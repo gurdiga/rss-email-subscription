@@ -1,12 +1,17 @@
 {
   "name": "rss-email-subscription",
-  "version": "1.0.0",
-  "description": "",
+  "version": "0.1.0",
+  "description": "This is meant to be an email subscription system for blogs",
   "main": "index.js",
-  "type": "module",
   "scripts": {},
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "feedburner",
+    "email",
+    "subscription",
+    "blog",
+    "rss"
+  ],
+  "author": "Vlad GURDIGA <gurdiga@gmail.com>",
   "license": "ISC",
   "devDependencies": {
     "@types/chai": "4.2.18",
@@ -15,10 +20,11 @@
     "chai": "4.3.4",
     "mocha": "8.4.0",
     "prettier": "2.3.0",
-    "prettier-plugin-jsdoc": "0.3.23",
     "typescript": "4.3.2"
   },
   "dependencies": {
-    "rss-parser": "3.12.0"
+    "rss-parser": "3.12.0",
+    "ts-mocha": "8.0.0",
+    "ts-node": "10.0.0"
   }
 }

@@ -1,10 +1,10 @@
 default: run
 
 run:
-	node src/main.js
+	ts-node src/rss-checking.ts
 
 test:
-	mocha -R dot src/**/*.spec.js
+	ts-mocha -R dot src/**/*.spec.ts
 
 edit:
 	code -n .

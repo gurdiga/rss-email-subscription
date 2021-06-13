@@ -1,15 +1,6 @@
-// @ts-check
-
-/** @typedef {import('./rss-item-validation.js').Item} Item */
-
-import Parser from 'rss-parser';
+import Parser, { Item } from 'rss-parser';
 import fs from 'fs';
-import {
-  isItemValidationError,
-  isValidItem,
-  makeNewItemFilter,
-  validateItem,
-} from './rss-item-validation';
+import { isItemValidationError, isValidItem, makeNewItemFilter, validateItem } from './rss-item-validation';
 
 async function main() {
   const url = 'http://127.0.0.1:4000/feed.xml';
@@ -18,16 +9,13 @@ async function main() {
     const newItems = await getNewItems(url);
 
     storeNewItems(newItems);
+    debugger;
   } catch (e) {
     console.error(e);
   }
 }
 
-/**
- * @param {string} url
- * @returns {Promise<Item[]>}
- */
-async function getNewItems(url) {
+export async function getNewItems(url: string): Promise<Item[]> {
   const feed = await new Parser().parseURL(url);
   const items = feed.items.map(validateItem);
   const validationErrors = items.filter(isItemValidationError);
@@ -44,11 +32,7 @@ async function getNewItems(url) {
   return newItems;
 }
 
-/**
- * @param {string} url
- * @returns {Date | undefined}
- */
-function getLastItemTimestamp(url) {
+function getLastItemTimestamp(url: string): Date | undefined {
   /** TODO Make this work. When storing new items, store the newest item timestamp. */
   const json = fs.readFileSync('./data/lastItems.json', 'utf8');
   const lastItemTimestamps = JSON.parse(json);
@@ -59,8 +43,7 @@ function getLastItemTimestamp(url) {
   }
 }
 
-/** @param {Item[]} newItems */
-function storeNewItems(newItems) {
+function storeNewItems(newItems: Item[]): void {
   fs.writeFileSync('./data/newItems.json', JSON.stringify(newItems, null, 2));
 }
 

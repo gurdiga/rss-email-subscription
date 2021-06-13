@@ -9,7 +9,8 @@
       "request": "launch",
       "name": "Launch Program",
       "skipFiles": ["<node_internals>/**"],
-      "program": "${workspaceFolder}/src/main.js"
+      "program": "${workspaceFolder}/src/rss-checking.ts",
+      "outFiles": ["${workspaceFolder}/**/*.js"]
     }
   ]
 }
