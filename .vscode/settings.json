@@ -5,6 +5,10 @@
   "files.associations": {
     "jsconfig.json": "jsonc"
   },
+  "[plaintext]": {
+    "editor.wordWrap": "wordWrapColumn",
+    "editor.wordWrapColumn": 72
+  },
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }

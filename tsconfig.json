@@ -1,0 +1,14 @@
+{
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"],
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": true,
+    "noEmit": true,
+    "module": "commonjs",
+    "lib": ["es2020", "dom"],
+    "target": "es2020",
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  }
+}
