@@ -33,7 +33,10 @@ export async function getNewItems(url: string): Promise<Item[]> {
 }
 
 function getLastItemTimestamp(url: string): Date | undefined {
-  /** TODO Make this work. When storing new items, store the newest item timestamp. */
+  /**
+   * TODO: Make this work. When storing new items, store the newest item timestamp.
+   *
+   * */
   const json = fs.readFileSync('./data/lastItems.json', 'utf8');
   const lastItemTimestamps = JSON.parse(json);
   const lastItemTimestamp = lastItemTimestamps[url];
