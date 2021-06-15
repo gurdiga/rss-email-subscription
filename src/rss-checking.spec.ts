@@ -2,51 +2,39 @@ import { expect } from 'chai';
 
 describe('RSS checking', () => {
   it('returns an empty output for empty input', () => {
-    const sinceTimestamp = new Date();
-    const newItems = getNewItems([], sinceTimestamp);
-    const expectedNewItems: RssItem[] = [];
+    const newItems = getNewItems([], new Date());
 
-    expect(newItems).to.deep.equal(expectedNewItems);
+    expect(newItems).to.deep.equal([]);
   });
 
   it('returns all the items when the since timestamp is undefined', () => {
-    const allItems = [
-      /* prettier: please keep these stacked */
-      makeRssItem(undefined, undefined, new Date()),
-      makeRssItem(undefined, undefined, new Date()),
-      makeRssItem(undefined, undefined, new Date()),
-    ];
-    const newItems = getNewItems(allItems);
+    const allItems = [rssItem(), rssItem(), rssItem()];
 
-    expect(newItems).to.deep.equal(allItems);
+    expect(getNewItems(allItems)).to.deep.equal(allItems);
   });
 
   it('returns only the items with timestamp later than the since timestamp', () => {
     const sinceTimestamp = new Date(2020, 1, 1, 21, 15);
     const allItems = [
       /* prettier: please keep these stacked */
-      makeRssItem('title', 'content', new Date(2020, 1, 1, 21, 10)),
-      makeRssItem('title', 'content', new Date(2020, 1, 1, 21, 20)),
-      makeRssItem('title', 'content', new Date(2020, 1, 1, 21, 25)),
+      rssItem(new Date(2020, 1, 1, 21, 10)),
+      rssItem(new Date(2020, 1, 1, 21, 20)),
+      rssItem(new Date(2020, 1, 1, 21, 25)),
     ];
-    const expectedNewItems: RssItem[] = allItems.slice(1, 3);
-    const newItems = getNewItems(allItems, sinceTimestamp);
 
-    expect(newItems).to.deep.equal(expectedNewItems);
+    expect(getNewItems(allItems, sinceTimestamp)).to.deep.equal(allItems.slice(1, 3));
   });
 
   it('returns only the items that have title, content, and timestamp', () => {
     const allItems = [
       /* prettier: please keep these stacked */
-      makeRssItem('', 'content', new Date(2020, 1, 1, 21, 10)),
-      makeRssItem('title', '', new Date(2020, 1, 1, 21, 20)),
-      makeRssItem('title', 'content', new Date(2020, 1, 1, 21, 25)),
-      makeRssItem('title', '', new Date('not a valid date string')),
+      rssItem(new Date(2020, 1, 1, 21, 10), '', 'content'),
+      rssItem(new Date(2020, 1, 1, 21, 20), 'title', ''),
+      rssItem(new Date(2020, 1, 1, 21, 25), 'title', 'content'),
+      rssItem(new Date('hey invalid date'), 'title', ''),
     ];
-    const newItems = getNewItems(allItems);
 
-    expect(newItems.length).to.equal(1);
-    expect(newItems[0]).to.deep.equal(allItems[2]);
+    expect(getNewItems(allItems)).to.deep.equal(allItems.slice(2, 3));
   });
 });
 
@@ -56,8 +44,8 @@ interface RssItem {
   timestamp: Date;
 }
 
-function makeRssItem(title: string = 'title', content: string = 'content', timestamp: Date = new Date()): RssItem {
-  return { title, content, timestamp };
+function rssItem(timestamp: Date = new Date(), title: string = 'title', content: string = 'content'): RssItem {
+  return { timestamp, title, content };
 }
 
 function getNewItems(items: RssItem[], sinceTimestamp?: Date): RssItem[] {
