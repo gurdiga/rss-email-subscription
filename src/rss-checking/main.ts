@@ -1,18 +1,24 @@
-import Parser, { Item } from 'rss-parser';
 import fs from 'fs';
+import path from 'path';
+import Parser, { Item } from 'rss-parser';
+import { makeInput } from './input';
 import { isItemValidationError, isValidItem, makeNewItemFilter, validateItem } from './rss-item-validation';
 
 async function main() {
-  const url = 'http://127.0.0.1:4000/feed.xml';
+  const urlString = process.argv[2]; // first command line arg
+  const dataDirString = process.argv[3]; // second command line arg
 
-  try {
-    const newItems = await getNewItems(url);
+  const input = makeInput(urlString, dataDirString);
 
-    storeNewItems(newItems);
-    debugger;
-  } catch (e) {
-    console.error(e);
+  if (input.kind === 'InvalidInput') {
+    console.error(`
+ERROR: ${input.reason}\n
+USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>
+`);
+    return;
   }
+
+  console.log({ input });
 }
 
 export async function getNewItems(url: string): Promise<Item[]> {
@@ -34,6 +40,9 @@ export async function getNewItems(url: string): Promise<Item[]> {
 
 function getLastItemTimestamp(url: string): Date | undefined {
   /**
+   * TODO: How do I do the ”programming by intent” to get a better
+   * understanding bout the API of the code?
+   *
    * TODO: Make this work. When storing new items, store the newest item timestamp.
    *
    * */
@@ -46,8 +55,8 @@ function getLastItemTimestamp(url: string): Date | undefined {
   }
 }
 
-function storeNewItems(newItems: Item[]): void {
-  fs.writeFileSync('./data/newItems.json', JSON.stringify(newItems, null, 2));
+function storeNewItems(newItems: Item[], dataDir: string): void {
+  fs.writeFileSync(`./newItems.json`, JSON.stringify(newItems, null, 2));
 }
 
 main();

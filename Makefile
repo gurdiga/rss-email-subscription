@@ -1,13 +1,13 @@
 default: run
 
 run:
-	ts-node src/rss-checking.ts
+	ts-node src/rss-checking/main.ts
 
 test:
-	ts-mocha -R dot src/**/*.spec.ts
+	ts-mocha -R dot 'src/**/*.spec.ts'
 
 w:
-	ts-mocha -R dot --watch --watch-files src src/**/*.spec.ts
+	ts-mocha -R dot --watch --watch-files src 'src/**/*.spec.ts'
 
 edit:
 	code -n .
