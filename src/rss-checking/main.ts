@@ -3,6 +3,7 @@ import path from 'path';
 import Parser, { Item } from 'rss-parser';
 import { makeInput } from './input';
 import { isItemValidationError, isValidItem, makeNewItemFilter, validateItem } from './rss-item-validation';
+import { fetchRssResponse } from './rss-response';
 
 async function main() {
   const urlString = process.argv[2]; // first command line arg
@@ -18,7 +19,14 @@ USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>
     return;
   }
 
-  console.log({ input });
+  const rssBody = await fetchRssResponse(input.value.url);
+
+  console.log({ rssBody });
+
+  // Intent:
+  // const output = processInput(input);
+  //
+  // writeOutput(output);
 }
 
 export async function getNewItems(url: string): Promise<Item[]> {
