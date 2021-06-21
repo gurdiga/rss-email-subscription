@@ -12,10 +12,20 @@ interface InvalidRssResponse {
 
 export async function fetchRssResponse(url: URL, fetchFn = fetch): Promise<ValidRssResponse | InvalidRssResponse> {
   try {
-    return {
-      kind: 'ValidRssResponse',
-      xml: await fetchFn(url).then((r) => r.text()),
-    };
+    const response = await fetchFn(url);
+    const contentType = response.headers.get('content-type')?.toLowerCase();
+
+    if (contentType?.startsWith('application/xml')) {
+      return {
+        kind: 'ValidRssResponse',
+        xml: await response.text(),
+      };
+    } else {
+      return {
+        kind: 'InvalidRssResponse',
+        reason: `Invalid response content-type: ${contentType}`,
+      };
+    }
   } catch (e) {
     return {
       kind: 'InvalidRssResponse',
