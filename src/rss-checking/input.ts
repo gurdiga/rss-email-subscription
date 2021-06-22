@@ -1,11 +1,11 @@
-import { makeDataDir } from './data-dir';
+import { makeDataDir, ValidDataDir } from './data-dir';
 import { makeRssUrl } from './rss-url';
 
 interface ValidInput {
   kind: 'ValidInput';
   value: {
     url: URL;
-    dataDir: string;
+    dataDir: ValidDataDir;
   };
 }
 
@@ -33,7 +33,7 @@ export function makeInput(urlString?: string, dataDirString?: string): ValidInpu
       kind: 'ValidInput',
       value: {
         url: url.value,
-        dataDir: dataDir.value,
+        dataDir: dataDir,
       },
     };
   }

@@ -1,6 +1,6 @@
 import path from 'path';
 
-interface ValidDataDir {
+export interface ValidDataDir {
   kind: 'ValidDataDir';
   value: string;
 }

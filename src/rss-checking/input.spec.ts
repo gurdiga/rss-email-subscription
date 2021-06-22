@@ -12,7 +12,10 @@ describe('makeInput', () => {
       kind: 'ValidInput',
       value: {
         url: new URL(urlString),
-        dataDir: dataDirString,
+        dataDir: {
+          kind: 'ValidDataDir',
+          value: dataDirString,
+        },
       },
     });
   });

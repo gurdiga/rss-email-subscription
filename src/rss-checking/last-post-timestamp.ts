@@ -1,3 +1,5 @@
-export function getLastPostTimestamp(dataDir: string): Date {
+import { ValidDataDir } from './data-dir';
+
+export function getLastPostTimestamp(dataDir: ValidDataDir): Date {
   return new Date();
 }
