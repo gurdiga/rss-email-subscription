@@ -38,4 +38,3 @@ export function makeInput(urlString?: string, dataDirString?: string): ValidInpu
     };
   }
 }
-// TODO: Ensure data dir exists or can be created?

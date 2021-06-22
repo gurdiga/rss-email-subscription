@@ -10,6 +10,8 @@ interface InvalidRssResponse {
   reason: string;
 }
 
+// TODO: Maybe introduce an intermediary type for the fetchFn?
+
 export async function fetchRssResponse(url: URL, fetchFn = fetch): Promise<ValidRssResponse | InvalidRssResponse> {
   try {
     const response = await fetchFn(url);
