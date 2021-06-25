@@ -25,11 +25,19 @@ export function getLastPostTimestamp(
 
     try {
       const data = JSON.parse(jsonString);
+      const timestamp = new Date(data.lastPostTimestamp);
 
-      return {
-        kind: 'ValidTimestamp',
-        value: new Date(data.lastPostTimestamp),
-      };
+      if (timestamp.toString() !== 'Invalid Date') {
+        return {
+          kind: 'ValidTimestamp',
+          value: timestamp,
+        };
+      } else {
+        return {
+          kind: 'InvalidTimestamp',
+          reason: `Invalid timestamp in ${filePath}`,
+        };
+      }
     } catch (jsonParsingError) {
       return {
         kind: 'InvalidTimestamp',

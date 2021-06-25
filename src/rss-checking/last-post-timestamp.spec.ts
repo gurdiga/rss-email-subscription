@@ -50,5 +50,15 @@ describe(getLastPostTimestamp.name, () => {
     });
   });
 
-  // TODO: test for missing timestamp in JSON
+  it('returns an InvalidTimestamp value when the timestamp in lastPostTimestamp.json is not a valid date', () => {
+    const mockFileReaderFn = (_filePath: string) => {
+      return '{"lastPostTimestamp": "not a JSON date"}';
+    };
+    const result = getLastPostTimestamp(dataDir, mockFileReaderFn);
+
+    expect(result).to.deep.equal({
+      kind: 'InvalidTimestamp',
+      reason: `Invalid timestamp in ${dataDirPathString}/lastPostTimestamp.json`,
+    });
+  });
 });
