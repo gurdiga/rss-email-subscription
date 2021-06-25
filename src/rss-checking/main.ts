@@ -29,7 +29,7 @@ async function main(): Promise<number | undefined> {
     return 3;
   }
 
-  // const rssItems = getRssItems(rssResponse);
+  // const rssItems = parseRssItems(rssResponse);
 
   // console.log({ rssItems, lastPostTimestamp });
 

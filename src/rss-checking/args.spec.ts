@@ -3,7 +3,7 @@ import { InvalidDataDir, makeDataDir } from './data-dir';
 import { parseArgs } from './args';
 import { InvalidRssUrl, makeRssUrl } from './rss-url';
 
-describe('makeInput', () => {
+describe(parseArgs.name, () => {
   it('returns a ValidArgs when input is valid', () => {
     const urlString = 'https://example.com/feed.xml';
     const dataDirString = '/some/path';

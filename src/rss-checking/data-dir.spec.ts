@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { makeDataDir } from './data-dir';
 
-describe('makeDataDir', () => {
+describe(makeDataDir.name, () => {
   it('returns a ValidDataDir value for the given path', () => {
     expect(makeDataDir('/some/dir')).to.deep.equal({ kind: 'ValidDataDir', value: '/some/dir' });
     expect(makeDataDir('./dir')).to.deep.equal({ kind: 'ValidDataDir', value: `${process.cwd()}/dir` });
