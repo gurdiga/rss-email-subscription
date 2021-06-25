@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import fetch, { Response, Headers } from 'node-fetch';
-import { fetchRssResponse } from './rss-response';
+import { fetchRssResponse, ValidRssResponse } from './rss-response';
 
 describe(fetchRssResponse.name, () => {
   const mockUrl = new URL('http://example.com/feed.xml');
@@ -14,7 +14,8 @@ describe(fetchRssResponse.name, () => {
     expect(response).to.deep.equal({
       kind: 'ValidRssResponse',
       xml: mockXmlResponse,
-    });
+      baseURL: mockUrl,
+    } as ValidRssResponse);
   });
 
   it('returns an InvalidRssResponse value when fetching didn’t go well', async () => {
@@ -50,7 +51,8 @@ describe(fetchRssResponse.name, () => {
       expect(response).to.deep.equal({
         kind: 'ValidRssResponse',
         xml: mockXmlResponse,
-      });
+        baseURL: mockUrl,
+      } as ValidRssResponse);
     });
 
     it('ignores content-type attributes', async () => {
@@ -60,7 +62,8 @@ describe(fetchRssResponse.name, () => {
       expect(response).to.deep.equal({
         kind: 'ValidRssResponse',
         xml: mockXmlResponse,
-      });
+        baseURL: mockUrl,
+      } as ValidRssResponse);
     });
   });
 

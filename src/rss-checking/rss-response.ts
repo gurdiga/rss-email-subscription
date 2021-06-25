@@ -1,8 +1,9 @@
 import fetch from 'node-fetch';
 
-interface ValidRssResponse {
+export interface ValidRssResponse {
   kind: 'ValidRssResponse';
   xml: string;
+  baseURL: URL;
 }
 
 interface InvalidRssResponse {
@@ -21,6 +22,7 @@ export async function fetchRssResponse(url: URL, fetchFn = fetch): Promise<Valid
       return {
         kind: 'ValidRssResponse',
         xml: await response.text(),
+        baseURL: url,
       };
     } else {
       return {
