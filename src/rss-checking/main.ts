@@ -1,5 +1,5 @@
 import path from 'path';
-import { makeInput } from './input';
+import { parseArgs } from './args';
 import { getLastPostTimestamp } from './last-post-timestamp';
 import { fetchRssResponse } from './rss-response';
 
@@ -7,22 +7,22 @@ async function main(): Promise<number | undefined> {
   const urlString = process.argv[2]; // first command line arg
   const dataDirString = process.argv[3]; // second command line arg
 
-  const input = makeInput(urlString, dataDirString);
+  const argParsingResult = parseArgs(urlString, dataDirString);
 
-  if (input.kind === 'InvalidInput') {
-    console.error(`\nERROR: ${input.reason}`);
+  if (argParsingResult.kind === 'InvalidArgs') {
+    console.error(`\nERROR: ${argParsingResult.reason}`);
     console.error(`USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>\n`);
     return 1;
   }
 
-  const rssResponse = await fetchRssResponse(input.value.url);
+  const rssResponse = await fetchRssResponse(argParsingResult.value.url);
 
   if (rssResponse.kind === 'InvalidRssResponse') {
     console.error(`\nERROR: ${rssResponse.reason}\n`);
     return 2;
   }
 
-  const lastPostTimestamp = getLastPostTimestamp(input.value.dataDir);
+  const lastPostTimestamp = getLastPostTimestamp(argParsingResult.value.dataDir);
 
   if (lastPostTimestamp.kind === 'InvalidTimestamp') {
     console.error(`\nERROR: ${lastPostTimestamp.reason}\n`);

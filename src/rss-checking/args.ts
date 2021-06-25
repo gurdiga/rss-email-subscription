@@ -1,36 +1,36 @@
 import { makeDataDir, ValidDataDir } from './data-dir';
 import { makeRssUrl } from './rss-url';
 
-interface ValidInput {
-  kind: 'ValidInput';
+interface ValidArgs {
+  kind: 'ValidArgs';
   value: {
     url: URL;
     dataDir: ValidDataDir;
   };
 }
 
-interface InvalidInput {
-  kind: 'InvalidInput';
+interface InvalidArgs {
+  kind: 'InvalidArgs';
   reason: string;
 }
 
-export function makeInput(urlString?: string, dataDirString?: string): ValidInput | InvalidInput {
+export function parseArgs(urlString?: string, dataDirString?: string): ValidArgs | InvalidArgs {
   const url = makeRssUrl(urlString);
   const dataDir = makeDataDir(dataDirString);
 
   if (url.kind === 'InvalidRssUrl') {
     return {
-      kind: 'InvalidInput',
+      kind: 'InvalidArgs',
       reason: `Invalid RSS URL: ${url.reason}`,
     };
   } else if (dataDir.kind === 'InvalidDataDir') {
     return {
-      kind: 'InvalidInput',
+      kind: 'InvalidArgs',
       reason: `Invalid data dir: ${dataDir.reason}`,
     };
   } else {
     return {
-      kind: 'ValidInput',
+      kind: 'ValidArgs',
       value: {
         url: url.value,
         dataDir: dataDir,
