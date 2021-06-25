@@ -1,9 +1,6 @@
-import fs from 'fs';
 import path from 'path';
-import Parser, { Item } from 'rss-parser';
 import { makeInput } from './input';
 import { getLastPostTimestamp } from './last-post-timestamp';
-import { isItemValidationError, isValidItem, makeNewItemFilter, validateItem } from './rss-item-validation';
 import { fetchRssResponse } from './rss-response';
 
 async function main(): Promise<number | undefined> {
