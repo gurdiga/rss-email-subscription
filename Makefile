@@ -1,7 +1,7 @@
 default: run
 
 run:
-	ts-node src/rss-checking/main.ts http://localhost:4000/feed.xml .
+	ts-node src/rss-checking/main.ts http://localhost:4000/feed.xml data/
 
 test:
 	ts-mocha -R dot 'src/**/*.spec.ts'
