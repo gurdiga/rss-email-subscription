@@ -29,12 +29,12 @@ async function main(): Promise<number | undefined> {
     return 3;
   }
 
-  console.log({ rssBody: rssResponse, lastPostTimestamp });
+  // const rssItems = getRssItems(rssResponse);
 
-  // Intent:
-  // const output = processInput(input);
-  //
-  // writeOutput(output);
+  // console.log({ rssItems, lastPostTimestamp });
+
+  // const newRssItems = getNewItems(rssItems, lastPostTimestamp);
+  // const recordResult = recordNewRssItems(newRssItems);
 }
 
 main().then((exitCode) => process.exit(exitCode));
