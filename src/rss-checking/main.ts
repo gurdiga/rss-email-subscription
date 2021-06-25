@@ -15,17 +15,17 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const rssResponse = await fetchRssResponse(argParsingResult.value.url);
+  const rssFetchingResult = await fetchRssResponse(argParsingResult.value.url);
 
-  if (rssResponse.kind === 'InvalidRssResponse') {
-    console.error(`\nERROR: ${rssResponse.reason}\n`);
+  if (rssFetchingResult.kind === 'InvalidRssResponse') {
+    console.error(`\nERROR: ${rssFetchingResult.reason}\n`);
     return 2;
   }
 
-  const lastPostTimestamp = getLastPostTimestamp(argParsingResult.value.dataDir);
+  const lastPostTimestampParsingResult = getLastPostTimestamp(argParsingResult.value.dataDir);
 
-  if (lastPostTimestamp.kind === 'InvalidTimestamp') {
-    console.error(`\nERROR: ${lastPostTimestamp.reason}\n`);
+  if (lastPostTimestampParsingResult.kind === 'InvalidTimestamp') {
+    console.error(`\nERROR: ${lastPostTimestampParsingResult.reason}\n`);
     return 3;
   }
 
