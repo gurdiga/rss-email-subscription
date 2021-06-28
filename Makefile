@@ -6,6 +6,8 @@ run:
 test:
 	ts-mocha -R dot 'src/**/*.spec.ts'
 
+t: test
+
 w:
 	ts-mocha -R dot --watch --watch-files src 'src/**/*.spec.ts'
 
