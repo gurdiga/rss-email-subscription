@@ -42,6 +42,7 @@ function isInvalidRssItem(value: any): value is InvalidRssItem {
 interface InvalidRssItem {
   kind: 'InvalidRssItem';
   reason: string;
+  item: Item;
 }
 
 export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRssItem {
@@ -49,6 +50,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post title is missing',
+      item,
     };
   }
 
@@ -56,6 +58,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post content is missing',
+      item,
     };
   }
 
@@ -63,6 +66,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post publication timestamp is missing',
+      item,
     };
   }
 
@@ -72,6 +76,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post link is missing',
+      item,
     };
   }
 
@@ -82,6 +87,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post publication timestamp is an invalid JSON date string',
+      item,
     };
   }
 

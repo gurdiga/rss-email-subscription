@@ -42,6 +42,61 @@ describe(parseRssItems.name, () => {
     } as RssParseResult);
   });
 
+  it('returns the invalid items into invalidItems of RssParseResult', async () => {
+    const xml = `
+      <?xml version="1.0" encoding="utf-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <title type="html">Your awesome title</title>
+        <entry>
+          <title type="html">Item without publication timestamp</title>
+          <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
+          <content>Some HTML content maybe</content>
+        </entry>
+        <entry>
+          <title type="html">Valid item</title>
+          <published>2021-06-12T18:50:16+03:00</published>
+          <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
+          <content>Some content</content>
+        </entry>
+      </feed>
+    `;
+
+    const result = await parseRssItems({
+      kind: 'ValidRssResponse',
+      xml,
+      baseURL,
+    });
+
+    expect(result).to.deep.equal({
+      validItems: [
+        {
+          content: 'Some content',
+          link: new URL('https://example.com/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html'),
+          publicationTimestamp: new Date('2021-06-12T15:50:16.000Z'),
+          title: 'Valid item',
+        },
+      ],
+      invalidItems: [
+        {
+          kind: 'InvalidRssItem',
+          reason: 'Post publication timestamp is missing',
+          item: {
+            content: 'Some HTML content maybe',
+            contentSnippet: 'Some HTML content maybe',
+            link: '/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html',
+            title: 'Item without publication timestamp',
+          } as any,
+          // This `as any` exists because rss-parser actually extracts
+          // all the properties from the <entry>, and so the item will
+          // also contain anything else besides the props defined in the
+          // Item interface.
+        },
+      ],
+    } as RssParseResult);
+  });
+
+  // TODO: handle invalid XML
+
   describe(buildRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
       const inputItem: Item = {
