@@ -14,23 +14,36 @@ export interface ValidRssParseResult {
   invalidItems: InvalidRssItem[];
 }
 
-interface InvalidRssParseResult {
-  kind: 'ValidRssParseResult';
+export interface InvalidRssParseResult {
+  kind: 'InvalidRssParseResult';
   reason: string;
 }
 
-export async function parseRssItems(rssResponse: ValidRssResponse): Promise<ValidRssParseResult> {
+export async function parseRssItems(
+  rssResponse: ValidRssResponse
+): Promise<ValidRssParseResult | InvalidRssParseResult> {
   const parser = new Parser();
-  const feed = await parser.parseString(rssResponse.xml);
-  const items = feed.items.map((item) => buildRssItem(item, rssResponse.baseURL));
-  const validItems = items.filter(isValidRssItem).map((i) => i.value);
-  const invalidItems = items.filter(isInvalidRssItem);
 
-  return {
-    kind: 'ValidRssParseResult',
-    validItems,
-    invalidItems,
-  };
+  try {
+    const feed = await parser.parseString(rssResponse.xml);
+
+    // TODO: Isolate XML parsing exceptions from the rest of the code?
+    // Add another try/catch for the following lines?
+    const items = feed.items.map((item) => buildRssItem(item, rssResponse.baseURL));
+    const validItems = items.filter(isValidRssItem).map((i) => i.value);
+    const invalidItems = items.filter(isInvalidRssItem);
+
+    return {
+      kind: 'ValidRssParseResult',
+      validItems,
+      invalidItems,
+    };
+  } catch (error) {
+    return {
+      kind: 'InvalidRssParseResult',
+      reason: `Invalid XML: ${rssResponse.xml}`,
+    };
+  }
 }
 
 export interface ValidRssItem {

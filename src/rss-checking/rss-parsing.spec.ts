@@ -1,12 +1,19 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Item } from 'rss-parser';
-import { buildRssItem, parseRssItems, RssItem, ValidRssParseResult, ValidRssItem } from './rss-parsing';
+import {
+  buildRssItem,
+  parseRssItems,
+  RssItem,
+  ValidRssParseResult,
+  ValidRssItem,
+  InvalidRssParseResult,
+} from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
-  it('returns a RssParseResult containing the items', async () => {
+  it('returns a ValidRssParseResult containing the items', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
     const expectedValidItems: RssItem[] = [
       {
@@ -43,7 +50,7 @@ describe(parseRssItems.name, () => {
     } as ValidRssParseResult);
   });
 
-  it('returns the invalid items into invalidItems of RssParseResult', async () => {
+  it('returns the invalid items into invalidItems of ValidRssParseResult', async () => {
     const xml = `
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -97,7 +104,32 @@ describe(parseRssItems.name, () => {
     } as ValidRssParseResult);
   });
 
-  // TODO: handle invalid XML
+  it('returns an InvalidRssParseResult value when invalid XML', async () => {
+    const xml = `
+    <?xml version="1.0" encoding="utf-8"?>
+    <feed xmlns="http://www.w3.org/2005/Atom">
+      <title type="html">Your awesome title</title>
+      <entry>
+        <!-- An XML error on the next line: missing closing quote for the type attribute -->
+        <title type="html>Valid item</title>
+        <published>2021-06-12T18:50:16+03:00</published>
+        <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
+        <content>Some content</content>
+      </entry>
+    </feed>
+  `;
+
+    const result = (await parseRssItems({
+      kind: 'ValidRssResponse',
+      xml,
+      baseURL,
+    })) as InvalidRssParseResult;
+
+    expect(result).to.deep.equal({
+      kind: 'InvalidRssParseResult',
+      reason: `Invalid XML: ${xml}`,
+    } as InvalidRssParseResult);
+  });
 
   describe(buildRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
