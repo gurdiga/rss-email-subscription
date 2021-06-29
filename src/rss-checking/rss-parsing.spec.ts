@@ -65,24 +65,47 @@ describe(parseRssItems.name, () => {
     });
 
     it('returns a InvalidRssItem value when input is invalid', () => {
-      const inputItem: Item = {
+      const item: Item = {
         title: 'Post title',
         content: 'Post body',
         isoDate: new Date().toJSON(),
         link: '/the/path/to/file.html',
       };
 
-      const invalid = (reason: string) => ({ kind: 'InvalidRssItem', reason });
-      const build = (itemProps: Partial<Item>): ReturnType<typeof buildRssItem> =>
-        buildRssItem({ ...inputItem, ...itemProps }, baseURL);
+      let invalidInput: Item = { ...item, title: undefined };
+      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+        kind: 'InvalidRssItem',
+        item: invalidInput,
+        reason: 'Post title is missing',
+      });
 
-      expect(build({ title: undefined })).to.deep.equal(invalid('Post title is missing'));
-      expect(build({ content: undefined })).to.deep.equal(invalid('Post content is missing'));
-      expect(build({ isoDate: undefined })).to.deep.equal(invalid('Post publication timestamp is missing'));
-      expect(build({ isoDate: 'Not a JSON date string' })).to.deep.equal(
-        invalid('Post publication timestamp is an invalid JSON date string')
-      );
-      expect(build({ link: undefined })).to.deep.equal(invalid('Post link is missing'));
+      invalidInput = { ...item, content: undefined };
+      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+        kind: 'InvalidRssItem',
+        item: invalidInput,
+        reason: 'Post content is missing',
+      });
+
+      invalidInput = { ...item, isoDate: undefined };
+      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+        kind: 'InvalidRssItem',
+        item: invalidInput,
+        reason: 'Post publication timestamp is missing',
+      });
+
+      invalidInput = { ...item, isoDate: 'Not a JSON date string' };
+      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+        kind: 'InvalidRssItem',
+        item: invalidInput,
+        reason: 'Post publication timestamp is an invalid JSON date string',
+      });
+
+      invalidInput = { ...item, link: undefined };
+      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+        kind: 'InvalidRssItem',
+        item: invalidInput,
+        reason: 'Post link is missing',
+      });
     });
   });
 });
