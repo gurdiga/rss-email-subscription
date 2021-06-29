@@ -8,12 +8,18 @@ export interface RssItem {
   link: URL;
 }
 
-export interface RssParseResult {
+export interface ValidRssParseResult {
+  kind: 'ValidRssParseResult';
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
 }
 
-export async function parseRssItems(rssResponse: ValidRssResponse): Promise<RssParseResult> {
+interface InvalidRssParseResult {
+  kind: 'ValidRssParseResult';
+  reason: string;
+}
+
+export async function parseRssItems(rssResponse: ValidRssResponse): Promise<ValidRssParseResult> {
   const parser = new Parser();
   const feed = await parser.parseString(rssResponse.xml);
   const items = feed.items.map((item) => buildRssItem(item, rssResponse.baseURL));
@@ -21,6 +27,7 @@ export async function parseRssItems(rssResponse: ValidRssResponse): Promise<RssP
   const invalidItems = items.filter(isInvalidRssItem);
 
   return {
+    kind: 'ValidRssParseResult',
     validItems,
     invalidItems,
   };

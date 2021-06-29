@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Item } from 'rss-parser';
-import { buildRssItem, parseRssItems, RssItem, RssParseResult, ValidRssItem } from './rss-parsing';
+import { buildRssItem, parseRssItems, RssItem, ValidRssParseResult, ValidRssItem } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
@@ -37,9 +37,10 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
+      kind: 'ValidRssParseResult',
       validItems: expectedValidItems,
       invalidItems: [],
-    } as RssParseResult);
+    } as ValidRssParseResult);
   });
 
   it('returns the invalid items into invalidItems of RssParseResult', async () => {
@@ -68,6 +69,7 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
+      kind: 'ValidRssParseResult',
       validItems: [
         {
           content: 'Some content',
@@ -92,7 +94,7 @@ describe(parseRssItems.name, () => {
           // Item interface.
         },
       ],
-    } as RssParseResult);
+    } as ValidRssParseResult);
   });
 
   // TODO: handle invalid XML
