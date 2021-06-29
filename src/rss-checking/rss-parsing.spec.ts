@@ -6,9 +6,9 @@ import { ValidRssResponse } from './rss-response';
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
-  it('returns a ValidRssItems containing the items', async () => {
+  it('returns a RssParseResult containing the items', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
-    const expectedItems: RssItem[] = [
+    const expectedValidItems: RssItem[] = [
       {
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
         content: '<div type="html" xml:base="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html"/>',
@@ -37,9 +37,9 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
-      kind: 'ValidRssItems',
-      items: expectedItems,
-    });
+      validItems: expectedValidItems,
+      invalidItems: [],
+    } as RssParseResult);
   });
 
   describe(buildRssItem.name, () => {
@@ -87,11 +87,6 @@ describe(parseRssItems.name, () => {
   });
 });
 
-interface ValidRssItems {
-  kind: 'ValidRssItems';
-  items: RssItem[];
-}
-
 interface RssItem {
   title: string;
   content: string;
@@ -99,31 +94,21 @@ interface RssItem {
   link: URL;
 }
 
-interface InvalidRssItems {
-  kind: 'InvalidRssItems';
-  reason: string;
-}
-
 interface RssParseResult {
-  validRssItems: ValidRssItem[];
-  invalidRssItems: InvalidRssItem[];
-  message: string;
+  validItems: RssItem[];
+  invalidItems: InvalidRssItem[];
 }
-
-/**
- * TODO: return RssParseResult
- */
 
 async function parseRssItems(rssResponse: ValidRssResponse): Promise<RssParseResult> {
   const parser = new Parser();
   const feed = await parser.parseString(rssResponse.xml);
   const items = feed.items.map((item) => buildRssItem(item, rssResponse.baseURL));
   const validItems = items.filter(isValidRssItem).map((i) => i.value);
+  const invalidItems = items.filter(isInvalidRssItem);
 
   return {
-    validRssItems: [], // TODO
-    invalidRssItems: [], // TODO
-    message: 'TODO', // TODO
+    validItems,
+    invalidItems,
   };
 }
 
@@ -134,6 +119,10 @@ interface ValidRssItem {
 
 function isValidRssItem(value: any): value is ValidRssItem {
   return value.kind === 'ValidRssItem';
+}
+
+function isInvalidRssItem(value: any): value is InvalidRssItem {
+  return value.kind === 'InvalidRssItem';
 }
 
 interface InvalidRssItem {
