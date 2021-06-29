@@ -131,6 +131,27 @@ describe(parseRssItems.name, () => {
     } as InvalidRssParseResult);
   });
 
+  it('returns an InvalidRssParseResult value when buildRssItem throws', async () => {
+    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
+    const buildRssItemFn = () => {
+      throw new Error('Something broke!');
+    };
+
+    const result = (await parseRssItems(
+      {
+        kind: 'ValidRssResponse',
+        xml,
+        baseURL,
+      },
+      buildRssItemFn
+    )) as InvalidRssParseResult;
+
+    expect(result).to.deep.equal({
+      kind: 'InvalidRssParseResult',
+      reason: `buildRssItemFn threw: Error: Something broke!`,
+    } as InvalidRssParseResult);
+  });
+
   describe(buildRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
       const inputItem: Item = {
