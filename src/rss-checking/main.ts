@@ -49,7 +49,9 @@ async function main(): Promise<number | undefined> {
     return 5;
   }
 
-  // const newRssItems = getNewItems(rssParseResult.validItems, lastPostTimestampParsingResult.value);
+  // const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestampParsingResult.value);
+
+  // TODO: RssItem: does it need the author?
 
   console.log({ rssParseResult: rssParseResult });
 
