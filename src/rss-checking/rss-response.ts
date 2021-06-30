@@ -11,9 +11,19 @@ interface InvalidRssResponse {
   reason: string;
 }
 
-// TODO: Maybe introduce an intermediary type for the fetchFn?
+interface FetchResponse {
+  headers: {
+    get(name: string): string | null;
+  };
+  text(): Promise<string>;
+}
 
-export async function fetchRssResponse(url: URL, fetchFn = fetch): Promise<ValidRssResponse | InvalidRssResponse> {
+type FetchFn = (url: URL) => Promise<FetchResponse>;
+
+export async function fetchRssResponse(
+  url: URL,
+  fetchFn: FetchFn = fetch
+): Promise<ValidRssResponse | InvalidRssResponse> {
   try {
     const response = await fetchFn(url);
     const contentType = response.headers.get('content-type')?.toLowerCase();

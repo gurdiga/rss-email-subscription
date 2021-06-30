@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import fetch, { Response, Headers } from 'node-fetch';
+import { Headers } from 'node-fetch';
 import { fetchRssResponse, ValidRssResponse } from './rss-response';
 
 describe(fetchRssResponse.name, () => {
@@ -9,7 +9,8 @@ describe(fetchRssResponse.name, () => {
   const mockText = async () => mockXmlResponse;
 
   it('returns a ValidRssResponse value containing the XML response from the given URL', async () => {
-    const response = await fetchRssResponse(mockUrl, makeFetchMock());
+    const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+    const response = await fetchRssResponse(mockUrl, mockFetchFn);
 
     expect(response).to.deep.equal({
       kind: 'ValidRssResponse',
@@ -20,12 +21,10 @@ describe(fetchRssResponse.name, () => {
 
   it('returns an InvalidRssResponse value when fetching didn’t go well', async () => {
     const mockException = new Error('Flaky wifi');
-    const response = await fetchRssResponse(
-      mockUrl,
-      makeFetchMock(async () => {
-        throw mockException;
-      })
-    );
+    const mockFetchFn = async () => {
+      throw mockException;
+    };
+    const response = await fetchRssResponse(mockUrl, mockFetchFn);
 
     expect(response).to.deep.equal({
       kind: 'InvalidRssResponse',
@@ -35,18 +34,20 @@ describe(fetchRssResponse.name, () => {
 
   describe('content type validation', () => {
     it('returns an InvalidRssResponse value when the response is not XML', async () => {
-      const headers = new Headers({ 'content-type': 'text/html; charset=utf-8' });
-      const response = await fetchRssResponse(mockUrl, makeFetchMock(undefined, headers));
+      const mockHeaders = new Headers({ 'content-type': 'text/html; charset=utf-8' });
+      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+      const response = await fetchRssResponse(mockUrl, mockFetchFn);
 
       expect(response).to.deep.equal({
         kind: 'InvalidRssResponse',
-        reason: `Invalid response content-type: ${headers.get('content-type')}`,
+        reason: `Invalid response content-type: ${mockHeaders.get('content-type')}`,
       });
     });
 
     it('disregards header casing', async () => {
-      const headers = new Headers({ 'content-type': 'application/xml; charSET=UTF-8' });
-      const response = await fetchRssResponse(mockUrl, makeFetchMock(undefined, headers));
+      const mockHeaders = new Headers({ 'content-type': 'application/xml; charSET=UTF-8' });
+      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+      const response = await fetchRssResponse(mockUrl, mockFetchFn);
 
       expect(response).to.deep.equal({
         kind: 'ValidRssResponse',
@@ -55,9 +56,10 @@ describe(fetchRssResponse.name, () => {
       } as ValidRssResponse);
     });
 
-    it('ignores content-type attributes', async () => {
-      const headers = new Headers({ 'content-type': 'application/xml' });
-      const response = await fetchRssResponse(mockUrl, makeFetchMock(undefined, headers));
+    it('ignores content-type header attributes', async () => {
+      const mockHeaders = new Headers({ 'content-type': 'application/xml' });
+      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+      const response = await fetchRssResponse(mockUrl, mockFetchFn);
 
       expect(response).to.deep.equal({
         kind: 'ValidRssResponse',
@@ -66,11 +68,4 @@ describe(fetchRssResponse.name, () => {
       } as ValidRssResponse);
     });
   });
-
-  function makeFetchMock(text: Response['text'] = mockText, headers: Response['headers'] = mockHeaders): typeof fetch {
-    return (async (_url: URL) => ({
-      headers,
-      text,
-    })) as any as typeof fetch;
-  }
 });
