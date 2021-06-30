@@ -1,6 +1,7 @@
 import path from 'path';
 import { parseArgs } from './args';
 import { getLastPostTimestamp } from './last-post-timestamp';
+import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
 
 async function main(): Promise<number | undefined> {
@@ -10,7 +11,7 @@ async function main(): Promise<number | undefined> {
   const argParsingResult = parseArgs(urlString, dataDirString);
 
   if (argParsingResult.kind === 'InvalidArgs') {
-    console.error(`\nERROR: ${argParsingResult.reason}`);
+    console.error(`\nERROR: InvalidArgs: ${argParsingResult.reason}`);
     console.error(`USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>\n`);
     return 1;
   }
@@ -18,22 +19,40 @@ async function main(): Promise<number | undefined> {
   const rssFetchingResult = await fetchRssResponse(argParsingResult.value.url);
 
   if (rssFetchingResult.kind === 'InvalidRssResponse') {
-    console.error(`\nERROR: ${rssFetchingResult.reason}\n`);
+    console.error(`\nERROR: InvalidRssResponse: ${rssFetchingResult.reason}\n`);
     return 2;
   }
 
   const lastPostTimestampParsingResult = getLastPostTimestamp(argParsingResult.value.dataDir);
 
   if (lastPostTimestampParsingResult.kind === 'InvalidTimestamp') {
-    console.error(`\nERROR: ${lastPostTimestampParsingResult.reason}\n`);
+    console.error(`\nERROR: InvalidTimestamp: ${lastPostTimestampParsingResult.reason}\n`);
     return 3;
   }
 
-  // const rssItems = parseRssItems(rssResponse);
+  const rssParseResult = await parseRssItems(rssFetchingResult);
 
-  // console.log({ rssItems, lastPostTimestamp });
+  if (rssParseResult.kind === 'InvalidRssParseResult') {
+    console.error(`\nERROR: InvalidRssParseResult: ${rssParseResult.reason}\n`);
+    return 4;
+  }
 
-  // const newRssItems = getNewItems(rssItems, lastPostTimestamp);
+  if (rssParseResult.invalidItems.length > 0) {
+    const count = rssParseResult.invalidItems.length;
+    const formattedItems = JSON.stringify(rssParseResult.invalidItems, null, 2);
+
+    console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedItems}\n`);
+  }
+
+  if (rssParseResult.validItems.length === 0) {
+    console.error(`\nERROR: no valid RSS items\n`);
+    return 5;
+  }
+
+  // const newRssItems = getNewItems(rssParseResult.validItems, lastPostTimestampParsingResult.value);
+
+  console.log({ rssParseResult: rssParseResult });
+
   // const recordResult = recordNewRssItems(newRssItems);
 }
 
