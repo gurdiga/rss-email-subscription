@@ -1,5 +1,6 @@
 import path from 'path';
 import { parseArgs } from './args';
+import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp } from './last-post-timestamp';
 import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
@@ -30,6 +31,8 @@ async function main(): Promise<number | undefined> {
     return 3;
   }
 
+  const lastPostTimestamp =
+    lastPostTimestampParsingResult.kind === 'MissingTimestampFile' ? new Date() : lastPostTimestampParsingResult.value;
   const rssParseResult = await parseRssItems(rssFetchingResult);
 
   if (rssParseResult.kind === 'InvalidRssParseResult') {
@@ -49,11 +52,11 @@ async function main(): Promise<number | undefined> {
     return 5;
   }
 
-  // const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestampParsingResult.value);
+  const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestamp);
 
   // TODO: RssItem: does it need the author?
 
-  console.log({ rssParseResult: rssParseResult });
+  console.log({ newRssItems, lastPostTimestamp });
 
   // const recordResult = recordNewRssItems(newRssItems);
 }
