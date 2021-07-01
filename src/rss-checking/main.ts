@@ -54,9 +54,9 @@ async function main(): Promise<number | undefined> {
 
   const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestamp);
 
-  console.log({ newRssItems, lastPostTimestamp });
-
   // const recordResult = recordNewRssItems(newRssItems);
+
+  console.log({ newRssItems, lastPostTimestamp });
 }
 
 main().then((exitCode) => process.exit(exitCode));
