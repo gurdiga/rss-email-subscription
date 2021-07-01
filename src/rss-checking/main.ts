@@ -54,8 +54,6 @@ async function main(): Promise<number | undefined> {
 
   const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestamp);
 
-  // TODO: RssItem: does it need the author?
-
   console.log({ newRssItems, lastPostTimestamp });
 
   // const recordResult = recordNewRssItems(newRssItems);

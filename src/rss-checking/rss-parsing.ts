@@ -4,6 +4,7 @@ import { ValidRssResponse } from './rss-response';
 export interface RssItem {
   title: string;
   content: string;
+  author: string;
   pubDate: Date;
   link: URL;
 }
@@ -29,7 +30,7 @@ export async function parseRssItems(
     const feed = await parser.parseString(rssResponse.xml);
 
     try {
-      const items = feed.items.map((item) => buildRssItemFn(item, rssResponse.baseURL));
+      const items = feed.items.map((item) => buildRssItemFn(item as ParsedRssItem, rssResponse.baseURL));
 
       const validItems = items.filter(isValidRssItem).map((i) => i.value);
       const invalidItems = items.filter(isInvalidRssItem);
@@ -58,21 +59,17 @@ export interface ValidRssItem {
   value: RssItem;
 }
 
-function isValidRssItem(value: any): value is ValidRssItem {
-  return value.kind === 'ValidRssItem';
-}
-
-function isInvalidRssItem(value: any): value is InvalidRssItem {
-  return value.kind === 'InvalidRssItem';
-}
-
 interface InvalidRssItem {
   kind: 'InvalidRssItem';
   reason: string;
-  item: Item;
+  item: ParsedRssItem;
 }
 
-export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRssItem {
+export interface ParsedRssItem extends Item {
+  author: string | undefined; // The Item interface of rss-parser is missing author?!
+}
+
+export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
   if (!item.title?.trim()) {
     return {
       kind: 'InvalidRssItem',
@@ -85,6 +82,14 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     return {
       kind: 'InvalidRssItem',
       reason: 'Post content is missing',
+      item,
+    };
+  }
+
+  if (!item.author?.trim()) {
+    return {
+      kind: 'InvalidRssItem',
+      reason: 'Post author is missing',
       item,
     };
   }
@@ -123,8 +128,17 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     value: {
       title: item.title,
       content: item.content,
+      author: item.author,
       pubDate: new Date(item.isoDate),
       link: link,
     },
   };
+}
+
+function isValidRssItem(value: any): value is ValidRssItem {
+  return value.kind === 'ValidRssItem';
+}
+
+function isInvalidRssItem(value: any): value is InvalidRssItem {
+  return value.kind === 'InvalidRssItem';
 }
