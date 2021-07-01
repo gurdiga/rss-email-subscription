@@ -1,5 +1,5 @@
 import path from 'path';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { ValidDataDir } from './data-dir';
 
 interface ValidTimestamp {
@@ -12,13 +12,25 @@ interface InvalidTimestamp {
   reason: string;
 }
 
+interface MissingTimestampFile {
+  kind: 'MissingTimestampFile';
+}
+
 type DataReaderFn = (filePath: string) => string;
+type FileExistsFn = (filePath: string) => boolean;
 
 export function getLastPostTimestamp(
   dataDir: ValidDataDir,
-  dataReaderFn: DataReaderFn = dataReader
-): ValidTimestamp | InvalidTimestamp {
+  dataReaderFn: DataReaderFn = dataReader,
+  fileExists: FileExistsFn = existsSync
+): ValidTimestamp | InvalidTimestamp | MissingTimestampFile {
   const filePath = path.resolve(dataDir.value, 'lastPostTimestamp.json');
+
+  if (!fileExists(filePath)) {
+    return {
+      kind: 'MissingTimestampFile',
+    };
+  }
 
   try {
     const jsonString = dataReaderFn(filePath);
