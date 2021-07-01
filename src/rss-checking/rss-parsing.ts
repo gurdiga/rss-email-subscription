@@ -4,7 +4,7 @@ import { ValidRssResponse } from './rss-response';
 export interface RssItem {
   title: string;
   content: string;
-  publicationTimestamp: Date;
+  pubDate: Date;
   link: URL;
 }
 
@@ -123,7 +123,7 @@ export function buildRssItem(item: Item, baseURL: URL): ValidRssItem | InvalidRs
     value: {
       title: item.title,
       content: item.content,
-      publicationTimestamp: new Date(item.isoDate),
+      pubDate: new Date(item.isoDate),
       link: link,
     },
   };

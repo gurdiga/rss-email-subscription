@@ -19,20 +19,20 @@ describe(parseRssItems.name, () => {
       {
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
         content: '<div type="html" xml:base="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html"/>',
-        publicationTimestamp: new Date('2021-06-12T19:05:00+03:00'),
+        pubDate: new Date('2021-06-12T19:05:00+03:00'),
         link: new URL('/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html', baseURL),
       },
       {
         title: 'A new post',
         content: '<div type="html" xml:base="/2021/06/12/a-new-post.html"/>',
-        publicationTimestamp: new Date('2021-06-12T19:03:00+03:00'),
+        pubDate: new Date('2021-06-12T19:03:00+03:00'),
         link: new URL('/2021/06/12/a-new-post.html', baseURL),
       },
       {
         title: 'Welcome to Jekyll!',
         content:
           '\n      <p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>\n',
-        publicationTimestamp: new Date('2021-06-12T18:50:16+03:00'),
+        pubDate: new Date('2021-06-12T18:50:16+03:00'),
         link: new URL('/jekyll/update/2021/06/12/welcome-to-jekyll.html', baseURL),
       },
     ];
@@ -81,7 +81,7 @@ describe(parseRssItems.name, () => {
         {
           content: 'Some content',
           link: new URL('https://example.com/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html'),
-          publicationTimestamp: new Date('2021-06-12T15:50:16.000Z'),
+          pubDate: new Date('2021-06-12T15:50:16.000Z'),
           title: 'Valid item',
         },
       ],
@@ -166,7 +166,7 @@ describe(parseRssItems.name, () => {
         value: {
           title: inputItem.title!,
           content: inputItem.content!,
-          publicationTimestamp: new Date(inputItem.isoDate!),
+          pubDate: new Date(inputItem.isoDate!),
           link: new URL(inputItem.link!, baseURL),
         },
       };
