@@ -28,33 +28,51 @@ describe(recordNewRssItems.name, () => {
       link: new URL('https://test.com/item-three'),
     },
   ];
-
-  it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
-    const writtenFiles: { path: string; content: string }[] = [];
-    const writeFile = (path: string, content: string) => writtenFiles.push({ path, content });
-    const nameFileFn = (item: RssItem) => item.pubDate.toJSON() + '.json';
-
-    recordNewRssItems(dataDir, rssItems, writeFile, nameFileFn);
-
-    expect(writtenFiles).to.deep.equal([
-      { path: `/some/dir/inbox/${nameFileFn(rssItems[0])}`, content: JSON.stringify(rssItems[0]) },
-      { path: `/some/dir/inbox/${nameFileFn(rssItems[1])}`, content: JSON.stringify(rssItems[1]) },
-      { path: `/some/dir/inbox/${nameFileFn(rssItems[2])}`, content: JSON.stringify(rssItems[2]) },
-    ]);
-  });
+  const mockMkdirp = (_path: string) => {};
+  const mockWriteFile = (_path: string, _content: string) => {};
 
   it('creates the ./data/inbox directory if it does not exist', () => {
-    // TODO
+    let createdDirectory = '';
+    const mockMkdirp = (path: string) => (createdDirectory = path);
+
+    recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
+
+    expect(createdDirectory).to.equal('/some/dir/inbox');
   });
 
-  it('reports the error when can’t write file', () => {
-    const mockError = new Error('No write access');
-    const writeFile = (_path: string, _content: string) => {
+  it('reports when cant create the ./data/inbox directory', () => {
+    const mockError = new Error('Disk is full');
+    const mockMkdirp = (_path: string) => {
       throw mockError;
     };
 
     expect(() => {
-      recordNewRssItems(dataDir, rssItems, writeFile);
+      recordNewRssItems(dataDir, rssItems, mockMkdirp);
+    }).to.throw(`Cant create /some/dir/inbox directory: ${mockError}`);
+  });
+
+  it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
+    const writtenFiles: { path: string; content: string }[] = [];
+    const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
+    const mockNameFile = (item: RssItem) => item.pubDate.toJSON() + '.json';
+
+    recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile, mockNameFile);
+
+    expect(writtenFiles).to.deep.equal([
+      { path: `/some/dir/inbox/${mockNameFile(rssItems[0])}`, content: JSON.stringify(rssItems[0]) },
+      { path: `/some/dir/inbox/${mockNameFile(rssItems[1])}`, content: JSON.stringify(rssItems[1]) },
+      { path: `/some/dir/inbox/${mockNameFile(rssItems[2])}`, content: JSON.stringify(rssItems[2]) },
+    ]);
+  });
+
+  it('reports the error when can’t write file', () => {
+    const mockError = new Error('No write access');
+    const mockWriteFile = (_path: string, _content: string) => {
+      throw mockError;
+    };
+
+    expect(() => {
+      recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
     }).to.throw(`Cant write RSS item file to inbox: ${mockError}, item: ${JSON.stringify(rssItems[0])}`);
   });
 
@@ -67,9 +85,11 @@ describe(recordNewRssItems.name, () => {
         pubDate: new Date('2020-01-03T10:50:16-06:00'),
         link: new URL('https://test.com/item-two'),
       };
-      const hashFn = (s: string) => s.length.toString();
+      const mockHash = (s: string) => s.length.toString();
 
-      expect(itemFileName(item, hashFn)).to.equal('1578070216-56.json');
+      expect(itemFileName(item, mockHash)).to.equal('1578070216-56.json');
     });
   });
+
+  // TODO: test mkdirp, writeFile, itemFileName
 });
