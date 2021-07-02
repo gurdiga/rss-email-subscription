@@ -65,5 +65,5 @@ export function getLastPostTimestamp(
 }
 
 function dataReader(path: string) {
-  return readFileSync(path, 'utf-8');
+  return readFileSync(path, 'utf8');
 }
