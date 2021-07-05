@@ -1,7 +1,10 @@
 import { expect } from 'chai';
 import { RssItem } from './rss-parsing';
 import { makeDataDir, ValidDataDir } from './data-dir';
-import { itemFileName, recordNewRssItems } from './new-item-recording';
+import { itemFileName, mkdirp, recordNewRssItems } from './new-item-recording';
+import { existsSync, mkdtempSync, rmdirSync } from 'fs';
+import path from 'path';
+import os from 'os';
 
 describe(recordNewRssItems.name, () => {
   const dataDir = makeDataDir('/some/dir/') as ValidDataDir;
@@ -91,5 +94,17 @@ describe(recordNewRssItems.name, () => {
     });
   });
 
-  // TODO: test mkdirp, writeFile, itemFileName
+  // TODO: test writeFile, itemFileName
+
+  describe(mkdirp.name, () => {
+    const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-'));
+
+    it('creates nested directories', () => {
+      const dir = `${tmpWorkDir}/one/two/three`;
+
+      mkdirp(dir);
+
+      expect(existsSync(dir)).to.be.true;
+    });
+  });
 });

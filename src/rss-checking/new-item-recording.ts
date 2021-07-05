@@ -37,7 +37,7 @@ export function recordNewRssItems(
   });
 }
 
-function mkdirp(path: string): void {
+export function mkdirp(path: string): void {
   mkdirSync(path, { recursive: true });
 }
 
