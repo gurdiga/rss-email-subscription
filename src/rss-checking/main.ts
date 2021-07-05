@@ -42,21 +42,24 @@ async function main(): Promise<number | undefined> {
     return 4;
   }
 
-  if (rssParseResult.invalidItems.length > 0) {
-    const count = rssParseResult.invalidItems.length;
-    const formattedItems = JSON.stringify(rssParseResult.invalidItems, null, 2);
+  const { validItems, invalidItems } = rssParseResult;
+
+  if (invalidItems.length > 0) {
+    const count = invalidItems.length;
+    const formattedItems = JSON.stringify(invalidItems, null, 2);
 
     console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedItems}\n`);
   }
 
-  if (rssParseResult.validItems.length === 0) {
+  if (validItems.length === 0) {
     console.error(`\nERROR: no valid RSS items\n`);
     return 5;
   }
 
-  const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestamp);
+  const newRssItems = selectNewItems(validItems, lastPostTimestamp);
 
   recordNewRssItems(dataDir, newRssItems);
+  // recordLastPostTimestamp(dataDir, validItems);
 }
 
 main().then((exitCode) => process.exit(exitCode));
