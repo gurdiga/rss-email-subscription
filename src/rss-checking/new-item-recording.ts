@@ -14,7 +14,7 @@ export function recordNewRssItems(
   mkdirpFn: MkdirpFn = mkdirp,
   writeFileFn: WriteFileFn = writeFile,
   nameFileFn: NameFileFn = itemFileName
-) {
+): void {
   const inboxDirName = 'inbox';
   const inboxDirPath = path.resolve(dataDir.value, inboxDirName);
 

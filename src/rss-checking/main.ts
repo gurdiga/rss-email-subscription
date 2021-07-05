@@ -2,6 +2,7 @@ import path from 'path';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp } from './last-post-timestamp';
+import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
 
@@ -17,14 +18,15 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const rssFetchingResult = await fetchRssResponse(argParsingResult.value.url);
+  const { dataDir, url } = argParsingResult.value;
+  const rssFetchingResult = await fetchRssResponse(url);
 
   if (rssFetchingResult.kind === 'InvalidRssResponse') {
     console.error(`\nERROR: InvalidRssResponse: ${rssFetchingResult.reason}\n`);
     return 2;
   }
 
-  const lastPostTimestampParsingResult = getLastPostTimestamp(argParsingResult.value.dataDir);
+  const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
 
   if (lastPostTimestampParsingResult.kind === 'InvalidTimestamp') {
     console.error(`\nERROR: InvalidTimestamp: ${lastPostTimestampParsingResult.reason}\n`);
@@ -54,9 +56,7 @@ async function main(): Promise<number | undefined> {
 
   const newRssItems = selectNewItems(rssParseResult.validItems, lastPostTimestamp);
 
-  // const recordResult = recordNewRssItems(newRssItems);
-
-  console.log({ newRssItems, lastPostTimestamp });
+  recordNewRssItems(dataDir, newRssItems);
 }
 
 main().then((exitCode) => process.exit(exitCode));
