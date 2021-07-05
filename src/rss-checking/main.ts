@@ -9,7 +9,6 @@ import { fetchRssResponse } from './rss-response';
 async function main(): Promise<number | undefined> {
   const urlString = process.argv[2]; // first command line arg
   const dataDirString = process.argv[3]; // second command line arg
-
   const argParsingResult = parseArgs(urlString, dataDirString);
 
   if (argParsingResult.kind === 'InvalidArgs') {
@@ -35,14 +34,14 @@ async function main(): Promise<number | undefined> {
 
   const lastPostTimestamp =
     lastPostTimestampParsingResult.kind === 'MissingTimestampFile' ? new Date() : lastPostTimestampParsingResult.value;
-  const rssParseResult = await parseRssItems(rssFetchingResult);
+  const rssParsingResult = await parseRssItems(rssFetchingResult);
 
-  if (rssParseResult.kind === 'InvalidRssParseResult') {
-    console.error(`\nERROR: InvalidRssParseResult: ${rssParseResult.reason}\n`);
+  if (rssParsingResult.kind === 'InvalidRssParseResult') {
+    console.error(`\nERROR: InvalidRssParseResult: ${rssParsingResult.reason}\n`);
     return 4;
   }
 
-  const { validItems, invalidItems } = rssParseResult;
+  const { validItems, invalidItems } = rssParsingResult;
 
   if (invalidItems.length > 0) {
     const count = invalidItems.length;
