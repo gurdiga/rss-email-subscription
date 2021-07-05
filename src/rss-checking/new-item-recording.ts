@@ -27,12 +27,12 @@ export function recordNewRssItems(
   rssItems.forEach((item) => {
     const fileName = nameFileFn(item);
     const filePath = path.resolve(inboxDirPath, fileName);
-    const fileContents = JSON.stringify(item);
+    const fileContent = JSON.stringify(item);
 
     try {
-      writeFileFn(filePath, fileContents);
+      writeFileFn(filePath, fileContent);
     } catch (error) {
-      throw new Error(`Cant write RSS item file to inbox: ${error}, item: ${fileContents}`);
+      throw new Error(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
     }
   });
 }
@@ -41,7 +41,7 @@ export function mkdirp(path: string): void {
   mkdirSync(path, { recursive: true });
 }
 
-function writeFile(path: string, content: string): void {
+export function writeFile(path: string, content: string): void {
   writeFileSync(path, content, { encoding: 'utf8' });
 }
 
