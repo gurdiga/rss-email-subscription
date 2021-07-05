@@ -78,12 +78,16 @@ export function recordLastPostTimestamp(
   const sortByPubDateDesc: ArraySortFn<RssItem> = (a, b) => b.pubDate.getTime() - a.pubDate.getTime();
   const latestItem = [...items].sort(sortByPubDateDesc)[0];
 
-  writeFileFn(
-    getLastPostTimestampFileName(dataDir),
-    JSON.stringify({
-      lastPostTimestamp: latestItem.pubDate,
-    })
-  );
+  const filePath = getLastPostTimestampFileName(dataDir);
+  const fileContent = JSON.stringify({
+    lastPostTimestamp: latestItem.pubDate,
+  });
+
+  try {
+    writeFileFn(filePath, fileContent);
+  } catch (error) {
+    throw new Error(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
+  }
 }
 
 type ArraySortFn<T> = (a: T, b: T) => number;
