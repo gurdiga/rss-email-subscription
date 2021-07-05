@@ -1,7 +1,7 @@
 import path from 'path';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
-import { getLastPostTimestamp } from './last-post-timestamp';
+import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
@@ -59,7 +59,7 @@ async function main(): Promise<number | undefined> {
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
 
   recordNewRssItems(dataDir, newRssItems);
-  // recordLastPostTimestamp(dataDir, validItems);
+  recordLastPostTimestamp(dataDir, validItems);
 }
 
 main().then((exitCode) => process.exit(exitCode));
