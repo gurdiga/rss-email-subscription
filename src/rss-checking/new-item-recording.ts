@@ -5,7 +5,7 @@ import { ValidDataDir } from './data-dir';
 import { RssItem } from './rss-parsing';
 
 type MkdirpFn = (path: string) => void;
-type WriteFileFn = (path: string, content: string) => void;
+export type WriteFileFn = (path: string, content: string) => void;
 type NameFileFn = (item: RssItem) => string;
 
 export function recordNewRssItems(
