@@ -59,7 +59,7 @@ async function main(): Promise<number | undefined> {
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
 
   recordNewRssItems(dataDir, newRssItems);
-  recordLastPostTimestamp(dataDir, validItems);
+  recordLastPostTimestamp(dataDir, newRssItems);
 }
 
 main().then((exitCode) => process.exit(exitCode));
