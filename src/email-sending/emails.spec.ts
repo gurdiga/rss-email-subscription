@@ -27,13 +27,24 @@ describe(getEmails.name, () => {
   });
 
   it('eliminates duplicates', async () => {
-    const mockFileContent = '["a@test.com", "a@test.com", "b@test.com", "b@test.com", "b@test.com"]';
+    const mockFileContent = JSON.stringify(['a@test.com', 'a@test.com', 'b@test.com', 'b@test.com', 'b@test.com']);
     const mockReadFileFn = () => mockFileContent;
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
 
     expect(result).to.deep.equal({
       kind: 'RecipientList',
       emails: ['a@test.com', 'b@test.com'],
+    });
+  });
+
+  it('trims emails', async () => {
+    const mockFileContent = JSON.stringify(['  a@test.com  ', '	b@test.com		', '\r\nc@test.com']);
+    const mockReadFileFn = () => mockFileContent;
+    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+
+    expect(result).to.deep.equal({
+      kind: 'RecipientList',
+      emails: ['a@test.com', 'b@test.com', 'c@test.com'],
     });
   });
 
@@ -58,8 +69,8 @@ async function getEmails(
   fileExistsFn: FileExistsFn = fileExists
 ): Promise<Emails | Failure> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
-  const emails = JSON.parse(readFileFn(filePath));
-  const uniqEmails = emails.filter(filterUniq);
+  const emails = JSON.parse(readFileFn(filePath)) as string[];
+  const uniqEmails = emails.filter(filterUniq).map((e) => e.trim());
 
   return {
     kind: 'RecipientList',
