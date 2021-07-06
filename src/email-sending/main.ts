@@ -3,7 +3,7 @@ async function main(): Promise<number> {
   // - read the email list
   // - send each post to each of the emails
 
-  // const emailListReadingResult = await readEmailList();
+  // const emailListReadingResult = await getEmails();
   console.log('OK');
   return 0;
 }
