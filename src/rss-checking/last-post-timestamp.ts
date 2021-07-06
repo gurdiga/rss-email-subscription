@@ -1,8 +1,7 @@
 import path from 'path';
-import { readFileSync, existsSync } from 'fs';
 import { ValidDataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
-import { writeFile, WriteFileFn } from './new-item-recording';
+import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
 
 interface ValidTimestamp {
   kind: 'ValidTimestamp';
@@ -18,13 +17,10 @@ interface MissingTimestampFile {
   kind: 'MissingTimestampFile';
 }
 
-type DataReaderFn = (filePath: string) => string;
-type FileExistsFn = (filePath: string) => boolean;
-
 export function getLastPostTimestamp(
   dataDir: ValidDataDir,
-  dataReaderFn: DataReaderFn = dataReader,
-  fileExistsFn: FileExistsFn = existsSync
+  dataReaderFn: ReadFileFn = readFile,
+  fileExistsFn: FileExistsFn = fileExists
 ): ValidTimestamp | InvalidTimestamp | MissingTimestampFile {
   const filePath = getLastPostTimestampFileName(dataDir);
 
@@ -64,10 +60,6 @@ export function getLastPostTimestamp(
       reason: `Can’t read ${filePath}: ${ioError.message}`,
     };
   }
-}
-
-function dataReader(path: string) {
-  return readFileSync(path, 'utf8');
 }
 
 export function recordLastPostTimestamp(

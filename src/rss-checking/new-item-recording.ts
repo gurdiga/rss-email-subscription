@@ -1,11 +1,9 @@
-import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 import { ValidDataDir } from '../shared/data-dir';
+import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
 import { RssItem } from './rss-parsing';
 
-type MkdirpFn = (path: string) => void;
-export type WriteFileFn = (path: string, content: string) => void;
 type NameFileFn = (item: RssItem) => string;
 
 export function recordNewRssItems(
@@ -35,14 +33,6 @@ export function recordNewRssItems(
       throw new Error(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
     }
   });
-}
-
-export function mkdirp(path: string): void {
-  mkdirSync(path, { recursive: true });
-}
-
-export function writeFile(path: string, content: string): void {
-  writeFileSync(path, content, { encoding: 'utf8' });
 }
 
 type HashFn = (input: string) => string;
