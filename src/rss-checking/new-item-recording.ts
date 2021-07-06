@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { ValidDataDir } from './data-dir';
+import { ValidDataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
 
 type MkdirpFn = (path: string) => void;
