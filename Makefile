@@ -1,6 +1,10 @@
-default: run
+default: run-email-sending
 
-run:
+run-email-sending:
+	ts-node src/email-sending/main.ts
+
+
+run-rss-checking:
 	ts-node src/rss-checking/main.ts http://localhost:4000/feed.xml data/
 
 test:
