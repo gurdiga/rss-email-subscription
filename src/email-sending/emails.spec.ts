@@ -22,7 +22,7 @@ describe(getEmails.name, () => {
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal({
       kind: 'RecipientList',
-      emails: ['test@test.com'],
+      emails: [{ kind: 'Email', value: 'test@test.com' }],
     });
   });
 
@@ -33,7 +33,10 @@ describe(getEmails.name, () => {
 
     expect(result).to.deep.equal({
       kind: 'RecipientList',
-      emails: ['a@test.com', 'b@test.com'],
+      emails: [
+        { kind: 'Email', value: 'a@test.com' },
+        { kind: 'Email', value: 'b@test.com' },
+      ],
     });
   });
 
@@ -44,7 +47,11 @@ describe(getEmails.name, () => {
 
     expect(result).to.deep.equal({
       kind: 'RecipientList',
-      emails: ['a@test.com', 'b@test.com', 'c@test.com'],
+      emails: [
+        { kind: 'Email', value: 'a@test.com' },
+        { kind: 'Email', value: 'b@test.com' },
+        { kind: 'Email', value: 'c@test.com' },
+      ],
     });
   });
 
@@ -55,7 +62,20 @@ describe(getEmails.name, () => {
 
 interface Emails {
   kind: 'RecipientList';
-  emails: string[]; // TODO: Consider adding a tagged Email type?
+  emails: Email[];
+}
+
+interface Email {
+  kind: 'Email';
+  value: string;
+}
+
+// TODO: Add unit test
+function makeEmail(email: string): Email {
+  return {
+    kind: 'Email',
+    value: email,
+  };
 }
 
 interface Failure {
@@ -70,7 +90,10 @@ async function getEmails(
 ): Promise<Emails | Failure> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
   const emails = JSON.parse(readFileFn(filePath)) as string[];
-  const uniqEmails = emails.filter(filterUniq).map((e) => e.trim());
+  const uniqEmails = emails
+    .filter(filterUniq)
+    .map((e) => e.trim())
+    .map(makeEmail);
 
   return {
     kind: 'RecipientList',
