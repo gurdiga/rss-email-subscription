@@ -1,6 +1,6 @@
 import path from 'path';
 import { readFileSync, existsSync } from 'fs';
-import { ValidDataDir } from './data-dir';
+import { ValidDataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
 import { writeFile, WriteFileFn } from './new-item-recording';
 

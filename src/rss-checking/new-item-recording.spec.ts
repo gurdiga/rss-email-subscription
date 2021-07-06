@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { RssItem } from './rss-parsing';
-import { makeDataDir, ValidDataDir } from './data-dir';
+import { makeDataDir, ValidDataDir } from '../shared/data-dir';
 import { itemFileName, mkdirp, recordNewRssItems, writeFile } from './new-item-recording';
 import { existsSync, mkdtempSync, readFileSync } from 'fs';
 import path from 'path';

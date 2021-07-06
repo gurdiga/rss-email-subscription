@@ -1,4 +1,4 @@
-import { makeDataDir, ValidDataDir } from './data-dir';
+import { makeDataDir, ValidDataDir } from '../shared/data-dir';
 import { makeRssUrl } from './rss-url';
 
 interface ValidArgs {

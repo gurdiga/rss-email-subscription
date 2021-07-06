@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeDataDir, ValidDataDir } from './data-dir';
+import { makeDataDir, ValidDataDir } from '../shared/data-dir';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { RssItem } from './rss-parsing';
 

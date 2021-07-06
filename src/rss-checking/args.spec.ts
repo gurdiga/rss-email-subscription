@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { InvalidDataDir, makeDataDir } from './data-dir';
+import { InvalidDataDir, makeDataDir } from '../shared/data-dir';
 import { parseArgs } from './args';
 import { InvalidRssUrl, makeRssUrl } from './rss-url';
 
