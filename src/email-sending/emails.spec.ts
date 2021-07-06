@@ -22,7 +22,7 @@ describe(getEmails.name, () => {
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal({
       kind: 'RecipientList',
-      emails: [{ kind: 'Email', value: 'test@test.com' }],
+      emails: [{ kind: 'ValidEmail', value: 'test@test.com' }],
     });
   });
 
@@ -34,48 +34,59 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal({
       kind: 'RecipientList',
       emails: [
-        { kind: 'Email', value: 'a@test.com' },
-        { kind: 'Email', value: 'b@test.com' },
+        { kind: 'ValidEmail', value: 'a@test.com' },
+        { kind: 'ValidEmail', value: 'b@test.com' },
       ],
     });
   });
 
-  it('trims emails', async () => {
-    const mockFileContent = JSON.stringify(['  a@test.com  ', '	b@test.com		', '\r\nc@test.com']);
-    const mockReadFileFn = () => mockFileContent;
-    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+  describe(makeEmail.name, () => {
+    it('returns an Email value from the given string', () => {
+      expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'ValidEmail', value: 'a@test.com' });
+    });
 
-    expect(result).to.deep.equal({
-      kind: 'RecipientList',
-      emails: [
-        { kind: 'Email', value: 'a@test.com' },
-        { kind: 'Email', value: 'b@test.com' },
-        { kind: 'Email', value: 'c@test.com' },
-      ],
+    it('trims the whitespace', () => {
+      expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'ValidEmail', value: 'a@test.com' });
+      expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'ValidEmail', value: 'b@test.com' });
+      expect(makeEmail('\r\nc@test.com ')).to.deep.equal({ kind: 'ValidEmail', value: 'c@test.com' });
+    });
+
+    it('returns an InvalidEmail value when the email is invalid', () => {
+      // TODO: Handle invalid emails. Check isSyntacticallyCorrectEmail in repetitor.tsx
+      // https://github.com/gurdiga/repetitor.tsx/blob/master/shared/src/Model/Email.ts#L20
+      // Check https://en.wikipedia.org/wiki/Email_address#Syntax
     });
   });
 
-  // TODO: Handle invalid emails
+  // TODO: Return validEmails and invalidEmails
   // TODO: Handle empty list
   // TODO: Handle missing file
 });
 
 interface Emails {
   kind: 'RecipientList';
-  emails: Email[];
+  emails: ValidEmail[];
 }
 
-interface Email {
-  kind: 'Email';
+interface ValidEmail {
+  kind: 'ValidEmail';
   value: string;
 }
 
-// TODO: Add unit test
-function makeEmail(email: string): Email {
+interface InvalidEmail {
+  kind: 'InvalidEmail';
+  reason: string;
+}
+
+function makeEmail(email: string): ValidEmail | InvalidEmail {
   return {
-    kind: 'Email',
-    value: email,
+    kind: 'ValidEmail',
+    value: email.trim(),
   };
+}
+
+function isValidEmail(value: any): value is ValidEmail {
+  return value.kind === 'ValidEmail';
 }
 
 interface Failure {
@@ -90,10 +101,7 @@ async function getEmails(
 ): Promise<Emails | Failure> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
   const emails = JSON.parse(readFileFn(filePath)) as string[];
-  const uniqEmails = emails
-    .filter(filterUniq)
-    .map((e) => e.trim())
-    .map(makeEmail);
+  const uniqEmails = emails.filter(filterUniq).map(makeEmail).filter(isValidEmail);
 
   return {
     kind: 'RecipientList',
