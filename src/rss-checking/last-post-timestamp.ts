@@ -2,6 +2,7 @@ import path from 'path';
 import { ValidDataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
+import { ArraySortFn } from '../shared/array-utils';
 
 interface ValidTimestamp {
   kind: 'ValidTimestamp';
@@ -81,8 +82,6 @@ export function recordLastPostTimestamp(
     throw new Error(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
   }
 }
-
-type ArraySortFn<T> = (a: T, b: T) => number;
 
 function getLastPostTimestampFileName(dataDir: ValidDataDir) {
   return path.resolve(dataDir.value, 'lastPostTimestamp.json');
