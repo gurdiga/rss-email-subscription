@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import path from 'path';
+import { filterUniq } from '../shared/array-utils';
 import { makeDataDir, ValidDataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
 
@@ -25,8 +26,15 @@ describe(getEmails.name, () => {
     });
   });
 
-  it('eliminates duplicates', () => {
-    // TODO
+  it('eliminates duplicates', async () => {
+    const mockFileContent = '["a@test.com", "a@test.com", "b@test.com", "b@test.com", "b@test.com"]';
+    const mockReadFileFn = () => mockFileContent;
+    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+
+    expect(result).to.deep.equal({
+      kind: 'RecipientList',
+      emails: ['a@test.com', 'b@test.com'],
+    });
   });
 
   // TODO: Handle invalid emails
@@ -51,9 +59,10 @@ async function getEmails(
 ): Promise<Emails | Failure> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
   const emails = JSON.parse(readFileFn(filePath));
+  const uniqEmails = emails.filter(filterUniq);
 
   return {
     kind: 'RecipientList',
-    emails: emails,
+    emails: uniqEmails,
   };
 }
