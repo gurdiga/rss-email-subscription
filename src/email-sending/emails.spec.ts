@@ -44,6 +44,7 @@ describe(getEmails.name, () => {
   describe(makeEmail.name, () => {
     it('returns an Email value from the given string', () => {
       expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
+      expect(makeEmail('23@test.com')).to.deep.equal({ kind: 'Email', value: '23@test.com' });
     });
 
     it('accepts “plus addressing”', () => {
@@ -61,10 +62,11 @@ describe(getEmails.name, () => {
       expect(makeEmail(' \r\n\t')).to.deep.equal(makeErr('Syntactically invalid email: " \r\n\t"'));
       expect(makeEmail('@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "@test.com"'));
       expect(makeEmail('a+@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a+@test.com"'));
-
-      // TODO: Handle invalid emails. Check isSyntacticallyCorrectEmail in repetitor.tsx
-      // https://github.com/gurdiga/repetitor.tsx/blob/master/shared/src/Model/Email.ts#L20
-      // Check https://en.wikipedia.org/wiki/Email_address#Syntax
+      expect(makeEmail('a++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a++2@test.com"'));
+      expect(makeEmail('++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "++2@test.com"'));
+      expect(makeEmail('a@test')).to.deep.equal(makeErr('Syntactically invalid email: "a@test"'));
+      expect(makeEmail('a@too-short-tld.i')).to.deep.equal(makeErr('Syntactically invalid email: "a@too-short-tld.i"'));
+      expect(makeEmail('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
     });
   });
 
@@ -100,10 +102,16 @@ function makeEmail(emailString: string): Result<Email> {
 
   const sides = emailString.split('@');
   const [localPart, domain] = sides.map((s) => s.trim());
-
   const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9]+((\+)?[a-z0-9]+)*$/i.test(localPart);
 
   if (!doesLocalPartLookReasonable) {
+    return err;
+  }
+
+  const domainLevels = domain.split(/\./).reverse();
+  const doDomainPartsLookReasonable = /[a-z]{2,}/i.test(domainLevels[0]) && domainLevels.every((l) => l.length >= 1);
+
+  if (!doDomainPartsLookReasonable) {
     return err;
   }
 
