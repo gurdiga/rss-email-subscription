@@ -1,13 +1,13 @@
 import path from 'path';
 import crypto from 'crypto';
-import { ValidDataDir } from '../shared/data-dir';
+import { DataDir } from '../shared/data-dir';
 import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
 import { RssItem } from './rss-parsing';
 
 type NameFileFn = (item: RssItem) => string;
 
 export function recordNewRssItems(
-  dataDir: ValidDataDir,
+  dataDir: DataDir,
   rssItems: RssItem[],
   mkdirpFn: MkdirpFn = mkdirp,
   writeFileFn: WriteFileFn = writeFile,

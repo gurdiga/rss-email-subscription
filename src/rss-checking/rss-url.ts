@@ -1,29 +1,18 @@
-interface ValidRssUrl {
-  kind: 'ValidRssUrl';
-  value: URL;
-}
+import { Result } from '../shared/lang';
 
-export interface InvalidRssUrl {
-  kind: 'InvalidRssUrl';
-  reason: string;
-}
-
-export function makeRssUrl(url?: string): ValidRssUrl | InvalidRssUrl {
+export function makeRssUrl(url?: string): Result<URL> {
   if (!url) {
     return {
-      kind: 'InvalidRssUrl',
+      kind: 'Err',
       reason: 'Missing URL string',
     };
   }
 
   try {
-    return {
-      kind: 'ValidRssUrl',
-      value: new URL(url),
-    };
+    return new URL(url);
   } catch (e) {
     return {
-      kind: 'InvalidRssUrl',
+      kind: 'Err',
       reason: e.message,
     };
   }

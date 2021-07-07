@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import path from 'path';
 import { filterUniq } from '../shared/array-utils';
-import { makeDataDir, ValidDataDir } from '../shared/data-dir';
+import { makeDataDir, DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
+import { Result } from '../shared/lang';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
-  const mockDataDir = makeDataDir(dataDirPathString) as ValidDataDir;
+  const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
   const mockFileExistsFn = (_filePath: string) => true;
 
   it('reads emails from the given dataDir', async () => {
@@ -22,7 +23,7 @@ describe(getEmails.name, () => {
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal({
       kind: 'RecipientList',
-      emails: [{ kind: 'ValidEmail', value: 'test@test.com' }],
+      emails: [{ kind: 'Email', value: 'test@test.com' }],
     });
   });
 
@@ -34,24 +35,24 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal({
       kind: 'RecipientList',
       emails: [
-        { kind: 'ValidEmail', value: 'a@test.com' },
-        { kind: 'ValidEmail', value: 'b@test.com' },
+        { kind: 'Email', value: 'a@test.com' },
+        { kind: 'Email', value: 'b@test.com' },
       ],
     });
   });
 
   describe(makeEmail.name, () => {
     it('returns an Email value from the given string', () => {
-      expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'ValidEmail', value: 'a@test.com' });
+      expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
     });
 
     it('trims the whitespace', () => {
-      expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'ValidEmail', value: 'a@test.com' });
-      expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'ValidEmail', value: 'b@test.com' });
-      expect(makeEmail('\r\nc@test.com ')).to.deep.equal({ kind: 'ValidEmail', value: 'c@test.com' });
+      expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
+      expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'Email', value: 'b@test.com' });
+      expect(makeEmail('\r\nc@test.com ')).to.deep.equal({ kind: 'Email', value: 'c@test.com' });
     });
 
-    it('returns an InvalidEmail value when the email is invalid', () => {
+    it('returns an Err value when the email is invalid', () => {
       // TODO: Handle invalid emails. Check isSyntacticallyCorrectEmail in repetitor.tsx
       // https://github.com/gurdiga/repetitor.tsx/blob/master/shared/src/Model/Email.ts#L20
       // Check https://en.wikipedia.org/wiki/Email_address#Syntax
@@ -65,43 +66,33 @@ describe(getEmails.name, () => {
 
 interface Emails {
   kind: 'RecipientList';
-  emails: ValidEmail[];
+  emails: Email[];
 }
 
-interface ValidEmail {
-  kind: 'ValidEmail';
+interface Email {
+  kind: 'Email';
   value: string;
 }
 
-interface InvalidEmail {
-  kind: 'InvalidEmail';
-  reason: string;
-}
-
-function makeEmail(email: string): ValidEmail | InvalidEmail {
+function makeEmail(email: string): Result<Email> {
   return {
-    kind: 'ValidEmail',
+    kind: 'Email',
     value: email.trim(),
   };
 }
 
-function isValidEmail(value: any): value is ValidEmail {
-  return value.kind === 'ValidEmail';
-}
-
-interface Failure {
-  kind: 'Failure';
-  reason: string;
+function isEmail(value: any): value is Email {
+  return value.kind === 'Email';
 }
 
 async function getEmails(
-  dataDir: ValidDataDir,
+  dataDir: DataDir,
   readFileFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
-): Promise<Emails | Failure> {
+): Promise<Result<Emails>> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
   const emails = JSON.parse(readFileFn(filePath)) as string[];
-  const uniqEmails = emails.filter(filterUniq).map(makeEmail).filter(isValidEmail);
+  const uniqEmails = emails.filter(filterUniq).map(makeEmail).filter(isEmail);
 
   return {
     kind: 'RecipientList',

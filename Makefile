@@ -12,7 +12,7 @@ test:
 
 t: test
 
-w:
+tw:
 	ts-mocha -R dot --watch --watch-files src 'src/**/*.spec.ts'
 
 edit:
@@ -24,6 +24,8 @@ check:
 	tsc -p tsconfig.json
 
 c: check
+cw:
+	tsc -p tsconfig.json --watch
 
 pre-commit: check test
 pc: pre-commit

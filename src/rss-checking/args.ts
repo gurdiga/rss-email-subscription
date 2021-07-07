@@ -1,40 +1,38 @@
-import { makeDataDir, ValidDataDir } from '../shared/data-dir';
+import { makeDataDir, DataDir } from '../shared/data-dir';
+import { Result } from '../shared/lang';
 import { makeRssUrl } from './rss-url';
 
-interface ValidArgs {
-  kind: 'ValidArgs';
+interface Args {
+  kind: 'Args';
   value: {
     url: URL;
-    dataDir: ValidDataDir;
+    dataDir: DataDir;
   };
 }
 
-interface InvalidArgs {
-  kind: 'InvalidArgs';
-  reason: string;
-}
-
-export function parseArgs(urlString?: string, dataDirString?: string): ValidArgs | InvalidArgs {
+export function parseArgs(urlString?: string, dataDirString?: string): Result<Args> {
   const url = makeRssUrl(urlString);
   const dataDir = makeDataDir(dataDirString);
 
-  if (url.kind === 'InvalidRssUrl') {
-    return {
-      kind: 'InvalidArgs',
-      reason: `Invalid RSS URL: ${url.reason}`,
-    };
-  } else if (dataDir.kind === 'InvalidDataDir') {
-    return {
-      kind: 'InvalidArgs',
-      reason: `Invalid data dir: ${dataDir.reason}`,
-    };
+  if (url instanceof URL) {
+    if (dataDir.kind === 'Err') {
+      return {
+        kind: 'Err',
+        reason: `Invalid data dir: ${dataDir.reason}`,
+      };
+    } else {
+      return {
+        kind: 'Args',
+        value: {
+          url: url,
+          dataDir: dataDir,
+        },
+      };
+    }
   } else {
     return {
-      kind: 'ValidArgs',
-      value: {
-        url: url.value,
-        dataDir: dataDir,
-      },
+      kind: 'Err',
+      reason: `Invalid RSS URL: ${url.reason}`,
     };
   }
 }

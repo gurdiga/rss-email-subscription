@@ -1,34 +1,23 @@
 import path from 'path';
-import { ValidDataDir } from '../shared/data-dir';
+import { DataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
 import { ArraySortFn } from '../shared/array-utils';
+import { Result } from '../shared/lang';
 
-interface ValidTimestamp {
-  kind: 'ValidTimestamp';
-  value: Date;
-}
-
-interface InvalidTimestamp {
-  kind: 'InvalidTimestamp';
-  reason: string;
-}
-
-interface MissingTimestampFile {
+export interface MissingTimestampFile {
   kind: 'MissingTimestampFile';
 }
 
 export function getLastPostTimestamp(
-  dataDir: ValidDataDir,
+  dataDir: DataDir,
   dataReaderFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
-): ValidTimestamp | InvalidTimestamp | MissingTimestampFile {
+): Result<Date> | MissingTimestampFile {
   const filePath = getLastPostTimestampFileName(dataDir);
 
   if (!fileExistsFn(filePath)) {
-    return {
-      kind: 'MissingTimestampFile',
-    };
+    return { kind: 'MissingTimestampFile' };
   }
 
   try {
@@ -39,32 +28,29 @@ export function getLastPostTimestamp(
       const timestamp = new Date(data.lastPostTimestamp);
 
       if (timestamp.toString() !== 'Invalid Date') {
-        return {
-          kind: 'ValidTimestamp',
-          value: timestamp,
-        };
+        return timestamp;
       } else {
         return {
-          kind: 'InvalidTimestamp',
+          kind: 'Err',
           reason: `Invalid timestamp in ${filePath}`,
         };
       }
     } catch (jsonParsingError) {
       return {
-        kind: 'InvalidTimestamp',
+        kind: 'Err',
         reason: `Invalid JSON in ${filePath}`,
       };
     }
   } catch (ioError) {
     return {
-      kind: 'InvalidTimestamp',
+      kind: 'Err',
       reason: `Can’t read ${filePath}: ${ioError.message}`,
     };
   }
 }
 
 export function recordLastPostTimestamp(
-  dataDir: ValidDataDir,
+  dataDir: DataDir,
   items: RssItem[],
   writeFileFn: WriteFileFn = writeFile
 ): void {
@@ -83,6 +69,6 @@ export function recordLastPostTimestamp(
   }
 }
 
-function getLastPostTimestampFileName(dataDir: ValidDataDir) {
+function getLastPostTimestampFileName(dataDir: DataDir) {
   return path.resolve(dataDir.value, 'lastPostTimestamp.json');
 }

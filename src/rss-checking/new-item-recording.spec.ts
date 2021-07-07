@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { RssItem } from './rss-parsing';
-import { makeDataDir, ValidDataDir } from '../shared/data-dir';
+import { makeDataDir, DataDir } from '../shared/data-dir';
 import { itemFileName, recordNewRssItems } from './new-item-recording';
 
 describe(recordNewRssItems.name, () => {
-  const dataDir = makeDataDir('/some/dir/') as ValidDataDir;
+  const dataDir = makeDataDir('/some/dir/') as DataDir;
   const rssItems: RssItem[] = [
     {
       title: 'Item one',

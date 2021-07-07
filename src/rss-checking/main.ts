@@ -1,4 +1,5 @@
 import path from 'path';
+import { isErr } from '../shared/lang';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
@@ -11,8 +12,8 @@ async function main(): Promise<number | undefined> {
   const dataDirString = process.argv[3]; // second command line arg
   const argParsingResult = parseArgs(urlString, dataDirString);
 
-  if (argParsingResult.kind === 'InvalidArgs') {
-    console.error(`\nERROR: InvalidArgs: ${argParsingResult.reason}`);
+  if (argParsingResult.kind === 'Err') {
+    console.error(`\nERROR: parsing args: ${argParsingResult.reason}`);
     console.error(`USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>\n`);
     return 1;
   }
@@ -20,24 +21,24 @@ async function main(): Promise<number | undefined> {
   const { dataDir, url } = argParsingResult.value;
   const rssFetchingResult = await fetchRssResponse(url);
 
-  if (rssFetchingResult.kind === 'InvalidRssResponse') {
-    console.error(`\nERROR: InvalidRssResponse: ${rssFetchingResult.reason}\n`);
+  if (rssFetchingResult.kind === 'Err') {
+    console.error(`\nERROR: fetching RSS: ${rssFetchingResult.reason}\n`);
     return 2;
   }
 
   const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
 
-  if (lastPostTimestampParsingResult.kind === 'InvalidTimestamp') {
-    console.error(`\nERROR: InvalidTimestamp: ${lastPostTimestampParsingResult.reason}\n`);
+  if (isErr(lastPostTimestampParsingResult)) {
+    console.error(`\nERROR: reading last post timestamp: ${lastPostTimestampParsingResult.reason}\n`);
     return 3;
   }
 
   const lastPostTimestamp =
-    lastPostTimestampParsingResult.kind === 'MissingTimestampFile' ? new Date() : lastPostTimestampParsingResult.value;
+    lastPostTimestampParsingResult instanceof Date ? lastPostTimestampParsingResult : new Date();
   const rssParsingResult = await parseRssItems(rssFetchingResult);
 
-  if (rssParsingResult.kind === 'InvalidRssParseResult') {
-    console.error(`\nERROR: InvalidRssParseResult: ${rssParsingResult.reason}\n`);
+  if (rssParsingResult.kind === 'Err') {
+    console.error(`\nERROR: parsing RSS items: ${rssParsingResult.reason}\n`);
     return 4;
   }
 

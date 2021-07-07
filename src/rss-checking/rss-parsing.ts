@@ -1,5 +1,6 @@
 import Parser, { Item } from 'rss-parser';
-import { ValidRssResponse } from './rss-response';
+import { Result } from '../shared/lang';
+import { RssResponse } from './rss-response';
 
 export interface RssItem {
   title: string;
@@ -9,21 +10,16 @@ export interface RssItem {
   link: URL;
 }
 
-export interface ValidRssParseResult {
-  kind: 'ValidRssParseResult';
+export interface RssParseResult {
+  kind: 'RssParseResult';
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
 }
 
-export interface InvalidRssParseResult {
-  kind: 'InvalidRssParseResult';
-  reason: string;
-}
-
 export async function parseRssItems(
-  rssResponse: ValidRssResponse,
+  rssResponse: RssResponse,
   buildRssItemFn = buildRssItem
-): Promise<ValidRssParseResult | InvalidRssParseResult> {
+): Promise<Result<RssParseResult>> {
   const parser = new Parser();
 
   try {
@@ -36,19 +32,19 @@ export async function parseRssItems(
       const invalidItems = items.filter(isInvalidRssItem);
 
       return {
-        kind: 'ValidRssParseResult',
+        kind: 'RssParseResult',
         validItems,
         invalidItems,
       };
     } catch (error) {
       return {
-        kind: 'InvalidRssParseResult',
+        kind: 'Err',
         reason: `buildRssItemFn threw: ${error}`,
       };
     }
   } catch (error) {
     return {
-      kind: 'InvalidRssParseResult',
+      kind: 'Err',
       reason: `Invalid XML: ${rssResponse.xml}`,
     };
   }

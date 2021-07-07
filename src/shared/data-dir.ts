@@ -1,19 +1,15 @@
 import path from 'path';
+import { Result } from './lang';
 
-export interface ValidDataDir {
-  kind: 'ValidDataDir';
+export interface DataDir {
+  kind: 'DataDir';
   value: string;
 }
 
-export interface InvalidDataDir {
-  kind: 'InvalidDataDir';
-  reason: string;
-}
-
-export function makeDataDir(inputPath?: string): ValidDataDir | InvalidDataDir {
+export function makeDataDir(inputPath?: string): Result<DataDir> {
   if (!inputPath) {
     return {
-      kind: 'InvalidDataDir',
+      kind: 'Err',
       reason: 'Missing value',
     };
   }
@@ -21,7 +17,7 @@ export function makeDataDir(inputPath?: string): ValidDataDir | InvalidDataDir {
   const absolutePath = path.resolve(process.cwd(), inputPath);
 
   return {
-    kind: 'ValidDataDir',
+    kind: 'DataDir',
     value: absolutePath,
   };
 }

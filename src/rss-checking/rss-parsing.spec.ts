@@ -1,19 +1,12 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
-import {
-  buildRssItem,
-  parseRssItems,
-  RssItem,
-  ValidRssParseResult,
-  ValidRssItem,
-  InvalidRssParseResult,
-  ParsedRssItem,
-} from './rss-parsing';
+import { Err } from '../shared/lang';
+import { buildRssItem, parseRssItems, RssItem, RssParseResult, ValidRssItem, ParsedRssItem } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
-  it('returns a ValidRssParseResult containing the items', async () => {
+  it('returns a RssParseResult containing the items', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
     const expectedValidItems: RssItem[] = [
       {
@@ -40,19 +33,19 @@ describe(parseRssItems.name, () => {
     ];
 
     const result = await parseRssItems({
-      kind: 'ValidRssResponse',
+      kind: 'RssResponse',
       xml,
       baseURL,
     });
 
     expect(result).to.deep.equal({
-      kind: 'ValidRssParseResult',
+      kind: 'RssParseResult',
       validItems: expectedValidItems,
       invalidItems: [],
-    } as ValidRssParseResult);
+    } as RssParseResult);
   });
 
-  it('returns the invalid items into invalidItems of ValidRssParseResult', async () => {
+  it('returns the invalid items into invalidItems of RssParseResult', async () => {
     const xml = `
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -78,13 +71,13 @@ describe(parseRssItems.name, () => {
     `;
 
     const result = await parseRssItems({
-      kind: 'ValidRssResponse',
+      kind: 'RssResponse',
       xml,
       baseURL,
     });
 
     expect(result).to.deep.equal({
-      kind: 'ValidRssParseResult',
+      kind: 'RssParseResult',
       validItems: [
         {
           title: 'Valid item',
@@ -107,7 +100,7 @@ describe(parseRssItems.name, () => {
           },
         },
       ],
-    } as ValidRssParseResult);
+    } as RssParseResult);
   });
 
   it('returns an InvalidRssParseResult value when invalid XML', async () => {
@@ -126,15 +119,15 @@ describe(parseRssItems.name, () => {
   `;
 
     const result = (await parseRssItems({
-      kind: 'ValidRssResponse',
+      kind: 'RssResponse',
       xml,
       baseURL,
-    })) as InvalidRssParseResult;
+    })) as Err;
 
     expect(result).to.deep.equal({
-      kind: 'InvalidRssParseResult',
+      kind: 'Err',
       reason: `Invalid XML: ${xml}`,
-    } as InvalidRssParseResult);
+    } as Err);
   });
 
   it('returns an InvalidRssParseResult value when buildRssItem throws', async () => {
@@ -145,17 +138,17 @@ describe(parseRssItems.name, () => {
 
     const result = (await parseRssItems(
       {
-        kind: 'ValidRssResponse',
+        kind: 'RssResponse',
         xml,
         baseURL,
       },
       buildRssItemFn
-    )) as InvalidRssParseResult;
+    )) as Err;
 
     expect(result).to.deep.equal({
-      kind: 'InvalidRssParseResult',
+      kind: 'Err',
       reason: `buildRssItemFn threw: Error: Something broke!`,
-    } as InvalidRssParseResult);
+    } as Err);
   });
 
   describe(buildRssItem.name, () => {
