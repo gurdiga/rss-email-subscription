@@ -1,9 +1,7 @@
 import { expect } from 'chai';
-import path from 'path';
-import { filterUniq } from '../shared/array-utils';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
-import { makeErr, Result } from '../shared/lang';
+import { makeErr } from '../shared/lang';
+import { getEmails, makeEmail } from './emails';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
@@ -22,7 +20,7 @@ describe(getEmails.name, () => {
 
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal({
-      kind: 'RecipientList',
+      kind: 'EmailList',
       emails: [{ kind: 'Email', value: 'test@test.com' }],
     });
   });
@@ -33,7 +31,7 @@ describe(getEmails.name, () => {
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
 
     expect(result).to.deep.equal({
-      kind: 'RecipientList',
+      kind: 'EmailList',
       emails: [
         { kind: 'Email', value: 'a@test.com' },
         { kind: 'Email', value: 'b@test.com' },
@@ -74,68 +72,3 @@ describe(getEmails.name, () => {
   // TODO: Handle empty list
   // TODO: Handle missing file
 });
-
-interface Emails {
-  kind: 'RecipientList';
-  emails: Email[];
-}
-
-interface Email {
-  kind: 'Email';
-  value: string;
-}
-
-function makeEmail(emailString: string): Result<Email> {
-  const email = emailString.trim();
-  const err = makeErr(`Syntactically invalid email: "${emailString}"`);
-
-  if (!email) {
-    return err;
-  }
-
-  const keyCharacters = ['.', '@'];
-  const containsKeyCharacters = keyCharacters.every((c) => !!emailString && emailString.includes(c));
-
-  if (!containsKeyCharacters) {
-    return err;
-  }
-
-  const sides = emailString.split('@');
-  const [localPart, domain] = sides.map((s) => s.trim());
-  const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9]+((\+)?[a-z0-9]+)*$/i.test(localPart);
-
-  if (!doesLocalPartLookReasonable) {
-    return err;
-  }
-
-  const domainLevels = domain.split(/\./).reverse();
-  const doDomainPartsLookReasonable = /[a-z]{2,}/i.test(domainLevels[0]) && domainLevels.every((l) => l.length >= 1);
-
-  if (!doDomainPartsLookReasonable) {
-    return err;
-  }
-
-  return {
-    kind: 'Email',
-    value: email,
-  };
-}
-
-function isEmail(value: any): value is Email {
-  return value.kind === 'Email';
-}
-
-async function getEmails(
-  dataDir: DataDir,
-  readFileFn: ReadFileFn = readFile,
-  fileExistsFn: FileExistsFn = fileExists
-): Promise<Result<Emails>> {
-  const filePath = path.resolve(dataDir.value, 'emails.json');
-  const emails = JSON.parse(readFileFn(filePath)) as string[];
-  const uniqEmails = emails.filter(filterUniq).map(makeEmail).filter(isEmail);
-
-  return {
-    kind: 'RecipientList',
-    emails: uniqEmails,
-  };
-}
