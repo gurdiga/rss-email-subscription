@@ -3,7 +3,7 @@ import path from 'path';
 import { filterUniq } from '../shared/array-utils';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
@@ -46,6 +46,10 @@ describe(getEmails.name, () => {
       expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
     });
 
+    it('accepts “plus addressing”', () => {
+      expect(makeEmail('a+1@test.com')).to.deep.equal({ kind: 'Email', value: 'a+1@test.com' });
+    });
+
     it('trims the whitespace', () => {
       expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
       expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'Email', value: 'b@test.com' });
@@ -53,6 +57,11 @@ describe(getEmails.name, () => {
     });
 
     it('returns an Err value when the email is invalid', () => {
+      expect(makeEmail('')).to.deep.equal(makeErr('Syntactically invalid email: ""'));
+      expect(makeEmail(' \r\n\t')).to.deep.equal(makeErr('Syntactically invalid email: " \r\n\t"'));
+      expect(makeEmail('@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "@test.com"'));
+      expect(makeEmail('a+@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a+@test.com"'));
+
       // TODO: Handle invalid emails. Check isSyntacticallyCorrectEmail in repetitor.tsx
       // https://github.com/gurdiga/repetitor.tsx/blob/master/shared/src/Model/Email.ts#L20
       // Check https://en.wikipedia.org/wiki/Email_address#Syntax
@@ -74,10 +83,33 @@ interface Email {
   value: string;
 }
 
-function makeEmail(email: string): Result<Email> {
+function makeEmail(emailString: string): Result<Email> {
+  const email = emailString.trim();
+  const err = makeErr(`Syntactically invalid email: "${emailString}"`);
+
+  if (!email) {
+    return err;
+  }
+
+  const keyCharacters = ['.', '@'];
+  const containsKeyCharacters = keyCharacters.every((c) => !!emailString && emailString.includes(c));
+
+  if (!containsKeyCharacters) {
+    return err;
+  }
+
+  const sides = emailString.split('@');
+  const [localPart, domain] = sides.map((s) => s.trim());
+
+  const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9]+((\+)?[a-z0-9]+)*$/i.test(localPart);
+
+  if (!doesLocalPartLookReasonable) {
+    return err;
+  }
+
   return {
     kind: 'Email',
-    value: email.trim(),
+    value: email,
   };
 }
 
