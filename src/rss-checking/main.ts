@@ -12,7 +12,7 @@ async function main(): Promise<number | undefined> {
   const dataDirString = process.argv[3]; // second command line arg
   const argParsingResult = parseArgs(urlString, dataDirString);
 
-  if (argParsingResult.kind === 'Err') {
+  if (isErr(argParsingResult)) {
     console.error(`\nERROR: parsing args: ${argParsingResult.reason}`);
     console.error(`USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>\n`);
     return 1;
@@ -21,7 +21,7 @@ async function main(): Promise<number | undefined> {
   const { dataDir, url } = argParsingResult.value;
   const rssFetchingResult = await fetchRssResponse(url);
 
-  if (rssFetchingResult.kind === 'Err') {
+  if (isErr(rssFetchingResult)) {
     console.error(`\nERROR: fetching RSS: ${rssFetchingResult.reason}\n`);
     return 2;
   }
@@ -37,7 +37,7 @@ async function main(): Promise<number | undefined> {
     lastPostTimestampParsingResult instanceof Date ? lastPostTimestampParsingResult : new Date();
   const rssParsingResult = await parseRssItems(rssFetchingResult);
 
-  if (rssParsingResult.kind === 'Err') {
+  if (isErr(rssParsingResult)) {
     console.error(`\nERROR: parsing RSS items: ${rssParsingResult.reason}\n`);
     return 4;
   }
