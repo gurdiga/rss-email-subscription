@@ -10,11 +10,9 @@ describe(getEmails.name, () => {
 
   it('reads emails from the given dataDir', async () => {
     let actualPathArg = '';
-    const mockFileContent = '["test@test.com"]';
-
     const mockReadFileFn = (filePath: string): string => {
       actualPathArg = filePath;
-      return mockFileContent;
+      return '["test@test.com"]';
     };
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
 
