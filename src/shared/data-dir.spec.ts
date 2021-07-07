@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { makeDataDir } from './data-dir';
+import { makeErr } from './lang';
 
 describe(makeDataDir.name, () => {
   it('returns a DataDir value for the given path', () => {
@@ -11,6 +12,6 @@ describe(makeDataDir.name, () => {
   });
 
   it('returns an Err value with invalid input', () => {
-    expect(makeDataDir('')).to.deep.equal({ kind: 'Err', reason: 'Missing value' });
+    expect(makeDataDir('')).to.deep.equal(makeErr('Missing value'));
   });
 });

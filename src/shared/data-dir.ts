@@ -1,5 +1,5 @@
 import path from 'path';
-import { Result } from './lang';
+import { makeErr, Result } from './lang';
 
 export interface DataDir {
   kind: 'DataDir';
@@ -8,10 +8,7 @@ export interface DataDir {
 
 export function makeDataDir(inputPath?: string): Result<DataDir> {
   if (!inputPath) {
-    return {
-      kind: 'Err',
-      reason: 'Missing value',
-    };
+    return makeErr('Missing value');
   }
 
   const absolutePath = path.resolve(process.cwd(), inputPath);

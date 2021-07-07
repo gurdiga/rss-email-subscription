@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { Err } from '../shared/lang';
+import { Err, makeErr } from '../shared/lang';
 import { getLastPostTimestamp, MissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
 import { RssItem } from './rss-parsing';
 
@@ -33,10 +33,7 @@ describe('Last post timestamp', () => {
       };
       const result = getLastPostTimestamp(mockDataDir, mockFileReaderFn, mockFileExistsFn);
 
-      expect(result).to.deep.equal({
-        kind: 'Err',
-        reason: `Can’t read ${dataDirPathString}/lastPostTimestamp.json: Some IO error?!`,
-      } as Err);
+      expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostTimestamp.json: Some IO error?!`));
     });
 
     it('returns an Err value when lastPostTimestamp.json does not exist', () => {
@@ -54,10 +51,7 @@ describe('Last post timestamp', () => {
       };
       const result = getLastPostTimestamp(mockDataDir, mockFileReaderFn, mockFileExistsFn);
 
-      expect(result).to.deep.equal({
-        kind: 'Err',
-        reason: `Invalid JSON in ${dataDirPathString}/lastPostTimestamp.json`,
-      } as Err);
+      expect(result).to.deep.equal(makeErr(`Invalid JSON in ${dataDirPathString}/lastPostTimestamp.json`));
     });
 
     it('returns an Err value when the timestamp in lastPostTimestamp.json is not a valid date', () => {
@@ -66,10 +60,7 @@ describe('Last post timestamp', () => {
       };
       const result = getLastPostTimestamp(mockDataDir, mockFileReaderFn, mockFileExistsFn);
 
-      expect(result).to.deep.equal({
-        kind: 'Err',
-        reason: `Invalid timestamp in ${dataDirPathString}/lastPostTimestamp.json`,
-      } as Err);
+      expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostTimestamp.json`));
     });
   });
 

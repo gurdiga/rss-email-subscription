@@ -1,5 +1,5 @@
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { makeRssUrl } from './rss-url';
 
 interface Args {
@@ -16,10 +16,7 @@ export function parseArgs(urlString?: string, dataDirString?: string): Result<Ar
 
   if (url instanceof URL) {
     if (dataDir.kind === 'Err') {
-      return {
-        kind: 'Err',
-        reason: `Invalid data dir: ${dataDir.reason}`,
-      };
+      return makeErr(`Invalid data dir: ${dataDir.reason}`);
     } else {
       return {
         kind: 'Args',
@@ -30,9 +27,6 @@ export function parseArgs(urlString?: string, dataDirString?: string): Result<Ar
       };
     }
   } else {
-    return {
-      kind: 'Err',
-      reason: `Invalid RSS URL: ${url.reason}`,
-    };
+    return makeErr(`Invalid RSS URL: ${url.reason}`);
   }
 }

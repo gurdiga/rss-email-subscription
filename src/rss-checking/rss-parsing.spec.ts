@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
-import { Err } from '../shared/lang';
+import { Err, makeErr } from '../shared/lang';
 import { buildRssItem, parseRssItems, RssItem, RssParseResult, ValidRssItem, ParsedRssItem } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
@@ -124,10 +124,7 @@ describe(parseRssItems.name, () => {
       baseURL,
     })) as Err;
 
-    expect(result).to.deep.equal({
-      kind: 'Err',
-      reason: `Invalid XML: ${xml}`,
-    } as Err);
+    expect(result).to.deep.equal(makeErr(`Invalid XML: ${xml}`));
   });
 
   it('returns an InvalidRssParseResult value when buildRssItem throws', async () => {
@@ -145,10 +142,7 @@ describe(parseRssItems.name, () => {
       buildRssItemFn
     )) as Err;
 
-    expect(result).to.deep.equal({
-      kind: 'Err',
-      reason: `buildRssItemFn threw: Error: Something broke!`,
-    } as Err);
+    expect(result).to.deep.equal(makeErr(`buildRssItemFn threw: Error: Something broke!`));
   });
 
   describe(buildRssItem.name, () => {

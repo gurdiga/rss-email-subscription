@@ -3,7 +3,7 @@ import { DataDir } from '../shared/data-dir';
 import { RssItem } from './rss-parsing';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
 import { ArraySortFn } from '../shared/array-utils';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 export interface MissingTimestampFile {
   kind: 'MissingTimestampFile';
@@ -30,22 +30,13 @@ export function getLastPostTimestamp(
       if (timestamp.toString() !== 'Invalid Date') {
         return timestamp;
       } else {
-        return {
-          kind: 'Err',
-          reason: `Invalid timestamp in ${filePath}`,
-        };
+        return makeErr(`Invalid timestamp in ${filePath}`);
       }
     } catch (jsonParsingError) {
-      return {
-        kind: 'Err',
-        reason: `Invalid JSON in ${filePath}`,
-      };
+      return makeErr(`Invalid JSON in ${filePath}`);
     }
   } catch (ioError) {
-    return {
-      kind: 'Err',
-      reason: `Can’t read ${filePath}: ${ioError.message}`,
-    };
+    return makeErr(`Can’t read ${filePath}: ${ioError.message}`);
   }
 }
 

@@ -1,5 +1,5 @@
 import fetch from 'node-fetch';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 export interface RssResponse {
   kind: 'RssResponse';
@@ -29,15 +29,9 @@ export async function fetchRssResponse(url: URL, fetchFn: FetchFn = fetch): Prom
         baseURL: url,
       };
     } else {
-      return {
-        kind: 'Err',
-        reason: `Invalid response content-type: ${contentType}`,
-      };
+      return makeErr(`Invalid response content-type: ${contentType}`);
     }
   } catch (e) {
-    return {
-      kind: 'Err',
-      reason: (e as Error).message,
-    };
+    return makeErr((e as Error).message);
   }
 }

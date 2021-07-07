@@ -1,5 +1,5 @@
 import Parser, { Item } from 'rss-parser';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { RssResponse } from './rss-response';
 
 export interface RssItem {
@@ -37,16 +37,10 @@ export async function parseRssItems(
         invalidItems,
       };
     } catch (error) {
-      return {
-        kind: 'Err',
-        reason: `buildRssItemFn threw: ${error}`,
-      };
+      return makeErr(`buildRssItemFn threw: ${error}`);
     }
   } catch (error) {
-    return {
-      kind: 'Err',
-      reason: `Invalid XML: ${rssResponse.xml}`,
-    };
+    return makeErr(`Invalid XML: ${rssResponse.xml}`);
   }
 }
 
