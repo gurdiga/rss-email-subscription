@@ -61,6 +61,11 @@ export async function getEmails(
   fileExistsFn: FileExistsFn = fileExists
 ): Promise<Result<EmailList>> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
+
+  if (!fileExistsFn(filePath)) {
+    return makeErr(`File not found: ${filePath}`);
+  }
+
   const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
   const emails = emailStrings.map(makeEmail);
   const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));

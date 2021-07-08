@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
+import { readFile } from '../shared/io';
 import { makeErr } from '../shared/lang';
 import { Email, EmailList, getEmails, makeEmail } from './emails';
 
@@ -57,8 +58,19 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal(expectedResult);
   });
 
-  // TODO: Handle empty list
-  // TODO: Handle missing file
+  it('returns an Err value when the file is missing', async () => {
+    let actualPathArg = '';
+    const mockFileExistsFn = (filePath: string) => {
+      actualPathArg = filePath;
+      return false;
+    };
+    const result = await getEmails(mockDataDir, readFile, mockFileExistsFn);
+
+    expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
+    expect(result).to.deep.equal(makeErr(`File not found: ${dataDirPathString}/emails.json`));
+  });
+
+  // TODO: Handle non-array JSON
 
   describe(makeEmail.name, () => {
     it('returns an Email value from the given string', () => {
