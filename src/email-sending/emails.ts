@@ -1,12 +1,13 @@
 import path from 'path';
-import { filterUniq } from '../shared/array-utils';
+import { filterUniq, filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
-import { makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
-  emails: Email[];
+  validEmails: Email[];
+  invalidEmails: string[];
 }
 
 export interface Email {
@@ -60,11 +61,14 @@ export async function getEmails(
   fileExistsFn: FileExistsFn = fileExists
 ): Promise<Result<EmailList>> {
   const filePath = path.resolve(dataDir.value, 'emails.json');
-  const emails = JSON.parse(readFileFn(filePath)) as string[];
-  const uniqEmails = emails.filter(filterUniq).map(makeEmail).filter(isEmail);
+  const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
+  const emails = emailStrings.map(makeEmail);
+  const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
+  const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
   return {
     kind: 'EmailList',
-    emails: uniqEmails,
+    validEmails: validEmails,
+    invalidEmails,
   };
 }

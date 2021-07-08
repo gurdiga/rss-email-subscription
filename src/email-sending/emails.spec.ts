@@ -15,43 +15,48 @@ describe(getEmails.name, () => {
       return '["test@test.com"]';
     };
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+    const expectedResult: EmailList = {
+      kind: 'EmailList',
+      validEmails: [{ kind: 'Email', value: 'test@test.com' }],
+      invalidEmails: [],
+    };
 
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
-    expect(result).to.deep.equal({
-      kind: 'EmailList',
-      emails: [{ kind: 'Email', value: 'test@test.com' }],
-    } as EmailList);
+    expect(result).to.deep.equal(expectedResult);
   });
 
   it('eliminates duplicates', async () => {
-    const mockFileContent = JSON.stringify(['a@test.com', 'a@test.com', 'b@test.com', 'b@test.com', 'b@test.com']);
+    const mockFileContent = JSON.stringify(['a@test.com', 'a@test.com', ' b@test.com', 'b@test.com', 'b@test.com']);
     const mockReadFileFn = () => mockFileContent;
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
-
-    expect(result).to.deep.equal({
+    const expectedResult: EmailList = {
       kind: 'EmailList',
-      emails: [
+      validEmails: [
         { kind: 'Email', value: 'a@test.com' },
         { kind: 'Email', value: 'b@test.com' },
       ],
-    } as EmailList);
+      invalidEmails: [],
+    };
+
+    expect(result).to.deep.equal(expectedResult as EmailList);
   });
 
   it('returns valid and invalid emails separately', async () => {
     const mockFileContent = JSON.stringify(['a@test.com', '+@test.com', 'b@test', 'b@test.com']);
     const mockReadFileFn = () => mockFileContent;
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
-
-    expect(result).to.deep.equal({
+    const expectedResult: EmailList = {
       kind: 'EmailList',
-      emails: [
+      validEmails: [
         { kind: 'Email', value: 'a@test.com' },
         { kind: 'Email', value: 'b@test.com' },
       ],
-    } as EmailList);
+      invalidEmails: ['Syntactically invalid email: "+@test.com"', 'Syntactically invalid email: "b@test"'],
+    };
+
+    expect(result).to.deep.equal(expectedResult);
   });
 
-  // TODO: Return validEmails and invalidEmails
   // TODO: Handle empty list
   // TODO: Handle missing file
 
