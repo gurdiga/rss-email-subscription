@@ -70,6 +70,13 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal(makeErr(`File not found: ${dataDirPathString}/emails.json`));
   });
 
+  it('returns an Err value when the file contains invalid JSON', async () => {
+    const mockReadFileFn = (_filePath: string): string => 'not a JSON string';
+    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+
+    expect(result).to.deep.equal(makeErr(`Can’t parse JSON: ${dataDirPathString}/emails.json`));
+  });
+
   // TODO: Handle non-array JSON
 
   describe(makeEmail.name, () => {

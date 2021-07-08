@@ -66,14 +66,18 @@ export async function getEmails(
     return makeErr(`File not found: ${filePath}`);
   }
 
-  const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
-  const emails = emailStrings.map(makeEmail);
-  const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
-  const invalidEmails = emails.filter(isErr).map((e) => e.reason);
+  try {
+    const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
+    const emails = emailStrings.map(makeEmail);
+    const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
+    const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
-  return {
-    kind: 'EmailList',
-    validEmails: validEmails,
-    invalidEmails,
-  };
+    return {
+      kind: 'EmailList',
+      validEmails: validEmails,
+      invalidEmails,
+    };
+  } catch (error) {
+    return makeErr(`Can’t parse JSON: ${filePath}`);
+  }
 }
