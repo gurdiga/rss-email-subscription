@@ -1,7 +1,7 @@
 default: run-email-sending
 
 run-email-sending:
-	ts-node src/email-sending/main.ts
+	ts-node src/email-sending/main.ts data/
 
 
 run-rss-checking:
