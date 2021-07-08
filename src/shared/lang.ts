@@ -15,3 +15,7 @@ export function makeErr(reason: string): Err {
     reason,
   };
 }
+
+export function isString(value: any): boolean {
+  return typeof value === 'string';
+}
