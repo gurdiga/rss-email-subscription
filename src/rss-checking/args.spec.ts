@@ -1,24 +1,25 @@
 import { expect } from 'chai';
 import { makeDataDir } from '../shared/data-dir';
 import { Err, makeErr } from '../shared/lang';
-import { parseArgs } from './args';
+import { RssCheckingArgs, parseArgs } from './args';
 import { makeRssUrl } from './rss-url';
 
 describe(parseArgs.name, () => {
   it('returns a Args when input is valid', () => {
     const urlString = 'https://example.com/feed.xml';
     const dataDirString = '/some/path';
-
-    expect(parseArgs(urlString, dataDirString)).to.deep.equal({
+    const expectedResult: RssCheckingArgs = {
       kind: 'Args',
-      value: {
-        url: new URL(urlString),
-        dataDir: {
+      values: [
+        new URL(urlString),
+        {
           kind: 'DataDir',
           value: dataDirString,
         },
-      },
-    });
+      ],
+    };
+
+    expect(parseArgs(urlString, dataDirString)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when some of the pieces is invalid', () => {

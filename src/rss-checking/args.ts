@@ -1,16 +1,11 @@
 import { makeDataDir, DataDir, isDataDir } from '../shared/data-dir';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
+import { Args } from '../shared/process-utils';
 import { makeRssUrl } from './rss-url';
 
-interface Args {
-  kind: 'Args';
-  value: {
-    url: URL;
-    dataDir: DataDir;
-  };
-}
+export type RssCheckingArgs = Args<[URL, DataDir]>;
 
-export function parseArgs(urlString?: string, dataDirString?: string): Result<Args> {
+export function parseArgs(urlString?: string, dataDirString?: string): Result<RssCheckingArgs> {
   const url = makeRssUrl(urlString);
   const dataDir = makeDataDir(dataDirString);
 
@@ -18,10 +13,7 @@ export function parseArgs(urlString?: string, dataDirString?: string): Result<Ar
     if (isDataDir(dataDir)) {
       return {
         kind: 'Args',
-        value: {
-          url: url,
-          dataDir: dataDir,
-        },
+        values: [url, dataDir],
       };
     } else {
       return makeErr(`Invalid data dir: ${dataDir.reason}`);

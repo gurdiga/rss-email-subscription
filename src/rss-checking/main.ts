@@ -19,7 +19,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const { dataDir, url } = argParsingResult.value;
+  const [url, dataDir] = argParsingResult.values;
   const rssFetchingResult = await fetchRssResponse(url);
 
   if (isErr(rssFetchingResult)) {
