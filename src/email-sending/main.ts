@@ -4,10 +4,6 @@ import { parseArgs } from './args';
 import { getEmails } from './emails';
 
 async function main(): Promise<number> {
-  // TODO: Process post files in data/inbox:
-  // - read the email list
-  // - send each post to each of the emails
-
   const dataDirString = getFirstCliArg(process);
   const argParsingResult = parseArgs(dataDirString);
 
@@ -17,9 +13,12 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  // const emails = await getEmails(dataDir);
+  const [dataDir] = argParsingResult.values;
+  const emails = await getEmails(dataDir);
 
-  console.log(argParsingResult.values);
+  console.log(emails);
+  // TODO: Process post files in data/inbox:
+  // - send each post to each of the emails
 
   return 0;
 }
