@@ -1,6 +1,6 @@
 import path from 'path';
 import { isErr } from '../shared/lang';
-import { getFirstCliArg, getSecondCliArg } from '../shared/process-utils';
+import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
@@ -14,8 +14,8 @@ async function main(): Promise<number | undefined> {
   const argParsingResult = parseArgs(urlString, dataDirString);
 
   if (isErr(argParsingResult)) {
-    console.error(`\nERROR: parsing args: ${argParsingResult.reason}`);
-    console.error(`USAGE: ${path.relative(process.cwd(), process.argv[1])} <RSS_URL> <DATA_DIR>\n`);
+    console.error(`\nERROR: args: ${argParsingResult.reason}`);
+    console.error(`USAGE: ${programFilePath(process)} <RSS_URL> <DATA_DIR>\n`);
     return 1;
   }
 
