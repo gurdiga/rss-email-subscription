@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
-import { getEmails, makeEmail } from './emails';
+import { Email, EmailList, getEmails, makeEmail } from './emails';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
@@ -20,7 +20,7 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal({
       kind: 'EmailList',
       emails: [{ kind: 'Email', value: 'test@test.com' }],
-    });
+    } as EmailList);
   });
 
   it('eliminates duplicates', async () => {
@@ -34,23 +34,41 @@ describe(getEmails.name, () => {
         { kind: 'Email', value: 'a@test.com' },
         { kind: 'Email', value: 'b@test.com' },
       ],
-    });
+    } as EmailList);
   });
+
+  it('returns valid and invalid emails separately', async () => {
+    const mockFileContent = JSON.stringify(['a@test.com', '+@test.com', 'b@test', 'b@test.com']);
+    const mockReadFileFn = () => mockFileContent;
+    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+
+    expect(result).to.deep.equal({
+      kind: 'EmailList',
+      emails: [
+        { kind: 'Email', value: 'a@test.com' },
+        { kind: 'Email', value: 'b@test.com' },
+      ],
+    } as EmailList);
+  });
+
+  // TODO: Return validEmails and invalidEmails
+  // TODO: Handle empty list
+  // TODO: Handle missing file
 
   describe(makeEmail.name, () => {
     it('returns an Email value from the given string', () => {
-      expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
-      expect(makeEmail('23@test.com')).to.deep.equal({ kind: 'Email', value: '23@test.com' });
+      expect(makeEmail('a@test.com')).to.deep.equal({ kind: 'Email', value: 'a@test.com' } as Email);
+      expect(makeEmail('23@test.com')).to.deep.equal({ kind: 'Email', value: '23@test.com' } as Email);
     });
 
     it('accepts “plus addressing”', () => {
-      expect(makeEmail('a+1@test.com')).to.deep.equal({ kind: 'Email', value: 'a+1@test.com' });
+      expect(makeEmail('a+1@test.com')).to.deep.equal({ kind: 'Email', value: 'a+1@test.com' } as Email);
     });
 
     it('trims the whitespace', () => {
-      expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'Email', value: 'a@test.com' });
-      expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'Email', value: 'b@test.com' });
-      expect(makeEmail('\r\nc@test.com ')).to.deep.equal({ kind: 'Email', value: 'c@test.com' });
+      expect(makeEmail('  a@test.com  ')).to.deep.equal({ kind: 'Email', value: 'a@test.com' } as Email);
+      expect(makeEmail('	b@test.com\t\t')).to.deep.equal({ kind: 'Email', value: 'b@test.com' } as Email);
+      expect(makeEmail('\r\nc@test.com ')).to.deep.equal({ kind: 'Email', value: 'c@test.com' } as Email);
     });
 
     it('returns an Err value when the email is invalid', () => {
@@ -65,8 +83,4 @@ describe(getEmails.name, () => {
       expect(makeEmail('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
     });
   });
-
-  // TODO: Return validEmails and invalidEmails
-  // TODO: Handle empty list
-  // TODO: Handle missing file
 });

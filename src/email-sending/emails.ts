@@ -4,12 +4,12 @@ import { DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
 import { makeErr, Result } from '../shared/lang';
 
-interface EmailList {
+export interface EmailList {
   kind: 'EmailList';
   emails: Email[];
 }
 
-interface Email {
+export interface Email {
   kind: 'Email';
   value: string;
 }
