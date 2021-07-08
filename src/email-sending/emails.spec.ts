@@ -74,10 +74,18 @@ describe(getEmails.name, () => {
     const mockReadFileFn = (_filePath: string): string => 'not a JSON string';
     const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
 
-    expect(result).to.deep.equal(makeErr(`Can’t parse JSON: ${dataDirPathString}/emails.json`));
+    expect(result).to.deep.equal(makeErr(`Can’t parse JSON in ${dataDirPathString}/emails.json`));
   });
 
-  // TODO: Handle non-array JSON
+  it('returns an Err value when the file doesn’t contain an array of strings', async () => {
+    const getResult = async (json: string) => await getEmails(mockDataDir, () => json, mockFileExistsFn);
+    const err = makeErr(`JSON in ${dataDirPathString}/emails.json is not an array of strings`);
+
+    expect(await getResult('{"is-array": false}')).to.deep.equal(err);
+    expect(await getResult('["email@test.com", 2, 3]')).to.deep.equal(err);
+    expect(await getResult('"a string"')).to.deep.equal(err);
+    expect(await getResult('null')).to.deep.equal(err);
+  });
 
   describe(makeEmail.name, () => {
     it('returns an Email value from the given string', () => {

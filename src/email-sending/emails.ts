@@ -2,7 +2,7 @@ import path from 'path';
 import { filterUniq, filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { isErr, isString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -68,16 +68,21 @@ export async function getEmails(
 
   try {
     const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
-    const emails = emailStrings.map(makeEmail);
-    const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
-    const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
-    return {
-      kind: 'EmailList',
-      validEmails: validEmails,
-      invalidEmails,
-    };
+    if (Array.isArray(emailStrings) && emailStrings.every(isString)) {
+      const emails = emailStrings.map(makeEmail);
+      const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
+      const invalidEmails = emails.filter(isErr).map((e) => e.reason);
+
+      return {
+        kind: 'EmailList',
+        validEmails: validEmails,
+        invalidEmails,
+      };
+    } else {
+      return makeErr(`JSON in ${filePath} is not an array of strings`);
+    }
   } catch (error) {
-    return makeErr(`Can’t parse JSON: ${filePath}`);
+    return makeErr(`Can’t parse JSON in ${filePath}`);
   }
 }
