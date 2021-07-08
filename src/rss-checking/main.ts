@@ -1,5 +1,6 @@
 import path from 'path';
 import { isErr } from '../shared/lang';
+import { getFirstCliArg, getSecondCliArg } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
@@ -8,8 +9,8 @@ import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
 
 async function main(): Promise<number | undefined> {
-  const urlString = process.argv[2]; // first command line arg
-  const dataDirString = process.argv[3]; // second command line arg
+  const urlString = getFirstCliArg(process);
+  const dataDirString = getSecondCliArg(process);
   const argParsingResult = parseArgs(urlString, dataDirString);
 
   if (isErr(argParsingResult)) {
