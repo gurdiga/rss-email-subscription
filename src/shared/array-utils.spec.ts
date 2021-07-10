@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { filterUniq, filterUniqBy } from './array-utils';
+import { filterUniq, filterUniqBy, sortBy } from './array-utils';
 
 describe(filterUniq.name, () => {
   it('filters out duplicates compared by reference', () => {
@@ -33,5 +33,24 @@ describe(filterUniqBy.name, () => {
     );
 
     expect(result).to.deep.equal(['2020-01-12', '2020-03-01', '2020-04-02']);
+  });
+});
+
+describe(sortBy.name, () => {
+  it('sorts an array by a mapper function', () => {
+    const input = [
+      { name: 'two', value: 2 },
+      { name: 'zero', value: 0 },
+      { name: 'one', value: 1 },
+      { name: 'three', value: 3 },
+    ];
+    const expectedOutput = [
+      { name: 'zero', value: 0 },
+      { name: 'one', value: 1 },
+      { name: 'two', value: 2 },
+      { name: 'three', value: 3 },
+    ];
+
+    expect(input.sort(sortBy((s) => s.value))).to.deep.equal(expectedOutput);
   });
 });

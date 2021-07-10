@@ -1,4 +1,5 @@
 import { RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
+import { sortBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
 import { makeErr, Result } from '../shared/lang';
@@ -43,7 +44,7 @@ export async function getRssItems(
   const validItems = rssItems
     .filter(isValidRssItem)
     .map((v) => v.value)
-    .sort((a, b) => (a.pubDate > b.pubDate ? 1 : -1));
+    .sort(sortBy((i) => i.pubDate));
 
   const invalidItems = rssItems.filter(isInvalidStoredRssItem);
 
