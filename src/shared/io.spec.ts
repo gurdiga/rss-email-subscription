@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { exists, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
 import { listFiles, mkdirp, writeFile } from './io';
@@ -44,6 +44,4 @@ describe(listFiles.name, () => {
 
     expect(listFiles(tmpWorkDir)).to.deep.equal(fileNames);
   });
-
-  // TODO: returns an Err when directory not found
 });
