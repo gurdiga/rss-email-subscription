@@ -59,8 +59,8 @@ describe(getRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(actualDirPath).to.equal('');
     expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(actualDirPath).to.equal('/some/path/inbox');
   });
 
   it('also returns the files with unparsable JSON', async () => {
