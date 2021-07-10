@@ -37,11 +37,12 @@ export function recordNewRssItems(
 
 type HashFn = (input: string) => string;
 
+export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
+
 export function itemFileName(item: RssItem, hashFn: HashFn = md5): string {
-  const unixTimestamp = Math.floor(item.pubDate.getTime() / 1000);
   const hash = hashFn(item.title + item.content + item.pubDate.toJSON());
 
-  return `${unixTimestamp}-${hash}.json`;
+  return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
 }
 
 function md5(input: string): string {

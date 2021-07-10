@@ -1,3 +1,4 @@
+import { RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
 import { Result } from '../shared/lang';
@@ -24,7 +25,7 @@ export async function getRssItems(
   readFileFn: ReadFileFn = readFile,
   listFilesFn: ListFilesFn = listFiles
 ): Promise<Result<RssReadingResult>> {
-  const fileNameFormat = /^\d{10}-.+\.json$/;
+  const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const fileNames = listFilesFn(`${dataDir.value}/inbox`).filter((fileName) => fileNameFormat.test(fileName));
 
   const rssItems = fileNames

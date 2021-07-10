@@ -16,7 +16,7 @@ describe(getRssItems.name, () => {
 
   const mockFiles: MockFile[] = [
     {
-      fileName: '1623513016-c86ddb2b80f258a6fe4c5005282bf21a6fd6a5f08ed4efce15ee5f6b20599df4.json',
+      fileName: 'rss-item-c86ddb2b80f258a6fe4c5005282bf21a6fd6a5f08ed4efce15ee5f6b20599df4.json',
       fileContent: JSON.stringify({
         title: 'Welcome to Jekyll!',
         content:
@@ -27,7 +27,7 @@ describe(getRssItems.name, () => {
       }),
     },
     {
-      fileName: '1623513900-c4feefb067a209bc98eff2744f54e785473287cc9c66034621a7845b024c4256.json',
+      fileName: 'rss-item-c4feefb067a209bc98eff2744f54e785473287cc9c66034621a7845b024c4256.json',
       fileContent: JSON.stringify({
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
         content: '<div type="html" xml:base="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html"/>',
@@ -37,7 +37,7 @@ describe(getRssItems.name, () => {
       }),
     },
     {
-      fileName: '1623513780-e16d90d96b5c0e1d70d990855ecc214c181800c912fa68946cca340524211286.json',
+      fileName: 'rss-item-e16d90d96b5c0e1d70d990855ecc214c181800c912fa68946cca340524211286.json',
       fileContent: JSON.stringify({
         title: 'A new post',
         content: '<div type="html" xml:base="/2021/06/12/a-new-post.html"/>',
@@ -65,7 +65,7 @@ describe(getRssItems.name, () => {
 
   it('also returns the files with unparsable JSON', async () => {
     const invalidFile: MockFile = {
-      fileName: '1623513016-file-with-bad-json-4efce15ee5f6b20599df4.json',
+      fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: 'not-a-valid-json-string',
     };
     const mockFilesWithInvalidItems = [...mockFiles, invalidFile];
@@ -89,7 +89,7 @@ describe(getRssItems.name, () => {
 
   it('also returns the files with invalid data', async () => {
     const invalidFile: MockFile = {
-      fileName: '1623513016-file-with-bad-json-4efce15ee5f6b20599df4.json',
+      fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: '{"invalid-data": true}',
     };
     const mockFilesWithInvalidItems = [...mockFiles, invalidFile];

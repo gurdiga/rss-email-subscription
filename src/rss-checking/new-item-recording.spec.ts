@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { RssItem } from '../shared/rss-item';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { itemFileName, recordNewRssItems } from './new-item-recording';
+import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 
 describe(recordNewRssItems.name, () => {
   const dataDir = makeDataDir('/some/dir/') as DataDir;
@@ -77,7 +77,7 @@ describe(recordNewRssItems.name, () => {
   });
 
   describe(itemFileName.name, () => {
-    it('consists of unix(pubDate)+hash(title,content,pubDate)+.json', () => {
+    it('consists of RSS_ITEM_FILE_PREFIX+hash(title,content,pubDate)+.json', () => {
       const item: RssItem = {
         title: 'Item two',
         content: 'The content of item two.',
@@ -85,9 +85,9 @@ describe(recordNewRssItems.name, () => {
         pubDate: new Date('2020-01-03T10:50:16-06:00'),
         link: new URL('https://test.com/item-two'),
       };
-      const mockHash = (s: string) => s.length.toString();
+      const mockHash = (s: string) => '-42';
 
-      expect(itemFileName(item, mockHash)).to.equal('1578070216-56.json');
+      expect(itemFileName(item, mockHash)).to.equal(`${RSS_ITEM_FILE_PREFIX}-42.json`);
     });
   });
 });
