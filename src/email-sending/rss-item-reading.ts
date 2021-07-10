@@ -1,7 +1,7 @@
 import { RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { isValidRssItem, RssItem, ValidRssItem } from '../shared/rss-item';
 
 export interface RssReadingResult {
@@ -25,11 +25,19 @@ export async function getRssItems(
   readFileFn: ReadFileFn = readFile,
   listFilesFn: ListFilesFn = listFiles
 ): Promise<Result<RssReadingResult>> {
-  const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
-  const fileNames = listFilesFn(`${dataDir.value}/inbox`).filter((fileName) => fileNameFormat.test(fileName));
+  const inboxDirPath = `${dataDir.value}/inbox`;
+  let fileNames: string[] = [];
 
+  try {
+    fileNames = listFilesFn(inboxDirPath);
+  } catch (error) {
+    return makeErr(`The ${inboxDirPath} directory does not exist`);
+  }
+
+  const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const rssItems = fileNames
-    .map((fileName) => readFileFn(`${dataDir.value}/inbox/${fileName}`))
+    .filter((fileName) => fileNameFormat.test(fileName))
+    .map((fileName) => readFileFn(`${inboxDirPath}/${fileName}`))
     .map((fileConten) => makeRssItemFromInboxFile(fileConten));
 
   const validItems = rssItems

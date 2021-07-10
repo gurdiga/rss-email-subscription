@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { basename } from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ListFilesFn, ReadFileFn } from '../shared/io';
+import { makeErr } from '../shared/lang';
 import { RssItem, ValidRssItem } from '../shared/rss-item';
 import { getRssItems, makeRssItemFromInboxFile, RssReadingResult } from './rss-item-reading';
 
@@ -127,6 +128,12 @@ describe(getRssItems.name, () => {
     };
 
     expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+  });
+
+  it('returns an Err value when data/inbox does not exist', async () => {
+    expect(await getRssItems(mockDataDir)).to.deep.equal(
+      makeErr(`The ${mockDataDir.value}/inbox directory does not exist`)
+    );
   });
 
   function makeMockReadFileFn(mockFiles: MockFile[]): ReadFileFn {
