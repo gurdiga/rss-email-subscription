@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { existsSync, mkdtempSync, readFileSync } from 'fs';
+import { exists, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { mkdirp, writeFile } from './io';
+import { listFiles, mkdirp, writeFile } from './io';
 
 describe(mkdirp.name, () => {
   const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-mkdirp-'));
@@ -28,4 +28,22 @@ describe(writeFile.name, () => {
     expect(existsSync(filePath)).to.be.true;
     expect(readFileSync(filePath, 'utf8')).to.equal(fileContent);
   });
+});
+
+describe(listFiles.name, () => {
+  const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-listFiles-'));
+
+  it('returns the names of files in the given directory, ignoring subdirectories', () => {
+    const fileNames = ['file1.txt', 'file2.txt', 'file3.txt'];
+
+    fileNames.forEach((fileName) => {
+      writeFileSync(`${tmpWorkDir}/${fileName}`, 'content', { encoding: 'utf8' });
+    });
+
+    mkdirSync(`${tmpWorkDir}/subdir`);
+
+    expect(listFiles(tmpWorkDir)).to.deep.equal(fileNames);
+  });
+
+  // TODO: returns an Err when directory not found
 });
