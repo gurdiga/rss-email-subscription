@@ -1,5 +1,5 @@
 import path from 'path';
-import { filterUniq, filterUniqBy } from '../shared/array-utils';
+import { filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
 import { isErr, isString, makeErr, Result } from '../shared/lang';

@@ -14,9 +14,31 @@ async function main(): Promise<number> {
   }
 
   const [dataDir] = argParsingResult.values;
-  const emails = await getEmails(dataDir);
+  const emailReadingResult = await getEmails(dataDir);
 
-  console.log(emails);
+  if (isErr(emailReadingResult)) {
+    console.error(`\nERROR: reading emails: ${emailReadingResult.reason}`);
+    return 2;
+  }
+
+  const { validEmails, invalidEmails } = emailReadingResult;
+
+  if (invalidEmails.length > 0) {
+    const count = invalidEmails.length;
+    const formattedEmails = JSON.stringify(invalidEmails, null, 2);
+
+    console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedEmails}\n`);
+  }
+
+  if (validEmails.length === 0) {
+    console.error(`\nERROR: no valid emails\n`);
+    return 3;
+  }
+
+  // const rssItems = getRssItems(dataDir);
+
+  console.log({ validEmails });
+
   // TODO: Process post files in data/inbox:
   // - send each post to each of the emails
 
