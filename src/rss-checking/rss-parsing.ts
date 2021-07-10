@@ -1,6 +1,6 @@
 import Parser, { Item } from 'rss-parser';
 import { makeErr, Result } from '../shared/lang';
-import { RssItem } from '../shared/rss-item';
+import { isValidRssItem, RssItem, ValidRssItem } from '../shared/rss-item';
 import { RssResponse } from './rss-response';
 
 export interface RssParseResult {
@@ -11,7 +11,7 @@ export interface RssParseResult {
 
 export async function parseRssItems(
   rssResponse: RssResponse,
-  buildRssItemFn = buildRssItem
+  buildRssItemFn: BuildRssItemFn = buildRssItem
 ): Promise<Result<RssParseResult>> {
   const parser = new Parser();
 
@@ -37,11 +37,6 @@ export async function parseRssItems(
   }
 }
 
-export interface ValidRssItem {
-  kind: 'ValidRssItem';
-  value: RssItem;
-}
-
 interface InvalidRssItem {
   kind: 'InvalidRssItem';
   reason: string;
@@ -52,8 +47,12 @@ export interface ParsedRssItem extends Item {
   author: string | undefined; // The Item interface of rss-parser is missing author?!
 }
 
+export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
+
 export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
-  if (!item.title?.trim()) {
+  const isMissing = (value: string | undefined): value is undefined => !value?.trim();
+
+  if (isMissing(item.title)) {
     return {
       kind: 'InvalidRssItem',
       reason: 'Post title is missing',
@@ -61,7 +60,7 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     };
   }
 
-  if (!item.content?.trim()) {
+  if (isMissing(item.content)) {
     return {
       kind: 'InvalidRssItem',
       reason: 'Post content is missing',
@@ -69,7 +68,7 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     };
   }
 
-  if (!item.author?.trim()) {
+  if (isMissing(item.author)) {
     return {
       kind: 'InvalidRssItem',
       reason: 'Post author is missing',
@@ -77,7 +76,7 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     };
   }
 
-  if (!item.isoDate?.trim()) {
+  if (isMissing(item.isoDate)) {
     return {
       kind: 'InvalidRssItem',
       reason: 'Post publication timestamp is missing',
@@ -106,20 +105,18 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     };
   }
 
+  const value: RssItem = {
+    title: item.title,
+    content: item.content,
+    author: item.author,
+    pubDate: new Date(item.isoDate),
+    link: link,
+  };
+
   return {
     kind: 'ValidRssItem',
-    value: {
-      title: item.title,
-      content: item.content,
-      author: item.author,
-      pubDate: new Date(item.isoDate),
-      link: link,
-    },
+    value,
   };
-}
-
-function isValidRssItem(value: any): value is ValidRssItem {
-  return value.kind === 'ValidRssItem';
 }
 
 function isInvalidRssItem(value: any): value is InvalidRssItem {

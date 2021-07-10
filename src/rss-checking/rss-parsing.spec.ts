@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../shared/lang';
-import { RssItem } from '../shared/rss-item';
-import { buildRssItem, parseRssItems, RssParseResult, ValidRssItem, ParsedRssItem } from './rss-parsing';
+import { RssItem, ValidRssItem } from '../shared/rss-item';
+import { buildRssItem, parseRssItems, RssParseResult, ParsedRssItem, BuildRssItemFn } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
@@ -130,7 +130,7 @@ describe(parseRssItems.name, () => {
 
   it('returns an InvalidRssParseResult value when buildRssItem throws', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
-    const buildRssItemFn = () => {
+    const buildRssItemFn: BuildRssItemFn = () => {
       throw new Error('Something broke!');
     };
 
