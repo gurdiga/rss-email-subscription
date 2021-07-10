@@ -1,14 +1,7 @@
 import Parser, { Item } from 'rss-parser';
 import { makeErr, Result } from '../shared/lang';
+import { RssItem } from '../shared/rss-item';
 import { RssResponse } from './rss-response';
-
-export interface RssItem {
-  title: string;
-  content: string;
-  author: string;
-  pubDate: Date;
-  link: URL;
-}
 
 export interface RssParseResult {
   kind: 'RssParseResult';

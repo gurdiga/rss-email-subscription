@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { RssItem } from './rss-parsing';
+import { RssItem } from '../shared/rss-item';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { itemFileName, recordNewRssItems } from './new-item-recording';
 

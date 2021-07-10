@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../shared/lang';
-import { buildRssItem, parseRssItems, RssItem, RssParseResult, ValidRssItem, ParsedRssItem } from './rss-parsing';
+import { RssItem } from '../shared/rss-item';
+import { buildRssItem, parseRssItems, RssParseResult, ValidRssItem, ParsedRssItem } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');

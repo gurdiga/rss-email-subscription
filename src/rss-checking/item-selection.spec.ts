@@ -1,6 +1,6 @@
 import { expect } from 'chai';
+import { RssItem } from '../shared/rss-item';
 import { selectNewItems } from './item-selection';
-import { RssItem } from './rss-parsing';
 
 describe(selectNewItems.name, () => {
   it('returns the items published after the given timestamp', () => {

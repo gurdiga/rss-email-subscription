@@ -1,6 +1,6 @@
 import path from 'path';
 import { DataDir } from '../shared/data-dir';
-import { RssItem } from './rss-parsing';
+import { RssItem } from '../shared/rss-item';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
 import { ArraySortFn } from '../shared/array-utils';
 import { makeErr, Result } from '../shared/lang';

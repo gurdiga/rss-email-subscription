@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { Err, makeErr } from '../shared/lang';
+import { makeErr } from '../shared/lang';
+import { RssItem } from '../shared/rss-item';
 import { getLastPostTimestamp, MissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
-import { RssItem } from './rss-parsing';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();

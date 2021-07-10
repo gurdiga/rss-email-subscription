@@ -2,7 +2,7 @@ import path from 'path';
 import crypto from 'crypto';
 import { DataDir } from '../shared/data-dir';
 import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
-import { RssItem } from './rss-parsing';
+import { RssItem } from '../shared/rss-item';
 
 type NameFileFn = (item: RssItem) => string;
 
