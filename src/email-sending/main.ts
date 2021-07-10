@@ -2,6 +2,7 @@ import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { getEmails } from './emails';
+import { getRssItems } from './rss-item-reading';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
@@ -35,12 +36,18 @@ async function main(): Promise<number> {
     return 3;
   }
 
-  // const rssItems = getRssItems(dataDir);
+  const rssItemReadingResult = await getRssItems(dataDir);
 
-  console.log({ validEmails });
+  if (rssItemReadingResult.kind === 'Err') {
+    console.error(`\nERROR: reading RSS items: ${rssItemReadingResult.reason}`);
+    return 2;
+  }
+
+  console.log({ validEmails }, rssItemReadingResult);
 
   // TODO: Process post files in data/inbox:
   // - send each post to each of the emails
+  // - use async/await for IO
 
   return 0;
 }
