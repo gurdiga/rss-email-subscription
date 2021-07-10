@@ -45,6 +45,10 @@ export function recordLastPostTimestamp(
   items: RssItem[],
   writeFileFn: WriteFileFn = writeFile
 ): void {
+  if (items.length === 0) {
+    return;
+  }
+
   const sortByPubDateDesc: ArraySortFn<RssItem> = (a, b) => b.pubDate.getTime() - a.pubDate.getTime();
   const latestItem = [...items].sort(sortByPubDateDesc)[0];
 

@@ -119,5 +119,15 @@ describe('Last post timestamp', () => {
         recordLastPostTimestamp(mockDataDir, mockRssItems, mockWriteFile);
       }).to.throw(`Cant record last post timestamp: ${mockError}, content: ${expectedFileContent}`);
     });
+
+    it('does nothing when there are no items', () => {
+      const writtenFiles: { path: string; content: string }[] = [];
+      const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
+      const newRssItems: RssItem[] = [];
+
+      recordLastPostTimestamp(mockDataDir, newRssItems, mockWriteFile);
+
+      expect(writtenFiles).to.deep.equal([]);
+    });
   });
 });
