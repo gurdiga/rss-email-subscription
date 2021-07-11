@@ -53,4 +53,8 @@ describe(sortBy.name, () => {
 
     expect(input.sort(sortBy((s) => s.value))).to.deep.equal(expectedOutput);
   });
+
+  it('can do descending', () => {
+    expect([0, 1, 2, 3].sort(sortBy((s) => s, 'desc'))).to.deep.equal([3, 2, 1, 0]);
+  });
 });

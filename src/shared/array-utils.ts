@@ -24,9 +24,13 @@ export function filterUniqBy<T>(mapFn: (value: T) => any) {
 }
 
 type ComparableType = number | string | Date | boolean;
+type SortDirection = 'asc' | 'desc';
 
-export function sortBy<T>(mapFn: (value: T) => ComparableType) {
-  return (a: T, b: T) => (mapFn(a) > mapFn(b) ? 1 : -1);
+export function sortBy<T>(mapFn: (value: T) => ComparableType, direction: SortDirection = 'asc') {
+  const result = direction === 'asc' ? 1 : -1;
+  return (a: T, b: T) => {
+    return mapFn(a) > mapFn(b) ? result : -result;
+  };
 }
 
 export function isEmpty(array: any[]): boolean {
