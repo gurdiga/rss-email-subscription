@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'path';
+import { sortBy } from '../shared/array-utils';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ListFilesFn, ReadFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
@@ -149,7 +150,7 @@ describe(getRssItems.name, () => {
   function mockValidItems(mockFiles: MockFile[]): RssItem[] {
     return mockFiles
       .map((f) => (makeRssItemFromInboxFile(f.fileContent) as ValidRssItem).value)
-      .sort((a, b) => a.pubDate.getTime() - b.pubDate.getTime());
+      .sort(sortBy((i) => i.pubDate));
   }
 
   describe(makeRssItemFromInboxFile.name, () => {

@@ -50,68 +50,40 @@ export interface ParsedRssItem extends Item {
 export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
 
 export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
+  const { title, content, author, isoDate } = item;
   const isMissing = (value: string | undefined): value is undefined => !value?.trim();
+  const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
 
-  if (isMissing(item.title)) {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post title is missing',
-      item,
-    };
+  if (isMissing(title)) {
+    return invalidRssItem('Post title is missing');
   }
 
-  if (isMissing(item.content)) {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post content is missing',
-      item,
-    };
+  if (isMissing(content)) {
+    return invalidRssItem('Post content is missing');
   }
 
-  if (isMissing(item.author)) {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post author is missing',
-      item,
-    };
+  if (isMissing(author)) {
+    return invalidRssItem('Post author is missing');
   }
 
-  if (isMissing(item.isoDate)) {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post publication timestamp is missing',
-      item,
-    };
+  if (isMissing(isoDate)) {
+    return invalidRssItem('Post publication timestamp is missing');
   }
 
   const linkString = item.link?.trim();
 
   if (!linkString) {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post link is missing',
-      item,
-    };
+    return invalidRssItem('Post link is missing');
   }
 
   const link = new URL(linkString, baseURL);
-  const publicationTimestamp = new Date(item.isoDate?.trim());
+  const pubDate = new Date(isoDate?.trim());
 
-  if (publicationTimestamp.toString() === 'Invalid Date') {
-    return {
-      kind: 'InvalidRssItem',
-      reason: 'Post publication timestamp is an invalid JSON date string',
-      item,
-    };
+  if (pubDate.toString() === 'Invalid Date') {
+    return invalidRssItem('Post publication timestamp is not a valid JSON date string');
   }
 
-  const value: RssItem = {
-    title: item.title,
-    content: item.content,
-    author: item.author,
-    pubDate: new Date(item.isoDate),
-    link: link,
-  };
+  const value: RssItem = { title, content, author, pubDate, link };
 
   return {
     kind: 'ValidRssItem',

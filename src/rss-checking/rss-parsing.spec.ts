@@ -211,7 +211,7 @@ describe(parseRssItems.name, () => {
       expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
-        reason: 'Post publication timestamp is an invalid JSON date string',
+        reason: 'Post publication timestamp is not a valid JSON date string',
       });
 
       invalidInput = { ...item, link: undefined };
