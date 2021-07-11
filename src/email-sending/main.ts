@@ -37,7 +37,7 @@ async function main(): Promise<number> {
     return 3;
   }
 
-  const rssItemReadingResult = await getRssItems(dataDir);
+  const rssItemReadingResult = getRssItems(dataDir);
 
   if (isErr(rssItemReadingResult)) {
     console.error(`\nERROR: reading RSS items: ${rssItemReadingResult.reason}`);
@@ -48,7 +48,6 @@ async function main(): Promise<number> {
 
   // TODO: Process post files in data/inbox:
   // - send each post to each of the emails
-  // - use async/await for IO
 
   return 0;
 }

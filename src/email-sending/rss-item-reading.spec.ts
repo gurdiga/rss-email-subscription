@@ -49,7 +49,7 @@ describe(getRssItems.name, () => {
     },
   ];
 
-  it('returns the list of items in data/inbox ordered by pubDate', async () => {
+  it('returns the list of items in data/inbox ordered by pubDate', () => {
     let actualDirPath = '';
     const mockListFilesFn = makeMockListFilesFn(mockFiles, (path: string) => (actualDirPath = path));
     const mockReadFileFn = makeMockReadFileFn(mockFiles);
@@ -60,11 +60,11 @@ describe(getRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
     expect(actualDirPath).to.equal('/some/path/inbox');
   });
 
-  it('also returns the files with unparsable JSON', async () => {
+  it('also returns the files with unparsable JSON', () => {
     const invalidFile: MockFile = {
       fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: 'not-a-valid-json-string',
@@ -85,10 +85,10 @@ describe(getRssItems.name, () => {
       ],
     };
 
-    expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
   });
 
-  it('also returns the files with invalid data', async () => {
+  it('also returns the files with invalid data', () => {
     const invalidFile: MockFile = {
       fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: '{"invalid-data": true}',
@@ -109,10 +109,10 @@ describe(getRssItems.name, () => {
       ],
     };
 
-    expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
   });
 
-  it('ignores files that do not match expected naming convention', async () => {
+  it('ignores files that do not match expected naming convention', () => {
     const invalidFile: MockFile = {
       fileName: 'some-file.json',
       fileContent: '{"some": "json-data"}',
@@ -127,13 +127,11 @@ describe(getRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(await getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
   });
 
-  it('returns an Err value when data/inbox does not exist', async () => {
-    expect(await getRssItems(mockDataDir)).to.deep.equal(
-      makeErr(`The ${mockDataDir.value}/inbox directory does not exist`)
-    );
+  it('returns an Err value when data/inbox does not exist', () => {
+    expect(getRssItems(mockDataDir)).to.deep.equal(makeErr(`The ${mockDataDir.value}/inbox directory does not exist`));
   });
 
   function makeMockReadFileFn(mockFiles: MockFile[]): ReadFileFn {

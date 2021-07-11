@@ -21,11 +21,11 @@ function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
   return value.kind === 'InvalidStoredRssItem';
 }
 
-export async function getRssItems(
+export function getRssItems(
   dataDir: DataDir,
   readFileFn: ReadFileFn = readFile,
   listFilesFn: ListFilesFn = listFiles
-): Promise<Result<RssReadingResult>> {
+): Result<RssReadingResult> {
   const inboxDirPath = `${dataDir.value}/inbox`;
   let fileNames: string[] = [];
 
