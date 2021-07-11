@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { filterUniq, filterUniqBy, sortBy } from './array-utils';
+import { filterUniq, filterUniqBy, sortBy, SortDirection } from './array-utils';
 
 describe(filterUniq.name, () => {
   it('filters out duplicates compared by reference', () => {
@@ -55,6 +55,6 @@ describe(sortBy.name, () => {
   });
 
   it('can do descending', () => {
-    expect([0, 1, 2, 3].sort(sortBy((s) => s, 'desc'))).to.deep.equal([3, 2, 1, 0]);
+    expect([0, 1, 2, 3].sort(sortBy((s) => s, SortDirection.Desc))).to.deep.equal([3, 2, 1, 0]);
   });
 });
