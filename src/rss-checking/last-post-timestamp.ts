@@ -2,7 +2,7 @@ import path from 'path';
 import { DataDir } from '../shared/data-dir';
 import { RssItem } from '../shared/rss-item';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
-import { ArraySortFn, isEmpty } from '../shared/array-utils';
+import { ArraySortFn, isEmpty, sortBy } from '../shared/array-utils';
 import { makeErr, Result } from '../shared/lang';
 
 export interface MissingTimestampFile {
@@ -49,9 +49,7 @@ export function recordLastPostTimestamp(
     return;
   }
 
-  // TODO: replace with sortBy()?
-  const sortByPubDateDesc: ArraySortFn<RssItem> = (a, b) => b.pubDate.getTime() - a.pubDate.getTime();
-  const latestItem = [...items].sort(sortByPubDateDesc)[0];
+  const latestItem = [...items].sort(sortBy((i) => i.pubDate, 'desc'))[0];
 
   const filePath = getLastPostTimestampFileName(dataDir);
   const fileContent = JSON.stringify({
