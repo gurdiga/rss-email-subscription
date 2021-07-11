@@ -44,7 +44,16 @@ async function main(): Promise<number> {
     return 2;
   }
 
-  console.log({ validEmails }, rssItemReadingResult);
+  const { validItems, invalidItems } = rssItemReadingResult;
+
+  if (!isEmpty(invalidItems)) {
+    const count = invalidItems.length;
+    const formattedItems = JSON.stringify(invalidItems, null, 2);
+
+    console.warn(`\nWARNING: ${count} invalid RSS items read: ${formattedItems}\n`);
+  }
+
+  console.log({ validEmails, validItems });
 
   // TODO: Process post files in data/inbox:
   // - send each post to each of the emails
