@@ -1,3 +1,4 @@
+import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
@@ -24,14 +25,14 @@ async function main(): Promise<number> {
 
   const { validEmails, invalidEmails } = emailReadingResult;
 
-  if (invalidEmails.length > 0) {
+  if (!isEmpty(invalidEmails)) {
     const count = invalidEmails.length;
     const formattedEmails = JSON.stringify(invalidEmails, null, 2);
 
     console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedEmails}\n`);
   }
 
-  if (validEmails.length === 0) {
+  if (isEmpty(validEmails)) {
     console.error(`\nERROR: no valid emails\n`);
     return 3;
   }

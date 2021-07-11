@@ -1,4 +1,4 @@
-import path from 'path';
+import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
@@ -45,14 +45,14 @@ async function main(): Promise<number | undefined> {
 
   const { validItems, invalidItems } = rssParsingResult;
 
-  if (invalidItems.length > 0) {
+  if (!isEmpty(invalidItems)) {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
     console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedItems}\n`);
   }
 
-  if (validItems.length === 0) {
+  if (isEmpty(validItems)) {
     console.error(`\nERROR: no valid RSS items\n`);
     return 5;
   }

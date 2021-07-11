@@ -28,3 +28,7 @@ type ComparableType = number | string | Date | boolean;
 export function sortBy<T>(mapFn: (value: T) => ComparableType) {
   return (a: T, b: T) => (mapFn(a) > mapFn(b) ? 1 : -1);
 }
+
+export function isEmpty(array: any[]): boolean {
+  return array.length === 0;
+}
