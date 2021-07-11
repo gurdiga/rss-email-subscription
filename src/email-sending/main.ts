@@ -39,7 +39,7 @@ async function main(): Promise<number> {
 
   const rssItemReadingResult = await getRssItems(dataDir);
 
-  if (rssItemReadingResult.kind === 'Err') {
+  if (isErr(rssItemReadingResult)) {
     console.error(`\nERROR: reading RSS items: ${rssItemReadingResult.reason}`);
     return 2;
   }
