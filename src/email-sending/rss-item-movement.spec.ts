@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { FileExistsFn, MkdirpFn, MoveFileFn } from '../shared/io';
 import { ValidStoredRssItem } from './rss-item-reading';
-import { moveItemToOutbox, moveItemToSent } from './rss-item-sending';
+import { moveItemToOutbox, moveItemToSent } from './rss-item-movement';
 
 describe('item sending', () => {
   const dataDirPathString = '/some/path';
