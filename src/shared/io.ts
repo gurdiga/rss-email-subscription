@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
 
 export type ReadFileFn = (filePath: string) => string;
 
@@ -30,4 +30,10 @@ export function listFiles(dirPath: string): string[] {
   return readdirSync(dirPath, { withFileTypes: true })
     .filter((e) => e.isFile())
     .map((e) => e.name);
+}
+
+export type MoveFileFn = (source: string, destination: string) => void;
+
+export function moveFile(source: string, destination: string): void {
+  renameSync(source, destination);
 }
