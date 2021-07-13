@@ -29,3 +29,7 @@ cw:
 
 pre-commit: check test
 pc: pre-commit
+
+# The required configuration is expected in the environment
+smtp-test:
+	ts-node src/email-sending/email-delivery.slow-test.ts
