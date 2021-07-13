@@ -6,16 +6,16 @@ import { isErr, isString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
-  validEmails: Email[];
+  validEmails: EmailAddress[];
   invalidEmails: string[];
 }
 
-export interface Email {
-  kind: 'Email';
+export interface EmailAddress {
+  kind: 'EmailAddress';
   value: string;
 }
 
-export function makeEmail(emailString: string): Result<Email> {
+export function makeEmailAddress(emailString: string): Result<EmailAddress> {
   const email = emailString.trim();
   const err = makeErr(`Syntactically invalid email: "${emailString}"`);
 
@@ -46,13 +46,13 @@ export function makeEmail(emailString: string): Result<Email> {
   }
 
   return {
-    kind: 'Email',
+    kind: 'EmailAddress',
     value: email,
   };
 }
 
-function isEmail(value: any): value is Email {
-  return value.kind === 'Email';
+function isEmail(value: any): value is EmailAddress {
+  return value.kind === 'EmailAddress';
 }
 
 export async function getEmails(
@@ -70,7 +70,7 @@ export async function getEmails(
     const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
 
     if (Array.isArray(emailStrings) && emailStrings.every(isString)) {
-      const emails = emailStrings.map(makeEmail);
+      const emails = emailStrings.map(makeEmailAddress);
       const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
       const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
