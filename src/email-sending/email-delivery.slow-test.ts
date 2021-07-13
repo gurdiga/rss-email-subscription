@@ -1,10 +1,10 @@
-import { deliverEmailFn } from './email-delivery';
+import { deliverEmail } from './email-delivery';
 
 async function main() {
   const destinationEmailAddress = 'gurdiga@gmail.com';
   const subject = 'testing deliverEmailFn from';
 
-  await deliverEmailFn(
+  await deliverEmail(
     destinationEmailAddress,
     subject,
     `

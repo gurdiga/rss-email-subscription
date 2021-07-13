@@ -5,7 +5,7 @@ export type DeliverEmailFn = (address: string, subject: string, body: string) =>
 
 let transporter: ReturnType<typeof nodemailer.createTransport>;
 
-export async function deliverEmailFn(address: string, subject: string, htmlBody: string): Promise<void> {
+export async function deliverEmail(address: string, subject: string, htmlBody: string): Promise<void> {
   if (!transporter) {
     transporter = nodemailer.createTransport({
       host: requireEnvVar('SMTP_HOST'),
