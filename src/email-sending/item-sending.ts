@@ -1,8 +1,12 @@
 import { RssItem } from '../shared/rss-item';
-import { DeliverEmailFn } from './email-delivery';
+import { deliverEmail, DeliverEmailFn } from './email-delivery';
 import { EmailAddress } from './emails';
 
-export function sendItem(emailAddress: EmailAddress, item: RssItem, deliverEmailFn: DeliverEmailFn): void {
+export function sendItem(
+  emailAddress: EmailAddress,
+  item: RssItem,
+  deliverEmailFn: DeliverEmailFn = deliverEmail
+): void {
   const emailMessage = makeEmailMessage(item);
 
   deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody);
