@@ -1,6 +1,6 @@
 import Parser, { Item } from 'rss-parser';
 import { makeErr, Result } from '../shared/lang';
-import { isValidRssItem, RssItem, ValidRssItem } from '../shared/rss-item';
+import { RssItem } from '../shared/rss-item';
 import { RssResponse } from './rss-response';
 
 export interface RssParseResult {
@@ -45,6 +45,15 @@ interface InvalidRssItem {
 
 export interface ParsedRssItem extends Item {
   author: string | undefined; // The Item interface of rss-parser is missing author?!
+}
+
+export interface ValidRssItem {
+  kind: 'ValidRssItem';
+  value: RssItem;
+}
+
+function isValidRssItem(value: any): value is ValidRssItem {
+  return value.kind === 'ValidRssItem';
 }
 
 export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;

@@ -3,12 +3,22 @@ import { sortBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
 import { makeErr, Result } from '../shared/lang';
-import { isValidRssItem, RssItem, ValidRssItem } from '../shared/rss-item';
+import { RssItem } from '../shared/rss-item';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
-  validItems: RssItem[];
+  validItems: ValidStoredRssItem[];
   invalidItems: InvalidStoredRssItem[];
+}
+
+export interface ValidStoredRssItem {
+  kind: 'ValidStoredRssItem';
+  item: RssItem;
+  fileName: string;
+}
+
+function isValidStoredRssItem(value: any): value is ValidStoredRssItem {
+  return value.kind === 'ValidStoredRssItem';
 }
 
 interface InvalidStoredRssItem {
@@ -21,7 +31,7 @@ function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
   return value.kind === 'InvalidStoredRssItem';
 }
 
-export function getRssItems(
+export function readStoredRssItems(
   dataDir: DataDir,
   readFileFn: ReadFileFn = readFile,
   listFilesFn: ListFilesFn = listFiles
@@ -38,14 +48,10 @@ export function getRssItems(
   const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const rssItems = fileNames
     .filter((fileName) => fileNameFormat.test(fileName))
-    .map((fileName) => readFileFn(`${inboxDirPath}/${fileName}`))
-    .map((fileConten) => makeRssItemFromInboxFile(fileConten));
+    .map((fileName) => [fileName, readFileFn(`${inboxDirPath}/${fileName}`)])
+    .map(([fileName, fileConten]) => makeStoredRssItem(fileName, fileConten));
 
-  const validItems = rssItems
-    .filter(isValidRssItem)
-    .map((v) => v.value)
-    .sort(sortBy((i) => i.pubDate));
-
+  const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
   const invalidItems = rssItems.filter(isInvalidStoredRssItem);
 
   return {
@@ -55,42 +61,40 @@ export function getRssItems(
   };
 }
 
-export function makeRssItemFromInboxFile(json: string): ValidRssItem | InvalidStoredRssItem {
-  const makeInvalidStoredRssItem = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
+export function makeStoredRssItem(fileName: string, json: string): ValidStoredRssItem | InvalidStoredRssItem {
+  const invalid = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
+
   try {
     let { title, content, author, pubDate, link } = JSON.parse(json);
 
     if (!title || typeof title !== 'string') {
-      return makeInvalidStoredRssItem('The "title" property is not a present string');
+      return invalid('The "title" property is not a present string');
     }
 
     if (!content || typeof content !== 'string') {
-      return makeInvalidStoredRssItem('The "content" property is not a present string');
+      return invalid('The "content" property is not a present string');
     }
 
     if (!author || typeof author !== 'string') {
-      return makeInvalidStoredRssItem('The "author" property is not a present string');
+      return invalid('The "author" property is not a present string');
     }
 
     pubDate = new Date(pubDate);
 
     if (pubDate.toString() === 'Invalid Date') {
-      return makeInvalidStoredRssItem('The "pubDate" property is not a valid JSON Date string');
+      return invalid('The "pubDate" property is not a valid JSON Date string');
     }
 
     try {
       link = new URL(link);
     } catch (error) {
-      return makeInvalidStoredRssItem('The "link" property is not a valid URL');
+      return invalid('The "link" property is not a valid URL');
     }
 
-    const value: RssItem = { title, content, author, pubDate, link };
+    const item: RssItem = { title, content, author, pubDate, link };
 
-    return {
-      kind: 'ValidRssItem',
-      value,
-    };
+    return { kind: 'ValidStoredRssItem', item, fileName };
   } catch (error) {
-    return makeInvalidStoredRssItem('Could not parse JSON');
+    return invalid('Could not parse JSON');
   }
 }

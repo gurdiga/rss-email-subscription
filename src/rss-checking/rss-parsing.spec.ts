@@ -1,8 +1,15 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../shared/lang';
-import { RssItem, ValidRssItem } from '../shared/rss-item';
-import { buildRssItem, parseRssItems, RssParseResult, ParsedRssItem, BuildRssItemFn } from './rss-parsing';
+import { RssItem } from '../shared/rss-item';
+import {
+  buildRssItem,
+  parseRssItems,
+  RssParseResult,
+  ParsedRssItem,
+  BuildRssItemFn,
+  ValidRssItem,
+} from './rss-parsing';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');

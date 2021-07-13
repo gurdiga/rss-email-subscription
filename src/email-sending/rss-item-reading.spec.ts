@@ -4,10 +4,9 @@ import { sortBy } from '../shared/array-utils';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ListFilesFn, ReadFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
-import { RssItem, ValidRssItem } from '../shared/rss-item';
-import { getRssItems, makeRssItemFromInboxFile, RssReadingResult } from './rss-item-reading';
+import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
-describe(getRssItems.name, () => {
+describe(readStoredRssItems.name, () => {
   const dataDirPathString = '/some/path';
   const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
 
@@ -61,7 +60,7 @@ describe(getRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
     expect(actualDirPath).to.equal('/some/path/inbox');
   });
 
@@ -86,7 +85,7 @@ describe(getRssItems.name, () => {
       ],
     };
 
-    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
   });
 
   it('also returns the files with invalid data', () => {
@@ -110,7 +109,7 @@ describe(getRssItems.name, () => {
       ],
     };
 
-    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
   });
 
   it('ignores files that do not match expected naming convention', () => {
@@ -122,17 +121,19 @@ describe(getRssItems.name, () => {
     const mockListFilesFn = makeMockListFilesFn(mockFilesWithInvalidItems);
     const mockReadFileFn = makeMockReadFileFn(mockFilesWithInvalidItems);
 
-    const expectedResul: RssReadingResult = {
+    const expectedResult: RssReadingResult = {
       kind: 'RssReadingResult',
       validItems: mockValidItems(mockFiles),
       invalidItems: [],
     };
 
-    expect(getRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when data/inbox does not exist', () => {
-    expect(getRssItems(mockDataDir)).to.deep.equal(makeErr(`The ${mockDataDir.value}/inbox directory does not exist`));
+    expect(readStoredRssItems(mockDataDir)).to.deep.equal(
+      makeErr(`The ${mockDataDir.value}/inbox directory does not exist`)
+    );
   });
 
   function makeMockReadFileFn(mockFiles: MockFile[]): ReadFileFn {
@@ -147,13 +148,14 @@ describe(getRssItems.name, () => {
     };
   }
 
-  function mockValidItems(mockFiles: MockFile[]): RssItem[] {
+  function mockValidItems(mockFiles: MockFile[]): ValidStoredRssItem[] {
     return mockFiles
-      .map((f) => (makeRssItemFromInboxFile(f.fileContent) as ValidRssItem).value)
-      .sort(sortBy((i) => i.pubDate));
+      .map((f) => makeStoredRssItem(f.fileName, f.fileContent) as ValidStoredRssItem)
+      .sort(sortBy(({ item }) => item.pubDate));
   }
 
-  describe(makeRssItemFromInboxFile.name, () => {
+  describe(makeStoredRssItem.name, () => {
+    const fileName = `rss-item-checksum.json`;
     const data = {
       title: 'Welcome to Jekyll!',
       content:
@@ -165,20 +167,21 @@ describe(getRssItems.name, () => {
 
     it('returns a ValidRssItem value from a valid JSON string', () => {
       const json = JSON.stringify(data);
-      const expectedResult: ValidRssItem = {
-        kind: 'ValidRssItem',
-        value: {
+      const expectedResult: ValidStoredRssItem = {
+        kind: 'ValidStoredRssItem',
+        item: {
           ...data,
           pubDate: new Date(data.pubDate),
           link: new URL(data.link),
         },
+        fileName,
       };
 
-      expect(makeRssItemFromInboxFile(json)).to.deep.equal(expectedResult);
+      expect(makeStoredRssItem(fileName, json)).to.deep.equal(expectedResult);
     });
 
     it('returns an Err value when aything is wrong or missing', () => {
-      const result = (data: object) => makeRssItemFromInboxFile(JSON.stringify(data));
+      const result = (data: object) => makeStoredRssItem(fileName, JSON.stringify(data));
       const err = (data: object, reason: string) => ({
         kind: 'InvalidStoredRssItem',
         reason,

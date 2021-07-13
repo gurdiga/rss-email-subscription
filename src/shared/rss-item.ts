@@ -5,12 +5,3 @@ export interface RssItem {
   pubDate: Date;
   link: URL;
 }
-
-export interface ValidRssItem {
-  kind: 'ValidRssItem';
-  value: RssItem;
-}
-
-export function isValidRssItem(value: any): value is ValidRssItem {
-  return value.kind === 'ValidRssItem';
-}

@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { getEmails } from './emails';
-import { getRssItems } from './rss-item-reading';
+import { readStoredRssItems } from './rss-item-reading';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
@@ -37,7 +37,7 @@ async function main(): Promise<number> {
     return 3;
   }
 
-  const rssItemReadingResult = getRssItems(dataDir);
+  const rssItemReadingResult = readStoredRssItems(dataDir);
 
   if (isErr(rssItemReadingResult)) {
     console.error(`\nERROR: reading RSS items: ${rssItemReadingResult.reason}`);
@@ -55,8 +55,20 @@ async function main(): Promise<number> {
 
   console.log({ validEmails, validItems });
 
-  // TODO: Process post files in data/inbox:
-  // - send each post to each of the emails
+  for (const item of validItems) {
+    for (const email of validEmails) {
+      // moveItemToOutbox(dataDir, item);
+      // sendItem(email, item);
+      // moveItemToSent(dataDir, item);
+      // purgeOldSentItems(dataDir);
+    }
+  }
+
+  // sendEmail:
+  // - move the item to data/outbox
+  // - record each delivery status within the item
+  // - move the item to data/sent
+  // - purge old items from data/sent
 
   return 0;
 }
