@@ -51,7 +51,7 @@ describe(readStoredRssItems.name, () => {
 
   it('returns the list of items in data/inbox ordered by pubDate', () => {
     let actualDirPath = '';
-    const mockListFilesFn = makeMockListFilesFn(mockFiles, (path: string) => (actualDirPath = path));
+    const mockListFilesFn = makeMockListFilesFn(mockFiles, (path) => (actualDirPath = path));
     const mockReadFileFn = makeMockReadFileFn(mockFiles);
 
     const expectedResul: RssReadingResult = {
@@ -137,11 +137,11 @@ describe(readStoredRssItems.name, () => {
   });
 
   function makeMockReadFileFn(mockFiles: MockFile[]): ReadFileFn {
-    return (path: string) => mockFiles.find((f) => f.fileName === basename(path))?.fileContent!;
+    return (path) => mockFiles.find((f) => f.fileName === basename(path))?.fileContent!;
   }
 
   function makeMockListFilesFn(mockFiles: MockFile[], callback: (path: string) => void = () => {}): ListFilesFn {
-    return (path: string) => {
+    return (path) => {
       callback(path);
 
       return mockFiles.map((f) => f.fileName);
