@@ -2,9 +2,9 @@ import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { FileExistsFn, MkdirpFn, MoveFileFn } from '../shared/io';
 import { ValidStoredRssItem } from './rss-item-reading';
-import { moveItemToOutbox } from './rss-item-sending';
+import { moveItemToOutbox, moveItemToSent } from './rss-item-sending';
 
-describe(moveItemToOutbox.name, () => {
+describe('item sending', () => {
   const dataDirPathString = '/some/path';
   const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
 
@@ -22,46 +22,94 @@ describe(moveItemToOutbox.name, () => {
     fileName: itemFileName,
   };
 
-  it('moves the given item from data/inbox to data/outbox', () => {
-    const mockFileExistsFn: FileExistsFn = () => true;
+  describe(moveItemToOutbox.name, () => {
+    it('moves the given item from data/inbox to data/outbox', () => {
+      const mockFileExistsFn: FileExistsFn = () => true;
 
-    const movedFiles: { source: string; destination: string }[] = [];
-    const mockMoveFileFn: MoveFileFn = (source, destination) => movedFiles.push({ source, destination });
+      const movedFiles: { source: string; destination: string }[] = [];
+      const mockMoveFileFn: MoveFileFn = (source, destination) => movedFiles.push({ source, destination });
 
-    moveItemToOutbox(mockDataDir, item, mockFileExistsFn, mockMoveFileFn);
-
-    expect(movedFiles).to.deep.equal([
-      {
-        source: `${dataDirPathString}/inbox/${itemFileName}`,
-        destination: `${dataDirPathString}/outbox/${itemFileName}`,
-      },
-    ]);
-  });
-
-  it('throws when the source item does not exist', () => {
-    const itemFilePath = `${dataDirPathString}/inbox/${itemFileName}`;
-    const mockFileExistsFn: FileExistsFn = (path) => path !== itemFilePath;
-    let invokedMoveFile = false;
-    const mockMoveFileFn: MoveFileFn = (_source, _destination) => (invokedMoveFile = true);
-
-    expect(() => {
       moveItemToOutbox(mockDataDir, item, mockFileExistsFn, mockMoveFileFn);
-    }).to.throw(`moveItemToOutbox: Source item does not exist: ${itemFilePath}`);
 
-    expect(invokedMoveFile).to.be.false;
+      expect(movedFiles).to.deep.equal([
+        {
+          source: `${dataDirPathString}/inbox/${itemFileName}`,
+          destination: `${dataDirPathString}/outbox/${itemFileName}`,
+        },
+      ]);
+    });
+
+    it('throws when the source item does not exist', () => {
+      const itemFilePath = `${dataDirPathString}/inbox/${itemFileName}`;
+      const mockFileExistsFn: FileExistsFn = (path) => path !== itemFilePath;
+      let invokedMoveFile = false;
+      const mockMoveFileFn: MoveFileFn = (_source, _destination) => (invokedMoveFile = true);
+
+      expect(() => {
+        moveItemToOutbox(mockDataDir, item, mockFileExistsFn, mockMoveFileFn);
+      }).to.throw(`moveItem: Source item does not exist: ${itemFilePath}`);
+
+      expect(invokedMoveFile).to.be.false;
+    });
+
+    it('it creates the data/outbox directory when it doesn’t yet exist', () => {
+      const outboxPath = `${dataDirPathString}/outbox`;
+      const mockFileExistsFn: FileExistsFn = (path) => path !== outboxPath;
+
+      const mockMoveFileFn: MoveFileFn = (_source, _destination) => {};
+
+      let createdDirectory = '';
+      const mockMkdirpFn: MkdirpFn = (path) => (createdDirectory = path);
+
+      moveItemToOutbox(mockDataDir, item, mockFileExistsFn, mockMoveFileFn, mockMkdirpFn);
+
+      expect(createdDirectory).to.equal(outboxPath);
+    });
   });
 
-  it('it creates the data/outbox directory when it doesn’t yet exist', () => {
-    const outboxPath = `${dataDirPathString}/outbox`;
-    const mockFileExistsFn: FileExistsFn = (path) => path !== outboxPath;
+  describe(moveItemToSent.name, () => {
+    it('moves the given item from data/outbox to data/sent', () => {
+      const mockFileExistsFn: FileExistsFn = () => true;
 
-    const mockMoveFileFn: MoveFileFn = (_source, _destination) => {};
+      const movedFiles: { source: string; destination: string }[] = [];
+      const mockMoveFileFn: MoveFileFn = (source, destination) => movedFiles.push({ source, destination });
 
-    let createdDirectory = '';
-    const mockMkdirpFn: MkdirpFn = (path) => (createdDirectory = path);
+      moveItemToSent(mockDataDir, item, mockFileExistsFn, mockMoveFileFn);
 
-    moveItemToOutbox(mockDataDir, item, mockFileExistsFn, mockMoveFileFn, mockMkdirpFn);
+      expect(movedFiles).to.deep.equal([
+        {
+          source: `${dataDirPathString}/outbox/${itemFileName}`,
+          destination: `${dataDirPathString}/sent/${itemFileName}`,
+        },
+      ]);
+    });
 
-    expect(createdDirectory).to.equal(outboxPath);
+    it('throws when the source item does not exist', () => {
+      const itemFilePath = `${dataDirPathString}/outbox/${itemFileName}`;
+      const mockFileExistsFn: FileExistsFn = (path) => path !== itemFilePath;
+
+      let invokedMoveFile = false;
+      const mockMoveFileFn: MoveFileFn = (_source, _destination) => (invokedMoveFile = true);
+
+      expect(() => {
+        moveItemToSent(mockDataDir, item, mockFileExistsFn, mockMoveFileFn);
+      }).to.throw(`moveItem: Source item does not exist: ${itemFilePath}`);
+
+      expect(invokedMoveFile).to.be.false;
+    });
+
+    it('it creates the data/sent directory when it doesn’t yet exist', () => {
+      const outboxPath = `${dataDirPathString}/sent`;
+      const mockFileExistsFn: FileExistsFn = (path) => path !== outboxPath;
+
+      const mockMoveFileFn: MoveFileFn = (_source, _destination) => {};
+
+      let createdDirectory = '';
+      const mockMkdirpFn: MkdirpFn = (path) => (createdDirectory = path);
+
+      moveItemToSent(mockDataDir, item, mockFileExistsFn, mockMoveFileFn, mockMkdirpFn);
+
+      expect(createdDirectory).to.equal(outboxPath);
+    });
   });
 });

@@ -9,17 +9,43 @@ export function moveItemToOutbox(
   moveFileFn: MoveFileFn = moveFile,
   mkdirpFn: MkdirpFn = mkdirp
 ): void {
-  const outboxPath = `${dataDir.value}/outbox`;
+  moveItem(dataDir, item, 'inbox', 'outbox', fileExistsFn, moveFileFn, mkdirpFn);
+}
 
-  if (!fileExistsFn(outboxPath)) {
-    mkdirpFn(outboxPath);
+export function moveItemToSent(
+  dataDir: DataDir,
+  item: ValidStoredRssItem,
+  fileExistsFn: FileExistsFn = fileExists,
+  moveFileFn: MoveFileFn = moveFile,
+  mkdirpFn: MkdirpFn = mkdirp
+): void {
+  moveItem(dataDir, item, 'outbox', 'sent', fileExistsFn, moveFileFn, mkdirpFn);
+}
+
+type SourceDirName = 'inbox' | 'outbox';
+type DestinationDirName = 'outbox' | 'sent';
+
+function moveItem(
+  dataDir: DataDir,
+  item: ValidStoredRssItem,
+  source: SourceDirName,
+  destination: DestinationDirName,
+  fileExistsFn: FileExistsFn = fileExists,
+  moveFileFn: MoveFileFn = moveFile,
+  mkdirpFn: MkdirpFn = mkdirp
+): void {
+  const sourceDirPath = `${dataDir.value}/${source}`;
+  const destinationDirPath = `${dataDir.value}/${destination}`;
+
+  if (!fileExistsFn(destinationDirPath)) {
+    mkdirpFn(destinationDirPath);
   }
 
-  const sourceFilePath = `${dataDir.value}/inbox/${item.fileName}`;
+  const sourceFilePath = `${sourceDirPath}/${item.fileName}`;
 
   if (fileExistsFn(sourceFilePath)) {
-    moveFileFn(sourceFilePath, `${outboxPath}/${item.fileName}`);
+    moveFileFn(sourceFilePath, `${destinationDirPath}/${item.fileName}`);
   } else {
-    throw new Error(`moveItemToOutbox: Source item does not exist: ${sourceFilePath}`);
+    throw new Error(`${moveItem.name}: Source item does not exist: ${sourceFilePath}`);
   }
 }
