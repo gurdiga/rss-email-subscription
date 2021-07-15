@@ -1,12 +1,18 @@
 # rss-email-subscription
 
-We have a blog and a list of email addresses. We want an app that would watch the blog’s RSS feed, and would email the new blog posts to the aforementioned email addresses.
+Say we have a blog and a list of email addresses. We want an app that would watch the blog’s RSS feed, and would email the new blog posts to every email address.
 
-Could I set up a cron job that would run an app/script to check the RSS and then send the emails on any news?
+## 2 pieces:
 
-It seem like I need 2 pieces:
+1. `src/rss-checking/main.ts`: an app that fetches the given RSS feed, and records the new items; run with `make run-rss-checking`.
+2. `src/email-sending/main.ts`: an app that knows the email addresses, and delivers the new items; run with `make run-email-sending`; SMTP config comes from envars.
 
-1. an app to keep track of the RSS, and yield the new content;
-   - https://www.npmjs.com/package/rss-parser
-   - https://www.npmjs.com/package/rss-watcher
-2. an app to keep track of emails, and send the new content to emails.
+Somehow I managed to TDD everything following the advice from GeePaw Hill.
+
+## TODO:
+
+- Setup a sample Docker composition with:
+  - an SMTP service to do the delivering; it has to be properly configured with SPF and stuff.
+  - a cron service; it will run the above 2 pieces once a day, or maybe more often.
+- Collect new email addresses from blog subscribers.
+- Allow adding multiple feed URLs and lists of email addresses.
