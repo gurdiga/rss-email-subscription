@@ -1,5 +1,6 @@
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
+import { logError, logWarning } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { selectNewItems } from './item-selection';
@@ -14,8 +15,8 @@ async function main(): Promise<number | undefined> {
   const argParsingResult = parseArgs(urlString, dataDirString);
 
   if (isErr(argParsingResult)) {
-    console.error(`\nERROR: args: ${argParsingResult.reason}`);
-    console.error(`USAGE: ${programFilePath(process)} <RSS_URL> <DATA_DIR>\n`);
+    logError(`invalid args: ${argParsingResult.reason}`, { urlString, dataDirString });
+    logError(`USAGE: ${programFilePath(process)} <RSS_URL> <DATA_DIR>`);
     return 1;
   }
 
@@ -23,14 +24,14 @@ async function main(): Promise<number | undefined> {
   const rssFetchingResult = await fetchRssResponse(url);
 
   if (isErr(rssFetchingResult)) {
-    console.error(`\nERROR: fetching RSS: ${rssFetchingResult.reason}\n`);
+    logError(`fetching RSS: ${rssFetchingResult.reason}`, { url });
     return 2;
   }
 
   const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
 
   if (isErr(lastPostTimestampParsingResult)) {
-    console.error(`\nERROR: reading last post timestamp: ${lastPostTimestampParsingResult.reason}\n`);
+    logError(`reading last post timestamp: ${lastPostTimestampParsingResult.reason}`, { dataDir });
     return 3;
   }
 
@@ -39,7 +40,7 @@ async function main(): Promise<number | undefined> {
   const rssParsingResult = await parseRssItems(rssFetchingResult);
 
   if (isErr(rssParsingResult)) {
-    console.error(`\nERROR: parsing RSS items: ${rssParsingResult.reason}\n`);
+    logError(`parsing RSS items: ${rssParsingResult.reason}`);
     return 4;
   }
 
@@ -49,18 +50,22 @@ async function main(): Promise<number | undefined> {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
-    console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedItems}\n`);
+    logWarning(`${count} invalid RSS items: ${formattedItems}\n`);
   }
 
   if (isEmpty(validItems)) {
-    console.error(`\nERROR: no valid RSS items\n`);
+    logError(`no valid RSS items`, { url });
     return 5;
   }
 
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
 
-  recordNewRssItems(dataDir, newRssItems);
-  recordLastPostTimestamp(dataDir, newRssItems);
+  try {
+    recordNewRssItems(dataDir, newRssItems);
+    recordLastPostTimestamp(dataDir, newRssItems);
+  } catch (error) {
+    logError(error.message, { url, dataDir });
+  }
 }
 
 main().then((exitCode) => process.exit(exitCode));

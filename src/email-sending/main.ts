@@ -5,70 +5,71 @@ import { parseArgs } from './args';
 import { getEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { sendItem } from './item-sending';
+import { logError, logInfo, logWarning } from '../shared/logging';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
   const argParsingResult = parseArgs(dataDirString);
 
   if (isErr(argParsingResult)) {
-    console.error(`\nERROR: args: ${argParsingResult.reason}`);
-    console.error(`USAGE: ${programFilePath(process)} <DATA_DIR>\n`);
+    logError(`invalid args: ${argParsingResult.reason}`, { dataDirString });
+    logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
 
   const [dataDir] = argParsingResult.values;
 
-  console.log(`INFO: processing data dir ${dataDir.value}`);
+  logInfo(`processing data dir ${dataDir.value}`, { dataDirString });
 
   const emailReadingResult = await getEmails(dataDir);
 
   if (isErr(emailReadingResult)) {
-    console.error(`\nERROR: reading emails: ${emailReadingResult.reason}\n`);
+    logError(`reading emails: ${emailReadingResult.reason}`, { dataDirString });
     return 2;
   }
 
   const { validEmails, invalidEmails } = emailReadingResult;
 
-  console.log(`INFO: Found ${validEmails.length} emails.`);
+  logInfo(`Found ${validEmails.length} emails.`, { dataDirString });
 
   if (!isEmpty(invalidEmails)) {
     const count = invalidEmails.length;
     const formattedEmails = JSON.stringify(invalidEmails, null, 2);
 
-    console.warn(`\nWARNING: ${count} invalid RSS items: ${formattedEmails}\n`);
+    logWarning(`${count} invalid RSS items: ${formattedEmails}`, { dataDirString });
   }
 
   if (isEmpty(validEmails)) {
-    console.error(`\nERROR: no valid emails\n`);
+    logError(`no valid emails`, { dataDirString });
     return 3;
   }
 
   const rssItemReadingResult = readStoredRssItems(dataDir);
 
   if (isErr(rssItemReadingResult)) {
-    console.error(`\nERROR: reading RSS items: ${rssItemReadingResult.reason}`);
+    logError(`reading RSS items: ${rssItemReadingResult.reason}`, { dataDirString });
     return 2;
   }
 
   const { validItems, invalidItems } = rssItemReadingResult;
 
-  console.log(`INFO: Found ${validItems.length} RSS items to send.`);
+  logInfo(`Found ${validItems.length} RSS items to send.`, { dataDirString });
 
   if (!isEmpty(invalidItems)) {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
-    console.warn(`\nWARNING: ${count} invalid RSS items read: ${formattedItems}\n`);
+    logWarning(`${count} invalid RSS items read: ${formattedItems}`, { dataDirString });
   }
 
   for (const item of validItems) {
     for (const email of validEmails) {
-      console.log(`INFO: Sending "${item.item.title}" to ${email.value}`);
+      logInfo(`Sending "${item.item.title}" to ${email.value}`);
 
       try {
         await sendItem(email, item.item);
       } catch (error) {
-        console.error(`ERROR: sending email: ${error.message}`);
+        logError(`failed sending email: ${error.message}`);
       }
     }
   }
