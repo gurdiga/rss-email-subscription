@@ -2,14 +2,18 @@ import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn } from './email-delivery';
 import { EmailAddress } from './emails';
 
-export function sendItem(
+export async function sendItem(
   emailAddress: EmailAddress,
   item: RssItem,
   deliverEmailFn: DeliverEmailFn = deliverEmail
-): void {
+): Promise<void> {
   const emailMessage = makeEmailMessage(item);
 
-  deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody);
+  try {
+    await deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody);
+  } catch (error) {
+    throw new Error(`Could not deliver email to ${emailAddress.value}: ${error.message}`);
+  }
 }
 
 interface EmailMessage {
@@ -20,7 +24,6 @@ interface EmailMessage {
 export type MakeEmailMessageFn = (item: RssItem) => EmailMessage;
 
 export function makeEmailMessage(item: RssItem): EmailMessage {
-  // TODO
   return {
     subject: item.title,
     htmlBody: item.content,

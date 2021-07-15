@@ -16,17 +16,34 @@ describe('item-sending', () => {
   };
 
   describe(sendItem.name, () => {
-    it('delivers an email message with content from the given RssItem', () => {
+    it('delivers an email message with content from the given RssItem', async () => {
       let [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = ['', '', ''];
       const mockDeliverEmailFn: DeliverEmailFn = async (address, subject, body) => {
         [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = [address, subject, body];
       };
 
-      sendItem(emailAddress, item, mockDeliverEmailFn);
+      await sendItem(emailAddress, item, mockDeliverEmailFn);
 
       expect(deliveredToAddress).to.equal(emailAddress.value);
       expect(deliveredSubject).to.equal(item.title);
       expect(deliveredHtmlBody).to.equal(item.content);
+    });
+
+    it('throws meaningfully when delivery fails', async () => {
+      const mockError = new Error('Cant!');
+      const mockDeliverEmailFn: DeliverEmailFn = () => {
+        throw mockError;
+      };
+
+      let actualError = new Error('[No error]');
+
+      try {
+        await sendItem(emailAddress, item, mockDeliverEmailFn);
+      } catch (error) {
+        actualError = error;
+      }
+
+      expect(actualError.message).to.equal(`Could not deliver email to ${emailAddress.value}: ${mockError.message}`);
     });
   });
 

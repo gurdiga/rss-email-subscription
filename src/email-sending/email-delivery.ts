@@ -22,7 +22,7 @@ export async function deliverEmail(address: string, subject: string, htmlBody: s
     from: requireEnvVar('FROM_EMAIL_ADDRESS'),
     to: address,
     subject,
-    text: 'Please use an HTML-capable email',
+    text: 'Please use an HTML-capable email reader',
     html: htmlBody,
   });
 }

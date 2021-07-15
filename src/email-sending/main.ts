@@ -5,6 +5,7 @@ import { parseArgs } from './args';
 import { getEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { moveItemToOutbox, moveItemToSent } from './rss-item-movement';
+import { sendItem } from './item-sending';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
@@ -59,7 +60,7 @@ async function main(): Promise<number> {
   for (const item of validItems) {
     for (const email of validEmails) {
       moveItemToOutbox(dataDir, item);
-      // sendItem(email, item);
+      await sendItem(email, item.item);
       moveItemToSent(dataDir, item);
       // purgeOldSentItems(dataDir);
     }
