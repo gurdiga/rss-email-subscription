@@ -7,7 +7,9 @@ Say we have a blog and a list of email addresses. We want an app that would watc
 1. `src/rss-checking/main.ts`: an app that fetches the given RSS feed, and records the new items; run with `make run-rss-checking`.
 2. `src/email-sending/main.ts`: an app that knows the email addresses, and delivers the new items; run with `make run-email-sending`; SMTP config comes from envars.
 
-Somehow I managed to TDD everything following the advice from GeePaw Hill.
+Somehow I managed to gray-box TDD everything following the [advice from GeePaw Hill][0].
+
+[0]: https://www.geepawhill.org/2020/06/12/microtest-tdd-more-definition/
 
 ## TODO:
 
