@@ -4,7 +4,6 @@ import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
 import { getEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { moveItemToOutbox, moveItemToSent } from './rss-item-movement';
 import { sendItem } from './item-sending';
 
 async function main(): Promise<number> {
@@ -21,7 +20,7 @@ async function main(): Promise<number> {
   const emailReadingResult = await getEmails(dataDir);
 
   if (isErr(emailReadingResult)) {
-    console.error(`\nERROR: reading emails: ${emailReadingResult.reason}`);
+    console.error(`\nERROR: reading emails: ${emailReadingResult.reason}\n`);
     return 2;
   }
 
@@ -59,10 +58,13 @@ async function main(): Promise<number> {
 
   for (const item of validItems) {
     for (const email of validEmails) {
-      moveItemToOutbox(dataDir, item);
-      await sendItem(email, item.item);
-      moveItemToSent(dataDir, item);
-      // purgeOldSentItems(dataDir);
+      console.log(`INFO: Sending "${item.item.title}" to ${email.value}`);
+
+      try {
+        await sendItem(email, item.item);
+      } catch (error) {
+        console.error(`ERROR: sending email: ${error.message}`);
+      }
     }
   }
 
