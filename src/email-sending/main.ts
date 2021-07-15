@@ -17,6 +17,9 @@ async function main(): Promise<number> {
   }
 
   const [dataDir] = argParsingResult.values;
+
+  console.log(`INFO: processing data dir ${dataDir.value}`);
+
   const emailReadingResult = await getEmails(dataDir);
 
   if (isErr(emailReadingResult)) {
@@ -25,6 +28,8 @@ async function main(): Promise<number> {
   }
 
   const { validEmails, invalidEmails } = emailReadingResult;
+
+  console.log(`INFO: Found ${validEmails.length} emails.`);
 
   if (!isEmpty(invalidEmails)) {
     const count = invalidEmails.length;
@@ -47,14 +52,14 @@ async function main(): Promise<number> {
 
   const { validItems, invalidItems } = rssItemReadingResult;
 
+  console.log(`INFO: Found ${validItems.length} RSS items to send.`);
+
   if (!isEmpty(invalidItems)) {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
     console.warn(`\nWARNING: ${count} invalid RSS items read: ${formattedItems}\n`);
   }
-
-  console.log({ validEmails, validItems });
 
   for (const item of validItems) {
     for (const email of validEmails) {
