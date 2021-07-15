@@ -18,3 +18,15 @@ export function log(
 
   stdOutPrinterFn(message);
 }
+
+export function logInfo(message: LogRecord['message'], data?: LogRecord['data']): void {
+  log({ severity: 'info', message, data });
+}
+
+export function logWarning(message: LogRecord['message'], data?: LogRecord['data']): void {
+  log({ severity: 'warning', message, data });
+}
+
+export function logError(message: LogRecord['message'], data?: LogRecord['data']): void {
+  log({ severity: 'error', message, data });
+}
