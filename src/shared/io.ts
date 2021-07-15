@@ -37,3 +37,15 @@ export type MoveFileFn = (source: string, destination: string) => void;
 export function moveFile(source: string, destination: string): void {
   renameSync(source, destination);
 }
+
+export type StdOutPrinterFn = (message: string) => void;
+
+export function stdOutPrinter(message: string): void {
+  console.log(message);
+}
+
+export type TimestampFn = () => string;
+
+export function timestamp(): string {
+  return new Date().toJSON();
+}
