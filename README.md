@@ -18,3 +18,11 @@ Somehow I managed to gray-box TDD everything following the [advice from GeePaw H
   - a cron service; it will run the above 2 pieces once a day, or maybe more often.
 - Collect new email addresses from blog subscribers.
 - Allow adding multiple feed URLs and lists of email addresses.
+
+### Notes
+
+- Add a simple template to `makeEmailMessage`.
+- Docker image for SMTP?
+  - https://github.com/bokysan/docker-postfix?
+  - https://github.com/WeAreGenki/docker-smtp?
+- Docker image for cron + node: https://hub.docker.com/_/node?
