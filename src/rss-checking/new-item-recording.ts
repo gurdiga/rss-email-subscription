@@ -1,5 +1,5 @@
 import path from 'path';
-import crypto from 'crypto';
+import { HashFn, md5 } from '../shared/crypto';
 import { DataDir } from '../shared/data-dir';
 import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
 import { RssItem } from '../shared/rss-item';
@@ -35,16 +35,11 @@ export function recordNewRssItems(
   });
 }
 
-type HashFn = (input: string) => string;
-
 export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = md5): string {
-  const hash = hashFn(item.title + item.content + item.pubDate.toJSON());
+  const hashingSeed = 'item-name-seed';
+  const hash = hashFn(item.title + item.content + item.pubDate.toJSON(), hashingSeed);
 
   return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
-}
-
-function md5(input: string): string {
-  return crypto.createHash('sha256').update(input, 'utf8').digest('hex');
 }
