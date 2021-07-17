@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn } from './email-delivery';
 import { EmailAddress, makeEmailAddress } from './emails';
-import { makeEmailMessage, sendItem } from './item-sending';
+import { footerAd, makeEmailMessage, sendItem } from './item-sending';
 
 describe('item-sending', () => {
   const emailAddress = makeEmailAddress('some@email.com') as EmailAddress;
@@ -26,7 +26,7 @@ describe('item-sending', () => {
 
       expect(deliveredToAddress).to.equal(emailAddress.value);
       expect(deliveredSubject).to.equal(item.title);
-      expect(deliveredHtmlBody).to.equal(item.content);
+      expect(deliveredHtmlBody).to.contain(item.content);
     });
 
     it('throws meaningfully when delivery fails', async () => {
@@ -49,10 +49,13 @@ describe('item-sending', () => {
 
   describe(makeEmailMessage.name, () => {
     it('returns an EmailMessage value for the given RssItem', () => {
-      const emailMessage = makeEmailMessage(item);
+      const mockUnsubscribeLink = 'A link to unsubscribe';
+      const emailMessage = makeEmailMessage(item, mockUnsubscribeLink);
 
       expect(emailMessage.subject).to.equal(item.title);
-      expect(emailMessage.htmlBody).to.equal(item.content);
+      expect(emailMessage.htmlBody).to.contain(item.content);
+      expect(emailMessage.htmlBody).to.contain(footerAd, 'includes the footer ad');
+      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeLink, 'the unscubscribe link');
     });
   });
 });

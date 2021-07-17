@@ -23,9 +23,15 @@ interface EmailMessage {
 
 export type MakeEmailMessageFn = (item: RssItem) => EmailMessage;
 
-export function makeEmailMessage(item: RssItem): EmailMessage {
+export const footerAd = `
+  <footer>
+    <p>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></p>
+  </footer>
+`;
+
+export function makeEmailMessage(item: RssItem, unsubscribeLink = 'TODO: Unsubscribe'): EmailMessage {
   return {
     subject: item.title,
-    htmlBody: item.content,
+    htmlBody: item.content + footerAd + unsubscribeLink,
   };
 }
