@@ -68,6 +68,7 @@ async function main(): Promise<number> {
 
       try {
         await sendItem(email, item.item);
+        // TODO rm item
       } catch (error) {
         logError(`failed sending email: ${error.message}`);
       }
