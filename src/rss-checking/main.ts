@@ -1,8 +1,9 @@
 import { isEmpty } from '../shared/array-utils';
+import { makeDataDir } from '../shared/data-dir';
+import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
-import { logError, logWarning } from '../shared/logging';
-import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
-import { parseArgs } from './args';
+import { logError, logInfo, logWarning } from '../shared/logging';
+import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
@@ -10,21 +11,26 @@ import { parseRssItems } from './rss-parsing';
 import { fetchRssResponse } from './rss-response';
 
 async function main(): Promise<number | undefined> {
-  const urlString = getFirstCliArg(process);
-  const dataDirString = getSecondCliArg(process);
-  const argParsingResult = parseArgs(urlString, dataDirString);
+  const dataDirString = getFirstCliArg(process);
+  const dataDir = makeDataDir(dataDirString);
 
-  if (isErr(argParsingResult)) {
-    logError(`invalid args: ${argParsingResult.reason}`, { urlString, dataDirString });
-    logError(`USAGE: ${programFilePath(process)} <RSS_URL> <DATA_DIR>`);
+  if (isErr(dataDir)) {
+    logError(`invalid data dir: ${dataDir.reason}`, { dataDirString });
     return 1;
   }
 
-  const [url, dataDir] = argParsingResult.values;
+  const feedSettingsReadingResult = getFeedSettings(dataDir);
+
+  if (isErr(feedSettingsReadingResult)) {
+    logError(`invalid feed settings: ${feedSettingsReadingResult.reason}`, { dataDirString });
+    return 6;
+  }
+
+  const { url } = feedSettingsReadingResult;
   const rssFetchingResult = await fetchRssResponse(url);
 
   if (isErr(rssFetchingResult)) {
-    logError(`fetching RSS: ${rssFetchingResult.reason}`, { url });
+    logError(`fetching RSS: ${rssFetchingResult.reason}`, { url: feedSettingsReadingResult });
     return 2;
   }
 
@@ -54,7 +60,7 @@ async function main(): Promise<number | undefined> {
   }
 
   if (isEmpty(validItems)) {
-    logError(`no valid RSS items`, { url });
+    logError(`no valid RSS items`, { url: feedSettingsReadingResult });
     return 5;
   }
 
@@ -62,9 +68,12 @@ async function main(): Promise<number | undefined> {
 
   try {
     recordNewRssItems(dataDir, newRssItems);
+    logInfo(`Recorded ${newRssItems.length} items`);
+
     recordLastPostTimestamp(dataDir, newRssItems);
+    logInfo(`Recorded last post timestamp`);
   } catch (error) {
-    logError(error.message, { url, dataDir });
+    logError(error.message, { url: feedSettingsReadingResult, dataDir });
   }
 }
 
