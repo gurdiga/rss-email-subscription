@@ -1,6 +1,7 @@
 import Parser, { Item } from 'rss-parser';
-import { makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
+import { makeUrl } from '../shared/url';
 import { RssResponse } from './rss-response';
 
 export interface RssParseResult {
@@ -85,7 +86,12 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     return invalidRssItem('Post link is missing');
   }
 
-  const link = new URL(linkString, baseURL);
+  const link = makeUrl(linkString, baseURL);
+
+  if (isErr(link)) {
+    return invalidRssItem('Post link is not a valid URL');
+  }
+
   const pubDate = new Date(isoDate?.trim());
 
   if (pubDate.toString() === 'Invalid Date') {

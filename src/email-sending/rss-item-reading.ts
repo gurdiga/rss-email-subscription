@@ -2,8 +2,9 @@ import { RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
-import { makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
+import { makeUrl } from '../shared/url';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -85,9 +86,9 @@ export function makeStoredRssItem(fileName: string, json: string): ValidStoredRs
       return invalid('The "pubDate" property is not a valid JSON Date string');
     }
 
-    try {
-      link = new URL(link);
-    } catch (error) {
+    link = makeUrl(link);
+
+    if (isErr(link)) {
       return invalid('The "link" property is not a valid URL');
     }
 
