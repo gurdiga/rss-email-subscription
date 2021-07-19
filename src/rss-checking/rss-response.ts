@@ -7,7 +7,6 @@ export interface RssResponse {
   baseURL: URL;
 }
 
-// TODO: Move to shared/io?
 interface FetchResponse {
   headers: {
     get(name: string): string | null;

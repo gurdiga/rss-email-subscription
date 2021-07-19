@@ -9,28 +9,25 @@ export async function sendItem(
   deliverEmailFn: DeliverEmailFn = deliverEmail,
   hashFn: HashFn = md5
 ): Promise<void> {
-  // I need:
+  // To build the unsubscribe link I need:
   // - the blog to unsubscribe from: can be a seeded hash
   // - email to unsubscribe: can be a seeded hash
 
   /*
 
   It seems like I need a data/feed.json file like this:
-
   {
     "url": "https://example.com/feed.xml",
     "hashingSeed": "<random string>",
   }
 
   The data/emails.json needs to contain:
-
   {
     "<email-seeded-hash>": "email"
   }
 
-  ...and the EmailAddress needs to change to contain email’s hashed seed.
-
-  Then, the unsubscribe link can contain:
+  ...and the EmailAddress needs to change to contain email’s hashed
+  seed. Then, the unsubscribe link can contain:
 
   `${<blog-url-seeded-hash>}-${<email-seeded-hash>}`
 

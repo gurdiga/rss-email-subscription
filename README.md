@@ -13,6 +13,9 @@ Somehow I managed to gray-box TDD everything following the [advice from GeePaw H
 
 ## TODO:
 
+- Associated each email with a seeded hash;
+- Unsubscribe: How to find feed’s dataDir? One option would be to give the dataDir a unique name.
+- email-sending: purge the item after sending it;
 - Setup a sample Docker composition with:
   - an SMTP service to do the delivering; it has to be properly configured with SPF and stuff.
   - a cron service; it will run the above 2 pieces once a day, or maybe more often.
@@ -21,7 +24,6 @@ Somehow I managed to gray-box TDD everything following the [advice from GeePaw H
 
 ### Notes
 
-- Add a simple template to `makeEmailMessage`.
 - Docker image for SMTP?
   - https://github.com/bokysan/docker-postfix?
   - https://github.com/WeAreGenki/docker-smtp?
