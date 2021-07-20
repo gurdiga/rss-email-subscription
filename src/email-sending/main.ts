@@ -6,6 +6,7 @@ import { getEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
+import { deleteItem } from './item-cleanup';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
@@ -66,11 +67,17 @@ async function main(): Promise<number> {
     for (const email of validEmails) {
       logInfo(`Sending "${item.item.title}" to ${email.value}`);
 
+      // TODO: make sendItem return a Result<void> instead of throwing?
       try {
         await sendItem(email, item.item);
-        // TODO rm item
       } catch (error) {
         logError(`failed sending email: ${error.message}`);
+      }
+
+      const deletionResult = deleteItem(dataDir, item);
+
+      if (isErr(deletionResult)) {
+        logError(deletionResult.reason);
       }
     }
   }
