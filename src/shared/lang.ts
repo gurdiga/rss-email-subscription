@@ -6,7 +6,7 @@ export interface Err {
 }
 
 export function isErr(value: any): value is Err {
-  return value.kind === 'Err';
+  return value?.kind === 'Err';
 }
 
 export function makeErr(reason: string): Err {
