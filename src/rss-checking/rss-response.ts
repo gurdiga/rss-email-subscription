@@ -16,7 +16,7 @@ interface FetchResponse {
 
 type FetchFn = (url: URL) => Promise<FetchResponse>;
 
-export async function fetchRssResponse(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
+export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
   try {
     const response = await fetchFn(url);
     const contentType = response.headers.get('content-type')?.toLowerCase();

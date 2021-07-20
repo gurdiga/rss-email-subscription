@@ -3,12 +3,12 @@ import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { logError, logInfo, logWarning } from '../shared/logging';
-import { getFirstCliArg, programFilePath } from '../shared/process-utils';
+import { getFirstCliArg } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
-import { fetchRssResponse } from './rss-response';
+import { fetchRss } from './rss-response';
 
 async function main(): Promise<number | undefined> {
   const dataDirString = getFirstCliArg(process);
@@ -27,7 +27,7 @@ async function main(): Promise<number | undefined> {
   }
 
   const { url } = feedSettingsReadingResult;
-  const rssFetchingResult = await fetchRssResponse(url);
+  const rssFetchingResult = await fetchRss(url);
 
   if (isErr(rssFetchingResult)) {
     logError(`fetching RSS: ${rssFetchingResult.reason}`, { url: feedSettingsReadingResult });
