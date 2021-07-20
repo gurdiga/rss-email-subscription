@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, writeFileSync } from 'fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'fs';
 
 export type ReadFileFn = (filePath: string) => string;
 
@@ -22,6 +22,12 @@ export type WriteFileFn = (path: string, content: string) => void;
 
 export function writeFile(path: string, content: string): void {
   writeFileSync(path, content, { encoding: 'utf8' });
+}
+
+export type DeleteFileFn = (path: string) => void;
+
+export function deleteFile(path: string): void {
+  rmSync(path);
 }
 
 export type ListFilesFn = (path: string) => string[];
