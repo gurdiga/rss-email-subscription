@@ -67,11 +67,10 @@ async function main(): Promise<number> {
     for (const email of validEmails) {
       logInfo(`Sending "${item.item.title}" to ${email.value}`);
 
-      // TODO: make sendItem return a Result<void> instead of throwing?
-      try {
-        await sendItem(email, item.item);
-      } catch (error) {
-        logError(`failed sending email: ${error.message}`);
+      const sendingResult = await sendItem(email, item.item);
+
+      if (isErr(sendingResult)) {
+        logError(sendingResult.reason);
       }
 
       const deletionResult = deleteItem(dataDir, item);

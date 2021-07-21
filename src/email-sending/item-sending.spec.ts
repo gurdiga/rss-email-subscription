@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn } from './email-delivery';
 import { EmailAddress, makeEmailAddress } from './emails';
@@ -29,21 +30,15 @@ describe('item-sending', () => {
       expect(deliveredHtmlBody).to.contain(item.content);
     });
 
-    it('throws meaningfully when delivery fails', async () => {
+    it('returns an Err value when delivery fails', async () => {
       const mockError = new Error('Cant!');
       const mockDeliverEmailFn: DeliverEmailFn = () => {
         throw mockError;
       };
 
-      let actualError = new Error('[No error]');
+      const result = await sendItem(emailAddress, item, mockDeliverEmailFn);
 
-      try {
-        await sendItem(emailAddress, item, mockDeliverEmailFn);
-      } catch (error) {
-        actualError = error;
-      }
-
-      expect(actualError.message).to.equal(`Could not deliver email to ${emailAddress.value}: ${mockError.message}`);
+      expect(result).to.deep.equal(makeErr(`Could not deliver email to ${emailAddress.value}: ${mockError.message}`));
     });
   });
 
