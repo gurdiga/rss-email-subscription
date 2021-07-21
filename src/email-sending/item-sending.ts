@@ -1,4 +1,4 @@
-import { HashFn, md5 } from '../shared/crypto';
+import { HashFn, hash } from '../shared/crypto';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn } from './email-delivery';
@@ -8,7 +8,7 @@ export async function sendItem(
   emailAddress: EmailAddress,
   item: RssItem,
   deliverEmailFn: DeliverEmailFn = deliverEmail,
-  hashFn: HashFn = md5
+  hashFn: HashFn = hash
 ): Promise<Result<void>> {
   // To build the unsubscribe link I need:
   // - the blog to unsubscribe from: can be a seeded hash
