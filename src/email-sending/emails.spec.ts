@@ -6,16 +6,16 @@ import { EmailAddress, EmailList, getEmails, makeEmailAddress } from './emails';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
-  const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
-  const mockFileExistsFn = (_filePath: string) => true;
+  const dataDir = makeDataDir(dataDirPathString) as DataDir;
+  const fileExistsFn = (_filePath: string) => true;
 
   it('reads emails from the given dataDir', async () => {
     let actualPathArg = '';
-    const mockReadFileFn = (filePath: string): string => {
+    const readFileFn = (filePath: string): string => {
       actualPathArg = filePath;
       return '["test@test.com"]';
     };
-    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [{ kind: 'EmailAddress', value: 'test@test.com' }],
@@ -27,9 +27,9 @@ describe(getEmails.name, () => {
   });
 
   it('eliminates duplicates', async () => {
-    const mockFileContent = JSON.stringify(['a@test.com', 'a@test.com', ' b@test.com', 'b@test.com', 'b@test.com']);
-    const mockReadFileFn = () => mockFileContent;
-    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+    const fileContent = JSON.stringify(['a@test.com', 'a@test.com', ' b@test.com', 'b@test.com', 'b@test.com']);
+    const readFileFn = () => fileContent;
+    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -43,9 +43,9 @@ describe(getEmails.name, () => {
   });
 
   it('returns valid and invalid emails separately', async () => {
-    const mockFileContent = JSON.stringify(['a@test.com', '+@test.com', 'b@test', 'b@test.com']);
-    const mockReadFileFn = () => mockFileContent;
-    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+    const fileContent = JSON.stringify(['a@test.com', '+@test.com', 'b@test', 'b@test.com']);
+    const readFileFn = () => fileContent;
+    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -60,25 +60,25 @@ describe(getEmails.name, () => {
 
   it('returns an Err value when the file is missing', async () => {
     let actualPathArg = '';
-    const mockFileExistsFn = (filePath: string) => {
+    const fileExistsFn = (filePath: string) => {
       actualPathArg = filePath;
       return false;
     };
-    const result = await getEmails(mockDataDir, readFile, mockFileExistsFn);
+    const result = await getEmails(dataDir, readFile, fileExistsFn);
 
     expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal(makeErr(`File not found: ${dataDirPathString}/emails.json`));
   });
 
   it('returns an Err value when the file contains invalid JSON', async () => {
-    const mockReadFileFn = (_filePath: string): string => 'not a JSON string';
-    const result = await getEmails(mockDataDir, mockReadFileFn, mockFileExistsFn);
+    const readFileFn = (_filePath: string): string => 'not a JSON string';
+    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
 
     expect(result).to.deep.equal(makeErr(`Can’t parse JSON in ${dataDirPathString}/emails.json`));
   });
 
   it('returns an Err value when the file doesn’t contain an array of strings', async () => {
-    const getResult = async (json: string) => await getEmails(mockDataDir, () => json, mockFileExistsFn);
+    const getResult = async (json: string) => await getEmails(dataDir, () => json, fileExistsFn);
     const err = makeErr(`JSON in ${dataDirPathString}/emails.json is not an array of strings`);
 
     expect(await getResult('{"is-array": false}')).to.deep.equal(err);

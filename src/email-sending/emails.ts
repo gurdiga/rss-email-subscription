@@ -76,7 +76,7 @@ export async function getEmails(
 
       return {
         kind: 'EmailList',
-        validEmails: validEmails,
+        validEmails,
         invalidEmails,
       };
     } else {
