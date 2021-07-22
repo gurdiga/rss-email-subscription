@@ -7,8 +7,15 @@ run-email-sending:
 run-rss-checking:
 	ts-node src/rss-checking/main.ts data/
 
-init-data:
-	echo '{"url": "http://localhost:4000/feed.xml", "hashingSeed": "1234567890123456"}' > data/feed.json
+data: data/feed.json data/emails.json
+
+data/feed.json:
+	echo '{"url": "http://localhost:4000/feed.xml", "hashingSeed": "1234567890123456"}' \
+	> $@
+
+data/emails.json: data/feed.json
+	echo 'TODO: src/email-storing/main.ts \
+	> $@'
 
 test:
 	ts-mocha -R dot 'src/**/*.spec.ts'

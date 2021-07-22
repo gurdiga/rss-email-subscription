@@ -86,53 +86,53 @@ describe(getEmails.name, () => {
     expect(await getResult('"a string"')).to.deep.equal(err);
     expect(await getResult('null')).to.deep.equal(err);
   });
+});
 
-  describe(makeEmailAddress.name, () => {
-    it('returns an EmailAddress value from the given string', () => {
-      expect(makeEmailAddress('a@test.com')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: 'a@test.com',
-      } as EmailAddress);
-      expect(makeEmailAddress('23@test.com')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: '23@test.com',
-      } as EmailAddress);
-    });
+describe(makeEmailAddress.name, () => {
+  it('returns an EmailAddress value from the given string', () => {
+    expect(makeEmailAddress('a@test.com')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'a@test.com',
+    } as EmailAddress);
+    expect(makeEmailAddress('23@test.com')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: '23@test.com',
+    } as EmailAddress);
+  });
 
-    it('accepts “plus addressing”', () => {
-      expect(makeEmailAddress('a+1@test.com')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: 'a+1@test.com',
-      } as EmailAddress);
-    });
+  it('accepts “plus addressing”', () => {
+    expect(makeEmailAddress('a+1@test.com')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'a+1@test.com',
+    } as EmailAddress);
+  });
 
-    it('trims the whitespace', () => {
-      expect(makeEmailAddress('  a@test.com  ')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: 'a@test.com',
-      } as EmailAddress);
-      expect(makeEmailAddress('	b@test.com\t\t')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: 'b@test.com',
-      } as EmailAddress);
-      expect(makeEmailAddress('\r\nc@test.com ')).to.deep.equal({
-        kind: 'EmailAddress',
-        value: 'c@test.com',
-      } as EmailAddress);
-    });
+  it('trims the whitespace', () => {
+    expect(makeEmailAddress('  a@test.com  ')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'a@test.com',
+    } as EmailAddress);
+    expect(makeEmailAddress('	b@test.com\t\t')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'b@test.com',
+    } as EmailAddress);
+    expect(makeEmailAddress('\r\nc@test.com ')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'c@test.com',
+    } as EmailAddress);
+  });
 
-    it('returns an Err value when the email is invalid', () => {
-      expect(makeEmailAddress('')).to.deep.equal(makeErr('Syntactically invalid email: ""'));
-      expect(makeEmailAddress(' \r\n\t')).to.deep.equal(makeErr('Syntactically invalid email: " \r\n\t"'));
-      expect(makeEmailAddress('@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "@test.com"'));
-      expect(makeEmailAddress('a+@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a+@test.com"'));
-      expect(makeEmailAddress('a++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a++2@test.com"'));
-      expect(makeEmailAddress('++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "++2@test.com"'));
-      expect(makeEmailAddress('a@test')).to.deep.equal(makeErr('Syntactically invalid email: "a@test"'));
-      expect(makeEmailAddress('a@too-short-tld.i')).to.deep.equal(
-        makeErr('Syntactically invalid email: "a@too-short-tld.i"')
-      );
-      expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
-    });
+  it('returns an Err value when the email is invalid', () => {
+    expect(makeEmailAddress('')).to.deep.equal(makeErr('Syntactically invalid email: ""'));
+    expect(makeEmailAddress(' \r\n\t')).to.deep.equal(makeErr('Syntactically invalid email: " \r\n\t"'));
+    expect(makeEmailAddress('@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "@test.com"'));
+    expect(makeEmailAddress('a+@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a+@test.com"'));
+    expect(makeEmailAddress('a++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a++2@test.com"'));
+    expect(makeEmailAddress('++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "++2@test.com"'));
+    expect(makeEmailAddress('a@test')).to.deep.equal(makeErr('Syntactically invalid email: "a@test"'));
+    expect(makeEmailAddress('a@too-short-tld.i')).to.deep.equal(
+      makeErr('Syntactically invalid email: "a@too-short-tld.i"')
+    );
+    expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
   });
 });
