@@ -19,3 +19,7 @@ export function makeErr(reason: string): Err {
 export function isString(value: any): boolean {
   return typeof value === 'string';
 }
+
+export function isNonEmptyString(value: string): boolean {
+  return value.trim().length > 0;
+}
