@@ -2,7 +2,7 @@ import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
-import { isErr, isString, makeErr, Result } from '../shared/lang';
+import { isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -67,23 +67,18 @@ export async function getEmails(
   }
 
   try {
-    const emailStrings = JSON.parse(readFileFn(filePath)) as string[];
+    const emailStrings = readFileFn(filePath).split('\n').filter(isNonEmptyString);
+    const emails = emailStrings.map(makeEmailAddress);
+    const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
+    const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
-    if (Array.isArray(emailStrings) && emailStrings.every(isString)) {
-      const emails = emailStrings.map(makeEmailAddress);
-      const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
-      const invalidEmails = emails.filter(isErr).map((e) => e.reason);
-
-      return {
-        kind: 'EmailList',
-        validEmails,
-        invalidEmails,
-      };
-    } else {
-      return makeErr(`JSON in ${filePath} is not an array of strings`);
-    }
+    return {
+      kind: 'EmailList',
+      validEmails,
+      invalidEmails,
+    };
   } catch (error) {
-    return makeErr(`Can’t parse JSON in ${filePath}`);
+    return makeErr(`Can’t read file ${filePath}: ${error.message}`);
   }
 }
 

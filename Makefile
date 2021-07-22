@@ -12,13 +12,13 @@ data/feed.json:
 	echo '{"url": "http://localhost:4000/feed.xml", "hashingSeed": "1234567890123456"}' \
 	> $@
 
-data/emails.csv:
-	rm $@
+.tmp/emails.csv:
+	rm -f $@
 	for email in a@test.com b@test.com c@test.com; do \
 		echo $$email >> $@; \
 	done
 
-data/emails.json: data/emails.csv data/feed.json
+data/emails.json: .tmp/emails.csv data/feed.json
 	ts-node src/email-storing/main.ts data/
 
 test:

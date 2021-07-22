@@ -17,16 +17,22 @@ describe(getEmails.name, () => {
   const dataDir = makeDataDir(dataDirPathString) as DataDir;
   const fileExistsFn = (_filePath: string) => true;
 
-  it('reads emails from the given dataDir', async () => {
+  // TODO: Change getEmails to get its input as a CSV string.
+
+  it('reads a list of emails from the given dataDir', async () => {
     let actualPathArg = '';
     const readFileFn = (filePath: string): string => {
       actualPathArg = filePath;
-      return '["test@test.com"]';
+      return ['test1@test.com', 'test2@test.com', 'test3@test.com'].join('\n');
     };
     const result = await getEmails(dataDir, readFileFn, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
-      validEmails: [{ kind: 'EmailAddress', value: 'test@test.com' }],
+      validEmails: [
+        { kind: 'EmailAddress', value: 'test1@test.com' },
+        { kind: 'EmailAddress', value: 'test2@test.com' },
+        { kind: 'EmailAddress', value: 'test3@test.com' },
+      ],
       invalidEmails: [],
     };
 
@@ -34,10 +40,19 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal(expectedResult);
   });
 
-  it('eliminates duplicates', async () => {
-    const fileContent = JSON.stringify(['a@test.com', 'a@test.com', ' b@test.com', 'b@test.com', 'b@test.com']);
-    const readFileFn = () => fileContent;
-    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
+  it('eliminates duplicates and ignores empty lines', async () => {
+    const fileContent = [
+      'a@test.com', // prettier: keep these stacked
+      'a@test.com',
+      ' b@test.com',
+      ' ',
+      '   \t  ',
+      '',
+      '\t',
+      'b@test.com',
+      'b@test.com',
+    ].join('\n');
+    const result = await getEmails(dataDir, () => fileContent, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -51,9 +66,8 @@ describe(getEmails.name, () => {
   });
 
   it('returns valid and invalid emails separately', async () => {
-    const fileContent = JSON.stringify(['a@test.com', '+@test.com', 'b@test', 'b@test.com']);
-    const readFileFn = () => fileContent;
-    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
+    const fileContent = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
+    const result = await getEmails(dataDir, () => fileContent, fileExistsFn);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -78,21 +92,14 @@ describe(getEmails.name, () => {
     expect(result).to.deep.equal(makeErr(`File not found: ${dataDirPathString}/emails.json`));
   });
 
-  it('returns an Err value when the file contains invalid JSON', async () => {
-    const readFileFn = (_filePath: string): string => 'not a JSON string';
+  it('returns an Err value when can’t read the file contents', async () => {
+    const error = new Error('Maybe can’t access?!');
+    const readFileFn = (_filePath: string): string => {
+      throw error;
+    };
     const result = await getEmails(dataDir, readFileFn, fileExistsFn);
 
-    expect(result).to.deep.equal(makeErr(`Can’t parse JSON in ${dataDirPathString}/emails.json`));
-  });
-
-  it('returns an Err value when the file doesn’t contain an array of strings', async () => {
-    const getResult = async (json: string) => await getEmails(dataDir, () => json, fileExistsFn);
-    const err = makeErr(`JSON in ${dataDirPathString}/emails.json is not an array of strings`);
-
-    expect(await getResult('{"is-array": false}')).to.deep.equal(err);
-    expect(await getResult('["email@test.com", 2, 3]')).to.deep.equal(err);
-    expect(await getResult('"a string"')).to.deep.equal(err);
-    expect(await getResult('null')).to.deep.equal(err);
+    expect(result).to.deep.equal(makeErr(`Can’t read file ${dataDirPathString}/emails.json: ${error.message}`));
   });
 });
 
