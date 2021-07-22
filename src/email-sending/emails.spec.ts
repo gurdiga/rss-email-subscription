@@ -2,7 +2,15 @@ import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { readFile } from '../shared/io';
 import { makeErr } from '../shared/lang';
-import { EmailAddress, EmailList, getEmails, makeEmailAddress } from './emails';
+import {
+  EmailAddress,
+  EmailHashFn,
+  EmailList,
+  getEmails,
+  indexEmails,
+  isEmailAddress,
+  makeEmailAddress,
+} from './emails';
 
 describe(getEmails.name, () => {
   const dataDirPathString = '/some/path';
@@ -85,6 +93,20 @@ describe(getEmails.name, () => {
     expect(await getResult('["email@test.com", 2, 3]')).to.deep.equal(err);
     expect(await getResult('"a string"')).to.deep.equal(err);
     expect(await getResult('null')).to.deep.equal(err);
+  });
+});
+
+describe(indexEmails.name, () => {
+  it('indexes emails by their seeded hash', () => {
+    const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
+    const hashFn: EmailHashFn = (e) => `#${e.value}#`;
+    const result = indexEmails(emailAddresses, hashFn);
+
+    expect(result).to.deep.equal({
+      '#a@test.com#': 'a@test.com',
+      '#b@test.com#': 'b@test.com',
+      '#c@test.com#': 'c@test.com',
+    });
   });
 });
 

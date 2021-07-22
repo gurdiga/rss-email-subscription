@@ -51,7 +51,7 @@ export function makeEmailAddress(emailString: string): Result<EmailAddress> {
   };
 }
 
-function isEmail(value: any): value is EmailAddress {
+export function isEmailAddress(value: any): value is EmailAddress {
   return value.kind === 'EmailAddress';
 }
 
@@ -71,7 +71,7 @@ export async function getEmails(
 
     if (Array.isArray(emailStrings) && emailStrings.every(isString)) {
       const emails = emailStrings.map(makeEmailAddress);
-      const validEmails = emails.filter(isEmail).filter(filterUniqBy((e) => e.value));
+      const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
       const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
       return {
@@ -85,4 +85,17 @@ export async function getEmails(
   } catch (error) {
     return makeErr(`Can’t parse JSON in ${filePath}`);
   }
+}
+
+export type EmailHashFn = (emailAddress: EmailAddress) => string;
+type EmailIndex = Record<string, string>;
+
+export function indexEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): EmailIndex {
+  const index: EmailIndex = {};
+
+  emailAddresses.forEach((e) => {
+    index[emailHashFn(e)] = e.value;
+  });
+
+  return index;
 }

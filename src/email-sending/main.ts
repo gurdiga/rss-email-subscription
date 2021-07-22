@@ -31,6 +31,7 @@ async function main(): Promise<number> {
 
   const { validEmails, invalidEmails } = emailReadingResult;
 
+  // TODO: Add more structure: also log email count and any valuable data
   logInfo(`Found ${validEmails.length} emails.`, { dataDirString });
 
   if (!isEmpty(invalidEmails)) {
