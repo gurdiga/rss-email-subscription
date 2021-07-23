@@ -1,21 +1,21 @@
 import { expect } from 'chai';
-import { makeDataDir, DataDir } from '../shared/data-dir';
-import { readFile } from '../shared/io';
-import { makeErr } from '../shared/lang';
+import { readFile, ReadFileFn } from '../shared/io';
+import { makeErr, Result } from '../shared/lang';
 import {
   EmailAddress,
   EmailHashFn,
   EmailList,
-  receiveEmails,
+  parseEmails,
   indexEmails,
   isEmailAddress,
   makeEmailAddress,
+  readEmailListFromFile,
 } from './emails';
 
 describe(parseEmails.name, () => {
   it('parses the emails from a one-per-line string', async () => {
     const emailList = ['test1@test.com', 'test2@test.com', 'test3@test.com'].join('\n');
-    const result = await receiveEmails(emailList);
+    const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -41,7 +41,7 @@ describe(parseEmails.name, () => {
       'b@test.com',
       'b@test.com',
     ].join('\n');
-    const result = await receiveEmails(emailList);
+    const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -56,7 +56,7 @@ describe(parseEmails.name, () => {
 
   it('returns valid and invalid emails separately', async () => {
     const emailList = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
-    const result = await receiveEmails(emailList);
+    const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -130,5 +130,41 @@ describe(makeEmailAddress.name, () => {
       makeErr('Syntactically invalid email: "a@too-short-tld.i"')
     );
     expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
+  });
+});
+
+describe(readEmailListFromFile.name, () => {
+  const filePath = '/some/file.txt';
+
+  it('reads and parses the emails from the given one-per-line file', () => {
+    let actualFilePath = '';
+    const readFile = (_filePath: string) => {
+      actualFilePath = _filePath;
+      return ['a@test.com', 'b@test.com', 'c@test.com'].join('\n');
+    };
+
+    const expectedResult: EmailList = {
+      kind: 'EmailList',
+      validEmails: [
+        { kind: 'EmailAddress', value: 'a@test.com' },
+        { kind: 'EmailAddress', value: 'b@test.com' },
+        { kind: 'EmailAddress', value: 'c@test.com' },
+      ],
+      invalidEmails: [],
+    };
+    const result = readEmailListFromFile(filePath, readFile);
+
+    expect(actualFilePath).to.equal(filePath);
+    expect(result).to.deep.equal(expectedResult);
+  });
+
+  it('returns an Err value when can’t read the file', () => {
+    const error = new Error('Read failed for some reason');
+    const readFile = (_filePath: string) => {
+      throw error;
+    };
+    const result = readEmailListFromFile(filePath, readFile);
+
+    expect(result).to.deep.equal(makeErr(`Could not read email list from file ${filePath}: ${error.message}`));
   });
 });

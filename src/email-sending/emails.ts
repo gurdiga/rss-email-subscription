@@ -1,7 +1,5 @@
-import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
-import { DataDir } from '../shared/data-dir';
-import { fileExists, FileExistsFn, readFile, ReadFileFn } from '../shared/io';
+import { readFile, ReadFileFn } from '../shared/io';
 import { isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
@@ -79,4 +77,14 @@ export function indexEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHa
   });
 
   return index;
+}
+
+export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn = readFile): Result<EmailList> {
+  try {
+    const fileContent = readFileFn(filePath);
+
+    return parseEmails(fileContent);
+  } catch (error) {
+    return makeErr(`Could not read email list from file ${filePath}: ${error.message}`);
+  }
 }

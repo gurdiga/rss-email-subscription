@@ -1,6 +1,9 @@
 import path from 'path';
 import { parseArgs } from '../email-sending/args';
+import { EmailAddress, indexEmails, parseEmails, readEmailListFromFile } from '../email-sending/emails';
+import { hash } from '../shared/crypto';
 import { getFeedSettings } from '../shared/feed-settings';
+import { readFile } from '../shared/io';
 import { isErr } from '../shared/lang';
 import { logError } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
@@ -37,14 +40,18 @@ async function main(): Promise<number> {
 
   if (isErr(feedSettingsReadingResult)) {
     logError(`invalid feed settings: ${feedSettingsReadingResult.reason}`, { dataDirString });
-    return 6;
+    return 2;
   }
 
   const { hashingSeed } = feedSettingsReadingResult;
+  const emailAddresses = readEmailListFromFile(inputCsvFilePath);
 
-  // const emailAddresses = getEmails(inputCsvFilePath);
-  // const hashEmail = (e: EmailAddress) => hash(e.value, hashingSeed);
-  // const emailIndex = indexEmails(emailAddresses, hashEmail);
+  if (isErr(emailAddresses)) {
+    return 3;
+  }
+
+  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSeed);
+  const emailIndex = indexEmails(emailAddresses.validEmails, hashEmail);
 
   // const storeResult = storeEmails(emailAddresses)
 
