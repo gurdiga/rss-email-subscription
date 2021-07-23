@@ -1,3 +1,4 @@
+import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { readFile, ReadFileFn, writeFile, WriteFileFn } from '../shared/io';
@@ -90,6 +91,8 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
   }
 }
 
+export const emailsFileName = 'emails.json';
+
 export function storeEmails(
   dataDir: DataDir,
   emailAddresses: EmailAddress[],
@@ -97,12 +100,12 @@ export function storeEmails(
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
   const emailIndex = indexEmails(emailAddresses, emailHashFn);
-  const filePath = `${dataDir.value}/emails.json`; // TODO: Extract constant
+  const filePath = path.join(dataDir.value, emailsFileName);
   const json = JSON.stringify(emailIndex);
 
   try {
     writeFileFn(filePath, json);
   } catch (error) {
-    return makeErr(`Could not store emails to ${dataDir.value}/emails.json: ${error.message}`);
+    return makeErr(`Could not store emails to ${dataDir.value}/${emailsFileName}: ${error.message}`);
   }
 }

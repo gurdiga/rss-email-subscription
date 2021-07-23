@@ -11,6 +11,7 @@ import {
   makeEmailAddress,
   readEmailListFromFile,
   storeEmails,
+  emailsFileName,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -181,7 +182,7 @@ describe(storeEmails.name, () => {
     const writeFile = (path: string, content: string) => (writtenFile = { path, content });
 
     const expectedFileWrite = {
-      path: `${dataDirString}/emails.json`,
+      path: `${dataDirString}/${emailsFileName}`,
       content: JSON.stringify({
         '#a@test.com#': 'a@test.com',
         '#b@test.com#': 'b@test.com',
@@ -201,6 +202,8 @@ describe(storeEmails.name, () => {
     };
     const result = storeEmails(dataDir, emailAddresses, emailHash, writeFile);
 
-    expect(result).to.deep.equal(makeErr(`Could not store emails to ${dataDirString}/emails.json: ${error.message}`));
+    expect(result).to.deep.equal(
+      makeErr(`Could not store emails to ${dataDirString}/${emailsFileName}: ${error.message}`)
+    );
   });
 });
