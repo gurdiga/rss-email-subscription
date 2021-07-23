@@ -1,5 +1,6 @@
 import { filterUniqBy } from '../shared/array-utils';
-import { readFile, ReadFileFn } from '../shared/io';
+import { DataDir } from '../shared/data-dir';
+import { readFile, ReadFileFn, writeFile, WriteFileFn } from '../shared/io';
 import { isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
@@ -86,5 +87,22 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
     return parseEmails(fileContent);
   } catch (error) {
     return makeErr(`Could not read email list from file ${filePath}: ${error.message}`);
+  }
+}
+
+export function storeEmails(
+  dataDir: DataDir,
+  emailAddresses: EmailAddress[],
+  emailHashFn: EmailHashFn,
+  writeFileFn: WriteFileFn = writeFile
+): Result<void> {
+  const emailIndex = indexEmails(emailAddresses, emailHashFn);
+  const filePath = `${dataDir.value}/emails.json`; // TODO: Extract constant
+  const json = JSON.stringify(emailIndex);
+
+  try {
+    writeFileFn(filePath, json);
+  } catch (error) {
+    return makeErr(`Could not store emails to ${dataDir.value}/emails.json: ${error.message}`);
   }
 }

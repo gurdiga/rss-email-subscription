@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { readFile, ReadFileFn } from '../shared/io';
-import { makeErr, Result } from '../shared/lang';
+import { DataDir, makeDataDir } from '../shared/data-dir';
+import { makeErr } from '../shared/lang';
 import {
   EmailAddress,
   EmailHashFn,
@@ -10,6 +10,7 @@ import {
   isEmailAddress,
   makeEmailAddress,
   readEmailListFromFile,
+  storeEmails,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -166,5 +167,40 @@ describe(readEmailListFromFile.name, () => {
     const result = readEmailListFromFile(filePath, readFile);
 
     expect(result).to.deep.equal(makeErr(`Could not read email list from file ${filePath}: ${error.message}`));
+  });
+});
+
+describe(storeEmails.name, () => {
+  const dataDirString = '/some/path';
+  const dataDir = makeDataDir(dataDirString) as DataDir;
+  const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
+  const emailHash = (e: EmailAddress) => `#${e.value}#`;
+
+  it('stores the emails with their hashes', () => {
+    let writtenFile = { path: '', content: '' };
+    const writeFile = (path: string, content: string) => (writtenFile = { path, content });
+
+    const expectedFileWrite = {
+      path: `${dataDirString}/emails.json`,
+      content: JSON.stringify({
+        '#a@test.com#': 'a@test.com',
+        '#b@test.com#': 'b@test.com',
+        '#c@test.com#': 'c@test.com',
+      }),
+    };
+    const result = storeEmails(dataDir, emailAddresses, emailHash, writeFile);
+
+    expect(writtenFile).to.deep.equal(expectedFileWrite);
+    expect(result).to.be.undefined;
+  });
+
+  it('returns an Err value when can’t write file', () => {
+    const error = new Error('File write failed!?');
+    const writeFile = () => {
+      throw error;
+    };
+    const result = storeEmails(dataDir, emailAddresses, emailHash, writeFile);
+
+    expect(result).to.deep.equal(makeErr(`Could not store emails to ${dataDirString}/emails.json: ${error.message}`));
   });
 });

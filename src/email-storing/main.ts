@@ -1,11 +1,10 @@
 import path from 'path';
 import { parseArgs } from '../email-sending/args';
-import { EmailAddress, indexEmails, parseEmails, readEmailListFromFile } from '../email-sending/emails';
+import { EmailAddress, readEmailListFromFile, storeEmails } from '../email-sending/emails';
 import { hash } from '../shared/crypto';
 import { getFeedSettings } from '../shared/feed-settings';
-import { readFile } from '../shared/io';
 import { isErr } from '../shared/lang';
-import { logError } from '../shared/logging';
+import { logError, logInfo } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
 /*
@@ -24,7 +23,7 @@ When storing a list of emails:
 */
 
 async function main(): Promise<number> {
-  const inputCsvFilePath = path.join(__dirname, '.tmp/emails.csv');
+  const inputFilePath = path.join(process.cwd(), '.tmp/emails.csv');
 
   const dataDirString = getFirstCliArg(process);
   const argParsingResult = parseArgs(dataDirString);
@@ -44,17 +43,23 @@ async function main(): Promise<number> {
   }
 
   const { hashingSeed } = feedSettingsReadingResult;
-  const emailAddresses = readEmailListFromFile(inputCsvFilePath);
+  const emailReadingResult = readEmailListFromFile(inputFilePath);
 
-  if (isErr(emailAddresses)) {
+  if (isErr(emailReadingResult)) {
+    logError(emailReadingResult.reason, { inputFilePath });
     return 3;
   }
 
+  const { validEmails } = emailReadingResult;
   const hashEmail = (e: EmailAddress) => hash(e.value, hashingSeed);
-  const emailIndex = indexEmails(emailAddresses.validEmails, hashEmail);
+  const storeResult = storeEmails(dataDir, validEmails, hashEmail);
 
-  // const storeResult = storeEmails(emailAddresses)
+  if (isErr(storeResult)) {
+    logError(storeResult.reason, { dataDirString });
+    return 4;
+  }
 
+  logInfo('Stored emails', { dataDirString, emailCount: validEmails.length });
   return 0;
 }
 
