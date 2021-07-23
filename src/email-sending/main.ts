@@ -1,8 +1,8 @@
 import { isEmpty } from '../shared/array-utils';
-import { isErr } from '../shared/lang';
+import { isErr, Result } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { parseArgs } from './args';
-import { getEmails } from './emails';
+import { EmailList } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
@@ -22,12 +22,17 @@ async function main(): Promise<number> {
 
   logInfo(`processing data dir ${dataDir.value}`, { dataDirString });
 
-  const emailReadingResult = await getEmails(dataDir);
+  // TODO: add loadStoredEmails()
+  const emailReadingResult: Result<EmailList> = {
+    kind: 'EmailList',
+    validEmails: [],
+    invalidEmails: [],
+  };
 
-  if (isErr(emailReadingResult)) {
-    logError(`reading emails: ${emailReadingResult.reason}`, { dataDirString });
-    return 2;
-  }
+  // if (isErr(emailReadingResult)) {
+  //   logError(`reading emails: ${emailReadingResult.reason}`, { dataDirString });
+  //   return 2;
+  // }
 
   const { validEmails, invalidEmails } = emailReadingResult;
 

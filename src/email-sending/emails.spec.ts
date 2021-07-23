@@ -6,26 +6,16 @@ import {
   EmailAddress,
   EmailHashFn,
   EmailList,
-  getEmails,
+  receiveEmails,
   indexEmails,
   isEmailAddress,
   makeEmailAddress,
 } from './emails';
 
-describe(getEmails.name, () => {
-  const dataDirPathString = '/some/path';
-  const dataDir = makeDataDir(dataDirPathString) as DataDir;
-  const fileExistsFn = (_filePath: string) => true;
-
-  // TODO: Change getEmails to get its input as a CSV string.
-
-  it('reads a list of emails from the given dataDir', async () => {
-    let actualPathArg = '';
-    const readFileFn = (filePath: string): string => {
-      actualPathArg = filePath;
-      return ['test1@test.com', 'test2@test.com', 'test3@test.com'].join('\n');
-    };
-    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
+describe(parseEmails.name, () => {
+  it('parses the emails from a one-per-line string', async () => {
+    const emailList = ['test1@test.com', 'test2@test.com', 'test3@test.com'].join('\n');
+    const result = await receiveEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -36,12 +26,11 @@ describe(getEmails.name, () => {
       invalidEmails: [],
     };
 
-    expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
     expect(result).to.deep.equal(expectedResult);
   });
 
   it('eliminates duplicates and ignores empty lines', async () => {
-    const fileContent = [
+    const emailList = [
       'a@test.com', // prettier: keep these stacked
       'a@test.com',
       ' b@test.com',
@@ -52,7 +41,7 @@ describe(getEmails.name, () => {
       'b@test.com',
       'b@test.com',
     ].join('\n');
-    const result = await getEmails(dataDir, () => fileContent, fileExistsFn);
+    const result = await receiveEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -66,8 +55,8 @@ describe(getEmails.name, () => {
   });
 
   it('returns valid and invalid emails separately', async () => {
-    const fileContent = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
-    const result = await getEmails(dataDir, () => fileContent, fileExistsFn);
+    const emailList = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
+    const result = await receiveEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
@@ -78,28 +67,6 @@ describe(getEmails.name, () => {
     };
 
     expect(result).to.deep.equal(expectedResult);
-  });
-
-  it('returns an Err value when the file is missing', async () => {
-    let actualPathArg = '';
-    const fileExistsFn = (filePath: string) => {
-      actualPathArg = filePath;
-      return false;
-    };
-    const result = await getEmails(dataDir, readFile, fileExistsFn);
-
-    expect(actualPathArg).to.equal(`${dataDirPathString}/emails.json`);
-    expect(result).to.deep.equal(makeErr(`File not found: ${dataDirPathString}/emails.json`));
-  });
-
-  it('returns an Err value when can’t read the file contents', async () => {
-    const error = new Error('Maybe can’t access?!');
-    const readFileFn = (_filePath: string): string => {
-      throw error;
-    };
-    const result = await getEmails(dataDir, readFileFn, fileExistsFn);
-
-    expect(result).to.deep.equal(makeErr(`Can’t read file ${dataDirPathString}/emails.json: ${error.message}`));
   });
 });
 

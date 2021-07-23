@@ -55,31 +55,17 @@ export function isEmailAddress(value: any): value is EmailAddress {
   return value.kind === 'EmailAddress';
 }
 
-export async function getEmails(
-  dataDir: DataDir,
-  readFileFn: ReadFileFn = readFile,
-  fileExistsFn: FileExistsFn = fileExists
-): Promise<Result<EmailList>> {
-  const filePath = path.resolve(dataDir.value, 'emails.json');
+export function parseEmails(emailList: string): Result<EmailList> {
+  const emailStrings = emailList.split('\n').filter(isNonEmptyString);
+  const emails = emailStrings.map(makeEmailAddress);
+  const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
+  const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 
-  if (!fileExistsFn(filePath)) {
-    return makeErr(`File not found: ${filePath}`);
-  }
-
-  try {
-    const emailStrings = readFileFn(filePath).split('\n').filter(isNonEmptyString);
-    const emails = emailStrings.map(makeEmailAddress);
-    const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
-    const invalidEmails = emails.filter(isErr).map((e) => e.reason);
-
-    return {
-      kind: 'EmailList',
-      validEmails,
-      invalidEmails,
-    };
-  } catch (error) {
-    return makeErr(`Can’t read file ${filePath}: ${error.message}`);
-  }
+  return {
+    kind: 'EmailList',
+    validEmails,
+    invalidEmails,
+  };
 }
 
 export type EmailHashFn = (emailAddress: EmailAddress) => string;
