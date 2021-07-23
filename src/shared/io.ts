@@ -38,12 +38,6 @@ export function listFiles(dirPath: string): string[] {
     .map((e) => e.name);
 }
 
-export type MoveFileFn = (source: string, destination: string) => void;
-
-export function moveFile(source: string, destination: string): void {
-  renameSync(source, destination);
-}
-
 export type StdOutPrinterFn = (message: string) => void;
 
 export function stdOutPrinter(message: string): void {

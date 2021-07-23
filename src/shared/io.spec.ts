@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { listFiles, mkdirp, moveFile, writeFile } from './io';
+import { listFiles, mkdirp, writeFile } from './io';
 
 describe(mkdirp.name, () => {
   const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-mkdirp-'));
@@ -43,19 +43,5 @@ describe(listFiles.name, () => {
     mkdirSync(`${tmpWorkDir}/subdir`);
 
     expect(listFiles(tmpWorkDir)).to.deep.equal(fileNames);
-  });
-});
-
-describe(moveFile.name, () => {
-  const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-moveFile-'));
-
-  it('moves a file from path A to path B', () => {
-    mkdirSync(`${tmpWorkDir}/dir1`);
-    mkdirSync(`${tmpWorkDir}/dir2`);
-    writeFileSync(`${tmpWorkDir}/dir1/file.txt`, 'some file content');
-
-    moveFile(`${tmpWorkDir}/dir1/file.txt`, `${tmpWorkDir}/dir2/file.txt`);
-    expect(existsSync(`${tmpWorkDir}/dir2/file.txt`)).to.be.true;
-    expect(existsSync(`${tmpWorkDir}/dir1/file.txt`)).to.be.false;
   });
 });
