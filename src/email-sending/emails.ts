@@ -24,7 +24,7 @@ export function makeEmailAddress(emailString: string): Result<EmailAddress> {
   }
 
   const keyCharacters = ['.', '@'];
-  const containsKeyCharacters = keyCharacters.every((c) => !!emailString && emailString.includes(c));
+  const containsKeyCharacters = keyCharacters.every((c) => !!emailString && emailString.includes(c)); // TODO: Why check for `!!emailString`? Then, why not use `email` instead?
 
   if (!containsKeyCharacters) {
     return err;
