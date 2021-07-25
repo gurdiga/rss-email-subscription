@@ -56,7 +56,7 @@ describe(parseEmails.name, () => {
     expect(result).to.deep.equal(expectedResult as EmailList);
   });
 
-  it('returns valid and invalid emails separately', async () => {
+  it('also returns invalid emails if any', async () => {
     const emailList = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
     const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
