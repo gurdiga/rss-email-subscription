@@ -12,6 +12,9 @@ import {
   readEmailListFromFile,
   storeEmails,
   emailsFileName,
+  EmailIndex,
+  StoredEmails,
+  loadStoredEmails,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -206,4 +209,86 @@ describe(storeEmails.name, () => {
       makeErr(`Could not store emails to ${dataDirString}/${emailsFileName}: ${error.message}`)
     );
   });
+});
+
+describe(loadStoredEmails.name, () => {
+  const dataDirString = '/some/path';
+  const dataDir = makeDataDir(dataDirString) as DataDir;
+
+  const index: EmailIndex = {
+    hash1: 'email1@test.com',
+    hash2: 'email2@test.com',
+    hash3: 'email3@test.com',
+  };
+
+  it('returns a list of stored emails with their hashes', () => {
+    let actualFilePath = '';
+    const readFile = (_filePath: string) => {
+      actualFilePath = _filePath;
+      return JSON.stringify(index);
+    };
+
+    const result = loadStoredEmails(dataDir, readFile);
+
+    expect(actualFilePath).to.equal(`${dataDirString}/${emailsFileName}`);
+    expect(result).to.deep.equal({
+      validHashedEmails: [
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
+        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), seededHash: 'hash3' },
+      ],
+      invalidHashedEmails: [],
+    } as StoredEmails);
+  });
+
+  it('also returns index items with invalid emails', () => {
+    const index = {
+      hash1: 'email1@test.com',
+      hash2: 'email2@test.com',
+      hash3: 'what?',
+      ' ': 'bad-hash@test.com',
+      hash5: null,
+      hash6: [1, 2, 3],
+    };
+
+    const readFile = (_filePath: string) => JSON.stringify(index);
+    const result = loadStoredEmails(dataDir, readFile);
+
+    expect(result).to.deep.equal({
+      validHashedEmails: [
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
+      ],
+      invalidHashedEmails: [
+        'Syntactically invalid email: "what?"', // prettier: keep these stacked please
+        'Empty hash for email "bad-hash@test.com"',
+        'Expected email string but got null: "null"',
+        'Expected email string but got array: "[1,2,3]"',
+      ],
+    } as StoredEmails);
+  });
+
+  it('returns an Err value when the JSON is not an object', () => {
+    let fileContent = '';
+    const readFile = (_filePath: string) => fileContent;
+    const invalidJsonStrings = ['null', '[]', '"string"', '42', 'true'];
+
+    for (fileContent of invalidJsonStrings) {
+      expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(
+        makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values'),
+        `fileContent: ${fileContent}`
+      );
+    }
+  });
+
+  it('returns an error when JSON is not valid', () => {
+    const fileContent = '}';
+    const readFile = (_filePath: string) => fileContent;
+
+    expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(makeErr('Invalid JSON in /some/path/emails.json'));
+  });
+
+  function email(s: string) {
+    return makeEmailAddress(s) as EmailAddress;
+  }
 });

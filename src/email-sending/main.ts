@@ -1,7 +1,7 @@
 import { isEmpty } from '../shared/array-utils';
-import { isErr, Result } from '../shared/lang';
+import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
-import { EmailList } from './emails';
+import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
@@ -20,33 +20,24 @@ async function main(): Promise<number> {
 
   logInfo(`Processing data dir ${dataDir.value}`, { dataDirString });
 
-  // TODO: add loadStoredEmails()
-  const emailReadingResult: Result<EmailList> = {
-    kind: 'EmailList',
-    validEmails: [],
-    invalidEmails: [],
-  };
+  const emailReadingResult = loadStoredEmails(dataDir);
 
-  // if (isErr(emailReadingResult)) {
-  //   logError(`reading emails: ${emailReadingResult.reason}`, { dataDirString });
-  //   return 2;
-  // }
-
-  const { validEmails, invalidEmails } = emailReadingResult;
-
-  logInfo(`Found ${validEmails.length} emails`, { dataDirString, validEmailCount: validEmails.length });
-
-  if (!isEmpty(invalidEmails)) {
-    const count = invalidEmails.length;
-    const formattedEmails = JSON.stringify(invalidEmails, null, 2);
-
-    logWarning(`Found invalid RSS items: ${formattedEmails}`, { dataDirString, invalidItemCount: count });
+  if (isErr(emailReadingResult)) {
+    logError(`Failed reading emails`, { dataDirString, reason: emailReadingResult.reason });
+    return 2;
   }
 
-  if (isEmpty(validEmails)) {
-    logError(`No valid emails`, { dataDirString });
-    return 3;
+  const { validHashedEmails, invalidHashedEmails } = emailReadingResult;
+
+  if (validHashedEmails.length === 0) {
+    logError(`No valid emails found`, { dataDirString });
   }
+
+  if (invalidHashedEmails.length > 0) {
+    logWarning(`Found invalid emails`, { invalidHashedEmails });
+  }
+
+  logInfo(`Found emails`, { dataDirString, emailCount: validHashedEmails.length });
 
   const rssItemReadingResult = readStoredRssItems(dataDir);
 
@@ -63,24 +54,24 @@ async function main(): Promise<number> {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
-    logWarning(`Found invalid RSS items`, { dataDirString, invalidItemCount: count, formattedItems });
+    logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
   }
 
   for (const item of validItems) {
-    for (const email of validEmails) {
-      logInfo(`Sending RSS item`, { itemTitle: item.item.title, email: email.value });
+    for (const hashedEmail of validHashedEmails) {
+      logInfo(`Sending RSS item`, { itemTitle: item.item.title, email: hashedEmail.emailAddress.value });
 
-      const sendingResult = await sendItem(email, item.item);
+      const sendingResult = await sendItem(hashedEmail.emailAddress, item.item);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);
       }
+    }
 
-      const deletionResult = deleteItem(dataDir, item);
+    const deletionResult = deleteItem(dataDir, item);
 
-      if (isErr(deletionResult)) {
-        logError(deletionResult.reason);
-      }
+    if (isErr(deletionResult)) {
+      logError(deletionResult.reason);
     }
   }
 
