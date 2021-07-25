@@ -30,6 +30,7 @@ export function makeEmailAddress(emailString: string): Result<EmailAddress> {
     return err;
   }
 
+  // TODO: Rename to `parts`
   const sides = emailString.split('@');
   const [localPart, domain] = sides.map((s) => s.trim());
   const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9]+((\+)?[a-z0-9]+)*$/i.test(localPart);
