@@ -1,7 +1,7 @@
 import path from 'path';
-import { parseArgs } from '../email-sending/args';
 import { EmailAddress, readEmailListFromFile, storeEmails } from '../email-sending/emails';
 import { hash } from '../shared/crypto';
+import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { logError, logInfo } from '../shared/logging';
@@ -26,15 +26,14 @@ async function main(): Promise<number> {
   const inputFilePath = path.join(process.cwd(), '.tmp/emails.csv');
 
   const dataDirString = getFirstCliArg(process);
-  const argParsingResult = parseArgs(dataDirString);
+  const dataDir = makeDataDir(dataDirString);
 
-  if (isErr(argParsingResult)) {
-    logError(`invalid args: ${argParsingResult.reason}`, { dataDirString });
+  if (isErr(dataDir)) {
+    logError(`invalid args: ${dataDir.reason}`, { dataDirString });
     logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
 
-  const [dataDir] = argParsingResult.values;
   const feedSettingsReadingResult = getFeedSettings(dataDir);
 
   if (isErr(feedSettingsReadingResult)) {

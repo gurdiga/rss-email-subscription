@@ -3,7 +3,7 @@ import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { logError, logInfo, logWarning } from '../shared/logging';
-import { getFirstCliArg } from '../shared/process-utils';
+import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
@@ -15,7 +15,8 @@ async function main(): Promise<number | undefined> {
   const dataDir = makeDataDir(dataDirString);
 
   if (isErr(dataDir)) {
-    logError(`invalid data dir: ${dataDir.reason}`, { dataDirString });
+    logError(`Invalid data dir: ${dataDir.reason}`, { dataDirString });
+    logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
 

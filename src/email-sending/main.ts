@@ -1,26 +1,24 @@
 import { isEmpty } from '../shared/array-utils';
 import { isErr, Result } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
-import { parseArgs } from './args';
 import { EmailList } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
+import { makeDataDir } from '../shared/data-dir';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
-  const argParsingResult = parseArgs(dataDirString);
+  const dataDir = makeDataDir(dataDirString);
 
-  if (isErr(argParsingResult)) {
-    logError(`invalid args: ${argParsingResult.reason}`, { dataDirString });
+  if (isErr(dataDir)) {
+    logError(`Invalid data dir`, { dataDirString, reason: dataDir.reason });
     logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
 
-  const [dataDir] = argParsingResult.values;
-
-  logInfo(`processing data dir ${dataDir.value}`, { dataDirString });
+  logInfo(`Processing data dir ${dataDir.value}`, { dataDirString });
 
   // TODO: add loadStoredEmails()
   const emailReadingResult: Result<EmailList> = {
@@ -37,7 +35,7 @@ async function main(): Promise<number> {
   const { validEmails, invalidEmails } = emailReadingResult;
 
   // TODO: Add more structure: also log email count and any valuable data
-  logInfo(`Found ${validEmails.length} emails.`, { dataDirString });
+  logInfo(`Found ${validEmails.length} emails`, { dataDirString });
 
   if (!isEmpty(invalidEmails)) {
     const count = invalidEmails.length;
@@ -47,14 +45,14 @@ async function main(): Promise<number> {
   }
 
   if (isEmpty(validEmails)) {
-    logError(`no valid emails`, { dataDirString });
+    logError(`No valid emails`, { dataDirString });
     return 3;
   }
 
   const rssItemReadingResult = readStoredRssItems(dataDir);
 
   if (isErr(rssItemReadingResult)) {
-    logError(`reading RSS items: ${rssItemReadingResult.reason}`, { dataDirString });
+    logError(`Reading RSS items: ${rssItemReadingResult.reason}`, { dataDirString });
     return 2;
   }
 
