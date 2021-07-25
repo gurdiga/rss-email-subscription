@@ -18,4 +18,5 @@ async function main() {
     `\nSeems OK. Please check the ${destinationEmailAddress} inbox for a message having the subject of "${subject}".\n`
   );
 }
+
 main();
