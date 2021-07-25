@@ -115,9 +115,11 @@ describe('Last post timestamp', () => {
         throw mockError;
       };
 
-      expect(() => {
-        recordLastPostTimestamp(mockDataDir, mockRssItems, mockWriteFile);
-      }).to.throw(`Cant record last post timestamp: ${mockError}, content: ${expectedFileContent}`);
+      const result = recordLastPostTimestamp(mockDataDir, mockRssItems, mockWriteFile);
+
+      expect(result).to.deep.equal(
+        makeErr(`Cant record last post timestamp: ${mockError}, content: ${expectedFileContent}`)
+      );
     });
 
     it('does nothing when there are no items', () => {

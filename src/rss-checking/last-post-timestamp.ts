@@ -44,7 +44,7 @@ export function recordLastPostTimestamp(
   dataDir: DataDir,
   items: RssItem[],
   writeFileFn: WriteFileFn = writeFile
-): void {
+): Result<void> {
   if (isEmpty(items)) {
     return;
   }
@@ -59,7 +59,7 @@ export function recordLastPostTimestamp(
   try {
     writeFileFn(filePath, fileContent);
   } catch (error) {
-    throw new Error(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
+    return makeErr(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
   }
 }
 
