@@ -15,7 +15,7 @@ async function main(): Promise<number | undefined> {
   const dataDir = makeDataDir(dataDirString);
 
   if (isErr(dataDir)) {
-    logError(`Invalid data dir: ${dataDir.reason}`, { dataDirString });
+    logError(`Invalid data dir`, { dataDirString, reason: dataDir.reason });
     logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
@@ -23,7 +23,7 @@ async function main(): Promise<number | undefined> {
   const feedSettingsReadingResult = getFeedSettings(dataDir);
 
   if (isErr(feedSettingsReadingResult)) {
-    logError(`invalid feed settings: ${feedSettingsReadingResult.reason}`, { dataDirString });
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
     return 6;
   }
 
@@ -31,14 +31,14 @@ async function main(): Promise<number | undefined> {
   const rssFetchingResult = await fetchRss(url);
 
   if (isErr(rssFetchingResult)) {
-    logError(`fetching RSS: ${rssFetchingResult.reason}`, { url: feedSettingsReadingResult });
+    logError(`Failed fetching RSS`, { url, reason: rssFetchingResult.reason });
     return 2;
   }
 
   const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
 
   if (isErr(lastPostTimestampParsingResult)) {
-    logError(`reading last post timestamp: ${lastPostTimestampParsingResult.reason}`, { dataDir });
+    logError(`Failed reading last post timestamp`, { dataDir, reason: lastPostTimestampParsingResult.reason });
     return 3;
   }
 
@@ -47,7 +47,7 @@ async function main(): Promise<number | undefined> {
   const rssParsingResult = await parseRssItems(rssFetchingResult);
 
   if (isErr(rssParsingResult)) {
-    logError(`parsing RSS items: ${rssParsingResult.reason}`);
+    logError(`Failed parsing RSS items`, { reson: rssParsingResult.reason });
     return 4;
   }
 
@@ -57,24 +57,29 @@ async function main(): Promise<number | undefined> {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
-    logWarning(`${count} invalid RSS items: ${formattedItems}\n`);
+    logWarning(`Found invalid RSS items`, { count, formattedItems });
   }
 
   if (isEmpty(validItems)) {
-    logError(`no valid RSS items`, { url: feedSettingsReadingResult });
+    logError(`No valid RSS items`, { url });
     return 5;
   }
 
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
+  const newRssItemRecordingResult = recordNewRssItems(dataDir, newRssItems);
 
-  try {
-    recordNewRssItems(dataDir, newRssItems);
-    logInfo(`Recorded ${newRssItems.length} items`);
+  if (isErr(newRssItemRecordingResult)) {
+    logError(`Failed recording new items`, { reason: newRssItemRecordingResult.reason });
+  } else {
+    logInfo(`Recorded new items`, { newItemCount: newRssItems.length });
+  }
 
-    recordLastPostTimestamp(dataDir, newRssItems);
+  const LastPostTimestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
+
+  if (isErr(LastPostTimestampRecordingResult)) {
+    logError(`Failed recording last post timestamp`, { reason: LastPostTimestampRecordingResult.reason });
+  } else {
     logInfo(`Recorded last post timestamp`);
-  } catch (error) {
-    logError(error.message, { url: feedSettingsReadingResult, dataDir });
   }
 }
 

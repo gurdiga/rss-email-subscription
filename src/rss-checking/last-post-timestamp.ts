@@ -64,5 +64,5 @@ export function recordLastPostTimestamp(
 }
 
 function getLastPostTimestampFileName(dataDir: DataDir) {
-  return path.resolve(dataDir.value, 'lastPostTimestamp.json');
+  return path.join(dataDir.value, 'lastPostTimestamp.json');
 }
