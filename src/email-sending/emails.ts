@@ -24,15 +24,14 @@ export function makeEmailAddress(emailString: string): Result<EmailAddress> {
   }
 
   const keyCharacters = ['.', '@'];
-  const containsKeyCharacters = keyCharacters.every((c) => !!emailString && emailString.includes(c)); // TODO: Why check for `!!emailString`? Then, why not use `email` instead?
+  const containsKeyCharacters = keyCharacters.every((c) => email.includes(c));
 
   if (!containsKeyCharacters) {
     return err;
   }
 
-  // TODO: Rename to `parts`
-  const sides = emailString.split('@');
-  const [localPart, domain] = sides.map((s) => s.trim());
+  const parts = email.split('@');
+  const [localPart, domain] = parts.map((s) => s.trim());
   const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9]+((\+)?[a-z0-9]+)*$/i.test(localPart);
 
   if (!doesLocalPartLookReasonable) {

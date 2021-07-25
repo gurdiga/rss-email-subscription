@@ -34,14 +34,13 @@ async function main(): Promise<number> {
 
   const { validEmails, invalidEmails } = emailReadingResult;
 
-  // TODO: Add more structure: also log email count and any valuable data
-  logInfo(`Found ${validEmails.length} emails`, { dataDirString });
+  logInfo(`Found ${validEmails.length} emails`, { dataDirString, validEmailCount: validEmails.length });
 
   if (!isEmpty(invalidEmails)) {
     const count = invalidEmails.length;
     const formattedEmails = JSON.stringify(invalidEmails, null, 2);
 
-    logWarning(`${count} invalid RSS items: ${formattedEmails}`, { dataDirString });
+    logWarning(`Found invalid RSS items: ${formattedEmails}`, { dataDirString, invalidItemCount: count });
   }
 
   if (isEmpty(validEmails)) {
@@ -52,24 +51,24 @@ async function main(): Promise<number> {
   const rssItemReadingResult = readStoredRssItems(dataDir);
 
   if (isErr(rssItemReadingResult)) {
-    logError(`Reading RSS items: ${rssItemReadingResult.reason}`, { dataDirString });
+    logError(`Failed to read RSS items`, { dataDirString, reason: rssItemReadingResult.reason });
     return 2;
   }
 
   const { validItems, invalidItems } = rssItemReadingResult;
 
-  logInfo(`Found ${validItems.length} RSS items to send.`, { dataDirString });
+  logInfo(`Found RSS items to send`, { dataDirString, validItemCount: validItems.length });
 
   if (!isEmpty(invalidItems)) {
     const count = invalidItems.length;
     const formattedItems = JSON.stringify(invalidItems, null, 2);
 
-    logWarning(`${count} invalid RSS items read: ${formattedItems}`, { dataDirString });
+    logWarning(`Found invalid RSS items`, { dataDirString, invalidItemCount: count, formattedItems });
   }
 
   for (const item of validItems) {
     for (const email of validEmails) {
-      logInfo(`Sending "${item.item.title}" to ${email.value}`);
+      logInfo(`Sending RSS item`, { itemTitle: item.item.title, email: email.value });
 
       const sendingResult = await sendItem(email, item.item);
 
