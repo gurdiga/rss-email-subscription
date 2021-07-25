@@ -23,3 +23,10 @@ export function isString(value: any): boolean {
 export function isNonEmptyString(value: string): boolean {
   return value.trim().length > 0;
 }
+
+export function getTypeName(value: any): string {
+  return Object.prototype.toString
+    .call(value)
+    .match(/^\[object (\w+)\]$/)![1]
+    .toLowerCase();
+}
