@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { RssItem } from '../shared/rss-item';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
+import { makeErr } from '../shared/lang';
 
 describe(recordNewRssItems.name, () => {
   const dataDir = makeDataDir('/some/dir/') as DataDir;
@@ -46,9 +47,9 @@ describe(recordNewRssItems.name, () => {
       throw mockError;
     };
 
-    expect(() => {
-      recordNewRssItems(dataDir, rssItems, mockMkdirp);
-    }).to.throw(`Cant create /some/dir/inbox directory: ${mockError}`);
+    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp);
+
+    expect(result).to.deep.equal(makeErr(`Cant create /some/dir/inbox directory: ${mockError}`));
   });
 
   it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
@@ -71,9 +72,11 @@ describe(recordNewRssItems.name, () => {
       throw mockError;
     };
 
-    expect(() => {
-      recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
-    }).to.throw(`Cant write RSS item file to inbox: ${mockError}, item: ${JSON.stringify(rssItems[0])}`);
+    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
+
+    expect(result).to.deep.equal(
+      makeErr(`Cant write RSS item file to inbox: ${mockError}, item: ${JSON.stringify(rssItems[0])}`)
+    );
   });
 
   describe(itemFileName.name, () => {

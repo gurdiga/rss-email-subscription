@@ -2,6 +2,7 @@ import path from 'path';
 import { HashFn, hash } from '../shared/crypto';
 import { DataDir } from '../shared/data-dir';
 import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
+import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 
 type NameFileFn = (item: RssItem) => string;
@@ -12,17 +13,17 @@ export function recordNewRssItems(
   mkdirpFn: MkdirpFn = mkdirp,
   writeFileFn: WriteFileFn = writeFile,
   nameFileFn: NameFileFn = itemFileName
-): void {
+): Result<undefined> {
   const inboxDirName = 'inbox';
   const inboxDirPath = path.resolve(dataDir.value, inboxDirName);
 
   try {
     mkdirpFn(inboxDirPath);
   } catch (error) {
-    throw new Error(`Cant create ${inboxDirPath} directory: ${error}`);
+    return makeErr(`Cant create ${inboxDirPath} directory: ${error}`);
   }
 
-  rssItems.forEach((item) => {
+  for (const item of rssItems) {
     const fileName = nameFileFn(item);
     const filePath = path.resolve(inboxDirPath, fileName);
     const fileContent = JSON.stringify(item);
@@ -30,9 +31,9 @@ export function recordNewRssItems(
     try {
       writeFileFn(filePath, fileContent);
     } catch (error) {
-      throw new Error(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
+      return makeErr(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
     }
-  });
+  }
 }
 
 export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
