@@ -4,6 +4,7 @@ import { Args } from '../shared/process-utils';
 
 export type EmailSendingArgs = Args<[DataDir]>;
 
+// TODO: Inline this function.
 export function parseArgs(dataDirString?: string): Result<EmailSendingArgs> {
   const dataDir = makeDataDir(dataDirString);
 
