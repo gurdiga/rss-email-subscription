@@ -92,9 +92,9 @@ describe(makeEmailAddress.name, () => {
       kind: 'EmailAddress',
       value: 'a@test.com',
     } as EmailAddress);
-    expect(makeEmailAddress('23@test.com')).to.deep.equal({
+    expect(makeEmailAddress('no-23@test.com')).to.deep.equal({
       kind: 'EmailAddress',
-      value: '23@test.com',
+      value: 'no-23@test.com',
     } as EmailAddress);
   });
 
