@@ -100,8 +100,8 @@ export function storeEmails(
   emailHashFn: EmailHashFn,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
-  const emailIndex = indexEmails(emailAddresses, emailHashFn);
   const filePath = path.join(dataDir.value, emailsFileName);
+  const emailIndex = indexEmails(emailAddresses, emailHashFn);
   const json = JSON.stringify(emailIndex);
 
   try {
