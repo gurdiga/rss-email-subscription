@@ -3,7 +3,7 @@ import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn } from './email-delivery';
 import { EmailAddress, makeEmailAddress } from './emails';
-import { footerAd, makeEmailMessage, sendItem } from './item-sending';
+import { footerAd, makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 
 describe('item-sending', () => {
   const emailAddress = makeEmailAddress('some@email.com') as EmailAddress;
@@ -15,6 +15,7 @@ describe('item-sending', () => {
     pubDate: new Date('2021-06-12T15:50:16.000Z'),
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
   };
+  const unsubscribeLink = 'unsubscribe link';
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
@@ -23,7 +24,7 @@ describe('item-sending', () => {
         [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = [address, subject, body];
       };
 
-      await sendItem(emailAddress, item, mockDeliverEmailFn);
+      await sendItem(emailAddress, item, unsubscribeLink, mockDeliverEmailFn);
 
       expect(deliveredToAddress).to.equal(emailAddress.value);
       expect(deliveredSubject).to.equal(item.title);
@@ -36,7 +37,7 @@ describe('item-sending', () => {
         throw mockError;
       };
 
-      const result = await sendItem(emailAddress, item, mockDeliverEmailFn);
+      const result = await sendItem(emailAddress, item, unsubscribeLink, mockDeliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${emailAddress.value}: ${mockError.message}`));
     });
@@ -51,6 +52,12 @@ describe('item-sending', () => {
       expect(emailMessage.htmlBody).to.contain(item.content);
       expect(emailMessage.htmlBody).to.contain(footerAd, 'includes the footer ad');
       expect(emailMessage.htmlBody).to.contain(mockUnsubscribeLink, 'the unscubscribe link');
+    });
+  });
+
+  describe(makeUnsubscribeLink.name, () => {
+    it('returns a link containing the blog id and the email salted hash', () => {
+      //
     });
   });
 });

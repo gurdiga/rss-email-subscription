@@ -1,4 +1,4 @@
-import { HashFn, hash } from '../shared/crypto';
+import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn } from './email-delivery';
@@ -7,57 +7,9 @@ import { EmailAddress } from './emails';
 export async function sendItem(
   emailAddress: EmailAddress,
   item: RssItem,
-  deliverEmailFn: DeliverEmailFn = deliverEmail,
-  hashFn: HashFn = hash
+  unsubscribeLink: string,
+  deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
-  // To build the unsubscribe link I need:
-  // - the blog to unsubscribe from: can be a seeded hash
-  // - email to unsubscribe: can be a seeded hash
-
-  /*
-
-  It seems like I need a data/feed.json file like this:
-  {
-    "url": "https://example.com/feed.xml",
-    "hashingSeed": "<random string>",
-  }
-
-  The data/emails.json needs to contain:
-  {
-    "<email-seeded-hash>": "email"
-  }
-
-  ...and the EmailAddress needs to change to contain email’s hashed
-  seed. Then, the unsubscribe link can contain:
-
-  `${<blog-url-seeded-hash>}-${<email-seeded-hash>}`
-
-  ...which means that I need to know the blog.
-
-  A problem that may arise from using the file-system as storage is that
-  it may not be easily accessible from the subscribe/unscubscribe part
-  of the web app. I could arrange it as a Docker volume shared between
-  containers, but that can be dangerous in that two containers could
-  overwrite each other’s data.
-
-  TODO: Find a concrede conflictual scenario.
-
-  TODO: Maybe pass only dataDir to the rss-chacking app
-
-  Points:
-  - this part of the app would only need to write the lastPostTimestamp,
-    the rest is read-only or at least the data it writes (the RSS items)
-    is used internally by itself;
-  - the web-ui part would need to write emails, feed URL, and maybe
-    other bits.
-
-  TODO: Clarify this: One other seemingly problematic scenario is to
-  access and name data directorie. Maybe use sequential numerical IDs.
-
-  */
-  const blogUrlHash = 'TODO'; // needs the blog URL
-  const emailAddressHash = (emailAddress as any).hash; // TODO
-  const unsubscribeLink = `https://feedsubscription.com/unsubscribe?hash=${blogUrlHash}-${emailAddressHash}`;
   const emailMessage = makeEmailMessage(item, unsubscribeLink);
 
   try {
@@ -80,9 +32,14 @@ export const footerAd = `
   </footer>
 `;
 
-export function makeEmailMessage(item: RssItem, unsubscribeLink = 'TODO: Unsubscribe'): EmailMessage {
+export function makeEmailMessage(item: RssItem, unsubscribeLink: string): EmailMessage {
   return {
     subject: item.title,
     htmlBody: item.content + footerAd + unsubscribeLink,
   };
+}
+
+export function makeUnsubscribeLink(dataDir: DataDir, emailAddress: EmailAddress): string {
+  // TODO
+  return '';
 }

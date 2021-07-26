@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { sendItem } from './item-sending';
+import { makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { makeDataDir } from '../shared/data-dir';
@@ -57,18 +57,19 @@ async function main(): Promise<number> {
     logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
   }
 
-  for (const item of validItems) {
-    for (const hashedEmail of validHashedEmails) {
-      logInfo(`Sending RSS item`, { itemTitle: item.item.title, email: hashedEmail.emailAddress.value });
+  for (const storedItem of validItems) {
+    for (const { emailAddress } of validEmails) {
+      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: emailAddress.value });
 
-      const sendingResult = await sendItem(hashedEmail.emailAddress, item.item);
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, emailAddress);
+      const sendingResult = await sendItem(emailAddress, storedItem.item, unsubscribeLink);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);
       }
     }
 
-    const deletionResult = deleteItem(dataDir, item);
+    const deletionResult = deleteItem(dataDir, storedItem);
 
     if (isErr(deletionResult)) {
       logError(deletionResult.reason);
