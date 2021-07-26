@@ -10,6 +10,8 @@ import { makeDataDir } from '../shared/data-dir';
 import { makeUrl } from '../shared/url';
 import { requireEnvVar } from '../shared/env';
 
+const appBaseUrlString = requireEnvVar('APP_BASE_URL');
+
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
@@ -59,7 +61,7 @@ async function main(): Promise<number> {
     logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
   }
 
-  const appBaseUrl = makeUrl(requireEnvVar('APP_BASE_URL'));
+  const appBaseUrl = makeUrl(appBaseUrlString);
 
   if (isErr(appBaseUrl)) {
     logError(`Invalid app base URL`, { appBaseUrl: appBaseUrl.reason });

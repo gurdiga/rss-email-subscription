@@ -3,7 +3,7 @@ import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn } from './email-delivery';
-import { EmailAddress, HashedEmail } from './emails';
+import { HashedEmail } from './emails';
 
 export async function sendItem(
   hashedEmail: HashedEmail,
