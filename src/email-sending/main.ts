@@ -27,17 +27,17 @@ async function main(): Promise<number> {
     return 2;
   }
 
-  const { validHashedEmails, invalidHashedEmails } = emailReadingResult;
+  const { validEmails, invalidEmails } = emailReadingResult;
 
-  if (validHashedEmails.length === 0) {
+  if (validEmails.length === 0) {
     logError(`No valid emails found`, { dataDirString });
   }
 
-  if (invalidHashedEmails.length > 0) {
-    logWarning(`Found invalid emails`, { invalidHashedEmails });
+  if (invalidEmails.length > 0) {
+    logWarning(`Found invalid emails`, { invalidEmails });
   }
 
-  logInfo(`Found emails`, { dataDirString, emailCount: validHashedEmails.length });
+  logInfo(`Found emails`, { dataDirString, emailCount: validEmails.length });
 
   const rssItemReadingResult = readStoredRssItems(dataDir);
 

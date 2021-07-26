@@ -7,21 +7,6 @@ import { isErr } from '../shared/lang';
 import { logError, logInfo } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
-/*
-
-This is a support script to create the data/emails.json during the
-development process.
-
-When storing a list of emails:
-
-1. get the input string, one email per line - it can come from a file or
-   from the HTTP request body;
-2. parse the input string - get a list of EmailAddress values;
-3. store the list of emails indexed by the seeded hash to
-   data/email.json.
-
-*/
-
 async function main(): Promise<number> {
   const inputFilePath = path.join(process.cwd(), '.tmp/emails.csv');
 
@@ -29,7 +14,7 @@ async function main(): Promise<number> {
   const dataDir = makeDataDir(dataDirString);
 
   if (isErr(dataDir)) {
-    logError(`invalid args: ${dataDir.reason}`, { dataDirString });
+    logError(`Invalid args`, { dataDirString, reason: dataDir.reason });
     logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
@@ -37,7 +22,7 @@ async function main(): Promise<number> {
   const feedSettingsReadingResult = getFeedSettings(dataDir);
 
   if (isErr(feedSettingsReadingResult)) {
-    logError(`invalid feed settings: ${feedSettingsReadingResult.reason}`, { dataDirString });
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
     return 2;
   }
 

@@ -232,12 +232,12 @@ describe(loadStoredEmails.name, () => {
 
     expect(actualFilePath).to.equal(`${dataDirString}/${emailsFileName}`);
     expect(result).to.deep.equal({
-      validHashedEmails: [
+      validEmails: [
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
         { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
         { kind: 'HashedEmail', emailAddress: email('email3@test.com'), seededHash: 'hash3' },
       ],
-      invalidHashedEmails: [],
+      invalidEmails: [],
     } as StoredEmails);
   });
 
@@ -255,11 +255,11 @@ describe(loadStoredEmails.name, () => {
     const result = loadStoredEmails(dataDir, readFile);
 
     expect(result).to.deep.equal({
-      validHashedEmails: [
+      validEmails: [
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
         { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
       ],
-      invalidHashedEmails: [
+      invalidEmails: [
         'Syntactically invalid email: "what?"', // prettier: keep these stacked please
         'Empty hash for email "bad-hash@test.com"',
         'Expected email string but got null: "null"',

@@ -111,8 +111,8 @@ export function storeEmails(
 }
 
 export interface StoredEmails {
-  validHashedEmails: HashedEmail[];
-  invalidHashedEmails: string[];
+  validEmails: HashedEmail[];
+  invalidEmails: string[];
 }
 
 export interface HashedEmail {
@@ -137,12 +137,12 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
     }
 
     const results = Object.entries(index).map(([key, value]) => parseIndexEntry(key, value));
-    const validHashedEmails = results.filter(isHashedEmail);
-    const invalidHashedEmails = results.filter(isErr).map((error) => error.reason);
+    const validEmails = results.filter(isHashedEmail);
+    const invalidEmails = results.filter(isErr).map((error) => error.reason);
 
     return {
-      validHashedEmails,
-      invalidHashedEmails,
+      validEmails,
+      invalidEmails,
     };
   } catch (error) {
     return makeErr(`Invalid JSON in ${filePath}`);
