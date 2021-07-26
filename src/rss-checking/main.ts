@@ -71,7 +71,7 @@ async function main(): Promise<number | undefined> {
   if (isErr(newRssItemRecordingResult)) {
     logError(`Failed recording new items`, { reason: newRssItemRecordingResult.reason });
   } else {
-    logInfo(`Recorded new items`, { newItemCount: newRssItems.length });
+    logInfo(`Recorded new items`, { itemCount: newRssItems.length });
   }
 
   const LastPostTimestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);

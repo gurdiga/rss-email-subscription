@@ -6,11 +6,14 @@ import { deliverEmail, DeliverEmailFn } from './email-delivery';
 import { EmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
-  emailAddress: EmailAddress,
+  hashedEmail: HashedEmail,
   item: RssItem,
-  unsubscribeLink: string,
+  dataDir: DataDir,
+  appBaseUrl: URL,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
+  const { emailAddress } = hashedEmail;
+  const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
   const emailMessage = makeEmailMessage(item, unsubscribeLink);
 
   try {

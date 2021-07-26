@@ -8,7 +8,13 @@ import { EmailAddress, HashedEmail, makeEmailAddress } from './emails';
 import { footerAd, makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 
 describe('item-sending', () => {
-  const emailAddress = makeEmailAddress('some@email.com') as EmailAddress;
+  const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
+  const hashedEmail: HashedEmail = {
+    kind: 'HashedEmail',
+    emailAddress: makeEmailAddress('some@email.com') as EmailAddress,
+    seededHash: '#some-hash#',
+  };
+
   const item: RssItem = {
     title: 'Welcome to Jekyll!',
     content:
@@ -17,31 +23,33 @@ describe('item-sending', () => {
     pubDate: new Date('2021-06-12T15:50:16.000Z'),
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
   };
-  const unsubscribeLink = 'unsubscribe link';
+  const baseUrl = new URL('https://test.app');
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
       let [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = ['', '', ''];
-      const mockDeliverEmailFn: DeliverEmailFn = async (address, subject, body) => {
+      const deliverEmailFn: DeliverEmailFn = async (address, subject, body) => {
         [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = [address, subject, body];
       };
 
-      await sendItem(emailAddress, item, unsubscribeLink, mockDeliverEmailFn);
+      await sendItem(hashedEmail, item, dataDir, baseUrl, deliverEmailFn);
 
-      expect(deliveredToAddress).to.equal(emailAddress.value);
+      expect(deliveredToAddress).to.equal(hashedEmail.emailAddress.value);
       expect(deliveredSubject).to.equal(item.title);
       expect(deliveredHtmlBody).to.contain(item.content);
     });
 
     it('returns an Err value when delivery fails', async () => {
       const mockError = new Error('Cant!');
-      const mockDeliverEmailFn: DeliverEmailFn = () => {
+      const deliverEmailFn: DeliverEmailFn = () => {
         throw mockError;
       };
 
-      const result = await sendItem(emailAddress, item, unsubscribeLink, mockDeliverEmailFn);
+      const result = await sendItem(hashedEmail, item, dataDir, baseUrl, deliverEmailFn);
 
-      expect(result).to.deep.equal(makeErr(`Could not deliver email to ${emailAddress.value}: ${mockError.message}`));
+      expect(result).to.deep.equal(
+        makeErr(`Could not deliver email to ${hashedEmail.emailAddress.value}: ${mockError.message}`)
+      );
     });
   });
 
@@ -59,7 +67,6 @@ describe('item-sending', () => {
 
   describe(makeUnsubscribeLink.name, () => {
     it('returns a link containing the blog unique ID and the email salted hash', () => {
-      const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
       const blogId = path.basename(dataDir.value);
       const appBaseUrl = new URL('https://app.com');
 
