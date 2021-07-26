@@ -1,8 +1,9 @@
+import path from 'path';
 import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn } from './email-delivery';
-import { EmailAddress } from './emails';
+import { EmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
   emailAddress: EmailAddress,
@@ -39,7 +40,10 @@ export function makeEmailMessage(item: RssItem, unsubscribeLink: string): EmailM
   };
 }
 
-export function makeUnsubscribeLink(dataDir: DataDir, emailAddress: EmailAddress): string {
-  // TODO
-  return '';
+export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, appBaseUrl: URL): string {
+  const blogId = path.basename(dataDir.value);
+  const queryString = `id=${blogId}-${hashedEmail.seededHash}`;
+  const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);
+
+  return `<a href="${unsubscribeUrl.toString()}">Unsubscribe</a>`;
 }

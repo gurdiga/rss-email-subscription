@@ -6,13 +6,13 @@ import {
   EmailHashFn,
   EmailList,
   parseEmails,
-  indexEmails,
+  hashEmails,
   isEmailAddress,
   makeEmailAddress,
   readEmailListFromFile,
   storeEmails,
   emailsFileName,
-  EmailIndex,
+  HashedEmails,
   StoredEmails,
   loadStoredEmails,
 } from './emails';
@@ -75,11 +75,11 @@ describe(parseEmails.name, () => {
   });
 });
 
-describe(indexEmails.name, () => {
+describe(hashEmails.name, () => {
   it('indexes emails by their seeded hash', () => {
     const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
     const hashFn: EmailHashFn = (e) => `#${e.value}#`;
-    const result = indexEmails(emailAddresses, hashFn);
+    const result = hashEmails(emailAddresses, hashFn);
 
     expect(result).to.deep.equal({
       '#a@test.com#': 'a@test.com',
@@ -215,7 +215,7 @@ describe(loadStoredEmails.name, () => {
   const dataDirString = '/some/path';
   const dataDir = makeDataDir(dataDirString) as DataDir;
 
-  const index: EmailIndex = {
+  const index: HashedEmails = {
     hash1: 'email1@test.com',
     hash2: 'email2@test.com',
     hash3: 'email3@test.com',

@@ -1,4 +1,6 @@
-type EnvVarName = 'FROM_EMAIL_ADDRESS' | 'SMTP_CONNECTION_STRING';
+type EnvVarName = 'APP_BASE_URL' | 'FROM_EMAIL_ADDRESS' | 'SMTP_CONNECTION_STRING';
+
+export type RequireEnvVarFn = (varName: EnvVarName) => string;
 
 export function requireEnvVar(varName: EnvVarName): string {
   assert(varName in process.env, `Env var is missing: ${varName}`);

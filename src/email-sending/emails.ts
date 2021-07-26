@@ -69,10 +69,12 @@ export function parseEmails(emailList: string): Result<EmailList> {
 }
 
 export type EmailHashFn = (emailAddress: EmailAddress) => string;
-export type EmailIndex = Record<string, string>;
 
-export function indexEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): EmailIndex {
-  const index: EmailIndex = {};
+type EmailHash = string;
+export type HashedEmails = Record<EmailHash, EmailAddress['value']>;
+
+export function hashEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): HashedEmails {
+  const index: HashedEmails = {};
 
   emailAddresses.forEach((e) => {
     index[emailHashFn(e)] = e.value;
@@ -100,8 +102,8 @@ export function storeEmails(
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
   const filePath = path.join(dataDir.value, emailsFileName);
-  const emailIndex = indexEmails(emailAddresses, emailHashFn);
-  const json = JSON.stringify(emailIndex);
+  const hashedEmails = hashEmails(emailAddresses, emailHashFn);
+  const json = JSON.stringify(hashedEmails);
 
   try {
     writeFileFn(filePath, json);
@@ -130,7 +132,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   const json = readFileFn(filePath);
 
   try {
-    const index = JSON.parse(json) as EmailIndex;
+    const index = JSON.parse(json) as HashedEmails;
 
     if (getTypeName(index) !== 'object') {
       return makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values');

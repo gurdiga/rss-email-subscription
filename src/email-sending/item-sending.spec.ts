@@ -1,8 +1,10 @@
 import { expect } from 'chai';
+import path from 'path';
+import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn } from './email-delivery';
-import { EmailAddress, makeEmailAddress } from './emails';
+import { EmailAddress, HashedEmail, makeEmailAddress } from './emails';
 import { footerAd, makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 
 describe('item-sending', () => {
@@ -56,8 +58,22 @@ describe('item-sending', () => {
   });
 
   describe(makeUnsubscribeLink.name, () => {
-    it('returns a link containing the blog id and the email salted hash', () => {
-      //
+    it('returns a link containing the blog unique ID and the email salted hash', () => {
+      const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
+      const blogId = path.basename(dataDir.value);
+      const appBaseUrl = new URL('https://app.com');
+
+      const hashedEmail: HashedEmail = {
+        kind: 'HashedEmail',
+        emailAddress: makeEmailAddress('test@test.com') as EmailAddress,
+        seededHash: '#test@test.com#',
+      };
+
+      const result = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
+
+      expect(result).to.equal(
+        `<a href="${appBaseUrl}unsubscribe?id=${blogId}-${hashedEmail.seededHash}">Unsubscribe</a>`
+      );
     });
   });
 });

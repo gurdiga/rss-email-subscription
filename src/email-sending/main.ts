@@ -7,6 +7,8 @@ import { makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { makeDataDir } from '../shared/data-dir';
+import { makeUrl } from '../shared/url';
+import { requireEnvVar } from '../shared/env';
 
 async function main(): Promise<number> {
   const dataDirString = getFirstCliArg(process);
@@ -57,12 +59,19 @@ async function main(): Promise<number> {
     logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
   }
 
-  for (const storedItem of validItems) {
-    for (const { emailAddress } of validEmails) {
-      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: emailAddress.value });
+  const appBaseUrl = makeUrl(requireEnvVar('APP_BASE_URL'));
 
-      const unsubscribeLink = makeUnsubscribeLink(dataDir, emailAddress);
-      const sendingResult = await sendItem(emailAddress, storedItem.item, unsubscribeLink);
+  if (isErr(appBaseUrl)) {
+    logError(`Invalid app base URL`, { appBaseUrl: appBaseUrl.reason });
+    return 3;
+  }
+
+  for (const storedItem of validItems) {
+    for (const hashedEmail of validEmails) {
+      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: hashedEmail.emailAddress.value });
+
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
+      const sendingResult = await sendItem(hashedEmail.emailAddress, storedItem.item, unsubscribeLink);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);
