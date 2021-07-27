@@ -13,6 +13,12 @@ import { requireEnvVar } from '../shared/env';
 const appBaseUrlString = requireEnvVar('APP_BASE_URL');
 
 async function main(): Promise<number> {
+  // const env = requireEnv({
+  //   APP_BASE_URL: 'string',
+  //   SMTP_CONNECTION_STRING: 'string',
+  //   FROM_EMAIL_ADDRESS: 'string'
+  // });
+
   const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
 

@@ -1,5 +1,4 @@
-type EnvVarName = 'APP_BASE_URL' | 'FROM_EMAIL_ADDRESS' | 'SMTP_CONNECTION_STRING';
-
+export type EnvVarName = 'APP_BASE_URL' | 'FROM_EMAIL_ADDRESS' | 'SMTP_CONNECTION_STRING';
 export type RequireEnvVarFn = (varName: EnvVarName) => string;
 
 export function requireEnvVar(varName: EnvVarName): string {
