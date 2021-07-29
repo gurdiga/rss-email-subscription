@@ -135,6 +135,11 @@ describe(makeEmailAddress.name, () => {
       makeErr('Syntactically invalid email: "a@too-short-tld.i"')
     );
     expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
+    expect(makeEmailAddress(42)).to.deep.equal(makeErr('Syntactically invalid email: "42"'));
+    expect(makeEmailAddress(undefined)).to.deep.equal(makeErr('Syntactically invalid email: "undefined"'));
+    expect(makeEmailAddress(null)).to.deep.equal(makeErr('Syntactically invalid email: "null"'));
+    expect(makeEmailAddress({})).to.deep.equal(makeErr('Syntactically invalid email: "[object Object]"'));
+    expect(makeEmailAddress([])).to.deep.equal(makeErr('Syntactically invalid email: ""'));
   });
 });
 

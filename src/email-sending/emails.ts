@@ -15,7 +15,8 @@ export interface EmailAddress {
   value: string;
 }
 
-export function makeEmailAddress(emailString: string): Result<EmailAddress> {
+export function makeEmailAddress(input: any): Result<EmailAddress> {
+  const emailString = `${input}`;
   const email = emailString.trim();
   const err = makeErr(`Syntactically invalid email: "${emailString}"`);
 
