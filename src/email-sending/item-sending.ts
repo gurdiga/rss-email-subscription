@@ -8,13 +8,11 @@ import { HashedEmail } from './emails';
 export async function sendItem(
   hashedEmail: HashedEmail,
   item: RssItem,
-  dataDir: DataDir,
-  appBaseUrl: URL,
+  unsubscribeLink: string,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
   const { emailAddress } = hashedEmail;
-  const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
   const emailMessage = makeEmailMessage(item, unsubscribeLink);
   const fromAddress = 'TODO'; // TODO: take it from feed.json
 

@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { sendItem } from './item-sending';
+import { makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { makeDataDir } from '../shared/data-dir';
@@ -90,7 +90,8 @@ async function main(): Promise<number | undefined> {
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: hashedEmail.emailAddress.value });
 
-      const sendingResult = await sendItem(hashedEmail, storedItem.item, dataDir, appBaseUrl, env);
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
+      const sendingResult = await sendItem(hashedEmail, storedItem.item, unsubscribeLink, env);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);

@@ -23,7 +23,7 @@ describe('item-sending', () => {
     pubDate: new Date('2021-06-12T15:50:16.000Z'),
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
   };
-  const baseUrl = new URL('https://test.app');
+  const unsubscribeLink = 'The unsibscribe link HTML';
   const env: EmailDeliveryEnv = {
     FROM_EMAIL_ADDRESS: 'from@test.com',
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
@@ -36,7 +36,7 @@ describe('item-sending', () => {
         [actualFrom, actualTo, actualSubject, actualHtmlBody] = [from, to, subject, body];
       };
 
-      await sendItem(hashedEmail, item, dataDir, baseUrl, env, deliverEmailFn);
+      await sendItem(hashedEmail, item, unsubscribeLink, env, deliverEmailFn);
 
       expect(actualTo).to.equal(hashedEmail.emailAddress.value);
       expect(actualSubject).to.equal(item.title);
@@ -49,7 +49,7 @@ describe('item-sending', () => {
         throw mockError;
       };
 
-      const result = await sendItem(hashedEmail, item, dataDir, baseUrl, env, deliverEmailFn);
+      const result = await sendItem(hashedEmail, item, unsubscribeLink, env, deliverEmailFn);
 
       expect(result).to.deep.equal(
         makeErr(`Could not deliver email to ${hashedEmail.emailAddress.value}: ${mockError.message}`)
