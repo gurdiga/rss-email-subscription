@@ -8,16 +8,20 @@ import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { makeDataDir } from '../shared/data-dir';
 import { makeUrl } from '../shared/url';
-import { requireEnvVar } from '../shared/env';
+import { requireEnv } from '../shared/env';
+import { EmailDeliveryEnv } from './email-delivery';
 
-const appBaseUrlString = requireEnvVar('APP_BASE_URL');
+export interface Env extends EmailDeliveryEnv {
+  APP_BASE_URL: string;
+}
 
 async function main(): Promise<number> {
-  // const env = requireEnv({
-  //   APP_BASE_URL: 'string',
-  //   SMTP_CONNECTION_STRING: 'string',
-  //   FROM_EMAIL_ADDRESS: 'string'
-  // });
+  const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING', 'FROM_EMAIL_ADDRESS']);
+
+  if (isErr(env)) {
+    logError(`Invalid environment variables`, { reason: env.reason });
+    return 4;
+  }
 
   const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
@@ -67,7 +71,7 @@ async function main(): Promise<number> {
     logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
   }
 
-  const appBaseUrl = makeUrl(appBaseUrlString);
+  const appBaseUrl = makeUrl(env.APP_BASE_URL);
 
   if (isErr(appBaseUrl)) {
     logError(`Invalid app base URL`, { appBaseUrl: appBaseUrl.reason });
@@ -78,7 +82,7 @@ async function main(): Promise<number> {
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: hashedEmail.emailAddress.value });
 
-      const sendingResult = await sendItem(hashedEmail, storedItem.item, dataDir, appBaseUrl);
+      const sendingResult = await sendItem(hashedEmail, storedItem.item, dataDir, appBaseUrl, env);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);

@@ -1,21 +1,26 @@
 import nodemailer from 'nodemailer';
-import { requireEnvVar } from '../shared/env';
 
-export type DeliverEmailFn = (address: string, subject: string, body: string) => Promise<void>;
+export interface EmailDeliveryEnv {
+  SMTP_CONNECTION_STRING: string;
+  FROM_EMAIL_ADDRESS: string;
+}
+
+export type DeliverEmailFn = (address: string, subject: string, body: string, env: EmailDeliveryEnv) => Promise<void>;
 
 let transporter: ReturnType<typeof nodemailer.createTransport>;
 
-// TODO: Have an Env for every main to make it clear what envars it needs.
-const smtpConnectionString = requireEnvVar('SMTP_CONNECTION_STRING');
-const fromEmailAddressString = requireEnvVar('FROM_EMAIL_ADDRESS'); // make it an arg: senderAddress
-
-export async function deliverEmail(address: string, subject: string, htmlBody: string): Promise<void> {
+export async function deliverEmail(
+  address: string,
+  subject: string,
+  htmlBody: string,
+  env: EmailDeliveryEnv
+): Promise<void> {
   if (!transporter) {
-    transporter = nodemailer.createTransport(smtpConnectionString);
+    transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING);
   }
 
   await transporter.sendMail({
-    from: fromEmailAddressString,
+    from: env.FROM_EMAIL_ADDRESS, // TODO: Move to feed.json
     to: address,
     subject,
     text: 'Please use an HTML-capable email reader',

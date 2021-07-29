@@ -9,20 +9,17 @@ describe(requireEnv.name, () => {
       UID: '42',
     };
 
-    const result = requireEnv({ HOME: 'string', UID: 'number' }, envars);
+    const result = requireEnv(['HOME', 'UID'], envars);
 
     expect(result).to.deep.equal({
       HOME: '/home/vlad',
-      UID: 42,
+      UID: '42',
     });
   });
 
-  it('returns Err when any of the envars are not as expected', () => {
-    const resultForEnvars = (env: NodeJS.Process['env']) => requireEnv({ HOME: 'string', UID: 'number' }, env);
+  it('returns Err when any of the envars are missing', () => {
+    const resultForEnvars = (env: NodeJS.Process['env']) => requireEnv(['HOME', 'UID'], env);
 
-    expect(resultForEnvars({ HOME: '/path' })).to.deep.equal(makeErr(`Environment variable UID is missing`));
-    expect(resultForEnvars({ HOME: '/path', UID: 'non-number' })).to.deep.equal(
-      makeErr(`Environment variable UID is expected to contain a number`)
-    );
+    expect(resultForEnvars({ HOME: '/path' })).to.deep.equal(makeErr(`Environment variable UID is not set`));
   });
 });

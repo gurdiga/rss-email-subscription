@@ -3,7 +3,7 @@ import path from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { DeliverEmailFn } from './email-delivery';
+import { DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, HashedEmail, makeEmailAddress } from './emails';
 import { footerAd, makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 
@@ -24,6 +24,10 @@ describe('item-sending', () => {
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
   };
   const baseUrl = new URL('https://test.app');
+  const env: EmailDeliveryEnv = {
+    FROM_EMAIL_ADDRESS: 'from@test.com',
+    SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
+  };
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
@@ -32,7 +36,7 @@ describe('item-sending', () => {
         [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = [address, subject, body];
       };
 
-      await sendItem(hashedEmail, item, dataDir, baseUrl, deliverEmailFn);
+      await sendItem(hashedEmail, item, dataDir, baseUrl, env, deliverEmailFn);
 
       expect(deliveredToAddress).to.equal(hashedEmail.emailAddress.value);
       expect(deliveredSubject).to.equal(item.title);
@@ -45,7 +49,7 @@ describe('item-sending', () => {
         throw mockError;
       };
 
-      const result = await sendItem(hashedEmail, item, dataDir, baseUrl, deliverEmailFn);
+      const result = await sendItem(hashedEmail, item, dataDir, baseUrl, env, deliverEmailFn);
 
       expect(result).to.deep.equal(
         makeErr(`Could not deliver email to ${hashedEmail.emailAddress.value}: ${mockError.message}`)

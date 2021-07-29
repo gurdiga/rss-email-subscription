@@ -2,7 +2,7 @@ import path from 'path';
 import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { deliverEmail, DeliverEmailFn } from './email-delivery';
+import { deliverEmail, DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
 import { HashedEmail } from './emails';
 
 export async function sendItem(
@@ -10,6 +10,7 @@ export async function sendItem(
   item: RssItem,
   dataDir: DataDir,
   appBaseUrl: URL,
+  env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
   const { emailAddress } = hashedEmail;
@@ -17,7 +18,7 @@ export async function sendItem(
   const emailMessage = makeEmailMessage(item, unsubscribeLink);
 
   try {
-    await deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody);
+    await deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody, env);
   } catch (error) {
     return makeErr(`Could not deliver email to ${emailAddress.value}: ${error.message}`);
   }

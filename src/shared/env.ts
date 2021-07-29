@@ -30,32 +30,20 @@ export class EnvironmentAssertionError extends Error {
   }
 }
 
-export function requireEnv(
-  envarTypes: Record<string, 'string' | 'number'>,
+export function requireEnv<ENV = Record<string, string>>(
+  envarNames: (keyof ENV)[],
   envars: NodeJS.Process['env'] = process.env
-): Result<Record<string, string | number>> {
-  const values = { ...envarTypes };
+): Result<ENV> {
+  const values = {} as ENV;
 
-  for (const envarName in envarTypes) {
-    const envarValue = envars[envarName];
+  for (const envarName of envarNames) {
+    const envarValue = envars[envarName] as string;
 
     if (!envarValue) {
-      return makeErr(`Environment variable ${envarName} is missing`);
+      return makeErr(`Environment variable ${envarName} is not set`);
     }
 
-    const expectedType = envarTypes[envarName];
-
-    if (expectedType === 'number') {
-      const persedNumber = parseFloat(envarValue);
-
-      if (isNaN(persedNumber)) {
-        return makeErr(`Environment variable ${envarName} is expected to contain a number`);
-      }
-
-      values[envarName] = persedNumber as any; // Don’t know how to to fit types.
-    } else {
-      values[envarName] = envarValue as any; // Don’t know how to to fit types.
-    }
+    values[envarName] = envarValue as any;
   }
 
   return values;
