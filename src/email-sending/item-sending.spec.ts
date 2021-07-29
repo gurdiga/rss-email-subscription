@@ -26,7 +26,6 @@ describe('item-sending', () => {
   };
 
   const env: EmailDeliveryEnv = {
-    FROM_EMAIL_ADDRESS: 'from@test.com',
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
   };
 

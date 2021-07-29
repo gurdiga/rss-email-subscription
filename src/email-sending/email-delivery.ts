@@ -2,7 +2,6 @@ import nodemailer from 'nodemailer';
 
 export interface EmailDeliveryEnv {
   SMTP_CONNECTION_STRING: string;
-  FROM_EMAIL_ADDRESS: string;
 }
 
 export type DeliverEmailFn = (
@@ -27,7 +26,7 @@ export async function deliverEmail(
   }
 
   await transporter.sendMail({
-    from, // TODO: Move to feed.json
+    from,
     to,
     subject,
     text: 'Please use an HTML-capable email reader',

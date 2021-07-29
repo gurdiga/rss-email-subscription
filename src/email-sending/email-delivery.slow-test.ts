@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv } from './email-delivery';
 
 async function main(): Promise<number> {
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'FROM_EMAIL_ADDRESS']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
     console.error(`\nInvalid environment variables: ${env.reason}`);
@@ -11,7 +11,7 @@ async function main(): Promise<number> {
   }
 
   const fromAddress = 'gurdiga@gmail.com';
-  const toAddress = 'gurdiga@gmail.com';
+  const toAddress = 'gurdiga@mail.ru';
   const subject = 'testing deliverEmailFn from';
 
   await deliverEmail(

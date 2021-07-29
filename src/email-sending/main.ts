@@ -17,7 +17,7 @@ export interface Env extends EmailDeliveryEnv {
 }
 
 async function main(): Promise<number | undefined> {
-  const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING', 'FROM_EMAIL_ADDRESS']);
+  const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
     logError(`Invalid environment variables`, { reason: env.reason });
@@ -42,6 +42,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
+  const { fromAddress } = feedSettingsReadingResult;
   const emailReadingResult = loadStoredEmails(dataDir);
 
   if (isErr(emailReadingResult)) {
@@ -92,8 +93,7 @@ async function main(): Promise<number | undefined> {
 
       const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
-      const from = hashedEmail.emailAddress; // TODO: get it from feed settings
-      const sendingResult = await sendItem(from, hashedEmail.emailAddress, emailMessage, env);
+      const sendingResult = await sendItem(fromAddress, hashedEmail.emailAddress, emailMessage, env);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);

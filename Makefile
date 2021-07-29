@@ -9,12 +9,12 @@ run-rss-checking:
 data: data/feed.json data/emails.json
 
 data/feed.json:
-	echo '{"url": "http://localhost:4000/feed.xml", "hashingSalt": "1234567890123456"}' \
+	echo '{"url": "http://localhost:4000/feed.xml", "hashingSalt": "1234567890123456", "fromAddress": "gurdiga@gmail.com"}' \
 	> $@
 
 .tmp/emails.csv:
 	rm -f $@
-	for email in a@test.com b@test.com c@test.com; do \
+	for email in vlad@gurdiga.com gurdiga@mail.ru; do \
 		echo $$email >> $@; \
 	done
 
