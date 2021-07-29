@@ -9,7 +9,7 @@ run-rss-checking:
 data: data/feed.json data/emails.json
 
 data/feed.json:
-	echo '{"url": "http://localhost:4000/feed.xml", "hashingSeed": "1234567890123456"}' \
+	echo '{"url": "http://localhost:4000/feed.xml", "hashingSalt": "1234567890123456"}' \
 	> $@
 
 .tmp/emails.csv:

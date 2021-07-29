@@ -10,7 +10,7 @@ describe(getFeedSettings.name, () => {
   it('returns the data in feed.json as a FeedSettings value', () => {
     const mockData = {
       url: 'https://example.com/feed.xml',
-      hashingSeed: 'more-than-sixteen-non-space-characters',
+      hashingSalt: 'more-than-sixteen-non-space-characters',
     };
     let actualPath = '';
     const mockReadFileFn = (path: string) => {
@@ -23,7 +23,7 @@ describe(getFeedSettings.name, () => {
     expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
     expect(result).to.deep.equal({
       url: new URL(mockData.url),
-      hashingSeed: mockData.hashingSeed,
+      hashingSalt: mockData.hashingSalt,
     });
   });
 
@@ -46,11 +46,11 @@ describe(getFeedSettings.name, () => {
     expect(settingsFromJson('{"url": "not-a-url"}')).to.deep.equal(
       makeErr(`Invalid feed URL in ${dataDirPathString}/feed.json: not-a-url`)
     );
-    expect(settingsFromJson('{"url": "https://a.com", "hashingSeed": 42}')).to.deep.equal(
-      makeErr(`Invalid hashing seed in ${dataDirPathString}/feed.json: 42`)
+    expect(settingsFromJson('{"url": "https://a.com", "hashingSalt": 42}')).to.deep.equal(
+      makeErr(`Invalid hashing salt in ${dataDirPathString}/feed.json: 42`)
     );
-    expect(settingsFromJson('{"url": "https://a.com", "hashingSeed": "seeeeedd"}')).to.deep.equal(
-      makeErr(`Hashing seed is too short in ${dataDirPathString}/feed.json: at least 16 characters required`)
+    expect(settingsFromJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
+      makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 characters required`)
     );
   });
 });

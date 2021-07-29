@@ -39,8 +39,8 @@ export function recordNewRssItems(
 export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
-  const hashingSeed = 'item-name-seed';
-  const hash = hashFn(item.title + item.content + item.pubDate.toJSON(), hashingSeed);
+  const hashingSalt = 'item-name-salt';
+  const hash = hashFn(item.title + item.content + item.pubDate.toJSON(), hashingSalt);
 
   return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
 }

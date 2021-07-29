@@ -5,7 +5,7 @@ import { makeUrl } from './url';
 
 export interface FeedSettings {
   url: URL;
-  hashingSeed: string;
+  hashingSalt: string;
 }
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
@@ -22,22 +22,22 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid feed URL in ${dataDir.value}/feed.json: ${data.url}`);
       }
 
-      const { hashingSeed } = data;
-      const seedMinLength = 16;
+      const { hashingSalt } = data;
+      const saltMinLength = 16;
 
-      if (typeof hashingSeed !== 'string') {
-        return makeErr(`Invalid hashing seed in ${dataDir.value}/feed.json: ${hashingSeed}`);
+      if (typeof hashingSalt !== 'string') {
+        return makeErr(`Invalid hashing salt in ${dataDir.value}/feed.json: ${hashingSalt}`);
       }
 
-      if (hashingSeed.trim().length < seedMinLength) {
+      if (hashingSalt.trim().length < saltMinLength) {
         return makeErr(
-          `Hashing seed is too short in ${dataDir.value}/feed.json: at least ${seedMinLength} characters required`
+          `Hashing salt is too short in ${dataDir.value}/feed.json: at least ${saltMinLength} characters required`
         );
       }
 
       return {
         url,
-        hashingSeed,
+        hashingSalt,
       };
     } catch (error) {
       return makeErr(`Can’t parse JSON in ${filePath}: ${error.message},`);

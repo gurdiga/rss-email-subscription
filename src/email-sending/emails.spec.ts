@@ -76,7 +76,7 @@ describe(parseEmails.name, () => {
 });
 
 describe(hashEmails.name, () => {
-  it('indexes emails by their seeded hash', () => {
+  it('indexes emails by their salted hash', () => {
     const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
     const hashFn: EmailHashFn = (e) => `#${e.value}#`;
     const result = hashEmails(emailAddresses, hashFn);
@@ -233,9 +233,9 @@ describe(loadStoredEmails.name, () => {
     expect(actualFilePath).to.equal(`${dataDirString}/${emailsFileName}`);
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
-        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), seededHash: 'hash3' },
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
+        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3' },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -256,8 +256,8 @@ describe(loadStoredEmails.name, () => {
 
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), seededHash: 'hash1' },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), seededHash: 'hash2' },
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
       ],
       invalidEmails: [
         'Syntactically invalid email: "what?"', // prettier: keep these stacked please

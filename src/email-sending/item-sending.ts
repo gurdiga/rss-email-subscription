@@ -46,7 +46,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeLink: string): EmailM
 
 export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, appBaseUrl: URL): string {
   const blogId = path.basename(dataDir.value);
-  const queryString = `id=${blogId}-${hashedEmail.seededHash}`;
+  const queryString = `id=${blogId}-${hashedEmail.saltedHash}`;
   const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);
 
   return `<a href="${unsubscribeUrl.toString()}">Unsubscribe</a>`;

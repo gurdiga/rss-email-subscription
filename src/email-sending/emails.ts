@@ -120,7 +120,7 @@ export interface StoredEmails {
 export interface HashedEmail {
   kind: 'HashedEmail';
   emailAddress: EmailAddress;
-  seededHash: string; // TODO: replace seed with salt everywhere
+  saltedHash: string;
 }
 
 function isHashedEmail(value: any): value is HashedEmail {
@@ -151,12 +151,12 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-function parseIndexEntry(seededHash: string, email: string): HashedEmail | Err {
+function parseIndexEntry(saltedHash: string, email: string): HashedEmail | Err {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeErr(`Expected email string but got ${getTypeName(email)}: "${JSON.stringify(email)}"`);
   }
 
-  if (!isNonEmptyString(seededHash)) {
+  if (!isNonEmptyString(saltedHash)) {
     return makeErr(`Empty hash for email "${email}"`);
   }
 
@@ -169,6 +169,6 @@ function parseIndexEntry(seededHash: string, email: string): HashedEmail | Err {
   return {
     kind: 'HashedEmail',
     emailAddress: emailAddressMakingResult,
-    seededHash,
+    saltedHash,
   };
 }

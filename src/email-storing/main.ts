@@ -26,7 +26,7 @@ async function main(): Promise<number> {
     return 2;
   }
 
-  const { hashingSeed } = feedSettingsReadingResult;
+  const { hashingSalt } = feedSettingsReadingResult;
   const emailReadingResult = readEmailListFromFile(inputFilePath);
 
   if (isErr(emailReadingResult)) {
@@ -35,7 +35,7 @@ async function main(): Promise<number> {
   }
 
   const { validEmails } = emailReadingResult;
-  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSeed);
+  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
   const storeResult = storeEmails(dataDir, validEmails, hashEmail);
 
   if (isErr(storeResult)) {

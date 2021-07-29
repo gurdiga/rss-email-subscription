@@ -12,7 +12,7 @@ describe('item-sending', () => {
   const hashedEmail: HashedEmail = {
     kind: 'HashedEmail',
     emailAddress: makeEmailAddress('some@email.com') as EmailAddress,
-    seededHash: '#some-hash#',
+    saltedHash: '#some-hash#',
   };
 
   const item: RssItem = {
@@ -77,13 +77,13 @@ describe('item-sending', () => {
       const hashedEmail: HashedEmail = {
         kind: 'HashedEmail',
         emailAddress: makeEmailAddress('test@test.com') as EmailAddress,
-        seededHash: '#test@test.com#',
+        saltedHash: '#test@test.com#',
       };
 
       const result = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
 
       expect(result).to.equal(
-        `<a href="${appBaseUrl}unsubscribe?id=${blogId}-${hashedEmail.seededHash}">Unsubscribe</a>`
+        `<a href="${appBaseUrl}unsubscribe?id=${blogId}-${hashedEmail.saltedHash}">Unsubscribe</a>`
       );
     });
   });
