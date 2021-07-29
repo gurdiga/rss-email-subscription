@@ -10,6 +10,7 @@ import { makeDataDir } from '../shared/data-dir';
 import { makeUrl } from '../shared/url';
 import { requireEnv } from '../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
+import { getFeedSettings } from '../shared/feed-settings';
 
 export interface Env extends EmailDeliveryEnv {
   APP_BASE_URL: string;
@@ -33,6 +34,13 @@ async function main(): Promise<number | undefined> {
   }
 
   logInfo(`Processing data dir ${dataDir.value}`, { dataDirString });
+
+  const feedSettingsReadingResult = getFeedSettings(dataDir);
+
+  if (isErr(feedSettingsReadingResult)) {
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
+    return 1;
+  }
 
   const emailReadingResult = loadStoredEmails(dataDir);
 
