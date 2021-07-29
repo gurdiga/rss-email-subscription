@@ -31,16 +31,16 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
-      let [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = ['', '', ''];
-      const deliverEmailFn: DeliverEmailFn = async (address, subject, body) => {
-        [deliveredToAddress, deliveredSubject, deliveredHtmlBody] = [address, subject, body];
+      let [actualFrom, actualTo, actualSubject, actualHtmlBody] = ['', '', '', ''];
+      const deliverEmailFn: DeliverEmailFn = async (from, to, subject, body) => {
+        [actualFrom, actualTo, actualSubject, actualHtmlBody] = [from, to, subject, body];
       };
 
       await sendItem(hashedEmail, item, dataDir, baseUrl, env, deliverEmailFn);
 
-      expect(deliveredToAddress).to.equal(hashedEmail.emailAddress.value);
-      expect(deliveredSubject).to.equal(item.title);
-      expect(deliveredHtmlBody).to.contain(item.content);
+      expect(actualTo).to.equal(hashedEmail.emailAddress.value);
+      expect(actualSubject).to.equal(item.title);
+      expect(actualHtmlBody).to.contain(item.content);
     });
 
     it('returns an Err value when delivery fails', async () => {

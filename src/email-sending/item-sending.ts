@@ -16,9 +16,10 @@ export async function sendItem(
   const { emailAddress } = hashedEmail;
   const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
   const emailMessage = makeEmailMessage(item, unsubscribeLink);
+  const fromAddress = 'TODO'; // TODO: take it from feed.json
 
   try {
-    await deliverEmailFn(emailAddress.value, emailMessage.subject, emailMessage.htmlBody, env);
+    await deliverEmailFn(fromAddress, emailAddress.value, emailMessage.subject, emailMessage.htmlBody, env);
   } catch (error) {
     return makeErr(`Could not deliver email to ${emailAddress.value}: ${error.message}`);
   }

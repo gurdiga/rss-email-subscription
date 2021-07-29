@@ -10,11 +10,13 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const destinationEmailAddress = 'gurdiga@gmail.com';
+  const fromAddress = 'gurdiga@gmail.com';
+  const toAddress = 'gurdiga@gmail.com';
   const subject = 'testing deliverEmailFn from';
 
   await deliverEmail(
-    destinationEmailAddress,
+    fromAddress,
+    toAddress,
     subject,
     `
       <p>This emai is sent from this unit test:</p>
@@ -24,9 +26,7 @@ async function main(): Promise<number> {
     env
   );
 
-  console.log(
-    `\nSeems OK. Please check the ${destinationEmailAddress} inbox for a message having the subject of "${subject}".\n`
-  );
+  console.log(`\nSeems OK. Please check the ${toAddress} inbox for a message having the subject of "${subject}".\n`);
   return 0;
 }
 

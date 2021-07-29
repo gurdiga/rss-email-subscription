@@ -5,12 +5,19 @@ export interface EmailDeliveryEnv {
   FROM_EMAIL_ADDRESS: string;
 }
 
-export type DeliverEmailFn = (address: string, subject: string, body: string, env: EmailDeliveryEnv) => Promise<void>;
+export type DeliverEmailFn = (
+  from: string,
+  to: string,
+  subject: string,
+  body: string,
+  env: EmailDeliveryEnv
+) => Promise<void>;
 
 let transporter: ReturnType<typeof nodemailer.createTransport>;
 
 export async function deliverEmail(
-  address: string,
+  from: string,
+  to: string,
   subject: string,
   htmlBody: string,
   env: EmailDeliveryEnv
@@ -20,8 +27,8 @@ export async function deliverEmail(
   }
 
   await transporter.sendMail({
-    from: env.FROM_EMAIL_ADDRESS, // TODO: Move to feed.json
-    to: address,
+    from, // TODO: Move to feed.json
+    to,
     subject,
     text: 'Please use an HTML-capable email reader',
     html: htmlBody,
