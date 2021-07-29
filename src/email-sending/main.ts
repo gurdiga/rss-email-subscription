@@ -15,12 +15,12 @@ export interface Env extends EmailDeliveryEnv {
   APP_BASE_URL: string;
 }
 
-async function main(): Promise<number> {
+async function main(): Promise<number | undefined> {
   const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING', 'FROM_EMAIL_ADDRESS']);
 
   if (isErr(env)) {
     logError(`Invalid environment variables`, { reason: env.reason });
-    return 4;
+    return 1;
   }
 
   const dataDirString = getFirstCliArg(process);
@@ -38,7 +38,7 @@ async function main(): Promise<number> {
 
   if (isErr(emailReadingResult)) {
     logError(`Failed reading emails`, { dataDirString, reason: emailReadingResult.reason });
-    return 2;
+    return 1;
   }
 
   const { validEmails, invalidEmails } = emailReadingResult;
@@ -57,7 +57,7 @@ async function main(): Promise<number> {
 
   if (isErr(rssItemReadingResult)) {
     logError(`Failed to read RSS items`, { dataDirString, reason: rssItemReadingResult.reason });
-    return 2;
+    return 1;
   }
 
   const { validItems, invalidItems } = rssItemReadingResult;
@@ -75,7 +75,7 @@ async function main(): Promise<number> {
 
   if (isErr(appBaseUrl)) {
     logError(`Invalid app base URL`, { appBaseUrl: appBaseUrl.reason });
-    return 3;
+    return 1;
   }
 
   for (const storedItem of validItems) {
@@ -95,8 +95,6 @@ async function main(): Promise<number> {
       logError(deletionResult.reason);
     }
   }
-
-  return 0;
 }
 
 main().then((exitCode) => process.exit(exitCode));

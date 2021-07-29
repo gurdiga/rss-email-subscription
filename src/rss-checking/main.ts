@@ -24,7 +24,7 @@ async function main(): Promise<number | undefined> {
 
   if (isErr(feedSettingsReadingResult)) {
     logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
-    return 6;
+    return 1;
   }
 
   const { url } = feedSettingsReadingResult;
@@ -32,14 +32,14 @@ async function main(): Promise<number | undefined> {
 
   if (isErr(rssFetchingResult)) {
     logError(`Failed fetching RSS`, { url, reason: rssFetchingResult.reason });
-    return 2;
+    return 1;
   }
 
   const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
 
   if (isErr(lastPostTimestampParsingResult)) {
     logError(`Failed reading last post timestamp`, { dataDir, reason: lastPostTimestampParsingResult.reason });
-    return 3;
+    return 1;
   }
 
   const lastPostTimestamp =
@@ -48,7 +48,7 @@ async function main(): Promise<number | undefined> {
 
   if (isErr(rssParsingResult)) {
     logError(`Failed parsing RSS items`, { reson: rssParsingResult.reason });
-    return 4;
+    return 1;
   }
 
   const { validItems, invalidItems } = rssParsingResult;
@@ -62,7 +62,7 @@ async function main(): Promise<number | undefined> {
 
   if (isEmpty(validItems)) {
     logError(`No valid RSS items`, { url });
-    return 5;
+    return 1;
   }
 
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);

@@ -7,7 +7,7 @@ import { isErr } from '../shared/lang';
 import { logError, logInfo } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
-async function main(): Promise<number> {
+async function main(): Promise<number | undefined> {
   const inputFilePath = path.join(process.cwd(), '.tmp/emails.csv');
 
   const dataDirString = getFirstCliArg(process);
@@ -23,7 +23,7 @@ async function main(): Promise<number> {
 
   if (isErr(feedSettingsReadingResult)) {
     logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
-    return 2;
+    return 1;
   }
 
   const { hashingSalt } = feedSettingsReadingResult;
@@ -31,7 +31,7 @@ async function main(): Promise<number> {
 
   if (isErr(emailReadingResult)) {
     logError(emailReadingResult.reason, { inputFilePath });
-    return 3;
+    return 1;
   }
 
   const { validEmails } = emailReadingResult;
@@ -40,11 +40,10 @@ async function main(): Promise<number> {
 
   if (isErr(storeResult)) {
     logError(storeResult.reason, { dataDirString });
-    return 4;
+    return 1;
   }
 
   logInfo('Stored emails', { dataDirString, emailCount: validEmails.length });
-  return 0;
 }
 
 main().then((exitCode) => process.exit(exitCode));
