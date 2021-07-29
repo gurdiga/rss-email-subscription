@@ -6,6 +6,7 @@ import { makeUrl } from './url';
 export interface FeedSettings {
   url: URL;
   hashingSalt: string;
+  // TODO: Add `fromAddress: string;`
 }
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {

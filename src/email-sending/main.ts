@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { makeUnsubscribeLink, sendItem } from './item-sending';
+import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { makeDataDir } from '../shared/data-dir';
@@ -91,7 +91,9 @@ async function main(): Promise<number | undefined> {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: hashedEmail.emailAddress.value });
 
       const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
-      const sendingResult = await sendItem(hashedEmail, storedItem.item, unsubscribeLink, env);
+      const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
+      const from = hashedEmail.emailAddress; // TODO: get it from feed settings
+      const sendingResult = await sendItem(from, hashedEmail.emailAddress, emailMessage, env);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);

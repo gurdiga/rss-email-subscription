@@ -3,32 +3,28 @@ import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
-import { HashedEmail } from './emails';
+import { EmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
-  hashedEmail: HashedEmail,
-  item: RssItem,
-  unsubscribeLink: string,
+  from: EmailAddress,
+  to: EmailAddress,
+  messageContent: MessageContent,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
-  const { emailAddress } = hashedEmail;
-  const emailMessage = makeEmailMessage(item, unsubscribeLink);
-  const fromAddress = 'TODO'; // TODO: take it from feed.json
-
   try {
-    await deliverEmailFn(fromAddress, emailAddress.value, emailMessage.subject, emailMessage.htmlBody, env);
+    await deliverEmailFn(from.value, to.value, messageContent.subject, messageContent.htmlBody, env);
   } catch (error) {
-    return makeErr(`Could not deliver email to ${emailAddress.value}: ${error.message}`);
+    return makeErr(`Could not deliver email to ${to.value}: ${error.message}`);
   }
 }
 
-interface EmailMessage {
+export interface MessageContent {
   subject: string;
   htmlBody: string;
 }
 
-export type MakeEmailMessageFn = (item: RssItem) => EmailMessage;
+export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
 
 export const footerAd = `
   <footer>
@@ -36,7 +32,7 @@ export const footerAd = `
   </footer>
 `;
 
-export function makeEmailMessage(item: RssItem, unsubscribeLink: string): EmailMessage {
+export function makeEmailMessage(item: RssItem, unsubscribeLink: string): MessageContent {
   return {
     subject: item.title,
     htmlBody: item.content + footerAd + unsubscribeLink,
