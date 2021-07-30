@@ -5,7 +5,7 @@ import { isErr } from '../shared/lang';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
-import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
+import { getLastPostTimestamp, isMissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
@@ -35,15 +35,17 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const lastPostTimestampParsingResult = getLastPostTimestamp(dataDir);
+  let lastPostTimestamp = getLastPostTimestamp(dataDir);
 
-  if (isErr(lastPostTimestampParsingResult)) {
-    logError(`Failed reading last post timestamp`, { dataDir, reason: lastPostTimestampParsingResult.reason });
+  if (isErr(lastPostTimestamp)) {
+    logError(`Failed reading last post timestamp`, { dataDir, reason: lastPostTimestamp.reason });
     return 1;
   }
 
-  const lastPostTimestamp =
-    lastPostTimestampParsingResult instanceof Date ? lastPostTimestampParsingResult : new Date();
+  if (isMissingTimestampFile(lastPostTimestamp)) {
+    lastPostTimestamp = new Date();
+  }
+
   const rssParsingResult = await parseRssItems(rssFetchingResult);
 
   if (isErr(rssParsingResult)) {

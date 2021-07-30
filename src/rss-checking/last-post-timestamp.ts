@@ -2,11 +2,15 @@ import path from 'path';
 import { DataDir } from '../shared/data-dir';
 import { RssItem } from '../shared/rss-item';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
-import { ArraySortFn, isEmpty, sortBy, SortDirection } from '../shared/array-utils';
+import { isEmpty, sortBy, SortDirection } from '../shared/array-utils';
 import { makeErr, Result } from '../shared/lang';
 
 export interface MissingTimestampFile {
   kind: 'MissingTimestampFile';
+}
+
+export function isMissingTimestampFile(value: any): value is MissingTimestampFile {
+  return value.kind === 'MissingTimestampFile';
 }
 
 export function getLastPostTimestamp(
