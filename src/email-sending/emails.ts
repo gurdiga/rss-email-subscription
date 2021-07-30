@@ -130,25 +130,30 @@ function isHashedEmail(value: any): value is HashedEmail {
 
 export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<StoredEmails> {
   const filePath = path.join(dataDir.value, emailsFileName);
-  const json = readFileFn(filePath);
 
   try {
-    const index = JSON.parse(json) as HashedEmails;
+    const json = readFileFn(filePath);
 
-    if (getTypeName(index) !== 'object') {
-      return makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values');
+    try {
+      const index = JSON.parse(json) as HashedEmails;
+
+      if (getTypeName(index) !== 'object') {
+        return makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values');
+      }
+
+      const results = Object.entries(index).map(([key, value]) => parseIndexEntry(key, value));
+      const validEmails = results.filter(isHashedEmail);
+      const invalidEmails = results.filter(isErr).map((error) => error.reason);
+
+      return {
+        validEmails,
+        invalidEmails,
+      };
+    } catch (error) {
+      return makeErr(`Invalid JSON in ${filePath}`);
     }
-
-    const results = Object.entries(index).map(([key, value]) => parseIndexEntry(key, value));
-    const validEmails = results.filter(isHashedEmail);
-    const invalidEmails = results.filter(isErr).map((error) => error.reason);
-
-    return {
-      validEmails,
-      invalidEmails,
-    };
   } catch (error) {
-    return makeErr(`Invalid JSON in ${filePath}`);
+    return makeErr(`Can’t read file ${filePath}: ${error.message}`);
   }
 }
 

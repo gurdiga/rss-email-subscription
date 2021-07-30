@@ -286,11 +286,22 @@ describe(loadStoredEmails.name, () => {
     }
   });
 
-  it('returns an error when JSON is not valid', () => {
+  it('returns an Err value when JSON is not valid', () => {
     const fileContent = '}';
     const readFile = (_filePath: string) => fileContent;
 
     expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(makeErr('Invalid JSON in /some/path/emails.json'));
+  });
+
+  it('returns an Err value when can’t read file', () => {
+    const error = new Error('No access');
+    const readFile = (_filePath: string) => {
+      throw error;
+    };
+
+    expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(
+      makeErr(`Can’t read file /some/path/emails.json: ${error.message}`)
+    );
   });
 
   function email(s: string) {
