@@ -18,7 +18,3 @@ export function makeDataDir(inputPath?: string): Result<DataDir> {
     value: absolutePath,
   };
 }
-
-export function isDataDir(value: any): value is DataDir {
-  return value.kind === 'DataDir';
-}

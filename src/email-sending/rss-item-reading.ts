@@ -43,7 +43,7 @@ export function readStoredRssItems(
   try {
     fileNames = listFilesFn(inboxDirPath);
   } catch (error) {
-    return makeErr(`The ${inboxDirPath} directory does not exist`);
+    return makeErr(`Can’t list files in ${inboxDirPath}: ${error.message}`);
   }
 
   const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');

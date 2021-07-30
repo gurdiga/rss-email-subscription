@@ -54,7 +54,7 @@ describe(getFeedSettings.name, () => {
       makeErr(`Invalid hashing salt in ${dataDirPathString}/feed.json: 42`)
     );
     expect(fromJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
-      makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 characters required`)
+      makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 non-space characters required`)
     );
     expect(fromJson('{"url": "https://a.com", "hashingSalt": "1234567890123456"}')).to.deep.equal(
       makeErr(`Missing "fromAddress" in ${dataDirPathString}/feed.json`)

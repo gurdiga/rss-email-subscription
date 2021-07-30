@@ -131,8 +131,14 @@ describe(readStoredRssItems.name, () => {
   });
 
   it('returns an Err value when data/inbox does not exist', () => {
-    expect(readStoredRssItems(mockDataDir)).to.deep.equal(
-      makeErr(`The ${mockDataDir.value}/inbox directory does not exist`)
+    const error = new Error('Not there?!');
+    const listFilesFn = () => {
+      throw error;
+    };
+    const readFileFn = () => '';
+
+    expect(readStoredRssItems(mockDataDir, readFileFn, listFilesFn)).to.deep.equal(
+      makeErr(`Can’t list files in ${mockDataDir.value}/inbox: ${error.message}`)
     );
   });
 

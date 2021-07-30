@@ -21,30 +21,30 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
       const url = makeUrl(data.url);
 
       if (isErr(url)) {
-        return makeErr(`Invalid feed URL in ${dataDir.value}/feed.json: ${data.url}`);
+        return makeErr(`Invalid feed URL in ${filePath}: ${data.url}`);
       }
 
       const { hashingSalt } = data;
       const saltMinLength = 16;
 
       if (typeof hashingSalt !== 'string') {
-        return makeErr(`Invalid hashing salt in ${dataDir.value}/feed.json: ${hashingSalt}`);
+        return makeErr(`Invalid hashing salt in ${filePath}: ${hashingSalt}`);
       }
 
       if (hashingSalt.trim().length < saltMinLength) {
         return makeErr(
-          `Hashing salt is too short in ${dataDir.value}/feed.json: at least ${saltMinLength} characters required`
+          `Hashing salt is too short in ${filePath}: at least ${saltMinLength} non-space characters required`
         );
       }
 
       if (!data.fromAddress) {
-        return makeErr(`Missing "fromAddress" in ${dataDir.value}/feed.json`);
+        return makeErr(`Missing "fromAddress" in ${filePath}`);
       }
 
       const fromAddress = makeEmailAddress(data.fromAddress);
 
       if (isErr(fromAddress)) {
-        return makeErr(`Invalid "fromAddress" in ${dataDir.value}/feed.json: ${fromAddress.reason}`);
+        return makeErr(`Invalid "fromAddress" in ${filePath}: ${fromAddress.reason}`);
       }
 
       return {
