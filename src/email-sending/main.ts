@@ -35,46 +35,46 @@ async function main(): Promise<number | undefined> {
 
   logInfo(`Processing data dir ${dataDir.value}`, { dataDirString });
 
-  const feedSettingsReadingResult = getFeedSettings(dataDir);
+  const feedSettings = getFeedSettings(dataDir);
 
-  if (isErr(feedSettingsReadingResult)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
+  if (isErr(feedSettings)) {
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
     return 1;
   }
 
-  const { fromAddress } = feedSettingsReadingResult;
-  const emailReadingResult = loadStoredEmails(dataDir);
+  const { fromAddress } = feedSettings;
+  const storedEmails = loadStoredEmails(dataDir);
 
-  if (isErr(emailReadingResult)) {
-    logError(`Failed reading emails`, { dataDirString, reason: emailReadingResult.reason });
+  if (isErr(storedEmails)) {
+    logError(`Failed reading emails`, { dataDirString, reason: storedEmails.reason });
     return 1;
   }
 
-  const { validEmails, invalidEmails } = emailReadingResult;
+  const { validEmails, invalidEmails } = storedEmails;
 
   if (validEmails.length === 0) {
     logError(`No valid emails found`, { dataDirString });
   }
 
   if (invalidEmails.length > 0) {
-    logWarning(`Found invalid emails`, { invalidEmails });
+    logWarning(`Found invalid emails`, { dataDirString, invalidEmails });
   }
 
   logInfo(`Found emails`, { dataDirString, emailCount: validEmails.length });
 
-  const rssItemReadingResult = readStoredRssItems(dataDir);
+  const storedRssItems = readStoredRssItems(dataDir);
 
-  if (isErr(rssItemReadingResult)) {
-    logError(`Failed to read RSS items`, { dataDirString, reason: rssItemReadingResult.reason });
+  if (isErr(storedRssItems)) {
+    logError(`Failed to read RSS items`, { dataDirString, reason: storedRssItems.reason });
     return 1;
   }
 
-  const { validItems, invalidItems } = rssItemReadingResult;
+  const { validItems, invalidItems } = storedRssItems;
 
   logInfo(`Found RSS items to send`, { dataDirString, validItemCount: validItems.length });
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid RSS items`, { dataDirString, itemCount: invalidItems.length, invalidItems });
+    logWarning(`Found invalid RSS items`, { dataDirString, invalidItems });
   }
 
   const appBaseUrl = makeUrl(env.APP_BASE_URL);
@@ -86,7 +86,7 @@ async function main(): Promise<number | undefined> {
 
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
-      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, email: hashedEmail.emailAddress.value });
+      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
 
       const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
