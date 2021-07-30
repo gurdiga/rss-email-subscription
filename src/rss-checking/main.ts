@@ -56,10 +56,7 @@ async function main(): Promise<number | undefined> {
   const { validItems, invalidItems } = rssParsingResult;
 
   if (!isEmpty(invalidItems)) {
-    const count = invalidItems.length;
-    const formattedItems = JSON.stringify(invalidItems, null, 2);
-
-    logWarning(`Found invalid RSS items`, { count, formattedItems });
+    logWarning(`Found invalid RSS items`, { count: invalidItems.length, invalidItems });
   }
 
   if (isEmpty(validItems)) {
@@ -72,17 +69,19 @@ async function main(): Promise<number | undefined> {
 
   if (isErr(newRssItemRecordingResult)) {
     logError(`Failed recording new items`, { reason: newRssItemRecordingResult.reason });
-  } else {
-    logInfo(`Recorded new items`, { itemCount: newRssItems.length });
+    return 1;
   }
 
-  const LastPostTimestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
+  logInfo(`Recorded new items`, { itemCount: newRssItems.length });
 
-  if (isErr(LastPostTimestampRecordingResult)) {
-    logError(`Failed recording last post timestamp`, { reason: LastPostTimestampRecordingResult.reason });
-  } else {
-    logInfo(`Recorded last post timestamp`);
+  const lastPostTimestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
+
+  if (isErr(lastPostTimestampRecordingResult)) {
+    logError(`Failed recording last post timestamp`, { reason: lastPostTimestampRecordingResult.reason });
+    return 1;
   }
+
+  logInfo(`Recorded last post timestamp`);
 }
 
 main().then((exitCode) => process.exit(exitCode));

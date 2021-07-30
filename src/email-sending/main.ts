@@ -74,10 +74,7 @@ async function main(): Promise<number | undefined> {
   logInfo(`Found RSS items to send`, { dataDirString, validItemCount: validItems.length });
 
   if (!isEmpty(invalidItems)) {
-    const count = invalidItems.length;
-    const formattedItems = JSON.stringify(invalidItems, null, 2);
-
-    logWarning(`Found invalid RSS items`, { dataDirString, itemCount: count, formattedItems });
+    logWarning(`Found invalid RSS items`, { dataDirString, itemCount: invalidItems.length, invalidItems });
   }
 
   const appBaseUrl = makeUrl(env.APP_BASE_URL);
