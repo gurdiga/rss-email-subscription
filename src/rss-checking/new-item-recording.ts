@@ -7,6 +7,8 @@ import { RssItem } from '../shared/rss-item';
 
 type NameFileFn = (item: RssItem) => string;
 
+export const inboxDirName = 'inbox';
+
 export function recordNewRssItems(
   dataDir: DataDir,
   rssItems: RssItem[],
@@ -14,7 +16,6 @@ export function recordNewRssItems(
   writeFileFn: WriteFileFn = writeFile,
   nameFileFn: NameFileFn = itemFileName
 ): Result<undefined> {
-  const inboxDirName = 'inbox';
   const inboxDirPath = path.resolve(dataDir.value, inboxDirName);
 
   try {

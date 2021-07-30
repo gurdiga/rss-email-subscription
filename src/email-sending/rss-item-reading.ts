@@ -1,4 +1,5 @@
-import { RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
+import path from 'path';
+import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
@@ -37,7 +38,7 @@ export function readStoredRssItems(
   readFileFn: ReadFileFn = readFile,
   listFilesFn: ListFilesFn = listFiles
 ): Result<RssReadingResult> {
-  const inboxDirPath = `${dataDir.value}/inbox`;
+  const inboxDirPath = path.join(dataDir.value, inboxDirName);
   let fileNames: string[] = [];
 
   try {

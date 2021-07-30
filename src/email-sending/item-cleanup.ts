@@ -1,4 +1,5 @@
 import path from 'path';
+import { inboxDirName } from '../rss-checking/new-item-recording';
 import { DataDir } from '../shared/data-dir';
 import { deleteFile, DeleteFileFn } from '../shared/io';
 import { makeErr, Result } from '../shared/lang';
@@ -9,7 +10,7 @@ export function deleteItem(
   storedRssItem: ValidStoredRssItem,
   deleteFileFn: DeleteFileFn = deleteFile
 ): Result<void> {
-  const itemFilePath = path.join(dataDir.value, 'inbox', storedRssItem.fileName);
+  const itemFilePath = path.join(dataDir.value, inboxDirName, storedRssItem.fileName);
 
   try {
     deleteFileFn(itemFilePath);

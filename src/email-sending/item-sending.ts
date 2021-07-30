@@ -35,7 +35,7 @@ export const footerAd = `
 export function makeEmailMessage(item: RssItem, unsubscribeLink: string): MessageContent {
   return {
     subject: item.title,
-    htmlBody: item.content + footerAd + unsubscribeLink,
+    htmlBody: item.content + unsubscribeLink + footerAd,
   };
 }
 
@@ -44,5 +44,5 @@ export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, 
   const queryString = `id=${blogId}-${hashedEmail.saltedHash}`;
   const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);
 
-  return `<a href="${unsubscribeUrl.toString()}">Unsubscribe</a>`;
+  return `<a href="${unsubscribeUrl}">Unsubscribe</a>`;
 }
