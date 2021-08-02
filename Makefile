@@ -47,3 +47,16 @@ pc: pre-commit
 # The required configuration is expected in the environment
 smtp-test:
 	ts-node src/email-sending/email-delivery.slow-test.ts
+
+
+# TODO: Get this to send emails.
+smtp:
+	docker run --rm --name postfix \
+		-v `pwd`/.tmp/opendkim-keys:/etc/opendkim/keys \
+		-e "ALLOWED_SENDER_DOMAINS=gurdiga.com" \
+		-e "DKIM_AUTOGENERATE=yes" \
+		-p 1587:587 \
+		boky/postfix
+
+reset-last-post-timestamp:
+	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > data/lastPostTimestamp.json
