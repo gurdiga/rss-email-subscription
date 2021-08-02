@@ -14,7 +14,7 @@ data/feed.json:
 
 .tmp/emails.csv:
 	rm -f $@
-	for email in vlad@gurdiga.com gurdiga@mail.ru; do \
+	for email in vlad@homeschooling.md gurdiga@mail.ru; do \
 		echo $$email >> $@; \
 	done
 
