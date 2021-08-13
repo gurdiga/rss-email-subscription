@@ -75,3 +75,5 @@ app-service:
 		--name app \
 		-v `pwd`/.tmp/data:/data \
 		app:$(APP_VERSION)
+
+# TODO: Deploy the composition

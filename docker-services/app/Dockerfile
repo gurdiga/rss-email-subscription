@@ -15,4 +15,8 @@ WORKDIR /code
 RUN git checkout $VERSION
 RUN npm install
 
+# TODO:
+# - Add crontab entry
+# - make it “hang”
+
 CMD [ "make", "pre-commit" ]

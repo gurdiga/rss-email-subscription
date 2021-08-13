@@ -11,8 +11,7 @@ services:
       disable: true
       # Disabled because makes it makes following the logs harder when degugging
 
-  app:
-    image: node:16.6-alpine3.14
-
-    volumes:
-      - /app/data:/data
+  # app:
+  #   build: docker-services/app
+  #   volumes:
+  #     - /app/data:/data
