@@ -8,6 +8,6 @@ export function makeUrl(url?: string): Result<URL> {
   try {
     return new URL(url);
   } catch (e) {
-    return makeErr(e.message);
+    return makeErr(`${e.code}: ${url}`);
   }
 }

@@ -10,7 +10,7 @@ describe(makeUrl.name, () => {
   });
 
   it('returns an Err value when the string is not a valid URL', () => {
-    expect(makeUrl('not a real URL')).to.deep.equal(makeErr('Invalid URL: not a real URL'));
+    expect(makeUrl('not a real URL')).to.deep.equal(makeErr('ERR_INVALID_URL: not a real URL'));
     expect(makeUrl('')).to.deep.equal(makeErr('Missing URL string'));
     expect(makeUrl(undefined)).to.deep.equal(makeErr('Missing URL string'));
   });
