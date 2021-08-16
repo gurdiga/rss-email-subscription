@@ -1,4 +1,4 @@
-default: app-service
+default: composition
 
 run-email-sending:
 	node_modules/.bin/ts-node src/email-sending/main.ts data/
@@ -76,4 +76,7 @@ app-service:
 		-v `pwd`/.tmp/data:/data \
 		app:$(APP_VERSION)
 
-# TODO: Deploy the composition
+
+# TODO: Persist email queue across container restarts
+composition:
+	docker-compose up --remove-orphans --detach
