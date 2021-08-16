@@ -10,9 +10,9 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  const fromAddress = 'gurdiga@gmail.com';
-  const toAddress = 'gurdiga@mail.ru';
-  const subject = 'testing deliverEmailFn from';
+  const fromAddress = 'feed@feedsubscription.com';
+  const toAddress = 'gurdiga@gmail.com';
+  const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
 
   await deliverEmail(
     fromAddress,
@@ -26,7 +26,9 @@ async function main(): Promise<number> {
     env
   );
 
-  console.log(`\nSeems OK. Please check the ${toAddress} inbox for a message having the subject of "${subject}".\n`);
+  console.log(
+    `\nMessage accepted by the SMTP server. Please check the ${toAddress} inbox for a message having the subject of "${subject}".\n`
+  );
   return 0;
 }
 
