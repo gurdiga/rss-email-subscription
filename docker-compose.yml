@@ -3,15 +3,17 @@ version: '3.9'
 services:
   smtp:
     image: boky/postfix
-    ports: ['587:587']
+    restart: always
+    ports: ['1587:587']
     volumes:
-      - /etc/opendkim/keys:/etc/opendkim/keys
-
+      - ./.tmp/opendkim-keys:/etc/opendkim/keys
+    env_file: smtp.env
     healthcheck:
       disable: true
       # Disabled because makes it makes following the logs harder when degugging
 
   # app:
   #   build: docker-services/app
+  #   restart: always
   #   volumes:
   #     - /app/data:/data
