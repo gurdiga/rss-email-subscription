@@ -48,7 +48,6 @@ pc: pre-commit
 smtp-test:
 	node_modules/.bin/ts-node src/email-sending/email-delivery.slow-test.ts
 
-# TODO: Set up DMARC?
 smtp:
 	docker run --rm --name postfix \
 		-v `pwd`/.tmp/opendkim-keys:/etc/opendkim/keys \
@@ -75,7 +74,6 @@ app-service:
 		--name app \
 		-v `pwd`/.tmp/data:/data \
 		app:$(APP_VERSION)
-
 
 # TODO: Persist email queue across container restarts
 composition:
