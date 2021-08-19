@@ -41,8 +41,20 @@ c: check
 cw:
 	node_modules/.bin/tsc -p tsconfig.json --watch
 
-pre-commit: check test
+pre-commit: check test lint
 pc: pre-commit
+
+lint: lint-docker-compose lint-dockerfile
+
+lint-docker-compose:
+	docker-compose --file docker-compose.yml config
+
+# TODO: Fix lintint errors
+lint-dockerfile:
+	find . -name Dockerfile | tee /dev/stderr | xargs hadolint
+
+lint-docker-files:
+	echo TODO
 
 # The required configuration is expected in the environment
 smtp-test:
