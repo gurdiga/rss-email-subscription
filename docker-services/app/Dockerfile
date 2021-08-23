@@ -17,6 +17,5 @@ RUN npm install
 
 # TODO:
 # - Add crontab entry
-# - make it “hang”
 
-CMD [ "make", "pre-commit" ]
+CMD [ "sleep", "infinity" ]
