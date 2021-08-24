@@ -4,17 +4,18 @@ services:
   smtp:
     image: boky/postfix
     restart: always
-    ports: ['1587:587']
+    # ports: ['1587:587'] # This is only for debugging from the Docker host, right?
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ./.tmp/var/spool/postfix:/var/spool/postfix # to persist queue during container restarts
     env_file: smtp.env
     healthcheck:
-      disable: true
-      # Disabled because makes it makes following the logs harder when degugging
+      disable: true # Disabled because makes it makes following the logs harder when degugging
 
-  # app:
-  #   build: docker-services/app
-  #   restart: always
-  #   volumes:
-  #     - /app/data:/data
+  app:
+    image: app
+    restart: always
+    tty: true # This is to keep the container from exiting
+    init: true # This is to tell Node process to stop when the container is asked to stop.
+    volumes:
+      - ./.tmp/data:/data

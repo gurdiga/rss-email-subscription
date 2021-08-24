@@ -1,4 +1,4 @@
-default: composition
+default: app
 
 run-email-sending:
 	node_modules/.bin/ts-node src/email-sending/main.ts data/
@@ -73,20 +73,29 @@ smtp:
 reset-last-post-timestamp:
 	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > data/lastPostTimestamp.json
 
-APP_VERSION=00c87b1
-app-service:
+app: app-build app-run
+
+APP_IMAGE_NAME=app
+app-build:
 	docker build \
+		--progress=plain \
 		-f docker-services/app/Dockerfile \
-		--tag app:$(APP_VERSION) \
-		--build-arg VERSION=$(APP_VERSION) \
+		--tag $(APP_IMAGE_NAME) \
 		--ssh default \
 		.
 
+app-run:
 	docker run --rm \
-		--name app \
+		-it \
 		-v `pwd`/.tmp/data:/data \
-		app:$(APP_VERSION)
+		-e "NODE_ENV=production" `#See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md` \
+		--name $(APP_IMAGE_NAME) \
+		$(APP_IMAGE_NAME)
 
-# TODO: Persist email queue across container restarts
-composition:
+compose:
 	docker-compose up --remove-orphans --detach
+
+decompose:
+	docker-compose down
+
+recompose: decompose compose
