@@ -3,5 +3,4 @@ data/
 
 .tmp/
 
-.env
-smtp.env
+*.env

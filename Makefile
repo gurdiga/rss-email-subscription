@@ -49,12 +49,8 @@ lint: lint-docker-compose lint-dockerfile
 lint-docker-compose:
 	docker-compose --file docker-compose.yml config
 
-# TODO: Fix lintint errors
 lint-dockerfile:
 	find . -name Dockerfile | tee /dev/stderr | xargs hadolint
-
-lint-docker-files:
-	echo TODO
 
 # The required configuration is expected in the environment
 smtp-test:
@@ -63,9 +59,7 @@ smtp-test:
 smtp:
 	docker run --rm --name postfix \
 		-v `pwd`/.tmp/opendkim-keys:/etc/opendkim/keys \
-		-e "ALLOWED_SENDER_DOMAINS=feedsubscription.com" \
-		-e "DKIM_AUTOGENERATE=yes" \
-		-e "INBOUND_DEBUGGING=yes" \
+		--env-file smtp.env \
 		--no-healthcheck \
 		-p 1587:587 \
 		boky/postfix
@@ -88,7 +82,7 @@ app-run:
 	docker run --rm \
 		-it \
 		-v `pwd`/.tmp/data:/data \
-		-e "NODE_ENV=production" `#See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md` \
+		--env-file app.env \
 		--name $(APP_IMAGE_NAME) \
 		$(APP_IMAGE_NAME)
 
