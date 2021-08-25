@@ -4,7 +4,7 @@ services:
   smtp:
     image: boky/postfix
     restart: always
-    # ports: ['1587:587'] # This is only for debugging from the Docker host, right?
+    ports: ['127.0.0.1:1587:587']
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ./.tmp/var/spool/postfix:/var/spool/postfix # to persist queue during container restarts
