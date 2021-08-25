@@ -1,14 +1,14 @@
 default: app
 
 run-email-sending:
-	node_modules/.bin/ts-node src/email-sending/main.ts data/
+	node_modules/.bin/ts-node src/email-sending/main.ts .tmp/data/
 
 run-rss-checking:
-	node_modules/.bin/ts-node src/rss-checking/main.ts data/
+	node_modules/.bin/ts-node src/rss-checking/main.ts .tmp/data/
 
-data: data/feed.json data/emails.json
+.tmp/data: .tmp/data/feed.json .tmp/data/emails.json
 
-data/feed.json:
+.tmp/data/feed.json:
 	echo '{"url": "http://localhost:4000/feed.xml", "hashingSalt": "1234567890123456", "fromAddress": "gurdiga@gmail.com"}' \
 	> $@
 
@@ -18,8 +18,8 @@ data/feed.json:
 		echo $$email >> $@; \
 	done
 
-data/emails.json: .tmp/emails.csv data/feed.json
-	node_modules/.bin/ts-node src/email-storing/main.ts data/
+.tmp/data/emails.json: .tmp/emails.csv .tmp/data/feed.json
+	node_modules/.bin/ts-node src/email-storing/main.ts .tmp/data/
 
 test:
 	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
@@ -65,7 +65,7 @@ smtp:
 		boky/postfix
 
 reset-last-post-timestamp:
-	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > data/lastPostTimestamp.json
+	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
 app: app-build app-run
 
@@ -86,10 +86,10 @@ app-run:
 		--name $(APP_IMAGE_NAME) \
 		$(APP_IMAGE_NAME)
 
-compose:
+start:
 	docker-compose up --remove-orphans --detach
 
-decompose:
+stop:
 	docker-compose down
 
-recompose: decompose compose
+restart: stop start
