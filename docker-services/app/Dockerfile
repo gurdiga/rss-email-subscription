@@ -7,11 +7,11 @@ RUN apk update \
 
 WORKDIR /code
 
-COPY src/ ./src/
+COPY package*.json ./
+RUN npm ci
+
 COPY \
-    package*.json \
     tsconfig.json \
     Makefile \
   ./
-
-RUN npm ci
+COPY src/ ./src/
