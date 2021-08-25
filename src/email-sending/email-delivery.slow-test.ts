@@ -10,6 +10,8 @@ async function main(): Promise<number> {
     return 1;
   }
 
+  console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING);
+
   const fromAddress = 'feed@feedsubscription.com';
   const toAddress = 'gurdiga@gmail.com';
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
