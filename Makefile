@@ -67,10 +67,8 @@ smtp:
 reset-last-post-timestamp:
 	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
-app: app-build app-run
-
 APP_IMAGE_NAME=app
-app-build:
+app:
 	docker build \
 		--progress=plain \
 		-f docker-services/app/Dockerfile \
@@ -78,7 +76,7 @@ app-build:
 		--ssh default \
 		.
 
-app-run:
+run-app:
 	docker run --rm \
 		-it \
 		-v `pwd`/.tmp/data:/data \
