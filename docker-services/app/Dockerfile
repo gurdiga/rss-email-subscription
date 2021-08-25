@@ -7,10 +7,5 @@ RUN apk update \
 
 WORKDIR /code
 
-COPY package*.json ./
-RUN npm ci
-
 COPY . ./
-
-# TODO:
-# - Add crontab entry
+RUN npm ci
