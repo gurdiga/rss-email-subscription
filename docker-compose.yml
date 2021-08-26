@@ -14,7 +14,6 @@ services:
 
   app:
     image: app
-    restart: always
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
       - ${DATA_DIR}:/data
