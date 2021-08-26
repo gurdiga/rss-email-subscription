@@ -10,8 +10,7 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function main(): Promise<number | undefined> {
-  const dataDirString = getFirstCliArg(process);
+export async function main(dataDirString: string): Promise<number | undefined> {
   const dataDir = makeDataDir(dataDirString);
 
   if (isErr(dataDir)) {
@@ -85,5 +84,5 @@ export async function main(): Promise<number | undefined> {
 }
 
 if (isRunDirectly(module)) {
-  main().then((exitCode) => process.exit(exitCode));
+  main(getFirstCliArg(process)).then((exitCode) => process.exit(exitCode));
 }

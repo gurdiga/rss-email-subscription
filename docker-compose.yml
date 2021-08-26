@@ -17,5 +17,5 @@ services:
     restart: always
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
-      - ./.tmp/data:/data
+      - ${DATA_DIR}:/data
     env_file: app.env
