@@ -3,6 +3,9 @@ default: run
 run:
 	ts-node src/main.ts
 
+logs-app:
+	docker logs -f rss-email-subscription_app_1
+
 run-email-sending:
 	node_modules/.bin/ts-node src/email-sending/main.ts .tmp/data/
 
