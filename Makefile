@@ -1,4 +1,7 @@
-default: app
+default: run
+
+run:
+	ts-node src/main.ts
 
 run-email-sending:
 	node_modules/.bin/ts-node src/email-sending/main.ts .tmp/data/
@@ -78,7 +81,7 @@ app:
 
 run-app:
 	docker run --rm \
-		-it \
+		--init \
 		-v `pwd`/.tmp/data:/data \
 		--env-file app.env \
 		--name $(APP_IMAGE_NAME) \

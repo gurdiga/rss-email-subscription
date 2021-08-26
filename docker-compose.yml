@@ -15,7 +15,6 @@ services:
   app:
     image: app
     restart: always
-    tty: true # This is to keep the container from exiting
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
       - ./.tmp/data:/data

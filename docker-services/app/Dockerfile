@@ -15,3 +15,5 @@ COPY \
     Makefile \
   ./
 COPY src/ ./src/
+
+CMD ["node_modules/.bin/ts-node", "src/main.ts"]
