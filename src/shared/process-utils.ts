@@ -12,3 +12,7 @@ export function getFirstCliArg(process: NodeJS.Process): string {
 export function programFilePath(process: NodeJS.Process): string {
   return path.relative(process.cwd(), process.argv[1]);
 }
+
+export function isRunDirectly(module: NodeJS.Module): boolean {
+  return require.main === module;
+}

@@ -3,14 +3,14 @@ import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { logError, logInfo, logWarning } from '../shared/logging';
-import { getFirstCliArg, programFilePath } from '../shared/process-utils';
+import { getFirstCliArg, isRunDirectly, programFilePath } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, isMissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-async function main(): Promise<number | undefined> {
+export async function main(): Promise<number | undefined> {
   const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
 
@@ -84,4 +84,6 @@ async function main(): Promise<number | undefined> {
   logInfo(`Recorded last post timestamp`);
 }
 
-main().then((exitCode) => process.exit(exitCode));
+if (isRunDirectly(module)) {
+  main().then((exitCode) => process.exit(exitCode));
+}
