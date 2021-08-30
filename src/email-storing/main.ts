@@ -8,8 +8,6 @@ import { logError, logInfo } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
 async function main(): Promise<number | undefined> {
-  const inputFilePath = path.join(process.cwd(), '.tmp/emails.csv');
-
   const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
 
@@ -19,6 +17,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
+  const inputFilePath = path.join(dataDir.value, 'emails.csv');
   const feedSettingsReadingResult = getFeedSettings(dataDir);
 
   if (isErr(feedSettingsReadingResult)) {
