@@ -21,7 +21,7 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
     const response = await fetchFn(url);
     const contentType = response.headers.get('content-type')?.toLowerCase();
 
-    if (contentType?.startsWith('application/xml')) {
+    if (contentType?.startsWith('application/xml') || contentType?.startsWith('text/xml')) {
       return {
         kind: 'RssResponse',
         xml: await response.text(),

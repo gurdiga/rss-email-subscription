@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { Headers } from 'node-fetch';
-import { Err, makeErr } from '../shared/lang';
+import { Err, isErr, makeErr } from '../shared/lang';
 import { fetchRss, RssResponse } from './rss-response';
 
 describe(fetchRss.name, () => {
@@ -18,6 +18,14 @@ describe(fetchRss.name, () => {
       xml: mockXmlResponse,
       baseURL: mockUrl,
     } as RssResponse);
+  });
+
+  it('accepts text/xml content-type', async () => {
+    const mockHeaders = new Headers({ 'content-type': 'text/xml;charset=utf-8' });
+    const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+    const response = (await fetchRss(mockUrl, mockFetchFn)) as RssResponse;
+
+    expect(response.kind).to.equal('RssResponse');
   });
 
   it('returns an Err value when fetching didn’t go well', async () => {
