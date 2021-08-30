@@ -7,6 +7,9 @@ import { makeUrl } from './url';
 export interface FeedSettings {
   url: URL;
   hashingSalt: string;
+
+  // TODO: replace `fromAddress` with `fromAddressLocalPart` because the
+  // domain part will always be `feedsubscription.com`.
   fromAddress: EmailAddress;
 }
 
