@@ -63,6 +63,8 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     return 1;
   }
 
+  logInfo(`Parsed RSS items`, { count: rssParsingResult.validItems.length, lastPostTimestamp });
+
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
   const newRssItemRecordingResult = recordNewRssItems(dataDir, newRssItems);
 
