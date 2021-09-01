@@ -20,12 +20,16 @@ describe(fetchRss.name, () => {
     } as RssResponse);
   });
 
-  it('accepts text/xml content-type', async () => {
-    const mockHeaders = new Headers({ 'content-type': 'text/xml;charset=utf-8' });
-    const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
-    const response = (await fetchRss(mockUrl, mockFetchFn)) as RssResponse;
+  it('accepts other RSS and Atom content-type values', async () => {
+    const contentTypes = ['text/xml;charset=utf-8', 'application/atom+xml'];
 
-    expect(response.kind).to.equal('RssResponse');
+    for (const type of contentTypes) {
+      const mockHeaders = new Headers({ 'content-type': type });
+      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
+      const response = await fetchRss(mockUrl, mockFetchFn);
+
+      expect(response.kind).to.equal('RssResponse', (response as Err).reason);
+    }
   });
 
   it('returns an Err value when fetching didn’t go well', async () => {

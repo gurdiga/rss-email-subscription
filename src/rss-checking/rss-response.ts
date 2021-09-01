@@ -17,10 +17,12 @@ interface FetchResponse {
 type FetchFn = (url: URL) => Promise<FetchResponse>;
 
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
+  const supportedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml'];
+
   try {
     const response = await fetchFn(url);
     const contentType = response.headers.get('content-type')?.toLowerCase() || '';
-    const isValidContentType = (s: string) => /^(application|text)\/xml\b/.test(s);
+    const isValidContentType = (s: string) => supportedConentTypes.some((t) => s.startsWith(t));
 
     if (isValidContentType(contentType)) {
       return {
