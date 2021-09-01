@@ -19,9 +19,10 @@ type FetchFn = (url: URL) => Promise<FetchResponse>;
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
   try {
     const response = await fetchFn(url);
-    const contentType = response.headers.get('content-type')?.toLowerCase();
+    const contentType = response.headers.get('content-type')?.toLowerCase() || '';
+    const isValidContentType = (s: string) => /^(application|text)\/xml\b/.test(s);
 
-    if (contentType?.startsWith('application/xml') || contentType?.startsWith('text/xml')) {
+    if (isValidContentType(contentType)) {
       return {
         kind: 'RssResponse',
         xml: await response.text(),
