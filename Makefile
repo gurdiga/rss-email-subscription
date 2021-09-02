@@ -82,7 +82,6 @@ app:
 		--progress=plain \
 		-f docker-services/app/Dockerfile \
 		--tag $(APP_IMAGE_NAME) \
-		--ssh default \
 		.
 
 run-app:
