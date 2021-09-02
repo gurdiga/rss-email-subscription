@@ -96,7 +96,7 @@ start:
 	DATA_DIR_ROOT=./.tmp/docker-data docker-compose up --remove-orphans --detach
 
 stop:
-	docker-compose down
+	DATA_DIR_ROOT=./.tmp/docker-data docker-compose down
 
 restart: stop start
 
