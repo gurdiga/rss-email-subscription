@@ -1,6 +1,6 @@
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
-import { getFirstCliArg, programFilePath } from '../shared/process-utils';
+import { getFirstCliArg, isRunDirectly, programFilePath } from '../shared/process-utils';
 import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
@@ -16,7 +16,7 @@ export interface Env extends EmailDeliveryEnv {
   APP_BASE_URL: string;
 }
 
-async function main(): Promise<number | undefined> {
+export async function main(dataDirString: string): Promise<number | undefined> {
   const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
@@ -24,7 +24,6 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const dataDirString = getFirstCliArg(process);
   const dataDir = makeDataDir(dataDirString);
 
   if (isErr(dataDir)) {
@@ -105,4 +104,6 @@ async function main(): Promise<number | undefined> {
   }
 }
 
-main().then((exitCode) => process.exit(exitCode));
+if (isRunDirectly(module)) {
+  main(getFirstCliArg(process)).then((exitCode) => process.exit(exitCode));
+}

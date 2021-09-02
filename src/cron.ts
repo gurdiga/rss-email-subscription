@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import path from 'path';
 import { main as checkRss } from './rss-checking/main';
+import { main as sendEmails } from './email-sending/main';
 import { logError, logInfo } from './shared/logging';
 
 function main() {
@@ -21,10 +22,11 @@ function main() {
 
   for (const { name } of dataDirs) {
     const dataDir = path.join(dataDirRoot, name);
-    const cronPattern = '*/10 * * * * *'; // TODO: switch to `0 0 * * *` when finished
+    const cronPattern = '0 * * * * *'; // TODO: switch to `0 0 * * *` when finished
 
     logInfo(`Scheduling RSS check for ${dataDir}`, { cronPattern });
-    schedule(cronPattern, () => checkRss(dataDir));
+    // schedule(cronPattern, () => checkRss(dataDir));
+    schedule(cronPattern, () => sendEmails(dataDir));
   }
 }
 
