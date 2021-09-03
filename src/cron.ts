@@ -5,7 +5,7 @@ import { main as checkRss } from './rss-checking/main';
 import { main as sendEmails } from './email-sending/main';
 import { logError, logInfo } from './shared/logging';
 
-function main() {
+async function main() {
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
@@ -26,9 +26,9 @@ function main() {
 
     logInfo(`Scheduling processing for ${dataDir}`, { cronPattern });
 
-    schedule(cronPattern, () => {
-      checkRss(dataDir);
-      sendEmails(dataDir);
+    schedule(cronPattern, async () => {
+      await checkRss(dataDir);
+      await sendEmails(dataDir);
     });
   }
 }
