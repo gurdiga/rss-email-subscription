@@ -33,7 +33,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const { validEmails } = emailReadingResult;
+  const { validEmails, invalidEmails } = emailReadingResult;
   const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
   const storeResult = storeEmails(dataDir, validEmails, hashEmail);
 
@@ -42,7 +42,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  logInfo('Stored emails', { dataDirString, emailCount: validEmails.length });
+  logInfo('Stored emails', { dataDirString, validEmails: validEmails.length, invalidEmails });
 }
 
 main().then((exitCode) => process.exit(exitCode));

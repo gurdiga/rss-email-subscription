@@ -33,7 +33,7 @@ export function makeEmailAddress(input: any): Result<EmailAddress> {
 
   const parts = email.split('@');
   const [localPart, domain] = parts.map((s) => s.trim());
-  const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9-]+((\+)?[a-z0-9-]+)*$/i.test(localPart);
+  const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9-]+((\+|\.)?[a-z0-9-]+)*$/i.test(localPart);
 
   if (!doesLocalPartLookReasonable) {
     return err;
