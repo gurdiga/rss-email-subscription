@@ -22,7 +22,7 @@ function main() {
 
   for (const { name } of dataDirs) {
     const dataDir = path.join(dataDirRoot, name);
-    const cronPattern = '0 * * * * *'; // TODO: switch to `0 0 * * *` when finished
+    const cronPattern = '0 * * * *';
 
     logInfo(`Scheduling processing for ${dataDir}`, { cronPattern });
 
