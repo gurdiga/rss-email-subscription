@@ -24,9 +24,12 @@ function main() {
     const dataDir = path.join(dataDirRoot, name);
     const cronPattern = '0 * * * * *'; // TODO: switch to `0 0 * * *` when finished
 
-    logInfo(`Scheduling RSS check for ${dataDir}`, { cronPattern });
-    // schedule(cronPattern, () => checkRss(dataDir));
-    schedule(cronPattern, () => sendEmails(dataDir));
+    logInfo(`Scheduling processing for ${dataDir}`, { cronPattern });
+
+    schedule(cronPattern, () => {
+      checkRss(dataDir);
+      sendEmails(dataDir);
+    });
   }
 }
 
