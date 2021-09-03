@@ -93,10 +93,10 @@ run-app:
 		$(APP_IMAGE_NAME)
 
 start:
-	DATA_DIR_ROOT=./.tmp/docker-data docker-compose up --remove-orphans --detach
+	docker-compose up --remove-orphans --detach
 
 stop:
-	DATA_DIR_ROOT=./.tmp/docker-data docker-compose down
+	docker-compose down
 
 restart: stop start
 
