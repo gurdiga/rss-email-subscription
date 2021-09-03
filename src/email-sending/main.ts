@@ -32,7 +32,7 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     return 1;
   }
 
-  logInfo(`Processing data dir ${dataDir.value}`, { dataDirString });
+  logInfo(`Sending the new items from ${dataDir.value}`, { dataDirString });
 
   const feedSettings = getFeedSettings(dataDir);
 
