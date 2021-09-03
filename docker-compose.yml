@@ -16,5 +16,5 @@ services:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
-      - ${DATA_DIR_ROOT}:/data
+      - .tmp/docker-data:/data
     env_file: app.env
