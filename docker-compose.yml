@@ -9,6 +9,8 @@ services:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ./.tmp/var/spool/postfix:/var/spool/postfix # to persist queue during container restarts
     env_file: smtp.env
+    logging:
+      driver: local
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
@@ -18,3 +20,5 @@ services:
     volumes:
       - .tmp/docker-data:/data
     env_file: app.env
+    logging:
+      driver: local
