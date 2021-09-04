@@ -60,8 +60,6 @@ export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promis
 
   const { validItems, invalidItems } = storedRssItems;
 
-  logInfo(`Found RSS items to send`, { dataDir: dataDir.value, validItemCount: validItems.length });
-
   if (!isEmpty(invalidItems)) {
     logWarning(`Found invalid RSS items`, { dataDir: dataDir.value, invalidItems });
   }
@@ -70,6 +68,8 @@ export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promis
     logInfo(`No valid items`, { dataDir: dataDir.value });
     return 0;
   }
+
+  logInfo(`Found RSS items to send`, { dataDir: dataDir.value, validItemCount: validItems.length });
 
   const appBaseUrl = makeUrl(env.APP_BASE_URL);
 
