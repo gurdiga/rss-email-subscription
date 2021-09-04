@@ -50,16 +50,17 @@ export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promis
   logInfo(`Parsed RSS items`, { count: rssParsingResult.validItems.length, lastPostTimestamp });
 
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
+
+  if (newRssItems.length === 0) {
+    logInfo(`No new items`);
+    return 0;
+  }
+
   const newRssItemRecordingResult = recordNewRssItems(dataDir, newRssItems);
 
   if (isErr(newRssItemRecordingResult)) {
     logError(`Failed recording new items`, { reason: newRssItemRecordingResult.reason });
     return 1;
-  }
-
-  if (newRssItems.length === 0) {
-    logInfo(`No new items`);
-    return 0;
   }
 
   logInfo(`Recorded new items`, { itemCount: newRssItems.length });
