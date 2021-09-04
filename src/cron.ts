@@ -8,7 +8,7 @@ import { getFeedSettings } from './shared/feed-settings';
 import { isErr } from './shared/lang';
 import { makeDataDir } from './shared/data-dir';
 
-async function main() {
+function main() {
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
@@ -16,12 +16,25 @@ async function main() {
     return;
   }
 
+  let cronJobs = scheduleFeedChecks(dataDirRoot);
+
+  process.on('SIGHUP', () => {
+    logInfo('Received SIGUP. Will reload.');
+
+    cronJobs.forEach((j) => j.stop());
+    cronJobs = scheduleFeedChecks(dataDirRoot);
+  });
+}
+
+function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
   const dataDirs = readdirSync(dataDirRoot, { withFileTypes: true }).filter((x) => x.isDirectory());
 
   if (dataDirs.length === 0) {
     logError(`No dataDirs in dataDirRoot`, { dataDirRoot });
-    return;
+    return [];
   }
+
+  const cronJobs: CronJob[] = [];
 
   for (const { name } of dataDirs) {
     const cronPattern = '0 * * * *';
@@ -35,23 +48,24 @@ async function main() {
 
     logInfo(`Scheduling feed check for ${dataDirString}`, { cronPattern });
 
-    schedule(cronPattern, async () => {
-      const feedSettings = getFeedSettings(dataDir);
+    cronJobs.push(
+      new CronJob(cronPattern, async () => {
+        const feedSettings = getFeedSettings(dataDir);
 
-      if (isErr(feedSettings)) {
-        logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
-        return;
-      }
+        if (isErr(feedSettings)) {
+          logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+          return;
+        }
 
-      await checkRss(dataDir, feedSettings);
-      await sendEmails(dataDir, feedSettings);
-    });
+        await checkRss(dataDir, feedSettings);
+        await sendEmails(dataDir, feedSettings);
+      })
+    );
   }
-}
 
-function schedule(cronPattern: string, job: () => void): void {
-  // TODO: Consider limiting the level of parallelisation if/when needed.
-  new CronJob(cronPattern, job).start();
+  cronJobs.forEach((j) => j.start());
+
+  return cronJobs;
 }
 
 main();
