@@ -155,26 +155,35 @@ describe(parseRssItems.name, () => {
 
   describe(buildRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
-      const inputItem: ParsedRssItem = {
-        title: 'Post title',
-        content: 'Post body',
-        isoDate: new Date().toJSON(),
-        author: 'John DOE',
-        link: '/the/path/to/file.html',
-      };
-
-      const expectedResult: ValidRssItem = {
-        kind: 'ValidRssItem',
-        value: {
-          title: inputItem.title!,
-          content: inputItem.content!,
-          author: inputItem.author!,
-          pubDate: new Date(inputItem.isoDate!),
-          link: new URL(inputItem.link!, baseURL),
+      [
+        {
+          title: 'Post title',
+          content: 'Post body',
+          isoDate: new Date().toJSON(),
+          author: 'John DOE',
+          link: '/the/path/to/file.html',
         },
-      };
+        {
+          title: 'Post title',
+          content: 'Post body',
+          isoDate: new Date().toJSON(),
+          creator: 'John DOE Creator',
+          link: '/the/path/to/file.html',
+        },
+      ].forEach((inputItem: ParsedRssItem) => {
+        const expectedResult: ValidRssItem = {
+          kind: 'ValidRssItem',
+          value: {
+            title: inputItem.title!,
+            content: inputItem.content!,
+            author: inputItem.author! || inputItem.creator!,
+            pubDate: new Date(inputItem.isoDate!),
+            link: new URL(inputItem.link!, baseURL),
+          },
+        };
 
-      expect(buildRssItem(inputItem, baseURL)).to.deep.equal(expectedResult);
+        expect(buildRssItem(inputItem, baseURL)).to.deep.equal(expectedResult);
+      });
     });
 
     it('returns a InvalidRssItem value when input is invalid', () => {

@@ -45,7 +45,8 @@ interface InvalidRssItem {
 }
 
 export interface ParsedRssItem extends Item {
-  author: string | undefined; // The Item interface of rss-parser is missing author?!
+  author?: string; // The Item interface of rss-parser is missing author?!
+  creator?: string; // This is non-standard, but present in WP feeds
 }
 
 export interface ValidRssItem {
@@ -60,7 +61,8 @@ function isValidRssItem(value: any): value is ValidRssItem {
 export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
 
 export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
-  const { title, content, author, isoDate } = item;
+  const { title, content, isoDate } = item;
+  const author = item.author || item.creator;
   const isMissing = (value: string | undefined): value is undefined => !value?.trim();
   const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
 
