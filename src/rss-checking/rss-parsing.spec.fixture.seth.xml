@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:content="http://purl.org/rss/1.0/modules/content/" xmlns:wfw="http://wellformedweb.org/CommentAPI/" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:sy="http://purl.org/rss/1.0/modules/syndication/" xmlns:slash="http://purl.org/rss/1.0/modules/slash/" xmlns:georss="http://www.georss.org/georss" xmlns:geo="http://www.w3.org/2003/01/geo/wgs84_pos#">
+
+  <channel>
+    <title>Seth&#039;s Blog</title>
+    <atom:link href="https://seths.blog/feed/" rel="self" type="application/rss+xml" />
+    <link>https://seths.blog</link>
+    <description>Seth Godin&#039;s Blog on marketing, tribes and respect</description>
+    <lastBuildDate>Thu, 02 Sep 2021 01:22:33 +0000</lastBuildDate>
+    <language>en-US</language>
+    <sy:updatePeriod>
+	hourly</sy:updatePeriod>
+    <sy:updateFrequency>
+	1</sy:updateFrequency>
+
+    <site xmlns="com-wordpress:feed-additions:1">147199084</site>
+    <item>
+      <title>Instead</title>
+      <link>https://seths.blog/2021/09/instead-2/</link>
+
+      <dc:creator>
+        <![CDATA[Seth Godin]]>
+      </dc:creator>
+      <pubDate>Sat, 04 Sep 2021 08:29:00 +0000</pubDate>
+      <category>
+        <![CDATA[Uncategorized]]>
+      </category>
+      <guid isPermaLink="false">https://seths.blog/?p=40516</guid>
+
+      <description>
+        <![CDATA[A simple substitute might change a habit. Instead of a snack, brush your teeth. Instead of a nap, go for a walk. Instead of a nasty tweet or cutting remark, write it down in a private notebook. Instead of the elevator, take the stairs. Instead of doomscrolling, send someone a nice note. Instead of an [&#8230;]]]>
+      </description>
+      <content:encoded>
+        <![CDATA[<p>A simple substitute might change a habit.</p>
+<p>Instead of a snack, brush your teeth.</p>
+<p>Instead of a nap, go for a walk.</p>
+<p>Instead of a nasty tweet or cutting remark, write it down in a private notebook.</p>
+<p>Instead of the elevator, take the stairs.</p>
+<p>Instead of doomscrolling, send someone a nice note.</p>
+<p>Instead of an angry email, make a phone call.</p>
+<p>Instead of a purchase seeking joy, consider a donation&#8230;</p>]]>
+      </content:encoded>
+
+      <post-id xmlns="com-wordpress:feed-additions:1">40516</post-id>
+    </item>
+  </channel>
+</rss>

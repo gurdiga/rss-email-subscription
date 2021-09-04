@@ -53,6 +53,40 @@ describe(parseRssItems.name, () => {
     } as RssParsingResult);
   });
 
+  it('can extract <content:encoded>', async () => {
+    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.seth.xml`, 'utf-8');
+    const expectedValidItems: RssItem[] = [
+      {
+        title: 'Instead',
+        content: `
+        <p>A simple substitute might change a habit.</p>
+<p>Instead of a snack, brush your teeth.</p>
+<p>Instead of a nap, go for a walk.</p>
+<p>Instead of a nasty tweet or cutting remark, write it down in a private notebook.</p>
+<p>Instead of the elevator, take the stairs.</p>
+<p>Instead of doomscrolling, send someone a nice note.</p>
+<p>Instead of an angry email, make a phone call.</p>
+<p>Instead of a purchase seeking joy, consider a donation&#8230;</p>
+      `,
+        author: '\n        Seth Godin\n      ',
+        pubDate: new Date('2021-09-04T08:29:00.000Z'),
+        link: new URL('https://seths.blog/2021/09/instead-2/'),
+      },
+    ];
+
+    const result = await parseRssItems({
+      kind: 'RssResponse',
+      xml,
+      baseURL,
+    });
+
+    expect(result).to.deep.equal({
+      kind: 'RssParseResult',
+      validItems: expectedValidItems,
+      invalidItems: [],
+    } as RssParsingResult);
+  });
+
   it('returns the invalid items into invalidItems of RssParseResult', async () => {
     const xml = `
       <?xml version="1.0" encoding="utf-8"?>
