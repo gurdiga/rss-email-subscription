@@ -65,11 +65,11 @@ export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promis
   }
 
   if (isEmpty(validItems)) {
-    logInfo(`No valid items`, { dataDir: dataDir.value });
+    logInfo(`No items to send`, { dataDir: dataDir.value });
     return 0;
   }
 
-  logInfo(`Found RSS items to send`, { dataDir: dataDir.value, validItemCount: validItems.length });
+  logInfo(`Found ${validItems.length} items to send`, { dataDir: dataDir.value });
 
   const appBaseUrl = makeUrl(env.APP_BASE_URL);
 
