@@ -71,7 +71,7 @@ smtp:
 		boky/postfix
 
 reset-last-post-timestamp:
-	echo '{"lastPostTimestamp":"2021-01-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
+	echo '{"lastPostTimestamp":"2020-10-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
 APP_IMAGE_NAME=app
 app:
