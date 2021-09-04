@@ -9,6 +9,7 @@ import {
   ParsedRssItem,
   BuildRssItemFn,
   ValidRssItem,
+  maxValidItems,
 } from './rss-parsing';
 
 describe(parseRssItems.name, () => {
@@ -85,6 +86,31 @@ describe(parseRssItems.name, () => {
       validItems: expectedValidItems,
       invalidItems: [],
     } as RssParsingResult);
+  });
+
+  it(`only returns ${maxValidItems} most recent valid items`, async () => {
+    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.max.xml`, 'utf-8');
+
+    const result = (await parseRssItems({
+      kind: 'RssResponse',
+      xml,
+      baseURL,
+    })) as RssParsingResult;
+
+    const itemTitles = result.validItems.map((x) => x.title);
+
+    expect(itemTitles).to.deep.equal([
+      'post-12',
+      'post-11',
+      'post-10',
+      'post-9',
+      'post-8',
+      'post-7',
+      'post-6',
+      'post-5',
+      'post-4',
+      'post-3',
+    ]);
   });
 
   it('returns the invalid items into invalidItems of RssParseResult', async () => {

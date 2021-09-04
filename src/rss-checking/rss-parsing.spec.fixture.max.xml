@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <generator uri="https://jekyllrb.com/" version="4.2.0">Jekyll</generator>
+  <link href="/feed.xml" rel="self" type="application/atom+xml" />
+  <link href="/" rel="alternate" type="text/html" />
+  <updated>2021-07-01T09:20:12+03:00</updated>
+  <id>/feed.xml</id>
+  <title type="html">Your awesome title</title>
+  <subtitle>Write an awesome description for your new site here. You can edit this line in _config.yml. It will appear in your document head meta (for Google search results) and in your feed.xml site description.</subtitle>
+  <author>
+    <name>John DOE</name>
+  </author>
+
+  <entry>
+    <title type="html">post-1</title>
+    <published>2021-06-01T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-1</id>
+    <content type="html" xml:base="/2021/06/12/post-1">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-2</title>
+    <published>2021-06-02T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-2</id>
+    <content type="html" xml:base="/2021/06/12/post-2">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-3</title>
+    <published>2021-06-03T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-3</id>
+    <content type="html" xml:base="/2021/06/12/post-3">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-4</title>
+    <published>2021-06-04T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-4</id>
+    <content type="html" xml:base="/2021/06/12/post-4">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-5</title>
+    <published>2021-06-05T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-5</id>
+    <content type="html" xml:base="/2021/06/12/post-5">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-6</title>
+    <published>2021-06-06T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-6</id>
+    <content type="html" xml:base="/2021/06/12/post-6">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-7</title>
+    <published>2021-06-07T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-7</id>
+    <content type="html" xml:base="/2021/06/12/post-7">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-8</title>
+    <published>2021-06-08T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-8</id>
+    <content type="html" xml:base="/2021/06/12/post-8">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-9</title>
+    <published>2021-06-09T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-9</id>
+    <content type="html" xml:base="/2021/06/12/post-9">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-10</title>
+    <published>2021-06-10T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-10</id>
+    <content type="html" xml:base="/2021/06/12/post-10">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-11</title>
+    <published>2021-06-11T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-11</id>
+    <content type="html" xml:base="/2021/06/12/post-11">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+
+  <entry>
+    <title type="html">post-12</title>
+    <published>2021-06-12T19:05:01+03:00</published>
+    <link href="/2021/06/12/post-N" rel="alternate" type="text/html" title="Serial post Sat Jun 12 19:04:59 EEST 2021" />
+    <id>/2021/06/12/post-12</id>
+    <content type="html" xml:base="/2021/06/12/post-12">The content</content>
+    <author>
+      <name>John DOE</name>
+    </author>
+    <summary type="html"></summary>
+  </entry>
+</feed>

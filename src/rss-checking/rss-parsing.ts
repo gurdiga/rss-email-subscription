@@ -10,6 +10,8 @@ export interface RssParsingResult {
   invalidItems: InvalidRssItem[];
 }
 
+export const maxValidItems = 10;
+
 export async function parseRssItems(
   rssResponse: RssResponse,
   buildRssItemFn: BuildRssItemFn = buildRssItem
@@ -22,7 +24,11 @@ export async function parseRssItems(
     try {
       const items = feed.items.map((item) => buildRssItemFn(item as ParsedRssItem, rssResponse.baseURL));
 
-      const validItems = items.filter(isValidRssItem).map((i) => i.value);
+      const validItems = items
+        .filter(isValidRssItem)
+        .map((i) => i.value)
+        .sort((a, b) => (a.pubDate < b.pubDate ? 1 : -1))
+        .slice(0, maxValidItems);
       const invalidItems = items.filter(isInvalidRssItem);
 
       return {
