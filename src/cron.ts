@@ -1,9 +1,12 @@
 import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import path from 'path';
-import { main as checkRss } from './rss-checking/main';
-import { main as sendEmails } from './email-sending/main';
+import { main as checkRss } from './rss-checking';
+import { main as sendEmails } from './email-sending';
 import { logError, logInfo } from './shared/logging';
+import { getFeedSettings } from './shared/feed-settings';
+import { isErr } from './shared/lang';
+import { makeDataDir } from './shared/data-dir';
 
 async function main() {
   const dataDirRoot = process.env.DATA_DIR_ROOT;
@@ -21,14 +24,27 @@ async function main() {
   }
 
   for (const { name } of dataDirs) {
-    const dataDir = path.join(dataDirRoot, name);
     const cronPattern = '0 * * * *';
+    const dataDirString = path.join(dataDirRoot, name);
+    const dataDir = makeDataDir(dataDirString);
 
-    logInfo(`Scheduling feed check for ${dataDir}`, { cronPattern });
+    if (isErr(dataDir)) {
+      logError(`Invalid dataDir`, { dataDirString, reason: dataDir.reason });
+      continue;
+    }
+
+    logInfo(`Scheduling feed check for ${dataDirString}`, { cronPattern });
 
     schedule(cronPattern, async () => {
-      await checkRss(dataDir);
-      await sendEmails(dataDir);
+      const feedSettings = getFeedSettings(dataDir);
+
+      if (isErr(feedSettings)) {
+        logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+        return;
+      }
+
+      await checkRss(dataDir, feedSettings);
+      await sendEmails(dataDir, feedSettings);
     });
   }
 }

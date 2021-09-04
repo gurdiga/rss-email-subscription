@@ -1,31 +1,15 @@
 import { isEmpty } from '../shared/array-utils';
-import { makeDataDir } from '../shared/data-dir';
-import { getFeedSettings } from '../shared/feed-settings';
+import { DataDir } from '../shared/data-dir';
+import { FeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { logError, logInfo, logWarning } from '../shared/logging';
-import { getFirstCliArg, isRunDirectly, programFilePath } from '../shared/process-utils';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, isMissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function main(dataDirString: string): Promise<number | undefined> {
-  const dataDir = makeDataDir(dataDirString);
-
-  if (isErr(dataDir)) {
-    logError(`Invalid data dir`, { dataDirString, reason: dataDir.reason });
-    logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
-    return 1;
-  }
-
-  const feedSettings = getFeedSettings(dataDir);
-
-  if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
-    return 1;
-  }
-
+export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const { url } = feedSettings;
   const rssResponse = await fetchRss(url);
 
@@ -88,8 +72,4 @@ export async function main(dataDirString: string): Promise<number | undefined> {
   }
 
   logInfo(`Recorded last post timestamp`);
-}
-
-if (isRunDirectly(module)) {
-  main(getFirstCliArg(process)).then((exitCode) => process.exit(exitCode));
 }

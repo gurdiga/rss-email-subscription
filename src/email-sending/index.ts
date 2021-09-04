@@ -1,22 +1,21 @@
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
-import { getFirstCliArg, isRunDirectly, programFilePath } from '../shared/process-utils';
 import { loadStoredEmails } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
-import { makeDataDir } from '../shared/data-dir';
+import { DataDir } from '../shared/data-dir';
 import { makeUrl } from '../shared/url';
 import { requireEnv } from '../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { getFeedSettings } from '../shared/feed-settings';
+import { FeedSettings } from '../shared/feed-settings';
 
 export interface Env extends EmailDeliveryEnv {
   APP_BASE_URL: string;
 }
 
-export async function main(dataDirString: string): Promise<number | undefined> {
+export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
@@ -24,20 +23,10 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     return 1;
   }
 
-  const dataDir = makeDataDir(dataDirString);
-
-  if (isErr(dataDir)) {
-    logError(`Invalid data dir`, { dataDirString, reason: dataDir.reason });
-    logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
-    return 1;
-  }
-
-  logInfo(`Sending the new items from ${dataDir.value}`, { dataDirString });
-
-  const feedSettings = getFeedSettings(dataDir);
+  logInfo(`Sending the new items from ${dataDir.value}`, { dataDir: dataDir.value });
 
   if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+    logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });
     return 1;
   }
 
@@ -45,40 +34,40 @@ export async function main(dataDirString: string): Promise<number | undefined> {
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
-    logError(`Failed reading emails`, { dataDirString, reason: storedEmails.reason });
+    logError(`Failed reading emails`, { dataDir: dataDir.value, reason: storedEmails.reason });
     return 1;
   }
 
   const { validEmails, invalidEmails } = storedEmails;
 
   if (isEmpty(validEmails)) {
-    logError(`No valid emails found`, { dataDirString });
+    logError(`No valid emails found`, { dataDir: dataDir.value });
     return 1;
   }
 
   if (invalidEmails.length > 0) {
-    logWarning(`Found invalid emails`, { dataDirString, invalidEmails });
+    logWarning(`Found invalid emails`, { dataDir: dataDir.value, invalidEmails });
   }
 
-  logInfo(`Found emails`, { dataDirString, emailCount: validEmails.length });
+  logInfo(`Found emails`, { dataDir: dataDir.value, emailCount: validEmails.length });
 
   const storedRssItems = readStoredRssItems(dataDir);
 
   if (isErr(storedRssItems)) {
-    logError(`Failed to read RSS items`, { dataDirString, reason: storedRssItems.reason });
+    logError(`Failed to read RSS items`, { dataDir: dataDir.value, reason: storedRssItems.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = storedRssItems;
 
-  logInfo(`Found RSS items to send`, { dataDirString, validItemCount: validItems.length });
+  logInfo(`Found RSS items to send`, { dataDir: dataDir.value, validItemCount: validItems.length });
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid RSS items`, { dataDirString, invalidItems });
+    logWarning(`Found invalid RSS items`, { dataDir: dataDir.value, invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logInfo(`No valid items`, { dataDirString });
+    logInfo(`No valid items`, { dataDir: dataDir.value });
     return 0;
   }
 
@@ -108,8 +97,4 @@ export async function main(dataDirString: string): Promise<number | undefined> {
       logError(deletionResult.reason);
     }
   }
-}
-
-if (isRunDirectly(module)) {
-  main(getFirstCliArg(process)).then((exitCode) => process.exit(exitCode));
 }
