@@ -51,8 +51,9 @@ export async function main(dataDirString: string): Promise<number | undefined> {
 
   const { validEmails, invalidEmails } = storedEmails;
 
-  if (validEmails.length === 0) {
+  if (isEmpty(validEmails)) {
     logError(`No valid emails found`, { dataDirString });
+    return 1;
   }
 
   if (invalidEmails.length > 0) {
