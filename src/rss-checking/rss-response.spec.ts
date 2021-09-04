@@ -21,7 +21,7 @@ describe(fetchRss.name, () => {
   });
 
   it('accepts other RSS and Atom content-type values', async () => {
-    const contentTypes = ['text/xml;charset=utf-8', 'application/atom+xml'];
+    const contentTypes = ['text/xml;charset=utf-8', 'application/atom+xml', 'application/rss+xml'];
 
     for (const type of contentTypes) {
       const mockHeaders = new Headers({ 'content-type': type });

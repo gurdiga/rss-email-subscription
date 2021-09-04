@@ -17,7 +17,7 @@ interface FetchResponse {
 type FetchFn = (url: URL) => Promise<FetchResponse>;
 
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
-  const supportedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml'];
+  const supportedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml', 'application/rss+xml'];
 
   try {
     const response = await fetchFn(url);
