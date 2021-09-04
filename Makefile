@@ -99,3 +99,6 @@ restart: stop start
 
 hashing-salt:
 	tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''
+
+reload:
+	docker kill --signal=SIGHUP rss-email-subscription_app_1
