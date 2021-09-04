@@ -102,3 +102,6 @@ hashing-salt:
 
 reload:
 	docker kill --signal=SIGHUP rss-email-subscription_app_1
+
+purge-smtp-queue:
+	docker exec -it rss-email-subscription_smtp_1 postsuper -d ALL
