@@ -19,18 +19,18 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     return 1;
   }
 
-  const feedSettingsReadingResult = getFeedSettings(dataDir);
+  const feedSettings = getFeedSettings(dataDir);
 
-  if (isErr(feedSettingsReadingResult)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
+  if (isErr(feedSettings)) {
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
     return 1;
   }
 
-  const { url } = feedSettingsReadingResult;
-  const rssFetchingResult = await fetchRss(url);
+  const { url } = feedSettings;
+  const rssResponse = await fetchRss(url);
 
-  if (isErr(rssFetchingResult)) {
-    logError(`Failed fetching RSS`, { url, reason: rssFetchingResult.reason });
+  if (isErr(rssResponse)) {
+    logError(`Failed fetching RSS`, { url, reason: rssResponse.reason });
     return 1;
   }
 
@@ -45,7 +45,7 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     lastPostTimestamp = new Date();
   }
 
-  const rssParsingResult = await parseRssItems(rssFetchingResult);
+  const rssParsingResult = await parseRssItems(rssResponse);
 
   if (isErr(rssParsingResult)) {
     logError(`Failed parsing RSS items`, { reson: rssParsingResult.reason });

@@ -4,7 +4,7 @@ import { RssItem } from '../shared/rss-item';
 import { makeUrl } from '../shared/url';
 import { RssResponse } from './rss-response';
 
-export interface RssParseResult {
+export interface RssParsingResult {
   kind: 'RssParseResult';
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
@@ -13,7 +13,7 @@ export interface RssParseResult {
 export async function parseRssItems(
   rssResponse: RssResponse,
   buildRssItemFn: BuildRssItemFn = buildRssItem
-): Promise<Result<RssParseResult>> {
+): Promise<Result<RssParsingResult>> {
   const parser = new Parser();
 
   try {

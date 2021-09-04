@@ -5,7 +5,7 @@ import { RssItem } from '../shared/rss-item';
 import {
   buildRssItem,
   parseRssItems,
-  RssParseResult,
+  RssParsingResult,
   ParsedRssItem,
   BuildRssItemFn,
   ValidRssItem,
@@ -50,7 +50,7 @@ describe(parseRssItems.name, () => {
       kind: 'RssParseResult',
       validItems: expectedValidItems,
       invalidItems: [],
-    } as RssParseResult);
+    } as RssParsingResult);
   });
 
   it('returns the invalid items into invalidItems of RssParseResult', async () => {
@@ -108,7 +108,7 @@ describe(parseRssItems.name, () => {
           },
         },
       ],
-    } as RssParseResult);
+    } as RssParsingResult);
   });
 
   it('returns an InvalidRssParseResult value when invalid XML', async () => {
