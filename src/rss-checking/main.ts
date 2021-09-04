@@ -73,6 +73,11 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     return 1;
   }
 
+  if (newRssItems.length === 0) {
+    logInfo(`No new items`);
+    return 0;
+  }
+
   logInfo(`Recorded new items`, { itemCount: newRssItems.length });
 
   const lastPostTimestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
