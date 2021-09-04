@@ -230,13 +230,19 @@ describe(parseRssItems.name, () => {
           creator: 'John DOE Creator',
           link: '/the/path/to/file.html',
         },
+        {
+          title: 'Post title',
+          content: 'Post body',
+          isoDate: new Date().toJSON(),
+          link: '/the/path/to/file.html',
+        },
       ].forEach((inputItem: ParsedRssItem) => {
         const expectedResult: ValidRssItem = {
           kind: 'ValidRssItem',
           value: {
             title: inputItem.title!,
             content: inputItem.content!,
-            author: inputItem.author! || inputItem.creator!,
+            author: inputItem.author! || inputItem.creator! || 'Anonymous Coward',
             pubDate: new Date(inputItem.isoDate!),
             link: new URL(inputItem.link!, baseURL),
           },
@@ -267,13 +273,6 @@ describe(parseRssItems.name, () => {
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post content is missing',
-      });
-
-      invalidInput = { ...item, author: undefined };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
-        kind: 'InvalidRssItem',
-        item: invalidInput,
-        reason: 'Post author is missing',
       });
 
       invalidInput = { ...item, isoDate: undefined };
