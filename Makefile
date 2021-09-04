@@ -1,7 +1,4 @@
-default: run
-
-run:
-	ts-node src/main.ts
+default: pre-commit
 
 logs-app:
 	docker logs -f rss-email-subscription_app_1
