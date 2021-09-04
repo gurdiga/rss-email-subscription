@@ -24,7 +24,7 @@ async function main() {
     const dataDir = path.join(dataDirRoot, name);
     const cronPattern = '0 * * * *';
 
-    logInfo(`Scheduling processing for ${dataDir}`, { cronPattern });
+    logInfo(`Scheduling feed check for ${dataDir}`, { cronPattern });
 
     schedule(cronPattern, async () => {
       await checkRss(dataDir);
