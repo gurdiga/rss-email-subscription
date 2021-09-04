@@ -76,6 +76,11 @@ export async function main(dataDirString: string): Promise<number | undefined> {
     logWarning(`Found invalid RSS items`, { dataDirString, invalidItems });
   }
 
+  if (isEmpty(validItems)) {
+    logInfo(`No valid items`, { dataDirString });
+    return 0;
+  }
+
   const appBaseUrl = makeUrl(env.APP_BASE_URL);
 
   if (isErr(appBaseUrl)) {
