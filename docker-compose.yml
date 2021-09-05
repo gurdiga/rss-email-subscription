@@ -37,3 +37,23 @@ services:
       DATA_DIR_ROOT: /data
     logging:
       driver: local
+
+  website:
+    image: nginx:alpine
+    restart: always
+    ports: ['80:80', '443:443']
+    volumes:
+      - ./website/html:/usr/share/nginx/html:ro
+      - ./website/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./.tmp/certbot/conf:/etc/letsencrypt
+      - ./.tmp/certbot/www:/var/www/certbot
+    environment:
+      NGINX_HOST: feedsubscription.com
+
+  certbot:
+    image: certbot/certbot
+    restart: always
+    volumes:
+      - ./.tmp/certbot/conf:/etc/letsencrypt
+      - ./.tmp/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 7d & wait $${!}; done;'"
