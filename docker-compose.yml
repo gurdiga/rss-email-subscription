@@ -14,6 +14,13 @@ services:
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
+  smtp-in:
+    image: zixia/simple-mail-forwarder
+    ports: ['25:25']
+    environment:
+      SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
+    restart: always
+
   app:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
