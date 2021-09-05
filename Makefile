@@ -76,21 +76,12 @@ smtp:
 reset-last-post-timestamp:
 	echo '{"lastPostTimestamp":"2020-10-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
-APP_IMAGE_NAME=app
 app:
 	docker build \
 		--progress=plain \
 		-f docker-services/app/Dockerfile \
-		--tag $(APP_IMAGE_NAME) \
+		--tag app \
 		.
-
-run-app:
-	docker run --rm \
-		--init \
-		-v `pwd`/.tmp/data:/data \
-		--env-file app.env \
-		--name $(APP_IMAGE_NAME) \
-		$(APP_IMAGE_NAME)
 
 start:
 	docker-compose up --remove-orphans --detach
