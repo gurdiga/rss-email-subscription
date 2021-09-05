@@ -65,14 +65,6 @@ lint-dockerfile:
 smtp-test:
 	node_modules/.bin/ts-node src/email-sending/email-delivery.slow-test.ts
 
-smtp:
-	docker run --rm --name postfix \
-		-v `pwd`/.tmp/opendkim-keys:/etc/opendkim/keys \
-		--env-file smtp.env \
-		--no-healthcheck \
-		-p 1587:587 \
-		boky/postfix
-
 reset-last-post-timestamp:
 	echo '{"lastPostTimestamp":"2020-10-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
