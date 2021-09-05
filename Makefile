@@ -6,6 +6,9 @@ logs-app:
 logs-smtp:
 	docker logs -f rss-email-subscription_smtp_1
 
+logs-smtp-in:
+	docker logs -f rss-email-subscription_smtp-in_1
+
 run-email-sending:
 	node_modules/.bin/ts-node src/cli.ts email-sending .tmp/data/
 
