@@ -100,3 +100,7 @@ ssl:
 			--agree-tos \
 			--non-interactive \
 			--email gurdiga@gmail.com" certbot
+
+.PHONY: website
+website:
+	open website/html/index.html
