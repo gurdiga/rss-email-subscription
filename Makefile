@@ -103,4 +103,4 @@ ssl:
 
 .PHONY: website
 website:
-	open website/html/index.html
+	(cd website/html && ~/src/nginx-server/nginx-server.py)
