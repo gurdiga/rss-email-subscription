@@ -15,5 +15,8 @@
   "[xml]": {
     "editor.defaultFormatter": "redhat.vscode-xml"
   },
+  "[nginx]": {
+    "editor.defaultFormatter": "raynigon.nginx-formatter"
+  },
   "typescript.tsdk": "node_modules/typescript/lib"
 }
