@@ -91,3 +91,12 @@ reload:
 
 purge-smtp-queue:
 	docker exec -it rss-email-subscription_smtp_1 postsuper -d ALL
+
+ssl:
+	docker-compose run --rm --entrypoint "\
+	  certbot certonly --webroot -w /var/www/certbot \
+			--domains feedsubscription.com \
+			--rsa-key-size 4096 \
+			--agree-tos \
+			--non-interactive \
+			--email gurdiga@gmail.com" certbot
