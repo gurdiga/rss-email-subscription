@@ -38,6 +38,7 @@ services:
     logging:
       driver: local
 
+  # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
     image: nginx:alpine
     restart: always
@@ -50,6 +51,7 @@ services:
     environment:
       NGINX_HOST: feedsubscription.com
 
+  # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
     image: certbot/certbot
     restart: always
