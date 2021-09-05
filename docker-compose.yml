@@ -35,6 +35,5 @@ services:
       NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
       SMTP_CONNECTION_STRING: smtp://smtp:587
       DATA_DIR_ROOT: /data
-      APP_BASE_URL: https://feedsubscription.com
     logging:
       driver: local

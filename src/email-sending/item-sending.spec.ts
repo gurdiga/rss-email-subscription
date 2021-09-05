@@ -70,7 +70,6 @@ describe('item-sending', () => {
   describe(makeUnsubscribeLink.name, () => {
     it('returns a link containing the blog unique ID and the email salted hash', () => {
       const blogId = path.basename(dataDir.value);
-      const appBaseUrl = new URL('https://app.com');
 
       const hashedEmail: HashedEmail = {
         kind: 'HashedEmail',
@@ -78,10 +77,10 @@ describe('item-sending', () => {
         saltedHash: '#test@test.com#',
       };
 
-      const result = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
+      const result = makeUnsubscribeLink(dataDir, hashedEmail);
 
       expect(result).to.equal(
-        `<a href="${appBaseUrl}unsubscribe?id=${blogId}-${hashedEmail.saltedHash}">Unsubscribe</a>`
+        `<a href="https://feedsubscription.com/unsubscribe?id=${blogId}-${hashedEmail.saltedHash}">Unsubscribe</a>`
       );
     });
   });

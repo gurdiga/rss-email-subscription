@@ -39,7 +39,8 @@ export function makeEmailMessage(item: RssItem, unsubscribeLink: string): Messag
   };
 }
 
-export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, appBaseUrl: URL): string {
+export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail): string {
+  const appBaseUrl = new URL('https://feedsubscription.com');
   const blogId = path.basename(dataDir.value);
   const queryString = `id=${blogId}-${hashedEmail.saltedHash}`;
   const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);

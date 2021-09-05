@@ -6,17 +6,12 @@ import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending'
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { DataDir } from '../shared/data-dir';
-import { makeUrl } from '../shared/url';
 import { requireEnv } from '../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { FeedSettings } from '../shared/feed-settings';
 
-export interface Env extends EmailDeliveryEnv {
-  APP_BASE_URL: string;
-}
-
 export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
-  const env = requireEnv<Env>(['APP_BASE_URL', 'SMTP_CONNECTION_STRING']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
     logError(`Invalid environment variables`, { reason: env.reason });
@@ -71,18 +66,11 @@ export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promis
 
   logInfo(`Found ${validItems.length} items to send`, { dataDir: dataDir.value });
 
-  const appBaseUrl = makeUrl(env.APP_BASE_URL);
-
-  if (isErr(appBaseUrl)) {
-    logError(`Invalid app base URL`, { appBaseUrl: appBaseUrl.reason });
-    return 1;
-  }
-
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
 
-      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, appBaseUrl);
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
       const sendingResult = await sendItem(fromAddress, hashedEmail.emailAddress, emailMessage, env);
 
