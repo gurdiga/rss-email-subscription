@@ -9,7 +9,7 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const { url } = feedSettings;
   const rssResponse = await fetchRss(url);
 

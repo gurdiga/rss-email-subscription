@@ -1,8 +1,8 @@
 import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import path from 'path';
-import { main as checkRss } from './rss-checking';
-import { main as sendEmails } from './email-sending';
+import { checkRss } from './rss-checking';
+import { sendEmails } from './email-sending';
 import { logError, logInfo } from './shared/logging';
 import { getFeedSettings } from './shared/feed-settings';
 import { isErr } from './shared/lang';

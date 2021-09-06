@@ -10,7 +10,7 @@ import { requireEnv } from '../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { FeedSettings } from '../shared/feed-settings';
 
-export async function main(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
