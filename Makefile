@@ -106,4 +106,4 @@ website:
 	(cd website/html && ~/src/nginx-server/nginx-server.py)
 
 website-reload:
-	docker exec -it rss-email-subscription_website_1 nginx -s reload
+	docker exec rss-email-subscription_website_1 nginx -s reload
