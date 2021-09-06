@@ -107,3 +107,6 @@ website:
 
 website-reload:
 	docker exec rss-email-subscription_website_1 nginx -s reload
+
+subscription:
+	node_modules/.bin/ts-node src/subscription/server.ts
