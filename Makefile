@@ -10,10 +10,10 @@ logs-smtp-in:
 	docker logs -f rss-email-subscription_smtp-in_1
 
 run-email-sending:
-	node_modules/.bin/ts-node src/cli.ts email-sending .tmp/data/
+	node_modules/.bin/ts-node src/cron-cli.ts email-sending .tmp/data/
 
 run-rss-checking:
-	node_modules/.bin/ts-node src/cli.ts rss-checking .tmp/data/
+	node_modules/.bin/ts-node src/cron-cli.ts rss-checking .tmp/data/
 
 .tmp/data: .tmp/data/feed.json .tmp/data/emails.json
 
