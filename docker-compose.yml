@@ -39,6 +39,15 @@ services:
     logging:
       driver: local
 
+  subscription:
+    image: app
+    init: true # This is to tell Node process to stop when the container is asked to stop.
+    command: node_modules/.bin/ts-node src/subscription/server.ts
+    volumes:
+      - .tmp/docker-data:/data
+    logging:
+      driver: local
+
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
     image: nginx:alpine

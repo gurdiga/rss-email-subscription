@@ -2,11 +2,12 @@ import express from 'express';
 
 const app = express();
 
-app.get('/', function (req, res) {
+app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
-app.get('/unsubscribe', function (req, res) {
+app.get('/unsubscribe', (req, res) => {
+  // TODO
   res.send(`Unsubscribing ${JSON.stringify(req.params)}`);
 });
 
