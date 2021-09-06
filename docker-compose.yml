@@ -35,6 +35,7 @@ services:
       NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
       SMTP_CONNECTION_STRING: smtp://smtp:587
       DATA_DIR_ROOT: /data
+    command: node_modules/.bin/ts-node src/cron.ts
     logging:
       driver: local
 
