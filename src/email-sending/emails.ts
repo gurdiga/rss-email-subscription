@@ -71,7 +71,7 @@ export function parseEmails(emailList: string): Result<EmailList> {
 
 export type EmailHashFn = (emailAddress: EmailAddress) => string;
 
-type EmailHash = string;
+export type EmailHash = string;
 export type HashedEmails = Record<EmailHash, EmailAddress['value']>;
 
 export function hashEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): HashedEmails {
