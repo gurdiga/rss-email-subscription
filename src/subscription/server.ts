@@ -1,4 +1,5 @@
 import express from 'express';
+import helmet from 'helmet';
 import { isErr } from '../shared/lang';
 import { logError, logInfo } from '../shared/logging';
 import { unsubscribe } from './unsubscription';
@@ -12,7 +13,7 @@ if (!dataDirRoot) {
   process.exit(1);
 }
 
-app.disable('x-powered-by');
+app.use(helmet());
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
