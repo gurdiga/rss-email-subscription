@@ -121,7 +121,7 @@ export interface StoredEmails {
 export interface HashedEmail {
   kind: 'HashedEmail';
   emailAddress: EmailAddress;
-  saltedHash: string;
+  saltedHash: EmailHash;
 }
 
 function isHashedEmail(value: any): value is HashedEmail {

@@ -1,5 +1,5 @@
-import { EmailHash, HashedEmail, loadStoredEmails, storeEmails } from '../email-sending/emails';
-import { DataDir } from '../shared/data-dir';
+import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
+import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
 
 type Unsubscription = NotFound | Success;
@@ -48,9 +48,27 @@ interface UnsubscriptionId {
   emailHash: EmailHash;
 }
 
-function parseUnsubscriptionId(id: any): Result<UnsubscriptionId> {
-  // TODO
-  return makeErr('Not implemented: parseUnsubscriptionId');
+export function parseUnsubscriptionId(id: any): Result<UnsubscriptionId> {
+  if (typeof id !== 'string') {
+    return makeErr('Unsubscription ID is not a string');
+  }
+
+  const [feedId, emailHash] = id?.split('-');
+
+  if (!emailHash) {
+    return makeErr(`Email hash is missing`);
+  }
+
+  const dataDir = makeDataDir(feedId);
+
+  if (isErr(dataDir)) {
+    return makeErr(`Invalid feed ID: ${dataDir.reason}`);
+  }
+
+  return {
+    dataDir,
+    emailHash,
+  };
 }
 
 function removeEmail(emailHash: EmailHash, hashedEmails: HashedEmail[]): Result<HashedEmail[]> {
