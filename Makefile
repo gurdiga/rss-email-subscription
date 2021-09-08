@@ -53,7 +53,7 @@ c: check
 cw:
 	node_modules/.bin/tsc -p tsconfig.json --watch
 
-pre-commit: check test lint
+pre-commit: check test lint snyk
 pc: pre-commit
 
 lint: lint-docker-compose lint-dockerfile
@@ -110,3 +110,6 @@ website-reload:
 
 subscription:
 	node_modules/.bin/ts-node src/subscription/server.ts
+
+snyk:
+	snyk test
