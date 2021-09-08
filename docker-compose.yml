@@ -47,6 +47,10 @@ services:
       - .tmp/docker-data:/data
     logging:
       driver: local
+    environment:
+      TZ: UTC
+      NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+      DATA_DIR_ROOT: /data
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:

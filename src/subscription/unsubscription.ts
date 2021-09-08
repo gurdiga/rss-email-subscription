@@ -1,29 +1,9 @@
-import {
-  EmailAddress,
-  EmailHash,
-  HashedEmail,
-  indexEmails,
-  loadStoredEmails,
-  storeEmailIndex,
-} from '../email-sending/emails';
-import { hash } from '../shared/crypto';
+import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
-import { getFeedSettings } from '../shared/feed-settings';
 import { isErr, makeErr, Result } from '../shared/lang';
-import { logError } from '../shared/logging';
 
-type Unsubscription = NotFound | Success;
-
-interface NotFound {
-  kind: 'NotFound';
-}
-
-interface Success {
-  kind: 'Success';
-}
-
-export function unsubscribe(id: any): Result<Unsubscription> {
-  const unsubscriptionId = parseUnsubscriptionId(id);
+export function unsubscribe(id: any, dataDirRoot: string): Result<void> {
+  const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 
   if (isErr(unsubscriptionId)) {
     return unsubscriptionId;
@@ -43,27 +23,12 @@ export function unsubscribe(id: any): Result<Unsubscription> {
     return newHashedEmails;
   }
 
-  const feedSettings = getFeedSettings(dataDir);
-
-  if (isErr(feedSettings)) {
-    return feedSettings;
-  }
-
-  const { hashingSalt } = feedSettings;
-  const newEmails = newHashedEmails.map((x) => x.emailAddress);
-
-  // TODO: Maybe move to emails.ts?
-  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
-
-  // TODO: Maybe re-create the index from newHashedEmails -- then no need to re-hash, no need to read feedSettings
-  const emailIndex = indexEmails(newEmails, hashEmail);
+  const emailIndex = Object.fromEntries(newHashedEmails.map((x) => [x.saltedHash, x.emailAddress.value]));
   const result = storeEmailIndex(dataDir, emailIndex);
 
   if (isErr(result)) {
     return result;
   }
-
-  return { kind: 'Success' };
 }
 
 interface UnsubscriptionId {
@@ -71,7 +36,7 @@ interface UnsubscriptionId {
   emailHash: EmailHash;
 }
 
-export function parseUnsubscriptionId(id: any): Result<UnsubscriptionId> {
+export function parseUnsubscriptionId(id: any, dataDirRoot: string): Result<UnsubscriptionId> {
   if (typeof id !== 'string') {
     return makeErr('Unsubscription ID is not a string');
   }
@@ -82,7 +47,7 @@ export function parseUnsubscriptionId(id: any): Result<UnsubscriptionId> {
     return makeErr(`Email hash is missing`);
   }
 
-  const dataDir = makeDataDir(feedId);
+  const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
     return makeErr(`Invalid feed ID: ${dataDir.reason}`);

@@ -5,28 +5,32 @@ import { unsubscribe } from './unsubscription';
 
 const app = express();
 
+const dataDirRoot = process.env.DATA_DIR_ROOT;
+
+if (!dataDirRoot) {
+  logError(`DATA_DIR_ROOT envar missing`);
+  process.exit(1);
+}
+
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
 app.get('/unsubscribe', (req, res) => {
-  logInfo('Unsubscription request', req.query);
+  const { query } = req;
 
-  const result = unsubscribe(req.query.id);
+  logInfo('Unsubscription request', { query, dataDirRoot });
+
+  const { id } = query;
+  const result = unsubscribe(id, dataDirRoot);
 
   if (isErr(result)) {
-    logError('Unsubscription request failed', { query: req.query, reason: result.reason });
+    logError('Unsubscription request failed', { query, reason: result.reason });
     res.sendStatus(500);
     return;
   }
 
-  if (result.kind === 'NotFound') {
-    logError('Unsubscription request failed', { query: req.query, reason: 'not found' });
-    res.sendStatus(404);
-    return;
-  }
-
-  logInfo('Unsubscription request succeded', { query: req.query });
+  logInfo('Unsubscription request succeded', { query });
   res.sendStatus(200);
 });
 
@@ -34,5 +38,5 @@ const port = 3000;
 const host = 'localhost';
 
 app.listen(port, host, () => {
-  console.log(`Running on http://${host}:${port}`);
+  logInfo(`Running on http://${host}:${port}`, { dataDirRoot });
 });
