@@ -8,11 +8,18 @@ import { logError, logInfo } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
 async function main(): Promise<number | undefined> {
-  const dataDirString = getFirstCliArg(process);
-  const dataDir = makeDataDir(dataDirString);
+  const dataDirRoot = process.env.DATA_DIR_ROOT;
+
+  if (!dataDirRoot) {
+    logError(`DATA_DIR_ROOT envar missing`);
+    process.exit(1);
+  }
+
+  const feedId = getFirstCliArg(process);
+  const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
-    logError(`Invalid args`, { dataDirString, reason: dataDir.reason });
+    logError(`Invalid args`, { feedId, reason: dataDir.reason });
     logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
     return 1;
   }
@@ -21,7 +28,7 @@ async function main(): Promise<number | undefined> {
   const feedSettings = getFeedSettings(dataDir);
 
   if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+    logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });
     return 1;
   }
 
@@ -39,11 +46,11 @@ async function main(): Promise<number | undefined> {
   const storeResult = storeEmailIndex(dataDir, emailIndex);
 
   if (isErr(storeResult)) {
-    logError(storeResult.reason, { dataDirString });
+    logError(storeResult.reason, { dataDirString: feedId });
     return 1;
   }
 
-  logInfo('Stored emails', { dataDirString, validEmails: validEmails.length, invalidEmails });
+  logInfo('Stored emails', { dataDirString: feedId, validEmails: validEmails.length, invalidEmails });
 }
 
 main().then((exitCode) => process.exit(exitCode));

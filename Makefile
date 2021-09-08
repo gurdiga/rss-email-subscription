@@ -10,14 +10,14 @@ logs-smtp-in:
 	docker logs -f rss-email-subscription_smtp-in_1
 
 run-email-sending:
-	node_modules/.bin/ts-node src/cron-cli.ts email-sending .tmp/data/
+	node_modules/.bin/ts-node src/cron-cli.ts email-sending feed
 
 run-rss-checking:
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking .tmp/data/
+	node_modules/.bin/ts-node src/cron-cli.ts rss-checking feed
 
-.tmp/data: .tmp/data/feed.json .tmp/data/emails.json
+.tmp/data/feed: .tmp/data/feed/feed.json .tmp/data/feed/emails.json
 
-.tmp/data/feed.json:
+.tmp/data/feed/feed.json:
 	echo '{"url": "http://localhost:4000/feed.xml", "hashingSalt": "1234567890123456", "fromAddress": "gurdiga@gmail.com"}' \
 	> $@
 
@@ -27,8 +27,11 @@ run-rss-checking:
 		echo $$email >> $@; \
 	done
 
-.tmp/data/emails.json: .tmp/emails.csv .tmp/data/feed.json
-	node_modules/.bin/ts-node src/email-storing/main.ts .tmp/data/
+.tmp/data/feed/emails.json: .tmp/emails.csv .tmp/data/feed/feed.json
+	node_modules/.bin/ts-node src/email-storing/main.ts feed
+
+reset-last-post-timestamp:
+	echo '{"lastPostTimestamp":"2020-10-12T16:05:00.000Z"}' > .tmp/data/feed/lastPostTimestamp.json
 
 test:
 	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
@@ -64,9 +67,6 @@ lint-dockerfile:
 # The required configuration is expected in the environment
 smtp-test:
 	node_modules/.bin/ts-node src/email-sending/email-delivery.slow-test.ts
-
-reset-last-post-timestamp:
-	echo '{"lastPostTimestamp":"2020-10-12T16:05:00.000Z"}' > .tmp/data/lastPostTimestamp.json
 
 app:
 	docker build \

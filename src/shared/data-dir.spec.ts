@@ -11,6 +11,15 @@ describe(makeDataDir.name, () => {
     expect(makeDataDir('.')).to.deep.equal({ kind: 'DataDir', value: `${process.cwd()}` });
   });
 
+  it('accepts the relative root as the second arg', () => {
+    const dataDirRoot = '/some/path';
+
+    expect(makeDataDir('justaddlight', dataDirRoot)).to.deep.equal({
+      kind: 'DataDir',
+      value: `${dataDirRoot}/justaddlight`,
+    });
+  });
+
   it('returns an Err value with invalid input', () => {
     expect(makeDataDir('')).to.deep.equal(makeErr('Missing value'));
   });
