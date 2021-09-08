@@ -16,7 +16,7 @@
     "type": "git",
     "url": "https://github.com/gurdiga/rss-email-subscription.git"
   },
-  "license": "ISC",
+  "license": "",
   "devDependencies": {
     "@types/chai": "4.2.18",
     "@types/mocha": "8.2.2",
