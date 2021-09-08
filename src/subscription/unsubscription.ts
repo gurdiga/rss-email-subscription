@@ -2,7 +2,15 @@ import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../em
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
 
-export function unsubscribe(id: any, dataDirRoot: string): Result<void> {
+interface Success {
+  kind: 'Success';
+}
+
+interface NotFound {
+  kind: 'NotFound';
+}
+
+export function unsubscribe(id: any, dataDirRoot: string): Result<Success | NotFound> {
   const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 
   if (isErr(unsubscriptionId)) {
@@ -17,6 +25,11 @@ export function unsubscribe(id: any, dataDirRoot: string): Result<void> {
   }
 
   const { validEmails } = storedEmails;
+
+  if (!validEmails.some((x) => x.saltedHash === emailHash)) {
+    return { kind: 'NotFound' };
+  }
+
   const newHashedEmails = removeEmail(emailHash, validEmails);
 
   if (isErr(newHashedEmails)) {
@@ -29,6 +42,8 @@ export function unsubscribe(id: any, dataDirRoot: string): Result<void> {
   if (isErr(result)) {
     return result;
   }
+
+  return { kind: 'Success' };
 }
 
 interface UnsubscriptionId {

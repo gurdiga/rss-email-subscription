@@ -12,6 +12,7 @@ if (!dataDirRoot) {
   process.exit(1);
 }
 
+app.disable('x-powered-by');
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
@@ -30,7 +31,14 @@ app.get('/unsubscribe', (req, res) => {
     return;
   }
 
+  if (result.kind === 'NotFound') {
+    logInfo('Not found', { id });
+    res.sendStatus(404);
+    return;
+  }
+
   logInfo('Unsubscription request succeded', { query });
+
   res.sendStatus(200);
 });
 
