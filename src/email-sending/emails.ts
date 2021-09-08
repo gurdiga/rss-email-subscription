@@ -69,15 +69,12 @@ export function parseEmails(emailList: string): Result<EmailList> {
   };
 }
 
-export type EmailHashFn = (emailAddress: EmailAddress) => string;
-
+export type EmailHashFn = (emailAddress: EmailAddress) => EmailHash;
 export type EmailHash = string;
-export type HashedEmails = Record<EmailHash, EmailAddress['value']>;
+export type EmailIndex = Record<EmailHash, EmailAddress['value']>;
 
-// TODO: mv hashEmails indexEmails
-// TODO: mv HashedEmails EmailIndex
-export function hashEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): HashedEmails {
-  const index: HashedEmails = {};
+export function indexEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): EmailIndex {
+  const index: EmailIndex = {};
 
   emailAddresses.forEach((e) => {
     index[emailHashFn(e)] = e.value;
@@ -98,15 +95,20 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
 
 export const emailsFileName = 'emails.json';
 
-export function storeEmails(
+export function storeEmailsAddresses(
   dataDir: DataDir,
   emailAddresses: EmailAddress[],
   emailHashFn: EmailHashFn,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
+  const emailIndex = indexEmails(emailAddresses, emailHashFn);
+
+  return storeEmailIndex(dataDir, emailIndex, writeFileFn);
+}
+
+function storeEmailIndex(dataDir: DataDir, emailIndex: EmailIndex, writeFileFn: WriteFileFn): Result<void> {
   const filePath = path.join(dataDir.value, emailsFileName);
-  const hashedEmails = hashEmails(emailAddresses, emailHashFn);
-  const json = JSON.stringify(hashedEmails);
+  const json = JSON.stringify(emailIndex);
 
   try {
     writeFileFn(filePath, json);
@@ -145,7 +147,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
     const json = readFileFn(filePath);
 
     try {
-      const index = JSON.parse(json) as HashedEmails;
+      const index = JSON.parse(json) as EmailIndex;
 
       if (getTypeName(index) !== 'object') {
         return makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values');

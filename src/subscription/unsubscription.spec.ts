@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { EmailAddress, HashedEmail, hashEmails, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
+import { EmailAddress, HashedEmail, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
-import { isErr, makeErr } from '../shared/lang';
+import { makeErr } from '../shared/lang';
 import { parseUnsubscriptionId, removeEmail } from './unsubscription';
 
 describe(parseUnsubscriptionId.name, () => {

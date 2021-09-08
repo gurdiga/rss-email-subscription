@@ -1,5 +1,5 @@
 import path from 'path';
-import { EmailAddress, readEmailListFromFile, storeEmails } from '../email-sending/emails';
+import { EmailAddress, readEmailListFromFile, storeEmailsAddresses } from '../email-sending/emails';
 import { hash } from '../shared/crypto';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
@@ -18,14 +18,14 @@ async function main(): Promise<number | undefined> {
   }
 
   const inputFilePath = path.join(dataDir.value, 'emails.csv');
-  const feedSettingsReadingResult = getFeedSettings(dataDir);
+  const feedSettings = getFeedSettings(dataDir);
 
-  if (isErr(feedSettingsReadingResult)) {
-    logError(`Invalid feed settings`, { dataDirString, reason: feedSettingsReadingResult.reason });
+  if (isErr(feedSettings)) {
+    logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
     return 1;
   }
 
-  const { hashingSalt } = feedSettingsReadingResult;
+  const { hashingSalt } = feedSettings;
   const emailReadingResult = readEmailListFromFile(inputFilePath);
 
   if (isErr(emailReadingResult)) {
@@ -35,7 +35,7 @@ async function main(): Promise<number | undefined> {
 
   const { validEmails, invalidEmails } = emailReadingResult;
   const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
-  const storeResult = storeEmails(dataDir, validEmails, hashEmail);
+  const storeResult = storeEmailsAddresses(dataDir, validEmails, hashEmail);
 
   if (isErr(storeResult)) {
     logError(storeResult.reason, { dataDirString });

@@ -6,13 +6,13 @@ import {
   EmailHashFn,
   EmailList,
   parseEmails,
-  hashEmails,
+  indexEmails,
   isEmailAddress,
   makeEmailAddress,
   readEmailListFromFile,
-  storeEmails,
+  storeEmailsAddresses,
   emailsFileName,
-  HashedEmails,
+  EmailIndex,
   StoredEmails,
   loadStoredEmails,
 } from './emails';
@@ -75,11 +75,11 @@ describe(parseEmails.name, () => {
   });
 });
 
-describe(hashEmails.name, () => {
+describe(indexEmails.name, () => {
   it('indexes emails by their salted hash', () => {
     const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
     const hashFn: EmailHashFn = (e) => `#${e.value}#`;
-    const result = hashEmails(emailAddresses, hashFn);
+    const result = indexEmails(emailAddresses, hashFn);
 
     expect(result).to.deep.equal({
       '#a@test.com#': 'a@test.com',
@@ -183,7 +183,7 @@ describe(readEmailListFromFile.name, () => {
   });
 });
 
-describe(storeEmails.name, () => {
+describe(storeEmailsAddresses.name, () => {
   const dataDirString = '/some/path';
   const dataDir = makeDataDir(dataDirString) as DataDir;
   const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
@@ -201,7 +201,7 @@ describe(storeEmails.name, () => {
         '#c@test.com#': 'c@test.com',
       }),
     };
-    const result = storeEmails(dataDir, emailAddresses, emailHash, writeFile);
+    const result = storeEmailsAddresses(dataDir, emailAddresses, emailHash, writeFile);
 
     expect(writtenFile).to.deep.equal(expectedFileWrite);
     expect(result).to.be.undefined;
@@ -212,7 +212,7 @@ describe(storeEmails.name, () => {
     const writeFile = () => {
       throw error;
     };
-    const result = storeEmails(dataDir, emailAddresses, emailHash, writeFile);
+    const result = storeEmailsAddresses(dataDir, emailAddresses, emailHash, writeFile);
 
     expect(result).to.deep.equal(
       makeErr(`Could not store emails to ${dataDirString}/${emailsFileName}: ${error.message}`)
@@ -224,7 +224,7 @@ describe(loadStoredEmails.name, () => {
   const dataDirString = '/some/path';
   const dataDir = makeDataDir(dataDirString) as DataDir;
 
-  const index: HashedEmails = {
+  const index: EmailIndex = {
     hash1: 'email1@test.com',
     hash2: 'email2@test.com',
     hash3: 'email3@test.com',
