@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { EmailAddress, HashedEmail, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
+import { EmailAddress, HashedEmail, isEmailAddress, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { parseUnsubscriptionId, removeEmail } from './unsubscription';
@@ -46,7 +46,9 @@ describe(removeEmail.name, () => {
     'b@test.com',
     'c@test.com',
     'd@test.com',
-  ].map((x) => makeEmailAddress(x) as EmailAddress);
+  ]
+    .map(makeEmailAddress)
+    .filter(isEmailAddress);
   const emailHashFn = (x: EmailAddress) => `##${x.value}##`;
 
   const hashedEmails = emailAddresses.map((x) => makeHashedEmail(x, emailHashFn));
