@@ -27,13 +27,12 @@ export function unsubscribe(id: any): Result<Unsubscription> {
   }
 
   const { validEmails } = storedEmails;
-  const removalResult = removeEmail(emailHash, validEmails) as Result<HashedEmail[]>;
+  const newHashedEmails = removeEmail(emailHash, validEmails);
 
-  if (isErr(removalResult)) {
-    return removalResult;
+  if (isErr(newHashedEmails)) {
+    return newHashedEmails;
   }
 
-  const newHashedEmails = removalResult;
   const result = storeHashedEmails(newHashedEmails) as Result<void>;
 
   if (isErr(result)) {
@@ -71,9 +70,12 @@ export function parseUnsubscriptionId(id: any): Result<UnsubscriptionId> {
   };
 }
 
-function removeEmail(emailHash: EmailHash, hashedEmails: HashedEmail[]): Result<HashedEmail[]> {
-  // TODO
-  return makeErr('Not implemented: removeEmail');
+export function removeEmail(emailHash: EmailHash, hashedEmails: HashedEmail[]): Result<HashedEmail[]> {
+  if (!emailHash.trim()) {
+    return makeErr('Email hash is an empty string or whitespace');
+  }
+
+  return hashedEmails.filter((x) => x.saltedHash !== emailHash);
 }
 
 function storeHashedEmails(hashedEmails: HashedEmail[]): Result<void> {

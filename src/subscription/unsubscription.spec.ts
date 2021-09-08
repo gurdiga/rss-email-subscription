@@ -1,7 +1,8 @@
 import { expect } from 'chai';
+import { EmailAddress, HashedEmail, hashEmails, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
-import { makeErr } from '../shared/lang';
-import { parseUnsubscriptionId } from './unsubscription';
+import { isErr, makeErr } from '../shared/lang';
+import { parseUnsubscriptionId, removeEmail } from './unsubscription';
 
 describe(parseUnsubscriptionId.name, () => {
   it('parses a feedId-emailHash tuple', () => {
@@ -35,5 +36,35 @@ describe(parseUnsubscriptionId.name, () => {
     const id = 42;
 
     expect(parseUnsubscriptionId(id)).to.deep.equal(makeErr('Unsubscription ID is not a string'));
+  });
+});
+
+describe(removeEmail.name, () => {
+  const emailAddresses = [
+    /* prettier: Please keep these stacked. Pretty please! */
+    'a@test.com',
+    'b@test.com',
+    'c@test.com',
+    'd@test.com',
+  ].map((x) => makeEmailAddress(x) as EmailAddress);
+  const emailHashFn = (x: EmailAddress) => `##${x.value}##`;
+
+  const hashedEmails = emailAddresses.map((x) => makeHashedEmail(x, emailHashFn));
+
+  it('removes the email with the corresponding hash from the given list', () => {
+    const emailAddressToRemove = emailAddresses[2];
+    const hash = emailHashFn(emailAddressToRemove);
+
+    const newHashedEmails = removeEmail(hash, hashedEmails) as HashedEmail[];
+
+    expect(newHashedEmails.map((x) => x.saltedHash)).not.to.include(hash);
+  });
+
+  it('returns an Err value if the hash is an empty string or whitespace', () => {
+    const expectedErr = makeErr('Email hash is an empty string or whitespace');
+
+    expect(removeEmail('', hashedEmails)).to.deep.equal(expectedErr);
+    expect(removeEmail('  \t', hashedEmails)).to.deep.equal(expectedErr);
+    expect(removeEmail('\n  ', hashedEmails)).to.deep.equal(expectedErr);
   });
 });

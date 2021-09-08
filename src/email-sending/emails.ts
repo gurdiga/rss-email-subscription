@@ -74,6 +74,8 @@ export type EmailHashFn = (emailAddress: EmailAddress) => string;
 export type EmailHash = string;
 export type HashedEmails = Record<EmailHash, EmailAddress['value']>;
 
+// TODO: mv hashEmails indexEmails
+// TODO: mv HashedEmails EmailIndex
 export function hashEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): HashedEmails {
   const index: HashedEmails = {};
 
@@ -124,6 +126,14 @@ export interface HashedEmail {
   saltedHash: EmailHash;
 }
 
+export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHashFn): HashedEmail {
+  return {
+    kind: 'HashedEmail',
+    emailAddress,
+    saltedHash: emailHashFn(emailAddress),
+  };
+}
+
 function isHashedEmail(value: any): value is HashedEmail {
   return value.kind === 'HashedEmail';
 }
@@ -157,7 +167,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-function parseIndexEntry(saltedHash: string, email: string): HashedEmail | Err {
+function parseIndexEntry(saltedHash: string, email: string): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeErr(`Expected email string but got ${getTypeName(email)}: "${JSON.stringify(email)}"`);
   }
