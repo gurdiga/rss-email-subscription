@@ -13,6 +13,7 @@ describe(getFeedSettings.name, () => {
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
+      replyTo: 'sandra@test.com',
     };
 
     let actualPath = '';
@@ -28,6 +29,31 @@ describe(getFeedSettings.name, () => {
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
       fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
+      replyTo: { kind: 'EmailAddress', value: data.replyTo } as EmailAddress,
+    });
+  });
+
+  it('replyTo defaults to no-reply@feedsubscription.com when missing', () => {
+    const data = {
+      url: 'https://example.com/feed.xml',
+      hashingSalt: 'more-than-sixteen-non-space-characters',
+      fromAddress: 'some@test.com',
+    };
+
+    let actualPath = '';
+    const mockReadFileFn = (path: string) => {
+      actualPath = path;
+      return JSON.stringify(data);
+    };
+
+    const result = getFeedSettings(dataDir, mockReadFileFn);
+
+    expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
+    expect(result).to.deep.equal({
+      url: new URL(data.url),
+      hashingSalt: data.hashingSalt,
+      fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
+      replyTo: { kind: 'EmailAddress', value: 'no-reply@feedsubscription.com' } as EmailAddress,
     });
   });
 

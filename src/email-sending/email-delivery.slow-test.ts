@@ -14,11 +14,13 @@ async function main(): Promise<number> {
 
   const fromAddress = 'feed@feedsubscription.com';
   const toAddress = 'gurdiga@gmail.com';
+  const replyTo = 'replyTo@gmail.com';
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
 
   await deliverEmail(
     fromAddress,
     toAddress,
+    replyTo,
     subject,
     `
       <p>This emai is sent from this unit test:</p>

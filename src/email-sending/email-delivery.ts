@@ -7,6 +7,7 @@ export interface EmailDeliveryEnv {
 export type DeliverEmailFn = (
   from: string,
   to: string,
+  replyTo: string,
   subject: string,
   body: string,
   env: EmailDeliveryEnv
@@ -17,6 +18,7 @@ let transporter: ReturnType<typeof nodemailer.createTransport>;
 export async function deliverEmail(
   from: string,
   to: string,
+  replyTo: string,
   subject: string,
   htmlBody: string,
   env: EmailDeliveryEnv
@@ -28,6 +30,7 @@ export async function deliverEmail(
   await transporter.sendMail({
     from,
     to,
+    replyTo,
     subject,
     text: 'Please use an HTML-capable email reader',
     html: htmlBody,

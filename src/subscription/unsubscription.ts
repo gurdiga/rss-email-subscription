@@ -1,6 +1,16 @@
-import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
+import {
+  EmailAddress,
+  EmailHash,
+  HashedEmail,
+  indexEmails,
+  loadStoredEmails,
+  storeEmailIndex,
+} from '../email-sending/emails';
+import { hash } from '../shared/crypto';
 import { DataDir, makeDataDir } from '../shared/data-dir';
+import { getFeedSettings } from '../shared/feed-settings';
 import { isErr, makeErr, Result } from '../shared/lang';
+import { logError } from '../shared/logging';
 
 type Unsubscription = NotFound | Success;
 
@@ -33,7 +43,21 @@ export function unsubscribe(id: any): Result<Unsubscription> {
     return newHashedEmails;
   }
 
-  const result = storeHashedEmails(newHashedEmails) as Result<void>;
+  const feedSettings = getFeedSettings(dataDir);
+
+  if (isErr(feedSettings)) {
+    return feedSettings;
+  }
+
+  const { hashingSalt } = feedSettings;
+  const newEmails = newHashedEmails.map((x) => x.emailAddress);
+
+  // TODO: Maybe move to emails.ts?
+  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
+
+  // TODO: Maybe re-create the index from newHashedEmails -- then no need to re-hash, no need to read feedSettings
+  const emailIndex = indexEmails(newEmails, hashEmail);
+  const result = storeEmailIndex(dataDir, emailIndex);
 
   if (isErr(result)) {
     return result;
@@ -76,9 +100,4 @@ export function removeEmail(emailHash: EmailHash, hashedEmails: HashedEmail[]): 
   }
 
   return hashedEmails.filter((x) => x.saltedHash !== emailHash);
-}
-
-function storeHashedEmails(hashedEmails: HashedEmail[]): Result<void> {
-  // TODO
-  return makeErr('Not implemented: storeHashedEmails');
 }

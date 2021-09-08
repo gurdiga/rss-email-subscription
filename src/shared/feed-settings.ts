@@ -8,9 +8,9 @@ export interface FeedSettings {
   url: URL;
   hashingSalt: string;
 
-  // TODO: replace `fromAddress` with `fromAddressLocalPart` because the
-  // domain part will always be `feedsubscription.com`.
+  // TODO: Default to feedId?
   fromAddress: EmailAddress;
+  replyTo: EmailAddress;
 }
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
@@ -50,10 +50,17 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid "fromAddress" in ${filePath}: ${fromAddress.reason}`);
       }
 
+      const replyTo = makeEmailAddress(data.replyTo || 'no-reply@feedsubscription.com');
+
+      if (isErr(replyTo)) {
+        return makeErr(`Invalid "replyTo" address in ${filePath}: ${replyTo.reason}`);
+      }
+
       return {
         url,
         hashingSalt,
         fromAddress,
+        replyTo,
       };
     } catch (error) {
       return makeErr(`Can’t parse JSON in ${filePath}: ${error.message},`);

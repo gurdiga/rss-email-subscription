@@ -11,6 +11,7 @@ describe('item-sending', () => {
   const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
   const from = makeEmailAddress('from@email.com') as EmailAddress;
   const to = makeEmailAddress('to@email.com') as EmailAddress;
+  const replyTo = makeEmailAddress('replyTo@email.com') as EmailAddress;
 
   const item: RssItem = {
     title: 'Welcome to Jekyll!',
@@ -31,14 +32,15 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
-      let [actualFrom, actualTo, actualSubject, actualHtmlBody] = ['', '', '', ''];
-      const deliverEmailFn: DeliverEmailFn = async (from, to, subject, body) => {
-        [actualFrom, actualTo, actualSubject, actualHtmlBody] = [from, to, subject, body];
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = ['', '', '', '', ''];
+      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, body) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, body];
       };
 
-      await sendItem(from, to, messageContent, env, deliverEmailFn);
+      await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
+      expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
     });
@@ -49,7 +51,7 @@ describe('item-sending', () => {
         throw mockError;
       };
 
-      const result = await sendItem(from, to, messageContent, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${mockError.message}`));
     });

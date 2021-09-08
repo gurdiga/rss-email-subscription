@@ -72,7 +72,13 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
       const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
-      const sendingResult = await sendItem(fromAddress, hashedEmail.emailAddress, emailMessage, env);
+      const sendingResult = await sendItem(
+        fromAddress,
+        hashedEmail.emailAddress,
+        feedSettings.replyTo,
+        emailMessage,
+        env
+      );
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);
