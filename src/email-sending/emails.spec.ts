@@ -10,11 +10,11 @@ import {
   isEmailAddress,
   makeEmailAddress,
   readEmailListFromFile,
-  storeEmailsAddresses,
   emailsFileName,
   EmailIndex,
   StoredEmails,
   loadStoredEmails,
+  storeEmailIndex,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -183,13 +183,14 @@ describe(readEmailListFromFile.name, () => {
   });
 });
 
-describe(storeEmailsAddresses.name, () => {
+describe(storeEmailIndex.name, () => {
   const dataDirString = '/some/path';
   const dataDir = makeDataDir(dataDirString) as DataDir;
   const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
   const emailHash = (e: EmailAddress) => `#${e.value}#`;
+  const emailIndex = indexEmails(emailAddresses, emailHash);
 
-  it('stores the emails with their hashes', () => {
+  it('stores the given email index', () => {
     let writtenFile = { path: '', content: '' };
     const writeFile = (path: string, content: string) => (writtenFile = { path, content });
 
@@ -201,7 +202,7 @@ describe(storeEmailsAddresses.name, () => {
         '#c@test.com#': 'c@test.com',
       }),
     };
-    const result = storeEmailsAddresses(dataDir, emailAddresses, emailHash, writeFile);
+    const result = storeEmailIndex(dataDir, emailIndex, writeFile);
 
     expect(writtenFile).to.deep.equal(expectedFileWrite);
     expect(result).to.be.undefined;
@@ -212,10 +213,10 @@ describe(storeEmailsAddresses.name, () => {
     const writeFile = () => {
       throw error;
     };
-    const result = storeEmailsAddresses(dataDir, emailAddresses, emailHash, writeFile);
+    const result = storeEmailIndex(dataDir, emailIndex, writeFile);
 
     expect(result).to.deep.equal(
-      makeErr(`Could not store emails to ${dataDirString}/${emailsFileName}: ${error.message}`)
+      makeErr(`Could not store email index to ${dataDirString}/${emailsFileName}: ${error.message}`)
     );
   });
 });

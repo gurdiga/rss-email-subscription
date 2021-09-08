@@ -95,25 +95,18 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
 
 export const emailsFileName = 'emails.json';
 
-export function storeEmailsAddresses(
+export function storeEmailIndex(
   dataDir: DataDir,
-  emailAddresses: EmailAddress[],
-  emailHashFn: EmailHashFn,
+  emailIndex: EmailIndex,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
-  const emailIndex = indexEmails(emailAddresses, emailHashFn);
-
-  return storeEmailIndex(dataDir, emailIndex, writeFileFn);
-}
-
-function storeEmailIndex(dataDir: DataDir, emailIndex: EmailIndex, writeFileFn: WriteFileFn): Result<void> {
   const filePath = path.join(dataDir.value, emailsFileName);
   const json = JSON.stringify(emailIndex);
 
   try {
     writeFileFn(filePath, json);
   } catch (error) {
-    return makeErr(`Could not store emails to ${dataDir.value}/${emailsFileName}: ${error.message}`);
+    return makeErr(`Could not store email index to ${dataDir.value}/${emailsFileName}: ${error.message}`);
   }
 }
 
