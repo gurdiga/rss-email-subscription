@@ -5,23 +5,15 @@ import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile 
 import { isEmpty, sortBy, SortDirection } from '../shared/array-utils';
 import { makeErr, Result } from '../shared/lang';
 
-export interface MissingTimestampFile {
-  kind: 'MissingTimestampFile';
-}
-
-export function isMissingTimestampFile(value: any): value is MissingTimestampFile {
-  return value.kind === 'MissingTimestampFile';
-}
-
 export function getLastPostTimestamp(
   dataDir: DataDir,
   dataReaderFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
-): Result<Date> | MissingTimestampFile {
+): Result<Date | undefined> {
   const filePath = getLastPostTimestampFileName(dataDir);
 
   if (!fileExistsFn(filePath)) {
-    return { kind: 'MissingTimestampFile' };
+    return;
   }
 
   try {

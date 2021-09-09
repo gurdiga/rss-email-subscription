@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { getLastPostTimestamp, MissingTimestampFile, recordLastPostTimestamp } from './last-post-timestamp';
+import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
@@ -36,13 +36,11 @@ describe('Last post timestamp', () => {
       expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostTimestamp.json: Some IO error?!`));
     });
 
-    it('returns an Err value when lastPostTimestamp.json does not exist', () => {
+    it('returns undefined value when lastPostTimestamp.json does not exist', () => {
       const mockFileExistsFn = (_filePath: string) => false;
       const result = getLastPostTimestamp(mockDataDir, undefined, mockFileExistsFn);
 
-      expect(result).to.deep.equal({
-        kind: 'MissingTimestampFile',
-      } as MissingTimestampFile);
+      expect(result).to.be.undefined;
     });
 
     it('returns an Err value when lastPostTimestamp.json does not contain valid JSON', () => {
@@ -93,7 +91,7 @@ describe('Last post timestamp', () => {
       lastPostTimestamp: mockRssItems[2].pubDate,
     });
 
-    it('writes pubDate of the latest item to data/lastPostTimestamp.json', () => {
+    it('writes pubDate of the latest item to lastPostTimestamp.json', () => {
       const writtenFiles: { path: string; content: string }[] = [];
       const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
       const initialRssItems = [...mockRssItems];

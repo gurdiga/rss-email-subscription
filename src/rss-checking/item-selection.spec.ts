@@ -61,4 +61,26 @@ describe(selectNewItems.name, () => {
 
     expect(selectNewItems(items, timestamp)).to.deep.equal(items);
   });
+
+  it('returns the first item when there is no lastPostTimestamp', () => {
+    const items: RssItem[] = [
+      {
+        title: 'Post One',
+        content: 'Content of post one',
+        author: 'John DOE',
+        link: new URL('https://test.com/one'),
+        pubDate: new Date('2020-02-15'),
+      },
+      {
+        title: 'Post Two',
+        content: 'Content of post two',
+        author: 'John DOE',
+        link: new URL('https://test.com/two'),
+        pubDate: new Date('2020-02-20'),
+      },
+    ];
+    const timestamp = undefined;
+
+    expect(selectNewItems(items, timestamp)).to.deep.equal([items[0]]);
+  });
 });
