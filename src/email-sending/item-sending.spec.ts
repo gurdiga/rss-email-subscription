@@ -81,8 +81,8 @@ describe('item-sending', () => {
 
       const result = makeUnsubscribeLink(dataDir, hashedEmail);
 
-      expect(result).to.equal(
-        `<a href="https://feedsubscription.com/unsubscribe?id=${feedId}-${hashedEmail.saltedHash}">Unsubscribe</a>`
+      expect(result).to.contain(
+        `<a href="https://feedsubscription.com/unsubscribe?id=${feedId}-${hashedEmail.saltedHash}">unsubscribe here</a>`
       );
     });
   });

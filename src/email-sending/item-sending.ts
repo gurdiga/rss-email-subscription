@@ -51,5 +51,5 @@ export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail):
   const queryString = `id=${feedId}-${hashedEmail.saltedHash}`;
   const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);
 
-  return `<a href="${unsubscribeUrl}">Unsubscribe</a>`;
+  return `<p>If you no longer want to receive these emails, you can <a href="${unsubscribeUrl}">unsubscribe here</a>.</p>`;
 }
