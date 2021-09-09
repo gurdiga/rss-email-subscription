@@ -29,17 +29,18 @@ export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
 
 export const footerAd = `
   <footer>
-    <hr />
     <p>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></p>
   </footer>
 `;
 
 export function makeEmailMessage(item: RssItem, unsubscribeLink: string): MessageContent {
   const h1 = `<h1><a href="${item.link}">${item.title}</a></h1>`;
+  const hr = '<hr />';
+  const htmlBody = h1 + item.content + hr + unsubscribeLink + hr + footerAd;
 
   return {
     subject: item.title,
-    htmlBody: h1 + item.content + unsubscribeLink + footerAd,
+    htmlBody,
   };
 }
 
