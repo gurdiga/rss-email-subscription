@@ -36,7 +36,8 @@ export const footerAd = `
 export function makeEmailMessage(item: RssItem, unsubscribeLink: string): MessageContent {
   const h1 = `<h1><a href="${item.link}">${item.title}</a></h1>`;
   const hr = '<hr />';
-  const htmlBody = h1 + item.content + hr + unsubscribeLink + hr + footerAd;
+  const wrappedContent = `<div style="max-width: 52em">${item.content}</div>`;
+  const htmlBody = h1 + wrappedContent + hr + unsubscribeLink + hr + footerAd;
 
   return {
     subject: item.title,
