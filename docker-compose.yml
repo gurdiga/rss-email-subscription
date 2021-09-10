@@ -2,6 +2,7 @@ version: '3.9'
 
 services:
   smtp:
+    container_name: smtp
     image: boky/postfix
     restart: always
     ports: ['127.0.0.1:1587:587']
@@ -17,6 +18,7 @@ services:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
   smtp-in:
+    container_name: smtp-in
     image: zixia/simple-mail-forwarder
     ports: ['25:25']
     restart: always
@@ -26,6 +28,7 @@ services:
       driver: local
 
   app:
+    container_name: app
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
@@ -40,6 +43,7 @@ services:
       driver: local
 
   subscription:
+    container_name: subscription
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     command: node_modules/.bin/ts-node src/subscription/server.ts
@@ -54,6 +58,7 @@ services:
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
+    container_name: website
     image: nginx:alpine
     restart: always
     ports: ['80:80', '443:443']
@@ -67,6 +72,7 @@ services:
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
+    container_name: certbot
     image: certbot/certbot
     restart: always
     volumes:
