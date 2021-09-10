@@ -1,13 +1,13 @@
 default: pre-commit
 
 logs-app:
-	docker logs -f rss-email-subscription_app_1
+	docker logs -f app
 
 logs-smtp:
-	docker logs -f rss-email-subscription_smtp_1
+	docker logs -f smtp
 
 logs-smtp-in:
-	docker logs -f rss-email-subscription_smtp-in_1
+	docker logs -f sm-in_1
 
 run-email-sending:
 	node_modules/.bin/ts-node src/cron-cli.ts email-sending feed
@@ -87,10 +87,10 @@ hashing-salt:
 	tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''
 
 reload:
-	docker kill --signal=SIGHUP rss-email-subscription_app_1
+	docker kill --signal=SIGHUP app
 
 purge-smtp-queue:
-	docker exec -it rss-email-subscription_smtp_1 postsuper -d ALL
+	docker exec -it smtp postsuper -d ALL
 
 ssl:
 	docker-compose run --rm --entrypoint "\
@@ -106,7 +106,7 @@ website:
 	(cd website/html && ~/src/nginx-server/nginx-server.py)
 
 website-reload:
-	docker exec rss-email-subscription_website_1 nginx -s reload
+	docker exec website nginx -s reload
 
 subscription:
 	node_modules/.bin/ts-node src/subscription/server.ts
