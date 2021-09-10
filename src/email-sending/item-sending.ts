@@ -29,7 +29,7 @@ export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
 
 export const footerAd = `
   <footer>
-    <p>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></p>
+    <cite><small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></small></cite>
   </footer>
 `;
 
@@ -45,11 +45,16 @@ export function makeEmailMessage(item: RssItem, unsubscribeLink: string): Messag
   };
 }
 
-export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail): string {
-  const appBaseUrl = new URL('https://feedsubscription.com');
+export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, feedName: string): string {
+  const url = new URL('https://feedsubscription.com/unsubscribe.html');
   const feedId = path.basename(dataDir.value);
-  const queryString = `id=${feedId}-${hashedEmail.saltedHash}`;
-  const unsubscribeUrl = new URL(`/unsubscribe?${queryString}`, appBaseUrl);
 
-  return `<p>If you no longer want to receive these emails, you can <a href="${unsubscribeUrl}">unsubscribe here</a>.</p>`;
+  url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
+  url.searchParams.set('feedName', feedName || feedId);
+  url.searchParams.set('email', hashedEmail.emailAddress.value);
+
+  return `<p>
+    <small>NOTE: If you no longer want to receive these emails, you
+    can <a href="${url}">unsubscribe here</a>.</small>
+  </p>`;
 }

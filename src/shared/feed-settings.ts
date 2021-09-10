@@ -5,6 +5,7 @@ import { isErr, makeErr, Result } from './lang';
 import { makeUrl } from './url';
 
 export interface FeedSettings {
+  feedName: string;
   url: URL;
   hashingSalt: string;
 
@@ -21,6 +22,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
 
     try {
       const data = JSON.parse(jsonString);
+      const { feedName } = data;
       const url = makeUrl(data.url);
 
       if (isErr(url)) {
@@ -57,6 +59,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
       }
 
       return {
+        feedName,
         url,
         hashingSalt,
         fromAddress,

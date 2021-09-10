@@ -70,20 +70,49 @@ describe('item-sending', () => {
   });
 
   describe(makeUnsubscribeLink.name, () => {
+    const feedName = 'Just Add Light and Stir';
+    const feedId = path.basename(dataDir.value);
+
+    const hashedEmail: HashedEmail = {
+      kind: 'HashedEmail',
+      emailAddress: makeEmailAddress('test@test.com') as EmailAddress,
+      saltedHash: '#test@test.com#',
+    };
+
     it('returns a link containing the feed unique ID and the email salted hash', () => {
-      const feedId = path.basename(dataDir.value);
-
-      const hashedEmail: HashedEmail = {
-        kind: 'HashedEmail',
-        emailAddress: makeEmailAddress('test@test.com') as EmailAddress,
-        saltedHash: '#test@test.com#',
-      };
-
-      const result = makeUnsubscribeLink(dataDir, hashedEmail);
+      const result = makeUnsubscribeLink(dataDir, hashedEmail, feedName);
 
       expect(result).to.contain(
-        `<a href="https://feedsubscription.com/unsubscribe?id=${feedId}-${hashedEmail.saltedHash}">unsubscribe here</a>`
+        `<a href="` +
+          `https://feedsubscription.com/unsubscribe.html` +
+          `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
+          `&feedName=${encodeSearchParamValue(feedName)}` +
+          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
+          `">unsubscribe here</a>`
       );
     });
+
+    it('uses feedId when feedName is empty', () => {
+      const result = makeUnsubscribeLink(dataDir, hashedEmail, '');
+
+      expect(result).to.contain(
+        `<a href="` +
+          `https://feedsubscription.com/unsubscribe.html` +
+          `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
+          `&feedName=${feedId}` +
+          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
+          `">unsubscribe here</a>`
+      );
+    });
+
+    function encodeSearchParamValue(s: string): string {
+      const { searchParams } = new URL('https://example.com/');
+
+      searchParams.set('paramName', s);
+
+      const encodedValue = searchParams.toString().split('=')[1];
+
+      return encodedValue;
+    }
   });
 });

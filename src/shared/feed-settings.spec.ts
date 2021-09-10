@@ -10,6 +10,7 @@ describe(getFeedSettings.name, () => {
 
   it('returns a FeedSettings value from feed.json', () => {
     const data = {
+      feedName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
@@ -26,6 +27,7 @@ describe(getFeedSettings.name, () => {
 
     expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
     expect(result).to.deep.equal({
+      feedName: data.feedName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
       fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
@@ -35,6 +37,7 @@ describe(getFeedSettings.name, () => {
 
   it('replyTo defaults to no-reply@feedsubscription.com when missing', () => {
     const data = {
+      feedName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
@@ -50,6 +53,7 @@ describe(getFeedSettings.name, () => {
 
     expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
     expect(result).to.deep.equal({
+      feedName: data.feedName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
       fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,

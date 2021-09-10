@@ -70,7 +70,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
 
-      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail);
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, feedSettings.feedName);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
       const sendingResult = await sendItem(
         fromAddress,
