@@ -44,8 +44,7 @@ app.get('/unsubscribe', (req, res) => {
 });
 
 const port = 3000;
-const host = 'localhost';
 
-app.listen(port, host, () => {
-  logInfo(`Running on http://${host}:${port}`, { dataDirRoot });
+app.listen(port, () => {
+  logInfo(`Running on http://0.0.0.0:${port}`, { dataDirRoot });
 });
