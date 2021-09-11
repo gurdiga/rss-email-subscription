@@ -14,20 +14,21 @@ if (!dataDirRoot) {
 }
 
 app.use(helmet());
+app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   res.send('Hello World');
 });
 
-app.get('/unsubscribe', (req, res) => {
-  const { query } = req;
+app.post('/unsubscribe', (req, res) => {
+  const { body } = req;
 
-  logInfo('Unsubscription request', { query, dataDirRoot });
+  logInfo('Unsubscription request', { body, dataDirRoot });
 
-  const { id } = query;
+  const { id } = body;
   const result = unsubscribe(id, dataDirRoot);
 
   if (isErr(result)) {
-    logError('Unsubscription request failed', { query, reason: result.reason });
+    logError('Unsubscription request failed', { body, reason: result.reason });
     res.sendStatus(500);
     return;
   }
@@ -38,7 +39,7 @@ app.get('/unsubscribe', (req, res) => {
     return;
   }
 
-  logInfo('Unsubscription request succeded', { query });
+  logInfo('Unsubscription request succeded', { body });
 
   res.sendStatus(200);
 });
