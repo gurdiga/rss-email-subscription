@@ -49,7 +49,7 @@
     </div>
 
     <script>
-      const queryParams = parseQueryString(location.search.slice(1));
+      const queryParams = parseQueryString(location.href);
 
       console.log('DEBUG queryParams', queryParams);
 
@@ -60,16 +60,14 @@
         document.querySelector('#error-message').removeAttribute('hidden');
       }
 
-      function parseQueryString(queryString) {
-        return queryString
-          .split('&')
-          .map(function (pair) {
-            return pair.split('=');
-          })
-          .reduce(function (acc, tuple) {
-            acc[tuple[0]] = tuple[1];
-            return acc;
-          }, {});
+      function parseQueryString(href) {
+        const params = {};
+
+        new URL(href).searchParams.forEach(function (value, key) {
+          params[key] = value;
+        });
+
+        return params;
       }
 
       function fillForm(queryParams) {
