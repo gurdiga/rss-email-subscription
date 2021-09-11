@@ -31,7 +31,7 @@
       <div class="mx-auto" style="max-width: 25em">
         <h1 class="mt-5">Unsubscribe</h1>
 
-        <form action="/unsubscribe" method="POST">
+        <form action="/unsubscribe" method="POST" class="mb-3">
           <p>
             Please confirm unsubscription of this email address: <code id="email"></code> from <b id="feed-name"></b>.
           </p>
@@ -45,11 +45,24 @@
           <p>You seem to have gotten here by mistake. 🤔</p>
           <p>Please click the <b>Unsubscribe</b> link at the bottom of any email from FeedSubscription.com.</p>
         </div>
+
+        <div id="unsubscribed-message" class="alert alert-success" role="alert" hidden>
+          <p>Your email has been removed from our list.</p>
+          <p>Sorry to see you go! 👋🙂</p>
+        </div>
+
+        <div id="not-subscribed-message" class="alert alert-info" role="alert" hidden>
+          Hm… it looks like you’re not subscribed. 🤔
+        </div>
+
+        <div id="failure-message" class="alert alert-danger" role="alert" hidden>
+          Something bad happened to our server! 😑
+        </div>
       </div>
     </div>
 
     <script>
-      const queryParams = parseQueryString(location.href);
+      var queryParams = getQueryStringParams(location.href);
 
       console.log('DEBUG queryParams', queryParams);
 
@@ -60,8 +73,8 @@
         document.querySelector('#error-message').removeAttribute('hidden');
       }
 
-      function parseQueryString(href) {
-        const params = {};
+      function getQueryStringParams(href) {
+        var params = {};
 
         new URL(href).searchParams.forEach(function (value, key) {
           params[key] = value;
@@ -75,6 +88,48 @@
         document.querySelector('#feed-name').textContent = queryParams.feedName;
         document.querySelector('form').elements.id.value = queryParams.id;
       }
+
+      function postForm(data) {
+        var formData = new URLSearchParams();
+
+        for (var key in data) {
+          formData.append(key, data[key]);
+        }
+
+        fetch('/unsubscribe', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(handleResponse)
+          .catch(function (e) {
+            console.error('Got error from the API', e);
+          });
+      }
+
+      function handleResponse(response) {
+        if (response.status === 200) {
+          document.getElementById('unsubscribed-message').removeAttribute('hidden');
+          return;
+        }
+
+        if (response.status === 404) {
+          document.getElementById('not-subscribed-message').removeAttribute('hidden');
+          return;
+        }
+
+        document.getElementById('failure-message').removeAttribute('hidden');
+        document.getElementById('failure-message').innerText += ' (' + response.status + ')';
+      }
+
+      document.querySelector('[name="submit-button"]').addEventListener('click', function (event) {
+        if (fetch) {
+          event.preventDefault();
+          postForm({ id: queryParams.id });
+        } else {
+          // There is no `fetch`, it’s some king of ancient browser: Let
+          // the form POST itself. It’s worse UX, but it works.
+        }
+      });
     </script>
   </body>
 </html>
