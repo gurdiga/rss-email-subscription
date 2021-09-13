@@ -1,6 +1,7 @@
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv } from './email-delivery';
+import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
 
 async function main(): Promise<number> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
@@ -12,7 +13,7 @@ async function main(): Promise<number> {
 
   console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING);
 
-  const fromAddress = 'feed@feedsubscription.com';
+  const fromAddress = makeFullEmailAddress('Slow Test', makeEmailAddress('feed@feedsubscription.com') as EmailAddress);
   const toAddress = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;

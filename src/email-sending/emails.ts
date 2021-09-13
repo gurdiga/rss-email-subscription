@@ -15,6 +15,20 @@ export interface EmailAddress {
   value: string;
 }
 
+export interface FullEmailAddress {
+  kind: 'FullEmailAddress';
+  emailAddress: EmailAddress;
+  displayName: string;
+}
+
+export function makeFullEmailAddress(displayName: string, emailAddress: EmailAddress): FullEmailAddress {
+  return {
+    kind: 'FullEmailAddress',
+    displayName,
+    emailAddress,
+  };
+}
+
 export function makeEmailAddress(input: any): Result<EmailAddress> {
   const emailString = `${input}`;
   const email = emailString.trim();

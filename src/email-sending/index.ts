@@ -1,6 +1,6 @@
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
-import { loadStoredEmails } from './emails';
+import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
@@ -70,15 +70,10 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
 
-      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, feedSettings.feedName);
+      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, feedSettings.displayName);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
-      const sendingResult = await sendItem(
-        fromAddress,
-        hashedEmail.emailAddress,
-        feedSettings.replyTo,
-        emailMessage,
-        env
-      );
+      const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
+      const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason);

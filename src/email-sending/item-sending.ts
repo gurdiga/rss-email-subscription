@@ -3,10 +3,10 @@ import { DataDir } from '../shared/data-dir';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
-import { EmailAddress, HashedEmail } from './emails';
+import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
-  from: EmailAddress,
+  from: FullEmailAddress,
   to: EmailAddress,
   replyTo: EmailAddress,
   messageContent: MessageContent,
@@ -14,7 +14,7 @@ export async function sendItem(
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
   try {
-    await deliverEmailFn(from.value, to.value, replyTo.value, messageContent.subject, messageContent.htmlBody, env);
+    await deliverEmailFn(from, to.value, replyTo.value, messageContent.subject, messageContent.htmlBody, env);
   } catch (error) {
     return makeErr(`Could not deliver email to ${to.value}: ${error.message}`);
   }
@@ -45,12 +45,12 @@ export function makeEmailMessage(item: RssItem, unsubscribeLink: string): Messag
   };
 }
 
-export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, feedName: string): string {
+export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, displayName: string): string {
   const url = new URL('https://feedsubscription.com/unsubscribe.html');
   const feedId = path.basename(dataDir.value);
 
   url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
-  url.searchParams.set('feedName', feedName || feedId);
+  url.searchParams.set('displayName', displayName || feedId);
   url.searchParams.set('email', hashedEmail.emailAddress.value);
 
   return `<p>

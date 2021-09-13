@@ -1,3 +1,4 @@
+import { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir } from './data-dir';
 import { readFile, ReadFileFn } from './io';
@@ -5,7 +6,7 @@ import { isErr, makeErr, Result } from './lang';
 import { makeUrl } from './url';
 
 export interface FeedSettings {
-  feedName: string;
+  displayName: string;
   url: URL;
   hashingSalt: string;
 
@@ -16,13 +17,14 @@ export interface FeedSettings {
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
   const filePath = `${dataDir.value}/feed.json`;
+  const feedId = basename(dataDir.value);
 
   try {
     const jsonString = readFileFn(filePath);
 
     try {
       const data = JSON.parse(jsonString);
-      const { feedName } = data;
+      const displayName = data.displayName || feedId;
       const url = makeUrl(data.url);
 
       if (isErr(url)) {
@@ -59,7 +61,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
       }
 
       return {
-        feedName,
+        displayName,
         url,
         hashingSalt,
         fromAddress,

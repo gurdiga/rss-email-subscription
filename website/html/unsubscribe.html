@@ -33,7 +33,8 @@
 
         <form action="/unsubscribe" method="POST" class="mb-3">
           <p>
-            Please confirm unsubscription of this email address: <code id="email"></code> from <b id="feed-name"></b>.
+            Please confirm unsubscription of this email address: <code id="email"></code> from
+            <b id="display-name"></b>.
           </p>
 
           <input name="id" type="hidden" value="" />
@@ -69,7 +70,7 @@
 
       console.log('DEBUG queryParams', queryParams);
 
-      if (queryParams.email && queryParams.id && queryParams.feedName) {
+      if (queryParams.email && queryParams.id && queryParams.displayName) {
         fillForm(queryParams);
       } else {
         document.querySelector('form').setAttribute('hidden', 'hidden');
@@ -88,7 +89,7 @@
 
       function fillForm(queryParams) {
         document.querySelector('#email').textContent = queryParams.email;
-        document.querySelector('#feed-name').textContent = queryParams.feedName;
+        document.querySelector('#display-name').textContent = queryParams.displayName;
         document.querySelector('form').elements.id.value = queryParams.id;
       }
 

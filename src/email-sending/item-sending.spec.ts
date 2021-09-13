@@ -4,12 +4,12 @@ import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
-import { EmailAddress, HashedEmail, makeEmailAddress } from './emails';
+import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { footerAd, makeEmailMessage, makeUnsubscribeLink, MessageContent, sendItem } from './item-sending';
 
 describe('item-sending', () => {
   const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
-  const from = makeEmailAddress('from@email.com') as EmailAddress;
+  const from = makeFullEmailAddress('John DOE', makeEmailAddress('from@email.com') as EmailAddress);
   const to = makeEmailAddress('to@email.com') as EmailAddress;
   const replyTo = makeEmailAddress('replyTo@email.com') as EmailAddress;
 
@@ -32,7 +32,13 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = ['', '', '', '', ''];
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
+        {} as FullEmailAddress,
+        '',
+        '',
+        '',
+        '',
+      ];
       const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, body) => {
         [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, body];
       };
@@ -70,7 +76,7 @@ describe('item-sending', () => {
   });
 
   describe(makeUnsubscribeLink.name, () => {
-    const feedName = 'Just Add Light and Stir';
+    const displayName = 'Just Add Light and Stir';
     const feedId = path.basename(dataDir.value);
 
     const hashedEmail: HashedEmail = {
@@ -80,26 +86,26 @@ describe('item-sending', () => {
     };
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {
-      const result = makeUnsubscribeLink(dataDir, hashedEmail, feedName);
+      const result = makeUnsubscribeLink(dataDir, hashedEmail, displayName);
 
       expect(result).to.contain(
         `<a href="` +
           `https://feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
-          `&feedName=${encodeSearchParamValue(feedName)}` +
+          `&displayName=${encodeSearchParamValue(displayName)}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
           `">unsubscribe here</a>`
       );
     });
 
-    it('uses feedId when feedName is empty', () => {
+    it('uses feedId when displayName is empty', () => {
       const result = makeUnsubscribeLink(dataDir, hashedEmail, '');
 
       expect(result).to.contain(
         `<a href="` +
           `https://feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
-          `&feedName=${feedId}` +
+          `&displayName=${feedId}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
           `">unsubscribe here</a>`
       );

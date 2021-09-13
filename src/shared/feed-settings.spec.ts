@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { basename } from 'path';
 import { EmailAddress } from '../email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
@@ -10,7 +11,7 @@ describe(getFeedSettings.name, () => {
 
   it('returns a FeedSettings value from feed.json', () => {
     const data = {
-      feedName: 'Just Add Light and Stir',
+      displayName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
@@ -27,38 +28,39 @@ describe(getFeedSettings.name, () => {
 
     expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
     expect(result).to.deep.equal({
-      feedName: data.feedName,
+      displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
       fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
       replyTo: { kind: 'EmailAddress', value: data.replyTo } as EmailAddress,
-    });
+    } as FeedSettings);
   });
 
-  it('replyTo defaults to no-reply@feedsubscription.com when missing', () => {
+  it('defaults replyTo to no-reply@feedsubscription.com', () => {
     const data = {
-      feedName: 'Just Add Light and Stir',
+      displayName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
 
-    let actualPath = '';
-    const mockReadFileFn = (path: string) => {
-      actualPath = path;
-      return JSON.stringify(data);
+    const mockReadFileFn = (_path: string) => JSON.stringify(data);
+    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
+
+    expect(result.replyTo.value).to.equal('no-reply@feedsubscription.com');
+  });
+
+  it('defaults displayName to feedId', () => {
+    const data = {
+      url: 'https://example.com/feed.xml',
+      hashingSalt: 'more-than-sixteen-non-space-characters',
+      fromAddress: 'some@test.com',
     };
 
-    const result = getFeedSettings(dataDir, mockReadFileFn);
+    const mockReadFileFn = (_path: string) => JSON.stringify(data);
+    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
 
-    expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
-    expect(result).to.deep.equal({
-      feedName: data.feedName,
-      url: new URL(data.url),
-      hashingSalt: data.hashingSalt,
-      fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
-      replyTo: { kind: 'EmailAddress', value: 'no-reply@feedsubscription.com' } as EmailAddress,
-    });
+    expect(result.displayName).to.deep.equal(basename(dataDir.value));
   });
 
   it('returns an Err value when the data is invalid', () => {

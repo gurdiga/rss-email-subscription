@@ -1,11 +1,13 @@
 import nodemailer from 'nodemailer';
+import Mail from 'nodemailer/lib/mailer';
+import { FullEmailAddress } from './emails';
 
 export interface EmailDeliveryEnv {
   SMTP_CONNECTION_STRING: string;
 }
 
 export type DeliverEmailFn = (
-  from: string,
+  from: FullEmailAddress,
   to: string,
   replyTo: string,
   subject: string,
@@ -16,7 +18,7 @@ export type DeliverEmailFn = (
 let transporter: ReturnType<typeof nodemailer.createTransport>;
 
 export async function deliverEmail(
-  from: string,
+  from: FullEmailAddress,
   to: string,
   replyTo: string,
   subject: string,
@@ -28,11 +30,17 @@ export async function deliverEmail(
   }
 
   await transporter.sendMail({
-    from,
+    from: makeMailAddress(from),
     to,
     replyTo,
     subject,
-    text: 'Please use an HTML-capable email reader',
     html: htmlBody,
   });
+}
+
+function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
+  return {
+    name: fullEmailAddress.displayName,
+    address: fullEmailAddress.emailAddress.value,
+  };
 }
