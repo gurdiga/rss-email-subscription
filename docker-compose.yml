@@ -12,8 +12,13 @@ services:
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
+    depends_on: [logger]
     logging:
-      driver: local
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: smtp-out
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
@@ -24,8 +29,13 @@ services:
     restart: always
     environment:
       SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
+    depends_on: [logger]
     logging:
-      driver: local
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: smtp-in
 
   app:
     container_name: app
@@ -39,8 +49,13 @@ services:
       SMTP_CONNECTION_STRING: smtp://smtp:587
       DATA_DIR_ROOT: /data
     command: node_modules/.bin/ts-node src/cron.ts
+    depends_on: [logger]
     logging:
-      driver: local
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: app
 
   subscription:
     container_name: subscription
@@ -50,12 +65,17 @@ services:
     command: node_modules/.bin/ts-node src/subscription/server.ts
     volumes:
       - .tmp/docker-data:/data
-    logging:
-      driver: local
     environment:
       TZ: UTC
       NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
       DATA_DIR_ROOT: /data
+    depends_on: [logger]
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: subscription
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -70,6 +90,13 @@ services:
       - ./.tmp/certbot/www:/var/www/certbot
     environment:
       NGINX_HOST: feedsubscription.com
+    depends_on: [logger]
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: website
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
@@ -80,3 +107,17 @@ services:
       - ./.tmp/certbot/conf:/etc/letsencrypt
       - ./website/html:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 7d & wait $${!}; done;'"
+    depends_on: [logger]
+    logging:
+      driver: syslog
+      options:
+        syslog-address: tcp://127.0.0.1:514
+        syslog-format: rfc3164
+        tag: certbot
+
+  logger:
+    container_name: logger
+    image: mumblepins/syslog-ng-alpine
+    ports: ['127.0.0.1:514:514']
+    volumes:
+      - ./.tmp/logs:/var/log/syslog-ng
