@@ -75,6 +75,12 @@ app:
 		--tag app \
 		.
 
+logger:
+	docker build \
+		--progress=plain \
+		--tag logger \
+		docker-services/logger
+
 start:
 	docker-compose up --remove-orphans --detach
 
