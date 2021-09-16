@@ -91,7 +91,7 @@ services:
 
   logger:
     container_name: logger
-    image: mumblepins/syslog-ng-alpine
+    image: logger
     ports: ['127.0.0.1:514:514']
     volumes:
       - ./.tmp/logs:/var/log/syslog-ng
