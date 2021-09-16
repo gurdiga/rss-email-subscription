@@ -9,9 +9,14 @@ x-logging: &logging
       syslog-format: rfc3164
       tag: '{{.Name}}'
 
+x-app-env: &app-env
+  TZ: UTC
+  NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+  DATA_DIR_ROOT: /data
+
 services:
-  smtp:
-    container_name: smtp
+  smtp-out:
+    container_name: smtp-out
     image: boky/postfix
     restart: always
     ports: ['127.0.0.1:1587:587']
@@ -41,10 +46,8 @@ services:
     volumes:
       - .tmp/docker-data:/data
     environment:
-      TZ: UTC
-      NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
-      SMTP_CONNECTION_STRING: smtp://smtp:587
-      DATA_DIR_ROOT: /data
+      SMTP_CONNECTION_STRING: smtp://smtp-out:587
+      <<: *app-env
     command: node_modules/.bin/ts-node src/cron.ts
     <<: *logging
 
@@ -57,9 +60,7 @@ services:
     volumes:
       - .tmp/docker-data:/data
     environment:
-      TZ: UTC
-      NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
-      DATA_DIR_ROOT: /data
+      <<: *app-env
     <<: *logging
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
