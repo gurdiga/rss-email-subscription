@@ -9,12 +9,12 @@ export async function sendItem(
   from: FullEmailAddress,
   to: EmailAddress,
   replyTo: EmailAddress,
-  messageContent: MessageContent,
+  { subject, textBody, htmlBody }: MessageContent,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<void>> {
   try {
-    await deliverEmailFn(from, to.value, replyTo.value, messageContent.subject, messageContent.htmlBody, env);
+    await deliverEmailFn(from, to.value, replyTo.value, subject, textBody, htmlBody, env);
   } catch (error) {
     return makeErr(`Could not deliver email to ${to.value}: ${error.message}`);
   }
@@ -22,6 +22,7 @@ export async function sendItem(
 
 export interface MessageContent {
   subject: string;
+  textBody: string;
   htmlBody: string;
 }
 
@@ -33,19 +34,32 @@ export const footerAd = `
   </footer>
 `;
 
-export function makeEmailMessage(item: RssItem, unsubscribeLink: string): MessageContent {
+export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL): MessageContent {
   const h1 = `<h1 style="font-size: 1.5em"><a href="${item.link}">${item.title}</a></h1>`;
   const hr = '<hr />';
   const wrappedContent = `<div style="max-width: 42em; margin-bottom: 3em">${item.content}</div>`;
+  const unsubscribeLink = `<p>
+    <small>NOTE: If you no longer want to receive these emails, you
+    can <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
+  </p>`;
+
   const htmlBody = h1 + wrappedContent + hr + unsubscribeLink + hr + footerAd;
+  const textBody =
+    textFromHtml(item.content) +
+    '\n\n---\n' +
+    'NOTE: If you no longer want to receive these emails, you can unsubscribe here:\n' +
+    unsubscribeUrl +
+    '\n---\n' +
+    'Email sent by FeedSubscription.com';
 
   return {
     subject: item.title,
+    textBody,
     htmlBody,
   };
 }
 
-export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, displayName: string): string {
+export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, displayName: string): URL {
   const url = new URL('https://feedsubscription.com/unsubscribe.html');
   const feedId = path.basename(dataDir.value);
 
@@ -53,8 +67,12 @@ export function makeUnsubscribeLink(dataDir: DataDir, hashedEmail: HashedEmail, 
   url.searchParams.set('displayName', displayName || feedId);
   url.searchParams.set('email', hashedEmail.emailAddress.value);
 
-  return `<p>
-    <small>NOTE: If you no longer want to receive these emails, you
-    can <a href="${url}">unsubscribe here</a>.</small>
-  </p>`;
+  return url;
+}
+
+export function textFromHtml(html: string): string {
+  return html
+    .replace(/<[^>]+>/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 }

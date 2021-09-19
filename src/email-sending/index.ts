@@ -2,7 +2,7 @@ import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { makeEmailMessage, makeUnsubscribeLink, sendItem } from './item-sending';
+import { makeEmailMessage, makeUnsubscribeUrl, sendItem } from './item-sending';
 import { logError, logInfo, logWarning } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { DataDir } from '../shared/data-dir';
@@ -70,8 +70,8 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     for (const hashedEmail of validEmails) {
       logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
 
-      const unsubscribeLink = makeUnsubscribeLink(dataDir, hashedEmail, feedSettings.displayName);
-      const emailMessage = makeEmailMessage(storedItem.item, unsubscribeLink);
+      const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
+      const emailMessage = makeEmailMessage(storedItem.item, unsubscribeUrl);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
       const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
 

@@ -5,7 +5,7 @@ import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { footerAd, makeEmailMessage, makeUnsubscribeLink, MessageContent, sendItem } from './item-sending';
+import { footerAd, makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem, textFromHtml } from './item-sending';
 
 describe('item-sending', () => {
   const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
@@ -23,6 +23,7 @@ describe('item-sending', () => {
   };
   const messageContent: MessageContent = {
     subject: item.title,
+    textBody: textFromHtml(item.content),
     htmlBody: item.content,
   };
 
@@ -32,22 +33,32 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualTextBody, actualHtmlBody] = [
         {} as FullEmailAddress,
         '',
         '',
         '',
         '',
+        '',
       ];
-      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, body) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, body];
+      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, textBody, htmlBody) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualTextBody, actualHtmlBody] = [
+          from,
+          to,
+          replyTo,
+          subject,
+          textBody,
+          htmlBody,
+        ];
       };
 
       await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
+      expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
+      expect(actualTextBody).to.contain(textFromHtml(item.content));
       expect(actualHtmlBody).to.contain(item.content);
     });
 
@@ -65,17 +76,19 @@ describe('item-sending', () => {
 
   describe(makeEmailMessage.name, () => {
     it('returns an EmailMessage value for the given RssItem', () => {
-      const mockUnsubscribeLink = 'A link to unsubscribe';
-      const emailMessage = makeEmailMessage(item, mockUnsubscribeLink);
+      const mockUnsubscribeUrl = new URL('https://example.com');
+      const emailMessage = makeEmailMessage(item, mockUnsubscribeUrl);
 
       expect(emailMessage.subject).to.equal(item.title);
+      expect(emailMessage.textBody).to.contain(textFromHtml(item.content));
+      expect(emailMessage.textBody).to.contain(mockUnsubscribeUrl);
       expect(emailMessage.htmlBody).to.contain(item.content);
       expect(emailMessage.htmlBody).to.contain(footerAd, 'includes the footer ad');
-      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeLink, 'the unscubscribe link');
+      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeUrl, 'the unscubscribe link');
     });
   });
 
-  describe(makeUnsubscribeLink.name, () => {
+  describe(makeUnsubscribeUrl.name, () => {
     const displayName = 'Just Add Light and Stir';
     const feedId = path.basename(dataDir.value);
 
@@ -86,28 +99,24 @@ describe('item-sending', () => {
     };
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {
-      const result = makeUnsubscribeLink(dataDir, hashedEmail, displayName);
+      const result = makeUnsubscribeUrl(dataDir, hashedEmail, displayName);
 
-      expect(result).to.contain(
-        `<a href="` +
-          `https://feedsubscription.com/unsubscribe.html` +
+      expect(result.toString()).to.equal(
+        `https://feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${encodeSearchParamValue(displayName)}` +
-          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
-          `">unsubscribe here</a>`
+          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });
 
     it('uses feedId when displayName is empty', () => {
-      const result = makeUnsubscribeLink(dataDir, hashedEmail, '');
+      const result = makeUnsubscribeUrl(dataDir, hashedEmail, '');
 
-      expect(result).to.contain(
-        `<a href="` +
-          `https://feedsubscription.com/unsubscribe.html` +
+      expect(result.toString()).to.equal(
+        `https://feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${feedId}` +
-          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}` +
-          `">unsubscribe here</a>`
+          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });
 
@@ -120,5 +129,17 @@ describe('item-sending', () => {
 
       return encodedValue;
     }
+  });
+});
+
+describe(textFromHtml.name, () => {
+  it('returns the text content of an HTML snippet', () => {
+    expect(textFromHtml('<p>Hello World1!</p>')).to.equal('Hello World1!');
+    expect(
+      textFromHtml(`<p>  Hello
+        World1.5!</p>
+      `)
+    ).to.equal('Hello World1.5!', 'Normalises whitespace');
+    expect(textFromHtml('<p>Hello <b>World<i>2</i></b>!</p>')).to.equal('Hello World2!', 'Removes nested tags');
   });
 });
