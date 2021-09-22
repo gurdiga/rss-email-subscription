@@ -5,7 +5,7 @@ import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { footerAd, makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem, textFromHtml } from './item-sending';
+import { makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem } from './item-sending';
 
 describe('item-sending', () => {
   const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
@@ -23,7 +23,6 @@ describe('item-sending', () => {
   };
   const messageContent: MessageContent = {
     subject: item.title,
-    textBody: textFromHtml(item.content),
     htmlBody: item.content,
   };
 
@@ -33,7 +32,7 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualTextBody, actualHtmlBody] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
         {} as FullEmailAddress,
         '',
         '',
@@ -41,15 +40,9 @@ describe('item-sending', () => {
         '',
         '',
       ];
-      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, textBody, htmlBody) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualTextBody, actualHtmlBody] = [
-          from,
-          to,
-          replyTo,
-          subject,
-          textBody,
-          htmlBody,
-        ];
+
+      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, htmlBody) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
       };
 
       await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
@@ -58,7 +51,6 @@ describe('item-sending', () => {
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
-      expect(actualTextBody).to.contain(textFromHtml(item.content));
       expect(actualHtmlBody).to.contain(item.content);
     });
 
@@ -80,11 +72,9 @@ describe('item-sending', () => {
       const emailMessage = makeEmailMessage(item, mockUnsubscribeUrl);
 
       expect(emailMessage.subject).to.equal(item.title);
-      expect(emailMessage.textBody).to.contain(textFromHtml(item.content));
-      expect(emailMessage.textBody).to.contain(mockUnsubscribeUrl);
       expect(emailMessage.htmlBody).to.contain(item.content);
-      expect(emailMessage.htmlBody).to.contain(footerAd, 'includes the footer ad');
-      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeUrl, 'the unscubscribe link');
+      expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
+      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeUrl, 'the unsubscribe link');
     });
   });
 
@@ -129,17 +119,5 @@ describe('item-sending', () => {
 
       return encodedValue;
     }
-  });
-});
-
-describe(textFromHtml.name, () => {
-  it('returns the text content of an HTML snippet', () => {
-    expect(textFromHtml('<p>Hello World1!</p>')).to.equal('Hello World1!');
-    expect(
-      textFromHtml(`<p>  Hello
-        World1.5!</p>
-      `)
-    ).to.equal('Hello World1.5!', 'Normalises whitespace');
-    expect(textFromHtml('<p>Hello <b>World<i>2</i></b>!</p>')).to.equal('Hello World2!', 'Removes nested tags');
   });
 });

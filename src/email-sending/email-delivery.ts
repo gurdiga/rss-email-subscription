@@ -1,7 +1,6 @@
 import nodemailer from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import { FullEmailAddress } from './emails';
-import { textFromHtml } from './item-sending';
 
 export interface EmailDeliveryEnv {
   SMTP_CONNECTION_STRING: string;
@@ -12,7 +11,6 @@ export type DeliverEmailFn = (
   to: string,
   replyTo: string,
   subject: string,
-  textBody: string,
   htmlBody: string,
   env: EmailDeliveryEnv
 ) => Promise<void>;
@@ -24,7 +22,6 @@ export async function deliverEmail(
   to: string,
   replyTo: string,
   subject: string,
-  textBody: string,
   htmlBody: string,
   env: EmailDeliveryEnv
 ): Promise<void> {
@@ -37,7 +34,7 @@ export async function deliverEmail(
     to,
     replyTo,
     subject,
-    text: textBody,
+    text: '',
     html: htmlBody,
   });
 }

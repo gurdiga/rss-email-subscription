@@ -2,7 +2,6 @@ import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { textFromHtml } from './item-sending';
 
 async function main(): Promise<number> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
@@ -24,7 +23,7 @@ async function main(): Promise<number> {
       <code>${__filename}</code>
     `;
 
-  await deliverEmail(fromAddress, toAddress, replyTo, subject, textFromHtml(html), html, env);
+  await deliverEmail(fromAddress, toAddress, replyTo, subject, html, env);
 
   console.log(
     `\nMessage accepted by the SMTP server. Please check the ${toAddress} inbox for a message having the subject of "${subject}".\n`
