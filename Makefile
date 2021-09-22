@@ -1,14 +1,5 @@
 default: pre-commit
 
-logs-app:
-	docker logs -f app
-
-logs-smtp:
-	docker logs -f smtp
-
-logs-smtp-in:
-	docker logs -f sm-in_1
-
 run-email-sending:
 	node_modules/.bin/ts-node src/cron-cli.ts email-sending feed
 
