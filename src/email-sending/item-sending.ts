@@ -29,25 +29,24 @@ export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
 
 export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL): MessageContent {
   const htmlBody = `
-  <main style="max-width: 42em; margin-bottom: 3em">
-    <article>${item.content}</article>
+    <div style="max-width: 42em; margin-bottom: 3em">
+      <article>${item.content}</article>
 
-    <hr />
+      <hr />
 
-    <footer>
-      <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
+      <footer>
+        <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
-      <p>
-        <small>If you no longer want to receive these emails, you can
-        <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
-      </p>
+        <p>
+          <small>If you no longer want to receive these emails, you can
+          <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
+        </p>
 
-      <p>
-        <cite><small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></small></cite>
-      </p>
-    </footer>
-  </main>
-`;
+        <p>
+          <cite><small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></small></cite>
+        </p>
+      </footer>
+    </div>`;
 
   return {
     subject: item.title,
