@@ -38,12 +38,9 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL): MessageCon
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
         <p>
-          <small>If you no longer want to receive these emails, you can
+          <small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a>.
+          If you no longer want to receive these emails, you can
           <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
-        </p>
-
-        <p>
-          <cite><small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a></small></cite>
         </p>
       </footer>
     </div>`;
