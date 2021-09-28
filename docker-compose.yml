@@ -43,7 +43,7 @@ services:
     ports: ['25:25']
     restart: always
     environment:
-      SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
+      SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com;@bounces.feedsubscription.com:gurdiga@gmail.com'
     <<: *logging
 
   app:
