@@ -26,7 +26,7 @@ services:
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
-      POSTFIX_notify_classes: bounce,resource,software
+      POSTFIX_notify_classes: 'bounce,resource,software'
       POSTFIX_bounce_notice_recipient: gurdiga@gmail.com
       POSTFIX_2bounce_notice_recipient: gurdiga@gmail.com
       POSTFIX_resource_notice_recipient: gurdiga@gmail.com
