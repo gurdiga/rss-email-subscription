@@ -31,6 +31,8 @@ services:
       POSTFIX_2bounce_notice_recipient: gurdiga@gmail.com
       POSTFIX_resource_notice_recipient: gurdiga@gmail.com
       POSTFIX_software_notice_recipient: gurdiga@gmail.com
+      POSTFIX_delay_notice_recipient: gurdiga@gmail.com
+      POSTFIX_error_notice_recipient: gurdiga@gmail.com
     <<: *logging
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
