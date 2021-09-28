@@ -26,6 +26,11 @@ services:
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
+      POSTFIX_notify_classes: bounce,resource,software
+      POSTFIX_bounce_notice_recipient: gurdiga@gmail.com
+      POSTFIX_2bounce_notice_recipient: gurdiga@gmail.com
+      POSTFIX_resource_notice_recipient: gurdiga@gmail.com
+      POSTFIX_software_notice_recipient: gurdiga@gmail.com
     <<: *logging
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
