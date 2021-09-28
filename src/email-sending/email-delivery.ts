@@ -36,6 +36,9 @@ export async function deliverEmail(
     subject,
     text: '',
     html: htmlBody,
+    envelope: {
+      from: makeReturnPath(to),
+    },
   });
 }
 
@@ -44,4 +47,11 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
     name: fullEmailAddress.displayName,
     address: fullEmailAddress.emailAddress.value,
   };
+}
+
+// TODO: Maybe take this out to keep this file as thin as possible.
+export function makeReturnPath(to: string, timestamp = Date.now().toString()): string {
+  const toAddress = to.replace(/@/, '=');
+
+  return `bounced-${timestamp}-${toAddress}@bounces.feedsubscription.com`;
 }
