@@ -38,6 +38,7 @@ export async function deliverEmail(
     html: htmlBody,
     envelope: {
       from: makeReturnPath(to),
+      to,
     },
   });
 }
