@@ -17,6 +17,7 @@ x-app-env: &app-env
 services:
   smtp-out:
     container_name: smtp-out
+    hostname: smtp-out
     image: boky/postfix
     restart: always
     ports: ['127.0.0.1:1587:587']
@@ -39,6 +40,7 @@ services:
 
   smtp-in:
     container_name: smtp-in
+    hostname: smtp-in
     image: zixia/simple-mail-forwarder
     ports: ['25:25']
     restart: always
@@ -50,6 +52,7 @@ services:
 
   app:
     container_name: app
+    hostname: app
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
@@ -62,6 +65,7 @@ services:
 
   subscription:
     container_name: subscription
+    hostname: subscription
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     ports: ['127.0.0.1:3000:3000']
@@ -75,6 +79,7 @@ services:
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
     container_name: website
+    hostname: website
     image: nginx:alpine
     restart: always
     ports: ['80:80', '443:443']
@@ -90,6 +95,7 @@ services:
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
     container_name: certbot
+    hostname: certbot
     image: certbot/certbot
     restart: always
     volumes:
@@ -100,6 +106,7 @@ services:
 
   logger:
     container_name: logger
+    hostname: logger
     image: logger
     ports: ['127.0.0.1:514:514']
     volumes:
