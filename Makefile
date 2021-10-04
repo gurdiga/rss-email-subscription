@@ -73,7 +73,7 @@ logger:
 		docker-services/logger
 
 start:
-	docker-compose up --remove-orphans --detach
+	docker-compose up --remove-orphans --detach --project-name res
 
 stop:
 	docker-compose down
