@@ -75,6 +75,10 @@ logger:
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
+start-delivery-only:
+	docker-compose --project-name res up --remove-orphans --detach \
+		-- smtp-out app
+
 stop:
 	docker-compose down
 
