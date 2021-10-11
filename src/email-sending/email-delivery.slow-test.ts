@@ -11,7 +11,7 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING);
+  console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING.substr(0, 18));
 
   const fromAddress = makeFullEmailAddress('Slow Test', makeEmailAddress('feed@feedsubscription.com') as EmailAddress);
   const toAddress = 'gurdiga@gmail.com';
