@@ -103,6 +103,10 @@ describe(makeEmailAddress.name, () => {
       kind: 'EmailAddress',
       value: 'john.doe@test.com',
     } as EmailAddress);
+    expect(makeEmailAddress('john_doe@test.com')).to.deep.equal({
+      kind: 'EmailAddress',
+      value: 'john_doe@test.com',
+    } as EmailAddress);
   });
 
   it('accepts “plus addressing”', () => {
