@@ -9,6 +9,8 @@ import { isErr } from './shared/lang';
 import { makeDataDir } from './shared/data-dir';
 
 function main() {
+  logInfo('Starting cron');
+
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
