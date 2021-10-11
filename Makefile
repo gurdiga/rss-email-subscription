@@ -1,10 +1,10 @@
 default: pre-commit
 
 run-email-sending:
-	node_modules/.bin/ts-node src/cron-cli.ts email-sending feed
+	node_modules/.bin/ts-node src/cron-cli.ts email-sending justaddlightandstir
 
 run-rss-checking:
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking feed
+	node_modules/.bin/ts-node src/cron-cli.ts rss-checking justaddlightandstir
 
 .tmp/data/feed: .tmp/data/feed/feed.json .tmp/data/feed/emails.json
 
