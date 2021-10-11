@@ -1,5 +1,7 @@
-import nodemailer from 'nodemailer';
+import nodemailer, { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
+import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { logInfo } from '../shared/logging';
 import { FullEmailAddress } from './emails';
 
 export interface EmailDeliveryEnv {
@@ -15,7 +17,7 @@ export type DeliverEmailFn = (
   env: EmailDeliveryEnv
 ) => Promise<void>;
 
-let transporter: ReturnType<typeof nodemailer.createTransport>;
+let transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
 export async function deliverEmail(
   from: FullEmailAddress,
@@ -29,7 +31,7 @@ export async function deliverEmail(
     transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING);
   }
 
-  await transporter.sendMail({
+  const messageInfo = await transporter.sendMail({
     from: makeMailAddress(from),
     to,
     replyTo,
@@ -40,6 +42,14 @@ export async function deliverEmail(
       from: makeReturnPath(to),
       to,
     },
+  });
+
+  logInfo('Sent mail', {
+    messageId: messageInfo.messageId,
+    envelopeFrom: messageInfo.envelope.from,
+    messageTime: (messageInfo as any).messageTime,
+    messageSize: (messageInfo as any).messageSize,
+    response: messageInfo.response,
   });
 }
 
