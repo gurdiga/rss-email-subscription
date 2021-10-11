@@ -1,6 +1,7 @@
 {
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
+  "typescript.tsdk": "node_modules/typescript/lib",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.associations": {
     "jsconfig.json": "jsonc"
@@ -18,5 +19,7 @@
   "[nginx]": {
     "editor.defaultFormatter": "raynigon.nginx-formatter"
   },
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
 }
