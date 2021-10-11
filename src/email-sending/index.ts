@@ -68,7 +68,11 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
-      logInfo(`Sending RSS item`, { itemTitle: storedItem.item.title, toEmail: hashedEmail.emailAddress.value });
+      logInfo(`Sending RSS item`, {
+        dataDir: dataDir.value,
+        itemTitle: storedItem.item.title,
+        toEmail: hashedEmail.emailAddress.value,
+      });
 
       const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeUrl);
@@ -76,14 +80,14 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
       const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
 
       if (isErr(sendingResult)) {
-        logError(sendingResult.reason);
+        logError(sendingResult.reason, { dataDir: dataDir.value });
       }
     }
 
     const deletionResult = deleteItem(dataDir, storedItem);
 
     if (isErr(deletionResult)) {
-      logError(deletionResult.reason);
+      logError(deletionResult.reason, { dataDir: dataDir.value });
     }
   }
 }
