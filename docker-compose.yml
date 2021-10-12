@@ -17,7 +17,7 @@ x-app-env: &app-env
 services:
   smtp-out:
     container_name: smtp-out
-    hostname: smtp-out
+    hostname: smtp-out.feedsubscription.com
     image: boky/postfix
     restart: always
     ports: ['127.0.0.1:1587:587']
