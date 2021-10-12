@@ -2,7 +2,7 @@ import { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir } from './data-dir';
 import { readFile, ReadFileFn } from './io';
-import { isErr, makeErr, Result } from './lang';
+import { getErrorMessage, isErr, makeErr, Result } from './lang';
 import { makeUrl } from './url';
 
 export interface FeedSettings {
@@ -68,9 +68,9 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         replyTo,
       };
     } catch (error) {
-      return makeErr(`Can’t parse JSON in ${filePath}: ${error.message},`);
+      return makeErr(`Can’t parse JSON in ${filePath}: ${getErrorMessage(error)},`);
     }
   } catch (error) {
-    return makeErr(`Can’t read file ${filePath}: ${error.message}`);
+    return makeErr(`Can’t read file ${filePath}: ${getErrorMessage(error)}`);
   }
 }

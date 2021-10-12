@@ -2,7 +2,7 @@ import path from 'path';
 import { inboxDirName } from '../rss-checking/new-item-recording';
 import { DataDir } from '../shared/data-dir';
 import { deleteFile, DeleteFileFn } from '../shared/io';
-import { makeErr, Result } from '../shared/lang';
+import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { ValidStoredRssItem } from './rss-item-reading';
 
 export function deleteItem(
@@ -15,6 +15,6 @@ export function deleteItem(
   try {
     deleteFileFn(itemFilePath);
   } catch (error) {
-    return makeErr(`Can’t delete sent item file ${itemFilePath}: ${error.message}`);
+    return makeErr(`Can’t delete sent item file ${itemFilePath}: ${getErrorMessage(error)}`);
   }
 }

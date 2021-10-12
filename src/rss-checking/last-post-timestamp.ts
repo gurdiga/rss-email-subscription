@@ -3,7 +3,7 @@ import { DataDir } from '../shared/data-dir';
 import { RssItem } from '../shared/rss-item';
 import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
 import { isEmpty, sortBy, SortDirection } from '../shared/array-utils';
-import { makeErr, Result } from '../shared/lang';
+import { getErrorMessage, makeErr, Result } from '../shared/lang';
 
 export function getLastPostTimestamp(
   dataDir: DataDir,
@@ -32,7 +32,7 @@ export function getLastPostTimestamp(
       return makeErr(`Invalid JSON in ${filePath}`);
     }
   } catch (ioError) {
-    return makeErr(`Can’t read ${filePath}: ${ioError.message}`);
+    return makeErr(`Can’t read ${filePath}: ${getErrorMessage(ioError)}`);
   }
 }
 

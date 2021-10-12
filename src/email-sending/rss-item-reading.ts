@@ -3,7 +3,7 @@ import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-rec
 import { sortBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../shared/io';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { getErrorMessage, isErr, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { makeUrl } from '../shared/url';
 
@@ -44,7 +44,7 @@ export function readStoredRssItems(
   try {
     fileNames = listFilesFn(inboxDirPath);
   } catch (error) {
-    return makeErr(`Can’t list files in ${inboxDirPath}: ${error.message}`);
+    return makeErr(`Can’t list files in ${inboxDirPath}: ${getErrorMessage(error)}`);
   }
 
   const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');

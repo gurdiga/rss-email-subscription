@@ -1,6 +1,6 @@
 import path from 'path';
 import { DataDir } from '../shared/data-dir';
-import { makeErr, Result } from '../shared/lang';
+import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
@@ -16,7 +16,7 @@ export async function sendItem(
   try {
     await deliverEmailFn(from, to.value, replyTo.value, subject, htmlBody, env);
   } catch (error) {
-    return makeErr(`Could not deliver email to ${to.value}: ${error.message}`);
+    return makeErr(`Could not deliver email to ${to.value}: ${getErrorMessage(error)}`);
   }
 }
 

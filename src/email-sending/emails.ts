@@ -2,7 +2,7 @@ import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { readFile, ReadFileFn, writeFile, WriteFileFn } from '../shared/io';
-import { Err, getTypeName, isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
+import { Err, getErrorMessage, getTypeName, isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -103,7 +103,7 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
 
     return parseEmails(fileContent);
   } catch (error) {
-    return makeErr(`Could not read email list from file ${filePath}: ${error.message}`);
+    return makeErr(`Could not read email list from file ${filePath}: ${getErrorMessage(error)}`);
   }
 }
 
@@ -120,7 +120,7 @@ export function storeEmailIndex(
   try {
     writeFileFn(filePath, json);
   } catch (error) {
-    return makeErr(`Could not store email index to ${dataDir.value}/${emailsFileName}: ${error.message}`);
+    return makeErr(`Could not store email index to ${dataDir.value}/${emailsFileName}: ${getErrorMessage(error)}`);
   }
 }
 
@@ -172,7 +172,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
       return makeErr(`Invalid JSON in ${filePath}`);
     }
   } catch (error) {
-    return makeErr(`Can’t read file ${filePath}: ${error.message}`);
+    return makeErr(`Can’t read file ${filePath}: ${getErrorMessage(error)}`);
   }
 }
 
