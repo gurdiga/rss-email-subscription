@@ -30,3 +30,19 @@ export function getTypeName(value: any): string {
     .match(/^\[object (\w+)\]$/)![1]
     .toLowerCase();
 }
+
+export function getErrorMessage(error: unknown): string {
+  if (!error) {
+    return '[EMPTY ERROR OBJECT]';
+  }
+
+  if (error instanceof Error) {
+    return error.message || '[NO ERROR MESSAGE]';
+  }
+
+  if (error instanceof Object && error.toString instanceof Function) {
+    return error.toString();
+  }
+
+  return `[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
+}
