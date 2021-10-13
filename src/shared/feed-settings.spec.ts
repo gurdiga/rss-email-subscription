@@ -36,7 +36,7 @@ describe(getFeedSettings.name, () => {
     } as FeedSettings);
   });
 
-  it('defaults replyTo to no-reply@feedsubscription.com', () => {
+  it('defaults replyTo to feedback@feedsubscription.com', () => {
     const data = {
       displayName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
@@ -47,7 +47,7 @@ describe(getFeedSettings.name, () => {
     const mockReadFileFn = (_path: string) => JSON.stringify(data);
     const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
 
-    expect(result.replyTo.value).to.equal('no-reply@feedsubscription.com');
+    expect(result.replyTo.value).to.equal('feedback@feedsubscription.com');
   });
 
   it('defaults displayName to feedId', () => {

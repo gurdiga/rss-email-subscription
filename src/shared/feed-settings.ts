@@ -54,7 +54,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid "fromAddress" in ${filePath}: ${fromAddress.reason}`);
       }
 
-      const replyTo = makeEmailAddress(data.replyTo || 'no-reply@feedsubscription.com');
+      const replyTo = makeEmailAddress(data.replyTo || 'feedback@feedsubscription.com');
 
       if (isErr(replyTo)) {
         return makeErr(`Invalid "replyTo" address in ${filePath}: ${replyTo.reason}`);
