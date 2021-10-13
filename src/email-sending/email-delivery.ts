@@ -15,7 +15,7 @@ export type DeliverEmailFn = (
   subject: string,
   htmlBody: string,
   env: EmailDeliveryEnv
-) => Promise<void>;
+) => Promise<DeliveryInfo>;
 
 let transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
@@ -26,7 +26,7 @@ export async function deliverEmail(
   subject: string,
   htmlBody: string,
   env: EmailDeliveryEnv
-): Promise<void> {
+): Promise<DeliveryInfo> {
   if (!transporter) {
     transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING);
   }
@@ -44,13 +44,21 @@ export async function deliverEmail(
     },
   });
 
-  logInfo('Sent mail', {
+  return {
     messageId: messageInfo.messageId,
-    envelopeFrom: messageInfo.envelope.from,
+    envelopeFrom: messageInfo.envelope.from || '[EMPTY envelope.from]',
     messageTime: (messageInfo as any).messageTime,
     messageSize: (messageInfo as any).messageSize,
     response: messageInfo.response,
-  });
+  };
+}
+
+export interface DeliveryInfo {
+  messageId: string;
+  envelopeFrom: string;
+  messageTime: number;
+  messageSize: number;
+  response: string;
 }
 
 function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {

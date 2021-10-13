@@ -3,7 +3,7 @@ import path from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
+import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem } from './item-sending';
 
@@ -32,6 +32,7 @@ describe('item-sending', () => {
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
+      const deliveryInfo = {} as DeliveryInfo;
       let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
         {} as FullEmailAddress,
         '',
@@ -43,15 +44,17 @@ describe('item-sending', () => {
 
       const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, htmlBody) => {
         [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
+        return deliveryInfo;
       };
 
-      await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
+      expect(result).to.equal(deliveryInfo);
     });
 
     it('returns an Err value when delivery fails', async () => {

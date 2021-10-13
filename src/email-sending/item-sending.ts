@@ -2,7 +2,7 @@ import path from 'path';
 import { DataDir } from '../shared/data-dir';
 import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { deliverEmail, DeliverEmailFn, EmailDeliveryEnv } from './email-delivery';
+import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
@@ -12,9 +12,9 @@ export async function sendItem(
   { subject, htmlBody }: MessageContent,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
-): Promise<Result<void>> {
+): Promise<Result<DeliveryInfo>> {
   try {
-    await deliverEmailFn(from, to.value, replyTo.value, subject, htmlBody, env);
+    return await deliverEmailFn(from, to.value, replyTo.value, subject, htmlBody, env);
   } catch (error) {
     return makeErr(`Could not deliver email to ${to.value}: ${getErrorMessage(error)}`);
   }
