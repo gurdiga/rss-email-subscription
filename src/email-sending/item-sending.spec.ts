@@ -72,12 +72,13 @@ describe('item-sending', () => {
   describe(makeEmailMessage.name, () => {
     it('returns an EmailMessage value for the given RssItem', () => {
       const mockUnsubscribeUrl = new URL('https://example.com');
-      const emailMessage = makeEmailMessage(item, mockUnsubscribeUrl);
+      const emailMessage = makeEmailMessage(item, mockUnsubscribeUrl, from.emailAddress);
 
       expect(emailMessage.subject).to.equal(item.title);
       expect(emailMessage.htmlBody).to.contain(item.content);
       expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
       expect(emailMessage.htmlBody).to.contain(mockUnsubscribeUrl, 'the unsubscribe link');
+      expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
     });
   });
 

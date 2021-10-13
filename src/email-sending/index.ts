@@ -75,7 +75,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
       });
 
       const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
-      const emailMessage = makeEmailMessage(storedItem.item, unsubscribeUrl);
+      const emailMessage = makeEmailMessage(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
       const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
 

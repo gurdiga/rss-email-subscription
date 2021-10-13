@@ -27,7 +27,7 @@ export interface MessageContent {
 
 export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
 
-export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL): MessageContent {
+export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): MessageContent {
   const htmlBody = `
     <div style="max-width: 42em; margin-bottom: 3em">
       <article>${item.content}</article>
@@ -36,6 +36,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL): MessageCon
 
       <footer>
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
+        <p>PRO TIP: Add ${fromAddress.value} so that it’s not considered junk mail.</p>
 
         <p>
           <small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a>.
