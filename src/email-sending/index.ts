@@ -81,6 +81,8 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
       if (isErr(sendingResult)) {
         logError(sendingResult.reason, { dataDir: dataDir.value });
+      } else {
+        logInfo('Delivery info', sendingResult);
       }
     }
 
