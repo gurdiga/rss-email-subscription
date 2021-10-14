@@ -34,6 +34,10 @@ services:
       POSTFIX_software_notice_recipient: gurdiga@gmail.com
       POSTFIX_delay_notice_recipient: gurdiga@gmail.com
       POSTFIX_error_notice_recipient: gurdiga@gmail.com
+
+      # https://wiki.deimos.fr/Postfix:_limit_outgoing_mail_throttling
+      POSTFIX_smtp_destination_concurrency_limit: 1
+      POSTFIX_smtp_destination_rate_delay: 2s
     <<: *logging
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
