@@ -31,7 +31,7 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
 
 export function makeEmailAddress(input: any): Result<EmailAddress> {
   const emailString = `${input}`;
-  const email = emailString.trim();
+  const email = emailString.trim().toLocaleLowerCase();
   const err = makeErr(`Syntactically invalid email: "${emailString}"`);
 
   if (!email) {
