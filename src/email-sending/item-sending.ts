@@ -43,7 +43,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
           <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
         </p>
 
-        <p><small>PRO TIP: Add ${fromAddress.value} so that it’s not considered junk mail.</small></p>
+        <p><small>PRO TIP: Add ${fromAddress.value} to your contact list so that this is not considered junk mail.</small></p>
       </footer>
     </div>`;
 
