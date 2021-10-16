@@ -72,5 +72,5 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
 export function makeReturnPath(to: string, timestamp = Date.now().toString()): string {
   const toAddress = to.replace(/@/, '=');
 
-  return `bounced-${timestamp}-${toAddress}@bounces.feedsubscription.com`;
+  return `bounced-${timestamp}-${toAddress}@feedsubscription.com`;
 }
