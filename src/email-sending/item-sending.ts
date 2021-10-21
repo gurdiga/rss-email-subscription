@@ -1,5 +1,6 @@
 import path from 'path';
 import { DataDir } from '../shared/data-dir';
+import { DOMAIN_NAME } from '../shared/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
@@ -38,7 +39,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
         <p>
-          <small>Email sent by <a href="https://feedsubscription.com">FeedSubscription.com</a>.
+          <small>Email sent by <a href="https://${DOMAIN_NAME}">FeedSubscription.com</a>.
           If you no longer want to receive these emails, you can
           <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
         </p>
@@ -54,7 +55,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
 }
 
 export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, displayName: string): URL {
-  const url = new URL('https://feedsubscription.com/unsubscribe.html');
+  const url = new URL(`https://${DOMAIN_NAME}/unsubscribe.html`);
   const feedId = path.basename(dataDir.value);
 
   url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);

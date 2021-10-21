@@ -5,6 +5,8 @@ import { readFile, ReadFileFn } from './io';
 import { getErrorMessage, isErr, makeErr, Result } from './lang';
 import { makeUrl } from './url';
 
+export const DOMAIN_NAME = 'feedsubscription.com';
+
 export interface FeedSettings {
   displayName: string;
   url: URL;
@@ -55,7 +57,8 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid "fromAddress" in ${filePath}: ${fromAddress.reason}`);
       }
 
-      const replyTo = makeEmailAddress(data.replyTo || 'feedback@feedsubscription.com');
+      const defaultReplyTo = `feedback@${DOMAIN_NAME}`;
+      const replyTo = makeEmailAddress(data.replyTo || defaultReplyTo);
 
       if (isErr(replyTo)) {
         return makeErr(`Invalid "replyTo" address in ${filePath}: ${replyTo.reason}`);

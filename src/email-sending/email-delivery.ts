@@ -1,6 +1,7 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { DOMAIN_NAME } from '../shared/feed-settings';
 import { logInfo } from '../shared/logging';
 import { FullEmailAddress } from './emails';
 
@@ -72,5 +73,5 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
 export function makeReturnPath(to: string, timestamp = Date.now().toString()): string {
   const toAddress = to.replace(/@/, '=');
 
-  return `bounced-${timestamp}-${toAddress}@feedsubscription.com`;
+  return `bounced-${timestamp}-${toAddress}@${DOMAIN_NAME}`;
 }
