@@ -16,6 +16,7 @@ describe(getFeedSettings.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
       replyTo: 'sandra@test.com',
+      cronPattern: '5 * * * *',
     };
 
     let actualPath = '';
@@ -33,6 +34,7 @@ describe(getFeedSettings.name, () => {
       hashingSalt: data.hashingSalt,
       fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
       replyTo: { kind: 'EmailAddress', value: data.replyTo } as EmailAddress,
+      cronPattern: data.cronPattern,
     } as FeedSettings);
   });
 

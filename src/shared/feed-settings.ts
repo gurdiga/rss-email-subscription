@@ -13,6 +13,7 @@ export interface FeedSettings {
   // TODO: Default to feedId?
   fromAddress: EmailAddress;
   replyTo: EmailAddress;
+  cronPattern: string;
 }
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
@@ -31,7 +32,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid feed URL in ${filePath}: ${data.url}`);
       }
 
-      const { hashingSalt } = data;
+      const { hashingSalt, cronPattern } = data;
       const saltMinLength = 16;
 
       if (typeof hashingSalt !== 'string') {
@@ -66,6 +67,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         hashingSalt,
         fromAddress,
         replyTo,
+        cronPattern,
       };
     } catch (error) {
       return makeErr(`Can’t parse JSON in ${filePath}: ${getErrorMessage(error)},`);
