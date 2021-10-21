@@ -33,7 +33,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
     <div style="max-width: 42em; margin-bottom: 3em">
       <article>${item.content}</article>
 
-      <hr />
+      <hr style="clear: both" />
 
       <footer>
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
