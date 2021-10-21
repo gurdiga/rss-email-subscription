@@ -11,8 +11,6 @@ export interface FeedSettings {
   displayName: string;
   url: URL;
   hashingSalt: string;
-
-  // TODO: Default to feedId?
   fromAddress: EmailAddress;
   replyTo: EmailAddress;
   cronPattern: string;
@@ -47,11 +45,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         );
       }
 
-      if (!data.fromAddress) {
-        return makeErr(`Missing "fromAddress" in ${filePath}`);
-      }
-
-      const fromAddress = makeEmailAddress(data.fromAddress);
+      const fromAddress = makeEmailAddress(`${feedId}@${DOMAIN_NAME}`);
 
       if (isErr(fromAddress)) {
         return makeErr(`Invalid "fromAddress" in ${filePath}: ${fromAddress.reason}`);

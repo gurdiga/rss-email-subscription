@@ -6,7 +6,8 @@ import { FeedSettings, getFeedSettings } from './feed-settings';
 import { makeErr, Result } from './lang';
 
 describe(getFeedSettings.name, () => {
-  const dataDirPathString = '/some/path';
+  const feedId = 'jalas';
+  const dataDirPathString = `/some/path/${feedId}`;
   const dataDir = makeDataDir(dataDirPathString) as DataDir;
 
   it('returns a FeedSettings value from feed.json', () => {
@@ -14,7 +15,6 @@ describe(getFeedSettings.name, () => {
       displayName: 'Just Add Light and Stir',
       url: 'https://example.com/feed.xml',
       hashingSalt: 'more-than-sixteen-non-space-characters',
-      fromAddress: 'some@test.com',
       replyTo: 'sandra@test.com',
       cronPattern: '5 * * * *',
     };
@@ -32,7 +32,7 @@ describe(getFeedSettings.name, () => {
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: { kind: 'EmailAddress', value: data.fromAddress } as EmailAddress,
+      fromAddress: { kind: 'EmailAddress', value: `${feedId}@feedsubscription.com` } as EmailAddress,
       replyTo: { kind: 'EmailAddress', value: data.replyTo } as EmailAddress,
       cronPattern: data.cronPattern,
     } as FeedSettings);
@@ -89,12 +89,6 @@ describe(getFeedSettings.name, () => {
     );
     expect(fromJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
       makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 non-space characters required`)
-    );
-    expect(fromJson('{"url": "https://a.com", "hashingSalt": "1234567890123456"}')).to.deep.equal(
-      makeErr(`Missing "fromAddress" in ${dataDirPathString}/feed.json`)
-    );
-    expect(fromJson('{"url": "https://a.com", "hashingSalt": "1234567890123456", "fromAddress": 42}')).to.deep.equal(
-      makeErr(`Invalid "fromAddress" in ${dataDirPathString}/feed.json: Syntactically invalid email: "42"`)
     );
   });
 });
