@@ -39,7 +39,6 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
   const cronJobs: CronJob[] = [];
 
   for (const { name } of dataDirs) {
-    const cronPattern = '0 * * * *';
     const dataDirString = path.join(dataDirRoot, name);
     const dataDir = makeDataDir(dataDirString);
 
@@ -48,17 +47,19 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
       continue;
     }
 
-    logInfo(`Scheduling feed check for ${dataDirString}`, { cronPattern });
+    const feedSettings = getFeedSettings(dataDir);
+
+    if (isErr(feedSettings)) {
+      logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+      continue;
+    }
+
+    const { cronPattern } = feedSettings;
+
+    logInfo(`Scheduling feed check`, { dataDirString, cronPattern });
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
-        const feedSettings = getFeedSettings(dataDir);
-
-        if (isErr(feedSettings)) {
-          logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
-          return;
-        }
-
         await checkRss(dataDir, feedSettings);
         await sendEmails(dataDir, feedSettings);
       })

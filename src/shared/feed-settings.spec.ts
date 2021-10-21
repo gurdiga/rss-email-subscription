@@ -10,15 +10,15 @@ describe(getFeedSettings.name, () => {
   const dataDirPathString = `/some/path/${feedId}`;
   const dataDir = makeDataDir(dataDirPathString) as DataDir;
 
-  it('returns a FeedSettings value from feed.json', () => {
-    const data = {
-      displayName: 'Just Add Light and Stir',
-      url: 'https://example.com/feed.xml',
-      hashingSalt: 'more-than-sixteen-non-space-characters',
-      replyTo: 'sandra@test.com',
-      cronPattern: '5 * * * *',
-    };
+  const data = {
+    displayName: 'Just Add Light and Stir',
+    url: 'https://example.com/feed.xml',
+    hashingSalt: 'more-than-sixteen-non-space-characters',
+    replyTo: 'sandra@test.com',
+    cronPattern: '5 * * * *',
+  };
 
+  it('returns a FeedSettings value from feed.json', () => {
     let actualPath = '';
     const mockReadFileFn = (path: string) => {
       actualPath = path;
@@ -36,6 +36,14 @@ describe(getFeedSettings.name, () => {
       replyTo: makeEmailAddress(data.replyTo) as EmailAddress,
       cronPattern: data.cronPattern,
     } as FeedSettings);
+  });
+
+  it('defaults cronPattern to every hour', () => {
+    const localData = { ...data, cronPattern: undefined };
+    const mockReadFileFn = (_path: string) => JSON.stringify(localData);
+    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
+
+    expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
 
   it('defaults replyTo to feedback@feedsubscription.com', () => {

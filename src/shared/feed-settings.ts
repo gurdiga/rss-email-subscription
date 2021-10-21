@@ -32,7 +32,8 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
         return makeErr(`Invalid feed URL in ${filePath}: ${data.url}`);
       }
 
-      const { hashingSalt, cronPattern } = data;
+      const defaultCrontPattern = '0 * * * *';
+      const { hashingSalt, cronPattern = defaultCrontPattern } = data;
       const saltMinLength = 16;
 
       if (typeof hashingSalt !== 'string') {
