@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'path';
-import { EmailAddress } from '../email-sending/emails';
+import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { makeErr, Result } from './lang';
@@ -32,8 +32,8 @@ describe(getFeedSettings.name, () => {
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: { kind: 'EmailAddress', value: `${feedId}@feedsubscription.com` } as EmailAddress,
-      replyTo: { kind: 'EmailAddress', value: data.replyTo } as EmailAddress,
+      fromAddress: makeEmailAddress(`${feedId}@feedsubscription.com`) as EmailAddress,
+      replyTo: makeEmailAddress(data.replyTo) as EmailAddress,
       cronPattern: data.cronPattern,
     } as FeedSettings);
   });
