@@ -51,7 +51,13 @@ services:
     volumes:
       - ./.tmp/smtp-in/opendkim-keys:/var/db/dkim/
     environment:
+      SMF_DOMAIN: feedsubscription.com
       SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
+      SMF_SRS: 'true'
+      SMF_POSTFIXMAIN_sender_canonical_maps: 'tcp:localhost:10001'
+      SMF_POSTFIXMAIN_sender_canonical_classes: 'envelope_sender'
+      SMF_POSTFIXMAIN_recipient_canonical_maps: 'tcp:localhost:10002'
+      SMF_POSTFIXMAIN_recipient_canonical_classes: 'envelope_recipient,header_recipient'
     <<: *logging
 
   app:
