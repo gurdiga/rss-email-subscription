@@ -1,3 +1,5 @@
+SHELL = bash
+
 default: pre-commit
 
 run-email-sending:
