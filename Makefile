@@ -121,7 +121,14 @@ snyk:
 watch-app:
 	tail -n0 -f .tmp/logs/feedsubscription/app.log \
 		| grep --line-buffered -P '"severity":"(error|warning)"' \
-		| while read _skip_timestamp _skip_namespace _skip_app json; do \
-			(echo "Subject: RES App error"; echo "From: wathc-app@feedsubscription.com"; echo; jq . <<<"$$json";) \
-		| ssmtp gurdiga@gmail.com; done \
+		| while read _skip_timestamp _skip_namespace _skip_app json; \
+		do \
+			( \
+				echo "Subject: RES App $$(jq .severity <<<"$$json")"; \
+				echo "From: wathc-app@feedsubscription.com"; \
+				echo; \
+				jq . <<<"$$json";\
+			) \
+			| ssmtp gurdiga@gmail.com; \
+		done \
 		& disown
