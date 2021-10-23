@@ -3,7 +3,7 @@ import { readdirSync } from 'fs';
 import path from 'path';
 import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
-import { logError, logInfo } from './shared/logging';
+import { logError, logInfo, logWarning } from './shared/logging';
 import { getFeedSettings } from './shared/feed-settings';
 import { isErr } from './shared/lang';
 import { makeDataDir } from './shared/data-dir';
@@ -21,7 +21,7 @@ function main() {
   let cronJobs = scheduleFeedChecks(dataDirRoot);
 
   process.on('SIGHUP', () => {
-    logInfo('Received SIGUP. Will reload.');
+    logWarning('Received SIGUP. Will reload.');
 
     cronJobs.forEach((j) => j.stop());
     cronJobs = scheduleFeedChecks(dataDirRoot);
