@@ -40,20 +40,23 @@ export function recordLastPostTimestamp(
   dataDir: DataDir,
   items: RssItem[],
   writeFileFn: WriteFileFn = writeFile
-): Result<void> {
+): Result<Date | undefined> {
   if (isEmpty(items)) {
     return;
   }
 
   const latestItem = [...items].sort(sortBy((i) => i.pubDate, SortDirection.Desc))[0];
+  const lastPostTimestamp = latestItem.pubDate;
 
   const filePath = getLastPostTimestampFileName(dataDir);
   const fileContent = JSON.stringify({
-    lastPostTimestamp: latestItem.pubDate,
+    lastPostTimestamp,
   });
 
   try {
     writeFileFn(filePath, fileContent);
+
+    return lastPostTimestamp;
   } catch (error) {
     return makeErr(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
   }

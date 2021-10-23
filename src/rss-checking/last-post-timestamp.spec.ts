@@ -87,8 +87,9 @@ describe('Last post timestamp', () => {
       },
     ];
 
+    const lastPostTimestamp = mockRssItems[2].pubDate;
     const expectedFileContent = JSON.stringify({
-      lastPostTimestamp: mockRssItems[2].pubDate,
+      lastPostTimestamp,
     });
 
     it('writes pubDate of the latest item to lastPostTimestamp.json', () => {
@@ -96,7 +97,7 @@ describe('Last post timestamp', () => {
       const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
       const initialRssItems = [...mockRssItems];
 
-      recordLastPostTimestamp(mockDataDir, mockRssItems, mockWriteFile);
+      const result = recordLastPostTimestamp(mockDataDir, mockRssItems, mockWriteFile);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
       expect(writtenFiles).to.deep.equal([
@@ -105,6 +106,8 @@ describe('Last post timestamp', () => {
           content: expectedFileContent,
         },
       ]);
+
+      expect(result).to.equal(lastPostTimestamp);
     });
 
     it('reports the error when can’t write file', () => {
