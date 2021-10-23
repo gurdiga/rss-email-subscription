@@ -112,6 +112,7 @@ website-reload:
 subscription:
 	node_modules/.bin/ts-node src/subscription/server.ts
 
+# TODO: Is there a way to signup to receive an email when someting is found?
 snyk:
 	snyk test
 
