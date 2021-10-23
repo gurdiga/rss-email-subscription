@@ -9,62 +9,66 @@ import { DataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { FeedSettings } from '../shared/feed-settings';
+import { basename } from 'path';
 
 export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+  const feedId = basename(dataDir.value);
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
-    logError(`Invalid environment variables`, { reason: env.reason });
+    logError(`Invalid environment variables`, { feedId, reason: env.reason });
     return 1;
   }
-
-  logInfo(`Sending the new items from ${dataDir.value}`, { dataDir: dataDir.value });
-
-  const { fromAddress } = feedSettings;
-  const storedEmails = loadStoredEmails(dataDir);
-
-  if (isErr(storedEmails)) {
-    logError(`Failed reading emails`, { dataDir: dataDir.value, reason: storedEmails.reason });
-    return 1;
-  }
-
-  const { validEmails, invalidEmails } = storedEmails;
-
-  if (isEmpty(validEmails)) {
-    logError(`No valid emails found`, { dataDir: dataDir.value });
-    return 1;
-  }
-
-  if (invalidEmails.length > 0) {
-    logWarning(`Found invalid emails`, { dataDir: dataDir.value, invalidEmails });
-  }
-
-  logInfo(`Found emails`, { dataDir: dataDir.value, emailCount: validEmails.length });
 
   const storedRssItems = readStoredRssItems(dataDir);
 
   if (isErr(storedRssItems)) {
-    logError(`Failed to read RSS items`, { dataDir: dataDir.value, reason: storedRssItems.reason });
+    logError(`Failed to read RSS items`, { feedId, reason: storedRssItems.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = storedRssItems;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid RSS items`, { dataDir: dataDir.value, invalidItems });
+    logWarning(`Invalid RSS items`, { feedId, invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logInfo(`No items to send`, { dataDir: dataDir.value });
+    logInfo(`No new items`, { feedId });
     return 0;
   }
 
-  logInfo(`Found ${validItems.length} items to send`, { dataDir: dataDir.value });
+  const { fromAddress } = feedSettings;
+  const storedEmails = loadStoredEmails(dataDir);
+
+  if (isErr(storedEmails)) {
+    logError(`Could not read emails`, { feedId, reason: storedEmails.reason });
+    return 1;
+  }
+
+  const { validEmails, invalidEmails } = storedEmails;
+
+  if (isEmpty(validEmails)) {
+    logError(`No valid emails`, { feedId });
+    return 1;
+  }
+
+  if (invalidEmails.length > 0) {
+    logWarning(`Invalid emails`, { feedId, invalidEmails });
+  }
+
+  const report = {
+    sentExpected: validItems.length * validEmails.length,
+    sent: 0,
+    failed: 0,
+  };
+
+  logInfo(`Sending new items`, { feedId, itemCount: validItems.length, emailCount: validEmails.length });
 
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
-      logInfo(`Sending RSS item`, {
-        dataDir: dataDir.value,
+      logInfo(`Sending item`, {
+        feedId,
         itemTitle: storedItem.item.title,
         toEmail: hashedEmail.emailAddress.value,
       });
@@ -75,16 +79,20 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
       const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
 
       if (isErr(sendingResult)) {
-        logError(sendingResult.reason, { dataDir: dataDir.value });
+        report.failed++;
+        logError(sendingResult.reason, { feedId });
       } else {
-        logInfo('Delivery info', sendingResult);
+        report.sent++;
+        logInfo('Delivery info', { feedId, ...sendingResult });
       }
     }
 
     const deletionResult = deleteItem(dataDir, storedItem);
 
     if (isErr(deletionResult)) {
-      logError(deletionResult.reason, { dataDir: dataDir.value });
+      logError(deletionResult.reason, { feedId });
     }
   }
+
+  logInfo('Sending report', { feedId, report });
 }
