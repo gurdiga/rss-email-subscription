@@ -1,3 +1,4 @@
+import { basename } from 'path';
 import { isEmpty } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { FeedSettings } from '../shared/feed-settings';
@@ -10,63 +11,66 @@ import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
 export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+  const feedId = basename(dataDir.value);
   const { url } = feedSettings;
   const rssResponse = await fetchRss(url);
 
   if (isErr(rssResponse)) {
-    logError(`Failed fetching RSS`, { url, reason: rssResponse.reason });
+    logError(`Failed fetching RSS`, { feedId, url, reason: rssResponse.reason });
     return 1;
   }
 
   const rssParsingResult = await parseRssItems(rssResponse);
 
   if (isErr(rssParsingResult)) {
-    logError(`Failed parsing RSS items`, { reson: rssParsingResult.reason });
+    logError(`Failed parsing RSS items`, { feedId, reson: rssParsingResult.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = rssParsingResult;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid RSS items`, { count: invalidItems.length, invalidItems });
+    logWarning(`Found invalid RSS items`, { feedId, count: invalidItems.length, invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logError(`No valid RSS items`, { url });
+    logError(`No valid RSS items`, { feedId, url });
     return 1;
   }
 
-  logInfo(`Found valid RSS items`, { count: validItems.length });
+  logInfo(`Found valid RSS items`, { feedId, count: validItems.length });
 
   let lastPostTimestamp = getLastPostTimestamp(dataDir);
 
   if (isErr(lastPostTimestamp)) {
-    logError(`Failed reading last post timestamp`, { dataDir, reason: lastPostTimestamp.reason });
+    logError(`Failed reading last post timestamp`, { feedId, reason: lastPostTimestamp.reason });
     return 1;
   }
 
   const newRssItems = selectNewItems(validItems, lastPostTimestamp);
 
   if (newRssItems.length === 0) {
-    logInfo(`No new items`);
+    logInfo(`No new items`, { feedId });
     return;
   }
 
   const recordingResult = recordNewRssItems(dataDir, newRssItems);
 
   if (isErr(recordingResult)) {
-    logError(`Failed recording new items`, { reason: recordingResult.reason });
+    logError(`Failed recording new items`, { feedId, reason: recordingResult.reason });
     return 1;
   }
 
-  logInfo(`Recorded new items`, { itemCount: newRssItems.length });
+  logInfo(`Recorded new items`, { feedId, itemCount: newRssItems.length });
 
   const timestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
 
   if (isErr(timestampRecordingResult)) {
-    logError(`Failed recording last post timestamp`, { reason: timestampRecordingResult.reason });
+    logError(`Failed recording last post timestamp`, { feedId, reason: timestampRecordingResult.reason });
     return 1;
   }
 
-  logInfo(`Recorded last post timestamp`);
+  if (timestampRecordingResult) {
+    logInfo(`Recorded last post timestamp`, { feedId, lastPostTimestamp: timestampRecordingResult });
+  }
 }
