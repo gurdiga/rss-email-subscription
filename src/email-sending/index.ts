@@ -20,11 +20,6 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
   logInfo(`Sending the new items from ${dataDir.value}`, { dataDir: dataDir.value });
 
-  if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });
-    return 1;
-  }
-
   const { fromAddress } = feedSettings;
   const storedEmails = loadStoredEmails(dataDir);
 
