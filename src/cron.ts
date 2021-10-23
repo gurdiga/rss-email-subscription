@@ -26,6 +26,8 @@ function main() {
     cronJobs.forEach((j) => j.stop());
     cronJobs = scheduleFeedChecks(dataDirRoot);
   });
+
+  scheduleErrorReportingCheck();
 }
 
 function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
@@ -69,6 +71,14 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
   cronJobs.forEach((j) => j.start());
 
   return cronJobs;
+}
+
+function scheduleErrorReportingCheck() {
+  logError('Starting a daily job to check error reporting');
+
+  new CronJob('0 0 * * *', async () => {
+    logError('Just checking error reporting');
+  }).start();
 }
 
 main();
