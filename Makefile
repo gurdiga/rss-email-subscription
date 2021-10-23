@@ -124,7 +124,7 @@ watch-app:
 		| while read _skip_timestamp _skip_namespace _skip_app json; \
 		do \
 			( \
-				echo "Subject: RES App $$(jq .severity <<<"$$json")"; \
+				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"; \
 				echo "From: wathc-app@feedsubscription.com"; \
 				echo; \
 				jq . <<<"$$json";\
