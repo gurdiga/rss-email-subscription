@@ -119,7 +119,7 @@ snyk:
 	snyk test
 
 watch-app:
-	tail -n0 -f src/rss-email-subscription/.tmp/logs/feedsubscription/app.log \
+	tail -n0 -f .tmp/logs/feedsubscription/app.log \
 		| grep -P '"severity":"(error|warning)"' \
 		| while read line; do (echo "Subject: RES App error"; echo "From: wathc-app@feedsubscription.com"; echo; jq . <<<"$$line";) \
 		| ssmtp gurdiga@gmail.com; done \
