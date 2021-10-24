@@ -132,3 +132,12 @@ watch-app:
 			| ssmtp gurdiga@gmail.com; \
 		done \
 		& disown
+
+unsubscribe-report:
+	@grep "^`date +%F`" .tmp/logs/feedsubscription/subscription.log \
+		| grep '"message":"Unsubscription request"' \
+		| grep -Po 'justaddlightandstir-[^"]+' | while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done \
+		| grep 'POST /unsubscribe' \
+		| grep -Po '(?<=&email=)[^"]+' \
+		| sort -u \
+		| sed 's/%40/@/'
