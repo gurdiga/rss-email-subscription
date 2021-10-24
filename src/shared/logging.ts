@@ -30,3 +30,28 @@ export function logWarning(message: LogRecord['message'], data?: LogRecord['data
 export function logError(message: LogRecord['message'], data?: LogRecord['data']): void {
   log({ severity: 'error', message, data });
 }
+
+interface Loggers {
+  logError: typeof logError;
+  logWarning: typeof logError;
+  logInfo: typeof logInfo;
+}
+
+export type LoggerName = keyof Loggers;
+export type LoggerFunction = Loggers[LoggerName];
+
+function makeModuleLogger(f: LoggerFunction, moduleName: string, feedId: string): LoggerFunction {
+  return (message, data) => f(message, { moduleName, feedId, ...data });
+}
+
+export function makeModuleLoggers(
+  moduleName: string,
+  feedId: string,
+  loggers: Loggers = { logError, logWarning, logInfo }
+): Loggers {
+  return {
+    logError: makeModuleLogger(loggers.logError, moduleName, feedId),
+    logWarning: makeModuleLogger(loggers.logWarning, moduleName, feedId),
+    logInfo: makeModuleLogger(loggers.logInfo, moduleName, feedId),
+  };
+}
