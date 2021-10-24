@@ -57,13 +57,15 @@ describe(recordNewRssItems.name, () => {
     const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
     const mockNameFile = (item: RssItem) => item.pubDate.toJSON() + '.json';
 
-    recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile, mockNameFile);
+    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile, mockNameFile);
 
     expect(writtenFiles).to.deep.equal([
       { path: `/some/dir/inbox/${mockNameFile(rssItems[0])}`, content: JSON.stringify(rssItems[0]) },
       { path: `/some/dir/inbox/${mockNameFile(rssItems[1])}`, content: JSON.stringify(rssItems[1]) },
       { path: `/some/dir/inbox/${mockNameFile(rssItems[2])}`, content: JSON.stringify(rssItems[2]) },
     ]);
+
+    expect(result).to.equal(rssItems.length);
   });
 
   it('reports the error when can’t write file', () => {

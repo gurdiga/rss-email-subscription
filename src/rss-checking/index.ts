@@ -30,15 +30,13 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
   const { validItems, invalidItems } = rssParsingResult;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid RSS items`, { feedId, count: invalidItems.length, invalidItems });
+    logWarning(`Found invalid items`, { feedId, count: invalidItems.length, invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logError(`No valid RSS items`, { feedId, url });
+    logError(`No valid items`, { feedId, url });
     return 1;
   }
-
-  logInfo(`Found valid RSS items`, { feedId, count: validItems.length });
 
   let lastPostTimestamp = getLastPostTimestamp(dataDir);
 
@@ -47,23 +45,29 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
     return 1;
   }
 
-  const newRssItems = selectNewItems(validItems, lastPostTimestamp);
+  const newItems = selectNewItems(validItems, lastPostTimestamp);
 
-  if (newRssItems.length === 0) {
+  if (newItems.length === 0) {
     logInfo(`No new items`, { feedId });
     return;
   }
 
-  const recordingResult = recordNewRssItems(dataDir, newRssItems);
+  const recordingResult = recordNewRssItems(dataDir, newItems);
 
   if (isErr(recordingResult)) {
     logError(`Failed recording new items`, { feedId, reason: recordingResult.reason });
     return 1;
   }
 
-  logInfo(`Recorded new items`, { feedId, itemCount: newRssItems.length });
+  const report = {
+    validItems: validItems.length,
+    newItems: newItems.length,
+    writtenItems: recordingResult,
+  };
 
-  const timestampRecordingResult = recordLastPostTimestamp(dataDir, newRssItems);
+  logInfo(`Feed checking report`, { feedId, report });
+
+  const timestampRecordingResult = recordLastPostTimestamp(dataDir, newItems);
 
   if (isErr(timestampRecordingResult)) {
     logError(`Failed recording last post timestamp`, { feedId, reason: timestampRecordingResult.reason });

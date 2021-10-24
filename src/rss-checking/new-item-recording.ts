@@ -15,8 +15,9 @@ export function recordNewRssItems(
   mkdirpFn: MkdirpFn = mkdirp,
   writeFileFn: WriteFileFn = writeFile,
   nameFileFn: NameFileFn = itemFileName
-): Result<undefined> {
+): Result<number> {
   const inboxDirPath = path.resolve(dataDir.value, inboxDirName);
+  let writtenItemCount = 0;
 
   try {
     mkdirpFn(inboxDirPath);
@@ -31,10 +32,13 @@ export function recordNewRssItems(
 
     try {
       writeFileFn(filePath, fileContent);
+      writtenItemCount++;
     } catch (error) {
       return makeErr(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
     }
   }
+
+  return writtenItemCount;
 }
 
 export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
