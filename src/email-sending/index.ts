@@ -33,11 +33,6 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     logWarning(`Invalid RSS items`, { feedId, invalidItems });
   }
 
-  if (isEmpty(validItems)) {
-    logInfo(`No new items`, { feedId });
-    return 0;
-  }
-
   const { fromAddress } = feedSettings;
   const storedEmails = loadStoredEmails(dataDir);
 
