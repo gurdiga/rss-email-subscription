@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailMessage, makeUnsubscribeUrl, sendItem } from './item-sending';
-import { logError, logInfo, logWarning } from '../shared/logging';
+import { makeModuleLoggers } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { DataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
@@ -13,24 +13,26 @@ import { basename } from 'path';
 
 export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
+  const { logError, logInfo, logWarning } = makeModuleLoggers('email-sending', feedId);
+
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
-    logError(`Invalid environment variables`, { feedId, reason: env.reason });
+    logError(`Invalid environment variables`, { reason: env.reason });
     return 1;
   }
 
   const storedRssItems = readStoredRssItems(dataDir);
 
   if (isErr(storedRssItems)) {
-    logError(`Failed to read RSS items`, { feedId, reason: storedRssItems.reason });
+    logError(`Failed to read RSS items`, { reason: storedRssItems.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = storedRssItems;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Invalid RSS items`, { feedId, invalidItems });
+    logWarning(`Invalid RSS items`, { invalidItems });
   }
 
   if (isEmpty(validItems)) {
@@ -42,7 +44,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
-    logError(`Could not read emails`, { feedId, reason: storedEmails.reason });
+    logError(`Could not read emails`, { reason: storedEmails.reason });
     return 1;
   }
 
@@ -54,7 +56,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   }
 
   if (invalidEmails.length > 0) {
-    logWarning(`Invalid emails`, { feedId, invalidEmails });
+    logWarning(`Invalid emails`, { invalidEmails });
   }
 
   const report = {
@@ -63,7 +65,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     failed: 0,
   };
 
-  logInfo(`Sending new items`, { feedId, itemCount: validItems.length, emailCount: validEmails.length });
+  logInfo(`Sending new items`, { itemCount: validItems.length, emailCount: validEmails.length });
 
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
@@ -83,7 +85,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
         logError(sendingResult.reason, { feedId });
       } else {
         report.sent++;
-        logInfo('Delivery info', { feedId, ...sendingResult });
+        logInfo('Delivery info', { ...sendingResult });
       }
     }
 
@@ -94,5 +96,5 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     }
   }
 
-  logInfo('Sending report', { feedId, report });
+  logInfo('Sending report', { report });
 }
