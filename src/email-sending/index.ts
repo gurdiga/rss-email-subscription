@@ -85,7 +85,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
         logError(sendingResult.reason, { feedId });
       } else {
         report.sent++;
-        logInfo('Delivery info', { ...sendingResult });
+        logInfo('Delivery info', { itemTitle: storedItem.item.title, ...sendingResult });
       }
     }
 
