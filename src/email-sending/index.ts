@@ -36,7 +36,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   }
 
   if (isEmpty(validItems)) {
-    logInfo(`Nothing to send`, { feedId });
+    logInfo(`Nothing to send`);
     return;
   }
 
@@ -51,7 +51,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   const { validEmails, invalidEmails } = storedEmails;
 
   if (isEmpty(validEmails)) {
-    logError(`No valid emails`, { feedId });
+    logError(`No valid emails`);
     return 1;
   }
 
@@ -70,7 +70,6 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   for (const storedItem of validItems) {
     for (const hashedEmail of validEmails) {
       logInfo(`Sending item`, {
-        feedId,
         itemTitle: storedItem.item.title,
         toEmail: hashedEmail.emailAddress.value,
       });
@@ -82,7 +81,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
       if (isErr(sendingResult)) {
         report.failed++;
-        logError(sendingResult.reason, { feedId });
+        logError(sendingResult.reason);
       } else {
         report.sent++;
         logInfo('Delivery info', { itemTitle: storedItem.item.title, ...sendingResult });
@@ -92,7 +91,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     const deletionResult = deleteItem(dataDir, storedItem);
 
     if (isErr(deletionResult)) {
-      logError(deletionResult.reason, { feedId });
+      logError(deletionResult.reason);
     }
   }
 
