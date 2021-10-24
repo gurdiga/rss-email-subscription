@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { log, LoggerFunction, LoggerName, LogRecord, makeModuleLoggers } from './logging';
+import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers } from './logging';
 
 describe(log.name, () => {
   it('sends a structured log record to STDOUT', () => {
@@ -24,22 +24,24 @@ describe(log.name, () => {
   });
 });
 
-describe(makeModuleLoggers.name, () => {
-  it('makes loggers that log their module & feedId besides the passed in data', () => {
-    const moduleName = 'Magic';
-    const feedId = 'justaddlight';
+describe(makeCustomLoggers.name, () => {
+  it('makes loggers that log the given data besides the passed in data', () => {
+    const moduleData = {
+      moduleName: 'Magic',
+      feedId: 'justaddlight',
+    };
 
     const loggers = makeFakeLoggers();
-    const moduleLoggers = makeModuleLoggers(moduleName, feedId, loggers);
+    const customLoggers = makeCustomLoggers(moduleData, loggers);
 
-    moduleLoggers.logError('Opps!', { one: 1 });
-    expect(loggers.logError.calls).to.deep.equal([['Opps!', { moduleName, feedId, one: 1 }]]);
+    customLoggers.logError('Opps!', { one: 1 });
+    expect(loggers.logError.calls).to.deep.equal([['Opps!', { ...moduleData, one: 1 }]]);
 
-    moduleLoggers.logWarning('Beaware', { two: 2 });
-    expect(loggers.logWarning.calls).to.deep.equal([['Beaware', { moduleName, feedId, two: 2 }]]);
+    customLoggers.logWarning('Beaware', { two: 2 });
+    expect(loggers.logWarning.calls).to.deep.equal([['Beaware', { ...moduleData, two: 2 }]]);
 
-    moduleLoggers.logInfo('FYI', { three: 3 });
-    expect(loggers.logInfo.calls).to.deep.equal([['FYI', { moduleName, feedId, three: 3 }]]);
+    customLoggers.logInfo('FYI', { three: 3 });
+    expect(loggers.logInfo.calls).to.deep.equal([['FYI', { ...moduleData, three: 3 }]]);
   });
 
   type CallRecordingFunction = LoggerFunction & {

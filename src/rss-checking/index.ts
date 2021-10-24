@@ -3,7 +3,7 @@ import { isEmpty } from '../shared/array-utils';
 import { DataDir } from '../shared/data-dir';
 import { FeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
-import { makeModuleLoggers } from '../shared/logging';
+import { makeCustomLoggers } from '../shared/logging';
 import { selectNewItems } from './item-selection';
 import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
@@ -12,7 +12,7 @@ import { fetchRss } from './rss-response';
 
 export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
-  const { logError, logInfo, logWarning } = makeModuleLoggers('rss-checking', feedId);
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId });
   const { url } = feedSettings;
   const rssResponse = await fetchRss(url);
 

@@ -40,18 +40,17 @@ interface Loggers {
 export type LoggerName = keyof Loggers;
 export type LoggerFunction = Loggers[LoggerName];
 
-function makeModuleLogger(f: LoggerFunction, moduleName: string, feedId: string): LoggerFunction {
-  return (message, data) => f(message, { moduleName, feedId, ...data });
+function makeModuleLogger(f: LoggerFunction, moduleData?: LogRecord['data']): LoggerFunction {
+  return (message, data) => f(message, { ...moduleData, ...data });
 }
 
-export function makeModuleLoggers(
-  moduleName: string,
-  feedId: string,
+export function makeCustomLoggers(
+  moduleData?: LogRecord['data'],
   loggers: Loggers = { logError, logWarning, logInfo }
 ): Loggers {
   return {
-    logError: makeModuleLogger(loggers.logError, moduleName, feedId),
-    logWarning: makeModuleLogger(loggers.logWarning, moduleName, feedId),
-    logInfo: makeModuleLogger(loggers.logInfo, moduleName, feedId),
+    logError: makeModuleLogger(loggers.logError, moduleData),
+    logWarning: makeModuleLogger(loggers.logWarning, moduleData),
+    logInfo: makeModuleLogger(loggers.logInfo, moduleData),
   };
 }

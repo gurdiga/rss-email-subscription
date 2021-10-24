@@ -3,7 +3,7 @@ import { isErr } from '../shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailMessage, makeUnsubscribeUrl, sendItem } from './item-sending';
-import { makeModuleLoggers } from '../shared/logging';
+import { makeCustomLoggers } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { DataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
@@ -13,7 +13,7 @@ import { basename } from 'path';
 
 export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
-  const { logError, logInfo, logWarning } = makeModuleLoggers('email-sending', feedId);
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
