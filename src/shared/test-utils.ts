@@ -1,9 +1,9 @@
-export type CallRecordingFunction<F extends Function = Function> = F & {
+export type Spy<F extends Function = Function> = F & {
   calls: any[][];
 };
 
-export function makeCallRecordingFunction<F extends Function>(): CallRecordingFunction<F> {
-  const callRecordingFunction: any = (...args: any[]) => (callRecordingFunction.calls ||= []).push(args);
+export function makeSpy<F extends Function>(): Spy<F> {
+  const spy: any = (...args: any[]) => (spy.calls ||= []).push(args);
 
-  return callRecordingFunction;
+  return spy;
 }

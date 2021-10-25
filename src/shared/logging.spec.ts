@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { StdOutPrinterFn } from './io';
 import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers } from './logging';
-import { CallRecordingFunction, makeCallRecordingFunction } from './test-utils';
+import { Spy, makeSpy } from './test-utils';
 
 describe(log.name, () => {
   it('sends a structured log record to STDOUT', () => {
@@ -14,7 +14,7 @@ describe(log.name, () => {
       },
     };
 
-    const mockStdOutPrinter = makeCallRecordingFunction<StdOutPrinterFn>();
+    const mockStdOutPrinter = makeSpy<StdOutPrinterFn>();
     const expectedMessage = JSON.stringify(record);
 
     log(record, mockStdOutPrinter);
@@ -42,11 +42,11 @@ describe(makeCustomLoggers.name, () => {
     expect(loggers.logInfo.calls).to.deep.equal([['FYI', { ...moduleData, three: 3 }]]);
   });
 
-  function makeFakeLoggers(): Record<LoggerName, CallRecordingFunction<LoggerFunction>> {
+  function makeFakeLoggers(): Record<LoggerName, Spy<LoggerFunction>> {
     return {
-      logError: makeCallRecordingFunction(),
-      logWarning: makeCallRecordingFunction(),
-      logInfo: makeCallRecordingFunction(),
+      logError: makeSpy(),
+      logWarning: makeSpy(),
+      logInfo: makeSpy(),
     };
   }
 });
