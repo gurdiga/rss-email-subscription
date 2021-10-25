@@ -1,4 +1,5 @@
 import Parser, { Item } from 'rss-parser';
+import { sortBy, SortDirection } from '../shared/array-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { makeUrl } from '../shared/url';
@@ -27,7 +28,7 @@ export async function parseRssItems(
       const validItems = items
         .filter(isValidRssItem)
         .map((i) => i.value)
-        .sort((a, b) => (a.pubDate < b.pubDate ? 1 : -1))
+        .sort(sortBy((i) => i.pubDate, SortDirection.Desc))
         .slice(0, maxValidItems);
       const invalidItems = items.filter(isInvalidRssItem);
 
