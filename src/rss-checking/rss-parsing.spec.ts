@@ -15,7 +15,7 @@ import {
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
-  it('returns a RssParseResult containing the items', async () => {
+  it('returns a RssParsingResult containing the items', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
     const expectedValidItems: RssItem[] = [
       {
@@ -48,7 +48,7 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
-      kind: 'RssParseResult',
+      kind: 'RssParsingResult',
       validItems: expectedValidItems,
       invalidItems: [],
     } as RssParsingResult);
@@ -82,7 +82,7 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
-      kind: 'RssParseResult',
+      kind: 'RssParsingResult',
       validItems: expectedValidItems,
       invalidItems: [],
     } as RssParsingResult);
@@ -113,7 +113,7 @@ describe(parseRssItems.name, () => {
     ]);
   });
 
-  it('returns the invalid items into invalidItems of RssParseResult', async () => {
+  it('returns the invalid items into invalidItems of RssParsingResult', async () => {
     const xml = `
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -145,7 +145,7 @@ describe(parseRssItems.name, () => {
     });
 
     expect(result).to.deep.equal({
-      kind: 'RssParseResult',
+      kind: 'RssParsingResult',
       validItems: [
         {
           title: 'Valid item',
@@ -171,7 +171,7 @@ describe(parseRssItems.name, () => {
     } as RssParsingResult);
   });
 
-  it('returns an InvalidRssParseResult value when invalid XML', async () => {
+  it('returns an InvalidRssParsingResult value when invalid XML', async () => {
     const xml = `
     <?xml version="1.0" encoding="utf-8"?>
     <feed xmlns="http://www.w3.org/2005/Atom">
@@ -195,7 +195,7 @@ describe(parseRssItems.name, () => {
     expect(result).to.deep.equal(makeErr(`Invalid XML: ${xml}`));
   });
 
-  it('returns an InvalidRssParseResult value when buildRssItem throws', async () => {
+  it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
     const buildRssItemFn: BuildRssItemFn = () => {
       throw new Error('Something broke!');

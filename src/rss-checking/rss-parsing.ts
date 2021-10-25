@@ -6,7 +6,7 @@ import { makeUrl } from '../shared/url';
 import { RssResponse } from './rss-response';
 
 export interface RssParsingResult {
-  kind: 'RssParseResult';
+  kind: 'RssParsingResult';
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
 }
@@ -33,7 +33,7 @@ export async function parseRssItems(
       const invalidItems = items.filter(isInvalidRssItem);
 
       return {
-        kind: 'RssParseResult',
+        kind: 'RssParsingResult',
         validItems,
         invalidItems,
       };
