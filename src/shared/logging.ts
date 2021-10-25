@@ -8,13 +8,8 @@ export interface LogRecord {
   data?: object;
 }
 
-export function log(
-  record: LogRecord,
-  timestampFn: TimestampFn = timestamp,
-  stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter
-) {
-  const timestamp = timestampFn();
-  const message = JSON.stringify({ ...record, timestamp });
+export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
+  const message = JSON.stringify(record);
 
   stdOutPrinterFn(message);
 }
