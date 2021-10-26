@@ -30,8 +30,6 @@ services:
       POSTFIX_notify_classes: 'bounce,resource,software'
       POSTFIX_bounce_notice_recipient: gurdiga@gmail.com
       POSTFIX_2bounce_notice_recipient: gurdiga@gmail.com
-      POSTFIX_resource_notice_recipient: gurdiga@gmail.com
-      POSTFIX_software_notice_recipient: gurdiga@gmail.com
       POSTFIX_delay_notice_recipient: gurdiga@gmail.com
       POSTFIX_error_notice_recipient: gurdiga@gmail.com
 
