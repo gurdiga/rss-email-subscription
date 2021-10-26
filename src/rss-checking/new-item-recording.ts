@@ -5,7 +5,7 @@ import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
 import { makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 
-type NameFileFn = (item: RssItem) => string;
+export type NameFileFn = (item: RssItem) => string;
 
 export const inboxDirName = 'inbox';
 

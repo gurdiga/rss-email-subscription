@@ -3,6 +3,7 @@ import path from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
+import { makeThrowingStub } from '../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem } from './item-sending';
@@ -59,10 +60,7 @@ describe('item-sending', () => {
 
     it('returns an Err value when delivery fails', async () => {
       const mockError = new Error('Cant!');
-      const deliverEmailFn: DeliverEmailFn = () => {
-        throw mockError;
-      };
-
+      const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(mockError);
       const result = await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${mockError.message}`));

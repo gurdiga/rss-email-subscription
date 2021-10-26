@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { EmailAddress, HashedEmail, isEmailAddress, makeEmailAddress, makeHashedEmail } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
+import { makeStub } from '../shared/test-utils';
 import { parseUnsubscriptionId, removeEmail } from './unsubscription';
 
 describe(parseUnsubscriptionId.name, () => {
@@ -51,8 +52,7 @@ describe(removeEmail.name, () => {
   ]
     .map(makeEmailAddress)
     .filter(isEmailAddress);
-  const emailHashFn = (x: EmailAddress) => `##${x.value}##`;
-
+  const emailHashFn = makeStub((x: EmailAddress) => `##${x.value}##`);
   const hashedEmails = emailAddresses.map((x) => makeHashedEmail(x, emailHashFn));
 
   it('removes the email with the corresponding hash from the given list', () => {

@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
+import { makeThrowingStub } from '../shared/test-utils';
 import {
   buildRssItem,
   parseRssItems,
@@ -197,9 +198,7 @@ describe(parseRssItems.name, () => {
 
   it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
     const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
-    const buildRssItemFn: BuildRssItemFn = () => {
-      throw new Error('Something broke!');
-    };
+    const buildRssItemFn = makeThrowingStub<BuildRssItemFn>(new Error('Something broke!'));
 
     const result = (await parseRssItems(
       {

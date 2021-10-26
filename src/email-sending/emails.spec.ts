@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
+import { ReadFileFn, WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
+import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
 import {
   EmailAddress,
   EmailHashFn,
@@ -78,7 +80,7 @@ describe(parseEmails.name, () => {
 describe(indexEmails.name, () => {
   it('indexes emails by their salted hash', () => {
     const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
-    const hashFn: EmailHashFn = (e) => `#${e.value}#`;
+    const hashFn = makeStub<EmailHashFn>((e) => `#${e.value}#`);
     const result = indexEmails(emailAddresses, hashFn);
 
     expect(result).to.deep.equal({
@@ -155,11 +157,7 @@ describe(readEmailListFromFile.name, () => {
   const filePath = '/some/file.txt';
 
   it('reads and parses the emails from the given one-per-line file', () => {
-    let actualFilePath = '';
-    const readFile = (_filePath: string) => {
-      actualFilePath = _filePath;
-      return ['a@test.com', 'b@test.com', 'c@test.com'].join('\n');
-    };
+    const readFile = makeStub<ReadFileFn>(() => ['a@test.com', 'b@test.com', 'c@test.com'].join('\n'));
 
     const expectedResult: EmailList = {
       kind: 'EmailList',
@@ -172,15 +170,13 @@ describe(readEmailListFromFile.name, () => {
     };
     const result = readEmailListFromFile(filePath, readFile);
 
-    expect(actualFilePath).to.equal(filePath);
+    expect(readFile.calls).to.deep.equal([[filePath]]);
     expect(result).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when can’t read the file', () => {
     const error = new Error('Read failed for some reason');
-    const readFile = (_filePath: string) => {
-      throw error;
-    };
+    const readFile = makeThrowingStub<ReadFileFn>(error);
     const result = readEmailListFromFile(filePath, readFile);
 
     expect(result).to.deep.equal(makeErr(`Could not read email list from file ${filePath}: ${error.message}`));
@@ -191,32 +187,29 @@ describe(storeEmailIndex.name, () => {
   const dataDirString = '/some/path';
   const dataDir = makeDataDir(dataDirString) as DataDir;
   const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
-  const emailHash = (e: EmailAddress) => `#${e.value}#`;
+  const emailHash = makeStub<EmailHashFn>((e: EmailAddress) => `#${e.value}#`);
   const emailIndex = indexEmails(emailAddresses, emailHash);
 
   it('stores the given email index', () => {
-    let writtenFile = { path: '', content: '' };
-    const writeFile = (path: string, content: string) => (writtenFile = { path, content });
+    const writeFile = makeSpy<WriteFileFn>();
 
-    const expectedFileWrite = {
-      path: `${dataDirString}/${emailsFileName}`,
-      content: JSON.stringify({
+    const expectedFileWrite = [
+      `${dataDirString}/${emailsFileName}`,
+      JSON.stringify({
         '#a@test.com#': 'a@test.com',
         '#b@test.com#': 'b@test.com',
         '#c@test.com#': 'c@test.com',
       }),
-    };
+    ];
     const result = storeEmailIndex(dataDir, emailIndex, writeFile);
 
-    expect(writtenFile).to.deep.equal(expectedFileWrite);
+    expect(writeFile.calls).to.deep.equal([expectedFileWrite]);
     expect(result).to.be.undefined;
   });
 
   it('returns an Err value when can’t write file', () => {
     const error = new Error('File write failed!?');
-    const writeFile = () => {
-      throw error;
-    };
+    const writeFile = makeThrowingStub<WriteFileFn>(error);
     const result = storeEmailIndex(dataDir, emailIndex, writeFile);
 
     expect(result).to.deep.equal(
@@ -236,15 +229,10 @@ describe(loadStoredEmails.name, () => {
   };
 
   it('returns a list of stored emails with their hashes', () => {
-    let actualFilePath = '';
-    const readFile = (_filePath: string) => {
-      actualFilePath = _filePath;
-      return JSON.stringify(index);
-    };
-
+    const readFile = makeStub(() => JSON.stringify(index));
     const result = loadStoredEmails(dataDir, readFile);
 
-    expect(actualFilePath).to.equal(`${dataDirString}/${emailsFileName}`);
+    expect(readFile.calls).to.deep.equal([[`${dataDirString}/${emailsFileName}`]]);
     expect(result).to.deep.equal({
       validEmails: [
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
@@ -265,7 +253,7 @@ describe(loadStoredEmails.name, () => {
       hash6: [1, 2, 3],
     };
 
-    const readFile = (_filePath: string) => JSON.stringify(index);
+    const readFile = makeStub(() => JSON.stringify(index));
     const result = loadStoredEmails(dataDir, readFile);
 
     expect(result).to.deep.equal({
@@ -284,7 +272,7 @@ describe(loadStoredEmails.name, () => {
 
   it('returns an Err value when the JSON is not an object', () => {
     let fileContent = '';
-    const readFile = (_filePath: string) => fileContent;
+    const readFile = makeStub<ReadFileFn>(() => fileContent);
     const invalidJsonStrings = ['null', '[]', '"string"', '42', 'true'];
 
     for (fileContent of invalidJsonStrings) {
@@ -296,17 +284,14 @@ describe(loadStoredEmails.name, () => {
   });
 
   it('returns an Err value when JSON is not valid', () => {
-    const fileContent = '}';
-    const readFile = (_filePath: string) => fileContent;
+    const readFile = makeStub<ReadFileFn>(() => '}');
 
     expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(makeErr('Invalid JSON in /some/path/emails.json'));
   });
 
   it('returns an Err value when can’t read file', () => {
     const error = new Error('No access');
-    const readFile = (_filePath: string) => {
-      throw error;
-    };
+    const readFile = makeThrowingStub<ReadFileFn>(error);
 
     expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(
       makeErr(`Can’t read file /some/path/emails.json: ${error.message}`)

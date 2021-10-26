@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
+import { DeleteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
+import { makeSpy, makeThrowingStub } from '../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { ValidStoredRssItem } from './rss-item-reading';
 
@@ -22,20 +24,16 @@ describe(deleteItem.name, () => {
   };
 
   it('removes the given item from the given dataDir', () => {
-    let actualPath = '';
-    const mockDeleteFileFn = (path: string) => (actualPath = path);
+    const deleteFileFn = makeSpy<DeleteFileFn>();
+    const result = deleteItem(dataDir, storedRssItem, deleteFileFn);
 
-    const result = deleteItem(dataDir, storedRssItem, mockDeleteFileFn);
-
-    expect(actualPath).to.equal(`${dataDirPathString}/inbox/${storedRssItem.fileName}`);
+    expect(deleteFileFn.calls).to.deep.equal([[`${dataDirPathString}/inbox/${storedRssItem.fileName}`]]);
     expect(result).to.be.undefined;
   });
 
   it('returns an Err value when can’t delete (maybe it’s not there?)', () => {
     const error = new Error('Can’t access?!');
-    const mockDeleteFileFn = (_path: string) => {
-      throw error;
-    };
+    const mockDeleteFileFn = makeThrowingStub<DeleteFileFn>(error);
 
     const result = deleteItem(dataDir, storedRssItem, mockDeleteFileFn);
     expect(result).to.deep.equal(

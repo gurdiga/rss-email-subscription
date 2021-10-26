@@ -4,18 +4,19 @@ import { sortBy } from '../shared/array-utils';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ListFilesFn, ReadFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
+import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
 describe(readStoredRssItems.name, () => {
   const dataDirPathString = '/some/path';
-  const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
+  const dataDir = makeDataDir(dataDirPathString) as DataDir;
 
   interface MockFile {
     fileName: string;
     fileContent: string;
   }
 
-  const mockFiles: MockFile[] = [
+  const files: MockFile[] = [
     {
       fileName: 'rss-item-c86ddb2b80f258a6fe4c5005282bf21a6fd6a5f08ed4efce15ee5f6b20599df4.json',
       fileContent: JSON.stringify({
@@ -50,18 +51,17 @@ describe(readStoredRssItems.name, () => {
   ];
 
   it('returns the list of items in data/inbox ordered by pubDate', () => {
-    let actualDirPath = '';
-    const mockListFilesFn = makeMockListFilesFn(mockFiles, (path) => (actualDirPath = path));
-    const mockReadFileFn = makeMockReadFileFn(mockFiles);
+    const listFilesFn = makeStub<ListFilesFn>(() => files.map((f) => f.fileName));
+    const readFileFn = makeReadFileFnStub(files);
 
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
-      validItems: mockValidItems(mockFiles),
+      validItems: makeMockValidItems(files),
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
-    expect(actualDirPath).to.equal('/some/path/inbox');
+    expect(readStoredRssItems(dataDir, readFileFn, listFilesFn)).to.deep.equal(expectedResul);
+    expect(listFilesFn.calls).to.deep.equal([['/some/path/inbox']]);
   });
 
   it('also returns the files with unparsable JSON', () => {
@@ -69,13 +69,13 @@ describe(readStoredRssItems.name, () => {
       fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: 'not-a-valid-json-string',
     };
-    const mockFilesWithInvalidItems = [...mockFiles, invalidFile];
-    const mockListFilesFn = makeMockListFilesFn(mockFilesWithInvalidItems);
-    const mockReadFileFn = makeMockReadFileFn(mockFilesWithInvalidItems);
+    const filesWithInvalidItems = [...files, invalidFile];
+    const listFilesFn = makeStub<ListFilesFn>(() => filesWithInvalidItems.map((f) => f.fileName));
+    const readFileFn = makeReadFileFnStub(filesWithInvalidItems);
 
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
-      validItems: mockValidItems(mockFiles),
+      validItems: makeMockValidItems(files),
       invalidItems: [
         {
           kind: 'InvalidStoredRssItem',
@@ -85,7 +85,7 @@ describe(readStoredRssItems.name, () => {
       ],
     };
 
-    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(dataDir, readFileFn, listFilesFn)).to.deep.equal(expectedResul);
   });
 
   it('also returns the files with invalid data', () => {
@@ -93,13 +93,13 @@ describe(readStoredRssItems.name, () => {
       fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
       fileContent: '{"invalid-data": true}',
     };
-    const mockFilesWithInvalidItems = [...mockFiles, invalidFile];
-    const mockListFilesFn = makeMockListFilesFn(mockFilesWithInvalidItems);
-    const mockReadFileFn = makeMockReadFileFn(mockFilesWithInvalidItems);
+    const filesWithInvalidItems = [...files, invalidFile];
+    const listFilesFn = makeStub<ListFilesFn>(() => filesWithInvalidItems.map((f) => f.fileName));
+    const readFileFn = makeReadFileFnStub(filesWithInvalidItems);
 
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
-      validItems: mockValidItems(mockFiles),
+      validItems: makeMockValidItems(files),
       invalidItems: [
         {
           kind: 'InvalidStoredRssItem',
@@ -109,7 +109,7 @@ describe(readStoredRssItems.name, () => {
       ],
     };
 
-    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(dataDir, readFileFn, listFilesFn)).to.deep.equal(expectedResul);
   });
 
   it('ignores files that do not match expected naming convention', () => {
@@ -117,44 +117,34 @@ describe(readStoredRssItems.name, () => {
       fileName: 'some-file.json',
       fileContent: '{"some": "json-data"}',
     };
-    const mockFilesWithInvalidItems = [...mockFiles, invalidFile];
-    const mockListFilesFn = makeMockListFilesFn(mockFilesWithInvalidItems);
-    const mockReadFileFn = makeMockReadFileFn(mockFilesWithInvalidItems);
+    const filesWithInvalidItems = [...files, invalidFile];
+    const listFilesFn = makeStub<ListFilesFn>(() => filesWithInvalidItems.map((f) => f.fileName));
+    const readFileFn = makeReadFileFnStub(filesWithInvalidItems);
 
     const expectedResult: RssReadingResult = {
       kind: 'RssReadingResult',
-      validItems: mockValidItems(mockFiles),
+      validItems: makeMockValidItems(files),
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(mockDataDir, mockReadFileFn, mockListFilesFn)).to.deep.equal(expectedResult);
+    expect(readStoredRssItems(dataDir, readFileFn, listFilesFn)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when data/inbox does not exist', () => {
     const error = new Error('Not there?!');
-    const listFilesFn = () => {
-      throw error;
-    };
-    const readFileFn = () => '';
+    const listFilesFn = makeThrowingStub<ListFilesFn>(error);
+    const readFileFn = makeSpy<ReadFileFn>();
 
-    expect(readStoredRssItems(mockDataDir, readFileFn, listFilesFn)).to.deep.equal(
-      makeErr(`Can’t list files in ${mockDataDir.value}/inbox: ${error.message}`)
+    expect(readStoredRssItems(dataDir, readFileFn, listFilesFn)).to.deep.equal(
+      makeErr(`Can’t list files in ${dataDir.value}/inbox: ${error.message}`)
     );
   });
 
-  function makeMockReadFileFn(mockFiles: MockFile[]): ReadFileFn {
+  function makeReadFileFnStub(mockFiles: MockFile[]): ReadFileFn {
     return (path) => mockFiles.find((f) => f.fileName === basename(path))?.fileContent!;
   }
 
-  function makeMockListFilesFn(mockFiles: MockFile[], callback: (path: string) => void = () => {}): ListFilesFn {
-    return (path) => {
-      callback(path);
-
-      return mockFiles.map((f) => f.fileName);
-    };
-  }
-
-  function mockValidItems(mockFiles: MockFile[]): ValidStoredRssItem[] {
+  function makeMockValidItems(mockFiles: MockFile[]): ValidStoredRssItem[] {
     return mockFiles
       .map((f) => makeStoredRssItem(f.fileName, f.fileContent) as ValidStoredRssItem)
       .sort(sortBy(({ item }) => item.pubDate));

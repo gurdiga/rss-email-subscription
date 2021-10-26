@@ -3,7 +3,9 @@ import { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
+import { ReadFileFn } from './io';
 import { makeErr, Result } from './lang';
+import { makeStub, makeThrowingStub } from './test-utils';
 
 describe(getFeedSettings.name, () => {
   const feedId = 'jalas';
@@ -19,15 +21,10 @@ describe(getFeedSettings.name, () => {
   };
 
   it('returns a FeedSettings value from feed.json', () => {
-    let actualPath = '';
-    const mockReadFileFn = (path: string) => {
-      actualPath = path;
-      return JSON.stringify(data);
-    };
+    const readFileFn = makeStub<ReadFileFn>((_path) => JSON.stringify(data));
+    const result = getFeedSettings(dataDir, readFileFn);
 
-    const result = getFeedSettings(dataDir, mockReadFileFn);
-
-    expect(actualPath).to.equal(`${dataDirPathString}/feed.json`);
+    expect(readFileFn.calls).to.deep.equal([[`${dataDirPathString}/feed.json`]]);
     expect(result).to.deep.equal({
       displayName: data.displayName,
       url: new URL(data.url),
@@ -39,9 +36,9 @@ describe(getFeedSettings.name, () => {
   });
 
   it('defaults cronPattern to every hour', () => {
-    const localData = { ...data, cronPattern: undefined };
-    const mockReadFileFn = (_path: string) => JSON.stringify(localData);
-    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
+    const dataWithoutCronPattern = { ...data, cronPattern: undefined };
+    const readFileFn = makeStub((_path: string) => JSON.stringify(dataWithoutCronPattern));
+    const result = getFeedSettings(dataDir, readFileFn) as FeedSettings;
 
     expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
@@ -54,8 +51,8 @@ describe(getFeedSettings.name, () => {
       fromAddress: 'some@test.com',
     };
 
-    const mockReadFileFn = (_path: string) => JSON.stringify(data);
-    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
+    const readFileFn = makeStub<ReadFileFn>((_path: string) => JSON.stringify(data));
+    const result = getFeedSettings(dataDir, readFileFn) as FeedSettings;
 
     expect(result.replyTo.value).to.equal('feedback@feedsubscription.com');
   });
@@ -67,35 +64,33 @@ describe(getFeedSettings.name, () => {
       fromAddress: 'some@test.com',
     };
 
-    const mockReadFileFn = (_path: string) => JSON.stringify(data);
-    const result = getFeedSettings(dataDir, mockReadFileFn) as FeedSettings;
+    const readFileFn = makeStub<ReadFileFn>((_path: string) => JSON.stringify(data));
+    const result = getFeedSettings(dataDir, readFileFn) as FeedSettings;
 
     expect(result.displayName).to.deep.equal(basename(dataDir.value));
   });
 
   it('returns an Err value when the data is invalid', () => {
     const mockError = new Error('File not there?');
-    const readFileFnThrows = () => {
-      throw mockError;
-    };
-    const result = getFeedSettings(dataDir, readFileFnThrows);
+    const readFileFn = makeThrowingStub<ReadFileFn>(mockError);
+    const result = getFeedSettings(dataDir, readFileFn);
 
     expect(result).to.deep.equal(makeErr(`Can’t read file ${dataDirPathString}/feed.json: ${mockError.message}`));
 
-    const fromJson = (jsonString: string): Result<FeedSettings> => {
+    const resultForJson = (jsonString: string): Result<FeedSettings> => {
       return getFeedSettings(dataDir, () => jsonString);
     };
 
-    expect(fromJson('non-json-string')).to.deep.equal(
+    expect(resultForJson('non-json-string')).to.deep.equal(
       makeErr(`Can’t parse JSON in ${dataDirPathString}/feed.json: Unexpected token o in JSON at position 1,`)
     );
-    expect(fromJson('{"url": "not-a-url"}')).to.deep.equal(
+    expect(resultForJson('{"url": "not-a-url"}')).to.deep.equal(
       makeErr(`Invalid feed URL in ${dataDirPathString}/feed.json: not-a-url`)
     );
-    expect(fromJson('{"url": "https://a.com", "hashingSalt": 42}')).to.deep.equal(
+    expect(resultForJson('{"url": "https://a.com", "hashingSalt": 42}')).to.deep.equal(
       makeErr(`Invalid hashing salt in ${dataDirPathString}/feed.json: 42`)
     );
-    expect(fromJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
+    expect(resultForJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
       makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 non-space characters required`)
     );
   });

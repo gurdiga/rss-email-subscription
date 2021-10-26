@@ -1,8 +1,10 @@
 import { expect } from 'chai';
 import { RssItem } from '../shared/rss-item';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
+import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../shared/lang';
+import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
+import { MkdirpFn, WriteFileFn } from '../shared/io';
 
 describe(recordNewRssItems.name, () => {
   const dataDir = makeDataDir('/some/dir/') as DataDir;
@@ -29,55 +31,45 @@ describe(recordNewRssItems.name, () => {
       link: new URL('https://test.com/item-three'),
     },
   ];
-  const mockMkdirp = (_path: string) => {};
-  const mockWriteFile = (_path: string, _content: string) => {};
+  const mkdirp = makeStub<MkdirpFn>();
+  const writeFile = makeStub<WriteFileFn>();
 
   it('creates the ./data/inbox directory if it does not exist', () => {
-    let createdDirectory = '';
-    const mockMkdirp = (path: string) => (createdDirectory = path);
+    const mkdirp = makeSpy<MkdirpFn>();
 
-    recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
-
-    expect(createdDirectory).to.equal('/some/dir/inbox');
+    recordNewRssItems(dataDir, rssItems, mkdirp, writeFile);
+    expect(mkdirp.calls).to.deep.equal([['/some/dir/inbox']]);
   });
 
   it('reports when cant create the ./data/inbox directory', () => {
-    const mockError = new Error('Disk is full');
-    const mockMkdirp = (_path: string) => {
-      throw mockError;
-    };
+    const error = new Error('Disk is full');
+    const mkdirp = makeThrowingStub<MkdirpFn>(error);
+    const result = recordNewRssItems(dataDir, rssItems, mkdirp);
 
-    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp);
-
-    expect(result).to.deep.equal(makeErr(`Cant create /some/dir/inbox directory: ${mockError}`));
+    expect(result).to.deep.equal(makeErr(`Cant create /some/dir/inbox directory: ${error}`));
   });
 
   it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
-    const writtenFiles: { path: string; content: string }[] = [];
-    const mockWriteFile = (path: string, content: string) => writtenFiles.push({ path, content });
-    const mockNameFile = (item: RssItem) => item.pubDate.toJSON() + '.json';
+    const writeFile = makeSpy<WriteFileFn>();
+    const nameFile = makeStub<NameFileFn>((item) => item.pubDate.toJSON() + '.json');
 
-    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile, mockNameFile);
+    const result = recordNewRssItems(dataDir, rssItems, mkdirp, writeFile, nameFile);
 
-    expect(writtenFiles).to.deep.equal([
-      { path: `/some/dir/inbox/${mockNameFile(rssItems[0])}`, content: JSON.stringify(rssItems[0]) },
-      { path: `/some/dir/inbox/${mockNameFile(rssItems[1])}`, content: JSON.stringify(rssItems[1]) },
-      { path: `/some/dir/inbox/${mockNameFile(rssItems[2])}`, content: JSON.stringify(rssItems[2]) },
+    expect(writeFile.calls).to.deep.equal([
+      [`/some/dir/inbox/${nameFile(rssItems[0])}`, JSON.stringify(rssItems[0])],
+      [`/some/dir/inbox/${nameFile(rssItems[1])}`, JSON.stringify(rssItems[1])],
+      [`/some/dir/inbox/${nameFile(rssItems[2])}`, JSON.stringify(rssItems[2])],
     ]);
-
     expect(result).to.equal(rssItems.length);
   });
 
   it('reports the error when can’t write file', () => {
-    const mockError = new Error('No write access');
-    const mockWriteFile = (_path: string, _content: string) => {
-      throw mockError;
-    };
-
-    const result = recordNewRssItems(dataDir, rssItems, mockMkdirp, mockWriteFile);
+    const error = new Error('No write access');
+    const writeFile = makeThrowingStub<WriteFileFn>(error);
+    const result = recordNewRssItems(dataDir, rssItems, mkdirp, writeFile);
 
     expect(result).to.deep.equal(
-      makeErr(`Cant write RSS item file to inbox: ${mockError}, item: ${JSON.stringify(rssItems[0])}`)
+      makeErr(`Cant write RSS item file to inbox: ${error}, item: ${JSON.stringify(rssItems[0])}`)
     );
   });
 
@@ -90,9 +82,9 @@ describe(recordNewRssItems.name, () => {
         pubDate: new Date('2020-01-03T10:50:16-06:00'),
         link: new URL('https://test.com/item-two'),
       };
-      const mockHash = (s: string) => '-42';
+      const hashFn = makeStub((s: string) => '-42');
 
-      expect(itemFileName(item, mockHash)).to.equal(`${RSS_ITEM_FILE_PREFIX}-42.json`);
+      expect(itemFileName(item, hashFn)).to.equal(`${RSS_ITEM_FILE_PREFIX}-42.json`);
     });
   });
 });
