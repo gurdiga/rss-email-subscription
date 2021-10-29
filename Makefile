@@ -82,7 +82,7 @@ start-delivery-only:
 		-- smtp-out app
 
 stop:
-	docker-compose down
+	docker-compose --project-name res down
 
 restart: stop start
 
