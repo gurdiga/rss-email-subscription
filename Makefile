@@ -111,8 +111,8 @@ website:
 website-reload:
 	docker exec website nginx -s reload
 
-subscription:
-	node_modules/.bin/ts-node src/subscription/server.ts
+api:
+	node_modules/.bin/ts-node src/api/server.ts
 
 # TODO: Is there a way to signup to receive an email when someting is found?
 snyk:
@@ -134,7 +134,7 @@ watch-app:
 		& disown
 
 unsubscribe-report:
-	@grep "^`date +%F`" .tmp/logs/feedsubscription/subscription.log \
+	@grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"Unsubscription request"' \
 		| grep -Po 'justaddlightandstir-[^"]+' | while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done \
 		| grep 'POST /unsubscribe' \

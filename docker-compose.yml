@@ -72,13 +72,13 @@ services:
     command: node_modules/.bin/ts-node src/cron.ts
     <<: *logging
 
-  subscription:
-    container_name: subscription
-    hostname: subscription
+  api:
+    container_name: api
+    hostname: api
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     ports: ['127.0.0.1:3000:3000']
-    command: node_modules/.bin/ts-node src/subscription/server.ts
+    command: node_modules/.bin/ts-node src/api/server.ts
     volumes:
       - .tmp/docker-data:/data
     environment:

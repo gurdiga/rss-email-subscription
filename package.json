@@ -5,9 +5,7 @@
   "main": "index.js",
   "scripts": {},
   "keywords": [
-    "feedburner",
-    "email",
-    "subscription",
+    "rss-to-email",
     "blog",
     "rss"
   ],
