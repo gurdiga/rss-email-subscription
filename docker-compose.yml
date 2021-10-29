@@ -33,6 +33,7 @@ services:
       POSTFIX_2bounce_notice_recipient: gurdiga@gmail.com
       POSTFIX_delay_notice_recipient: gurdiga@gmail.com
       POSTFIX_error_notice_recipient: gurdiga@gmail.com
+      POSTFIX_message_size_limit: 10485760 # 10M
 
       # https://wiki.deimos.fr/Postfix:_limit_outgoing_mail_throttling
       POSTFIX_smtp_destination_concurrency_limit: 1
