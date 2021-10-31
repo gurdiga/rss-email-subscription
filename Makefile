@@ -133,6 +133,21 @@ watch-app:
 		done \
 		& disown
 
+watch-smtp-out:
+	tail -n0 -f .tmp/logs/feedsubscription/smtp-out.log \
+		| grep --line-buffered -P '(warning|error|fatal|panic):' \
+		| while read _1 _2 _3 timestamp level message; \
+		do \
+			( \
+				echo "Subject: RES smtp-out $$level"; \
+				echo "From: watch-smtp-out@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf` \
+				echo; \
+				echo "$$message";\
+			) \
+			| ssmtp gurdiga@gmail.com; \
+		done \
+		& disown
+
 unsubscribe-report:
 	@grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"Unsubscription request"' \
