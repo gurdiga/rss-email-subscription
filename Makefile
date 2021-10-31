@@ -120,7 +120,7 @@ snyk:
 
 watch-app:
 	tail -n0 -f .tmp/logs/feedsubscription/app.log \
-		| grep --line-buffered -P '"severity":"(error|warning)"' \
+		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"Sending report")' \
 		| while read _skip_timestamp _skip_namespace _skip_app json; \
 		do \
 			( \
