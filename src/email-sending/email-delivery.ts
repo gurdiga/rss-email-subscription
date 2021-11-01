@@ -2,7 +2,6 @@ import nodemailer, { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
 import { DOMAIN_NAME } from '../shared/feed-settings';
-import { logInfo } from '../shared/logging';
 import { FullEmailAddress } from './emails';
 
 export interface EmailDeliveryEnv {
