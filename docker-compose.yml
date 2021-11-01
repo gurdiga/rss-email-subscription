@@ -11,7 +11,7 @@ x-logging: &logging
 
 x-app-env: &app-env
   TZ: UTC
-  NODE_ENV: production #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+  NODE_ENV: ${NODE_ENV:-production} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
   DATA_DIR_ROOT: /data
 
 services:
@@ -68,7 +68,7 @@ services:
     volumes:
       - .tmp/docker-data:/data
     environment:
-      SMTP_CONNECTION_STRING: smtp://smtp-out:587
+      SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING:-smtp://smtp-out:587}
       <<: *app-env
     command: node_modules/.bin/ts-node src/cron.ts
     <<: *logging
