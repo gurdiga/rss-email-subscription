@@ -66,7 +66,7 @@ services:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
-      - .tmp/docker-data:/data
+      - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
     environment:
       SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING:-smtp://smtp-out:587}
       <<: *app-env
