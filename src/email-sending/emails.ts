@@ -1,8 +1,9 @@
 import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
+import { hash } from '../shared/crypto';
 import { DataDir } from '../shared/data-dir';
 import { readFile, ReadFileFn, writeFile, WriteFileFn } from '../shared/io';
-import { Err, getErrorMessage, getTypeName, isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
+import { getErrorMessage, getTypeName, isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -141,6 +142,10 @@ export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHa
     emailAddress,
     saltedHash: emailHashFn(emailAddress),
   };
+}
+
+export function makeEmailHashFn(hashingSalt: string): EmailHashFn {
+  return (e: EmailAddress) => hash(e.value, hashingSalt);
 }
 
 function isHashedEmail(value: any): value is HashedEmail {

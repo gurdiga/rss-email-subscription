@@ -1,10 +1,7 @@
 import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
-
-interface Success {
-  kind: 'Success';
-}
+import { Success } from './shared';
 
 interface NotFound {
   kind: 'NotFound';

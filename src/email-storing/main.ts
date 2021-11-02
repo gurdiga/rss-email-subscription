@@ -1,5 +1,11 @@
 import path from 'path';
-import { EmailAddress, indexEmails, readEmailListFromFile, storeEmailIndex } from '../email-sending/emails';
+import {
+  EmailAddress,
+  indexEmails,
+  makeEmailHashFn,
+  readEmailListFromFile,
+  storeEmailIndex,
+} from '../email-sending/emails';
 import { hash } from '../shared/crypto';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
@@ -32,7 +38,6 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const { hashingSalt } = feedSettings;
   const emailReadingResult = readEmailListFromFile(inputFilePath);
 
   if (isErr(emailReadingResult)) {
@@ -41,8 +46,7 @@ async function main(): Promise<number | undefined> {
   }
 
   const { validEmails, invalidEmails } = emailReadingResult;
-  const hashEmail = (e: EmailAddress) => hash(e.value, hashingSalt);
-  const emailIndex = indexEmails(validEmails, hashEmail);
+  const emailIndex = indexEmails(validEmails, makeEmailHashFn(feedSettings.hashingSalt));
   const storeResult = storeEmailIndex(dataDir, emailIndex);
 
   if (isErr(storeResult)) {
