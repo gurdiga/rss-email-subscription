@@ -25,8 +25,9 @@ export function unsubscribe(id: any, dataDirRoot: string): Result<Success | NotF
   }
 
   const { validEmails } = storedEmails;
+  const emailFound = validEmails.some((x) => x.saltedHash === emailHash);
 
-  if (!validEmails.some((x) => x.saltedHash === emailHash)) {
+  if (!emailFound) {
     return { kind: 'NotFound' };
   }
 
