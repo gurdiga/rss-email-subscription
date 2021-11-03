@@ -8,7 +8,6 @@ import {
   makeHashedEmail,
   StoredEmails,
 } from '../email-sending/emails';
-import { hash } from '../shared/crypto';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
@@ -28,12 +27,8 @@ interface AlreadyRegistered {
   kind: 'AlreadyRegistered';
 }
 
-function subscribe(
-  emailString: string,
-  feedId: string,
-  dataDirRoot: string,
-  { logWarning } = makeCustomLoggers({ module: 'subscription' })
-): Result<Success | AlreadyRegistered> {
+function subscribe(emailString: string, feedId: string, dataDirRoot: string): Result<Success | AlreadyRegistered> {
+  const { logWarning } = makeCustomLoggers({ module: 'subscription' });
   const emailAddress = makeEmailAddress(emailString);
 
   if (isErr(emailAddress)) {
@@ -66,7 +61,8 @@ function subscribe(
     return feedSettings;
   }
 
-  const newEmails = addEmail(emailAddress, storedEmails, makeEmailHashFn(feedSettings.hashingSalt));
+  const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
+  const newEmails = addEmail(emailAddress, storedEmails, emailHashFn);
   const result = storeEmails(newEmails, dataDir);
 
   if (isErr(result)) {
