@@ -1,92 +1,54 @@
 import { expect } from 'chai';
-import {
-  EmailAddress,
-  EmailHashFn,
-  loadStoredEmails,
-  makeEmailAddress,
-  makeEmailHashFn,
-  makeHashedEmail,
-  StoredEmails,
-} from '../email-sending/emails';
+import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail, StoredEmails } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
-import { getFeedSettings } from '../shared/feed-settings';
-import { writeFile, WriteFileFn } from '../shared/io';
-import { isErr, Result } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
-import { Success } from './shared';
+import { WriteFileFn } from '../shared/io';
+import { makeSpy } from '../shared/test-utils';
+import { addEmail, storeEmails } from './subscription';
 
-describe(subscribe.name, () => {
-  it('exists', () => {
-    expect(subscribe).to.be.an.instanceOf(Function);
+describe('subscription', () => {
+  const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
+  const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
+
+  describe(addEmail.name, () => {
+    it('adds an email address to a StoredEmails', () => {
+      const storedEmails: StoredEmails = {
+        validEmails: [],
+        invalidEmails: [],
+      };
+
+      const newEmails = addEmail(emailAddress, storedEmails, emailHashFn);
+
+      expect(newEmails.validEmails).to.have.lengthOf(1);
+      expect(newEmails.validEmails[0]).to.deep.equal({
+        kind: 'HashedEmail',
+        emailAddress: emailAddress,
+        saltedHash: emailHashFn(emailAddress),
+      });
+      expect(newEmails.invalidEmails).to.be.empty;
+    });
+  });
+
+  describe(storeEmails.name, () => {
+    it('stores a StoredEmails to a DataDir', () => {
+      const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+      const newEmails: StoredEmails = {
+        validEmails: [hashedEmail],
+        invalidEmails: ['not-an-email'],
+      };
+      const dataDir: DataDir = makeDataDir('/test/feed-data-dir') as DataDir;
+      const writeFileFn = makeSpy<WriteFileFn>();
+
+      const result = storeEmails(newEmails, dataDir, writeFileFn); // TODO
+
+      expect(result).to.be.undefined;
+      expect(writeFileFn.calls).to.deep.equal([
+        [
+          `${dataDir.value}/emails.json`,
+          JSON.stringify({
+            [hashedEmail.saltedHash]: hashedEmail.emailAddress.value,
+          }),
+        ],
+      ]);
+    });
   });
 });
-
-// CSRF?
-
-interface AlreadyRegistered {
-  kind: 'AlreadyRegistered';
-}
-
-function subscribe(emailString: string, feedId: string, dataDirRoot: string): Result<Success | AlreadyRegistered> {
-  const { logWarning } = makeCustomLoggers({ module: 'subscription' });
-  const emailAddress = makeEmailAddress(emailString);
-
-  if (isErr(emailAddress)) {
-    return emailAddress;
-  }
-
-  const dataDir = makeDataDir(feedId, dataDirRoot);
-
-  if (isErr(dataDir)) {
-    return dataDir;
-  }
-
-  const storedEmails = loadStoredEmails(dataDir);
-
-  if (isErr(storedEmails)) {
-    return storedEmails;
-  }
-
-  if (storedEmails.invalidEmails.length > 0) {
-    logWarning('Found invalid emails stored', { invalidEmails: storedEmails.invalidEmails });
-  }
-
-  if (emailAlreadyExists(emailAddress, storedEmails)) {
-    return { kind: 'AlreadyRegistered' };
-  }
-
-  const feedSettings = getFeedSettings(dataDir);
-
-  if (isErr(feedSettings)) {
-    return feedSettings;
-  }
-
-  const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
-  const newEmails = addEmail(emailAddress, storedEmails, emailHashFn);
-  const result = storeEmails(newEmails, dataDir);
-
-  if (isErr(result)) {
-    return result;
-  }
-
-  return { kind: 'Success' };
-}
-
-function storeEmails(newEmails: StoredEmails, dataDir: DataDir, writeFileFn: WriteFileFn = writeFile): Result<void> {
-  // TDOO
-}
-
-function addEmail(emailAddress: EmailAddress, storedEmails: StoredEmails, emailHashFn: EmailHashFn): StoredEmails {
-  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-
-  storedEmails.validEmails.push(hashedEmail);
-
-  return storedEmails;
-}
-
-function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmails): boolean {
-  const { validEmails } = storedEmails;
-  const alreadyExists = validEmails.some((x) => x.emailAddress.value === emailAddress.value);
-
-  return alreadyExists;
-}
