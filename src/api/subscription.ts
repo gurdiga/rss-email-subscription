@@ -1,3 +1,4 @@
+import path from 'path';
 import {
   makeEmailAddress,
   loadStoredEmails,
@@ -70,10 +71,16 @@ export function subscribe(
 }
 
 export function storeEmails(
-  newEmails: StoredEmails,
+  storedEmails: StoredEmails,
   dataDir: DataDir,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
+  const index = Object.fromEntries(storedEmails.validEmails.map((e) => [e.saltedHash, e.emailAddress.value]));
+
+  const fileContents = JSON.stringify(index);
+  const filePath = path.join(dataDir.value, 'emails.json');
+
+  writeFileFn(filePath, fileContents);
   // TDOO
 }
 
