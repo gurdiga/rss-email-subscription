@@ -2,7 +2,8 @@ import { expect } from 'chai';
 import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail, StoredEmails } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { WriteFileFn } from '../shared/io';
-import { makeSpy } from '../shared/test-utils';
+import { makeErr } from '../shared/lang';
+import { makeSpy, makeThrowingStub } from '../shared/test-utils';
 import { addEmail, storeEmails } from './subscription';
 
 describe('subscription', () => {
@@ -29,16 +30,16 @@ describe('subscription', () => {
   });
 
   describe(storeEmails.name, () => {
-    it('stores a StoredEmails to a DataDir', () => {
-      const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-      const newEmails: StoredEmails = {
-        validEmails: [hashedEmail],
-        invalidEmails: ['not-an-email'],
-      };
-      const dataDir: DataDir = makeDataDir('/test/feed-data-dir') as DataDir;
-      const writeFileFn = makeSpy<WriteFileFn>();
+    const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+    const newEmails: StoredEmails = {
+      validEmails: [hashedEmail],
+      invalidEmails: ['not-an-email'],
+    };
+    const dataDir: DataDir = makeDataDir('/test/feed-data-dir') as DataDir;
 
-      const result = storeEmails(newEmails, dataDir, writeFileFn); // TODO
+    it('stores a StoredEmails to a DataDir', () => {
+      const writeFileFn = makeSpy<WriteFileFn>();
+      const result = storeEmails(newEmails, dataDir, writeFileFn);
 
       expect(result).to.be.undefined;
       expect(writeFileFn.calls).to.deep.equal([
@@ -49,6 +50,15 @@ describe('subscription', () => {
           }),
         ],
       ]);
+    });
+
+    it('reports file write errors', () => {
+      const error = new Error('No space on disk');
+      const writeFileFn = makeThrowingStub<WriteFileFn>(error);
+
+      const result = storeEmails(newEmails, dataDir, writeFileFn);
+
+      expect(result).to.deep.equal(makeErr(`Could not store emails: ${error.message}`));
     });
   });
 });

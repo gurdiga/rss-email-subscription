@@ -11,7 +11,7 @@ import {
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
-import { Result, isErr } from '../shared/lang';
+import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { Success } from './shared';
 
@@ -80,8 +80,11 @@ export function storeEmails(
   const fileContents = JSON.stringify(index);
   const filePath = path.join(dataDir.value, 'emails.json');
 
-  writeFileFn(filePath, fileContents);
-  // TDOO
+  try {
+    writeFileFn(filePath, fileContents);
+  } catch (error) {
+    return makeErr(`Could not store emails: ${getErrorMessage(error)}`);
+  }
 }
 
 export function addEmail(
