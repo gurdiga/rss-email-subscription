@@ -7,6 +7,7 @@ import {
   EmailAddress,
   EmailHashFn,
   makeHashedEmail,
+  HashedEmail,
 } from '../email-sending/emails';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
@@ -75,7 +76,8 @@ export function storeEmails(
   dataDir: DataDir,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
-  const index = Object.fromEntries(storedEmails.validEmails.map((e) => [e.saltedHash, e.emailAddress.value]));
+  const indexEntry = (e: HashedEmail) => [e.saltedHash, e.emailAddress.value];
+  const index = Object.fromEntries(storedEmails.validEmails.map(indexEntry));
 
   const fileContents = JSON.stringify(index);
   const filePath = path.join(dataDir.value, 'emails.json');
