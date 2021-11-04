@@ -1,4 +1,4 @@
-import { getErrorMessage, makeErr, Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 export function makeUrl(urlString?: string): Result<URL> {
   if (!urlString) {
