@@ -1,4 +1,4 @@
-import { basename } from 'path';
+import path, { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir } from './data-dir';
 import { readFile, ReadFileFn } from './io';
@@ -17,7 +17,7 @@ export interface FeedSettings {
 }
 
 export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
-  const filePath = `${dataDir.value}/feed.json`;
+  const filePath = path.join(dataDir.value, 'feed.json');
   const feedId = basename(dataDir.value);
 
   try {
