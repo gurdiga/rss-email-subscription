@@ -20,8 +20,6 @@ interface AlreadyRegistered {
   kind: 'AlreadyRegistered';
 }
 
-// TODO: CSRF?
-
 export function subscribe(
   emailString: string,
   feedId: string,

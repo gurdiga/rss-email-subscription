@@ -17,11 +17,26 @@ function main() {
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
+  app.post('/subscribe', subscriptionHandler(dataDirRoot));
   app.post('/unsubscribe', unsubscriptionHandler(dataDirRoot));
 
   app.listen(port, () => {
     logInfo(`Running on http://0.0.0.0:${port}`, { dataDirRoot });
   });
+}
+
+function subscriptionHandler(dataDirRoot: string): RequestHandler {
+  // TODO: CSRF?
+
+  return (req, res) => {
+    const { body } = req;
+
+    logInfo('Subscription request', { body, dataDirRoot });
+
+    // TODO
+
+    res.sendStatus(200);
+  };
 }
 
 function unsubscriptionHandler(dataDirRoot: string): RequestHandler {
