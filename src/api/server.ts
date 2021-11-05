@@ -1,7 +1,8 @@
 import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
 import { isErr } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
+import { logWarning, makeCustomLoggers } from '../shared/logging';
+import { isAppError, isInputError, isSuccess } from './shared';
 import { subscribe } from './subscription';
 import { unsubscribe } from './unsubscription';
 
@@ -19,17 +20,17 @@ function main() {
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
-  app.post('/subscribe', subscriptionHandler(dataDirRoot));
-  app.post('/unsubscribe', unsubscriptionHandler(dataDirRoot));
+  app.post('/subscribe', makeSubscriptionController(dataDirRoot));
+  app.post('/unsubscribe', makeUnsubscriptionController(dataDirRoot));
 
   app.listen(port, () => {
     logInfo(`Running on http://0.0.0.0:${port}`, { dataDirRoot });
   });
 }
 
-function subscriptionHandler(dataDirRoot: string): RequestHandler {
+function makeSubscriptionController(dataDirRoot: string): RequestHandler {
   // TODO: CSRF?
-  const { logInfo, logError } = makeCustomLoggers({ module: 'subscriptionHandler' });
+  const { logInfo, logError } = makeCustomLoggers({ module: 'SubscriptionController' });
 
   return (req, res) => {
     const { body } = req;
@@ -39,26 +40,29 @@ function subscriptionHandler(dataDirRoot: string): RequestHandler {
     const { feedId, email } = body;
     const result = subscribe(feedId, email, dataDirRoot);
 
-    if (result.kind === 'FeedNotFound') {
-      logInfo('Feed not found', { feedId });
-      res.status(400).send({ error: 'Feed not found' });
+    // TODO: Some manual testing: make api + curl ...
+
+    if (isSuccess(result)) {
+      logInfo('Subscription request succeded', { feedId, email });
+      res.sendStatus(200);
       return;
     }
 
-    if (isErr(result)) {
-      logError('Subscription request failed', { body, reason: result.reason });
+    if (isInputError(result)) {
+      logWarning('Subscription request input error', { body, message: result.message });
+      res.status(400).send(result);
+    }
+
+    if (isAppError(result)) {
+      logError('Subscription request failed', { body, message: result.message });
       res.sendStatus(500);
       return;
     }
-
-    // TODO
-
-    res.sendStatus(200);
   };
 }
 
-function unsubscriptionHandler(dataDirRoot: string): RequestHandler {
-  const { logInfo, logError } = makeCustomLoggers({ module: 'unsubscriptionHandler' });
+function makeUnsubscriptionController(dataDirRoot: string): RequestHandler {
+  const { logInfo, logError } = makeCustomLoggers({ module: 'UnsubscriptionHandler' });
 
   return (req, res) => {
     const { body } = req;
@@ -67,6 +71,8 @@ function unsubscriptionHandler(dataDirRoot: string): RequestHandler {
 
     const { id } = body;
     const result = unsubscribe(id, dataDirRoot);
+
+    // TODO: Align code structure with makeSubscriptionController
 
     if (isErr(result)) {
       logError('Unsubscription request failed', { body, reason: result.reason });
@@ -80,7 +86,7 @@ function unsubscriptionHandler(dataDirRoot: string): RequestHandler {
       return;
     }
 
-    logInfo('Unsubscription request succeded', { body });
+    logInfo('Unsubscription request succeded', { id });
 
     res.sendStatus(200);
   };

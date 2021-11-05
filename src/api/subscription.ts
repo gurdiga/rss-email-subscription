@@ -10,44 +10,49 @@ import {
   HashedEmail,
 } from '../email-sending/emails';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { FeedNotFound, getFeedSettings } from '../shared/feed-settings';
+import { getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { Success } from './shared';
-
-interface AlreadyRegistered {
-  kind: 'AlreadyRegistered';
-}
+import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
 export function subscribe(
   feedId: string,
   emailString: string,
   dataDirRoot: string
-): Result<Success | AlreadyRegistered | FeedNotFound> {
-  const { logWarning } = makeCustomLoggers({ module: 'subscription' });
+): Result<Success | InputError | AppError> {
+  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription' });
   const emailAddress = makeEmailAddress(emailString);
 
   if (isErr(emailAddress)) {
-    return emailAddress;
+    logWarning('Invalid email', { emailAddress });
+    return makeInputError('Invalid email');
   }
 
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
-    return dataDir;
+    logWarning('Invalid dataDir', { feedId, dataDirRoot });
+    return makeInputError('Invalid email');
   }
 
   const feedSettings = getFeedSettings(dataDir);
 
-  if (isErr(feedSettings) || feedSettings.kind === 'FeedNotFound') {
-    return feedSettings;
+  if (feedSettings.kind === 'FeedNotFound') {
+    logWarning('Feed not found', { feedId, dataDirRoot });
+    return makeInputError('Feed not found');
+  }
+
+  if (isErr(feedSettings)) {
+    logError('Can’t read feed settings', { feedId, dataDirRoot, reason: feedSettings.reason });
+    return makeAppError('Can’t read feed settings');
   }
 
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
-    return storedEmails;
+    logError('Can’t load stored emails', { dataDir, reason: storedEmails.reason });
+    return makeAppError('Databse read error');
   }
 
   if (storedEmails.invalidEmails.length > 0) {
@@ -55,7 +60,8 @@ export function subscribe(
   }
 
   if (emailAlreadyExists(emailAddress, storedEmails)) {
-    return { kind: 'AlreadyRegistered' };
+    logWarning('Already registered', { email: emailAddress.value });
+    return makeInputError('Email already registered');
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
@@ -63,7 +69,8 @@ export function subscribe(
   const result = storeEmails(newEmails, dataDir);
 
   if (isErr(result)) {
-    return result;
+    logError('Can’t store emails', { dataDir, reason: result.reason });
+    return makeAppError('Databse write error');
   }
 
   return { kind: 'Success' };
