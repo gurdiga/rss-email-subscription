@@ -38,6 +38,11 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
+  if (feedSettings.kind === 'FeedNotFound') {
+    logError('Feed not found', { dataDir });
+    return 1;
+  }
+
   const emailReadingResult = readEmailListFromFile(inputFilePath);
 
   if (isErr(emailReadingResult)) {

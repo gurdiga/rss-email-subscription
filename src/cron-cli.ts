@@ -37,6 +37,11 @@ if (isErr(feedSettings)) {
   process.exit(1);
 }
 
+if (feedSettings.kind === 'FeedNotFound') {
+  logError('Feed not found', { dataDir });
+  process.exit(1);
+}
+
 main(dataDir, feedSettings).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {

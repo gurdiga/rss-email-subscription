@@ -59,6 +59,11 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
       continue;
     }
 
+    if (feedSettings.kind === 'FeedNotFound') {
+      logError('Feed not found', { dataDir });
+      continue;
+    }
+
     const { cronPattern } = feedSettings;
 
     logInfo(`Scheduling feed check`, { dataDirString, cronPattern });

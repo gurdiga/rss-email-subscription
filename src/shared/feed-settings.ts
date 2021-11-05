@@ -1,13 +1,14 @@
 import path, { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir } from './data-dir';
-import { readFile, ReadFileFn } from './io';
+import { fileExists, FileExistsFn, readFile, ReadFileFn } from './io';
 import { getErrorMessage, isErr, makeErr, Result } from './lang';
 import { makeUrl } from './url';
 
 export const DOMAIN_NAME = 'feedsubscription.com';
 
 export interface FeedSettings {
+  kind: 'FeedSettings';
   displayName: string;
   url: URL;
   hashingSalt: string;
@@ -16,8 +17,21 @@ export interface FeedSettings {
   cronPattern: string;
 }
 
-export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<FeedSettings> {
+export interface FeedNotFound {
+  kind: 'FeedNotFound';
+}
+
+export function getFeedSettings(
+  dataDir: DataDir,
+  readFileFn: ReadFileFn = readFile,
+  fileExistsFn: FileExistsFn = fileExists
+): Result<FeedSettings | FeedNotFound> {
   const filePath = path.join(dataDir.value, 'feed.json');
+
+  if (!fileExistsFn(filePath)) {
+    return { kind: 'FeedNotFound' };
+  }
+
   const feedId = basename(dataDir.value);
 
   try {
@@ -60,6 +74,7 @@ export function getFeedSettings(dataDir: DataDir, readFileFn: ReadFileFn = readF
       }
 
       return {
+        kind: 'FeedSettings',
         displayName,
         url,
         hashingSalt,
