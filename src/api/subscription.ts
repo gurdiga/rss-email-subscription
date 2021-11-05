@@ -10,7 +10,7 @@ import {
   HashedEmail,
 } from '../email-sending/emails';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { getFeedSettings } from '../shared/feed-settings';
+import { FeedNotFound, getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -21,10 +21,10 @@ interface AlreadyRegistered {
 }
 
 export function subscribe(
-  emailString: string,
   feedId: string,
+  emailString: string,
   dataDirRoot: string
-): Result<Success | AlreadyRegistered> {
+): Result<Success | AlreadyRegistered | FeedNotFound> {
   const { logWarning } = makeCustomLoggers({ module: 'subscription' });
   const emailAddress = makeEmailAddress(emailString);
 
@@ -36,6 +36,12 @@ export function subscribe(
 
   if (isErr(dataDir)) {
     return dataDir;
+  }
+
+  const feedSettings = getFeedSettings(dataDir);
+
+  if (isErr(feedSettings) || feedSettings.kind === 'FeedNotFound') {
+    return feedSettings;
   }
 
   const storedEmails = loadStoredEmails(dataDir);
@@ -50,12 +56,6 @@ export function subscribe(
 
   if (emailAlreadyExists(emailAddress, storedEmails)) {
     return { kind: 'AlreadyRegistered' };
-  }
-
-  const feedSettings = getFeedSettings(dataDir);
-
-  if (isErr(feedSettings)) {
-    return feedSettings;
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);

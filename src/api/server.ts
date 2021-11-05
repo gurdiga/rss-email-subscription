@@ -1,10 +1,12 @@
 import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
 import { isErr } from '../shared/lang';
-import { logError, logInfo } from '../shared/logging';
+import { makeCustomLoggers } from '../shared/logging';
+import { subscribe } from './subscription';
 import { unsubscribe } from './unsubscription';
 
 function main() {
+  const { logInfo, logError } = makeCustomLoggers({ module: 'API' });
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
@@ -27,11 +29,27 @@ function main() {
 
 function subscriptionHandler(dataDirRoot: string): RequestHandler {
   // TODO: CSRF?
+  const { logInfo, logError } = makeCustomLoggers({ module: 'subscriptionHandler' });
 
   return (req, res) => {
     const { body } = req;
 
     logInfo('Subscription request', { body, dataDirRoot });
+
+    const { feedId, email } = body;
+    const result = subscribe(feedId, email, dataDirRoot);
+
+    if (result.kind === 'FeedNotFound') {
+      logInfo('Feed not found', { feedId });
+      res.status(400).send({ error: 'Feed not found' });
+      return;
+    }
+
+    if (isErr(result)) {
+      logError('Subscription request failed', { body, reason: result.reason });
+      res.sendStatus(500);
+      return;
+    }
 
     // TODO
 
@@ -40,6 +58,8 @@ function subscriptionHandler(dataDirRoot: string): RequestHandler {
 }
 
 function unsubscriptionHandler(dataDirRoot: string): RequestHandler {
+  const { logInfo, logError } = makeCustomLoggers({ module: 'unsubscriptionHandler' });
+
   return (req, res) => {
     const { body } = req;
 
