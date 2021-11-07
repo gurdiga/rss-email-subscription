@@ -159,4 +159,10 @@ unsubscribe-report:
 		| grep 'POST /unsubscribe' \
 		| grep -Po '(?<=&email=)[^"]+' \
 		| sort -u \
-		| sed 's/%40/@/'
+		| sed 's/%40/@/' \
+		| ( \
+				echo "Subject: RES unsubscriptions"; \
+				echo ""; \
+				cat; \
+			) \
+		| ssmtp gurdiga@gmail.com
