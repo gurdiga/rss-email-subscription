@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import nodeFetch from 'node-fetch';
 import { makeErr, Result } from '../shared/lang';
 
 export interface RssResponse {
@@ -15,6 +15,10 @@ interface FetchResponse {
 }
 
 type FetchFn = (url: URL) => Promise<FetchResponse>;
+
+function fetch(url: URL): Promise<FetchResponse> {
+  return nodeFetch(url.toString());
+}
 
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
   const supportedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml', 'application/rss+xml'];
