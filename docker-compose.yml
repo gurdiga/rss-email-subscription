@@ -36,7 +36,7 @@ services:
 
       # https://wiki.deimos.fr/Postfix:_limit_outgoing_mail_throttling
       POSTFIX_smtp_destination_concurrency_limit: 1
-      POSTFIX_smtp_destination_rate_delay: 2s
+      POSTFIX_smtp_destination_rate_delay: 1s
     <<: *logging
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
