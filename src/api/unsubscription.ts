@@ -4,7 +4,9 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
-export function unsubscribe(id: any, dataDirRoot: string): Success | InputError | AppError {
+export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputError | AppError {
+  const { id } = reqBody;
+
   const { logWarning, logError } = makeCustomLoggers({ module: 'subscription', dataDirRoot });
   const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 

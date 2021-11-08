@@ -1,5 +1,6 @@
 export interface Success {
   kind: 'Success';
+  logData?: Object;
 }
 
 export function isSuccess(x: any): x is Success {

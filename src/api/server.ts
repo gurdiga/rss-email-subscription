@@ -1,10 +1,11 @@
 import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
-import { isErr } from '../shared/lang';
-import { logWarning, makeCustomLoggers } from '../shared/logging';
-import { isAppError, isInputError, isSuccess } from './shared';
+import { makeCustomLoggers } from '../shared/logging';
+import { AppError, InputError, isAppError, isInputError, isSuccess, Success } from './shared';
 import { subscribe } from './subscription';
 import { unsubscribe } from './unsubscription';
+
+let requestCounter = 0;
 
 function main() {
   const { logInfo, logError } = makeCustomLoggers({ module: 'API' });
@@ -20,70 +21,40 @@ function main() {
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
-  app.post('/subscribe', makeSubscriptionController(dataDirRoot));
-  app.post('/unsubscribe', makeUnsubscriptionController(dataDirRoot));
+  app.post('/subscribe', makeRequestHandler('Subscription', dataDirRoot, subscribe));
+  app.post('/unsubscribe', makeRequestHandler('Subscription', dataDirRoot, unsubscribe));
 
   app.listen(port, () => {
     logInfo(`Running on http://0.0.0.0:${port}`, { dataDirRoot });
   });
 }
 
-function makeSubscriptionController(dataDirRoot: string): RequestHandler {
-  // TODO: CSRF?
-  const { logInfo, logError } = makeCustomLoggers({ module: 'SubscriptionController' });
-
+function makeRequestHandler(
+  action: string,
+  dataDirRoot: string,
+  handle: (reqBody: any, dataDirRoot: string) => Success | InputError | AppError
+): RequestHandler {
   return (req, res) => {
+    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId: ++requestCounter });
     const { body } = req;
 
-    logInfo('Subscription request', { body, dataDirRoot });
+    logInfo(action, { body, dataDirRoot });
 
-    const { feedId, email } = body;
-    const result = subscribe(feedId, email, dataDirRoot);
+    const result = handle(body, dataDirRoot);
 
     if (isSuccess(result)) {
-      logInfo('Subscription request succeded', { feedId, email });
+      logInfo(`${action} succeded`, result.logData);
       res.sendStatus(200);
       return;
     }
 
     if (isInputError(result)) {
-      logWarning('Subscription request input error', { body, message: result.message });
+      logWarning(`${action} input error`, { message: result.message });
       res.status(400).send(result);
     }
 
     if (isAppError(result)) {
-      logError('Subscription request failed', { body, message: result.message });
-      res.sendStatus(500);
-      return;
-    }
-  };
-}
-
-function makeUnsubscriptionController(dataDirRoot: string): RequestHandler {
-  const { logInfo, logError } = makeCustomLoggers({ module: 'UnsubscriptionController' });
-
-  return (req, res) => {
-    const { body } = req;
-
-    logInfo('Unsubscription request', { body, dataDirRoot });
-
-    const { id } = body;
-    const result = unsubscribe(id, dataDirRoot);
-
-    if (isSuccess(result)) {
-      logInfo('Unsubscription request succeded', { id });
-      res.sendStatus(200);
-      return;
-    }
-
-    if (isInputError(result)) {
-      logWarning('Unsubscription request input error', { body, message: result.message });
-      res.status(400).send(result);
-      return;
-    }
-
-    if (isAppError(result)) {
-      logError('Unsubscription request failed', { body, message: result.message });
+      logError(`${action} failed`, { message: result.message });
       res.sendStatus(500);
       return;
     }
