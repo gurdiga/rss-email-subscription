@@ -1,44 +1,46 @@
 import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
-import { Success } from './shared';
+import { makeCustomLoggers } from '../shared/logging';
+import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
-interface NotFound {
-  kind: 'NotFound';
-}
-
-export function unsubscribe(id: any, dataDirRoot: string): Result<Success | NotFound> {
+export function unsubscribe(id: any, dataDirRoot: string): Success | InputError | AppError {
+  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription', dataDirRoot });
   const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 
   if (isErr(unsubscriptionId)) {
-    return unsubscriptionId;
+    logWarning('Invalid unsubscription ID', { id });
+    return makeInputError('Invalid unsubscription ID');
   }
 
   const { dataDir, emailHash } = unsubscriptionId;
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
-    return storedEmails;
+    logError('Can’t load stored emails', { reason: storedEmails.reason });
+    return makeAppError('Databse read error');
   }
 
   const { validEmails } = storedEmails;
   const emailFound = validEmails.some((x) => x.saltedHash === emailHash);
 
   if (!emailFound) {
-    return { kind: 'NotFound' };
+    return makeInputError('Email not found');
   }
 
   const newHashedEmails = removeEmail(emailHash, validEmails);
 
   if (isErr(newHashedEmails)) {
-    return newHashedEmails;
+    logError('Can’t remove email', { reason: newHashedEmails.reason });
+    return makeAppError('Databse error');
   }
 
   const emailIndex = Object.fromEntries(newHashedEmails.map((x) => [x.saltedHash, x.emailAddress.value]));
   const result = storeEmailIndex(dataDir, emailIndex);
 
   if (isErr(result)) {
-    return result;
+    logError('Can’t store emails', { reason: result.reason });
+    return makeAppError('Databse write error');
   }
 
   return { kind: 'Success' };

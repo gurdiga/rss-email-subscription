@@ -40,8 +40,6 @@ function makeSubscriptionController(dataDirRoot: string): RequestHandler {
     const { feedId, email } = body;
     const result = subscribe(feedId, email, dataDirRoot);
 
-    // TODO: Some manual testing: make api + curl ...
-
     if (isSuccess(result)) {
       logInfo('Subscription request succeded', { feedId, email });
       res.sendStatus(200);
@@ -62,7 +60,7 @@ function makeSubscriptionController(dataDirRoot: string): RequestHandler {
 }
 
 function makeUnsubscriptionController(dataDirRoot: string): RequestHandler {
-  const { logInfo, logError } = makeCustomLoggers({ module: 'UnsubscriptionHandler' });
+  const { logInfo, logError } = makeCustomLoggers({ module: 'UnsubscriptionController' });
 
   return (req, res) => {
     const { body } = req;
@@ -72,23 +70,23 @@ function makeUnsubscriptionController(dataDirRoot: string): RequestHandler {
     const { id } = body;
     const result = unsubscribe(id, dataDirRoot);
 
-    // TODO: Align code structure with makeSubscriptionController
+    if (isSuccess(result)) {
+      logInfo('Unsubscription request succeded', { id });
+      res.sendStatus(200);
+      return;
+    }
 
-    if (isErr(result)) {
-      logError('Unsubscription request failed', { body, reason: result.reason });
+    if (isInputError(result)) {
+      logWarning('Unsubscription request input error', { body, message: result.message });
+      res.status(400).send(result);
+      return;
+    }
+
+    if (isAppError(result)) {
+      logError('Unsubscription request failed', { body, message: result.message });
       res.sendStatus(500);
       return;
     }
-
-    if (result.kind === 'NotFound') {
-      logInfo('Not found', { id });
-      res.sendStatus(404);
-      return;
-    }
-
-    logInfo('Unsubscription request succeded', { id });
-
-    res.sendStatus(200);
   };
 }
 

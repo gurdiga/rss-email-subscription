@@ -16,12 +16,8 @@ import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
-export function subscribe(
-  feedId: string,
-  emailString: string,
-  dataDirRoot: string
-): Result<Success | InputError | AppError> {
-  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription' });
+export function subscribe(feedId: string, emailString: string, dataDirRoot: string): Success | InputError | AppError {
+  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription', feedId, dataDirRoot });
   const emailAddress = makeEmailAddress(emailString);
 
   if (isErr(emailAddress)) {
@@ -32,26 +28,26 @@ export function subscribe(
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
-    logWarning('Invalid dataDir', { feedId, dataDirRoot });
-    return makeInputError('Invalid email');
+    logWarning('Invalid dataDir');
+    return makeInputError('Invalid feed');
   }
 
   const feedSettings = getFeedSettings(dataDir);
 
   if (feedSettings.kind === 'FeedNotFound') {
-    logWarning('Feed not found', { feedId, dataDirRoot });
+    logWarning('Feed not found');
     return makeInputError('Feed not found');
   }
 
   if (isErr(feedSettings)) {
-    logError('Can’t read feed settings', { feedId, dataDirRoot, reason: feedSettings.reason });
+    logError('Can’t read feed settings', { reason: feedSettings.reason });
     return makeAppError('Can’t read feed settings');
   }
 
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { dataDir, reason: storedEmails.reason });
+    logError('Can’t load stored emails', { reason: storedEmails.reason });
     return makeAppError('Databse read error');
   }
 
@@ -69,7 +65,7 @@ export function subscribe(
   const result = storeEmails(newEmails, dataDir);
 
   if (isErr(result)) {
-    logError('Can’t store emails', { dataDir, reason: result.reason });
+    logError('Can’t store emails', { reason: result.reason });
     return makeAppError('Databse write error');
   }
 
