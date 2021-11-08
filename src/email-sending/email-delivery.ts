@@ -68,7 +68,6 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
   };
 }
 
-// TODO: Maybe take this out to keep this file as thin as possible.
 export function makeReturnPath(to: string, timestamp = Date.now().toString()): string {
   const toAddress = to.replace(/@/, '=');
 

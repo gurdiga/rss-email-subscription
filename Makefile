@@ -135,7 +135,6 @@ api-test:
 	) \
 	&& echo
 
-# TODO: Is there a way to signup to receive an email when someting is found?
 snyk:
 	snyk test
 
