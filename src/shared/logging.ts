@@ -8,6 +8,7 @@ export interface LogRecord {
   data?: object;
 }
 
+// Only exported for tests
 export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
   const message = JSON.stringify(record);
 
