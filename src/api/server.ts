@@ -32,15 +32,15 @@ function main() {
 function makeRequestHandler(
   action: string,
   dataDirRoot: string,
-  handle: (reqBody: any, dataDirRoot: string) => Success | InputError | AppError
+  handle: (reqBody: object, dataDirRoot: string) => Success | InputError | AppError
 ): RequestHandler {
   return (req, res) => {
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId: ++requestCounter });
-    const { body } = req;
+    const reqBody = req.body || {};
 
-    logInfo(action, { body, dataDirRoot });
+    logInfo(action, { reqBody, dataDirRoot });
 
-    const result = handle(body, dataDirRoot);
+    const result = handle(reqBody, dataDirRoot);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);
