@@ -28,7 +28,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
 
   if (!emailFound) {
     logWarning('Email not found by hash', { emailHash });
-    return makeInputError('Email not registered');
+    return makeInputError('Email is not registered, or, you have already unsubscribed. — Which one is it? 🤔');
   }
 
   const newHashedEmails = removeEmail(emailHash, validEmails);
