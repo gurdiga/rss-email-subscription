@@ -57,7 +57,7 @@
           <p>Sorry to see you go! 👋🙂</p>
         </div>
 
-        <div id="not-subscribed-message" class="alert alert-info" role="alert" hidden>
+        <div id="user-input-error-message" class="alert alert-info" role="alert" hidden>
           Hm… it looks like you’re not subscribed. 🤔
         </div>
 
@@ -124,8 +124,14 @@
           return;
         }
 
-        if (response.status === 404) {
-          document.getElementById('not-subscribed-message').removeAttribute('hidden');
+        if (response.status === 400) {
+          response.json().then((json) => {
+            const userInputError = document.getElementById('user-input-error-message');
+
+            userInputError.removeAttribute('hidden');
+            userInputError.textContent = json.message;
+          });
+
           return;
         }
 
