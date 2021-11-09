@@ -46,7 +46,10 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
     return makeAppError('Database write error');
   }
 
-  return { kind: 'Success' };
+  return {
+    kind: 'Success',
+    message: 'Your have been unsubscribed. Sorry to see you go! 👋🙂',
+  };
 }
 
 interface UnsubscriptionId {

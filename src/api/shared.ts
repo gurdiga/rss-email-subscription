@@ -2,6 +2,7 @@ export type AppRequestHandler = (reqBody: object, dataDirRoot: string) => Succes
 
 export interface Success {
   kind: 'Success';
+  message: string;
   logData?: Object;
 }
 

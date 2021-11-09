@@ -40,7 +40,7 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);
-      res.sendStatus(200);
+      res.status(200).send(result);
       return;
     }
 

@@ -71,7 +71,10 @@ export function subscribe(reqBody: any, dataDirRoot: string): Success | InputErr
     return makeAppError('Databse write error');
   }
 
-  return { kind: 'Success' };
+  return {
+    kind: 'Success',
+    message: 'You are subscribed now. Welcome aboard! 🙂',
+  };
 }
 
 export function storeEmails(
