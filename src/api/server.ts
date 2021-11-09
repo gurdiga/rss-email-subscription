@@ -51,7 +51,7 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
 
     if (isAppError(result)) {
       logError(`${action} failed`, { message: result.message });
-      res.sendStatus(500);
+      res.status(500).send(result);
       return;
     }
   };
