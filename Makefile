@@ -189,4 +189,4 @@ unsubscribe-report:
 				echo ""; \
 				cat; \
 			) \
-		| ssmtp gurdiga@gmail.com
+		| ifne ssmtp gurdiga@gmail.com
