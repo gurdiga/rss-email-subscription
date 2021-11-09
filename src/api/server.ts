@@ -13,15 +13,15 @@ function main() {
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
-  app.post('/subscribe', makeRequestHandler('Subscription', subscribe));
-  app.post('/unsubscribe', makeRequestHandler('Subscription', unsubscribe));
+  app.post('/subscribe', makeRequestHandler(subscribe));
+  app.post('/unsubscribe', makeRequestHandler(unsubscribe));
 
   app.listen(port, () => {
     console.log(`Running on http://0.0.0.0:${port}`);
   });
 }
 
-function makeRequestHandler(action: string, handler: AppRequestHandler): RequestHandler {
+function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
@@ -32,6 +32,7 @@ function makeRequestHandler(action: string, handler: AppRequestHandler): Request
   return (req, res) => {
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId: ++requestCounter });
     const reqBody = req.body || {};
+    const action = handler.name;
 
     logInfo(action, { reqBody, dataDirRoot });
 

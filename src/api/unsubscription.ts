@@ -7,7 +7,7 @@ import { AppError, InputError, makeAppError, makeInputError, Success } from './s
 export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputError | AppError {
   const { id } = reqBody;
 
-  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription', dataDirRoot });
+  const { logWarning, logError } = makeCustomLoggers({ module: unsubscribe.name, dataDirRoot });
   const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 
   if (isErr(unsubscriptionId)) {
@@ -27,6 +27,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
   const emailFound = validEmails.some((x) => x.saltedHash === emailHash);
 
   if (!emailFound) {
+    logWarning('Email not found by hash', { emailHash });
     return makeInputError('Email not found');
   }
 

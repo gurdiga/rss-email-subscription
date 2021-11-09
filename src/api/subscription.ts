@@ -19,7 +19,7 @@ import { AppError, InputError, makeAppError, makeInputError, Success } from './s
 export function subscribe(reqBody: any, dataDirRoot: string): Success | InputError | AppError {
   const { feedId, email } = reqBody;
 
-  const { logWarning, logError } = makeCustomLoggers({ module: 'subscription', feedId, dataDirRoot });
+  const { logWarning, logError } = makeCustomLoggers({ module: subscribe.name, feedId, dataDirRoot });
   const emailAddress = makeEmailAddress(email);
 
   if (isErr(emailAddress)) {
