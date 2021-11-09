@@ -118,19 +118,27 @@ website-reload:
 api:
 	node_modules/.bin/ts-node src/api/server.ts
 
+# TODO: test unhappy paths too:
+# - registration when already registered
+# - unregistration when not registered
 api-test:
-	@curl --fail -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com \
+	@set -xuo pipefail \
+	&& curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq . \
 	&& ( \
-		jq . ./.tmp/development-docker-data/gurdiga/emails.json | ( \
-			grep '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' > /dev/null \
-			|| ( echo "Email not saved in emails.json"; exit 1 ) \
+		grep '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
+		|| ( \
+			echo "Email not saved in emails.json"; \
+			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
+			exit 1 \
 		) \
 	) \
-	&& curl --fail -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 \
+	&& curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 | jq . \
 	&& ( \
-		jq . ./.tmp/development-docker-data/gurdiga/emails.json | ( \
-			grep -v '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' > /dev/null \
-			|| ( echo "Email not removed from emails.json"; exit 1 ) \
+		grep -v '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
+		|| ( \
+			echo "Email not removed from emails.json"; \
+			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
+			exit 1 \
 		) \
 	) \
 	&& echo
