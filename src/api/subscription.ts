@@ -59,7 +59,7 @@ export function subscribe(reqBody: any, dataDirRoot: string): Success | InputErr
 
   if (emailAlreadyExists(emailAddress, storedEmails)) {
     logWarning('Already registered', { email: emailAddress.value });
-    return makeInputError('Email already registered');
+    return makeInputError('Email is already registered');
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
