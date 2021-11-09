@@ -12,7 +12,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
 
   if (isErr(unsubscriptionId)) {
     logWarning('Invalid unsubscription ID', { id });
-    return makeInputError('Invalid unsubscription ID');
+    return makeInputError('Invalid unsubscription link');
   }
 
   const { dataDir, emailHash } = unsubscriptionId;
