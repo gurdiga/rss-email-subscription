@@ -20,7 +20,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
 
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { reason: storedEmails.reason });
-    return makeAppError('Databse read error');
+    return makeAppError('Database read error');
   }
 
   const { validEmails } = storedEmails;
@@ -35,7 +35,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
 
   if (isErr(newHashedEmails)) {
     logError('Can’t remove email', { reason: newHashedEmails.reason });
-    return makeAppError('Databse error');
+    return makeAppError('Database error');
   }
 
   const emailIndex = Object.fromEntries(newHashedEmails.map((x) => [x.saltedHash, x.emailAddress.value]));
@@ -43,7 +43,7 @@ export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputE
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
-    return makeAppError('Databse write error');
+    return makeAppError('Database write error');
   }
 
   return { kind: 'Success' };
