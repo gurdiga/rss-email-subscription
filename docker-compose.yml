@@ -80,7 +80,7 @@ services:
     ports: ['127.0.0.1:3000:3000']
     command: node_modules/.bin/ts-node src/api/server.ts
     volumes:
-      - .tmp/docker-data:/data
+      - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
     environment:
       <<: *app-env
     <<: *logging
