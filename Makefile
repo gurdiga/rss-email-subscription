@@ -2,11 +2,11 @@ SHELL = bash
 
 default: pre-commit
 
-run-email-sending:
-	node_modules/.bin/ts-node src/cron-cli.ts email-sending justaddlightandstir
+email-sending:
+	node_modules/.bin/ts-node src/cron-cli.ts email-sending test-feed
 
-run-rss-checking:
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking justaddlightandstir
+rss-checking:
+	node_modules/.bin/ts-node src/cron-cli.ts rss-checking test-feed
 
 .tmp/data/feed: .tmp/data/feed/feed.json .tmp/data/feed/emails.json
 
