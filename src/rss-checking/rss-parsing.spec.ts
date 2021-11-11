@@ -170,6 +170,32 @@ describe(parseRssItems.name, () => {
     expect(result.invalidItems).to.deep.equal(expectedInvalidItems);
   });
 
+  it('defaults guid to "no-guid-no-id"', async () => {
+    const xml = `
+      <?xml version="1.0" encoding="utf-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom">
+        <title type="html">Your awesome title</title>
+        <entry>
+          <title type="html">Valid item</title>
+          <author>
+            <name>John DOE</name>
+          </author>
+          <published>2021-06-12T18:50:16+03:00</published>
+          <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
+          <content>Some content</content>
+        </entry>
+      </feed>
+    `;
+
+    const result = (await parseRssItems({
+      kind: 'RssResponse',
+      xml,
+      baseURL,
+    })) as RssParsingResult;
+
+    expect(result.validItems[0].guid).to.equal('no-guid-no-id');
+  });
+
   it('returns an InvalidRssParsingResult value when invalid XML', async () => {
     const xml = `
     <?xml version="1.0" encoding="utf-8"?>
