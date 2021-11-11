@@ -11,6 +11,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/one'),
         pubDate: new Date('2020-02-15'),
+        guid: '1',
       },
       {
         title: 'Post Two',
@@ -18,6 +19,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/two'),
         pubDate: new Date('2020-02-20'),
+        guid: '2',
       },
     ];
     const timestamp = new Date('2020-02-18');
@@ -33,6 +35,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/one'),
         pubDate: new Date('2020-02-15T19:20:30.45-10:00'),
+        guid: '1',
       },
       {
         title: 'Post Two',
@@ -40,6 +43,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/two'),
         pubDate: new Date('2020-02-15T19:30:30.45-10:00'),
+        guid: '2',
       },
     ];
     const timestamp = new Date('2020-02-16T06:25:30.45+01:00');
@@ -55,6 +59,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/one'),
         pubDate: new Date('2021-02-15'),
+        guid: '1',
       },
     ];
     const timestamp = new Date('2020-02-18');
@@ -70,6 +75,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/one'),
         pubDate: new Date('2020-02-15'),
+        guid: '1',
       },
       {
         title: 'Post Two',
@@ -77,6 +83,7 @@ describe(selectNewItems.name, () => {
         author: 'John DOE',
         link: new URL('https://test.com/two'),
         pubDate: new Date('2020-02-20'),
+        guid: '2',
       },
     ];
     const timestamp = undefined;

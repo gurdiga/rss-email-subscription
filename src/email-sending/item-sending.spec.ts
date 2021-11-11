@@ -21,6 +21,7 @@ describe('item-sending', () => {
     author: 'John DOE',
     pubDate: new Date('2021-06-12T15:50:16.000Z'),
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
+    guid: '1',
   };
   const messageContent: MessageContent = {
     subject: item.title,

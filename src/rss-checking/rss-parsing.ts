@@ -54,6 +54,7 @@ interface InvalidRssItem {
 export interface ParsedRssItem extends Item {
   author?: string; // The Item interface of rss-parser is missing author?!
   creator?: string; // This is non-standard, but present in WP feeds
+  id?: string; // Atom feeds have "id" instead of "guid". Please see https://validator.w3.org/feed/docs/atom.html#sampleFeed
   ['content:encoded']?: string; // Please see https://www.w3.org/wiki/RssContent
 }
 
@@ -109,7 +110,13 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     return invalidRssItem('Post publication timestamp is not a valid JSON date string');
   }
 
-  const value: RssItem = { title, content, author, pubDate, link };
+  const guid = item.guid || item.id;
+
+  if (isMissing(guid)) {
+    return invalidRssItem('Post GUID is missing');
+  }
+
+  const value: RssItem = { title, content, author, pubDate, link, guid };
 
   return {
     kind: 'ValidRssItem',

@@ -26,6 +26,7 @@ describe(readStoredRssItems.name, () => {
         author: 'John DOE',
         pubDate: '2021-06-12T15:50:16.000Z',
         link: 'http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html',
+        guid: '1',
       }),
     },
     {
@@ -36,6 +37,7 @@ describe(readStoredRssItems.name, () => {
         author: 'John DOE',
         pubDate: '2021-06-12T16:05:00.000Z',
         link: 'http://localhost:4000/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html',
+        guid: '2',
       }),
     },
     {
@@ -46,6 +48,7 @@ describe(readStoredRssItems.name, () => {
         author: 'John DOE',
         pubDate: '2021-06-12T16:03:00.000Z',
         link: 'http://localhost:4000/2021/06/12/a-new-post.html',
+        guid: '3',
       }),
     },
   ];
@@ -159,6 +162,7 @@ describe(readStoredRssItems.name, () => {
       author: 'John DOE',
       pubDate: '2021-06-12T15:50:16.000Z',
       link: 'http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html',
+      guid: 'some-long-GUID-string-of-some-kind',
     };
 
     it('returns a ValidRssItem value from a valid JSON string', () => {
@@ -169,6 +173,7 @@ describe(readStoredRssItems.name, () => {
           ...data,
           pubDate: new Date(data.pubDate),
           link: new URL(data.link),
+          guid: data.guid,
         },
         fileName,
       };

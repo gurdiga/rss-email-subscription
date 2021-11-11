@@ -25,6 +25,7 @@ describe(parseRssItems.name, () => {
         author: 'John DOE',
         pubDate: new Date('2021-06-12T19:05:00+03:00'),
         link: new URL('/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html', baseURL),
+        guid: '/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021',
       },
       {
         title: 'A new post',
@@ -32,6 +33,7 @@ describe(parseRssItems.name, () => {
         author: 'John DOE',
         pubDate: new Date('2021-06-12T19:03:00+03:00'),
         link: new URL('/2021/06/12/a-new-post.html', baseURL),
+        guid: '/2021/06/12/a-new-post',
       },
       {
         title: 'Welcome to Jekyll!',
@@ -39,6 +41,7 @@ describe(parseRssItems.name, () => {
         author: 'John DOE',
         pubDate: new Date('2021-06-12T18:50:16+03:00'),
         link: new URL('/jekyll/update/2021/06/12/welcome-to-jekyll.html', baseURL),
+        guid: '/jekyll/update/2021/06/12/welcome-to-jekyll',
       },
     ];
 
@@ -73,6 +76,7 @@ describe(parseRssItems.name, () => {
         author: '\n        Seth Godin\n      ',
         pubDate: new Date('2021-09-04T08:29:00.000Z'),
         link: new URL('https://seths.blog/2021/09/instead-2/'),
+        guid: 'https://seths.blog/?p=40516',
       },
     ];
 
@@ -119,6 +123,7 @@ describe(parseRssItems.name, () => {
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
         <title type="html">Your awesome title</title>
+
         <entry>
           <title type="html">Item without publication timestamp</title>
           <author>
@@ -127,6 +132,7 @@ describe(parseRssItems.name, () => {
           <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
           <content>Some HTML content maybe</content>
         </entry>
+
         <entry>
           <title type="html">Valid item</title>
           <author>
@@ -135,41 +141,33 @@ describe(parseRssItems.name, () => {
           <published>2021-06-12T18:50:16+03:00</published>
           <link href="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html" rel="alternate" type="text/html"/>
           <content>Some content</content>
+          <id>urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a</id>
         </entry>
+
       </feed>
     `;
 
-    const result = await parseRssItems({
+    const result = (await parseRssItems({
       kind: 'RssResponse',
       xml,
       baseURL,
-    });
+    })) as RssParsingResult;
 
-    expect(result).to.deep.equal({
-      kind: 'RssParsingResult',
-      validItems: [
-        {
-          title: 'Valid item',
-          content: 'Some content',
+    const expectedInvalidItems = [
+      {
+        kind: 'InvalidRssItem',
+        reason: 'Post publication timestamp is missing',
+        item: {
+          title: 'Item without publication timestamp',
+          content: 'Some HTML content maybe',
           author: 'John DOE',
-          link: new URL('https://example.com/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html'),
-          pubDate: new Date('2021-06-12T15:50:16.000Z'),
+          contentSnippet: 'Some HTML content maybe',
+          link: '/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html',
         },
-      ],
-      invalidItems: [
-        {
-          kind: 'InvalidRssItem',
-          reason: 'Post publication timestamp is missing',
-          item: {
-            title: 'Item without publication timestamp',
-            content: 'Some HTML content maybe',
-            author: 'John DOE',
-            contentSnippet: 'Some HTML content maybe',
-            link: '/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html',
-          },
-        },
-      ],
-    } as RssParsingResult);
+      },
+    ];
+
+    expect(result.invalidItems).to.deep.equal(expectedInvalidItems);
   });
 
   it('returns an InvalidRssParsingResult value when invalid XML', async () => {
@@ -214,13 +212,14 @@ describe(parseRssItems.name, () => {
 
   describe(buildRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
-      [
+      const inputRssItems: ParsedRssItem[] = [
         {
           title: 'Post title',
           content: 'Post body',
           isoDate: new Date().toJSON(),
           author: 'John DOE',
           link: '/the/path/to/file.html',
+          guid: '1',
         },
         {
           title: 'Post title',
@@ -228,14 +227,18 @@ describe(parseRssItems.name, () => {
           isoDate: new Date().toJSON(),
           creator: 'John DOE Creator',
           link: '/the/path/to/file.html',
+          guid: '2',
         },
         {
           title: 'Post title',
           content: 'Post body',
           isoDate: new Date().toJSON(),
           link: '/the/path/to/file.html',
+          guid: '3',
         },
-      ].forEach((inputItem: ParsedRssItem) => {
+      ];
+
+      inputRssItems.forEach((inputItem: ParsedRssItem) => {
         const expectedResult: ValidRssItem = {
           kind: 'ValidRssItem',
           value: {
@@ -244,6 +247,7 @@ describe(parseRssItems.name, () => {
             author: inputItem.author! || inputItem.creator! || 'Anonymous Coward',
             pubDate: new Date(inputItem.isoDate!),
             link: new URL(inputItem.link!, baseURL),
+            guid: inputItem.guid!,
           },
         };
 

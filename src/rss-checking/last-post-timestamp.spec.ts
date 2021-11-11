@@ -61,6 +61,7 @@ describe('Last post timestamp', () => {
         author: 'John DOE',
         pubDate: new Date('2020-01-02T10:50:16-06:00'),
         link: new URL('https://test.com/item-one'),
+        guid: '1',
       },
       {
         title: 'Item two',
@@ -68,6 +69,7 @@ describe('Last post timestamp', () => {
         author: 'John DOE',
         pubDate: new Date('2020-01-03T10:50:16-06:00'),
         link: new URL('https://test.com/item-two'),
+        guid: '2',
       },
       {
         title: 'Item three',
@@ -75,6 +77,7 @@ describe('Last post timestamp', () => {
         author: 'John DOE',
         pubDate: new Date('2020-01-04T10:50:16-06:00'),
         link: new URL('https://test.com/item-three'),
+        guid: '3',
       },
     ];
 

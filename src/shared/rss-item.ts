@@ -4,4 +4,5 @@ export interface RssItem {
   author: string;
   pubDate: Date;
   link: URL;
+  guid: string;
 }

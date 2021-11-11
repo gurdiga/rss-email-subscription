@@ -67,7 +67,7 @@ export function makeStoredRssItem(fileName: string, json: string): ValidStoredRs
   const invalid = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
 
   try {
-    let { title, content, author, pubDate, link } = JSON.parse(json);
+    let { title, content, author, pubDate, link, guid } = JSON.parse(json);
 
     if (!title || typeof title !== 'string') {
       return invalid('The "title" property is not a present string');
@@ -93,7 +93,11 @@ export function makeStoredRssItem(fileName: string, json: string): ValidStoredRs
       return invalid('The "link" property is not a valid URL');
     }
 
-    const item: RssItem = { title, content, author, pubDate, link };
+    if (!guid || typeof guid !== 'string') {
+      return invalid('The "guid" property is not a present string');
+    }
+
+    const item: RssItem = { title, content, author, pubDate, link, guid };
 
     return { kind: 'ValidStoredRssItem', item, fileName };
   } catch (error) {
