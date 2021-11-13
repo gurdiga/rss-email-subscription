@@ -8,16 +8,16 @@ import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
   from: FullEmailAddress,
-  to: EmailAddress,
-  replyTo: EmailAddress,
+  { value: to }: EmailAddress,
+  { value: replyTo }: EmailAddress,
   { subject, htmlBody }: MessageContent,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn(from, to.value, replyTo.value, subject, htmlBody, env);
+    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env });
   } catch (error) {
-    return makeErr(`Could not deliver email to ${to.value}: ${getErrorMessage(error)}`);
+    return makeErr(`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
   }
 }
 

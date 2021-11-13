@@ -44,7 +44,7 @@ describe('item-sending', () => {
         '',
       ];
 
-      const deliverEmailFn: DeliverEmailFn = async (from, to, replyTo, subject, htmlBody) => {
+      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody }) => {
         [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
         return deliveryInfo;
       };

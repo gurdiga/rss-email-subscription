@@ -8,25 +8,27 @@ export interface EmailDeliveryEnv {
   SMTP_CONNECTION_STRING: string;
 }
 
-export type DeliverEmailFn = (
-  from: FullEmailAddress,
-  to: string,
-  replyTo: string,
-  subject: string,
-  htmlBody: string,
-  env: EmailDeliveryEnv
-) => Promise<DeliveryInfo>;
+export type DeliverEmailFn = (emailDeliveryRequest: EmailDeliveryRequest) => Promise<DeliveryInfo>;
 
 let transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
-export async function deliverEmail(
-  from: FullEmailAddress,
-  to: string,
-  replyTo: string,
-  subject: string,
-  htmlBody: string,
-  env: EmailDeliveryEnv
-): Promise<DeliveryInfo> {
+export interface EmailDeliveryRequest {
+  from: FullEmailAddress;
+  to: string;
+  replyTo: string;
+  subject: string;
+  htmlBody: string;
+  env: EmailDeliveryEnv;
+}
+
+export async function deliverEmail({
+  from,
+  to,
+  replyTo,
+  subject,
+  htmlBody,
+  env,
+}: EmailDeliveryRequest): Promise<DeliveryInfo> {
   if (!transporter) {
     transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING);
   }

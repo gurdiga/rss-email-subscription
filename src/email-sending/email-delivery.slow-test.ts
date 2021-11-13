@@ -1,7 +1,7 @@
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
-import { deliverEmail, EmailDeliveryEnv } from './email-delivery';
+import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
 
 async function main(): Promise<number> {
@@ -14,20 +14,22 @@ async function main(): Promise<number> {
 
   console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING.substr(0, 18));
 
-  const fromAddress = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
-  const toAddress = 'gurdiga@gmail.com';
+  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
+  const to = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
-  const html = `
+  const htmlBody = `
       <p>This emai is sent from this unit test:</p>
 
       <code>${__filename}</code>
     `;
 
-  await deliverEmail(fromAddress, toAddress, replyTo, subject, html, env);
+  const emailDeliveryRequest: EmailDeliveryRequest = { from, to, replyTo, subject, htmlBody, env };
+
+  await deliverEmail(emailDeliveryRequest);
 
   console.log(
-    `\nMessage accepted by the SMTP server. Please check the ${toAddress} inbox for a message having the subject of "${subject}".\n`
+    `\nMessage accepted by the SMTP server. Please check the ${to} inbox for a message having the subject of "${subject}".\n`
   );
   return 0;
 }
