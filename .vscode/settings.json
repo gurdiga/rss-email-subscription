@@ -21,5 +21,9 @@
   },
   "[dotenv]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
-  }
+  },
+  "[dockerfile]": {
+    "editor.formatOnSave": false
+  },
+  "shellformat.effectLanguages": ["shellscript"]
 }
