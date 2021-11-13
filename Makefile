@@ -74,6 +74,12 @@ logger:
 		--tag logger \
 		docker-services/logger
 
+smtp-out:
+	docker build \
+		--progress=plain \
+		--tag smtp-out \
+		docker-services/smtp-out
+
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
