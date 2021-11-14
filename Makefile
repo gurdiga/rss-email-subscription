@@ -125,6 +125,7 @@ api:
 	node_modules/.bin/ts-node src/api/server.ts
 
 # TODO: test unhappy paths too:
+# - test one-click POST unsubscribe
 # - registration when already registered
 # - unregistration when not registered
 api-test:
