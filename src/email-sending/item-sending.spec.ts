@@ -32,37 +32,47 @@ describe('item-sending', () => {
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
   };
 
+  const unsubscribeUrl = new URL('https://example.com/unsubscribe?magicID');
+
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
       const deliveryInfo = {} as DeliveryInfo;
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribe] = [
         {} as FullEmailAddress,
         '',
         '',
         '',
         '',
-        '',
+        {} as URL,
       ];
 
-      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody }) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
+      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, listUnsubscribe }) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribe] = [
+          from,
+          to,
+          replyTo,
+          subject,
+          htmlBody,
+          listUnsubscribe,
+        ];
         return deliveryInfo;
       };
 
-      const result = await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, unsubscribeUrl, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
+      expect(actualListUnsubscribe).to.deep.equal(unsubscribeUrl);
       expect(result).to.equal(deliveryInfo);
     });
 
     it('returns an Err value when delivery fails', async () => {
       const mockError = new Error('Cant!');
       const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(mockError);
-      const result = await sendItem(from, to, replyTo, messageContent, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, unsubscribeUrl, env, deliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${mockError.message}`));
     });

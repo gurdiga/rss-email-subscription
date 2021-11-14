@@ -77,7 +77,14 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
       const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
       const emailMessage = makeEmailMessage(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
-      const sendingResult = await sendItem(from, hashedEmail.emailAddress, feedSettings.replyTo, emailMessage, env);
+      const sendingResult = await sendItem(
+        from,
+        hashedEmail.emailAddress,
+        feedSettings.replyTo,
+        emailMessage,
+        unsubscribeUrl,
+        env
+      );
 
       if (isErr(sendingResult)) {
         report.failed++;

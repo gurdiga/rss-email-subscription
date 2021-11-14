@@ -11,11 +11,12 @@ export async function sendItem(
   { value: to }: EmailAddress,
   { value: replyTo }: EmailAddress,
   { subject, htmlBody }: MessageContent,
+  unsubscribeUrl: URL,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env });
+    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env, listUnsubscribe: unsubscribeUrl });
   } catch (error) {
     return makeErr(`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
   }

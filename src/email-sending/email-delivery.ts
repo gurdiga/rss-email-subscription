@@ -17,6 +17,7 @@ export interface EmailDeliveryRequest {
   to: string;
   replyTo: string;
   subject: string;
+  listUnsubscribe: URL;
   htmlBody: string;
   env: EmailDeliveryEnv;
 }
@@ -26,6 +27,7 @@ export async function deliverEmail({
   to,
   replyTo,
   subject,
+  listUnsubscribe,
   htmlBody,
   env,
 }: EmailDeliveryRequest): Promise<DeliveryInfo> {
@@ -43,6 +45,9 @@ export async function deliverEmail({
     envelope: {
       from: makeReturnPath(to),
       to,
+    },
+    headers: {
+      'List-Unsubscribe': `<${listUnsubscribe}>`,
     },
   });
 
