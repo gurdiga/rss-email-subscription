@@ -17,7 +17,7 @@ export interface EmailDeliveryRequest {
   to: string;
   replyTo: string;
   subject: string;
-  listUnsubscribe: URL;
+  listUnsubscribeUrl: URL;
   htmlBody: string;
   env: EmailDeliveryEnv;
 }
@@ -27,7 +27,7 @@ export async function deliverEmail({
   to,
   replyTo,
   subject,
-  listUnsubscribe,
+  listUnsubscribeUrl,
   htmlBody,
   env,
 }: EmailDeliveryRequest): Promise<DeliveryInfo> {
@@ -47,7 +47,8 @@ export async function deliverEmail({
       to,
     },
     headers: {
-      'List-Unsubscribe': `<${listUnsubscribe}>`,
+      'List-Unsubscribe': `<${listUnsubscribeUrl}>`,
+      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
     },
   });
 

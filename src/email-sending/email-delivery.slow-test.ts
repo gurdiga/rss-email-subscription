@@ -17,7 +17,7 @@ async function main(): Promise<number> {
   const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
   const to = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
-  const listUnsubscribe = new URL('https://example.com/unsubscribe?please');
+  const listUnsubscribe = new URL(`https://${DOMAIN_NAME}/unsubscribe/testFeedId-saltedEmailHash`);
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
   const htmlBody = `
       <p>This emai is sent from this unit test:</p>
@@ -25,7 +25,15 @@ async function main(): Promise<number> {
       <code>${__filename}</code>
     `;
 
-  const emailDeliveryRequest: EmailDeliveryRequest = { from, to, replyTo, subject, htmlBody, env, listUnsubscribe };
+  const emailDeliveryRequest: EmailDeliveryRequest = {
+    from,
+    to,
+    replyTo,
+    subject,
+    htmlBody,
+    env,
+    listUnsubscribeUrl: listUnsubscribe,
+  };
 
   await deliverEmail(emailDeliveryRequest);
 

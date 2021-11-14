@@ -32,12 +32,12 @@ describe('item-sending', () => {
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
   };
 
-  const unsubscribeUrl = new URL('https://example.com/unsubscribe?magicID');
+  const listUnsubscribeUrl = new URL('https://example.com/unsubscribe?magicID');
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
       const deliveryInfo = {} as DeliveryInfo;
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribe] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribeUrl] = [
         {} as FullEmailAddress,
         '',
         '',
@@ -46,47 +46,47 @@ describe('item-sending', () => {
         {} as URL,
       ];
 
-      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, listUnsubscribe }) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribe] = [
+      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, listUnsubscribeUrl }) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribeUrl] = [
           from,
           to,
           replyTo,
           subject,
           htmlBody,
-          listUnsubscribe,
+          listUnsubscribeUrl,
         ];
         return deliveryInfo;
       };
 
-      const result = await sendItem(from, to, replyTo, messageContent, unsubscribeUrl, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, listUnsubscribeUrl, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
-      expect(actualListUnsubscribe).to.deep.equal(unsubscribeUrl);
+      expect(actualListUnsubscribeUrl).to.deep.equal(listUnsubscribeUrl);
       expect(result).to.equal(deliveryInfo);
     });
 
     it('returns an Err value when delivery fails', async () => {
-      const mockError = new Error('Cant!');
-      const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(mockError);
-      const result = await sendItem(from, to, replyTo, messageContent, unsubscribeUrl, env, deliverEmailFn);
+      const error = new Error('Cant!');
+      const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(error);
+      const result = await sendItem(from, to, replyTo, messageContent, listUnsubscribeUrl, env, deliverEmailFn);
 
-      expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${mockError.message}`));
+      expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${error.message}`));
     });
   });
 
   describe(makeEmailMessage.name, () => {
     it('returns an EmailMessage value for the given RssItem', () => {
-      const mockUnsubscribeUrl = new URL('https://example.com');
-      const emailMessage = makeEmailMessage(item, mockUnsubscribeUrl, from.emailAddress);
+      const unsubscribeUrl = new URL('https://example.com');
+      const emailMessage = makeEmailMessage(item, unsubscribeUrl, from.emailAddress);
 
       expect(emailMessage.subject).to.equal(item.title);
       expect(emailMessage.htmlBody).to.contain(item.content);
       expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
-      expect(emailMessage.htmlBody).to.contain(mockUnsubscribeUrl, 'the unsubscribe link');
+      expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
       expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
     });
   });

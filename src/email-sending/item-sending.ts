@@ -16,7 +16,7 @@ export async function sendItem(
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env, listUnsubscribe: unsubscribeUrl });
+    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env, listUnsubscribeUrl: unsubscribeUrl });
   } catch (error) {
     return makeErr(`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
   }
@@ -64,4 +64,8 @@ export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, d
   url.searchParams.set('email', hashedEmail.emailAddress.value);
 
   return url;
+}
+
+export function makeListUnsubscribeUrl(feedId: string, hashedEmail: HashedEmail): URL {
+  return new URL(`https://${DOMAIN_NAME}/unsubscribe/${feedId}-${hashedEmail.saltedHash}`);
 }
