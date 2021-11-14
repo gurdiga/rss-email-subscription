@@ -15,6 +15,7 @@ function main() {
   app.use(express.urlencoded({ extended: true }));
   app.post('/subscribe', makeRequestHandler(subscribe));
   app.post('/unsubscribe', makeRequestHandler(unsubscribe));
+  app.post('/unsubscribe/:id', makeRequestHandler(unsubscribe));
 
   app.listen(port, () => {
     console.log(`Running on http://0.0.0.0:${port}`);
@@ -31,12 +32,14 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
 
   return (req, res) => {
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId: ++requestCounter });
+
     const reqBody = req.body || {};
+    const reqParams = req.params || {};
     const action = handler.name;
 
     logInfo(action, { reqBody, dataDirRoot });
 
-    const result = handler(reqBody, dataDirRoot);
+    const result = handler(reqBody, reqParams, dataDirRoot);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);

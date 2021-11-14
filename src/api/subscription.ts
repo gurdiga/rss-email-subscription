@@ -16,7 +16,7 @@ import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
-export function subscribe(reqBody: any, dataDirRoot: string): Success | InputError | AppError {
+export function subscribe(reqBody: any, reqParams: any, dataDirRoot: string): Success | InputError | AppError {
   const { feedId, email } = reqBody;
 
   const { logWarning, logError } = makeCustomLoggers({ module: subscribe.name, feedId, dataDirRoot });

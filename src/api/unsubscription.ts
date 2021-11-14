@@ -4,14 +4,14 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
 
-export function unsubscribe(reqBody: any, dataDirRoot: string): Success | InputError | AppError {
-  const { id } = reqBody;
+export function unsubscribe(reqBody: any, reqParams: any, dataDirRoot: string): Success | InputError | AppError {
+  const { id } = reqBody['List-Unsubscribe'] === 'One-Click' ? reqParams : reqBody;
 
   const { logWarning, logError } = makeCustomLoggers({ module: unsubscribe.name, dataDirRoot });
   const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
 
   if (isErr(unsubscriptionId)) {
-    logWarning('Invalid unsubscription ID', { id });
+    logWarning('Invalid unsubscription ID', { id, reason: unsubscriptionId.reason });
     return makeInputError('Invalid unsubscription link');
   }
 
