@@ -183,6 +183,7 @@ watch-smtp-out:
 		done \
 		& disown
 
+# TODO: Fix this: only
 unsubscribe-report:
 	@grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"Unsubscription request"' \
@@ -193,6 +194,7 @@ unsubscribe-report:
 		| sed 's/%40/@/' \
 		| ( \
 				echo "Subject: RES unsubscriptions"; \
+				echo "From: make@feedsubscription.com"; \
 				echo ""; \
 				cat; \
 			) \
