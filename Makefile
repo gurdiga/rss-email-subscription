@@ -125,10 +125,9 @@ api:
 	node_modules/.bin/ts-node src/api/server.ts
 
 # TODO: test unhappy paths too:
-# - registration when already registered
-# - unregistration when not registered
+# - unsubscription when not subscribed
 api-test:
-	@set -xuo pipefail \
+	@set -exuo pipefail \
 	&& function main { \
 		subscribe; \
 		subscribe_verify; \
@@ -137,6 +136,9 @@ api-test:
 		subscribe; \
 		unsubscribe_1click; \
 		unsubscribe_verify; \
+		subscribe; \
+		resubscribe_failure_verify; \
+		unsubscribe; \
 	} \
 	&& function subscribe { \
 		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq .; \
@@ -162,6 +164,11 @@ api-test:
 	} \
 	&& function unsubscribe_1click { \
 		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 -d List-Unsubscribe=One-Click | jq . ; \
+	} \
+	&& function resubscribe_failure_verify { \
+		diff -u \
+			<(curl -s -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com) \
+			<(printf '{"kind":"InputError","message":"Email is already subscribed"}'); \
 	} \
 	&& main
 
