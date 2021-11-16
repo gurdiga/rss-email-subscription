@@ -37,7 +37,7 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
     const reqParams = req.params || {};
     const action = handler.name;
 
-    logInfo(action, { reqBody, dataDirRoot });
+    logInfo(action, { reqBody, reqParams, dataDirRoot });
 
     const result = handler(reqBody, reqParams, dataDirRoot);
 
