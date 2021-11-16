@@ -124,6 +124,7 @@ website-reload:
 api:
 	node_modules/.bin/ts-node src/api/server.ts
 
+# TODO: Maybe run these through the website (add -k -H 'Host: feedsubscription.com')
 api-test:
 	@set -exuo pipefail \
 	&& function main { \
