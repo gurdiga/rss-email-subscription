@@ -174,7 +174,7 @@ api-test:
 	&& function unsubscribe_failure_verify { \
 		diff -u \
 			<(curl -s -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9) \
-			<(printf '{"kind":"InputError","message":"Email is not registered, or, you have already unsubscribed. — Which one is it? 🤔"}') \
+			<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
 			&& echo OK; \
 	} \
 	&& main
