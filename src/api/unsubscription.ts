@@ -62,12 +62,13 @@ export function parseUnsubscriptionId(id: any, dataDirRoot: string): Result<Unsu
     return makeErr('Unsubscription ID is not a string');
   }
 
-  const [feedId, emailHash] = id?.split('-');
+  const match = /^(?<feedId>.+)-(?<emailHash>[^-]+)$/.exec(id);
 
-  if (!emailHash) {
-    return makeErr(`Email hash is missing`);
+  if (!match || !match.groups) {
+    return makeErr(`Invalid unsubscription ID`);
   }
 
+  const { feedId, emailHash } = match.groups as { feedId: string; emailHash: string };
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
