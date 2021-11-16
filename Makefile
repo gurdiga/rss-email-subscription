@@ -125,30 +125,45 @@ api:
 	node_modules/.bin/ts-node src/api/server.ts
 
 # TODO: test unhappy paths too:
-# - test one-click POST unsubscribe
 # - registration when already registered
 # - unregistration when not registered
 api-test:
 	@set -xuo pipefail \
-	&& curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq . \
-	&& ( \
+	&& function main { \
+		subscribe; \
+		subscribe_verify; \
+		unsubscribe; \
+		unsubscribe_verify; \
+		subscribe; \
+		unsubscribe_1click; \
+		unsubscribe_verify; \
+	} \
+	&& function subscribe { \
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq .; \
+	}\
+	&& function subscribe_verify { \
 		grep '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
 		|| ( \
 			echo "Email not saved in emails.json"; \
 			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
 			exit 1 \
 		) \
-	) \
-	&& curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 | jq . \
-	&& ( \
+	} \
+	&& function unsubscribe { \
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 | jq . ; \
+	} \
+	&& function unsubscribe_verify { \
 		grep -v '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
 		|| ( \
 			echo "Email not removed from emails.json"; \
 			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
 			exit 1 \
 		) \
-	) \
-	&& echo
+	} \
+	&& function unsubscribe_1click { \
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 -d List-Unsubscribe=One-Click | jq . ; \
+	} \
+	&& main
 
 snyk:
 	snyk test
