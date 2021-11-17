@@ -19,7 +19,7 @@ describe(parseUnsubscriptionId.name, () => {
     });
   });
 
-  it('handles dashed in feedId', () => {
+  it('properly handles dashed in feedId', () => {
     const emailHash = '6968c45bb2091e472b299923b254f5a2780941ab2d6b1f6e0d27ee356ee30e44';
     const feedId = 'css-tricks';
     const id = `${feedId}-${emailHash}`;

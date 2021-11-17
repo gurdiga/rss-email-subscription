@@ -72,7 +72,7 @@ export function parseUnsubscriptionId(id: any, dataDirRoot: string): Result<Unsu
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
-    return makeErr(`Invalid feed ID: ${dataDir.reason}`);
+    return makeErr(`Can’t make data dir from feedId "${feedId}": ${dataDir.reason}`);
   }
 
   return {
