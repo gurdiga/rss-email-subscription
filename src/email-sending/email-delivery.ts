@@ -12,13 +12,15 @@ export type DeliverEmailFn = (emailDeliveryRequest: EmailDeliveryRequest) => Pro
 
 let transporter: Transporter<SMTPTransport.SentMessageInfo>;
 
+export type EmailHeaders = Record<string, string>;
+
 export interface EmailDeliveryRequest {
   from: FullEmailAddress;
   to: string;
   replyTo: string;
   subject: string;
-  listUnsubscribeUrl: URL;
   htmlBody: string;
+  headers: EmailHeaders;
   env: EmailDeliveryEnv;
 }
 
@@ -27,7 +29,7 @@ export async function deliverEmail({
   to,
   replyTo,
   subject,
-  listUnsubscribeUrl,
+  headers,
   htmlBody,
   env,
 }: EmailDeliveryRequest): Promise<DeliveryInfo> {
@@ -40,16 +42,12 @@ export async function deliverEmail({
     to,
     replyTo,
     subject,
-    text: '',
     html: htmlBody,
     envelope: {
       from: makeReturnPath(to),
       to,
     },
-    headers: {
-      'List-Unsubscribe': `<${listUnsubscribeUrl}>`,
-      'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-    },
+    headers,
   });
 
   return {

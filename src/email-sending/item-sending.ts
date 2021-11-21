@@ -3,7 +3,7 @@ import { DataDir } from '../shared/data-dir';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
+import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv, EmailHeaders } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
 export async function sendItem(
@@ -11,12 +11,12 @@ export async function sendItem(
   { value: to }: EmailAddress,
   { value: replyTo }: EmailAddress,
   { subject, htmlBody }: MessageContent,
-  unsubscribeUrl: URL,
+  headers: EmailHeaders,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env, listUnsubscribeUrl: unsubscribeUrl });
+    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, headers, env });
   } catch (error) {
     return makeErr(`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
   }
@@ -66,6 +66,11 @@ export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, d
   return url;
 }
 
-export function makeListUnsubscribeUrl(feedId: string, hashedEmail: HashedEmail): URL {
-  return new URL(`https://${DOMAIN_NAME}/unsubscribe/${feedId}-${hashedEmail.saltedHash}`);
+export function makeEmailHeaders(feedId: string, emailSaltedHash: string): EmailHeaders {
+  const listUnsubscribeUrl = new URL(`https://${DOMAIN_NAME}/unsubscribe/${feedId}-${emailSaltedHash}`);
+
+  return {
+    'List-Unsubscribe': `<${listUnsubscribeUrl}>`,
+    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+  };
 }

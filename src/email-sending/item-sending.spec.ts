@@ -6,10 +6,11 @@ import { RssItem } from '../shared/rss-item';
 import { makeThrowingStub } from '../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem } from './item-sending';
+import { makeEmailHeaders, makeEmailMessage, makeUnsubscribeUrl, MessageContent, sendItem } from './item-sending';
 
 describe('item-sending', () => {
-  const dataDir = makeDataDir('/some/path/uniqid') as DataDir;
+  const feedId = 'uniqid';
+  const dataDir = makeDataDir(`/some/path/${feedId}`) as DataDir;
   const from = makeFullEmailAddress('John DOE', makeEmailAddress('from@email.com') as EmailAddress);
   const to = makeEmailAddress('to@email.com') as EmailAddress;
   const replyTo = makeEmailAddress('replyTo@email.com') as EmailAddress;
@@ -31,48 +32,47 @@ describe('item-sending', () => {
   const env: EmailDeliveryEnv = {
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
   };
-
-  const listUnsubscribeUrl = new URL('https://example.com/unsubscribe?magicID');
+  const headers = makeEmailHeaders(feedId, 'emailSaltedHash');
 
   describe(sendItem.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
       const deliveryInfo = {} as DeliveryInfo;
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribeUrl] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualHeaders] = [
         {} as FullEmailAddress,
         '',
         '',
         '',
         '',
-        {} as URL,
+        {},
       ];
 
-      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, listUnsubscribeUrl }) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualListUnsubscribeUrl] = [
+      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, headers }) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualHeaders] = [
           from,
           to,
           replyTo,
           subject,
           htmlBody,
-          listUnsubscribeUrl,
+          headers,
         ];
         return deliveryInfo;
       };
 
-      const result = await sendItem(from, to, replyTo, messageContent, listUnsubscribeUrl, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, headers, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
-      expect(actualListUnsubscribeUrl).to.deep.equal(listUnsubscribeUrl);
+      expect(actualHeaders).to.deep.equal(headers);
       expect(result).to.equal(deliveryInfo);
     });
 
     it('returns an Err value when delivery fails', async () => {
       const error = new Error('Cant!');
       const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(error);
-      const result = await sendItem(from, to, replyTo, messageContent, listUnsubscribeUrl, env, deliverEmailFn);
+      const result = await sendItem(from, to, replyTo, messageContent, headers, env, deliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${error.message}`));
     });

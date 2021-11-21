@@ -3,6 +3,7 @@ import { DOMAIN_NAME } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
+import { makeEmailHeaders } from './item-sending';
 
 async function main(): Promise<number> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
@@ -17,7 +18,6 @@ async function main(): Promise<number> {
   const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
   const to = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
-  const listUnsubscribe = new URL(`https://${DOMAIN_NAME}/unsubscribe/testFeedId-saltedEmailHash`);
   const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
   const htmlBody = `
       <p>This emai is sent from this unit test:</p>
@@ -31,8 +31,8 @@ async function main(): Promise<number> {
     replyTo,
     subject,
     htmlBody,
+    headers: makeEmailHeaders('testFeedId', 'emailSaltedHash'),
     env,
-    listUnsubscribeUrl: listUnsubscribe,
   };
 
   await deliverEmail(emailDeliveryRequest);
