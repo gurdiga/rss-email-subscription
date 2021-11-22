@@ -40,7 +40,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
         <p>
-          <small>Email sent by <a href="https://${DOMAIN_NAME}">FeedSubscription.com</a>.
+          <small>Email sent by FeedSubscription.com.
           If you no longer want to receive these emails, you can
           <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
         </p>
