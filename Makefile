@@ -223,19 +223,24 @@ watch-smtp-out:
 		done \
 		& disown
 
-# TODO: Fix this: only
 unsubscribe-report:
-	@grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
-		| grep '"message":"Unsubscription request"' \
+	@function send_report() {
+		(
+			echo "Subject: RES unsubscribe-report"
+			echo "From: unsubscribe-report@feedsubscription.com"
+			echo ""
+			cat
+		) \
+		# | ssmtp gurdiga@gmail.com
+	}
+
+	export -f send_report
+
+	grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
+		| grep '"message":"unsubscribe"' \
 		| grep -Po 'justaddlightandstir-[^"]+' | while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done \
 		| grep 'POST /unsubscribe' \
 		| grep -Po '(?<=&email=)[^"]+' \
 		| sort -u \
 		| sed 's/%40/@/' \
-		| ( \
-				echo "Subject: RES unsubscriptions"; \
-				echo "From: make@feedsubscription.com"; \
-				echo ""; \
-				cat; \
-			) \
-		| ifne ssmtp gurdiga@gmail.com
+		| ifne bash -c send_report
