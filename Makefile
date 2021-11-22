@@ -231,7 +231,7 @@ unsubscribe-report:
 			echo ""
 			cat
 		) \
-		# | ssmtp gurdiga@gmail.com
+		| ssmtp gurdiga@gmail.com
 	}
 
 	export -f send_report
