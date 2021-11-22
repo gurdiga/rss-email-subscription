@@ -1,3 +1,4 @@
+.ONESHELL:
 SHELL = bash
 
 default: pre-commit
@@ -126,58 +127,68 @@ api:
 
 # TODO: Maybe run these through the website (add -k -H 'Host: feedsubscription.com')
 api-test:
-	@set -exuo pipefail \
-	&& function main { \
-		subscribe; \
-		subscribe_verify; \
-		unsubscribe; \
-		unsubscribe_verify; \
-		subscribe; \
-		unsubscribe_1click; \
-		unsubscribe_verify; \
-		subscribe; \
-		resubscribe_failure_verify; \
-		unsubscribe; \
-		unsubscribe_failure_verify; \
-	} \
-	&& function subscribe { \
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq .; \
-	}\
-	&& function subscribe_verify { \
+	@set -exuo pipefail
+	function main {
+		subscribe
+		subscribe_verify
+		unsubscribe
+		unsubscribe_verify
+		subscribe
+		unsubscribe_1click
+		unsubscribe_verify
+		subscribe
+		resubscribe_failure_verify
+		unsubscribe
+		unsubscribe_failure_verify
+	}
+
+	function subscribe {
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq .
+	}
+
+	function subscribe_verify {
 		grep '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
-		|| ( \
-			echo "Email not saved in emails.json"; \
-			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
-			exit 1 \
-		) \
-	} \
-	&& function unsubscribe { \
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 | jq . ; \
-	} \
-	&& function unsubscribe_verify { \
+		|| (
+			echo "Email not saved in emails.json";
+			jq . ./.tmp/development-docker-data/gurdiga/emails.json;
+			exit 1
+		)
+	}
+
+	function unsubscribe {
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 \
+		| jq .
+	}
+
+	function unsubscribe_verify {
 		grep -v '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
-		|| ( \
-			echo "Email not removed from emails.json"; \
-			jq . ./.tmp/development-docker-data/gurdiga/emails.json; \
-			exit 1 \
-		) \
-	} \
-	&& function unsubscribe_1click { \
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 -d List-Unsubscribe=One-Click | jq . ; \
-	} \
-	&& function resubscribe_failure_verify { \
+		|| (
+			echo "Email not removed from emails.json";
+			jq . ./.tmp/development-docker-data/gurdiga/emails.json;
+			exit 1
+		)
+	}
+
+	function unsubscribe_1click {
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 -d List-Unsubscribe=One-Click \
+		| jq .
+	}
+
+	function resubscribe_failure_verify {
 		diff -u \
 			<(curl -s -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com) \
 			<(printf '{"kind":"InputError","message":"Email is already subscribed"}') \
-			&& echo OK; \
-	} \
-	&& function unsubscribe_failure_verify { \
+			&& echo OK
+	}
+
+	function unsubscribe_failure_verify {
 		diff -u \
 			<(curl -s -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9) \
 			<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
-			&& echo OK; \
-	} \
-	&& main
+			&& echo OK
+	}
+
+	main
 
 snyk:
 	snyk test
