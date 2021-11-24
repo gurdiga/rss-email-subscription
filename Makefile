@@ -147,10 +147,12 @@ api-test:
 	}
 
 	function subscribe_verify {
-		grep '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
+		jq . .tmp/development-docker-data/gurdiga/emails.json \
+		| grep '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' \
+		&& echo OK \
 		|| (
 			echo "Email not saved in emails.json";
-			jq . ./.tmp/development-docker-data/gurdiga/emails.json;
+			jq . .tmp/development-docker-data/gurdiga/emails.json;
 			exit 1
 		)
 	}
@@ -161,10 +163,12 @@ api-test:
 	}
 
 	function unsubscribe_verify {
-		grep -v '"test@gmail.com"' ./.tmp/development-docker-data/gurdiga/emails.json > /dev/null \
+		jq . .tmp/development-docker-data/gurdiga/emails.json \
+		| grep -v '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' > /dev/null \
+		&& echo OK \
 		|| (
 			echo "Email not removed from emails.json";
-			jq . ./.tmp/development-docker-data/gurdiga/emails.json;
+			jq . .tmp/development-docker-data/gurdiga/emails.json;
 			exit 1
 		)
 	}
