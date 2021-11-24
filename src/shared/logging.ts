@@ -15,15 +15,15 @@ export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOut
   stdOutPrinterFn(message);
 }
 
-export function logInfo(message: LogRecord['message'], data?: LogRecord['data']): void {
+function logInfo(message: LogRecord['message'], data?: LogRecord['data']): void {
   log({ severity: 'info', message, data });
 }
 
-export function logWarning(message: LogRecord['message'], data?: LogRecord['data']): void {
+function logWarning(message: LogRecord['message'], data?: LogRecord['data']): void {
   log({ severity: 'warning', message, data });
 }
 
-export function logError(message: LogRecord['message'], data?: LogRecord['data']): void {
+function logError(message: LogRecord['message'], data?: LogRecord['data']): void {
   log({ severity: 'error', message, data });
 }
 
@@ -36,7 +36,7 @@ interface Loggers {
 export type LoggerName = keyof Loggers;
 export type LoggerFunction = Loggers[LoggerName];
 
-function makeModuleLogger(f: LoggerFunction, moduleData?: LogRecord['data']): LoggerFunction {
+function makeCustomLogger(f: LoggerFunction, moduleData?: LogRecord['data']): LoggerFunction {
   return (message, data) => f(message, { ...moduleData, ...data });
 }
 
@@ -45,8 +45,8 @@ export function makeCustomLoggers(
   loggers: Loggers = { logError, logWarning, logInfo }
 ): Loggers {
   return {
-    logError: makeModuleLogger(loggers.logError, moduleData),
-    logWarning: makeModuleLogger(loggers.logWarning, moduleData),
-    logInfo: makeModuleLogger(loggers.logInfo, moduleData),
+    logError: makeCustomLogger(loggers.logError, moduleData),
+    logWarning: makeCustomLogger(loggers.logWarning, moduleData),
+    logInfo: makeCustomLogger(loggers.logInfo, moduleData),
   };
 }

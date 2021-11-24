@@ -1,19 +1,13 @@
 import path from 'path';
-import {
-  EmailAddress,
-  indexEmails,
-  makeEmailHashFn,
-  readEmailListFromFile,
-  storeEmailIndex,
-} from '../email-sending/emails';
-import { hash } from '../shared/crypto';
+import { indexEmails, makeEmailHashFn, readEmailListFromFile, storeEmailIndex } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
-import { logError, logInfo } from '../shared/logging';
+import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
 async function main(): Promise<number | undefined> {
+  const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
   const dataDirRoot = process.env.DATA_DIR_ROOT;
 
   if (!dataDirRoot) {
