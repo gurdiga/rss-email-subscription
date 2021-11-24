@@ -14,12 +14,12 @@ import { getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
+import { AppRequestHandler, makeAppError, makeInputError } from './shared';
 
-export function subscribe(reqBody: any, reqParams: any, dataDirRoot: string): Success | InputError | AppError {
+export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { feedId, email } = reqBody;
 
-  const { logWarning, logError } = makeCustomLoggers({ module: subscribe.name, feedId, dataDirRoot });
+  const { logWarning, logError } = makeCustomLoggers({ reqId, module: subscribe.name });
   const emailAddress = makeEmailAddress(email);
 
   if (isErr(emailAddress)) {
@@ -75,7 +75,7 @@ export function subscribe(reqBody: any, reqParams: any, dataDirRoot: string): Su
     kind: 'Success',
     message: 'You are subscribed now. Welcome aboard! 🙂',
   };
-}
+};
 
 export function storeEmails(
   storedEmails: StoredEmails,

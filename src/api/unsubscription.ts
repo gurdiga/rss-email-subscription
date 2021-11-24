@@ -2,28 +2,27 @@ import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../em
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppError, InputError, makeAppError, makeInputError, Success } from './shared';
+import { AppRequestHandler, makeAppError, makeInputError } from './shared';
 
-export function unsubscribe(reqBody: any, reqParams: any, dataDirRoot: string): Success | InputError | AppError {
-  const { id } = reqBody['List-Unsubscribe'] === 'One-Click' ? reqParams : reqBody;
+export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+  const { logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
+  const { id } = reqBody;
+  const parseResult = parseUnsubscriptionId(id, dataDirRoot);
 
-  const { logWarning, logError } = makeCustomLoggers({ module: unsubscribe.name, dataDirRoot });
-  const unsubscriptionId = parseUnsubscriptionId(id, dataDirRoot);
-
-  if (isErr(unsubscriptionId)) {
-    logWarning('Invalid unsubscription ID', { id, reason: unsubscriptionId.reason });
+  if (isErr(parseResult)) {
+    logWarning('Invalid unsubscription ID', { id, reason: parseResult.reason });
     return makeInputError('Invalid unsubscription link');
   }
 
-  const { dataDir, emailHash } = unsubscriptionId;
-  const storedEmails = loadStoredEmails(dataDir);
+  const { dataDir, emailHash } = parseResult;
+  const loadResult = loadStoredEmails(dataDir);
 
-  if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { reason: storedEmails.reason });
+  if (isErr(loadResult)) {
+    logError('Can’t load stored emails', { reason: loadResult.reason });
     return makeAppError('Database read error');
   }
 
-  const { validEmails } = storedEmails;
+  const { validEmails } = loadResult;
   const emailFound = validEmails.some((x) => x.saltedHash === emailHash);
 
   if (!emailFound) {
@@ -31,18 +30,18 @@ export function unsubscribe(reqBody: any, reqParams: any, dataDirRoot: string): 
     return makeInputError('Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔');
   }
 
-  const newHashedEmails = removeEmail(emailHash, validEmails);
+  const removeResult = removeEmail(emailHash, validEmails);
 
-  if (isErr(newHashedEmails)) {
-    logError('Can’t remove email', { reason: newHashedEmails.reason });
+  if (isErr(removeResult)) {
+    logError('Can’t remove email', { reason: removeResult.reason });
     return makeAppError('Database error');
   }
 
-  const emailIndex = Object.fromEntries(newHashedEmails.map((x) => [x.saltedHash, x.emailAddress.value]));
-  const result = storeEmailIndex(dataDir, emailIndex);
+  const emailIndex = Object.fromEntries(removeResult.map((x) => [x.saltedHash, x.emailAddress.value]));
+  const storeResult = storeEmailIndex(dataDir, emailIndex);
 
-  if (isErr(result)) {
-    logError('Can’t store emails', { reason: result.reason });
+  if (isErr(storeResult)) {
+    logError('Can’t store emails', { reason: storeResult.reason });
     return makeAppError('Database write error');
   }
 
@@ -50,7 +49,16 @@ export function unsubscribe(reqBody: any, reqParams: any, dataDirRoot: string): 
     kind: 'Success',
     message: 'Your have been unsubscribed. Sorry to see you go! 👋🙂',
   };
-}
+};
+
+export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscribe(
+  reqId,
+  _reqBody,
+  reqParams,
+  dataDirRoot
+) {
+  return unsubscribe(reqId, reqParams, {}, dataDirRoot);
+};
 
 interface UnsubscriptionId {
   dataDir: DataDir;

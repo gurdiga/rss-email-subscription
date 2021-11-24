@@ -3,7 +3,7 @@ import helmet from 'helmet';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, isAppError, isInputError, isSuccess } from './shared';
 import { subscribe } from './subscription';
-import { unsubscribe } from './unsubscription';
+import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 
 let requestCounter = 0;
 
@@ -15,10 +15,10 @@ function main() {
   app.use(express.urlencoded({ extended: true }));
   app.post('/subscribe', makeRequestHandler(subscribe));
   app.post('/unsubscribe', makeRequestHandler(unsubscribe));
-  app.post('/unsubscribe/:id', makeRequestHandler(unsubscribe));
+  app.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe));
 
   app.listen(port, () => {
-    console.log(`Running on http://0.0.0.0:${port}`);
+    console.log(`Listening on http://0.0.0.0:${port}`);
   });
 }
 
@@ -31,31 +31,26 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
   }
 
   return (req, res) => {
-    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId: ++requestCounter });
+    const reqId = ++requestCounter;
+    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId });
 
     const reqBody = req.body || {};
     const reqParams = req.params || {};
     const action = handler.name;
 
-    logInfo(action, { reqBody, reqParams, dataDirRoot });
+    logInfo(action, { reqId, action, reqBody, reqParams, dataDirRoot });
 
-    const result = handler(reqBody, reqParams, dataDirRoot);
+    const result = handler(reqId, reqBody, reqParams, dataDirRoot);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);
       res.status(200).send(result);
-      return;
-    }
-
-    if (isInputError(result)) {
+    } else if (isInputError(result)) {
       logWarning(`${action} input error`, { message: result.message });
       res.status(400).send(result);
-    }
-
-    if (isAppError(result)) {
+    } else if (isAppError(result)) {
       logError(`${action} failed`, { message: result.message });
       res.status(500).send(result);
-      return;
     }
   };
 }

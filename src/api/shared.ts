@@ -1,4 +1,9 @@
-export type AppRequestHandler = (reqBody: any, reqParams: any, dataDirRoot: string) => Success | InputError | AppError;
+export type AppRequestHandler = (
+  reqId: number,
+  reqBody: Record<string, any>,
+  reqParams: Record<string, any>,
+  dataDirRoot: string
+) => Success | InputError | AppError;
 
 export interface Success {
   kind: 'Success';
