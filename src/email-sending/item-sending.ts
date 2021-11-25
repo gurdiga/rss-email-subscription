@@ -43,7 +43,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
           <small>
             <a href="${unsubscribeUrl}">Unsubscribe</a>
             • PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
-            Replying with “Thank you” works even better. 🙂
+            Replying with “Hello!” or “Thank you!” works even better. 🙂
           </small>
         </p>
       </footer>
