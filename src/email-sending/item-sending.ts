@@ -40,12 +40,12 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
         <p>
-          <small>Email sent by FeedSubscription.com.
-          If you no longer want to receive these emails, you can
-          <a href="${unsubscribeUrl}">unsubscribe here</a>.</small>
+          <small>
+            <a href="${unsubscribeUrl}">Unsubscribe</a>
+            • PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
+            Replying with “Thank you” works even better. 🙂
+          </small>
         </p>
-
-        <p><small>PRO TIP: Add ${fromAddress.value} to your contact list so that this is not considered junk mail.</small></p>
       </footer>
     </div>`;
 
