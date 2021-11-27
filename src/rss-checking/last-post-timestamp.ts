@@ -10,7 +10,7 @@ export function getLastPostTimestamp(
   dataReaderFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
 ): Result<Date | undefined> {
-  const filePath = getLastPostTimestampFileName(dataDir);
+  const filePath = getLastPostMetadataFileName(dataDir);
 
   if (!fileExistsFn(filePath)) {
     return;
@@ -56,7 +56,7 @@ export function recordLastPostMetadata(
     guid: latestItem.guid,
   };
 
-  const filePath = getLastPostTimestampFileName(dataDir);
+  const filePath = getLastPostMetadataFileName(dataDir);
   const fileContent = JSON.stringify(metadata);
 
   try {
@@ -68,6 +68,6 @@ export function recordLastPostMetadata(
   }
 }
 
-function getLastPostTimestampFileName(dataDir: DataDir) {
+function getLastPostMetadataFileName(dataDir: DataDir) {
   return path.join(dataDir.value, 'lastPostTimestamp.json');
 }
