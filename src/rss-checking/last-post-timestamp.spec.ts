@@ -4,7 +4,7 @@ import { FileExistsFn, ReadFileFn, WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
-import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
+import { getLastPostTimestamp, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
@@ -53,7 +53,7 @@ describe('Last post timestamp', () => {
     });
   });
 
-  describe(recordLastPostTimestamp.name, () => {
+  describe(recordLastPostMetadata.name, () => {
     const mockRssItems: RssItem[] = [
       {
         title: 'Item one',
@@ -81,26 +81,28 @@ describe('Last post timestamp', () => {
       },
     ];
 
-    const lastPostTimestamp = mockRssItems[2].pubDate;
-    const expectedFileContent = JSON.stringify({
-      lastPostTimestamp,
-    });
+    const latestPost = mockRssItems[2];
+    const expectedLastPostMetadata: LastPostMetadata = {
+      lastPostTimestamp: latestPost.pubDate,
+      guid: latestPost.guid,
+    };
+    const expectedFileContent = JSON.stringify(expectedLastPostMetadata);
 
     it('writes pubDate of the latest item to lastPostTimestamp.json', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
       const initialRssItems = [...mockRssItems];
 
-      const result = recordLastPostTimestamp(mockDataDir, mockRssItems, writeFileFn);
+      const result = recordLastPostMetadata(mockDataDir, mockRssItems, writeFileFn);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
       expect(writeFileFn.calls).to.deep.equal([[`${mockDataDir.value}/lastPostTimestamp.json`, expectedFileContent]]);
-      expect(result).to.equal(lastPostTimestamp);
+      expect(result).to.deep.equal(expectedLastPostMetadata);
     });
 
     it('reports the error when can’t write file', () => {
       const mockError = new Error('No write access');
       const writeFileFn = makeThrowingStub<WriteFileFn>(mockError);
-      const result = recordLastPostTimestamp(mockDataDir, mockRssItems, writeFileFn);
+      const result = recordLastPostMetadata(mockDataDir, mockRssItems, writeFileFn);
 
       expect(result).to.deep.equal(
         makeErr(`Cant record last post timestamp: ${mockError}, content: ${expectedFileContent}`)
@@ -111,7 +113,7 @@ describe('Last post timestamp', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
       const newRssItems: RssItem[] = [];
 
-      recordLastPostTimestamp(mockDataDir, newRssItems, writeFileFn);
+      recordLastPostMetadata(mockDataDir, newRssItems, writeFileFn);
 
       expect(writeFileFn.calls).to.be.empty;
     });

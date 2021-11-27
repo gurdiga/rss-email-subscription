@@ -36,27 +36,33 @@ export function getLastPostTimestamp(
   }
 }
 
-export function recordLastPostTimestamp(
+export interface LastPostMetadata {
+  lastPostTimestamp: Date;
+  guid: string;
+}
+
+export function recordLastPostMetadata(
   dataDir: DataDir,
   items: RssItem[],
   writeFileFn: WriteFileFn = writeFile
-): Result<Date | undefined> {
+): Result<LastPostMetadata | undefined> {
   if (isEmpty(items)) {
     return;
   }
 
   const latestItem = [...items].sort(sortBy((i) => i.pubDate, SortDirection.Desc))[0];
-  const lastPostTimestamp = latestItem.pubDate;
+  const metadata: LastPostMetadata = {
+    lastPostTimestamp: latestItem.pubDate,
+    guid: latestItem.guid,
+  };
 
   const filePath = getLastPostTimestampFileName(dataDir);
-  const fileContent = JSON.stringify({
-    lastPostTimestamp,
-  });
+  const fileContent = JSON.stringify(metadata);
 
   try {
     writeFileFn(filePath, fileContent);
 
-    return lastPostTimestamp;
+    return metadata;
   } catch (error) {
     return makeErr(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
   }

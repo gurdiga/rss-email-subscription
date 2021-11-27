@@ -5,7 +5,7 @@ import { FeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { selectNewItems } from './item-selection';
-import { getLastPostTimestamp, recordLastPostTimestamp } from './last-post-timestamp';
+import { getLastPostTimestamp, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
@@ -69,14 +69,14 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
 
   logInfo(`Feed checking report`, { report });
 
-  const recordedLastPostTimestamp = recordLastPostTimestamp(dataDir, newItems);
+  const result = recordLastPostMetadata(dataDir, newItems);
 
-  if (isErr(recordedLastPostTimestamp)) {
-    logError(`Failed recording last post timestamp`, { reason: recordedLastPostTimestamp.reason });
+  if (isErr(result)) {
+    logError(`Failed recording last post metadata`, { reason: result.reason });
     return 1;
   }
 
-  if (recordedLastPostTimestamp) {
-    logInfo(`Recorded last post timestamp`, { recordedLastPostTimestamp });
+  if (result) {
+    logInfo(`Recorded last post metadata`, { recordedLastPostMetadata: result });
   }
 }
