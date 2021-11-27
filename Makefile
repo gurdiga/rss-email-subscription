@@ -4,10 +4,10 @@ SHELL = bash
 default: pre-commit
 
 email-sending:
-	node_modules/.bin/ts-node src/cron-cli.ts email-sending test-feed
+	node_modules/.bin/ts-node src/cron-cli.ts email-sending testblog
 
 rss-checking:
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking test-feed
+	node_modules/.bin/ts-node src/cron-cli.ts rss-checking testblog
 
 .tmp/data/feed: .tmp/data/feed/feed.json .tmp/data/feed/emails.json
 
