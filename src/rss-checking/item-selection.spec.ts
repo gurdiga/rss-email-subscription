@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { RssItem } from '../shared/rss-item';
 import { selectNewItems } from './item-selection';
+import { LastPostMetadata } from './last-post-timestamp';
 
 describe(selectNewItems.name, () => {
   it('returns the items published after the given timestamp', () => {
@@ -22,9 +23,41 @@ describe(selectNewItems.name, () => {
         guid: '2',
       },
     ];
-    const timestamp = new Date('2020-02-18');
 
-    expect(selectNewItems(items, timestamp)).to.deep.equal([items[1]]);
+    const lastPostMetadata: LastPostMetadata = {
+      lastPostTimestamp: new Date('2020-02-15'),
+      guid: '1',
+    };
+
+    expect(selectNewItems(items, lastPostMetadata)).to.deep.equal([items[1]]);
+  });
+
+  it('handles Blogger glitch where pubDate increases a couple milliseconds on update', () => {
+    const items: RssItem[] = [
+      {
+        title: 'Post One',
+        content: 'Content of post one',
+        author: 'John DOE',
+        link: new URL('https://test.com/one'),
+        pubDate: new Date('2020-02-14T19:20:30.45-10:00'),
+        guid: '1',
+      },
+      {
+        title: 'Post Two',
+        content: 'Content of post two',
+        author: 'John DOE',
+        link: new URL('https://test.com/two'),
+        pubDate: new Date('2020-02-15T19:20:30.47-10:00'),
+        guid: '2',
+      },
+    ];
+
+    const lastPostMetadata: LastPostMetadata = {
+      lastPostTimestamp: new Date('2020-02-15T19:20:30.45-10:00'),
+      guid: '2',
+    };
+
+    expect(selectNewItems(items, lastPostMetadata)).to.deep.equal([]);
   });
 
   it('normalizes the dates to UTC when filtering', () => {
@@ -46,9 +79,12 @@ describe(selectNewItems.name, () => {
         guid: '2',
       },
     ];
-    const timestamp = new Date('2020-02-16T06:25:30.45+01:00');
+    const lastPostMetadata: LastPostMetadata = {
+      lastPostTimestamp: new Date('2020-02-16T06:25:30.45+01:00'),
+      guid: '1',
+    };
 
-    expect(selectNewItems(items, timestamp)).to.deep.equal([items[1]]);
+    expect(selectNewItems(items, lastPostMetadata)).to.deep.equal([items[1]]);
   });
 
   it('allows posts with a future date', () => {
@@ -62,12 +98,15 @@ describe(selectNewItems.name, () => {
         guid: '1',
       },
     ];
-    const timestamp = new Date('2020-02-18');
+    const lastPostMetadata: LastPostMetadata = {
+      lastPostTimestamp: new Date('2021-02-14'),
+      guid: '0',
+    };
 
-    expect(selectNewItems(items, timestamp)).to.deep.equal(items);
+    expect(selectNewItems(items, lastPostMetadata)).to.deep.equal(items);
   });
 
-  it('returns the first item when there is no lastPostTimestamp', () => {
+  it('returns the first item when there is no last post metadata recorded', () => {
     const items: RssItem[] = [
       {
         title: 'Post One',
@@ -86,8 +125,8 @@ describe(selectNewItems.name, () => {
         guid: '2',
       },
     ];
-    const timestamp = undefined;
+    const lastPostMetadata = undefined;
 
-    expect(selectNewItems(items, timestamp)).to.deep.equal([items[0]]);
+    expect(selectNewItems(items, lastPostMetadata)).to.deep.equal([items[0]]);
   });
 });

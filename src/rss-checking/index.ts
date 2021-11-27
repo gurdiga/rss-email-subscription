@@ -46,7 +46,7 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
     return 1;
   }
 
-  const newItems = selectNewItems(validItems, lastPostMetadata?.lastPostTimestamp);
+  const newItems = selectNewItems(validItems, lastPostMetadata);
 
   if (newItems.length === 0) {
     logInfo(`No new items`, { feedId });

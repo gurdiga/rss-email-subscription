@@ -1,9 +1,12 @@
 import { RssItem } from '../shared/rss-item';
+import { LastPostMetadata } from './last-post-timestamp';
 
-export function selectNewItems(items: RssItem[], lastPostTimestamp: Date | undefined): RssItem[] {
-  if (!lastPostTimestamp) {
+export function selectNewItems(items: RssItem[], lastPostMetadata: LastPostMetadata | undefined): RssItem[] {
+  if (!lastPostMetadata) {
     return items.slice(0, 1);
   }
 
-  return items.filter((i) => i.pubDate > lastPostTimestamp);
+  const { lastPostTimestamp, guid } = lastPostMetadata;
+
+  return items.filter((i) => i.pubDate > lastPostTimestamp && i.guid !== guid);
 }
