@@ -5,7 +5,7 @@ import { FeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { selectNewItems } from './item-selection';
-import { getLastPostTimestamp, recordLastPostMetadata } from './last-post-timestamp';
+import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
@@ -39,14 +39,14 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
     return 1;
   }
 
-  let lastPostTimestamp = getLastPostTimestamp(dataDir);
+  let lastPostMetadata = getLastPostMetadata(dataDir);
 
-  if (isErr(lastPostTimestamp)) {
-    logError(`Failed reading last post timestamp`, { reason: lastPostTimestamp.reason });
+  if (isErr(lastPostMetadata)) {
+    logError(`Failed reading last post metadata`, { reason: lastPostMetadata.reason });
     return 1;
   }
 
-  const newItems = selectNewItems(validItems, lastPostTimestamp);
+  const newItems = selectNewItems(validItems, lastPostMetadata?.lastPostTimestamp);
 
   if (newItems.length === 0) {
     logInfo(`No new items`, { feedId });
@@ -62,7 +62,7 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
 
   const report = {
     validItems: validItems.length,
-    lastPostTimestamp,
+    lastPostTimestamp: lastPostMetadata,
     newItems: newItems.length,
     writtenItems: recordingResult,
   };

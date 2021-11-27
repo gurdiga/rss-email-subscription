@@ -4,52 +4,76 @@ import { FileExistsFn, ReadFileFn, WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
-import { getLastPostTimestamp, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
+import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
+  const aGuid = 'some-GUID-string';
   const dataDirPathString = '/some/path';
   const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
 
-  describe(getLastPostTimestamp.name, () => {
+  describe(getLastPostMetadata.name, () => {
     const fileExistsFn = makeStub<FileExistsFn>(() => true);
 
-    it('returns the Date recorded in lastPostTimestamp.json in dataDir', () => {
-      const fileReaderFn = makeStub<ReadFileFn>(() => {
-        return JSON.stringify({ lastPostTimestamp: aTimestamp });
-      });
-      const result = getLastPostTimestamp(mockDataDir, fileReaderFn, fileExistsFn);
+    it('returns the Date and GUID recorded in lastPostTimestamp.json in dataDir', () => {
+      const lastPostMetadata: LastPostMetadata = {
+        lastPostTimestamp: aTimestamp,
+        guid: aGuid,
+      };
+      const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
+      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
-      expect(result).to.deep.equal(aTimestamp);
+      const expectedResult: LastPostMetadata = {
+        lastPostTimestamp: aTimestamp,
+        guid: aGuid,
+      };
+
+      expect(result).to.deep.equal(expectedResult);
       expect(fileReaderFn.calls).to.deep.equal([[`${dataDirPathString}/lastPostTimestamp.json`]]);
     });
 
     it('returns an Err value when can’t read lastPostTimestamp.json', () => {
       const fileReaderFn = makeThrowingStub<ReadFileFn>(new Error('Some IO error?!'));
-      const result = getLastPostTimestamp(mockDataDir, fileReaderFn, fileExistsFn);
+      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostTimestamp.json: Some IO error?!`));
     });
 
     it('returns undefined value when lastPostTimestamp.json does not exist', () => {
       const fileExistsFn = makeStub<FileExistsFn>(() => false);
-      const result = getLastPostTimestamp(mockDataDir, undefined, fileExistsFn);
+      const result = getLastPostMetadata(mockDataDir, undefined, fileExistsFn);
 
       expect(result).to.be.undefined;
     });
 
     it('returns an Err value when lastPostTimestamp.json does not contain valid JSON', () => {
       const fileReaderFn = makeStub<ReadFileFn>(() => 'not a valid JSON string');
-      const result = getLastPostTimestamp(mockDataDir, fileReaderFn, fileExistsFn);
+      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr(`Invalid JSON in ${dataDirPathString}/lastPostTimestamp.json`));
     });
 
     it('returns an Err value when the timestamp in lastPostTimestamp.json is not a valid date', () => {
       const fileReaderFn = makeStub<ReadFileFn>(() => '{"lastPostTimestamp": "not a JSON date"}');
-      const result = getLastPostTimestamp(mockDataDir, fileReaderFn, fileExistsFn);
+      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostTimestamp.json`));
+    });
+
+    it('defaults guid to empty string', () => {
+      const lastPostMetadata: LastPostMetadata = {
+        lastPostTimestamp: aTimestamp,
+        guid: undefined as any as string,
+      };
+      const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
+      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
+
+      const expectedResult: LastPostMetadata = {
+        lastPostTimestamp: aTimestamp,
+        guid: '',
+      };
+
+      expect(result).to.deep.equal(expectedResult);
     });
   });
 

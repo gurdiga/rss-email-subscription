@@ -5,11 +5,11 @@ import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile 
 import { isEmpty, sortBy, SortDirection } from '../shared/array-utils';
 import { getErrorMessage, makeErr, Result } from '../shared/lang';
 
-export function getLastPostTimestamp(
+export function getLastPostMetadata(
   dataDir: DataDir,
   dataReaderFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
-): Result<Date | undefined> {
+): Result<LastPostMetadata | undefined> {
   const filePath = getLastPostMetadataFileName(dataDir);
 
   if (!fileExistsFn(filePath)) {
@@ -23,11 +23,16 @@ export function getLastPostTimestamp(
       const data = JSON.parse(jsonString);
       const timestamp = new Date(data.lastPostTimestamp);
 
-      if (timestamp.toString() !== 'Invalid Date') {
-        return timestamp;
-      } else {
+      if (timestamp.toString() === 'Invalid Date') {
         return makeErr(`Invalid timestamp in ${filePath}`);
       }
+
+      const { guid = '' } = data;
+
+      return {
+        lastPostTimestamp: timestamp,
+        guid,
+      };
     } catch (jsonParsingError) {
       return makeErr(`Invalid JSON in ${filePath}`);
     }
