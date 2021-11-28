@@ -15,7 +15,7 @@ describe('Last post timestamp', () => {
   describe(getLastPostMetadata.name, () => {
     const fileExistsFn = makeStub<FileExistsFn>(() => true);
 
-    it('returns the Date and GUID recorded in lastPostTimestamp.json in dataDir', () => {
+    it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
       const lastPostMetadata: LastPostMetadata = {
         lastPostTimestamp: aTimestamp,
         guid: aGuid,
@@ -29,35 +29,35 @@ describe('Last post timestamp', () => {
       };
 
       expect(result).to.deep.equal(expectedResult);
-      expect(fileReaderFn.calls).to.deep.equal([[`${dataDirPathString}/lastPostTimestamp.json`]]);
+      expect(fileReaderFn.calls).to.deep.equal([[`${dataDirPathString}/lastPostMetadata.json`]]);
     });
 
-    it('returns an Err value when can’t read lastPostTimestamp.json', () => {
+    it('returns an Err value when can’t read lastPostMetadata.json', () => {
       const fileReaderFn = makeThrowingStub<ReadFileFn>(new Error('Some IO error?!'));
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostTimestamp.json: Some IO error?!`));
+      expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostMetadata.json: Some IO error?!`));
     });
 
-    it('returns undefined value when lastPostTimestamp.json does not exist', () => {
+    it('returns undefined value when lastPostMetadata.json does not exist', () => {
       const fileExistsFn = makeStub<FileExistsFn>(() => false);
       const result = getLastPostMetadata(mockDataDir, undefined, fileExistsFn);
 
       expect(result).to.be.undefined;
     });
 
-    it('returns an Err value when lastPostTimestamp.json does not contain valid JSON', () => {
+    it('returns an Err value when lastPostMetadata.json does not contain valid JSON', () => {
       const fileReaderFn = makeStub<ReadFileFn>(() => 'not a valid JSON string');
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr(`Invalid JSON in ${dataDirPathString}/lastPostTimestamp.json`));
+      expect(result).to.deep.equal(makeErr(`Invalid JSON in ${dataDirPathString}/lastPostMetadata.json`));
     });
 
-    it('returns an Err value when the timestamp in lastPostTimestamp.json is not a valid date', () => {
+    it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
       const fileReaderFn = makeStub<ReadFileFn>(() => '{"lastPostTimestamp": "not a JSON date"}');
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostTimestamp.json`));
+      expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostMetadata.json`));
     });
 
     it('defaults guid to empty string', () => {
@@ -112,14 +112,14 @@ describe('Last post timestamp', () => {
     };
     const expectedFileContent = JSON.stringify(expectedLastPostMetadata);
 
-    it('writes pubDate of the latest item to lastPostTimestamp.json', () => {
+    it('writes pubDate of the latest item to lastPostMetadata.json', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
       const initialRssItems = [...mockRssItems];
 
       const result = recordLastPostMetadata(mockDataDir, mockRssItems, writeFileFn);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
-      expect(writeFileFn.calls).to.deep.equal([[`${mockDataDir.value}/lastPostTimestamp.json`, expectedFileContent]]);
+      expect(writeFileFn.calls).to.deep.equal([[`${mockDataDir.value}/lastPostMetadata.json`, expectedFileContent]]);
       expect(result).to.deep.equal(expectedLastPostMetadata);
     });
 

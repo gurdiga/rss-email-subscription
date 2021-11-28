@@ -74,5 +74,5 @@ export function recordLastPostMetadata(
 }
 
 function getLastPostMetadataFileName(dataDir: DataDir) {
-  return path.join(dataDir.value, 'lastPostTimestamp.json');
+  return path.join(dataDir.value, 'lastPostMetadata.json');
 }
