@@ -39,12 +39,13 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
       <footer>
         <p>You can read this post online here: <a href="${item.link}">${item.title}</a>.</p>
 
-        <p>
-          <small>
-            <a href="${unsubscribeUrl}">Unsubscribe</a>
-            • PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
-            Replying with “Hello!” or “Thank you!” works even better. 🙂
-          </small>
+        <p style="font-size: smaller;">
+          PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
+          Replying with “Hello!” or “Thank you!” works even better. 🙂
+        </p>
+
+        <p style="font-size: smaller;">
+          <a href="${unsubscribeUrl}">Unsubscribe</a>
         </p>
       </footer>
     </div>`;

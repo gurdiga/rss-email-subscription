@@ -16,13 +16,13 @@ async function main(): Promise<number> {
 
   console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING.substr(0, 18));
 
-  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
+  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${DOMAIN_NAME}`) as EmailAddress);
   const to = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
   const item: RssItem = {
     author: 'Me',
-    title: `testing deliverEmailFn from ${new Date().toJSON()}`,
-    content: 'This is the post content.',
+    title: `testing item-sending from ${new Date().toJSON()}`,
+    content: '<p>This is the post content.</p>',
     guid: `${Date.now()}`,
     link: new URL('https://example.com/post.html'),
     pubDate: new Date(),
