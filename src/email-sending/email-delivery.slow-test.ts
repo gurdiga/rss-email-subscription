@@ -3,7 +3,8 @@ import { DOMAIN_NAME } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailHeaders } from './item-sending';
+import { makeEmailHeaders, makeEmailMessage } from './item-sending';
+import { RssItem } from '../shared/rss-item';
 
 async function main(): Promise<number> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
@@ -18,11 +19,22 @@ async function main(): Promise<number> {
   const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`feed@${DOMAIN_NAME}`) as EmailAddress);
   const to = 'gurdiga@gmail.com';
   const replyTo = 'replyTo@gmail.com';
-  const subject = `testing deliverEmailFn from ${new Date().toJSON()}`;
+  const item: RssItem = {
+    author: 'Me',
+    title: `testing deliverEmailFn from ${new Date().toJSON()}`,
+    content: 'This is the post content.',
+    guid: `${Date.now()}`,
+    link: new URL('https://example.com/post.html'),
+    pubDate: new Date(),
+  };
+  const emailMessage = makeEmailMessage(item, new URL('https://example.com'), from.emailAddress);
+  const subject = emailMessage.subject;
   const htmlBody = `
       <p>This emai is sent from this unit test:</p>
 
       <code>${__filename}</code>
+
+      ${emailMessage.htmlBody}
     `;
 
   const emailDeliveryRequest: EmailDeliveryRequest = {
