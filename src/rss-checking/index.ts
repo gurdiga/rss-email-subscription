@@ -62,7 +62,7 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
 
   const report = {
     validItems: validItems.length,
-    lastPostTimestamp: lastPostMetadata,
+    lastPostMetadata,
     newItems: newItems.length,
     writtenItems: recordingResult,
   };

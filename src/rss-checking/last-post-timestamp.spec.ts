@@ -57,7 +57,7 @@ describe('Last post timestamp', () => {
     });
 
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
-      const fileReaderFn = makeStub<ReadFileFn>(() => '{"lastPostTimestamp": "not a JSON date"}');
+      const fileReaderFn = makeStub<ReadFileFn>(() => '{"pubDate": "not a JSON date"}');
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostMetadata.json`));
@@ -108,14 +108,14 @@ describe('Last post timestamp', () => {
       },
     ];
 
-    const latestPost = mockRssItems[2];
+    const lastPost = mockRssItems[2];
     const expectedLastPostMetadata: LastPostMetadata = {
-      pubDate: latestPost.pubDate,
-      guid: latestPost.guid,
+      pubDate: lastPost.pubDate,
+      guid: lastPost.guid,
     };
     const expectedFileContent = JSON.stringify(expectedLastPostMetadata);
 
-    it('writes pubDate of the latest item to lastPostMetadata.json', () => {
+    it('writes pubDate of the last item to lastPostMetadata.json', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
       const initialRssItems = [...mockRssItems];
 
