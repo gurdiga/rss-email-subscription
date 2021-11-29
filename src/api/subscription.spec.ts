@@ -17,7 +17,7 @@ describe('subscription', () => {
         invalidEmails: [],
       };
 
-      const newEmails = addEmail(emailAddress, storedEmails, emailHashFn);
+      const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
 
       expect(newEmails.validEmails).to.have.lengthOf(1);
       expect(newEmails.validEmails[0]).to.deep.equal({

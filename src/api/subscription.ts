@@ -63,7 +63,7 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
-  const newEmails = addEmail(emailAddress, storedEmails, emailHashFn);
+  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   const result = storeEmails(newEmails, dataDir);
 
   if (isErr(result)) {
@@ -96,8 +96,8 @@ export function storeEmails(
 }
 
 export function addEmail(
-  emailAddress: EmailAddress,
   storedEmails: StoredEmails,
+  emailAddress: EmailAddress,
   emailHashFn: EmailHashFn
 ): StoredEmails {
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
