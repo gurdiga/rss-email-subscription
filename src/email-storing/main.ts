@@ -1,5 +1,6 @@
 import path from 'path';
-import { indexEmails, makeEmailHashFn, readEmailListFromFile, storeEmailIndex } from '../email-sending/emails';
+import { addEmail, storeEmails } from '../api/subscription';
+import { makeEmailHashFn, readEmailListFromFile, StoredEmails } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
@@ -45,15 +46,34 @@ async function main(): Promise<number | undefined> {
   }
 
   const { validEmails, invalidEmails } = emailReadingResult;
-  const emailIndex = indexEmails(validEmails, makeEmailHashFn(feedSettings.hashingSalt));
-  const storeResult = storeEmailIndex(dataDir, emailIndex);
 
-  if (isErr(storeResult)) {
-    logError(storeResult.reason, { dataDirString: feedId });
+  if (invalidEmails.length > 0) {
+    logError(`Found invalid emails`, { invalidEmails });
     return 1;
   }
 
-  logInfo('Stored emails', { dataDirString: feedId, validEmails: validEmails.length, invalidEmails });
+  let storedEmails: StoredEmails = {
+    validEmails: [],
+    invalidEmails: [],
+  };
+  const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
+
+  for (const emailAddress of validEmails) {
+    storedEmails = addEmail(storedEmails, emailAddress, emailHashFn);
+  }
+
+  const result = storeEmails(storedEmails, dataDir);
+
+  if (isErr(result)) {
+    logError('Can’t store emails', { reason: result.reason });
+    return 1;
+  }
+
+  logInfo('Stored emails', {
+    dataDirString: feedId,
+    validEmails: storedEmails.validEmails.length,
+    invalidEmails: storedEmails.invalidEmails,
+  });
 }
 
 main().then((exitCode) => process.exit(exitCode));
