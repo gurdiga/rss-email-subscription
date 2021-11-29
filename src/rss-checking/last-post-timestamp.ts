@@ -7,7 +7,7 @@ import { getErrorMessage, makeErr, Result } from '../shared/lang';
 
 export function getLastPostMetadata(
   dataDir: DataDir,
-  dataReaderFn: ReadFileFn = readFile,
+  readFileFn: ReadFileFn = readFile,
   fileExistsFn: FileExistsFn = fileExists
 ): Result<LastPostMetadata | undefined> {
   const filePath = getLastPostMetadataFileName(dataDir);
@@ -17,24 +17,25 @@ export function getLastPostMetadata(
   }
 
   try {
-    const jsonString = dataReaderFn(filePath);
+    const jsonString = readFileFn(filePath);
 
     try {
       const data = JSON.parse(jsonString);
-      const timestamp = new Date(data.lastPostTimestamp);
+      const pubDate = new Date(data.pubDate);
 
-      if (timestamp.toString() === 'Invalid Date') {
+      if (pubDate.toString() === 'Invalid Date') {
         return makeErr(`Invalid timestamp in ${filePath}`);
       }
 
-      const { guid = '' } = data;
+      const defaultGuid = '';
+      const guid = data.guid || defaultGuid;
 
       return {
-        lastPostTimestamp: timestamp,
+        pubDate,
         guid,
       };
     } catch (jsonParsingError) {
-      return makeErr(`Invalid JSON in ${filePath}`);
+      return makeErr(`Invalid JSON in ${filePath}: ${jsonString}`);
     }
   } catch (ioError) {
     return makeErr(`Can’t read ${filePath}: ${getErrorMessage(ioError)}`);
@@ -42,7 +43,7 @@ export function getLastPostMetadata(
 }
 
 export interface LastPostMetadata {
-  lastPostTimestamp: Date;
+  pubDate: Date;
   guid: string;
 }
 
@@ -57,7 +58,7 @@ export function recordLastPostMetadata(
 
   const latestItem = [...items].sort(sortBy((i) => i.pubDate, SortDirection.Desc))[0];
   const metadata: LastPostMetadata = {
-    lastPostTimestamp: latestItem.pubDate,
+    pubDate: latestItem.pubDate,
     guid: latestItem.guid,
   };
 

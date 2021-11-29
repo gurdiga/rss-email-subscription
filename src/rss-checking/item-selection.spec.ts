@@ -25,7 +25,7 @@ describe(selectNewItems.name, () => {
     ];
 
     const lastPostMetadata: LastPostMetadata = {
-      lastPostTimestamp: new Date('2020-02-15'),
+      pubDate: new Date('2020-02-15'),
       guid: '1',
     };
 
@@ -53,7 +53,7 @@ describe(selectNewItems.name, () => {
     ];
 
     const lastPostMetadata: LastPostMetadata = {
-      lastPostTimestamp: new Date('2020-02-15T19:20:30.45-10:00'),
+      pubDate: new Date('2020-02-15T19:20:30.45-10:00'),
       guid: '2',
     };
 
@@ -80,7 +80,7 @@ describe(selectNewItems.name, () => {
       },
     ];
     const lastPostMetadata: LastPostMetadata = {
-      lastPostTimestamp: new Date('2020-02-16T06:25:30.45+01:00'),
+      pubDate: new Date('2020-02-16T06:25:30.45+01:00'),
       guid: '1',
     };
 
@@ -99,7 +99,7 @@ describe(selectNewItems.name, () => {
       },
     ];
     const lastPostMetadata: LastPostMetadata = {
-      lastPostTimestamp: new Date('2021-02-14'),
+      pubDate: new Date('2021-02-14'),
       guid: '0',
     };
 

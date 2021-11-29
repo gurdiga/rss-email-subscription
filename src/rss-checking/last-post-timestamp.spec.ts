@@ -17,14 +17,14 @@ describe('Last post timestamp', () => {
 
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
       const lastPostMetadata: LastPostMetadata = {
-        lastPostTimestamp: aTimestamp,
+        pubDate: aTimestamp,
         guid: aGuid,
       };
       const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       const expectedResult: LastPostMetadata = {
-        lastPostTimestamp: aTimestamp,
+        pubDate: aTimestamp,
         guid: aGuid,
       };
 
@@ -47,10 +47,13 @@ describe('Last post timestamp', () => {
     });
 
     it('returns an Err value when lastPostMetadata.json does not contain valid JSON', () => {
-      const fileReaderFn = makeStub<ReadFileFn>(() => 'not a valid JSON string');
+      const nonJsonString = 'not a valid JSON string';
+      const fileReaderFn = makeStub<ReadFileFn>(() => nonJsonString);
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr(`Invalid JSON in ${dataDirPathString}/lastPostMetadata.json`));
+      expect(result).to.deep.equal(
+        makeErr(`Invalid JSON in ${dataDirPathString}/lastPostMetadata.json: ${nonJsonString}`)
+      );
     });
 
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
@@ -62,14 +65,14 @@ describe('Last post timestamp', () => {
 
     it('defaults guid to empty string', () => {
       const lastPostMetadata: LastPostMetadata = {
-        lastPostTimestamp: aTimestamp,
+        pubDate: aTimestamp,
         guid: undefined as any as string,
       };
       const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
       const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
 
       const expectedResult: LastPostMetadata = {
-        lastPostTimestamp: aTimestamp,
+        pubDate: aTimestamp,
         guid: '',
       };
 
@@ -107,7 +110,7 @@ describe('Last post timestamp', () => {
 
     const latestPost = mockRssItems[2];
     const expectedLastPostMetadata: LastPostMetadata = {
-      lastPostTimestamp: latestPost.pubDate,
+      pubDate: latestPost.pubDate,
       guid: latestPost.guid,
     };
     const expectedFileContent = JSON.stringify(expectedLastPostMetadata);

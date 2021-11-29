@@ -6,7 +6,7 @@ export function selectNewItems(items: RssItem[], lastPostMetadata: LastPostMetad
     return items.slice(0, 1);
   }
 
-  const { lastPostTimestamp, guid } = lastPostMetadata;
+  const { pubDate, guid } = lastPostMetadata;
 
-  return items.filter((i) => i.pubDate > lastPostTimestamp && i.guid !== guid);
+  return items.filter((i) => i.pubDate > pubDate && i.guid !== guid);
 }
