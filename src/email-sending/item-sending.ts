@@ -44,7 +44,7 @@ export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress
           Replying with “Hello!” or “Thank you!” works even better. 🙂
         </p>
 
-        <p style="font-size: smaller;">
+        <p style="font-size: smaller; text-align: center;">
           <a href="${unsubscribeUrl}">Unsubscribe</a>
         </p>
       </footer>
