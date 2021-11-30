@@ -1,5 +1,6 @@
-import nodeFetch from 'node-fetch';
+import nodeFetch, { FetchError } from 'node-fetch';
 import { makeErr, Result } from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
 
 export interface RssResponse {
   kind: 'RssResponse';
@@ -16,8 +17,24 @@ interface FetchResponse {
 
 type FetchFn = (url: URL) => Promise<FetchResponse>;
 
-function fetch(url: URL): Promise<FetchResponse> {
-  return nodeFetch(url.toString());
+const { logError } = makeCustomLoggers({ module: 'fetch' });
+
+async function fetch(url: URL): Promise<FetchResponse> {
+  const doFetch = () => nodeFetch(url.toString());
+  const pauseInSecondsBeforeRetry = 5;
+
+  return doFetch().catch(async (error) => {
+    if (error instanceof FetchError) {
+      logError(`Got error: ${error.message}. Will retry in ${pauseInSecondsBeforeRetry} seconds...`);
+      return sleep(pauseInSecondsBeforeRetry).then(doFetch);
+    } else {
+      throw error;
+    }
+  });
+}
+
+async function sleep(seconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
 }
 
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
