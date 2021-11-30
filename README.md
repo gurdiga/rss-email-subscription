@@ -21,3 +21,4 @@ Everything is packed as a Docker composition:
 4. `website` is a container based on the official nginx Docker image, with a buch of static files.
 5. `certbot` for updating website’s LetsEncrypt certificates.
 6. `logger` an Alpine container with syslog-ng that collects the logs from all the other containers.
+7. `api` an instance of `app` that starts an Express server.
