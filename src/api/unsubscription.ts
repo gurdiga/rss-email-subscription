@@ -1,8 +1,9 @@
-import { EmailHash, HashedEmail, loadStoredEmails, storeEmailIndex } from '../email-sending/emails';
+import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError } from './shared';
+import { storeEmails } from './subscription';
 
 export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
@@ -15,30 +16,31 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
   }
 
   const { dataDir, emailHash } = parseResult;
-  const loadResult = loadStoredEmails(dataDir);
+  const storedEmails = loadStoredEmails(dataDir);
 
-  if (isErr(loadResult)) {
-    logError('Can’t load stored emails', { reason: loadResult.reason });
+  if (isErr(storedEmails)) {
+    logError('Can’t load stored emails', { reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
-  const { validEmails } = loadResult;
-  const emailFound = validEmails.some((x) => x.saltedHash === emailHash);
+  const { validEmails } = storedEmails;
+  const emailSubscribed = validEmails.some((x) => x.saltedHash === emailHash);
 
-  if (!emailFound) {
+  if (!emailSubscribed) {
     logWarning('Email not found by hash', { emailHash });
     return makeInputError('Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔');
   }
 
-  const removeResult = removeEmail(emailHash, validEmails);
+  const newValidEmails = removeEmail(validEmails, emailHash);
 
-  if (isErr(removeResult)) {
-    logError('Can’t remove email', { reason: removeResult.reason });
+  if (isErr(newValidEmails)) {
+    logError('Can’t remove email', { reason: newValidEmails.reason });
     return makeAppError('Database error');
   }
 
-  const emailIndex = Object.fromEntries(removeResult.map((x) => [x.saltedHash, x.emailAddress.value]));
-  const storeResult = storeEmailIndex(dataDir, emailIndex);
+  storedEmails.validEmails = newValidEmails;
+
+  const storeResult = storeEmails(storedEmails, dataDir);
 
   if (isErr(storeResult)) {
     logError('Can’t store emails', { reason: storeResult.reason });
@@ -89,7 +91,7 @@ export function parseUnsubscriptionId(id: any, dataDirRoot: string): Result<Unsu
   };
 }
 
-export function removeEmail(emailHash: EmailHash, hashedEmails: HashedEmail[]): Result<HashedEmail[]> {
+export function removeEmail(hashedEmails: HashedEmail[], emailHash: EmailHash): Result<HashedEmail[]> {
   if (!emailHash.trim()) {
     return makeErr('Email hash is an empty string or whitespace');
   }

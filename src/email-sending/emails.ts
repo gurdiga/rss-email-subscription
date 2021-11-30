@@ -88,17 +88,7 @@ export type EmailHashFn = (emailAddress: EmailAddress) => EmailHash;
 export type EmailHash = string;
 export type EmailIndex = Record<EmailHash, EmailAddress['value']>;
 
-export function indexEmails(emailAddresses: EmailAddress[], emailHashFn: EmailHashFn): EmailIndex {
-  const index: EmailIndex = {};
-
-  emailAddresses.forEach((e) => {
-    index[emailHashFn(e)] = e.value;
-  });
-
-  return index;
-}
-
-export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn = readFile): Result<EmailList> {
+export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileFn = readFile): Result<EmailList> {
   try {
     const fileContent = readFileFn(filePath);
 
@@ -109,21 +99,6 @@ export function readEmailListFromFile(filePath: string, readFileFn: ReadFileFn =
 }
 
 export const emailsFileName = 'emails.json';
-
-export function storeEmailIndex(
-  dataDir: DataDir,
-  emailIndex: EmailIndex,
-  writeFileFn: WriteFileFn = writeFile
-): Result<void> {
-  const filePath = path.join(dataDir.value, emailsFileName);
-  const json = JSON.stringify(emailIndex);
-
-  try {
-    writeFileFn(filePath, json);
-  } catch (error) {
-    return makeErr(`Could not store email index to ${dataDir.value}/${emailsFileName}: ${getErrorMessage(error)}`);
-  }
-}
 
 export interface StoredEmails {
   validEmails: HashedEmail[];

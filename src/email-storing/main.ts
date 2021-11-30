@@ -1,6 +1,6 @@
 import path from 'path';
 import { addEmail, storeEmails } from '../api/subscription';
-import { makeEmailHashFn, readEmailListFromFile, StoredEmails } from '../email-sending/emails';
+import { makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
@@ -38,7 +38,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  const emailReadingResult = readEmailListFromFile(inputFilePath);
+  const emailReadingResult = readEmailListFromCsvFile(inputFilePath);
 
   if (isErr(emailReadingResult)) {
     logError(emailReadingResult.reason, { inputFilePath });

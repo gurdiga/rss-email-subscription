@@ -8,15 +8,13 @@ import {
   EmailHashFn,
   EmailList,
   parseEmails,
-  indexEmails,
   isEmailAddress,
   makeEmailAddress,
-  readEmailListFromFile,
+  readEmailListFromCsvFile,
   emailsFileName,
   EmailIndex,
   StoredEmails,
   loadStoredEmails,
-  storeEmailIndex,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -74,20 +72,6 @@ describe(parseEmails.name, () => {
     };
 
     expect(result).to.deep.equal(expectedResult);
-  });
-});
-
-describe(indexEmails.name, () => {
-  it('indexes emails by their salted hash', () => {
-    const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
-    const hashFn = makeStub<EmailHashFn>((e) => `#${e.value}#`);
-    const result = indexEmails(emailAddresses, hashFn);
-
-    expect(result).to.deep.equal({
-      '#a@test.com#': 'a@test.com',
-      '#b@test.com#': 'b@test.com',
-      '#c@test.com#': 'c@test.com',
-    });
   });
 });
 
@@ -153,7 +137,7 @@ describe(makeEmailAddress.name, () => {
   });
 });
 
-describe(readEmailListFromFile.name, () => {
+describe(readEmailListFromCsvFile.name, () => {
   const filePath = '/some/file.txt';
 
   it('reads and parses the emails from the given one-per-line file', () => {
@@ -168,7 +152,7 @@ describe(readEmailListFromFile.name, () => {
       ],
       invalidEmails: [],
     };
-    const result = readEmailListFromFile(filePath, readFile);
+    const result = readEmailListFromCsvFile(filePath, readFile);
 
     expect(readFile.calls).to.deep.equal([[filePath]]);
     expect(result).to.deep.equal(expectedResult);
@@ -177,44 +161,9 @@ describe(readEmailListFromFile.name, () => {
   it('returns an Err value when can’t read the file', () => {
     const error = new Error('Read failed for some reason');
     const readFile = makeThrowingStub<ReadFileFn>(error);
-    const result = readEmailListFromFile(filePath, readFile);
+    const result = readEmailListFromCsvFile(filePath, readFile);
 
     expect(result).to.deep.equal(makeErr(`Could not read email list from file ${filePath}: ${error.message}`));
-  });
-});
-
-describe(storeEmailIndex.name, () => {
-  const dataDirString = '/some/path';
-  const dataDir = makeDataDir(dataDirString) as DataDir;
-  const emailAddresses = ['a@test.com', 'b@test.com', 'c@test.com'].map(makeEmailAddress).filter(isEmailAddress);
-  const emailHash = makeStub<EmailHashFn>((e: EmailAddress) => `#${e.value}#`);
-  const emailIndex = indexEmails(emailAddresses, emailHash);
-
-  it('stores the given email index', () => {
-    const writeFile = makeSpy<WriteFileFn>();
-
-    const expectedFileWrite = [
-      `${dataDirString}/${emailsFileName}`,
-      JSON.stringify({
-        '#a@test.com#': 'a@test.com',
-        '#b@test.com#': 'b@test.com',
-        '#c@test.com#': 'c@test.com',
-      }),
-    ];
-    const result = storeEmailIndex(dataDir, emailIndex, writeFile);
-
-    expect(writeFile.calls).to.deep.equal([expectedFileWrite]);
-    expect(result).to.be.undefined;
-  });
-
-  it('returns an Err value when can’t write file', () => {
-    const error = new Error('File write failed!?');
-    const writeFile = makeThrowingStub<WriteFileFn>(error);
-    const result = storeEmailIndex(dataDir, emailIndex, writeFile);
-
-    expect(result).to.deep.equal(
-      makeErr(`Could not store email index to ${dataDirString}/${emailsFileName}: ${error.message}`)
-    );
   });
 });
 

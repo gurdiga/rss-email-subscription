@@ -60,7 +60,7 @@ describe(removeEmail.name, () => {
     const emailAddressToRemove = emailAddresses[2];
     const hash = emailHashFn(emailAddressToRemove);
 
-    const newHashedEmails = removeEmail(hash, hashedEmails) as HashedEmail[];
+    const newHashedEmails = removeEmail(hashedEmails, hash) as HashedEmail[];
 
     expect(newHashedEmails.map((x) => x.saltedHash)).not.to.include(hash);
   });
@@ -68,8 +68,8 @@ describe(removeEmail.name, () => {
   it('returns an Err value if the hash is an empty string or whitespace', () => {
     const expectedErr = makeErr('Email hash is an empty string or whitespace');
 
-    expect(removeEmail('', hashedEmails)).to.deep.equal(expectedErr);
-    expect(removeEmail('  \t', hashedEmails)).to.deep.equal(expectedErr);
-    expect(removeEmail('\n  ', hashedEmails)).to.deep.equal(expectedErr);
+    expect(removeEmail(hashedEmails, '')).to.deep.equal(expectedErr);
+    expect(removeEmail(hashedEmails, '  \t')).to.deep.equal(expectedErr);
+    expect(removeEmail(hashedEmails, '\n  ')).to.deep.equal(expectedErr);
   });
 });
