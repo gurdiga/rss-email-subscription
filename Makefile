@@ -231,11 +231,11 @@ unsubscribe-report:
 		| sed 's/%40/@/' \
 		| ifne bash -c send_report
 
-postfix-delivery-report:
+delivery-report:
 	@function send_report() {
 		(
 			echo "Subject: RES Postfix delivery report"
-			echo "From: RES <postfix-delivery-report@feedsubscription.com>"
+			echo "From: RES <delivery-report@feedsubscription.com>"
 			echo ""
 			cat
 		) \
@@ -245,6 +245,7 @@ postfix-delivery-report:
 	export -f send_report
 
 	grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
+		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
 		| ifne bash -c send_report
