@@ -244,9 +244,10 @@ delivery-report:
 
 	export -f send_report
 
-	grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
+	( \
+		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
 		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
-		2>&1 \
-		| ifne bash -c send_report
+	) 2>&1 \
+	| ifne bash -c send_report
