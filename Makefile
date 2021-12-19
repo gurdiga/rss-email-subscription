@@ -248,4 +248,5 @@ delivery-report:
 		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
+		2>&1 \
 		| ifne bash -c send_report
