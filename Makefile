@@ -210,7 +210,7 @@ watch-smtp-out:
 		& disown
 
 unsubscribe-report:
-	@function send_report() {
+	function send_report() {
 		(
 			echo "Subject: RES unsubscribe-report"
 			echo "From: unsubscribe-report@feedsubscription.com"
@@ -230,3 +230,8 @@ unsubscribe-report:
 		| sort -u \
 		| sed 's/%40/@/' \
 		| ifne bash -c send_report
+
+postfix-delivery-report:
+	@grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
+	| grep -Po '(?<= status=)\S+' \
+	| sort | uniq -c
