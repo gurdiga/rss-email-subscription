@@ -210,14 +210,14 @@ watch-smtp-out:
 		& disown
 
 unsubscribe-report:
-	function send_report() {
+	@function send_report() {
 		(
 			echo "Subject: RES unsubscribe-report"
-			echo "From: unsubscribe-report@feedsubscription.com"
+			echo "From: RES <unsubscribe-report@feedsubscription.com>"
 			echo ""
 			cat
 		) \
-		| ssmtp gurdiga@gmail.com
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	}
 
 	export -f send_report
@@ -235,11 +235,11 @@ postfix-delivery-report:
 	@function send_report() {
 		(
 			echo "Subject: RES Postfix delivery report"
-			echo "From: postfix-delivery-report@feedsubscription.com"
+			echo "From: RES <postfix-delivery-report@feedsubscription.com>"
 			echo ""
 			cat
 		) \
-		| ssmtp gurdiga@gmail.com
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	}
 
 	export -f send_report
