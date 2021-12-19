@@ -232,6 +232,19 @@ unsubscribe-report:
 		| ifne bash -c send_report
 
 postfix-delivery-report:
-	@grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
-	| grep -Po '(?<= status=)\S+' \
-	| sort | uniq -c
+	@function send_report() {
+		(
+			echo "Subject: RES Postfix delivery report"
+			echo "From: postfix-delivery-report@feedsubscription.com"
+			echo ""
+			cat
+		) \
+		| ssmtp gurdiga@gmail.com
+	}
+
+	export -f send_report
+
+	grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
+		| grep -Po '(?<= status=)\S+' \
+		| sort | uniq -c \
+		| ifne bash -c send_report
