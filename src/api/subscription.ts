@@ -30,8 +30,8 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
-    logWarning('Invalid dataDir');
-    return makeInputError('Invalid feed');
+    logWarning('Invalid dataDir', { feedId });
+    return makeInputError('Invalid feed id');
   }
 
   const feedSettings = getFeedSettings(dataDir);
