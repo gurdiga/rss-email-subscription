@@ -10,41 +10,23 @@ import {
   HashedEmail,
 } from '../email-sending/emails';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { getFeedSettings } from '../shared/feed-settings';
+import { FeedSettings, getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, makeAppError, makeInputError } from './shared';
+import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';
 
 export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { feedId, email } = reqBody;
 
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: subscribe.name });
-  const emailAddress = makeEmailAddress(email);
+  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
 
-  if (isErr(emailAddress)) {
-    logWarning('Invalid email', { emailAddress });
-    return makeInputError('Invalid email');
+  if (inputProcessingResult.kind !== 'ProcessedInput') {
+    return inputProcessingResult;
   }
 
-  const dataDir = makeDataDir(feedId, dataDirRoot);
-
-  if (isErr(dataDir)) {
-    logWarning('Invalid dataDir', { feedId });
-    return makeInputError('Invalid feed id');
-  }
-
-  const feedSettings = getFeedSettings(dataDir);
-
-  if (feedSettings.kind === 'FeedNotFound') {
-    logWarning('Feed not found');
-    return makeInputError('Feed not found');
-  }
-
-  if (isErr(feedSettings)) {
-    logError('Can’t read feed settings', { reason: feedSettings.reason });
-    return makeAppError('Can’t read feed settings');
-  }
+  const { emailAddress, dataDir, feedSettings } = inputProcessingResult;
 
   const storedEmails = loadStoredEmails(dataDir);
 
@@ -74,6 +56,83 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
   return {
     kind: 'Success',
     message: 'You are subscribed now. Welcome aboard! 🙂',
+  };
+};
+
+interface Input {
+  reqId: number;
+  email: string;
+  feedId: string;
+  dataDirRoot: string;
+}
+
+interface ProcessedInput {
+  kind: 'ProcessedInput';
+  emailAddress: EmailAddress;
+  dataDir: DataDir;
+  feedSettings: FeedSettings;
+}
+
+function processInput({ reqId, email, feedId, dataDirRoot }: Input): ProcessedInput | InputError | AppError {
+  const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
+  const emailAddress = makeEmailAddress(email);
+
+  if (isErr(emailAddress)) {
+    logWarning('Invalid email', { emailAddress });
+    return makeInputError('Invalid email');
+  }
+
+  const dataDir = makeDataDir(feedId, dataDirRoot);
+
+  if (isErr(dataDir)) {
+    logWarning('Invalid dataDir', { feedId });
+    return makeInputError('Invalid feed id');
+  }
+
+  const feedSettings = getFeedSettings(dataDir);
+
+  if (feedSettings.kind === 'FeedNotFound') {
+    logWarning('Feed not found');
+    return makeInputError('Feed not found');
+  }
+
+  if (isErr(feedSettings)) {
+    logError('Can’t read feed settings', { reason: feedSettings.reason });
+    return makeAppError('Can’t read feed settings');
+  }
+
+  return {
+    kind: 'ProcessedInput',
+    emailAddress,
+    dataDir,
+    feedSettings,
+  };
+}
+
+export const subscribeWithDoubleOptIn: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+  const { feedId, email } = reqBody;
+
+  const { logError } = makeCustomLoggers({ reqId, module: subscribeWithDoubleOptIn.name });
+  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
+
+  if (inputProcessingResult.kind !== 'ProcessedInput') {
+    return inputProcessingResult;
+  }
+
+  const { emailAddress, feedSettings } = inputProcessingResult;
+  const sendingResult = sendConfirmationEmail(emailAddress, feedSettings);
+
+  if (isErr(sendingResult)) {
+    logError('Can’t send confirmation email', { reason: sendingResult.reason });
+    return makeAppError('Could not send confirmation email');
+  }
+
+  return {
+    kind: 'Success',
+    message: 'You are subscribed now. Welcome aboard! 🙂',
+    logData: {
+      TBD: 'TBD',
+    },
   };
 };
 
@@ -113,3 +172,5 @@ function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmai
 
   return alreadyExists;
 }
+
+function sendConfirmationEmail(emailAddress: EmailAddress, feedSettings: FeedSettings): void {}
