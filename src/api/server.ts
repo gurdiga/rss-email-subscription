@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, isAppError, isInputError, isSuccess } from './shared';
 import { subscribe } from './subscription';
+import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 
 let requestCounter = 0;
@@ -14,6 +15,7 @@ function main() {
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
   app.post('/subscribe', makeRequestHandler(subscribe));
+  app.post('/confirm-subscription', makeRequestHandler(confirmSubscription));
   app.post('/unsubscribe', makeRequestHandler(unsubscribe));
   app.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe));
 
