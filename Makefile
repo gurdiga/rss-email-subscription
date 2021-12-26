@@ -234,7 +234,7 @@ unsubscribe-report:
 delivery-report:
 	@function send_report() {
 		(
-			echo "Subject: RES Postfix delivery report"
+			echo "Subject: RES Delivery report"
 			echo "From: RES <delivery-report@feedsubscription.com>"
 			echo ""
 			cat
@@ -250,4 +250,20 @@ delivery-report:
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
 	) 2>&1 \
+	| ifne bash -c send_report
+
+mailq-report:
+	@function send_report() {
+		(
+			echo "Subject: RES mailq report"
+			echo "From: RES <mailq-report@feedsubscription.com>"
+			echo ""
+			cat
+		) \
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	}
+
+	export -f send_report
+
+	docker exec smtp-out mailq
 	| ifne bash -c send_report
