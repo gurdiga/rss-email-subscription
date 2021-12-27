@@ -265,5 +265,5 @@ mailq-report:
 
 	export -f send_report
 
-	docker exec smtp-out mailq
+	docker exec smtp-out mailq \
 	| ifne bash -c send_report
