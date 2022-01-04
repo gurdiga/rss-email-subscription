@@ -226,7 +226,7 @@ describe(loadStoredEmails.name, () => {
 
     for (fileContent of invalidJsonStrings) {
       expect(loadStoredEmails(dataDir, readFile)).to.deep.equal(
-        makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values'),
+        makeErr('Email index JSON is expected to be an object with hashes as keys and emails or email info as values'),
         `fileContent: ${fileContent}`
       );
     }

@@ -86,7 +86,11 @@ export function parseEmails(emailList: string): Result<EmailList> {
 
 export type EmailHashFn = (emailAddress: EmailAddress) => EmailHash;
 export type EmailHash = string;
-export type EmailIndex = Record<EmailHash, EmailAddress['value']>;
+export type EmailIndex = Record<EmailHash, EmailAddress['value'] | EmailInformation>;
+
+interface EmailInformation {
+  emailAddress: EmailAddress['value'];
+}
 
 export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileFn = readFile): Result<EmailList> {
   try {
@@ -137,7 +141,9 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
       const index = JSON.parse(json) as EmailIndex;
 
       if (getTypeName(index) !== 'object') {
-        return makeErr('Email index JSON is expected to be an object with hashes as keys and emails as values');
+        return makeErr(
+          'Email index JSON is expected to be an object with hashes as keys and emails or email info as values'
+        );
       }
 
       const results = Object.entries(index).map(([key, value]) => parseIndexEntry(key, value));
@@ -156,7 +162,8 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-function parseIndexEntry(saltedHash: string, email: string): Result<HashedEmail> {
+// TODO: Extend return type to contain EmailInformation
+function parseIndexEntry(saltedHash: string, email: string | EmailInformation): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeErr(`Expected email string but got ${getTypeName(email)}: "${JSON.stringify(email)}"`);
   }
