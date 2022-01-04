@@ -4,7 +4,7 @@ import { DataDir, makeDataDir } from '../shared/data-dir';
 import { WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
 import { makeSpy, makeThrowingStub } from '../shared/test-utils';
-import { addEmail, storeEmails } from './subscription';
+import { addEmail, sendConfirmationEmail, storeEmails } from './subscription';
 
 describe('subscription', () => {
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
@@ -59,6 +59,12 @@ describe('subscription', () => {
       const result = storeEmails(newEmails, dataDir, writeFileFn);
 
       expect(result).to.deep.equal(makeErr(`Could not store emails: ${error.message}`));
+    });
+  });
+
+  describe(sendConfirmationEmail.name, () => {
+    it('exists', () => {
+      expect(sendConfirmationEmail).to.exist;
     });
   });
 });

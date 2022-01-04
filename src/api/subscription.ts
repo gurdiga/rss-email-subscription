@@ -173,4 +173,6 @@ function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmai
   return alreadyExists;
 }
 
-function sendConfirmationEmail(emailAddress: EmailAddress, feedSettings: FeedSettings): void {}
+export function sendConfirmationEmail(emailAddress: EmailAddress, feedSettings: FeedSettings): Result<void> {
+  // TODO
+}
