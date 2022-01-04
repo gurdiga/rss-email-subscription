@@ -16,7 +16,15 @@ export function makeErr(reason: string): Err {
   };
 }
 
-export function isString(value: any): boolean {
+export function makeTypeMismatchErr(value: any, expectedType: string): Err {
+  const actualType = getTypeName(value);
+  const jsonValue = JSON.stringify(value);
+
+  return makeErr(`Expected ${expectedType} but got ${actualType}: "${jsonValue}"`);
+}
+
+// TODO: Extract to string-utils.ts?
+export function isString(value: any): value is string {
   return typeof value === 'string';
 }
 

@@ -2,8 +2,17 @@ import path from 'path';
 import { filterUniqBy } from '../shared/array-utils';
 import { hash } from '../shared/crypto';
 import { DataDir } from '../shared/data-dir';
-import { readFile, ReadFileFn, writeFile, WriteFileFn } from '../shared/io';
-import { getErrorMessage, getTypeName, isErr, isNonEmptyString, makeErr, Result } from '../shared/lang';
+import { readFile, ReadFileFn } from '../shared/io';
+import {
+  getErrorMessage,
+  getTypeName,
+  isErr,
+  isNonEmptyString,
+  makeErr,
+  makeTypeMismatchErr,
+  Result,
+} from '../shared/lang';
+import { isObject } from '../shared/object-utils';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -146,7 +155,14 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
         );
       }
 
-      const results = Object.entries(index).map(([key, value]) => parseIndexEntry(key, value));
+      const results = Object.entries(index).map(([key, value]) => {
+        if (typeof value === 'string') {
+          return parseSimpleIndexEntry(key, value);
+        } else {
+          return parseExtendedIndexEntry(key, value);
+        }
+      });
+
       const validEmails = results.filter(isHashedEmail);
       const invalidEmails = results.filter(isErr).map((error) => error.reason);
 
@@ -162,14 +178,13 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-// TODO: Extend return type to contain EmailInformation
-function parseIndexEntry(saltedHash: string, email: string | EmailInformation): Result<HashedEmail> {
+function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
-    return makeErr(`Expected email string but got ${getTypeName(email)}: "${JSON.stringify(email)}"`);
+    return makeTypeMismatchErr(email, `email string`);
   }
 
-  if (!isNonEmptyString(saltedHash)) {
-    return makeErr(`Empty hash for email "${email}"`);
+  if (typeof saltedHash !== 'string' || !isNonEmptyString(saltedHash)) {
+    return makeTypeMismatchErr(saltedHash, `non-empty hash string`);
   }
 
   const emailAddressMakingResult = makeEmailAddress(email);
@@ -183,4 +198,15 @@ function parseIndexEntry(saltedHash: string, email: string | EmailInformation): 
     emailAddress: emailAddressMakingResult,
     saltedHash,
   };
+}
+
+function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown): Result<HashedEmail> {
+  if (isObject(emailInformation) && 'emailAddress' in emailInformation) {
+    // TODO: Why doesn’t this work without `as any`?
+    const email = (emailInformation as any)['emailAddress'];
+
+    return parseSimpleIndexEntry(saltedHash, email);
+  } else {
+    return makeTypeMismatchErr(emailInformation, `emailInformation object`);
+  }
 }

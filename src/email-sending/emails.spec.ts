@@ -192,11 +192,32 @@ describe(loadStoredEmails.name, () => {
     } as StoredEmails);
   });
 
+  it('can parse extended email information', () => {
+    const extendedIndex: EmailIndex = {
+      hash1: { emailAddress: 'email1@test.com' },
+      hash2: { emailAddress: 'email2@test.com' },
+      hash3: { emailAddress: 'email3@test.com' },
+    };
+
+    const readFile = makeStub(() => JSON.stringify(extendedIndex));
+    const result = loadStoredEmails(dataDir, readFile);
+
+    expect(readFile.calls).to.deep.equal([[`${dataDirString}/${emailsFileName}`]]);
+    expect(result).to.deep.equal({
+      validEmails: [
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
+        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3' },
+      ],
+      invalidEmails: [],
+    } as StoredEmails);
+  });
+
   it('also returns index items with invalid emails', () => {
     const index = {
       hash1: 'email1@test.com',
       hash2: 'email2@test.com',
-      hash3: 'what?',
+      hash3: 'not-an-email',
       ' ': 'bad-hash@test.com',
       hash5: null,
       hash6: [1, 2, 3],
@@ -211,10 +232,10 @@ describe(loadStoredEmails.name, () => {
         { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
       ],
       invalidEmails: [
-        'Syntactically invalid email: "what?"', // prettier: keep these stacked please
-        'Empty hash for email "bad-hash@test.com"',
-        'Expected email string but got null: "null"',
-        'Expected email string but got array: "[1,2,3]"',
+        'Syntactically invalid email: "not-an-email"', // prettier: keep these stacked please
+        'Expected non-empty hash string but got string: "" ""',
+        'Expected emailInformation object but got null: "null"',
+        'Expected emailInformation object but got array: "[1,2,3]"',
       ],
     } as StoredEmails);
   });
