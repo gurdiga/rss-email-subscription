@@ -6,11 +6,11 @@ import { RssItem } from '../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv, EmailHeaders } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
-export async function sendItem(
+export async function sendEmail(
   from: FullEmailAddress,
   { value: to }: EmailAddress,
   { value: replyTo }: EmailAddress,
-  { subject, htmlBody }: MessageContent,
+  { subject, htmlBody }: EmailContent,
   headers: EmailHeaders,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
@@ -22,14 +22,14 @@ export async function sendItem(
   }
 }
 
-export interface MessageContent {
+export interface EmailContent {
   subject: string;
   htmlBody: string;
 }
 
-export type MakeEmailMessageFn = (item: RssItem) => MessageContent;
+export type MakeEmailContentFn = (item: RssItem) => EmailContent;
 
-export function makeEmailMessage(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): MessageContent {
+export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
   const htmlBody = `
     <div style="max-width: 42em; margin-bottom: 3em">
       <article>${item.content}</article>

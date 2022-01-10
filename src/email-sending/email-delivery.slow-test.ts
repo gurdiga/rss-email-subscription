@@ -3,7 +3,7 @@ import { DOMAIN_NAME } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailHeaders, makeEmailMessage } from './item-sending';
+import { makeEmailHeaders, makeEmailContent } from './item-sending';
 import { RssItem } from '../shared/rss-item';
 
 async function main(): Promise<number> {
@@ -27,7 +27,7 @@ async function main(): Promise<number> {
     link: new URL('https://example.com/post.html'),
     pubDate: new Date(),
   };
-  const emailMessage = makeEmailMessage(item, new URL('https://example.com'), from.emailAddress);
+  const emailMessage = makeEmailContent(item, new URL('https://example.com'), from.emailAddress);
   const subject = emailMessage.subject;
   const htmlBody = `
       <p>This emai is sent from this unit test:</p>
