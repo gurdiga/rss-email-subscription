@@ -61,15 +61,15 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
   const report = {
-    sentExpected: validItems.length * validEmails.length,
+    sentExpected: validItems.length * confirmedEmails.length,
     sent: 0,
     failed: 0,
   };
 
-  logInfo(`Sending new items`, { itemCount: validItems.length, emailCount: validEmails.length });
+  logInfo(`Sending new items`, { itemCount: validItems.length, emailCount: confirmedEmails.length });
 
   for (const storedItem of validItems) {
-    for (const hashedEmail of validEmails) {
+    for (const hashedEmail of confirmedEmails) {
       logInfo(`Sending item`, {
         itemTitle: storedItem.item.title,
         toEmail: hashedEmail.emailAddress.value,
