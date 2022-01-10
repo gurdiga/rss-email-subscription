@@ -2,7 +2,7 @@ import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, isAppError, isInputError, isSuccess } from './shared';
-import { subscribe, subscribeWithDoubleOptIn } from './subscription';
+import { subscribe } from './subscription';
 import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 
@@ -15,7 +15,6 @@ function main() {
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
   app.post('/subscribe', makeRequestHandler(subscribe));
-  app.post('/subscribe/with-double-opt-in', makeRequestHandler(subscribeWithDoubleOptIn));
   app.post('/confirm-subscription', makeRequestHandler(confirmSubscription));
   app.post('/unsubscribe', makeRequestHandler(unsubscribe));
   app.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe));

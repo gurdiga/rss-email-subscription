@@ -99,6 +99,7 @@ export type EmailIndex = Record<EmailHash, EmailAddress['value'] | EmailInformat
 
 interface EmailInformation {
   emailAddress: EmailAddress['value'];
+  isConfirmed?: boolean;
 }
 
 function isEmailInformation(x: any): x is EmailInformation {
@@ -126,6 +127,7 @@ export interface HashedEmail {
   kind: 'HashedEmail';
   emailAddress: EmailAddress;
   saltedHash: EmailHash;
+  isConfirmed?: boolean;
 }
 
 export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHashFn): HashedEmail {
@@ -133,6 +135,7 @@ export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHa
     kind: 'HashedEmail',
     emailAddress,
     saltedHash: emailHashFn(emailAddress),
+    isConfirmed: false,
   };
 }
 
@@ -182,7 +185,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
+function parseSimpleIndexEntry(saltedHash: unknown, email: unknown, isConfirmed = true): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeTypeMismatchErr(email, `email string`);
   }
@@ -201,12 +204,13 @@ function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<Hash
     kind: 'HashedEmail',
     emailAddress: emailAddressMakingResult,
     saltedHash,
+    isConfirmed,
   };
 }
 
 function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown): Result<HashedEmail> {
   if (isEmailInformation(emailInformation)) {
-    return parseSimpleIndexEntry(saltedHash, emailInformation.emailAddress);
+    return parseSimpleIndexEntry(saltedHash, emailInformation.emailAddress, !!emailInformation.isConfirmed);
   } else {
     return makeTypeMismatchErr(emailInformation, `EmailInformation object`);
   }

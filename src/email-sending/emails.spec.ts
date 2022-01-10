@@ -184,9 +184,9 @@ describe(loadStoredEmails.name, () => {
     expect(readFile.calls).to.deep.equal([[`${dataDirString}/${emailsFileName}`]]);
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
-        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3' },
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: true },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: true },
+        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3', isConfirmed: true },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -206,10 +206,10 @@ describe(loadStoredEmails.name, () => {
     expect(readFile.calls).to.deep.equal([[`${dataDirString}/${emailsFileName}`]]);
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
-        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3' },
-        { kind: 'HashedEmail', emailAddress: email('email4@test.com'), saltedHash: 'hash4' },
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: false },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: false },
+        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3', isConfirmed: false },
+        { kind: 'HashedEmail', emailAddress: email('email4@test.com'), saltedHash: 'hash4', isConfirmed: true },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -232,8 +232,8 @@ describe(loadStoredEmails.name, () => {
 
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
+        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: true },
+        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: true },
       ],
       invalidEmails: [
         'Syntactically invalid email: "not-an-email"', // prettier: keep these stacked please

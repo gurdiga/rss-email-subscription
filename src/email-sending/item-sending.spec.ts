@@ -99,6 +99,7 @@ describe('item-sending', () => {
       kind: 'HashedEmail',
       emailAddress: makeEmailAddress('test@test.com') as EmailAddress,
       saltedHash: '#test@test.com#',
+      isConfirmed: true,
     };
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {

@@ -59,6 +59,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
     logWarning(`Invalid emails`, { invalidEmails });
   }
 
+  const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
   const report = {
     sentExpected: validItems.length * validEmails.length,
     sent: 0,

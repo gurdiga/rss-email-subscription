@@ -109,33 +109,6 @@ function processInput({ reqId, email, feedId, dataDirRoot }: Input): ProcessedIn
   };
 }
 
-export const subscribeWithDoubleOptIn: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
-  const { feedId, email } = reqBody;
-
-  const { logError } = makeCustomLoggers({ reqId, module: subscribeWithDoubleOptIn.name });
-  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
-
-  if (inputProcessingResult.kind !== 'ProcessedInput') {
-    return inputProcessingResult;
-  }
-
-  const { emailAddress, feedSettings } = inputProcessingResult;
-  const sendingResult = sendConfirmationEmail(emailAddress, feedSettings);
-
-  if (isErr(sendingResult)) {
-    logError('Can’t send confirmation email', { reason: sendingResult.reason });
-    return makeAppError('Could not send confirmation email');
-  }
-
-  return {
-    kind: 'Success',
-    message: 'You are subscribed now. Welcome aboard! 🙂',
-    logData: {
-      TBD: 'TBD',
-    },
-  };
-};
-
 export function storeEmails(
   storedEmails: StoredEmails,
   dataDir: DataDir,

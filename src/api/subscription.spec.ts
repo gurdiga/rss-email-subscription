@@ -1,5 +1,12 @@
 import { expect } from 'chai';
-import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail, StoredEmails } from '../email-sending/emails';
+import {
+  EmailAddress,
+  EmailHashFn,
+  HashedEmail,
+  makeEmailAddress,
+  makeHashedEmail,
+  StoredEmails,
+} from '../email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
@@ -18,13 +25,15 @@ describe('subscription', () => {
       };
 
       const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
-
-      expect(newEmails.validEmails).to.have.lengthOf(1);
-      expect(newEmails.validEmails[0]).to.deep.equal({
+      const expectedHashedEmail: HashedEmail = {
         kind: 'HashedEmail',
         emailAddress: emailAddress,
         saltedHash: emailHashFn(emailAddress),
-      });
+        isConfirmed: false,
+      };
+
+      expect(newEmails.validEmails).to.have.lengthOf(1);
+      expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
       expect(newEmails.invalidEmails).to.be.empty;
     });
   });
