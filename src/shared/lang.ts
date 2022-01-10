@@ -23,11 +23,6 @@ export function makeTypeMismatchErr(value: any, expectedType: string): Err {
   return makeErr(`Expected ${expectedType} but got ${actualType}: "${jsonValue}"`);
 }
 
-// TODO: Extract to string-utils.ts?
-export function isString(value: any): value is string {
-  return typeof value === 'string';
-}
-
 export function isNonEmptyString(value: string): boolean {
   return value.trim().length > 0;
 }

@@ -197,6 +197,7 @@ describe(loadStoredEmails.name, () => {
       hash1: { emailAddress: 'email1@test.com' },
       hash2: { emailAddress: 'email2@test.com' },
       hash3: { emailAddress: 'email3@test.com' },
+      hash4: 'email4@test.com',
     };
 
     const readFile = makeStub(() => JSON.stringify(extendedIndex));
@@ -208,6 +209,7 @@ describe(loadStoredEmails.name, () => {
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1' },
         { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2' },
         { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3' },
+        { kind: 'HashedEmail', emailAddress: email('email4@test.com'), saltedHash: 'hash4' },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -219,8 +221,10 @@ describe(loadStoredEmails.name, () => {
       hash2: 'email2@test.com',
       hash3: 'not-an-email',
       ' ': 'bad-hash@test.com',
+      hash4: { emailAddress: 42 },
       hash5: null,
       hash6: [1, 2, 3],
+      hash7: {},
     };
 
     const readFile = makeStub(() => JSON.stringify(index));
@@ -234,8 +238,10 @@ describe(loadStoredEmails.name, () => {
       invalidEmails: [
         'Syntactically invalid email: "not-an-email"', // prettier: keep these stacked please
         'Expected non-empty hash string but got string: "" ""',
-        'Expected emailInformation object but got null: "null"',
-        'Expected emailInformation object but got array: "[1,2,3]"',
+        'Expected email string but got number: "42"',
+        'Expected EmailInformation object but got null: "null"',
+        'Expected EmailInformation object but got array: "[1,2,3]"',
+        'Expected EmailInformation object but got object: "{}"',
       ],
     } as StoredEmails);
   });

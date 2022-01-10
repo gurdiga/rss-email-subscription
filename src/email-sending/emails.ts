@@ -101,6 +101,10 @@ interface EmailInformation {
   emailAddress: EmailAddress['value'];
 }
 
+function isEmailInformation(x: any): x is EmailInformation {
+  return isObject(x) && 'emailAddress' in x;
+}
+
 export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileFn = readFile): Result<EmailList> {
   try {
     const fileContent = readFileFn(filePath);
@@ -201,12 +205,9 @@ function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<Hash
 }
 
 function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown): Result<HashedEmail> {
-  if (isObject(emailInformation) && 'emailAddress' in emailInformation) {
-    // TODO: Why doesn’t this work without `as any`?
-    const email = (emailInformation as any)['emailAddress'];
-
-    return parseSimpleIndexEntry(saltedHash, email);
+  if (isEmailInformation(emailInformation)) {
+    return parseSimpleIndexEntry(saltedHash, emailInformation.emailAddress);
   } else {
-    return makeTypeMismatchErr(emailInformation, `emailInformation object`);
+    return makeTypeMismatchErr(emailInformation, `EmailInformation object`);
   }
 }
