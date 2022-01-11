@@ -9,8 +9,9 @@ import {
   makeHashedEmail,
   HashedEmail,
 } from '../email-sending/emails';
+import { EmailContent } from '../email-sending/item-sending';
 import { makeDataDir, DataDir } from '../shared/data-dir';
-import { FeedSettings, getFeedSettings } from '../shared/feed-settings';
+import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -146,6 +147,23 @@ function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmai
   return alreadyExists;
 }
 
-export function sendConfirmationEmail(emailAddress: EmailAddress, feedSettings: FeedSettings): Result<void> {
-  // TODO
+export function makeConfirmationEmailContent(email: EmailAddress): Result<EmailContent> {
+  const subject = 'Please confirm feed subscription';
+  const htmlBody = ``;
+
+  // TODO: implement this
+  return {
+    subject,
+    htmlBody,
+  };
+}
+
+export function makeEmailConfirmationUrl(hashedEmail: HashedEmail, feedId: string, feedDisplayName: string): URL {
+  const url = new URL(`https://${DOMAIN_NAME}/confirm.html`);
+
+  url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
+  url.searchParams.set('displayName', feedDisplayName || feedId);
+  url.searchParams.set('email', hashedEmail.emailAddress.value);
+
+  return url;
 }

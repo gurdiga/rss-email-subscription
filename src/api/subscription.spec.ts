@@ -7,11 +7,13 @@ import {
   makeHashedEmail,
   StoredEmails,
 } from '../email-sending/emails';
+import { EmailContent } from '../email-sending/item-sending';
 import { DataDir, makeDataDir } from '../shared/data-dir';
+import { DOMAIN_NAME } from '../shared/feed-settings';
 import { WriteFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
-import { makeSpy, makeThrowingStub } from '../shared/test-utils';
-import { addEmail, sendConfirmationEmail, storeEmails } from './subscription';
+import { encodeSearchParamValue, makeSpy, makeThrowingStub } from '../shared/test-utils';
+import { addEmail, makeConfirmationEmailContent, makeEmailConfirmationUrl, storeEmails } from './subscription';
 
 describe('subscription', () => {
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
@@ -71,9 +73,32 @@ describe('subscription', () => {
     });
   });
 
-  describe(sendConfirmationEmail.name, () => {
-    it('exists', () => {
-      expect(sendConfirmationEmail).to.exist;
+  describe(makeConfirmationEmailContent.name, () => {
+    it('prepares the confirmation email contents', () => {
+      const email = makeEmailAddress('a@test.com') as EmailAddress;
+      const emailContent = makeConfirmationEmailContent(email) as EmailContent;
+      // const confirmationLink = makeEmailConfirmationUrl(email) as URL;
+
+      expect(emailContent.subject).to.equal('Please confirm feed subscription');
+      // TODO: Finish this
+      //expect(emailContent.htmlBody).to.include(confirmationLink.toString());
+    });
+  });
+
+  describe(makeEmailConfirmationUrl.name, () => {
+    it('returns the email confirmation URL', () => {
+      const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+      const feedId = 'justaddlightandstir';
+      const feedDisplayName = 'Just Add Light and Stir';
+
+      const result = makeEmailConfirmationUrl(hashedEmail, feedId, feedDisplayName).toString();
+
+      expect(result).to.equal(
+        `https://${DOMAIN_NAME}/confirm.html` +
+          `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
+          `&displayName=${encodeSearchParamValue(feedDisplayName)}` +
+          `&email=${encodeSearchParamValue(emailAddress.value)}`
+      );
     });
   });
 });

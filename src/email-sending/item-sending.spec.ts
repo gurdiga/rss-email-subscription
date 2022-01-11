@@ -3,7 +3,7 @@ import path from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { makeErr } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { makeThrowingStub } from '../shared/test-utils';
+import { encodeSearchParamValue, makeThrowingStub } from '../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailHeaders, makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
@@ -123,15 +123,5 @@ describe('item-sending', () => {
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });
-
-    function encodeSearchParamValue(s: string): string {
-      const { searchParams } = new URL('https://example.com/');
-
-      searchParams.set('paramName', s);
-
-      const encodedValue = searchParams.toString().split('=')[1];
-
-      return encodedValue;
-    }
   });
 });
