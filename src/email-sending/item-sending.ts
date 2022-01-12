@@ -67,6 +67,7 @@ export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, d
   return url;
 }
 
+// TODO: Consider removing since it’s not useful now.
 export function makeEmailHeaders(feedId: string, emailSaltedHash: string): EmailHeaders {
   const listUnsubscribeUrl = new URL(`https://${DOMAIN_NAME}/unsubscribe/${feedId}-${emailSaltedHash}`);
   const experimentingWithNoListHeaders = true;

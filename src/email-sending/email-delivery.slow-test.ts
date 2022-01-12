@@ -1,24 +1,34 @@
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME } from '../shared/feed-settings';
-import { isErr } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
-import { EmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailHeaders, makeEmailContent } from './item-sending';
+import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
+import { makeEmailContent } from './item-sending';
 import { RssItem } from '../shared/rss-item';
+import { makeConfirmationEmailContent } from '../api/subscription';
 
 async function main(): Promise<number> {
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+  const env = getEnv();
 
   if (isErr(env)) {
-    console.error(`\nInvalid environment variables: ${env.reason}`);
     return 1;
   }
 
-  console.log('SMTP_CONNECTION_STRING:', env.SMTP_CONNECTION_STRING.substr(0, 18));
+  console.log(`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
 
-  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${DOMAIN_NAME}`) as EmailAddress);
   const to = 'gurdiga@gmail.com';
-  const replyTo = 'replyTo@gmail.com';
+  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${DOMAIN_NAME}`) as EmailAddress);
+  const replyTo = `slow-test-reply-to@${DOMAIN_NAME}`;
+
+  await sentItemEmail(from, to, replyTo, env);
+  await sentEmailVerificationEmail(from, to, replyTo, env);
+
+  console.log('OK\n');
+
+  return 0;
+}
+
+async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
   const item: RssItem = {
     author: 'Me',
     title: `testing item-sending from ${new Date().toJSON()}`,
@@ -43,16 +53,44 @@ async function main(): Promise<number> {
     replyTo,
     subject,
     htmlBody,
-    headers: makeEmailHeaders('testFeedId', 'emailSaltedHash'),
+    headers: {},
     env,
   };
 
   await deliverEmail(emailDeliveryRequest);
 
-  console.log(
-    `\nMessage accepted by the SMTP server. Please check the ${to} inbox for a message having the subject of "${subject}".\n`
-  );
-  return 0;
+  console.log(`Item email sent to ${to}: "${subject}".`);
+}
+
+async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
+  const feedDisplayName = 'Test Feed Name';
+  const confirmationLinkUrl = new URL('https://test.com/confirmation-url');
+  const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
+
+  const { subject, htmlBody } = makeConfirmationEmailContent(feedDisplayName, confirmationLinkUrl, listEmailAddress);
+  const emailDeliveryRequest: EmailDeliveryRequest = {
+    from,
+    to,
+    replyTo,
+    subject,
+    htmlBody,
+    headers: {},
+    env,
+  };
+
+  await deliverEmail(emailDeliveryRequest);
+
+  console.log(`Email confirmation email sent to ${to}: "${subject}".`);
+}
+
+function getEnv(): Result<EmailDeliveryEnv> {
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+
+  if (isErr(env)) {
+    return makeErr(`\nInvalid environment variables: ${env.reason}`);
+  }
+
+  return env;
 }
 
 main().then((exitCode) => process.exit(exitCode));

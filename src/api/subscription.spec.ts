@@ -75,13 +75,16 @@ describe('subscription', () => {
 
   describe(makeConfirmationEmailContent.name, () => {
     it('prepares the confirmation email contents', () => {
-      const email = makeEmailAddress('a@test.com') as EmailAddress;
-      const emailContent = makeConfirmationEmailContent(email) as EmailContent;
-      // const confirmationLink = makeEmailConfirmationUrl(email) as URL;
+      const feedDisplayName = 'Just Add Light and Stir';
+      const confirmationUrl = new URL('https://test.com/confirm');
+      const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
+
+      const emailContent = makeConfirmationEmailContent(feedDisplayName, confirmationUrl, listEmailAddress);
 
       expect(emailContent.subject).to.equal('Please confirm feed subscription');
-      // TODO: Finish this
-      //expect(emailContent.htmlBody).to.include(confirmationLink.toString());
+      expect(emailContent.htmlBody).to.include(`<a href="${confirmationUrl}">`);
+      expect(emailContent.htmlBody).to.include(feedDisplayName);
+      expect(emailContent.htmlBody).to.include(listEmailAddress.value);
     });
   });
 

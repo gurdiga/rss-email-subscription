@@ -147,11 +147,28 @@ function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmai
   return alreadyExists;
 }
 
-export function makeConfirmationEmailContent(email: EmailAddress): Result<EmailContent> {
+export function makeConfirmationEmailContent(
+  feedDisplayName: string,
+  confirmationLinkUrl: URL,
+  listEmailAddress: EmailAddress
+): EmailContent {
   const subject = 'Please confirm feed subscription';
-  const htmlBody = ``;
+  const htmlBody = `
+    <p>Hi there,</p>
 
-  // TODO: implement this
+    <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
+
+    <p><a href="${confirmationLinkUrl}">Yes, subscribe me</a></p>
+
+    <p style="max-width: 35em">
+      If you asked to be subscribed, add the list email to your contacts
+      so that it’s not considered spam: ${listEmailAddress.value}. If you
+      didn’t ask to subscribe, please ignore this message.
+    </p>
+
+    <p>Have a nice day.</p>
+  `;
+
   return {
     subject,
     htmlBody,
