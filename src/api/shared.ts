@@ -1,3 +1,7 @@
+import { EmailHash } from '../email-sending/emails';
+import { DataDir, makeDataDir } from '../shared/data-dir';
+import { Result, makeErr, isErr } from '../shared/lang';
+
 export type AppRequestHandler = (
   reqId: number,
   reqBody: Record<string, any>,
@@ -45,4 +49,33 @@ export function makeAppError(message: string): AppError {
 
 export function isAppError(x: any): x is AppError {
   return x.kind === 'AppError';
+}
+
+interface SubscriptionId {
+  dataDir: DataDir;
+  emailHash: EmailHash;
+}
+
+export function parseSubscriptionId(id: any, dataDirRoot: string): Result<SubscriptionId> {
+  if (typeof id !== 'string') {
+    return makeErr('Unsubscription ID is not a string');
+  }
+
+  const match = /^(?<feedId>.+)-(?<emailHash>[^-]+)$/.exec(id);
+
+  if (!match || !match.groups) {
+    return makeErr(`Invalid unsubscription ID`);
+  }
+
+  const { feedId, emailHash } = match.groups as { feedId: string; emailHash: string };
+  const dataDir = makeDataDir(feedId, dataDirRoot);
+
+  if (isErr(dataDir)) {
+    return makeErr(`Can’t make data dir from feedId "${feedId}": ${dataDir.reason}`);
+  }
+
+  return {
+    dataDir,
+    emailHash,
+  };
 }

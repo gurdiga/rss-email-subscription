@@ -1,9 +1,8 @@
 import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, makeAppError, makeInputError } from './shared';
+import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';
-import { parseUnsubscriptionId } from './unsubscription';
 
 export const confirmSubscription: AppRequestHandler = function confirmSubscription(
   reqId,
@@ -13,7 +12,7 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
 ) {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
   const { id } = reqBody;
-  const parseResult = parseUnsubscriptionId(id, dataDirRoot);
+  const parseResult = parseSubscriptionId(id, dataDirRoot);
 
   if (isErr(parseResult)) {
     logWarning('Invalid unsubscription ID', { id, reason: parseResult.reason });
