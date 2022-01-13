@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { confirmSubscription } from './subscription-confirmation';
+import { confirmEmail } from './subscription-confirmation';
 
-describe(confirmSubscription.name, () => {
+describe(confirmEmail.name, () => {
   it('exists', () => {
-    expect(confirmSubscription).to.exist;
+    expect(confirmEmail).to.exist;
   });
 });

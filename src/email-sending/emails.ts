@@ -185,7 +185,7 @@ export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = read
   }
 }
 
-function parseSimpleIndexEntry(saltedHash: unknown, email: unknown, isConfirmed = true): Result<HashedEmail> {
+function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeTypeMismatchErr(email, `email string`);
   }
@@ -204,13 +204,24 @@ function parseSimpleIndexEntry(saltedHash: unknown, email: unknown, isConfirmed 
     kind: 'HashedEmail',
     emailAddress: emailAddressMakingResult,
     saltedHash,
-    isConfirmed,
+    isConfirmed: true,
   };
 }
 
 function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown): Result<HashedEmail> {
   if (isEmailInformation(emailInformation)) {
-    return parseSimpleIndexEntry(saltedHash, emailInformation.emailAddress, !!emailInformation.isConfirmed);
+    const result = parseSimpleIndexEntry(saltedHash, emailInformation.emailAddress);
+
+    if (isErr(result)) {
+      return result;
+    } else {
+      return {
+        ...result,
+        isConfirmed: !!emailInformation.isConfirmed,
+      };
+    }
+
+    return result;
   } else {
     return makeTypeMismatchErr(emailInformation, `EmailInformation object`);
   }
