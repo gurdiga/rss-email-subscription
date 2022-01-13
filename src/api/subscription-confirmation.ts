@@ -1,14 +1,65 @@
-import { AppRequestHandler } from './shared';
+import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
+import { isErr, makeErr, Result } from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
+import { AppRequestHandler, makeAppError, makeInputError } from './shared';
+import { storeEmails } from './subscription';
+import { parseUnsubscriptionId } from './unsubscription';
 
 export const confirmSubscription: AppRequestHandler = function confirmSubscription(
   reqId,
-  _reqBody,
-  reqParams,
+  reqBody,
+  _reqParams,
   dataDirRoot
 ) {
+  const { logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
+  const { id } = reqBody;
+  const parseResult = parseUnsubscriptionId(id, dataDirRoot);
+
+  if (isErr(parseResult)) {
+    logWarning('Invalid unsubscription ID', { id, reason: parseResult.reason });
+    return makeInputError('Invalid unsubscription link');
+  }
+
+  const { dataDir, emailHash } = parseResult;
+  const storedEmails = loadStoredEmails(dataDir);
+
+  if (isErr(storedEmails)) {
+    logError('Can’t load stored emails', { reason: storedEmails.reason });
+    return makeAppError('Database read error');
+  }
+
+  const { validEmails } = storedEmails;
+  const emailRegistered = validEmails.some((x) => x.saltedHash === emailHash);
+
+  if (!emailRegistered) {
+    logWarning('Email not registered yet', { emailHash });
+    return makeInputError('Email is not registered. You first need to ask for subscription, and only then confirm.');
+  }
+
+  const newValidEmails = confirmEmail(validEmails, emailHash);
+
+  if (isErr(newValidEmails)) {
+    logError('Can’t confirm email', { reason: newValidEmails.reason });
+    return makeAppError('Database error: confirmation failed');
+  }
+
+  storedEmails.validEmails = newValidEmails;
+
+  const storeResult = storeEmails(storedEmails, dataDir);
+
+  if (isErr(storeResult)) {
+    logError('Can’t store emails on confirm', { reason: storeResult.reason });
+    return makeAppError('Database write error: registering confirmation failed');
+  }
+
+  // TODO: Add to api-test
+
   return {
     kind: 'Success',
-    message: 'OK',
-    logData: 'TBD',
+    message: 'Emai confirmation succeeded. Welcome aboard! 😎',
   };
 };
+
+export function confirmEmail(hashedEmails: HashedEmail[], emailHash: EmailHash): Result<HashedEmail[]> {
+  return makeErr('TODO');
+}

@@ -35,7 +35,7 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
 
   if (isErr(newValidEmails)) {
     logError('Can’t remove email', { reason: newValidEmails.reason });
-    return makeAppError('Database error');
+    return makeAppError('Database error: unsubscription failed');
   }
 
   storedEmails.validEmails = newValidEmails;
@@ -43,8 +43,8 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
   const storeResult = storeEmails(storedEmails, dataDir);
 
   if (isErr(storeResult)) {
-    logError('Can’t store emails', { reason: storeResult.reason });
-    return makeAppError('Database write error');
+    logError('Can’t store emails on unsubscribe', { reason: storeResult.reason });
+    return makeAppError('Database write error: registering unsubscription failed');
   }
 
   return {
