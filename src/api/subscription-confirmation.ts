@@ -55,7 +55,7 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
 
   return {
     kind: 'Success',
-    message: 'Emai confirmation succeeded. Welcome aboard! 😎',
+    message: 'Emai confirmed. Welcome aboard! 😎',
   };
 };
 
