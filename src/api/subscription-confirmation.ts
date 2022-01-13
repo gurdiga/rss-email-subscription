@@ -1,5 +1,5 @@
-import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { loadStoredEmails } from '../email-sending/emails';
+import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';
@@ -28,21 +28,14 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
   }
 
   const { validEmails } = storedEmails;
-  const emailRegistered = validEmails.some((x) => x.saltedHash === emailHash);
+  const registeredEmail = validEmails.find((x) => x.saltedHash === emailHash);
 
-  if (!emailRegistered) {
+  if (!registeredEmail) {
     logWarning('Email not registered yet', { emailHash });
     return makeInputError('Email is not registered. You first need to ask for subscription, and only then confirm.');
   }
 
-  const newValidEmails = confirmEmail(validEmails, emailHash);
-
-  if (isErr(newValidEmails)) {
-    logError('Can’t confirm email', { reason: newValidEmails.reason });
-    return makeAppError('Database error: confirmation failed');
-  }
-
-  storedEmails.validEmails = newValidEmails;
+  registeredEmail.isConfirmed = true;
 
   const storeResult = storeEmails(storedEmails, dataDir);
 
@@ -58,7 +51,3 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
     message: 'Emai confirmed. Welcome aboard! 😎',
   };
 };
-
-export function confirmEmail(hashedEmails: HashedEmail[], emailHash: EmailHash): Result<HashedEmail[]> {
-  return makeErr('TODO');
-}

@@ -61,6 +61,8 @@ export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscri
   return unsubscribe(reqId, reqParams, {}, dataDirRoot);
 };
 
+// TODO: Deprecate this. The if should not be needed because the email
+// is already verified at removeEmail’s call state.
 export function removeEmail(hashedEmails: HashedEmail[], emailHash: EmailHash): Result<HashedEmail[]> {
   if (!emailHash.trim()) {
     return makeErr('Email hash is an empty string or whitespace');
