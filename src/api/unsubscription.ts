@@ -1,5 +1,5 @@
-import { EmailHash, HashedEmail, loadStoredEmails } from '../email-sending/emails';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { loadStoredEmails } from '../email-sending/emails';
+import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';
@@ -30,14 +30,7 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
     return makeInputError('Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔');
   }
 
-  const newValidEmails = removeEmail(validEmails, emailHash);
-
-  if (isErr(newValidEmails)) {
-    logError('Can’t remove email', { reason: newValidEmails.reason });
-    return makeAppError('Database error: unsubscription failed');
-  }
-
-  storedEmails.validEmails = newValidEmails;
+  storedEmails.validEmails = validEmails.filter((x) => x.saltedHash !== emailHash);
 
   const storeResult = storeEmails(storedEmails, dataDir);
 
@@ -60,13 +53,3 @@ export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscri
 ) {
   return unsubscribe(reqId, reqParams, {}, dataDirRoot);
 };
-
-// TODO: Deprecate this. The if should not be needed because the email
-// is already verified at removeEmail’s call state.
-export function removeEmail(hashedEmails: HashedEmail[], emailHash: EmailHash): Result<HashedEmail[]> {
-  if (!emailHash.trim()) {
-    return makeErr('Email hash is an empty string or whitespace');
-  }
-
-  return hashedEmails.filter((x) => x.saltedHash !== emailHash);
-}
