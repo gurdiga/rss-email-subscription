@@ -50,7 +50,7 @@ describe('subscription', () => {
 
     it('stores a StoredEmails to a DataDir', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
-      const result = storeEmails(newEmails, dataDir, writeFileFn);
+      const result = storeEmails(newEmails.validEmails, dataDir, writeFileFn);
 
       expect(result).to.be.undefined;
       expect(writeFileFn.calls).to.deep.equal([
@@ -67,7 +67,7 @@ describe('subscription', () => {
       const error = new Error('No space on disk');
       const writeFileFn = makeThrowingStub<WriteFileFn>(error);
 
-      const result = storeEmails(newEmails, dataDir, writeFileFn);
+      const result = storeEmails(newEmails.validEmails, dataDir, writeFileFn);
 
       expect(result).to.deep.equal(makeErr(`Could not store emails: ${error.message}`));
     });

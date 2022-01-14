@@ -37,7 +37,7 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
 
   registeredEmail.isConfirmed = true;
 
-  const storeResult = storeEmails(storedEmails, dataDir);
+  const storeResult = storeEmails(storedEmails.validEmails, dataDir);
 
   if (isErr(storeResult)) {
     logError('Can’t store emails on confirm', { reason: storeResult.reason });

@@ -47,7 +47,7 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
   const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
-  const result = storeEmails(newEmails, dataDir);
+  const result = storeEmails(newEmails.validEmails, dataDir);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
@@ -111,12 +111,13 @@ function processInput({ reqId, email, feedId, dataDirRoot }: Input): ProcessedIn
 }
 
 export function storeEmails(
-  storedEmails: StoredEmails,
+  hashedEmails: HashedEmail[],
   dataDir: DataDir,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
+  // TODO: replace with extended entry?
   const indexEntry = (e: HashedEmail) => [e.saltedHash, e.emailAddress.value];
-  const index = Object.fromEntries(storedEmails.validEmails.map(indexEntry));
+  const index = Object.fromEntries(hashedEmails.map(indexEntry));
 
   const fileContents = JSON.stringify(index);
   const filePath = path.join(dataDir.value, 'emails.json');

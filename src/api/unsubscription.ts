@@ -32,7 +32,7 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
 
   storedEmails.validEmails = validEmails.filter((x) => x.saltedHash !== emailHash);
 
-  const storeResult = storeEmails(storedEmails, dataDir);
+  const storeResult = storeEmails(storedEmails.validEmails, dataDir);
 
   if (isErr(storeResult)) {
     logError('Can’t store emails on unsubscribe', { reason: storeResult.reason });

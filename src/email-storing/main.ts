@@ -62,7 +62,7 @@ async function main(): Promise<number | undefined> {
     storedEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   }
 
-  const result = storeEmails(storedEmails, dataDir);
+  const result = storeEmails(storedEmails.validEmails, dataDir);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
