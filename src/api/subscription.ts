@@ -8,6 +8,8 @@ import {
   EmailHashFn,
   makeHashedEmail,
   HashedEmail,
+  makeEmailInformation,
+  EmailIndex,
 } from '../email-sending/emails';
 import { EmailContent } from '../email-sending/item-sending';
 import { makeDataDir, DataDir } from '../shared/data-dir';
@@ -115,11 +117,13 @@ export function storeEmails(
   dataDir: DataDir,
   writeFileFn: WriteFileFn = writeFile
 ): Result<void> {
-  // TODO: replace with extended entry?
-  const indexEntry = (e: HashedEmail) => [e.saltedHash, e.emailAddress.value];
-  const index = Object.fromEntries(hashedEmails.map(indexEntry));
+  const emailIndex: EmailIndex = {};
 
-  const fileContents = JSON.stringify(index);
+  hashedEmails.forEach((e) => {
+    emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
+  });
+
+  const fileContents = JSON.stringify(emailIndex);
   const filePath = path.join(dataDir.value, 'emails.json');
 
   try {

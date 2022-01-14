@@ -130,7 +130,7 @@ api-test:
 
 	function subscribe_verify {
 		jq . .tmp/development-docker-data/gurdiga/emails.json \
-		| grep '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' \
+		| grep '"emailAddress": "test@gmail.com"' \
 		&& echo OK \
 		|| (
 			echo "Email not saved in emails.json";
@@ -146,7 +146,7 @@ api-test:
 
 	function unsubscribe_verify {
 		jq . .tmp/development-docker-data/gurdiga/emails.json \
-		| grep -v '"ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9": "test@gmail.com"' > /dev/null \
+		| grep -v '"emailAddress": "test@gmail.com"' > /dev/null \
 		&& echo OK \
 		|| (
 			echo "Email not removed from emails.json";

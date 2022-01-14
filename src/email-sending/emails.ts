@@ -99,7 +99,14 @@ export type EmailIndex = Record<EmailHash, EmailAddress['value'] | EmailInformat
 
 interface EmailInformation {
   emailAddress: EmailAddress['value'];
-  isConfirmed?: boolean;
+  isConfirmed?: boolean; // TODO: Make this non-optional after migrating all feeds to EmailInformation.
+}
+
+export function makeEmailInformation(emailAddress: EmailAddress, isConfirmed: boolean): EmailInformation {
+  return {
+    emailAddress: emailAddress.value,
+    isConfirmed,
+  };
 }
 
 function isEmailInformation(x: any): x is EmailInformation {
@@ -127,7 +134,7 @@ export interface HashedEmail {
   kind: 'HashedEmail';
   emailAddress: EmailAddress;
   saltedHash: EmailHash;
-  isConfirmed?: boolean;
+  isConfirmed: boolean;
 }
 
 export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHashFn): HashedEmail {

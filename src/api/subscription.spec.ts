@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import {
   EmailAddress,
   EmailHashFn,
+  EmailIndex,
   HashedEmail,
   makeEmailAddress,
   makeHashedEmail,
@@ -52,15 +53,15 @@ describe('subscription', () => {
       const writeFileFn = makeSpy<WriteFileFn>();
       const result = storeEmails(newEmails.validEmails, dataDir, writeFileFn);
 
+      const expectedData: EmailIndex = {
+        [hashedEmail.saltedHash]: {
+          emailAddress: hashedEmail.emailAddress.value,
+          isConfirmed: hashedEmail.isConfirmed,
+        },
+      };
+
       expect(result).to.be.undefined;
-      expect(writeFileFn.calls).to.deep.equal([
-        [
-          `${dataDir.value}/emails.json`,
-          JSON.stringify({
-            [hashedEmail.saltedHash]: hashedEmail.emailAddress.value,
-          }),
-        ],
-      ]);
+      expect(writeFileFn.calls).to.deep.equal([[`${dataDir.value}/emails.json`, JSON.stringify(expectedData)]]);
     });
 
     it('reports file write errors', () => {
