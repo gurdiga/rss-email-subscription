@@ -185,7 +185,7 @@ watch-app:
 		| while read _skip_timestamp _skip_namespace _skip_app json;
 		do
 			(
-				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
+				echo "Subject: RES App $$(echo $$json | jq -r .severity)"
 				echo "From: wathc-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 				echo
 				jq . <<<"$$json"
