@@ -182,10 +182,10 @@ snyk:
 watch-app:
 	tail -n0 -f .tmp/logs/feedsubscription/{app,api}.log \
 		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"Sending report")' \
-		| while read _skip_timestamp _skip_namespace _skip_app json;
+		| while read -r _skip_timestamp _skip_namespace _skip_app json;
 		do
 			(
-				echo "Subject: RES App $$(echo $$json | jq -r .severity)"
+				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
 				echo "From: wathc-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 				echo
 				jq . <<<"$$json"
@@ -197,7 +197,7 @@ watch-app:
 watch-smtp-out:
 	tail -n0 -f .tmp/logs/feedsubscription/smtp-out.log \
 		| grep --line-buffered -P '(warning|error|fatal|panic):' \
-		| while read _1 _2 _3 timestamp level message;
+		| while read -r _1 _2 _3 timestamp level message;
 		do
 			(
 				echo "Subject: RES smtp-out $$level"
