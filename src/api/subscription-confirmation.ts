@@ -15,8 +15,8 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
   const parseResult = parseSubscriptionId(id, dataDirRoot);
 
   if (isErr(parseResult)) {
-    logWarning('Invalid unsubscription ID', { id, reason: parseResult.reason });
-    return makeInputError('Invalid unsubscription link');
+    logWarning('Invalid subscription ID', { id, reason: parseResult.reason });
+    return makeInputError('Invalid confirmation link');
   }
 
   const { dataDir, emailHash } = parseResult;

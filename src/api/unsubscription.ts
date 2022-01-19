@@ -10,7 +10,7 @@ export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBod
   const parseResult = parseSubscriptionId(id, dataDirRoot);
 
   if (isErr(parseResult)) {
-    logWarning('Invalid unsubscription ID', { id, reason: parseResult.reason });
+    logWarning('Invalid subscription ID', { id, reason: parseResult.reason });
     return makeInputError('Invalid unsubscription link');
   }
 
