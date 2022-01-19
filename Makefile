@@ -110,6 +110,10 @@ api:
 # TODO: Maybe run these through the website (add -k -H 'Host: feedsubscription.com')
 api-test:
 	@set -exuo pipefail
+	EMAIL=test@gmail.com
+	EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
+	FEED_ID=gurdiga
+
 	function main {
 		subscribe
 		subscribe_verify
@@ -125,51 +129,59 @@ api-test:
 	}
 
 	function subscribe {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com | jq .
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL \
+		| jq .
 	}
 
 	function subscribe_verify {
-		jq . .tmp/development-docker-data/gurdiga/emails.json \
-		| grep '"emailAddress": "test@gmail.com"' \
+		jq --exit-status ".$$EMAIL_HASH" .tmp/development-docker-data/$$FEED_ID/emails.json \
 		&& echo OK \
 		|| (
 			echo "Email not saved in emails.json";
-			jq . .tmp/development-docker-data/gurdiga/emails.json;
+			jq . .tmp/development-docker-data/$$FEED_ID/emails.json;
 			exit 1
 		)
 	}
 
+	function confirm {
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/confirm-subscription -d id=$$FEED_ID-$$EMAIL_HASH \
+		| jq .
+	}
+
+	function confirm_verify {
+		:;
+	}
+
 	function unsubscribe {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 \
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH \
 		| jq .
 	}
 
 	function unsubscribe_verify {
-		jq . .tmp/development-docker-data/gurdiga/emails.json \
-		| grep -v '"emailAddress": "test@gmail.com"' > /dev/null \
-		&& echo OK \
-		|| (
+		jq --exit-status ".$$EMAIL_HASH" .tmp/development-docker-data/$$FEED_ID/emails.json \
+		&& (
 			echo "Email not removed from emails.json";
-			jq . .tmp/development-docker-data/gurdiga/emails.json;
+			jq . .tmp/development-docker-data/$$FEED_ID/emails.json;
 			exit 1
-		)
+		) \
+		|| echo OK
 	}
 
 	function unsubscribe_1click {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9 -d List-Unsubscribe=One-Click \
+		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/$$FEED_ID-$$EMAIL_HASH -d List-Unsubscribe=One-Click \
 		| jq .
 	}
 
 	function resubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST http://0.0.0.0:3000/subscribe -d feedId=gurdiga -d email=test@gmail.com) \
+			<(curl -s -X POST http://0.0.0.0:3000/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL) \
 			<(printf '{"kind":"InputError","message":"Email is already subscribed"}') \
 			&& echo OK
 	}
 
 	function unsubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST http://0.0.0.0:3000/unsubscribe -d id=gurdiga-ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9) \
+			<(curl -s -X POST http://0.0.0.0:3000/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH) \
 			<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
 			&& echo OK
 	}
