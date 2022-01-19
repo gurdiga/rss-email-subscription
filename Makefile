@@ -114,10 +114,12 @@ api:
 # TODO: Maybe run these through the website (add -k -H 'Host: feedsubscription.com')
 api-test:
 	@set -exuo pipefail
+
 	EMAIL=test@gmail.com
 	EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
 	FEED_ID=gurdiga
 	DATA_FILE=.tmp/development-docker-data/$$FEED_ID/emails.json
+	BASE_URL=http://0.0.0.0:3000
 
 	function main {
 		subscribe
@@ -136,7 +138,7 @@ api-test:
 	}
 
 	function subscribe {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL \
+		curl -s --fail-with-body -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL \
 		| jq .
 	}
 
@@ -151,7 +153,7 @@ api-test:
 	}
 
 	function confirm {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/confirm-subscription -d id=$$FEED_ID-$$EMAIL_HASH \
+		curl -s --fail-with-body -X POST $$BASE_URL/confirm-subscription -d id=$$FEED_ID-$$EMAIL_HASH \
 		| jq .
 	}
 
@@ -166,7 +168,7 @@ api-test:
 	}
 
 	function unsubscribe {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH \
+		curl -s --fail-with-body -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH \
 		| jq .
 	}
 
@@ -181,20 +183,20 @@ api-test:
 	}
 
 	function unsubscribe_1click {
-		curl -s --fail-with-body -X POST http://0.0.0.0:3000/unsubscribe/$$FEED_ID-$$EMAIL_HASH -d List-Unsubscribe=One-Click \
+		curl -s --fail-with-body -X POST $$BASE_URL/unsubscribe/$$FEED_ID-$$EMAIL_HASH -d List-Unsubscribe=One-Click \
 		| jq .
 	}
 
 	function resubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST http://0.0.0.0:3000/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL) \
+			<(curl -s -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL) \
 			<(printf '{"kind":"InputError","message":"Email is already subscribed"}') \
 			&& echo OK
 	}
 
 	function unsubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST http://0.0.0.0:3000/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH) \
+			<(curl -s -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH) \
 			<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
 			&& echo OK
 	}
