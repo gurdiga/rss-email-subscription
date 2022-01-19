@@ -74,6 +74,10 @@ start-app-only: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
 
+start-api-and-website-only: app
+	docker-compose --project-name res up --remove-orphans \
+		-- website api
+
 stop:
 	docker-compose --project-name res down
 
