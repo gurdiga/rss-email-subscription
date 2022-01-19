@@ -117,6 +117,8 @@ api-test:
 	function main {
 		subscribe
 		subscribe_verify
+		confirm
+		confirm_verify
 		unsubscribe
 		unsubscribe_verify
 		subscribe
@@ -134,7 +136,7 @@ api-test:
 	}
 
 	function subscribe_verify {
-		jq --exit-status ".$$EMAIL_HASH" .tmp/development-docker-data/$$FEED_ID/emails.json \
+		jq --exit-status ".$$EMAIL_HASH | select(.isConfirmed == false)" .tmp/development-docker-data/$$FEED_ID/emails.json \
 		&& echo OK \
 		|| (
 			echo "Email not saved in emails.json";
@@ -149,7 +151,12 @@ api-test:
 	}
 
 	function confirm_verify {
-		:;
+		jq --exit-status ".$$EMAIL_HASH | select(.isConfirmed == true)" .tmp/development-docker-data/$$FEED_ID/emails.json \
+		|| (
+			echo "Email does not have isConfirmed of true in emails.json";
+			jq .$$EMAIL_HASH .tmp/development-docker-data/$$FEED_ID/emails.json;
+			exit 1
+		)
 	}
 
 	function unsubscribe {
