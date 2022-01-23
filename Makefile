@@ -74,9 +74,9 @@ start-app-only: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
 
-start-api-and-website-only: app
+start-api: app
 	docker-compose --project-name res up --remove-orphans \
-		-- website api
+		-- logger website api
 
 stop:
 	docker-compose --project-name res down
@@ -108,7 +108,7 @@ website:
 website-reload:
 	docker exec website nginx -s reload
 
-api:
+node-api:
 	node_modules/.bin/ts-node src/api/server.ts
 
 # TODO: Maybe run these through the website (add -k -H 'Host: feedsubscription.com')
