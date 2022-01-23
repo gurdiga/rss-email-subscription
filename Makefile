@@ -115,11 +115,13 @@ node-api:
 api-test:
 	@set -exuo pipefail
 
+	BASE_URL=https://localhost
+	CURL_ARGS='-k -H "Host: feedsubscription.com"'
+
 	EMAIL=test@gmail.com
 	EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
 	FEED_ID=gurdiga
 	DATA_FILE=.tmp/development-docker-data/$$FEED_ID/emails.json
-	BASE_URL=http://0.0.0.0:3000
 
 	function main {
 		subscribe
@@ -138,8 +140,8 @@ api-test:
 	}
 
 	function subscribe {
-		curl -s --fail-with-body -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL \
-		| jq .
+		curl $$CURL_ARGS -s --fail-with-body -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL
+		echo
 	}
 
 	function subscribe_verify {
@@ -153,8 +155,8 @@ api-test:
 	}
 
 	function confirm {
-		curl -s --fail-with-body -X POST $$BASE_URL/confirm-subscription -d id=$$FEED_ID-$$EMAIL_HASH \
-		| jq .
+		curl $$CURL_ARGS -s --fail-with-body -X POST $$BASE_URL/confirm-subscription -d id=$$FEED_ID-$$EMAIL_HASH
+		echo
 	}
 
 	function confirm_verify {
@@ -168,8 +170,8 @@ api-test:
 	}
 
 	function unsubscribe {
-		curl -s --fail-with-body -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH \
-		| jq .
+		curl $$CURL_ARGS -s --fail-with-body -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH
+		echo
 	}
 
 	function unsubscribe_verify {
@@ -183,20 +185,20 @@ api-test:
 	}
 
 	function unsubscribe_1click {
-		curl -s --fail-with-body -X POST $$BASE_URL/unsubscribe/$$FEED_ID-$$EMAIL_HASH -d List-Unsubscribe=One-Click \
-		| jq .
+		curl $$CURL_ARGS -s --fail-with-body -X POST $$BASE_URL/unsubscribe/$$FEED_ID-$$EMAIL_HASH -d List-Unsubscribe=One-Click
+		echo
 	}
 
 	function resubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL) \
+			<(curl $$CURL_ARGS -s -X POST $$BASE_URL/subscribe -d feedId=$$FEED_ID -d email=$$EMAIL) \
 			<(printf '{"kind":"InputError","message":"Email is already subscribed"}') \
 			&& echo OK
 	}
 
 	function unsubscribe_failure_verify {
 		diff -u \
-			<(curl -s -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH) \
+			<(curl $$CURL_ARGS -s -X POST $$BASE_URL/unsubscribe -d id=$$FEED_ID-$$EMAIL_HASH) \
 			<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
 			&& echo OK
 	}
