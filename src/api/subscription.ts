@@ -21,14 +21,13 @@ import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError }
 
 export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { feedId, email } = reqBody;
-
-  const { logWarning, logError } = makeCustomLoggers({ reqId, module: subscribe.name });
   const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
   }
 
+  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscribe.name });
   const { emailAddress, dataDir, feedSettings } = inputProcessingResult;
 
   const storedEmails = loadStoredEmails(dataDir);
