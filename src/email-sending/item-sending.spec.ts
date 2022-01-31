@@ -6,7 +6,7 @@ import { RssItem } from '../shared/rss-item';
 import { encodeSearchParamValue, makeThrowingStub } from '../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailHeaders, makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
+import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
 
 describe('item-sending', () => {
   const feedId = 'uniqid';
@@ -32,47 +32,37 @@ describe('item-sending', () => {
   const env: EmailDeliveryEnv = {
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
   };
-  const headers = makeEmailHeaders(feedId, 'emailSaltedHash');
 
   describe(sendEmail.name, () => {
     it('delivers an email message with content from the given RssItem', async () => {
       const deliveryInfo = {} as DeliveryInfo;
-      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualHeaders] = [
+      let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [
         {} as FullEmailAddress,
         '',
         '',
         '',
         '',
-        {},
       ];
 
-      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody, headers }) => {
-        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody, actualHeaders] = [
-          from,
-          to,
-          replyTo,
-          subject,
-          htmlBody,
-          headers,
-        ];
+      const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody }) => {
+        [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
         return deliveryInfo;
       };
 
-      const result = await sendEmail(from, to, replyTo, messageContent, headers, env, deliverEmailFn);
+      const result = await sendEmail(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(actualTo).to.equal(to.value);
       expect(actualFrom).to.equal(from);
       expect(actualReplyTo).to.equal(replyTo.value);
       expect(actualSubject).to.equal(item.title);
       expect(actualHtmlBody).to.contain(item.content);
-      expect(actualHeaders).to.deep.equal(headers);
       expect(result).to.equal(deliveryInfo);
     });
 
     it('returns an Err value when delivery fails', async () => {
       const error = new Error('Cant!');
       const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(error);
-      const result = await sendEmail(from, to, replyTo, messageContent, headers, env, deliverEmailFn);
+      const result = await sendEmail(from, to, replyTo, messageContent, env, deliverEmailFn);
 
       expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${error.message}`));
     });

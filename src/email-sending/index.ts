@@ -2,7 +2,7 @@ import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
-import { makeEmailHeaders, makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
+import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
 import { makeCustomLoggers } from '../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { DataDir } from '../shared/data-dir';
@@ -78,15 +78,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
       const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
-      const emailHeaders = makeEmailHeaders(feedId, hashedEmail.saltedHash);
-      const sendingResult = await sendEmail(
-        from,
-        hashedEmail.emailAddress,
-        feedSettings.replyTo,
-        emailContent,
-        emailHeaders,
-        env
-      );
+      const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feedSettings.replyTo, emailContent, env);
 
       if (isErr(sendingResult)) {
         report.failed++;

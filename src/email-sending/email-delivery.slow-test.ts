@@ -53,7 +53,6 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
     replyTo,
     subject,
     htmlBody,
-    headers: {},
     env,
   };
 
@@ -74,7 +73,6 @@ async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, re
     replyTo,
     subject,
     htmlBody,
-    headers: {},
     env,
   };
 

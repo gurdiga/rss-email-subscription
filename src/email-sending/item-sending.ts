@@ -3,7 +3,7 @@ import { DataDir } from '../shared/data-dir';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv, EmailHeaders } from './email-delivery';
+import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 
 export async function sendEmail(
@@ -11,12 +11,11 @@ export async function sendEmail(
   { value: to }: EmailAddress,
   { value: replyTo }: EmailAddress,
   { subject, htmlBody }: EmailContent,
-  headers: EmailHeaders,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, headers, env });
+    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env });
   } catch (error) {
     return makeErr(`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
   }
@@ -65,19 +64,4 @@ export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, d
   url.searchParams.set('email', hashedEmail.emailAddress.value);
 
   return url;
-}
-
-// TODO: Consider removing since it’s not useful now.
-export function makeEmailHeaders(feedId: string, emailSaltedHash: string): EmailHeaders {
-  const listUnsubscribeUrl = new URL(`https://${DOMAIN_NAME}/unsubscribe/${feedId}-${emailSaltedHash}`);
-  const experimentingWithNoListHeaders = true;
-
-  if (experimentingWithNoListHeaders) {
-    return {};
-  }
-
-  return {
-    'List-Unsubscribe': `<${listUnsubscribeUrl}>`,
-    'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-  };
 }
