@@ -7,14 +7,14 @@ import { makeCustomLoggers } from './shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from './shared/process-utils';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
-const dataDirRoot = process.env.DATA_DIR_ROOT;
+const dataDirRoot = process.env['DATA_DIR_ROOT'];
 
 if (!dataDirRoot) {
   logError(`DATA_DIR_ROOT envar missing`);
   process.exit(1);
 }
 
-const command = getFirstCliArg(process);
+const command = getFirstCliArg(process) || '[missing-command]';
 
 if (!['rss-checking', 'email-sending'].includes(command)) {
   displayUsage();

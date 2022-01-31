@@ -25,7 +25,7 @@ function main() {
 }
 
 function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
-  const dataDirRoot = process.env.DATA_DIR_ROOT;
+  const dataDirRoot = process.env['DATA_DIR_ROOT'];
 
   if (!dataDirRoot) {
     console.error(`DATA_DIR_ROOT envar missing`);

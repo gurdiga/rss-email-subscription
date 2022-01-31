@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { Headers } from 'node-fetch';
-import { Err, isErr, makeErr } from '../shared/lang';
+import { Err, makeErr } from '../shared/lang';
 import { fetchRss, RssResponse } from './rss-response';
 
 describe(fetchRss.name, () => {

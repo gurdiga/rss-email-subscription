@@ -97,4 +97,6 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   }
 
   logInfo('Sending report', { report });
+
+  return 0;
 }

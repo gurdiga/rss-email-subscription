@@ -56,7 +56,7 @@ export function makeEmailAddress(input: any): Result<EmailAddress> {
   }
 
   const parts = email.split('@');
-  const [localPart, domain] = parts.map((s) => s.trim());
+  const [localPart = '', domain = ''] = parts.map((s) => s.trim());
   const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9-_]+((\+|\.)?[a-z0-9-_]+)*$/i.test(localPart);
 
   if (!doesLocalPartLookReasonable) {
@@ -64,7 +64,7 @@ export function makeEmailAddress(input: any): Result<EmailAddress> {
   }
 
   const domainLevels = domain.split(/\./).reverse();
-  const doDomainPartsLookReasonable = /[a-z]{2,}/i.test(domainLevels[0]) && domainLevels.every((l) => l.length >= 1);
+  const doDomainPartsLookReasonable = /[a-z]{2,}/i.test(domainLevels[0]!) && domainLevels.every((l) => l.length >= 1);
 
   if (!doDomainPartsLookReasonable) {
     return err;

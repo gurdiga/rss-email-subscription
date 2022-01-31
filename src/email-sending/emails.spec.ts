@@ -1,14 +1,12 @@
 import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
-import { ReadFileFn, WriteFileFn } from '../shared/io';
+import { ReadFileFn } from '../shared/io';
 import { makeErr } from '../shared/lang';
-import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
+import { makeStub, makeThrowingStub } from '../shared/test-utils';
 import {
   EmailAddress,
-  EmailHashFn,
   EmailList,
   parseEmails,
-  isEmailAddress,
   makeEmailAddress,
   readEmailListFromCsvFile,
   emailsFileName,

@@ -13,7 +13,7 @@ function main() {
 
   logInfo('Starting cron');
 
-  const dataDirRoot = process.env.DATA_DIR_ROOT;
+  const dataDirRoot = process.env['DATA_DIR_ROOT'];
 
   if (!dataDirRoot) {
     logError(`DATA_DIR_ROOT envar missing`);

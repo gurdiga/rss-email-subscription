@@ -8,7 +8,6 @@ import {
   makeHashedEmail,
   StoredEmails,
 } from '../email-sending/emails';
-import { EmailContent } from '../email-sending/item-sending';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { WriteFileFn } from '../shared/io';

@@ -59,9 +59,9 @@ describe(recordNewRssItems.name, () => {
     const result = recordNewRssItems(dataDir, rssItems, mkdirp, writeFile, nameFile);
 
     expect(writeFile.calls).to.deep.equal([
-      [`/some/dir/inbox/${nameFile(rssItems[0])}`, JSON.stringify(rssItems[0])],
-      [`/some/dir/inbox/${nameFile(rssItems[1])}`, JSON.stringify(rssItems[1])],
-      [`/some/dir/inbox/${nameFile(rssItems[2])}`, JSON.stringify(rssItems[2])],
+      [`/some/dir/inbox/${nameFile(rssItems[0]!)}`, JSON.stringify(rssItems[0])],
+      [`/some/dir/inbox/${nameFile(rssItems[1]!)}`, JSON.stringify(rssItems[1])],
+      [`/some/dir/inbox/${nameFile(rssItems[2]!)}`, JSON.stringify(rssItems[2])],
     ]);
     expect(result).to.equal(rssItems.length);
   });
@@ -86,7 +86,7 @@ describe(recordNewRssItems.name, () => {
         link: new URL('https://test.com/item-two'),
         guid: '1',
       };
-      const hashFn = makeStub((s: string) => '-42');
+      const hashFn = makeStub((_s: string) => '-42');
 
       expect(itemFileName(item, hashFn)).to.equal(`${RSS_ITEM_FILE_PREFIX}-42.json`);
     });

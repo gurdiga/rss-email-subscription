@@ -1,4 +1,4 @@
-import { stdOutPrinter, StdOutPrinterFn, timestamp, TimestampFn } from './io';
+import { stdOutPrinter, StdOutPrinterFn } from './io';
 
 export type Severity = 'info' | 'warning' | 'error';
 

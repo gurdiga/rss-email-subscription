@@ -79,4 +79,6 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
   if (result) {
     logInfo(`Recorded last post metadata`, { recordedLastPostMetadata: result });
   }
+
+  return 0;
 }

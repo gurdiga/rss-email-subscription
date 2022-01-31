@@ -108,7 +108,7 @@ describe('Last post timestamp', () => {
       },
     ];
 
-    const lastPost = mockRssItems[2];
+    const lastPost = mockRssItems[2]!;
     const expectedLastPostMetadata: LastPostMetadata = {
       pubDate: lastPost.pubDate,
       guid: lastPost.guid,

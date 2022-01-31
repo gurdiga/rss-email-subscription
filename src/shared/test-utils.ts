@@ -29,6 +29,6 @@ export function makeThrowingStub<F extends Function>(error: Error): Spy<F> {
 }
 
 /** URL-encodes string */
-export function encodeSearchParamValue(string: string): string {
+export function encodeSearchParamValue(string: string): string | undefined {
   return new URLSearchParams({ string }).toString().split('=')[1];
 }

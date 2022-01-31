@@ -30,7 +30,7 @@ export function isNonEmptyString(value: string): boolean {
 export function getTypeName(value: any): string {
   return Object.prototype.toString
     .call(value)
-    .match(/^\[object (\w+)\]$/)![1]
+    .match(/^\[object (\w+)\]$/)![1]!
     .toLowerCase();
 }
 

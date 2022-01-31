@@ -193,7 +193,7 @@ describe(parseRssItems.name, () => {
       baseURL,
     })) as RssParsingResult;
 
-    expect(result.validItems[0].guid).to.equal('no-guid-no-id');
+    expect(result.validItems[0]!.guid).to.equal('no-guid-no-id');
   });
 
   it('returns an InvalidRssParsingResult value when invalid XML', async () => {

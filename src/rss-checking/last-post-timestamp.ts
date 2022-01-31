@@ -56,7 +56,7 @@ export function recordLastPostMetadata(
     return;
   }
 
-  const lastItem = [...items].sort(sortBy((i) => i.pubDate, SortDirection.Desc))[0];
+  const lastItem = [...items].sort(sortBy((i) => i.pubDate, SortDirection.Desc))[0]!;
   const metadata: LastPostMetadata = {
     pubDate: lastItem.pubDate,
     guid: lastItem.guid,

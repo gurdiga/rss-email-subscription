@@ -51,7 +51,7 @@ export function readStoredRssItems(
   const rssItems = fileNames
     .filter((fileName) => fileNameFormat.test(fileName))
     .map((fileName) => [fileName, readFileFn(`${inboxDirPath}/${fileName}`)])
-    .map(([fileName, fileConten]) => makeStoredRssItem(fileName, fileConten));
+    .map(([fileName, fileContents]) => makeStoredRssItem(fileName!, fileContents!));
 
   const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
   const invalidItems = rssItems.filter(isInvalidStoredRssItem);

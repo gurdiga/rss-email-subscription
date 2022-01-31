@@ -9,7 +9,7 @@ import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
-  const dataDirRoot = process.env.DATA_DIR_ROOT;
+  const dataDirRoot = process.env['DATA_DIR_ROOT'];
 
   if (!dataDirRoot) {
     logError(`DATA_DIR_ROOT envar missing`);
@@ -74,6 +74,8 @@ async function main(): Promise<number | undefined> {
     validEmails: storedEmails.validEmails.length,
     invalidEmails: storedEmails.invalidEmails,
   });
+
+  return 0;
 }
 
 main().then((exitCode) => process.exit(exitCode));

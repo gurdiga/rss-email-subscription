@@ -44,8 +44,6 @@ export const confirmSubscription: AppRequestHandler = function confirmSubscripti
     return makeAppError('Database write error: registering confirmation failed');
   }
 
-  // TODO: Add to api-test
-
   return {
     kind: 'Success',
     message: 'Emai confirmed. Welcome aboard! 😎',
