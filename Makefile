@@ -93,9 +93,10 @@ purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
 
 ssl:
-	docker-compose run --rm --entrypoint "\
+	docker-compose --project-name res run --rm --entrypoint "\
 	  certbot certonly --webroot -w /var/www/certbot \
-			--domains feedsubscription.com \
+			--expand \
+			--domains feedsubscription.com,new.feedsubscription.com \
 			--rsa-key-size 4096 \
 			--agree-tos \
 			--non-interactive \
