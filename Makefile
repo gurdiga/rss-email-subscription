@@ -86,8 +86,11 @@ restart: stop start
 hashing-salt:
 	tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''
 
-reload:
+reload-app:
 	docker kill --signal=SIGHUP app
+
+reload-website:
+	docker kill --signal=SIGHUP website
 
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
