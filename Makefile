@@ -105,13 +105,6 @@ ssl:
 			--non-interactive \
 			--email gurdiga@gmail.com" certbot
 
-.PHONY: website
-website:
-	(cd website/html && ~/src/nginx-server/nginx-server.py)
-
-website-reload:
-	docker exec website nginx -s reload
-
 node-api:
 	node_modules/.bin/ts-node src/api/server.ts
 
