@@ -78,6 +78,10 @@ start-api: app
 	docker-compose --project-name res up --remove-orphans \
 		-- logger website api
 
+start-website:
+	docker-compose --project-name res up --remove-orphans \
+		-- logger website
+
 stop:
 	docker-compose --project-name res down
 
