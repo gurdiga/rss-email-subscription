@@ -1,11 +1,11 @@
 import { expect } from 'chai';
-import { Headers } from 'node-fetch';
 import { Err, makeErr } from '../shared/lang';
+import { makeMyHeaders } from './fetch';
 import { fetchRss, RssResponse } from './rss-response';
 
 describe(fetchRss.name, () => {
   const mockUrl = new URL('http://example.com/feed.xml');
-  const mockHeaders = new Headers({ 'content-type': 'application/xml; charset=utf-8' });
+  const mockHeaders = makeMyHeaders({ 'content-type': 'application/xml; charset=utf-8' });
   const mockXmlResponse = '<xml>some response</xml>';
   const mockText = async () => mockXmlResponse;
 
@@ -24,7 +24,7 @@ describe(fetchRss.name, () => {
     const contentTypes = ['text/xml;charset=utf-8', 'application/atom+xml', 'application/rss+xml'];
 
     for (const type of contentTypes) {
-      const mockHeaders = new Headers({ 'content-type': type });
+      const mockHeaders = makeMyHeaders({ 'content-type': type });
       const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
       const response = await fetchRss(mockUrl, mockFetchFn);
 
@@ -44,7 +44,7 @@ describe(fetchRss.name, () => {
 
   describe('content type validation', () => {
     it('returns an Err value when the response is not XML', async () => {
-      const mockHeaders = new Headers({ 'content-type': 'text/html; charset=utf-8' });
+      const mockHeaders = makeMyHeaders({ 'content-type': 'text/html; charset=utf-8' });
       const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
       const response = await fetchRss(mockUrl, mockFetchFn);
 
@@ -52,7 +52,7 @@ describe(fetchRss.name, () => {
     });
 
     it('disregards header casing', async () => {
-      const mockHeaders = new Headers({ 'content-type': 'application/xml; charSET=UTF-8' });
+      const mockHeaders = makeMyHeaders({ 'content-type': 'application/xml; charSET=UTF-8' });
       const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
       const response = await fetchRss(mockUrl, mockFetchFn);
 
@@ -64,7 +64,7 @@ describe(fetchRss.name, () => {
     });
 
     it('ignores content-type header attributes', async () => {
-      const mockHeaders = new Headers({ 'content-type': 'application/xml' });
+      const mockHeaders = makeMyHeaders({ 'content-type': 'application/xml' });
       const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
       const response = await fetchRss(mockUrl, mockFetchFn);
 
