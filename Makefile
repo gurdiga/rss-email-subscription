@@ -82,6 +82,9 @@ start-website:
 	docker-compose --project-name res up --remove-orphans \
 		-- logger website
 
+start-blog:
+	cd ~/tmp/testblog && make start
+
 stop:
 	docker-compose --project-name res down
 
