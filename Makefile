@@ -141,7 +141,7 @@ watch-app:
 
 watch-smtp-out:
 	tail -n0 -f .tmp/logs/feedsubscription/smtp-out.log \
-		| grep --line-buffered -P '(warning|error|fatal|panic):' \
+		| grep --line-buffered -P '(warning|error|fatal|panic|reject):' \
 		| while read -r _1 _2 _3 timestamp level message;
 		do
 			(
@@ -162,12 +162,15 @@ unsubscribe-report:
 			echo ""
 			cat
 		) \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		| if [ -v DEBUG ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	}
 
 	export -f send_report
 
-	grep "^`date +%F`" .tmp/logs/feedsubscription/api.log \
+	TODAY=`date +%F`
+	DATE="$${DATE:=$$TODAY}"
+
+	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"unsubscribe"' \
 		| grep -Po 'justaddlightandstir-[^"]+' | while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done \
 		| grep 'POST /unsubscribe' \
