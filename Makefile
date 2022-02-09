@@ -124,6 +124,7 @@ api-test:
 snyk:
 	snyk test
 
+# cron @reboot
 watch-app:
 	tail -n0 -f .tmp/logs/feedsubscription/{app,api}.log \
 		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"Sending report")' \
@@ -139,6 +140,7 @@ watch-app:
 		done \
 		& disown
 
+# cron @reboot
 watch-smtp-out:
 	tail -n0 -f .tmp/logs/feedsubscription/smtp-out.log \
 		| grep --line-buffered -P '(warning|error|fatal|panic|reject):' \
@@ -154,6 +156,7 @@ watch-smtp-out:
 		done \
 		& disown
 
+# cron 59 23 * * *
 unsubscribe-report:
 	@function send_report() {
 		(
@@ -179,6 +182,7 @@ unsubscribe-report:
 		| sed 's/%40/@/' \
 		| ifne bash -c send_report
 
+# cron 59 23 * * *
 delivery-report:
 	@function send_report() {
 		(
@@ -200,6 +204,7 @@ delivery-report:
 	) 2>&1 \
 	| ifne bash -c send_report
 
+# cron 59 23 * * *
 mailq-report:
 	@function send_report() {
 		(
