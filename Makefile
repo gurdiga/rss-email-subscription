@@ -69,11 +69,11 @@ smtp-out:
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
-start-delivery-only:
+start-delivery:
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- smtp-out app
 
-start-app-only: app
+start-app: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
 
