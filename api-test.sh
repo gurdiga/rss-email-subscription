@@ -82,15 +82,15 @@ function unsubscribe_1click {
 function resubscribe_failure_verify {
 	diff -u \
 		<(post /subscribe -d feedId=$FEED_ID -d email=$EMAIL) \
-		<(printf '{"kind":"InputError","message":"Email is already subscribed"}') \
-		&& echo OK
+		<(printf '{"kind":"InputError","message":"Email is already subscribed"}') &&
+		echo OK
 }
 
 function unsubscribe_failure_verify {
 	diff -u \
 		<(post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH) \
-		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') \
-		&& echo OK
+		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') &&
+		echo OK
 }
 
 main

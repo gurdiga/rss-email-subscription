@@ -25,5 +25,8 @@
   "[dockerfile]": {
     "editor.formatOnSave": false
   },
-  "shellformat.effectLanguages": ["shellscript"]
+  "shellformat.effectLanguages": ["shellscript"],
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  }
 }
