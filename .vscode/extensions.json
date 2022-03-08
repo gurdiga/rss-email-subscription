@@ -3,7 +3,19 @@
   // Extension identifier format: ${publisher}.${name}. Example: vscode.csharp
 
   // List of extensions which should be recommended for users of this workspace.
-  "recommendations": ["waderyan.gitblame", "esbenp.prettier-vscode", "stkb.rewrap"],
+  "recommendations": [
+    "waderyan.gitblame",
+    "esbenp.prettier-vscode",
+    "stkb.rewrap",
+    "timonwong.shellcheck",
+    "mads-hartmann.bash-ide-vscode",
+    "jeff-hykin.better-shellscript-syntax",
+    "exiasr.hadolint",
+    "ahmadalli.vscode-nginx-conf",
+    "artdiniz.quitcontrol-vscode",
+    "bmalehorn.shell-syntax",
+    "foxundermoon.shell-format"
+  ],
   // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
   "unwantedRecommendations": []
 }
