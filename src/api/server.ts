@@ -14,6 +14,7 @@ function main() {
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
+  app.use('/web-ui-scripts', express.static(`${__dirname}/web-ui-scripts`));
   app.post('/subscribe', makeRequestHandler(subscribe));
   app.post('/confirm-subscription', makeRequestHandler(confirmSubscription));
   app.post('/unsubscribe', makeRequestHandler(unsubscribe));

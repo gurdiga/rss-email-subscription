@@ -8,3 +8,5 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src/ ./src/
+
+RUN ./node_modules/.bin/tsc -p src/web-ui/tsconfig.json

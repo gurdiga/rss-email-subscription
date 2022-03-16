@@ -86,6 +86,7 @@ services:
     volumes:
       - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
     environment:
+      # DEBUG: 'express:*'
       <<: *app-env
     <<: *logging
 

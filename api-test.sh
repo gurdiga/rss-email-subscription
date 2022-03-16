@@ -22,11 +22,17 @@ function main {
 	resubscribe_failure_verify
 	unsubscribe
 	unsubscribe_failure_verify
+	web_ui_scripts
 }
 
 function post {
 	# shellcheck disable=SC2145
 	curl -ks --fail-with-body -X POST $BASE_URL"$@"
+}
+
+function get {
+	# shellcheck disable=SC2145
+	curl -ks --fail-with-body $BASE_URL"$@"
 }
 
 function subscribe {
@@ -91,6 +97,10 @@ function unsubscribe_failure_verify {
 		<(post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH) \
 		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') &&
 		echo OK
+}
+
+function web_ui_scripts {
+	get /web-ui-scripts/subscription-confirmation.js | head
 }
 
 main

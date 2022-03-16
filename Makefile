@@ -81,9 +81,7 @@ start-api: app
 	docker-compose --project-name res up --remove-orphans \
 		-- logger website api
 
-start-website:
-	docker-compose --project-name res up --remove-orphans \
-		-- logger website
+start-website: start-api
 
 start-testblog:
 	cd ~/tmp/testblog && make start
