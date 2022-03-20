@@ -47,8 +47,8 @@ function subscribe_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" $DATA_FILE; then
 		print_success
 	else
-		print_failure "Email not saved in emails.json"
 		jq . $DATA_FILE
+		print_failure "Email not saved in emails.json? ☝️🤔"
 		exit 1
 	fi
 }
