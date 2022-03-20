@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -exuo pipefail
+set -euo pipefail
 
 BASE_URL=https://localhost
 EMAIL=test@gmail.com
@@ -36,71 +36,112 @@ function get {
 }
 
 function subscribe {
-	post /subscribe -d feedId=$FEED_ID -d email=$EMAIL
-	echo
+	if post /subscribe -d feedId=$FEED_ID -d email=$EMAIL; then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function subscribe_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" $DATA_FILE; then
-		echo OK
+		print_success
 	else
-		echo "Email not saved in emails.json"
+		print_failure "Email not saved in emails.json"
 		jq . $DATA_FILE
 		exit 1
 	fi
 }
 
 function confirm {
-	post /confirm-subscription -d id=$FEED_ID-$EMAIL_HASH
-	echo
+	if post /confirm-subscription -d id=$FEED_ID-$EMAIL_HASH; then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function confirm_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == true)" $DATA_FILE; then
-		echo OK
+		print_success
 	else
-		echo "Email does not have isConfirmed of true in emails.json"
+		print_failure "Email does not have isConfirmed of true in emails.json"
 		jq .$EMAIL_HASH $DATA_FILE
 		exit 1
 	fi
 }
 
 function unsubscribe {
-	post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH
-	echo
+	if post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH; then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function unsubscribe_verify {
 	if jq --exit-status ".$EMAIL_HASH" $DATA_FILE; then
-		echo "Email not removed from emails.json"
+		print_failure "Email not removed from emails.json"
 		jq . $DATA_FILE
 		exit 1
 	else
-		echo OK
+		print_success
 	fi
 }
 
 function unsubscribe_1click {
-	post /unsubscribe/$FEED_ID-$EMAIL_HASH -d List-Unsubscribe=One-Click
-	echo
+	if post /unsubscribe/$FEED_ID-$EMAIL_HASH -d List-Unsubscribe=One-Click; then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function resubscribe_failure_verify {
-	diff -u \
+	if diff -u \
 		<(post /subscribe -d feedId=$FEED_ID -d email=$EMAIL) \
-		<(printf '{"kind":"InputError","message":"Email is already subscribed"}') &&
-		echo OK
+		<(printf '{"kind":"InputError","message":"Email is already subscribed"}'); then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function unsubscribe_failure_verify {
-	diff -u \
+	if diff -u \
 		<(post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH) \
-		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}') &&
-		echo OK
+		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}'); then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function web_ui_scripts {
-	get /web-ui-scripts/subscription-confirmation.js | head
+	if get /web-ui-scripts/subscription-confirmation.js | head -5; then
+		print_success
+	else
+		print_failure ☝️
+	fi
+}
+
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+ENDCOLOR="\e[0m"
+
+function print_success {
+	echo
+	printf "${GREEN}%s${ENDCOLOR}\n\n" OK
+}
+
+function print_failure {
+	if test -z "$@"; then
+		# shellcheck disable=SC2059
+		printf "${RED}FAILURE${ENDCOLOR}\n\n"
+	else
+		printf "${RED}FAILURE: ${YELLOW}%s${ENDCOLOR}\n\n" "$@"
+	fi
 }
 
 main
