@@ -57,7 +57,7 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
 
   return {
     kind: 'Success',
-    message: 'You are subscribed now. Welcome aboard! 🙂',
+    message: 'Thank you for subscribing. Please check your email to confirm. 🤓',
   };
 };
 
