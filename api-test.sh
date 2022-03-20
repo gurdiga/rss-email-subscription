@@ -39,7 +39,7 @@ function subscribe {
 	if post /subscribe -d feedId=$FEED_ID -d email=$EMAIL; then
 		print_success
 	else
-		print_failure
+		print_failure "POST /subscribe failed: exit code $?"
 	fi
 }
 
@@ -57,7 +57,7 @@ function confirm {
 	if post /confirm-subscription -d id=$FEED_ID-$EMAIL_HASH; then
 		print_success
 	else
-		print_failure
+		print_failure "POST /confirm-subscription failed: exit code $?"
 	fi
 }
 
@@ -75,7 +75,7 @@ function unsubscribe {
 	if post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH; then
 		print_success
 	else
-		print_failure
+		print_failure "POST /unsubscribe failed: exit code $?"
 	fi
 }
 
@@ -93,7 +93,7 @@ function unsubscribe_1click {
 	if post /unsubscribe/$FEED_ID-$EMAIL_HASH -d List-Unsubscribe=One-Click; then
 		print_success
 	else
-		print_failure
+		print_failure "POST /unsubscribe failed: exit code $?"
 	fi
 }
 
@@ -140,8 +140,10 @@ function print_failure {
 		# shellcheck disable=SC2059
 		printf "${RED}FAILURE${ENDCOLOR}\n\n"
 	else
-		printf "${RED}FAILURE: ${YELLOW}%s${ENDCOLOR}\n\n" "$@"
+		printf "\n${RED}FAILURE: ${YELLOW}%s${ENDCOLOR}\n\n" "$@"
 	fi
+
+	exit 1
 }
 
 main
