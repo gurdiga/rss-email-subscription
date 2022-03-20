@@ -55,6 +55,8 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
     return makeAppError('Databse write error');
   }
 
+  // TODO: Send the subscription confirmation email.
+
   return {
     kind: 'Success',
     message: 'Thank you for subscribing. Please check your email to confirm. 🤓',
