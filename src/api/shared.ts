@@ -52,6 +52,7 @@ export function isAppError(x: any): x is AppError {
 }
 
 interface SubscriptionId {
+  feedId: string;
   dataDir: DataDir;
   emailHash: EmailHash;
 }
@@ -75,6 +76,7 @@ export function parseSubscriptionId(id: any, dataDirRoot: string): Result<Subscr
   }
 
   return {
+    feedId,
     dataDir,
     emailHash,
   };

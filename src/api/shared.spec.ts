@@ -12,6 +12,7 @@ describe(parseSubscriptionId.name, () => {
     const id = `${feedId}-${emailHash}`;
 
     expect(parseSubscriptionId(id, dataDirRoot)).to.deep.equal({
+      feedId,
       dataDir: makeDataDir(feedId, dataDirRoot),
       emailHash,
     });
@@ -23,6 +24,7 @@ describe(parseSubscriptionId.name, () => {
     const id = `${feedId}-${emailHash}`;
 
     expect(parseSubscriptionId(id, dataDirRoot)).to.deep.equal({
+      feedId,
       dataDir: makeDataDir(feedId, dataDirRoot),
       emailHash,
     });
