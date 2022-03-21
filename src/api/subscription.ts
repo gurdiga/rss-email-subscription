@@ -1,4 +1,5 @@
 import path from 'path';
+import { EmailDeliveryEnv } from '../email-sending/email-delivery';
 import {
   makeEmailAddress,
   loadStoredEmails,
@@ -10,16 +11,18 @@ import {
   HashedEmail,
   makeEmailInformation,
   EmailIndex,
+  makeFullEmailAddress,
 } from '../email-sending/emails';
-import { EmailContent } from '../email-sending/item-sending';
+import { EmailContent, sendEmail } from '../email-sending/item-sending';
 import { makeDataDir, DataDir } from '../shared/data-dir';
+import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';
 
-export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { feedId, email } = reqBody;
   const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
 
@@ -29,12 +32,18 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
 
   const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscribe.name });
   const { emailAddress, dataDir, feedSettings } = inputProcessingResult;
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+
+  if (isErr(env)) {
+    logError(`Invalid environment`, { reason: env.reason });
+    return makeAppError('Environment error');
+  }
 
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { reason: storedEmails.reason });
-    return makeAppError('Databse read error');
+    return makeAppError('Database read error');
   }
 
   if (storedEmails.invalidEmails.length > 0) {
@@ -52,16 +61,31 @@ export const subscribe: AppRequestHandler = function subscribe(reqId, reqBody, _
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
-    return makeAppError('Databse write error');
+    return makeAppError('Database write error');
   }
 
-  // TODO: Send the subscription confirmation email.
+  const from = makeFullEmailAddress(feedSettings.displayName, feedSettings.fromAddress);
+  const emailContent = makeSubscriptionConfirmationEmailContent();
+  const sendingResult = await sendEmail(from, emailAddress, feedSettings.replyTo, emailContent, env);
+
+  if (isErr(sendingResult)) {
+    logError('Can’t send confirmation request email', { reason: sendingResult.reason });
+    return makeAppError('Error sending confirmation request email');
+  }
 
   return {
     kind: 'Success',
     message: 'Thank you for subscribing. Please check your email to confirm. 🤓',
   };
 };
+
+// TODO: Move out and test-drive?
+function makeSubscriptionConfirmationEmailContent(): EmailContent {
+  return {
+    subject: 'TODO',
+    htmlBody: 'TODO',
+  };
+}
 
 interface Input {
   reqId: number;

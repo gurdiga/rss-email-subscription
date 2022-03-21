@@ -8,24 +8,24 @@ import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 
 let requestCounter = 0;
 
-function main() {
+async function main() {
   const port = 3000;
   const app = express();
 
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
   app.use('/web-ui-scripts', express.static(`${__dirname}/web-ui-scripts`));
-  app.post('/subscribe', makeRequestHandler(subscribe));
-  app.post('/confirm-subscription', makeRequestHandler(confirmSubscription));
-  app.post('/unsubscribe', makeRequestHandler(unsubscribe));
-  app.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe));
+  app.post('/subscribe', await makeRequestHandler(subscribe));
+  app.post('/confirm-subscription', await makeRequestHandler(confirmSubscription));
+  app.post('/unsubscribe', await makeRequestHandler(unsubscribe));
+  app.post('/unsubscribe/:id', await makeRequestHandler(oneClickUnsubscribe));
 
   app.listen(port, () => {
     console.log(`Listening on http://0.0.0.0:${port}`);
   });
 }
 
-function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
+async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHandler> {
   const dataDirRoot = process.env['DATA_DIR_ROOT'];
 
   if (!dataDirRoot) {
@@ -33,7 +33,7 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
     process.exit(1);
   }
 
-  return (req, res) => {
+  return async (req, res) => {
     const reqId = ++requestCounter;
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId });
 
@@ -43,7 +43,7 @@ function makeRequestHandler(handler: AppRequestHandler): RequestHandler {
 
     logInfo(action, { reqId, action, reqBody, reqParams, dataDirRoot });
 
-    const result = handler(reqId, reqBody, reqParams, dataDirRoot);
+    const result = await handler(reqId, reqBody, reqParams, dataDirRoot);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);

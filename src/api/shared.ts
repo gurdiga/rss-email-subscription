@@ -7,7 +7,7 @@ export type AppRequestHandler = (
   reqBody: Record<string, any>,
   reqParams: Record<string, any>,
   dataDirRoot: string
-) => Success | InputError | AppError;
+) => Promise<Success | InputError | AppError>;
 
 export interface Success {
   kind: 'Success';

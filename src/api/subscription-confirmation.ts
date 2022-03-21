@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';
 
-export const confirmSubscription: AppRequestHandler = function confirmSubscription(
+export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
   reqId,
   reqBody,
   _reqParams,

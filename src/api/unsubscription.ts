@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';
 
-export const unsubscribe: AppRequestHandler = function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id, dataDirRoot);
