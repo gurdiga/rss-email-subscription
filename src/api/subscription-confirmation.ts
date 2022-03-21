@@ -1,4 +1,5 @@
 import { loadStoredEmails } from '../email-sending/emails';
+import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
@@ -12,14 +13,21 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
 ) {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
   const { id } = reqBody;
-  const parseResult = parseSubscriptionId(id, dataDirRoot);
+  const parseResult = parseSubscriptionId(id);
 
   if (isErr(parseResult)) {
     logWarning('Invalid subscription ID', { id, reason: parseResult.reason });
     return makeInputError('Invalid confirmation link');
   }
 
-  const { dataDir, emailHash } = parseResult;
+  const { feedId, emailHash } = parseResult;
+  const dataDir = makeDataDir(feedId, dataDirRoot);
+
+  if (isErr(dataDir)) {
+    logError(`Can’t make data dir from feedId "${feedId}": ${dataDir.reason}`);
+    return makeAppError('Invalid confirmation link');
+  }
+
   const storedEmails = loadStoredEmails(dataDir);
 
   if (isErr(storedEmails)) {
