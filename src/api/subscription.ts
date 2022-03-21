@@ -64,9 +64,13 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
     return makeAppError('Database write error');
   }
 
-  const from = makeFullEmailAddress(feedSettings.displayName, feedSettings.fromAddress);
-  const emailContent = makeSubscriptionConfirmationEmailContent();
-  const sendingResult = await sendEmail(from, emailAddress, feedSettings.replyTo, emailContent, env);
+  const { displayName, fromAddress, replyTo } = feedSettings;
+
+  const from = makeFullEmailAddress(displayName, fromAddress);
+  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+  const confirmationLink = makeEmailConfirmationUrl(hashedEmail, feedId, displayName);
+  const emailContent = makeConfirmationEmailContent(displayName, confirmationLink, fromAddress);
+  const sendingResult = await sendEmail(from, emailAddress, replyTo, emailContent, env);
 
   if (isErr(sendingResult)) {
     logError('Can’t send confirmation request email', { reason: sendingResult.reason });
@@ -78,14 +82,6 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
     message: 'Thank you for subscribing. Please check your email to confirm. 🤓',
   };
 };
-
-// TODO: Move out and test-drive?
-function makeSubscriptionConfirmationEmailContent(): EmailContent {
-  return {
-    subject: 'TODO',
-    htmlBody: 'TODO',
-  };
-}
 
 interface Input {
   reqId: number;
