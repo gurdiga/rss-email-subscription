@@ -20,6 +20,7 @@ import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-setti
 import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
+import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';
 
 export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
@@ -201,12 +202,23 @@ export function makeConfirmationEmailContent(
   };
 }
 
-export function makeEmailConfirmationUrl(hashedEmail: HashedEmail, feedId: string, feedDisplayName: string): URL {
+function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams): URL {
   const url = new URL(`https://${DOMAIN_NAME}/confirm.html`);
+  let name: keyof typeof params;
 
-  url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
-  url.searchParams.set('displayName', feedDisplayName || feedId);
-  url.searchParams.set('email', hashedEmail.emailAddress.value);
+  for (name in params) {
+    url.searchParams.set(name, params[name]);
+  }
 
   return url;
+}
+
+export function makeEmailConfirmationUrl(hashedEmail: HashedEmail, feedId: string, feedDisplayName: string): URL {
+  const params: ConfirmationLinkUrlParams = {
+    id: `${feedId}-${hashedEmail.saltedHash}`,
+    displayName: feedDisplayName || feedId,
+    email: hashedEmail.emailAddress.value,
+  };
+
+  return makeUrlFromConfirmationLinkUrlParams(params);
 }
