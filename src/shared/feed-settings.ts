@@ -2,7 +2,7 @@ import path, { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir } from './data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from './io';
-import { getErrorMessage, isErr, makeErr, Result } from './lang';
+import { getErrorMessage, isErr, makeErr, Result } from '../web-ui/shared/lang';
 import { makeUrl } from './url';
 
 export const DOMAIN_NAME = 'feedsubscription.com';

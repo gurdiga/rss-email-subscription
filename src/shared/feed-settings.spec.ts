@@ -4,7 +4,7 @@ import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { FileExistsFn, ReadFileFn } from './io';
-import { makeErr } from './lang';
+import { makeErr } from '../web-ui/shared/lang';
 import { makeStub } from './test-utils';
 
 describe(getFeedSettings.name, () => {

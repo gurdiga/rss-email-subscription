@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName } from './lang';
+import { getErrorMessage, getTypeName } from '../web-ui/shared/lang';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {

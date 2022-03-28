@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeErr } from '../shared/lang';
+import { makeErr } from '../web-ui/shared/lang';
 import { parseSubscriptionId } from './shared';
 
 describe(parseSubscriptionId.name, () => {

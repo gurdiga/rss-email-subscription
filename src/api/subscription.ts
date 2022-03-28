@@ -18,7 +18,7 @@ import { makeDataDir, DataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
 import { writeFile, WriteFileFn } from '../shared/io';
-import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
+import { Result, isErr, makeErr, getErrorMessage } from '../web-ui/shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';

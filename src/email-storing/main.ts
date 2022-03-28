@@ -3,7 +3,7 @@ import { addEmail, storeEmails } from '../api/subscription';
 import { makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { getFeedSettings } from '../shared/feed-settings';
-import { isErr } from '../shared/lang';
+import { isErr } from '../web-ui/shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, programFilePath } from '../shared/process-utils';
 

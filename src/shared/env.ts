@@ -1,4 +1,4 @@
-import { makeErr, Result } from './lang';
+import { makeErr, Result } from '../web-ui/shared/lang';
 
 export function requireEnv<ENV = Record<string, string>>(
   envarNames: (keyof ENV)[],

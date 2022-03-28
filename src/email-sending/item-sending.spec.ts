@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import path from 'path';
 import { DataDir, makeDataDir } from '../shared/data-dir';
-import { makeErr } from '../shared/lang';
+import { makeErr } from '../web-ui/shared/lang';
 import { RssItem } from '../shared/rss-item';
 import { encodeSearchParamValue, makeThrowingStub } from '../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';

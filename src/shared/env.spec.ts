@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { requireEnv } from './env';
-import { makeErr } from './lang';
+import { makeErr } from '../web-ui/shared/lang';
 
 describe(requireEnv.name, () => {
   it('returns typed key-value pairs for the given envars', () => {

@@ -5,7 +5,7 @@ import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
 import { makeCustomLoggers } from './shared/logging';
 import { getFeedSettings } from './shared/feed-settings';
-import { isErr } from './shared/lang';
+import { isErr } from './web-ui/shared/lang';
 import { makeDataDir } from './shared/data-dir';
 
 function main() {
