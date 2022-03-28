@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../web-ui/shared/lang';
 import { RssItem } from '../shared/rss-item';
-import { makeThrowingStub } from '../shared/test-utils';
+import { makeThrowingStub } from '../web-ui/shared/test-utils';
 import {
   buildRssItem,
   parseRssItems,

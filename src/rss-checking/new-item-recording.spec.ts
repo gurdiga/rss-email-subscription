@@ -3,7 +3,7 @@ import { RssItem } from '../shared/rss-item';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../web-ui/shared/lang';
-import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
+import { makeSpy, makeStub, makeThrowingStub } from '../web-ui/shared/test-utils';
 import { MkdirpFn, WriteFileFn } from '../shared/io';
 
 describe(recordNewRssItems.name, () => {

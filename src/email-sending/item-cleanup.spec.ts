@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { DeleteFileFn } from '../shared/io';
 import { makeErr } from '../web-ui/shared/lang';
-import { makeSpy, makeThrowingStub } from '../shared/test-utils';
+import { makeSpy, makeThrowingStub } from '../web-ui/shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { ValidStoredRssItem } from './rss-item-reading';
 

@@ -5,7 +5,7 @@ import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { FileExistsFn, ReadFileFn } from './io';
 import { makeErr } from '../web-ui/shared/lang';
-import { makeStub } from './test-utils';
+import { makeStub } from '../web-ui/shared/test-utils';
 
 describe(getFeedSettings.name, () => {
   const feedId = 'jalas';

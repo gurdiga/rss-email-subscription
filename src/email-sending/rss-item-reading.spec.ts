@@ -4,7 +4,7 @@ import { sortBy } from '../shared/array-utils';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ListFilesFn, ReadFileFn } from '../shared/io';
 import { makeErr } from '../web-ui/shared/lang';
-import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
+import { makeSpy, makeStub, makeThrowingStub } from '../web-ui/shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
 describe(readStoredRssItems.name, () => {

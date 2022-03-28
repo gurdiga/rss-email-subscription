@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { ReadFileFn } from '../shared/io';
 import { makeErr } from '../web-ui/shared/lang';
-import { makeStub, makeThrowingStub } from '../shared/test-utils';
+import { makeStub, makeThrowingStub } from '../web-ui/shared/test-utils';
 import {
   EmailAddress,
   EmailList,
