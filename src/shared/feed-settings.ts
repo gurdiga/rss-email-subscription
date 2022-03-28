@@ -1,5 +1,5 @@
 import path, { basename } from 'path';
-import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
+import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { DataDir } from './data-dir';
 import { fileExists, FileExistsFn, readFile, ReadFileFn } from './io';
 import { getErrorMessage, isErr, makeErr, Result } from '../web-ui/shared/lang';

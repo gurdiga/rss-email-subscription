@@ -1,14 +1,14 @@
-import { isEmpty } from '../shared/array-utils';
-import { isErr } from '../web-ui/shared/lang';
+import { isEmpty } from '../../shared/array-utils';
+import { isErr } from '../../web-ui/shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
-import { makeCustomLoggers } from '../shared/logging';
+import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
-import { DataDir } from '../shared/data-dir';
-import { requireEnv } from '../shared/env';
+import { DataDir } from '../../shared/data-dir';
+import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { FeedSettings } from '../shared/feed-settings';
+import { FeedSettings } from '../../shared/feed-settings';
 import { basename } from 'path';
 
 export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {

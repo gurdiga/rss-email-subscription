@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { RssItem } from '../shared/rss-item';
+import { RssItem } from '../../shared/rss-item';
 import { selectNewItems } from './item-selection';
 import { LastPostMetadata } from './last-post-timestamp';
 

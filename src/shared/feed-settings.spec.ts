@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'path';
-import { EmailAddress, makeEmailAddress } from '../email-sending/emails';
+import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { FileExistsFn, ReadFileFn } from './io';

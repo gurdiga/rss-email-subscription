@@ -1,9 +1,9 @@
 import path from 'path';
-import { DataDir } from '../shared/data-dir';
-import { RssItem } from '../shared/rss-item';
-import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../shared/io';
-import { isEmpty, sortBy, SortDirection } from '../shared/array-utils';
-import { getErrorMessage, makeErr, Result } from '../web-ui/shared/lang';
+import { DataDir } from '../../shared/data-dir';
+import { RssItem } from '../../shared/rss-item';
+import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../../shared/io';
+import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
+import { getErrorMessage, makeErr, Result } from '../../web-ui/shared/lang';
 
 export function getLastPostMetadata(
   dataDir: DataDir,

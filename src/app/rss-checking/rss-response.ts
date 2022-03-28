@@ -1,4 +1,4 @@
-import { makeErr, Result } from '../web-ui/shared/lang';
+import { makeErr, Result } from '../../web-ui/shared/lang';
 import { fetch, FetchFn } from './fetch';
 
 export interface RssResponse {

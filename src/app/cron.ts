@@ -1,12 +1,12 @@
 import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
 import path from 'path';
-import { checkRss } from './rss-checking';
-import { sendEmails } from './email-sending';
-import { makeCustomLoggers } from './shared/logging';
-import { getFeedSettings } from './shared/feed-settings';
-import { isErr } from './web-ui/shared/lang';
-import { makeDataDir } from './shared/data-dir';
+import { checkRss } from '../app/rss-checking';
+import { sendEmails } from '../app/email-sending';
+import { makeCustomLoggers } from '../shared/logging';
+import { getFeedSettings } from '../shared/feed-settings';
+import { isErr } from '../web-ui/shared/lang';
+import { makeDataDir } from '../shared/data-dir';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });

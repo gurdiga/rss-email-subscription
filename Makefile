@@ -45,7 +45,7 @@ lint-dockerfile:
 
 # The required configuration is expected in the environment
 smtp-test:
-	node_modules/.bin/ts-node src/email-sending/email-delivery.slow-test.ts
+	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
 app:
 	docker build \

@@ -24,7 +24,7 @@ services:
     ports: ['127.0.0.1:1587:587']
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
-      - ./.tmp/var/spool/postfix:/var/spool/postfix # to persist queue during container restarts
+      - ${POSTFIX_DIR_ROOT:-./.tmp/var/spool/postfix}:/var/spool/postfix # to persist queue during container restarts
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
@@ -73,7 +73,7 @@ services:
       - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
     environment:
       <<: *app-env
-    command: node_modules/.bin/ts-node src/cron.ts
+    command: node_modules/.bin/ts-node src/app/cron.ts
     <<: *logging
 
   api:

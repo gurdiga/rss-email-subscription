@@ -1,9 +1,9 @@
 import { basename } from 'path';
-import { isEmpty } from '../shared/array-utils';
-import { DataDir } from '../shared/data-dir';
-import { FeedSettings } from '../shared/feed-settings';
-import { isErr } from '../web-ui/shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
+import { isEmpty } from '../../shared/array-utils';
+import { DataDir } from '../../shared/data-dir';
+import { FeedSettings } from '../../shared/feed-settings';
+import { isErr } from '../../web-ui/shared/lang';
+import { makeCustomLoggers } from '../../shared/logging';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';

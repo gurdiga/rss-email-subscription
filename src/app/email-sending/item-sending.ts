@@ -1,8 +1,8 @@
 import path from 'path';
-import { DataDir } from '../shared/data-dir';
-import { DOMAIN_NAME } from '../shared/feed-settings';
-import { getErrorMessage, makeErr, Result } from '../web-ui/shared/lang';
-import { RssItem } from '../shared/rss-item';
+import { DataDir } from '../../shared/data-dir';
+import { DOMAIN_NAME } from '../../shared/feed-settings';
+import { getErrorMessage, makeErr, Result } from '../../web-ui/shared/lang';
+import { RssItem } from '../../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
 

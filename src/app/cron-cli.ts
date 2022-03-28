@@ -1,10 +1,10 @@
 import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
-import { makeDataDir } from './shared/data-dir';
-import { getFeedSettings } from './shared/feed-settings';
-import { isErr } from './web-ui/shared/lang';
-import { makeCustomLoggers } from './shared/logging';
-import { getFirstCliArg, getSecondCliArg, programFilePath } from './shared/process-utils';
+import { makeDataDir } from '../shared/data-dir';
+import { getFeedSettings } from '../shared/feed-settings';
+import { isErr } from '../web-ui/shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
+import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
 const dataDirRoot = process.env['DATA_DIR_ROOT'];

@@ -1,9 +1,9 @@
 import path from 'path';
-import { HashFn, hash } from '../shared/crypto';
-import { DataDir } from '../shared/data-dir';
-import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../shared/io';
-import { makeErr, Result } from '../web-ui/shared/lang';
-import { RssItem } from '../shared/rss-item';
+import { HashFn, hash } from '../../shared/crypto';
+import { DataDir } from '../../shared/data-dir';
+import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../../shared/io';
+import { makeErr, Result } from '../../web-ui/shared/lang';
+import { RssItem } from '../../shared/rss-item';
 
 export type NameFileFn = (item: RssItem) => string;
 

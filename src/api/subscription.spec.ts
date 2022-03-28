@@ -7,7 +7,7 @@ import {
   makeEmailAddress,
   makeHashedEmail,
   StoredEmails,
-} from '../email-sending/emails';
+} from '../app/email-sending/emails';
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { WriteFileFn } from '../shared/io';

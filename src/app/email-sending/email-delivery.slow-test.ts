@@ -1,11 +1,11 @@
-import { requireEnv } from '../shared/env';
-import { DOMAIN_NAME } from '../shared/feed-settings';
-import { isErr, makeErr, Result } from '../web-ui/shared/lang';
+import { requireEnv } from '../../shared/env';
+import { DOMAIN_NAME } from '../../shared/feed-settings';
+import { isErr, makeErr, Result } from '../../web-ui/shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent } from './item-sending';
-import { RssItem } from '../shared/rss-item';
-import { makeConfirmationEmailContent } from '../api/subscription';
+import { RssItem } from '../../shared/rss-item';
+import { makeConfirmationEmailContent } from '../../api/subscription';
 
 async function main(): Promise<number> {
   const env = getEnv();

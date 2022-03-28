@@ -1,5 +1,5 @@
 import path from 'path';
-import { EmailDeliveryEnv } from '../email-sending/email-delivery';
+import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import {
   makeEmailAddress,
   loadStoredEmails,
@@ -12,8 +12,8 @@ import {
   makeEmailInformation,
   EmailIndex,
   makeFullEmailAddress,
-} from '../email-sending/emails';
-import { EmailContent, sendEmail } from '../email-sending/item-sending';
+} from '../app/email-sending/emails';
+import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { makeDataDir, DataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';

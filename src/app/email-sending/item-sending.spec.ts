@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import path from 'path';
-import { DataDir, makeDataDir } from '../shared/data-dir';
-import { makeErr } from '../web-ui/shared/lang';
-import { RssItem } from '../shared/rss-item';
-import { encodeSearchParamValue, makeThrowingStub } from '../web-ui/shared/test-utils';
+import { DataDir, makeDataDir } from '../../shared/data-dir';
+import { makeErr } from '../../web-ui/shared/lang';
+import { RssItem } from '../../shared/rss-item';
+import { encodeSearchParamValue, makeThrowingStub } from '../../web-ui/shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';

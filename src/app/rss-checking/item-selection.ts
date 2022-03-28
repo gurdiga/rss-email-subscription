@@ -1,4 +1,4 @@
-import { RssItem } from '../shared/rss-item';
+import { RssItem } from '../../shared/rss-item';
 import { LastPostMetadata } from './last-post-timestamp';
 
 export function selectNewItems(items: RssItem[], lastPostMetadata: LastPostMetadata | undefined): RssItem[] {

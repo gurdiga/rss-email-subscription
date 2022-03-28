@@ -1,8 +1,8 @@
 import path from 'path';
-import { filterUniqBy } from '../shared/array-utils';
-import { hash } from '../shared/crypto';
-import { DataDir } from '../shared/data-dir';
-import { readFile, ReadFileFn } from '../shared/io';
+import { filterUniqBy } from '../../shared/array-utils';
+import { hash } from '../../shared/crypto';
+import { DataDir } from '../../shared/data-dir';
+import { readFile, ReadFileFn } from '../../shared/io';
 import {
   getErrorMessage,
   getTypeName,
@@ -11,8 +11,8 @@ import {
   makeErr,
   makeTypeMismatchErr,
   Result,
-} from '../web-ui/shared/lang';
-import { isObject } from '../shared/object-utils';
+} from '../../web-ui/shared/lang';
+import { isObject } from '../../shared/object-utils';
 
 export interface EmailList {
   kind: 'EmailList';
