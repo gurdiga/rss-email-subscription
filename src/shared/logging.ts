@@ -29,7 +29,7 @@ function logError(message: LogRecord['message'], data?: LogRecord['data']): void
 
 interface Loggers {
   logError: typeof logError;
-  logWarning: typeof logError;
+  logWarning: typeof logWarning;
   logInfo: typeof logInfo;
 }
 

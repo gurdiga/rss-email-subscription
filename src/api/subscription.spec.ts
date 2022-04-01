@@ -38,6 +38,26 @@ describe('subscription', () => {
       expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
       expect(newEmails.invalidEmails).to.be.empty;
     });
+
+    it('marks the email as confirmed when skipping double-opt-in', () => {
+      const storedEmails: StoredEmails = {
+        validEmails: [],
+        invalidEmails: [],
+      };
+      const skipDoubleOptIn = true;
+
+      const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, skipDoubleOptIn);
+      const expectedHashedEmail: HashedEmail = {
+        kind: 'HashedEmail',
+        emailAddress: emailAddress,
+        saltedHash: emailHashFn(emailAddress),
+        isConfirmed: true,
+      };
+
+      expect(newEmails.validEmails).to.have.lengthOf(1);
+      expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
+      expect(newEmails.invalidEmails).to.be.empty;
+    });
   });
 
   describe(storeEmails.name, () => {

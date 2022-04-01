@@ -137,12 +137,16 @@ export interface HashedEmail {
   isConfirmed: boolean;
 }
 
-export function makeHashedEmail(emailAddress: EmailAddress, emailHashFn: EmailHashFn): HashedEmail {
+export function makeHashedEmail(
+  emailAddress: EmailAddress,
+  emailHashFn: EmailHashFn,
+  isConfirmed = false
+): HashedEmail {
   return {
     kind: 'HashedEmail',
     emailAddress,
     saltedHash: emailHashFn(emailAddress),
-    isConfirmed: false,
+    isConfirmed,
   };
 }
 

@@ -9,6 +9,11 @@ FEED_ID=gurdiga
 DATA_FILE=.tmp/development-docker-data/$FEED_ID/emails.json
 
 function main {
+	unsubscribe
+	subscribe_without_double_opt_in
+	subscribe_without_double_opt_in_verify
+	unsubscribe
+	unsubscribe_verify
 	subscribe
 	subscribe_verify
 	confirm
@@ -43,12 +48,30 @@ function subscribe {
 	fi
 }
 
+function subscribe_without_double_opt_in {
+	if post /subscribe -d feedId=$FEED_ID -d email=$EMAIL -d skipDoubleOptIn=true; then
+		print_success
+	else
+		print_failure "POST /subscribe failed: exit code $?"
+	fi
+}
+
 function subscribe_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" $DATA_FILE; then
 		print_success
 	else
 		jq . $DATA_FILE
 		print_failure "Email not saved in emails.json? ☝️🤔"
+		exit 1
+	fi
+}
+
+function subscribe_without_double_opt_in_verify {
+	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == true)" $DATA_FILE; then
+		print_success
+	else
+		jq . $DATA_FILE
+		print_failure "Email not saved in emails.json when skipping double-opt-in? ☝️🤔"
 		exit 1
 	fi
 }

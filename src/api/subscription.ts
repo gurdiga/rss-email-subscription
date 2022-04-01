@@ -24,15 +24,15 @@ import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';
 
 export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
-  const { feedId, email } = reqBody;
-  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot });
+  const { feedId, email, skipDoubleOptIn } = reqBody;
+  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot, skipDoubleOptIn });
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
   }
 
-  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscribe.name });
-  const { emailAddress, dataDir, feedSettings } = inputProcessingResult;
+  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, skipDoubleOptIn, module: subscribe.name });
+  const { emailAddress, dataDir, feedSettings, isConfirmed } = inputProcessingResult;
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
@@ -57,12 +57,19 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
-  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
+  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, isConfirmed);
   const result = storeEmails(newEmails.validEmails, dataDir);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
     return makeAppError('Database write error');
+  }
+
+  if (isConfirmed) {
+    return {
+      kind: 'Success',
+      message: 'Thank you for subscribing. Welcome aboard! 🤓',
+    };
   }
 
   const { displayName, fromAddress, replyTo } = feedSettings;
@@ -89,6 +96,7 @@ interface Input {
   email: string;
   feedId: string;
   dataDirRoot: string;
+  skipDoubleOptIn: any;
 }
 
 interface ProcessedInput {
@@ -96,9 +104,16 @@ interface ProcessedInput {
   emailAddress: EmailAddress;
   dataDir: DataDir;
   feedSettings: FeedSettings;
+  isConfirmed: boolean;
 }
 
-function processInput({ reqId, email, feedId, dataDirRoot }: Input): ProcessedInput | InputError | AppError {
+function processInput({
+  reqId,
+  email,
+  feedId,
+  dataDirRoot,
+  skipDoubleOptIn,
+}: Input): ProcessedInput | InputError | AppError {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
 
@@ -131,6 +146,7 @@ function processInput({ reqId, email, feedId, dataDirRoot }: Input): ProcessedIn
     emailAddress,
     dataDir,
     feedSettings,
+    isConfirmed: !!skipDoubleOptIn,
   };
 }
 
@@ -158,9 +174,10 @@ export function storeEmails(
 export function addEmail(
   storedEmails: StoredEmails,
   emailAddress: EmailAddress,
-  emailHashFn: EmailHashFn
+  emailHashFn: EmailHashFn,
+  isConfirmed = false
 ): StoredEmails {
-  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn, isConfirmed);
 
   storedEmails.validEmails.push(hashedEmail);
 
