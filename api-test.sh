@@ -9,7 +9,6 @@ FEED_ID=gurdiga
 DATA_FILE=.tmp/development-docker-data/$FEED_ID/emails.json
 
 function main {
-	unsubscribe
 	subscribe_without_double_opt_in
 	subscribe_without_double_opt_in_verify
 	unsubscribe

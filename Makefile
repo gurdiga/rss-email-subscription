@@ -78,7 +78,7 @@ start-app: app
 		-- app
 
 start-api: app
-	docker-compose --project-name res up --remove-orphans \
+	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api
 
 start-website: start-api
