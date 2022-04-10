@@ -130,7 +130,7 @@ watch-app:
 		do
 			(
 				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
-				echo "From: wathc-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+				echo "From: watch-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 				echo
 				jq . <<<"$$json"
 			) \
