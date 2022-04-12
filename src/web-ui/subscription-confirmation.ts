@@ -5,7 +5,7 @@ function main() {
 
   console.log({ queryParams });
 
-  // TODO
+  // TODO?
 }
 
 main();
