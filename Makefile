@@ -105,13 +105,15 @@ purge-smtp-queue:
 
 ssl:
 	docker-compose --project-name res run --rm --entrypoint "\
-	  certbot certonly --webroot -w /var/www/certbot \
+	  certbot certonly \
+			--webroot --webroot-path /var/www/certbot --domains feedsubscription.com \
+			--webroot --webroot-path /var/www/certbot/new --domains new.feedsubscription.com \
 			--expand \
-			--domains feedsubscription.com,new.feedsubscription.com \
 			--rsa-key-size 4096 \
 			--agree-tos \
 			--non-interactive \
 			--email gurdiga@gmail.com" certbot
+	docker kill --signal=SIGHUP website
 
 node-api:
 	node_modules/.bin/ts-node src/api/server.ts
