@@ -81,7 +81,12 @@ start-api: app
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api
 
-start-website: start-api
+start-website: new-website start-api
+
+open-website:
+	open https://localhost
+
+ow: open-website
 
 start-testblog:
 	cd ~/tmp/testblog && make start
