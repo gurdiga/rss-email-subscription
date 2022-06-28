@@ -24,7 +24,7 @@ export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Pr
   const rssParsingResult = await parseRssItems(rssResponse);
 
   if (isErr(rssParsingResult)) {
-    logError(`Failed parsing RSS items`, { reson: rssParsingResult.reason });
+    logError(`Failed parsing RSS items`, { reason: rssParsingResult.reason });
     return 1;
   }
 
