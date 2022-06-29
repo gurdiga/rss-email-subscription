@@ -4,7 +4,7 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "files.associations": {
-    "jsconfig.json": "jsonc"
+    "*.njk": "njk"
   },
   "[plaintext]": {
     "editor.wordWrap": "wordWrapColumn",
@@ -28,5 +28,8 @@
   "shellformat.effectLanguages": ["shellscript"],
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "emmet.includeLanguages": {
+    "njk": "html"
   }
 }
