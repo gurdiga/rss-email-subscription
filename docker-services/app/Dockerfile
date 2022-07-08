@@ -1,4 +1,4 @@
-FROM node:17-alpine3.14
+FROM node:16.15-alpine3.15
 
 VOLUME /data
 WORKDIR /code
