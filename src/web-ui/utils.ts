@@ -34,3 +34,25 @@ export function parseConfirmationLinkUrlParams(
 function consoleLogFn(...args: any[]): void {
   console.error(...args);
 }
+
+export type QuerySelectorFn = typeof document.querySelector;
+
+export function requireUiElements<T>(
+  selectors: Record<keyof T, string>,
+  querySelector: QuerySelectorFn = (s: string) => document.querySelector(s)
+): Result<T> {
+  const uiElements = {} as T;
+
+  for (const name in selectors) {
+    const selector = selectors[name];
+    const element = querySelector(selector);
+
+    if (!element) {
+      return makeErr(`Element not found by selector: "${selector}"`);
+    }
+
+    uiElements[name] = element as any;
+  }
+
+  return uiElements;
+}

@@ -1,5 +1,5 @@
-import { isErr, makeErr, Result } from '../shared/lang';
-import { parseConfirmationLinkUrlParams } from './utils';
+import { isErr } from '../shared/lang';
+import { parseConfirmationLinkUrlParams, requireUiElements } from './utils';
 
 interface UnsubscriptionUiElements {
   errorMessage: Element;
@@ -7,25 +7,26 @@ interface UnsubscriptionUiElements {
 
 function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
+
+  if (isErr(queryParams)) {
+    displayInitError(queryParams.reason);
+    return;
+  }
+
   const uiElements = requireUiElements<UnsubscriptionUiElements>({
-    errorMessage: '#error-message',
+    errorMessage: '#tbd-selector',
   });
 
   if (isErr(uiElements)) {
-    console.error('Some uiElement are missing?!');
+    displayInitError(uiElements.reason);
     return;
   }
 
   console.log({ queryParams, uiElements });
 
-  if (isErr(queryParams)) {
-    displayError(queryParams.reason, uiElements.errorMessage);
-    return;
-  }
-
   /**
 
-  Steps:
+  Tentative steps:
 
   - 1. input processing
     - Unhappy paths
@@ -48,23 +49,15 @@ function main() {
 
 main();
 
-function displayError(message: string, el: Element) {
-  el.textContent = message;
-}
+function displayInitError(message: string) {
+  const initErrorElementSelector = '#init-error-message';
+  const errorMessageElement = document.querySelector(initErrorElementSelector);
 
-function requireUiElements<T>(selectors: Record<keyof T, string>, parentElement: Element = document.body): Result<T> {
-  const uiElements = {} as T;
-
-  for (const name in selectors) {
-    const selector = selectors[name];
-    const element = parentElement.querySelector(selector);
-
-    if (!element) {
-      return makeErr(`Element not found by selector: "${selector}"`);
-    }
-
-    uiElements[name] = element as any;
+  if (!errorMessageElement) {
+    console.error(`Element is missing: ${initErrorElementSelector}`);
+    return;
   }
 
-  return uiElements;
+  errorMessageElement.textContent = message;
+  errorMessageElement.removeAttribute('hidden');
 }
