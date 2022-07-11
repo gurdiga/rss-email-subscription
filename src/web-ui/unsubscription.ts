@@ -37,26 +37,11 @@ function main() {
   console.log({ queryParams, uiElements });
 
   /**
-
-  Tentative steps:
-
-  - 1. input processing
-    - Unhappy paths
-      - invalid query params
-        - Display error message
-    - Happy path
-      - query params are in place and valid
-        - Fill in the form
-  - 2. send request to API
-    - Happy path
-      - display the success message
-    - Unhappy paths
-      - app error
-      - server error
-
+   * TODO:
+   * - fill in the feed name and email labels
+   * - wire up form submit
+   * - handle submit results
    */
-
-  // TODO?
 }
 
 main();
