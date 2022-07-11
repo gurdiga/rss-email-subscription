@@ -37,10 +37,10 @@ function main() {
   console.log({ queryParams, uiElements });
 
   /**
-   * TODO:
-   * - fill in the feed name and email labels
-   * - wire up form submit
-   * - handle submit results
+    TODO:
+    - fill in the feed name and email labels
+    - wire up form submit
+    - handle submit results
    */
 }
 
