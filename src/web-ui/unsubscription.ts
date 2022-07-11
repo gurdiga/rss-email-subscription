@@ -2,7 +2,13 @@ import { isErr } from '../shared/lang';
 import { parseConfirmationLinkUrlParams, requireUiElements } from './utils';
 
 interface UnsubscriptionUiElements {
-  errorMessage: Element;
+  feedNameLabel: Element;
+  emailLabel: Element;
+  subscriptionIdFormField: Element;
+  unsubscriptionSuccessLabel: Element;
+  inputErrorLabel: Element;
+  appErrorLabel: Element;
+  communicationErrorLabel: Element;
 }
 
 function main() {
@@ -14,7 +20,13 @@ function main() {
   }
 
   const uiElements = requireUiElements<UnsubscriptionUiElements>({
-    errorMessage: '#tbd-selector',
+    feedNameLabel: '#feed-name-label',
+    emailLabel: '#email-label',
+    subscriptionIdFormField: 'form input[name="id"]',
+    unsubscriptionSuccessLabel: '#unsubscription-success-label',
+    inputErrorLabel: '#input-error-label',
+    appErrorLabel: '#app-error-label',
+    communicationErrorLabel: '#communication-error-label',
   });
 
   if (isErr(uiElements)) {
