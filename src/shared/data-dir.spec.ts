@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeDataDir } from './data-dir';
-import { makeErr } from '../web-ui/shared/lang';
+import { makeErr } from './lang';
 
 describe(makeDataDir.name, () => {
   it('returns a DataDir value for the given path', () => {

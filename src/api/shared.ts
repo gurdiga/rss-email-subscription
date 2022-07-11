@@ -1,5 +1,5 @@
 import { EmailHash } from '../app/email-sending/emails';
-import { Result, makeErr } from '../web-ui/shared/lang';
+import { Result, makeErr } from '../shared/lang';
 
 export type AppRequestHandler = (
   reqId: number,

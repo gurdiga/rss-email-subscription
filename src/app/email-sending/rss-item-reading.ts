@@ -3,7 +3,7 @@ import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-rec
 import { sortBy } from '../../shared/array-utils';
 import { DataDir } from '../../shared/data-dir';
 import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../../shared/io';
-import { getErrorMessage, isErr, makeErr, Result } from '../../web-ui/shared/lang';
+import { getErrorMessage, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
 import { makeUrl } from '../../shared/url';
 

@@ -11,7 +11,7 @@ import {
   makeErr,
   makeTypeMismatchErr,
   Result,
-} from '../../web-ui/shared/lang';
+} from '../../shared/lang';
 import { isObject } from '../../shared/object-utils';
 
 export interface EmailList {

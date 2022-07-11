@@ -4,8 +4,8 @@ import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { FileExistsFn, ReadFileFn } from './io';
-import { makeErr } from '../web-ui/shared/lang';
-import { makeStub } from '../web-ui/shared/test-utils';
+import { makeErr } from './lang';
+import { makeStub } from './test-utils';
 
 describe(getFeedSettings.name, () => {
   const feedId = 'jalas';

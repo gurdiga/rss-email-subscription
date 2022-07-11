@@ -1,4 +1,4 @@
-import { makeErr, Result } from './shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 export interface ConfirmationLinkUrlParams {
   id: string;

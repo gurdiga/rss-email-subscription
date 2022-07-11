@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Err, makeErr } from '../../web-ui/shared/lang';
+import { Err, makeErr } from '../../shared/lang';
 import { makeMyHeaders } from './fetch';
 import { fetchRss, RssResponse } from './rss-response';
 

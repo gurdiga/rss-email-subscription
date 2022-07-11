@@ -1,5 +1,5 @@
 import path from 'path';
-import { makeErr, Result } from '../web-ui/shared/lang';
+import { makeErr, Result } from './lang';
 
 export interface DataDir {
   kind: 'DataDir';

@@ -1,6 +1,6 @@
 import { loadStoredEmails } from '../app/email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
-import { isErr } from '../web-ui/shared/lang';
+import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
 import { storeEmails } from './subscription';

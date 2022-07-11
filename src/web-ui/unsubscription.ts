@@ -1,4 +1,4 @@
-import { isErr, makeErr, Result } from './shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { parseConfirmationLinkUrlParams } from './utils';
 
 interface UnsubscriptionUiElements {

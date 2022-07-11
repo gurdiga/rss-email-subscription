@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { StdOutPrinterFn } from './io';
 import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers } from './logging';
-import { Spy, makeSpy } from '../web-ui/shared/test-utils';
+import { Spy, makeSpy } from './test-utils';
 
 describe(log.name, () => {
   it('sends a structured log record to STDOUT', () => {

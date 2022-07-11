@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { makeErr } from './shared/lang';
-import { makeSpy } from './shared/test-utils';
+import { makeErr } from '../shared/lang';
+import { makeSpy } from '../shared/test-utils';
 import { LogFn, parseConfirmationLinkUrlParams } from './utils';
 
 describe(parseConfirmationLinkUrlParams.name, () => {

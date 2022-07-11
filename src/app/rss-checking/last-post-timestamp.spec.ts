@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../../shared/data-dir';
 import { FileExistsFn, ReadFileFn, WriteFileFn } from '../../shared/io';
-import { makeErr } from '../../web-ui/shared/lang';
+import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
-import { makeSpy, makeStub, makeThrowingStub } from '../../web-ui/shared/test-utils';
+import { makeSpy, makeStub, makeThrowingStub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {

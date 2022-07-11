@@ -11,8 +11,8 @@ import {
 import { DataDir, makeDataDir } from '../shared/data-dir';
 import { DOMAIN_NAME } from '../shared/feed-settings';
 import { WriteFileFn } from '../shared/io';
-import { makeErr } from '../web-ui/shared/lang';
-import { encodeSearchParamValue, makeSpy, makeThrowingStub } from '../web-ui/shared/test-utils';
+import { makeErr } from '../shared/lang';
+import { encodeSearchParamValue, makeSpy, makeThrowingStub } from '../shared/test-utils';
 import { addEmail, makeConfirmationEmailContent, makeEmailConfirmationUrl, storeEmails } from './subscription';
 
 describe('subscription', () => {

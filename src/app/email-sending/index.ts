@@ -1,5 +1,5 @@
 import { isEmpty } from '../../shared/array-utils';
-import { isErr } from '../../web-ui/shared/lang';
+import { isErr } from '../../shared/lang';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';

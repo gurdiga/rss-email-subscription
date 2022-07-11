@@ -1,4 +1,4 @@
-import { makeErr, Result } from '../web-ui/shared/lang';
+import { makeErr, Result } from './lang';
 
 export function makeUrl(value: any, baseURL?: string | URL): Result<URL> {
   try {

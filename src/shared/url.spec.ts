@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeErr } from '../web-ui/shared/lang';
+import { makeErr } from './lang';
 import { makeUrl } from './url';
 
 describe(makeUrl.name, () => {
