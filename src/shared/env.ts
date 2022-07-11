@@ -10,7 +10,7 @@ export function requireEnv<ENV = Record<string, string>>(
     const envarValue = envars[envarName as string];
 
     if (!envarValue) {
-      return makeErr(`Environment variable ${envarName} is not set`);
+      return makeErr(`Environment variable ${String(envarName)} is not set`);
     }
 
     values[envarName] = envarValue as any;
