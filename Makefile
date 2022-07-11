@@ -228,4 +228,4 @@ mailq-report:
 
 new-website:
 	cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && npm run optim
-	rsync -avz ../feedsubscription.com/dist/ website/html/new/
+	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/new/
