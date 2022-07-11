@@ -1,6 +1,6 @@
 {
   "include": ["**/*.ts"],
-  "files": ["subscription-confirmation.ts"],
+  "files": ["unsubscription.ts"],
   "compilerOptions": {
     /* Visit https://aka.ms/tsconfig.json to read more about this file */
 
