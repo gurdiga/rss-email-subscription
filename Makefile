@@ -227,5 +227,5 @@ mailq-report:
 	| ifne bash -c send_report
 
 new-website:
-	cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && npm run optim
+	cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/new/
