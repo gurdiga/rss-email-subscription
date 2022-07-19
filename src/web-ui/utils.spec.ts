@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeErr } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { makeSpy, makeStub } from '../shared/test-utils';
 import { LogFn, parseConfirmationLinkUrlParams, QuerySelectorFn, requireUiElements } from './utils';
 
@@ -79,3 +79,35 @@ describe(requireUiElements.name, () => {
     ]);
   });
 });
+
+describe(fillUiElements.name, () => {
+  it('sets specific props on UI elements with the given values', () => {
+    const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
+      element: { id: 'email-label' } as HTMLSpanElement,
+      propName: 'textContent',
+      value: 'test@test.com',
+    };
+    const inputFillSpec: UiElementFillSpec<HTMLInputElement> = {
+      element: { id: 'form-field' } as HTMLInputElement,
+      propName: 'value',
+      value: 'test@test.com',
+    };
+
+    fillUiElements([spanFillSpec, inputFillSpec]);
+
+    expect(spanFillSpec.element.textContent).to.equal(spanFillSpec.value);
+    expect(inputFillSpec.element.value).to.equal(inputFillSpec.value);
+  });
+});
+
+interface UiElementFillSpec<T extends Element = any> {
+  element: T;
+  propName: keyof T;
+  value: string;
+}
+
+function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
+  for (const spec of specs) {
+    spec.element[spec.propName] = spec.value;
+  }
+}
