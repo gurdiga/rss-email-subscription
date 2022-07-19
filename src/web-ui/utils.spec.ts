@@ -83,24 +83,37 @@ describe(requireUiElements.name, () => {
 describe(fillUiElements.name, () => {
   it('sets specific props on UI elements with the given values', () => {
     const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
-      element: { id: 'email-label' } as HTMLSpanElement,
+      element: { id: 'email-label', textContent: '' } as HTMLSpanElement,
       propName: 'textContent',
       value: 'test@test.com',
     };
     const inputFillSpec: UiElementFillSpec<HTMLInputElement> = {
-      element: { id: 'form-field' } as HTMLInputElement,
-      propName: 'value',
-      value: 'test@test.com',
+      element: { id: 'form-field', className: '' } as HTMLInputElement,
+      propName: 'className',
+      value: 'col-md-12',
     };
 
     fillUiElements([spanFillSpec, inputFillSpec]);
 
     expect(spanFillSpec.element.textContent).to.equal(spanFillSpec.value);
-    expect(inputFillSpec.element.value).to.equal(inputFillSpec.value);
+    expect(inputFillSpec.element.className).to.equal(inputFillSpec.value);
+  });
+
+  it('returns an Err value wiht message on failure', () => {
+    const badPropName: keyof HTMLSpanElement = 'magic' as any;
+    const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
+      element: { id: 'email-label', tagName: 'SPAN', draggable: true } as HTMLSpanElement,
+      propName: badPropName,
+      value: 'abracadabra',
+    };
+
+    const result = fillUiElements([spanFillSpec]);
+
+    expect(result).to.deep.equal(makeErr(`Prop "${badPropName}" does not exist on SPAN`));
   });
 });
 
-interface UiElementFillSpec<T extends Element = any> {
+interface UiElementFillSpec<T extends HTMLElement = any> {
   element: T;
   propName: keyof T;
   value: string;
@@ -108,6 +121,10 @@ interface UiElementFillSpec<T extends Element = any> {
 
 function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   for (const spec of specs) {
+    if (!(spec.propName in spec.element)) {
+      return makeErr(`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
+    }
+
     spec.element[spec.propName] = spec.value;
   }
 }
