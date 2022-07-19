@@ -1,7 +1,14 @@
 import { expect } from 'chai';
-import { makeErr, Result } from '../shared/lang';
+import { makeErr } from '../shared/lang';
 import { makeSpy, makeStub } from '../shared/test-utils';
-import { LogFn, parseConfirmationLinkUrlParams, QuerySelectorFn, requireUiElements } from './utils';
+import {
+  fillUiElements,
+  LogFn,
+  parseConfirmationLinkUrlParams,
+  QuerySelectorFn,
+  requireUiElements,
+  UiElementFillSpec,
+} from './utils';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
   it('returns a ConfirmationLinkUrlParams value from location.search', () => {
@@ -112,19 +119,3 @@ describe(fillUiElements.name, () => {
     expect(result).to.deep.equal(makeErr(`Prop "${badPropName}" does not exist on SPAN`));
   });
 });
-
-interface UiElementFillSpec<T extends HTMLElement = any> {
-  element: T;
-  propName: keyof T;
-  value: string;
-}
-
-function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
-  for (const spec of specs) {
-    if (!(spec.propName in spec.element)) {
-      return makeErr(`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
-    }
-
-    spec.element[spec.propName] = spec.value;
-  }
-}

@@ -56,3 +56,19 @@ export function requireUiElements<T>(
 
   return uiElements;
 }
+
+export interface UiElementFillSpec<T extends HTMLElement = any> {
+  element: T;
+  propName: keyof T;
+  value: string;
+}
+
+export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
+  for (const spec of specs) {
+    if (!(spec.propName in spec.element)) {
+      return makeErr(`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
+    }
+
+    spec.element[spec.propName] = spec.value;
+  }
+}
