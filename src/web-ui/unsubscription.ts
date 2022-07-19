@@ -15,7 +15,7 @@ function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
 
   if (isErr(queryParams)) {
-    displayInitError(queryParams.reason);
+    displayMainError(queryParams.reason);
     return;
   }
 
@@ -30,7 +30,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    displayInitError(uiElements.reason);
+    displayMainError(uiElements.reason);
     return;
   }
 
@@ -46,7 +46,7 @@ function main() {
 
 main();
 
-function displayInitError(message: string) {
+function displayMainError(message: string) {
   const initErrorElementSelector = '#init-error-message';
   const errorMessageElement = document.querySelector(initErrorElementSelector);
 
