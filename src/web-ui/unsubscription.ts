@@ -34,7 +34,7 @@ function main() {
     return;
   }
 
-  fillUiElements([
+  const fillUiResult = fillUiElements([
     <UiElementFillSpec<HTMLSpanElement>>{
       element: uiElements.feedNameLabel,
       propName: 'textContent',
@@ -46,6 +46,11 @@ function main() {
       value: queryParams.email,
     },
   ]);
+
+  if (isErr(fillUiResult)) {
+    displayMainError(fillUiResult.reason);
+    return;
+  }
 
   console.log({ queryParams, uiElements });
 
