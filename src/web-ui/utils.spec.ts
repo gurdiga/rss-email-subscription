@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeErr } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { makeSpy, makeStub } from '../shared/test-utils';
 import {
   fillUiElements,
@@ -114,8 +114,13 @@ describe(fillUiElements.name, () => {
       value: 'abracadabra',
     };
 
-    const result = fillUiElements([spanFillSpec]);
+    let result: Result<void>;
 
+    result = fillUiElements([spanFillSpec]);
     expect(result).to.deep.equal(makeErr(`Prop "${badPropName}" does not exist on SPAN`));
+
+    spanFillSpec.element = null as any as HTMLSpanElement;
+    result = fillUiElements([spanFillSpec]);
+    expect(result).to.deep.equal(makeErr(`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
   });
 });

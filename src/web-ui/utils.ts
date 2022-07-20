@@ -65,6 +65,10 @@ export interface UiElementFillSpec<T extends HTMLElement = any> {
 
 export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   for (const spec of specs) {
+    if (!spec.element) {
+      return makeErr(`UiElementFillSpec element is missing in ${JSON.stringify(spec)}`);
+    }
+
     if (!(spec.propName in spec.element)) {
       return makeErr(`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
     }
