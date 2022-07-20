@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { parseConfirmationLinkUrlParams, requireUiElements } from './utils';
+import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
 interface UnsubscriptionUiElements {
   feedNameLabel: Element;
@@ -34,11 +34,23 @@ function main() {
     return;
   }
 
+  fillUiElements([
+    <UiElementFillSpec<HTMLSpanElement>>{
+      element: uiElements.feedNameLabel,
+      propName: 'textContent',
+      value: queryParams.displayName,
+    },
+    <UiElementFillSpec<HTMLSpanElement>>{
+      element: uiElements.emailLabel,
+      propName: 'textContent',
+      value: queryParams.email,
+    },
+  ]);
+
   console.log({ queryParams, uiElements });
 
   /**
     TODO:
-    - fill in the feed name and email labels
     - wire up form submit
     - handle submit results
    */
