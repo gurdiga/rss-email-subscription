@@ -45,6 +45,11 @@ function main() {
       propName: 'textContent',
       value: queryParams.email,
     },
+    <UiElementFillSpec<HTMLInputElement>>{
+      element: uiElements.subscriptionIdFormField,
+      propName: 'value',
+      value: queryParams.id,
+    },
   ]);
 
   if (isErr(fillUiResult)) {
