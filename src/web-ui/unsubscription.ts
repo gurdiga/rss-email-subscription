@@ -4,7 +4,7 @@ import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiEl
 interface UnsubscriptionUiElements {
   feedNameLabel: Element;
   emailLabel: Element;
-  subscriptionIdFormField: Element;
+  confirmButton: Element;
   unsubscriptionSuccessLabel: Element;
   inputErrorLabel: Element;
   appErrorLabel: Element;
@@ -22,7 +22,7 @@ function main() {
   const uiElements = requireUiElements<UnsubscriptionUiElements>({
     feedNameLabel: '#feed-name-label',
     emailLabel: '#email-label',
-    subscriptionIdFormField: 'form input[name="id"]',
+    confirmButton: '#confirm-button',
     unsubscriptionSuccessLabel: '#unsubscription-success-label',
     inputErrorLabel: '#input-error-label',
     appErrorLabel: '#app-error-label',
@@ -45,17 +45,20 @@ function main() {
       propName: 'textContent',
       value: queryParams.email,
     },
-    <UiElementFillSpec<HTMLInputElement>>{
-      element: uiElements.subscriptionIdFormField,
-      propName: 'value',
-      value: queryParams.id,
-    },
   ]);
 
   if (isErr(fillUiResult)) {
     displayMainError(fillUiResult.reason);
     return;
   }
+
+  uiElements.confirmButton.addEventListener('click', () => {
+    sendUnsubscribeRequest({ id: queryParams.id })
+      .then(handleUnsubscribeResponse)
+      .catch((e) => {
+        console.error('Got error from the API', e);
+      });
+  });
 
   console.log({ queryParams, uiElements });
 
@@ -79,4 +82,26 @@ function displayMainError(message: string) {
 
   errorMessageElement.textContent = message;
   errorMessageElement.removeAttribute('hidden');
+}
+
+interface UnsubscribeRequest {
+  id: string;
+}
+
+function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise<UnsubscribeResponse> {
+  var formData = new URLSearchParams();
+
+  formData.append('id', unsubscribeRequest.id);
+
+  return fetch('/unsubscribe', {
+    method: 'POST',
+    body: formData,
+  }).then((r) => r.json() as UnsubscribeResponse);
+}
+
+type UnsubscribeResponse = {}; // TODO: Define possible response types
+
+function handleUnsubscribeResponse(unsubscribeResponse: UnsubscribeResponse): void {
+  unsubscribeResponse;
+  // TODO
 }
