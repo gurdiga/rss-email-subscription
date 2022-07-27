@@ -5,11 +5,13 @@ import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiEl
 interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ErrorUiElements, ResponseStatusUiElements {}
 
 interface InputUiElements {
+  inputUiContainer: Element;
   feedNameLabel: Element;
   emailLabel: Element;
 }
 
 interface FormUiElements {
+  formUiContainer: Element;
   confirmButton: Element;
 }
 
@@ -33,8 +35,10 @@ function main() {
   }
 
   const uiElements = requireUiElements<UnsubscriptionUiElements>({
+    inputUiContainer: '#input-ui',
     feedNameLabel: '#feed-name-label',
     emailLabel: '#email-label',
+    formUiContainer: '#form-ui',
     confirmButton: '#confirm-button',
     communicationErrorLabel: '#communication-error-label',
     successLabel: '#unsubscription-success-label',
@@ -64,6 +68,9 @@ function main() {
     displayMainError(fillUiResult.reason);
     return;
   }
+
+  uiElements.inputUiContainer.removeAttribute('hidden');
+  uiElements.formUiContainer.removeAttribute('hidden');
 
   uiElements.confirmButton.addEventListener('click', () => {
     sendUnsubscribeRequest({ id: queryParams.id })
