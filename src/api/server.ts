@@ -6,6 +6,7 @@ import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { subscribe } from './subscription';
 import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
+import { basename } from 'path';
 
 let requestCounter = 0;
 
@@ -36,7 +37,7 @@ async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHa
 
   return async (req, res) => {
     const reqId = ++requestCounter;
-    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId });
+    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: basename(__filename) });
 
     const reqBody = req.body || {};
     const reqParams = req.params || {};
