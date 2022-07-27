@@ -2,14 +2,17 @@ import { ApiResponse } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
-interface UnsubscriptionUiElements {
+interface UnsubscriptionUiElements extends MessageUiElements {
   feedNameLabel: Element;
   emailLabel: Element;
   confirmButton: Element;
+  communicationErrorLabel: Element;
+}
+
+interface MessageUiElements {
   unsubscriptionSuccessLabel: Element;
   inputErrorLabel: Element;
   appErrorLabel: Element;
-  communicationErrorLabel: Element;
 }
 
 function main() {
@@ -25,10 +28,10 @@ function main() {
     feedNameLabel: '#feed-name-label',
     emailLabel: '#email-label',
     confirmButton: '#confirm-button',
+    communicationErrorLabel: '#communication-error-label',
     unsubscriptionSuccessLabel: '#unsubscription-success-label',
     inputErrorLabel: '#input-error-label',
     appErrorLabel: '#app-error-label',
-    communicationErrorLabel: '#communication-error-label',
   });
 
   if (isErr(uiElements)) {
@@ -56,7 +59,9 @@ function main() {
 
   uiElements.confirmButton.addEventListener('click', () => {
     sendUnsubscribeRequest({ id: queryParams.id })
-      .then(handleUnsubscribeResponse)
+      .then((unsubscribeResponse) => {
+        handleUnsubscribeResponse(unsubscribeResponse, uiElements);
+      })
       .catch((e) => {
         console.error('Got error from the API', e);
       });
@@ -105,6 +110,6 @@ function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise
 
 type UnsubscribeResponse = ApiResponse;
 
-function handleUnsubscribeResponse(unsubscribeResponse: UnsubscribeResponse): void {
-  console.log('handleUnsubscribeResponse', unsubscribeResponse);
+function handleUnsubscribeResponse(unsubscribeResponse: UnsubscribeResponse, uiElements: MessageUiElements): void {
+  console.log('handleUnsubscribeResponse', unsubscribeResponse, uiElements);
 }
