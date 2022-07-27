@@ -1,4 +1,4 @@
-import { ApiResponse } from '../shared/api-response';
+import { ApiResponse, isAppError, isInputError } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
@@ -74,14 +74,6 @@ function main() {
         handleCommunicationError(error, uiElements);
       });
   });
-
-  console.log({ queryParams, uiElements });
-
-  /**
-    TODO:
-    - wire up form submit
-    - handle submit results
-   */
 }
 
 main();
@@ -117,12 +109,26 @@ function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise
 }
 
 function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusUiElements): void {
-  console.log('handleUnsubscribeResponse', apiResponse, uiElements);
+  const { successLabel, appErrorLabel, inputErrorLabel } = uiElements;
+
+  if (isInputError(apiResponse)) {
+    inputErrorLabel.textContent = apiResponse.message;
+    inputErrorLabel.removeAttribute('hidden');
+    return;
+  }
+
+  if (isAppError(apiResponse)) {
+    appErrorLabel.textContent = apiResponse.message;
+    appErrorLabel.removeAttribute('hidden');
+    return;
+  }
+
+  successLabel.removeAttribute('hidden');
 }
 
-function handleCommunicationError(error: TypeError, { communicationErrorLabel }: ErrorUiElements): void {
-  const errorMessage = `Server communication error: ${error.message}`;
+function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
+  const { communicationErrorLabel } = uiElements;
 
+  communicationErrorLabel.textContent = error.message;
   communicationErrorLabel.removeAttribute('hidden');
-  communicationErrorLabel.textContent = errorMessage;
 }
