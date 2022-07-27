@@ -120,6 +120,9 @@ function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusU
   console.log('handleUnsubscribeResponse', apiResponse, uiElements);
 }
 
-function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
-  console.log('handleCommunicationError', error, uiElements);
+function handleCommunicationError(error: TypeError, { communicationErrorLabel }: ErrorUiElements): void {
+  const errorMessage = `Server communication error: ${error.message}`;
+
+  communicationErrorLabel.removeAttribute('hidden');
+  communicationErrorLabel.textContent = errorMessage;
 }
