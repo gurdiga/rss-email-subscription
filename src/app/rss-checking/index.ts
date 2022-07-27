@@ -12,7 +12,8 @@ import { fetchRss } from './rss-response';
 
 export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
-  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId });
+  const feedDisplayName = feedSettings.displayName;
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });
   const { url } = feedSettings;
   const rssResponse = await fetchRss(url);
 
