@@ -2,15 +2,23 @@ import { ApiResponse } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
-interface UnsubscriptionUiElements extends MessageUiElements {
+interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ErrorUiElements, ResponseStatusUiElements {}
+
+interface InputUiElements {
   feedNameLabel: Element;
   emailLabel: Element;
+}
+
+interface FormUiElements {
   confirmButton: Element;
+}
+
+interface ErrorUiElements {
   communicationErrorLabel: Element;
 }
 
-interface MessageUiElements {
-  unsubscriptionSuccessLabel: Element;
+interface ResponseStatusUiElements {
+  successLabel: Element;
   inputErrorLabel: Element;
   appErrorLabel: Element;
 }
@@ -29,7 +37,7 @@ function main() {
     emailLabel: '#email-label',
     confirmButton: '#confirm-button',
     communicationErrorLabel: '#communication-error-label',
-    unsubscriptionSuccessLabel: '#unsubscription-success-label',
+    successLabel: '#unsubscription-success-label',
     inputErrorLabel: '#input-error-label',
     appErrorLabel: '#app-error-label',
   });
@@ -60,10 +68,10 @@ function main() {
   uiElements.confirmButton.addEventListener('click', () => {
     sendUnsubscribeRequest({ id: queryParams.id })
       .then((unsubscribeResponse) => {
-        handleUnsubscribeResponse(unsubscribeResponse, uiElements);
+        handleApiResponse(unsubscribeResponse, uiElements);
       })
-      .catch((e) => {
-        console.error('Got error from the API', e);
+      .catch((error: TypeError) => {
+        handleCommunicationError(error, uiElements);
       });
   });
 
@@ -95,7 +103,7 @@ interface UnsubscribeRequest {
   id: string;
 }
 
-function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise<UnsubscribeResponse> {
+function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise<ApiResponse> {
   var formData = new URLSearchParams();
 
   formData.append('id', unsubscribeRequest.id);
@@ -105,11 +113,13 @@ function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise
     body: formData,
   })
     .then((r) => r.json())
-    .then((json) => json as UnsubscribeResponse);
+    .then((json) => json as ApiResponse);
 }
 
-type UnsubscribeResponse = ApiResponse;
+function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusUiElements): void {
+  console.log('handleUnsubscribeResponse', apiResponse, uiElements);
+}
 
-function handleUnsubscribeResponse(unsubscribeResponse: UnsubscribeResponse, uiElements: MessageUiElements): void {
-  console.log('handleUnsubscribeResponse', unsubscribeResponse, uiElements);
+function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
+  console.log('handleCommunicationError', error, uiElements);
 }
