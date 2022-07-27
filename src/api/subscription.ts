@@ -21,7 +21,8 @@ import { writeFile, WriteFileFn } from '../shared/io';
 import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
-import { AppError, AppRequestHandler, InputError, makeAppError, makeInputError } from './shared';
+import { AppRequestHandler } from './shared';
+import { AppError, InputError, makeAppError, makeInputError } from '../shared/api-response';
 
 export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
   const { feedId, email, skipDoubleOptIn } = reqBody;

@@ -1,3 +1,4 @@
+import { ApiResponse } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
@@ -97,12 +98,13 @@ function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise
   return fetch('/unsubscribe', {
     method: 'POST',
     body: formData,
-  }).then((r) => r.json() as UnsubscribeResponse);
+  })
+    .then((r) => r.json())
+    .then((json) => json as UnsubscribeResponse);
 }
 
-type UnsubscribeResponse = {}; // TODO: Define possible response types
+type UnsubscribeResponse = ApiResponse;
 
 function handleUnsubscribeResponse(unsubscribeResponse: UnsubscribeResponse): void {
-  unsubscribeResponse;
-  // TODO
+  console.log('handleUnsubscribeResponse', unsubscribeResponse);
 }

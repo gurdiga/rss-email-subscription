@@ -1,7 +1,8 @@
 import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, isAppError, isInputError, isSuccess } from './shared';
+import { AppRequestHandler } from './shared';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { subscribe } from './subscription';
 import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';

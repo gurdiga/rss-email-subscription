@@ -2,7 +2,8 @@ import { loadStoredEmails } from '../app/email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, makeAppError, makeInputError, parseSubscriptionId } from './shared';
+import { AppRequestHandler, parseSubscriptionId } from './shared';
+import { makeAppError, makeInputError } from '../shared/api-response';
 import { storeEmails } from './subscription';
 
 export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
