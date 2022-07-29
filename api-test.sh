@@ -158,11 +158,14 @@ function print_success {
 }
 
 function print_failure {
+	local caller_name="${FUNCNAME[1]}"
+	local prefix="${RED}FAILURE in $caller_name${ENDCOLOR}"
+
 	if test -z "$@"; then
 		# shellcheck disable=SC2059
-		printf "${RED}FAILURE${ENDCOLOR}\n\n"
+		printf "$prefix\n\n"
 	else
-		printf "\n${RED}FAILURE: ${YELLOW}%s${ENDCOLOR}\n\n" "$@"
+		printf "\n$prefix: ${YELLOW}%s${ENDCOLOR}\n\n" "$@"
 	fi
 
 	exit 1
