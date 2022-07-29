@@ -4,6 +4,7 @@ set -euo pipefail
 
 BASE_URL=https://localhost
 EMAIL=test@gmail.com
+# echo -n "${EMAIL}${FEED_HASHING_SALT}" | sha256sum
 EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
 FEED_ID=gurdiga
 DATA_FILE=.tmp/development-docker-data/$FEED_ID/emails.json
