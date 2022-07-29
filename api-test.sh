@@ -140,7 +140,7 @@ function unsubscribe_failure_verify {
 }
 
 function web_ui_scripts {
-	if get /web-ui-scripts/subscription-confirmation.js | head -5; then
+	if get /web-ui-scripts/web-ui/unsubscription.js | head -5; then
 		print_success
 	else
 		print_failure ☝️
