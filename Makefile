@@ -238,7 +238,8 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	rclone \
 		--stats=0 \
 		--verbose \
-		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S`
+		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S` \
+	| ssmtp gurdiga@gmail.com
 
 backup-purge:
 	# TODO Delete old backups
