@@ -229,3 +229,14 @@ mailq-report:
 new-website:
 	cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/new/
+
+# Also requires `rclone config` on first setup.
+backup: rclone
+	rclone --verbose copy $${DATA_DIR_ROOT:-.tmp/docker-data} dropbox-res:/RES-backups/`date +%F-%H-%M-%S`
+
+backup-purge:
+	# TODO Delete old backups
+
+rclone: /usr/local/bin/rclone
+/usr/local/bin/rclone:
+	curl https://rclone.org/install.sh | sudo bash
