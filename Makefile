@@ -233,7 +233,15 @@ new-website:
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
-	rclone --verbose copy $${DATA_DIR_ROOT:-.tmp/docker-data} dropbox-res:/RES-backups/`date +%F-%H-%M-%S`
+	rclone \
+		--transfers=1 `# because the default of 4 uses too much RAM and gets killed by the OS` \
+		--no-traverse `# save RAM, hopefully` \
+		--no-check-dest `# save RAM, hopefully` \
+		--max-backlog=1 `# save RAM, hopefully` \
+		--use-mmap --buffer-size=0 `# save RAM, hopefully` \
+		--stats=0 \
+		--verbose \
+		copy $${DATA_DIR_ROOT:-.tmp/docker-data} dropbox-res:/RES-backups/`date +%F-%H-%M-%S`
 
 backup-purge:
 	# TODO Delete old backups
