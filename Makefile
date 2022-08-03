@@ -241,7 +241,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		--use-mmap --buffer-size=0 `# save RAM, hopefully` \
 		--stats=0 \
 		--verbose \
-		copy $${DATA_DIR_ROOT:-.tmp/docker-data} dropbox-res:/RES-backups/`date +%F-%H-%M-%S`
+		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S`
 
 backup-purge:
 	# TODO Delete old backups
