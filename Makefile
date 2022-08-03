@@ -102,6 +102,7 @@ hashing-salt:
 reload-app:
 	docker kill --signal=SIGHUP app
 
+# cron @daily
 reload-website:
 	docker kill --signal=SIGHUP website
 
@@ -232,6 +233,7 @@ new-website:
 
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
+# cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	rclone \
 		--stats=0 \
