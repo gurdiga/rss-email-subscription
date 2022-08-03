@@ -243,4 +243,4 @@ rclone: /usr/local/bin/rclone
 
 rclone-config: ~/.config/rclone/rclone.conf
 ~/.config/rclone/rclone.conf:
-	# rclone config
+	rclone config
