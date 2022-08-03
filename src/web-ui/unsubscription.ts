@@ -30,7 +30,6 @@ function main() {
 
   if (isErr(queryParams)) {
     displayMainError(queryParams.reason);
-    // TODO: Add a explanatory message about the unsubscribe link in the email.
     return;
   }
 
