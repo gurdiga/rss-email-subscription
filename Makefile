@@ -102,9 +102,15 @@ hashing-salt:
 reload-app:
 	docker kill --signal=SIGHUP app
 
-# cron @daily
+# cron @weekly
 reload-website:
-	docker kill --signal=SIGHUP website
+	docker kill --signal=SIGHUP website | \
+	cat <( \
+		echo "Subject: RES reload-website" \
+		echo "From: reload-website@feedsubscription.com" \
+		echo \
+	) - \
+	| ssmtp gurdiga@gmail.com
 
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
