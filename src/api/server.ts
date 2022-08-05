@@ -25,6 +25,10 @@ async function main() {
   app.listen(port, () => {
     console.log(`Listening on http://0.0.0.0:${port}`);
   });
+
+  process.on('SIGTERM', () => {
+    console.info('SIGTERM signal received.');
+  });
 }
 
 async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHandler> {
