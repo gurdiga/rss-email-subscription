@@ -2,29 +2,6 @@ import { ApiResponse, isAppError, isInputError } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
-interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ErrorUiElements, ResponseStatusUiElements {}
-
-interface InputUiElements {
-  inputUiContainer: Element;
-  feedNameLabel: Element;
-  emailLabel: Element;
-}
-
-interface FormUiElements {
-  formUiContainer: Element;
-  confirmButton: Element;
-}
-
-interface ErrorUiElements {
-  communicationErrorLabel: Element;
-}
-
-interface ResponseStatusUiElements {
-  successLabel: Element;
-  inputErrorLabel: Element;
-  appErrorLabel: Element;
-}
-
 function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
 
@@ -83,6 +60,29 @@ function main() {
 }
 
 main();
+
+interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ErrorUiElements, ResponseStatusUiElements {}
+
+interface InputUiElements {
+  inputUiContainer: Element;
+  feedNameLabel: Element;
+  emailLabel: Element;
+}
+
+interface FormUiElements {
+  formUiContainer: Element;
+  confirmButton: Element;
+}
+
+interface ErrorUiElements {
+  communicationErrorLabel: Element;
+}
+
+interface ResponseStatusUiElements {
+  successLabel: Element;
+  inputErrorLabel: Element;
+  appErrorLabel: Element;
+}
 
 function displayMainError(message: string) {
   const initErrorElementSelector = '#init-error-message';
