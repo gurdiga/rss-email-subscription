@@ -241,7 +241,7 @@ RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 # cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
-	@time rclone \
+	@rclone \
 		--stats=0 \
 		--verbose \
 		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S` \
