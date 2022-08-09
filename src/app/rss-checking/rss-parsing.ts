@@ -110,7 +110,7 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
     return invalidRssItem('Post publication timestamp is not a valid JSON date string');
   }
 
-  const guid = item.guid || item.id || 'no-guid-no-id';
+  const guid = item.guid || item.id || link.toString();
   const value: RssItem = { title, content, author, pubDate, link, guid };
 
   return {
