@@ -104,7 +104,7 @@ reload-app:
 
 # cron @weekly
 reload-website:
-	docker kill --signal=SIGHUP website | \
+	@docker kill --signal=SIGHUP website | \
 	cat <(
 		echo "Subject: RES reload-website";
 		echo "From: reload-website@feedsubscription.com";
