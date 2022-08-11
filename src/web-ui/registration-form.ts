@@ -1,27 +1,18 @@
 (function () {
   function main() {
     /**
-     * Layouts:
-     *
-     * - Horizontal:
      * Subscribe to new posts: ____________ [SUBMIT]
-     * “Success! Welcome aboard!”
-     *
-     * - Vertical:
-     * Subscribe to new posts:
-     * ____________
-     * [SUBMIT]
-     * “Success! Welcome aboard!”
-     *
+     * _Success! Welcome aboard!_
      */
 
     findScripts().forEach((script, index) => {
-      if (script.dataset['isInitialized'] === 'true') {
+      const { dataset } = script;
+
+      if (dataset['isInitialized'] === 'true') {
         return;
       }
 
-      const { fieldLabelText, fieldLabelClassName, fieldPlaceholder, fieldTextboxClassName, buttonClassName } =
-        script.dataset;
+      const { fieldLabelText, fieldLabelClassName, fieldPlaceholder, fieldTextboxClassName, buttonClassName } = dataset;
 
       const uiContainer = createUiContainer();
       const formArea = createFormArea();
@@ -36,7 +27,7 @@
       uiContainer.append(formArea, messageArea);
 
       script.insertAdjacentElement('afterend', uiContainer);
-      script.dataset['isInitialized'] = 'true';
+      dataset['isInitialized'] = 'true';
     });
   }
 
@@ -83,10 +74,6 @@
     return input;
   }
 
-  function fieldId(index: number): string {
-    return `res-email-${index}`;
-  }
-
   function createSubmitButton(className?: string): HTMLInputElement {
     const button = createElement('input');
 
@@ -115,6 +102,10 @@
 
   function findScripts(): HTMLScriptElement[] {
     return [...document.querySelectorAll<HTMLScriptElement>('script[res-app]')];
+  }
+
+  function fieldId(index: number): string {
+    return `res-email-${index}`;
   }
 
   // Type definition copied from lib.dom.d.ts
