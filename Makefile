@@ -261,3 +261,6 @@ ${RCLONE_BINARY}:
 
 ${RCLONE_CONFIG}:
 	rclone config
+
+web-ui-watch:
+	./node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.dev.json
