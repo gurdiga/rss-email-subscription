@@ -44,15 +44,11 @@
   main();
 
   function createUiContainer(): HTMLDivElement {
-    return createElement('div', {
-      className: 'res-ui-containter',
-    });
+    return createElement('div', { className: 'res-ui-containter' });
   }
 
   function createFormArea(): HTMLDivElement {
-    return createElement('div', {
-      className: 'res-form-area',
-    });
+    return createElement('div', { className: 'res-form-area' });
   }
 
   function createFieldLabel(index: number, textContent?: string, className?: string): HTMLLabelElement {
@@ -83,9 +79,7 @@
   }
 
   function createMessageArea(): HTMLDivElement {
-    return createElement('div', {
-      className: 'res-message-area',
-    });
+    return createElement('div', { className: 'res-message-area' });
   }
 
   function createMessageContent(): HTMLElement {
