@@ -22,6 +22,8 @@
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
 
+      // submitButton.addEventListener('click', () => submitEmailToApi(fieldTextbox.value));
+
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
       uiContainer.append(formArea, messageArea);
@@ -34,70 +36,59 @@
   main();
 
   function createUiContainer(): HTMLDivElement {
-    const div = createElement('div');
-
-    div.className = 'res-ui-containter';
-
-    return div;
+    return createElement('div', {
+      className: 'res-ui-containter',
+    });
   }
 
   function createFormArea(): HTMLDivElement {
-    const div = createElement('div');
-
-    div.className = 'res-form-area';
-
-    return div;
+    return createElement('div', {
+      className: 'res-form-area',
+    });
   }
 
   function createFieldLabel(index: number, textContent?: string, className?: string): HTMLLabelElement {
-    const label = createElement('label');
-
-    label.htmlFor = fieldId(index);
-    label.textContent = textContent || 'Subscribe to new posts:';
-    label.style.marginRight = '0.5em';
-
-    addClassName(label, className);
-
-    return label;
+    return createElement('label', {
+      htmlFor: fieldId(index),
+      textContent: textContent || 'Subscribe to new posts:',
+      className: className,
+      style: <CSSStyleDeclaration>{
+        marginRight: '0.5em',
+      },
+    });
   }
 
   function createFieldTextbox(index: number, placeholder?: string, className?: string): HTMLInputElement {
-    const input = createElement('input');
-
-    input.id = fieldId(index);
-    input.name = 'email'; // trigger appropriate auto-complete
-    input.placeholder = placeholder || 'your@email.com';
-    input.style.marginRight = '0.25em';
-
-    addClassName(input, className);
-
-    return input;
+    return createElement('input', {
+      id: fieldId(index),
+      name: 'email', // trigger appropriate auto-complete
+      placeholder: placeholder || 'your@email.com',
+      style: <CSSStyleDeclaration>{
+        marginRight: '0.25em',
+      },
+      className: className,
+    });
   }
 
   function createSubmitButton(className?: string): HTMLInputElement {
-    const button = createElement('input');
-
-    button.type = 'submit';
-
-    addClassName(button, className);
-
-    return button;
+    return createElement('input', {
+      type: 'submit',
+      className: className,
+    });
   }
 
   function createMessageArea(): HTMLDivElement {
-    const div = createElement('div');
-
-    div.className = 'res-message-area';
-
-    return div;
+    return createElement('div', {
+      className: 'res-message-area',
+    });
   }
 
   function createMessageContent(): HTMLElement {
-    const message = createElement('small');
-
-    message.style.fontStyle = 'italic';
-
-    return message;
+    return createElement('small', {
+      style: <CSSStyleDeclaration>{
+        fontStyle: 'italic',
+      },
+    });
   }
 
   function findScripts(): HTMLScriptElement[] {
@@ -109,18 +100,22 @@
   }
 
   // Type definition copied from lib.dom.d.ts
-  function createElement<K extends keyof HTMLElementTagNameMap>(tagName: K): HTMLElementTagNameMap[K] {
-    return document.createElement(tagName);
-  }
+  function createElement<K extends keyof HTMLElementTagNameMap>(
+    tagName: K,
+    props: Partial<HTMLElementTagNameMap[K]> = {}
+  ): HTMLElementTagNameMap[K] {
+    const element = document.createElement(tagName);
 
-  function addClassName(element: HTMLElement, className?: string): void {
-    const classNames = (className || '')
-      .trim()
-      .split(/\s+/)
-      .filter((x) => !!x.trim());
+    for (const propName in props) {
+      const propValue = props[propName];
 
-    if (classNames.length > 0) {
-      element.classList.add(...classNames);
+      if (propName === 'style') {
+        Object.assign(element.style, propValue);
+      } else {
+        element[propName] = propValue!;
+      }
     }
+
+    return element;
   }
 })();
