@@ -29,7 +29,7 @@
           messageContent.textContent = message;
         };
 
-        submitEmailToApi(feedId, displayMessage, fieldTextbox.value);
+        preventDoubleClick(submitButton, () => submitEmailToApi(feedId, displayMessage, fieldTextbox.value));
       });
 
       formArea.append(fieldLabel, fieldTextbox, submitButton);
@@ -78,11 +78,8 @@
     });
   }
 
-  function createSubmitButton(className?: string): HTMLInputElement {
-    return createElement('input', {
-      type: 'submit',
-      className: className,
-    });
+  function createSubmitButton(className?: string): HTMLButtonElement {
+    return createElement('button', { className: className }, 'Please');
   }
 
   function createMessageArea(): HTMLDivElement {
@@ -107,10 +104,25 @@
     return `res-email-${index}`;
   }
 
+  function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<void>): void {
+    const initialTextContent = button.textContent;
+
+    button.disabled = true;
+    button.textContent = 'Wait…';
+
+    f().then(() => {
+      setTimeout(() => {
+        button.disabled = false;
+        button.textContent = initialTextContent;
+      }, 500);
+    });
+  }
+
   // Type definition copied from lib.dom.d.ts
   function createElement<K extends keyof HTMLElementTagNameMap>(
     tagName: K,
-    props: Partial<HTMLElementTagNameMap[K]> = {}
+    props: Partial<HTMLElementTagNameMap[K]> = {},
+    ...children: (string | Node)[]
   ): HTMLElementTagNameMap[K] {
     const element = document.createElement(tagName);
 
@@ -124,16 +136,22 @@
       }
     }
 
+    element.append(...children);
+
     return element;
   }
 
-  function submitEmailToApi(feedId: string, displayMessage: (message: string) => void, inputText: string): void {
+  function submitEmailToApi(
+    feedId: string,
+    displayMessage: (message: string) => void,
+    inputText: string
+  ): Promise<void> {
     var formData = new URLSearchParams({
       feedId: feedId,
       email: inputText,
     });
 
-    fetch('/subscribe', {
+    return fetch('/subscribe', {
       method: 'POST',
       body: formData,
     })
