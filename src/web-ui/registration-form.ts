@@ -1,14 +1,16 @@
 (function () {
   function main() {
-    /**
-     * Subscribe to new posts: ____________ [SUBMIT]
-     * _Success! Welcome aboard!_
-     */
-
     findScripts().forEach((script, index) => {
       const { dataset } = script;
 
       if (dataset['isInitialized'] === 'true') {
+        return;
+      }
+
+      const { feedId } = dataset;
+
+      if (!feedId) {
+        console.error('RES init error: data-feed-id is missing');
         return;
       }
 
@@ -18,11 +20,17 @@
       const formArea = createFormArea();
       const fieldLabel = createFieldLabel(index, fieldLabelText, fieldLabelClassName);
       const fieldTextbox = createFieldTextbox(index, fieldPlaceholder, fieldTextboxClassName);
-      const submitButton = createSubmitButton(buttonClassName); // TODO: Add click handler
+      const submitButton = createSubmitButton(buttonClassName);
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
 
-      // submitButton.addEventListener('click', () => submitEmailToApi(fieldTextbox.value));
+      submitButton.addEventListener('click', () => {
+        const displayMessage = (message: string) => {
+          messageContent.textContent = message;
+        };
+
+        submitEmailToApi(feedId, displayMessage, fieldTextbox.value);
+      });
 
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
@@ -117,5 +125,36 @@
     }
 
     return element;
+  }
+
+  function submitEmailToApi(feedId: string, displayMessage: (message: string) => void, inputText: string): void {
+    var formData = new URLSearchParams({
+      feedId: feedId,
+      email: inputText,
+    });
+
+    fetch('/subscribe', {
+      method: 'POST',
+      body: formData,
+    })
+      .then(async (response) => {
+        try {
+          const { message } = await response.json();
+
+          displayMessage(message);
+        } catch (error) {
+          console.error(error);
+          displayMessage(`Error: invalid response from the server!`);
+        }
+      })
+      .catch((error) => {
+        let { message } = error;
+
+        if (message === 'Failed to fetch') {
+          message = 'Can’t connect to the server!';
+        }
+
+        displayMessage(`Error: ${message} 😢`);
+      });
   }
 })();
