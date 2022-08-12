@@ -263,4 +263,8 @@ ${RCLONE_CONFIG}:
 	rclone config
 
 web-ui-watch:
+	cp --target-directory=../feedsubscription.com/web-ui-scripts/ \
+		./node_modules/systemjs/dist/system.min.js* \
+		./src/web-ui/systemjs-resolve-patch.js
+
 	./node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.dev.json
