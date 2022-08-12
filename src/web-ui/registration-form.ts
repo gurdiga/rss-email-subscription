@@ -79,7 +79,7 @@
   }
 
   function createSubmitButton(className?: string): HTMLButtonElement {
-    return createElement('button', { className: className }, 'Please');
+    return createElement('button', { className: className }, 'Submit');
   }
 
   function createMessageArea(): HTMLDivElement {
