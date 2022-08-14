@@ -271,3 +271,6 @@ web-ui-watch:
 
 npm-update:
 	npm outdated
+
+format-check:
+	prettier --check 'src/**/*.ts'
