@@ -156,14 +156,14 @@
           displayMessage(message);
         } catch (error) {
           console.error(error);
-          displayMessage(`Error: invalid response from the server!`);
+          displayMessage(`Error: invalid response from the server! Please try again.`);
         }
       })
       .catch((error) => {
         let { message } = error;
 
         if (message === 'Failed to fetch') {
-          message = 'Can’t connect to the server!';
+          message = 'Can’t connect to the server! Please try again.';
         }
 
         displayMessage(`Error: ${message} 😢`);
