@@ -270,7 +270,7 @@ web-ui-watch:
 	./node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.dev.json
 
 npm-update:
-	npm outdated
+	@npm outdated && echo "Yay!! Everything is up-to-date. 😎"
 
 format-check:
 	prettier --check 'src/**/*.ts'
