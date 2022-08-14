@@ -268,3 +268,6 @@ web-ui-watch:
 		./src/web-ui/systemjs-resolve-patch.js
 
 	./node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.dev.json
+
+npm-update:
+	npm outdated
