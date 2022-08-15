@@ -177,7 +177,7 @@ unsubscribe-report:
 			echo ""
 			cat
 		) \
-		| if [ -v DEBUG ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	}
 
 	export -f send_report
