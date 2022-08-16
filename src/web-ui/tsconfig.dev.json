@@ -1,6 +1,6 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../../feedsubscription.com/web-ui-scripts/"
+    "outDir": "../../../feedsubscription.com/src/web-ui-scripts/"
   }
 }
