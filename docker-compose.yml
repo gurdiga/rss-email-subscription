@@ -86,6 +86,7 @@ services:
       - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
     environment:
       # DEBUG: 'express:*'
+      # TS_NODE_DEBUG: 'true'
       <<: *app-env
     <<: *logging
 
