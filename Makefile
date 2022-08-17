@@ -32,7 +32,7 @@ c: check
 cw:
 	node_modules/.bin/tsc -p tsconfig.json --watch
 
-pre-commit: check test lint
+pre-commit: check test lint format-check
 pc: pre-commit
 
 lint: lint-docker-compose lint-dockerfile
