@@ -157,6 +157,7 @@
     var formData = new URLSearchParams({
       feedId: feedId,
       email: emailAddressText,
+      skipDoubleOptIn: 'true',
     });
 
     return fetch('/subscribe', {
