@@ -25,11 +25,20 @@
       const messageContent = createMessageContent();
 
       submitButton.addEventListener('click', () => {
+        const data = {
+          feedId,
+          emailAddressText: fieldTextbox.value,
+        };
+
         const displayMessage = (message: string) => {
           messageContent.textContent = message;
         };
 
-        preventDoubleClick(submitButton, () => submitEmailToApi(feedId, displayMessage, fieldTextbox.value));
+        const clearField = () => {
+          fieldTextbox.value = '';
+        };
+
+        preventDoubleClick(submitButton, () => submitEmailToApi(data, displayMessage, clearField));
       });
 
       formArea.append(fieldLabel, fieldTextbox, submitButton);
@@ -135,14 +144,19 @@
     return element;
   }
 
+  interface DataToSubmit {
+    feedId: string;
+    emailAddressText: string;
+  }
+
   function submitEmailToApi(
-    feedId: string,
+    { feedId, emailAddressText }: DataToSubmit,
     displayMessage: (message: string) => void,
-    inputText: string
+    clearField: () => void
   ): Promise<void> {
     var formData = new URLSearchParams({
       feedId: feedId,
-      email: inputText,
+      email: emailAddressText,
     });
 
     return fetch('/subscribe', {
@@ -151,9 +165,13 @@
     })
       .then(async (response) => {
         try {
-          const { message } = await response.json();
+          const { message, kind } = await response.json();
 
           displayMessage(message);
+
+          if (kind === 'Success') {
+            clearField();
+          }
         } catch (error) {
           console.error(error);
           displayMessage(`Error: invalid response from the server! Please try again.`);
