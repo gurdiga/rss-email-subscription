@@ -14,13 +14,20 @@
         return;
       }
 
-      const { fieldLabelText, fieldLabelClassName, fieldPlaceholder, fieldTextboxClassName, buttonClassName } = dataset;
+      const {
+        fieldLabelText,
+        fieldLabelClassName,
+        fieldPlaceholder,
+        fieldTextboxClassName,
+        buttonClassName,
+        buttonLabel,
+      } = dataset;
 
       const uiContainer = createUiContainer();
       const formArea = createFormArea();
       const fieldLabel = createFieldLabel(index, fieldLabelText, fieldLabelClassName);
       const fieldTextbox = createFieldTextbox(index, fieldPlaceholder, fieldTextboxClassName);
-      const submitButton = createSubmitButton(buttonClassName);
+      const submitButton = createSubmitButton(buttonClassName, buttonLabel);
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
 
@@ -84,8 +91,8 @@
     });
   }
 
-  function createSubmitButton(className?: string): HTMLButtonElement {
-    return createElement('button', { className: className }, 'Submit');
+  function createSubmitButton(className?: string, buttonLabel?: string): HTMLButtonElement {
+    return createElement('button', { className }, buttonLabel || 'Submit');
   }
 
   function createMessageArea(): HTMLDivElement {
