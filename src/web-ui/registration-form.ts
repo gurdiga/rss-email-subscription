@@ -157,7 +157,7 @@
     var formData = new URLSearchParams({
       feedId: feedId,
       email: emailAddressText,
-      skipDoubleOptIn: 'true',
+      skipDoubleOptIn: 'true', // TODO: Remove once the double-opt-in confirmation page is done.
     });
 
     return fetch('/subscribe', {
