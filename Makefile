@@ -203,9 +203,9 @@ subscribe-report:
 		| grep '"message":"subscribe"' \
 		| grep '"feedId":"justaddlightandstir"' \
 		| cat <( \
-				echo "Subject: RES backup-report" \
-				echo "From: RES <backup-report@feedsubscription.com>" \
-				echo "" \
+				echo "Subject: RES backup-report"; \
+				echo "From: RES <backup-report@feedsubscription.com>"; \
+				echo ""; \
 			) - \
 		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
