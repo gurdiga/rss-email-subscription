@@ -25,6 +25,7 @@
       const messageContent = createMessageContent();
 
       submitButton.addEventListener('click', () => {
+        const { origin } = new URL(script.src);
         const data = {
           feedId,
           emailAddressText: fieldTextbox.value,
@@ -38,7 +39,7 @@
           fieldTextbox.value = '';
         };
 
-        preventDoubleClick(submitButton, () => submitEmailToApi(data, displayMessage, clearField));
+        preventDoubleClick(submitButton, () => submitEmailToApi(origin, data, displayMessage, clearField));
       });
 
       formArea.append(fieldLabel, fieldTextbox, submitButton);
@@ -146,6 +147,7 @@
   }
 
   function submitEmailToApi(
+    origin: string,
     { feedId, emailAddressText }: DataToSubmit,
     displayMessage: (message: string) => void,
     clearField: () => void
@@ -156,7 +158,9 @@
       skipDoubleOptIn: 'true', // TODO: Remove once the double-opt-in confirmation page is done.
     });
 
-    return fetch('/subscribe', {
+    const url = `${origin}/subscribe`;
+
+    return fetch(url, {
       method: 'POST',
       body: formData,
     })
