@@ -195,6 +195,21 @@ unsubscribe-report:
 		| ifne bash -c send_report
 
 # cron 59 23 * * *
+subscribe-report:
+	TODAY=`date +%F`
+	DATE="$${DATE:=$$TODAY}"
+
+	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
+		| grep '"message":"subscribe"' \
+		| grep '"feedId":"justaddlightandstir"' \
+		| cat <( \
+				echo "Subject: RES backup-report" \
+				echo "From: RES <backup-report@feedsubscription.com>" \
+				echo "" \
+			) - \
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
+# cron 59 23 * * *
 delivery-report:
 	@function send_report() {
 		(
