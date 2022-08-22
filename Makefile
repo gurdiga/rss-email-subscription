@@ -196,10 +196,10 @@ unsubscribe-report:
 
 # cron 59 23 * * *
 subscribe-report:
-	TODAY=`date +%F`
-	DATE="$${DATE:=$$TODAY}"
+	@TODAY=`date +%F`
+	@DATE="$${DATE:=$$TODAY}"
 
-	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
+	@grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"subscribe"' \
 		| grep '"feedId":"justaddlightandstir"' \
 		| cat <( \
