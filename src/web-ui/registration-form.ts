@@ -100,7 +100,7 @@
   }
 
   function findScripts(): HTMLScriptElement[] {
-    return [...document.querySelectorAll<HTMLScriptElement>('script[res-app]')];
+    return [...document.querySelectorAll<HTMLScriptElement>('script[res-registration-form]')];
   }
 
   function fieldId(index: number): string {
