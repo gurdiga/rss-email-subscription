@@ -14,9 +14,13 @@ async function main() {
   const port = 3000;
   const app = express();
 
+  app.use(
+    '/web-ui-scripts',
+    helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
+    express.static(`${__dirname}/web-ui-scripts`)
+  );
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
-  app.use('/web-ui-scripts', express.static(`${__dirname}/web-ui-scripts`));
   app.post('/subscribe', await makeRequestHandler(subscribe));
   app.post('/confirm-subscription', await makeRequestHandler(confirmSubscription));
   app.post('/unsubscribe', await makeRequestHandler(unsubscribe));
