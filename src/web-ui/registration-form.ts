@@ -92,11 +92,7 @@
   }
 
   function createMessageContent(): HTMLElement {
-    return createElement('small', {
-      style: <CSSStyleDeclaration>{
-        fontStyle: 'italic',
-      },
-    });
+    return createElement('small');
   }
 
   function findScripts(): HTMLScriptElement[] {
