@@ -1,5 +1,6 @@
 import express, { RequestHandler } from 'express';
 import helmet from 'helmet';
+import cors from 'helmet';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './shared';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
@@ -19,6 +20,7 @@ async function main() {
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
     express.static(`${__dirname}/web-ui-scripts`)
   );
+  app.use(cors());
   app.use(helmet());
   app.use(express.urlencoded({ extended: true }));
   app.post('/subscribe', await makeRequestHandler(subscribe));
