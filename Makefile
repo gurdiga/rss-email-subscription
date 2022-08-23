@@ -35,13 +35,19 @@ cw:
 pre-commit: check test lint format-check
 pc: pre-commit
 
-lint: lint-docker-compose lint-dockerfile
+lint: lint-docker-compose lint-dockerfile lint-shell-scripts
 
 lint-docker-compose:
 	docker-compose --file docker-compose.yml config
 
 lint-dockerfile:
 	find . -name Dockerfile | tee /dev/stderr | xargs hadolint
+
+lint-shell-scripts:
+	find . \
+		-not -path './node_modules/*' \
+		-name '*.sh' \
+	| xargs shellcheck
 
 # The required configuration is expected in the environment
 smtp-test:
