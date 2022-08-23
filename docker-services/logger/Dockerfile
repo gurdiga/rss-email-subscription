@@ -10,7 +10,8 @@ RUN apk add --no-cache \
 
 COPY syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
 COPY logrotate.conf /etc/logrotate.d/feedsubscription.conf
+COPY start.sh /start.sh
 
 ENTRYPOINT [ "tini", "--" ]
 
-CMD [ "/bin/sh", "-c", "exec /usr/sbin/syslog-ng --verbose --foreground" ]
+CMD [ "/start.sh" ]
