@@ -28,6 +28,8 @@ function main {
 	unsubscribe
 	unsubscribe_failure_verify
 	web_ui_scripts
+	verify_allows_embedding_js
+	verify_has_cors_enabled
 }
 
 function post {
@@ -38,6 +40,11 @@ function post {
 function get {
 	# shellcheck disable=SC2145
 	curl -ks --fail-with-body $BASE_URL"$@"
+}
+
+function head {
+	# shellcheck disable=SC2145
+	curl -ks --head $BASE_URL"$@"
 }
 
 function subscribe {
@@ -146,6 +153,25 @@ function web_ui_scripts {
 	else
 		print_failure ☝️
 	fi
+}
+
+function assert_header {
+	local url="$1"
+	local header="$2"
+
+	if head "$url" | grep "$header"; then
+		print_success
+	else
+		print_failure "Header missing? \"$header\""
+	fi
+}
+
+function verify_allows_embedding_js {
+	assert_header /web-ui-scripts/web-ui/registration-form.js 'cross-origin-resource-policy: cross-origin'
+}
+
+function verify_has_cors_enabled {
+	assert_header /subscribe 'access-control-allow-origin: *'
 }
 
 RED="\e[31m"
