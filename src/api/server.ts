@@ -28,6 +28,10 @@ async function main() {
   app.post('/unsubscribe', await makeRequestHandler(unsubscribe));
   app.post('/unsubscribe/:id', await makeRequestHandler(oneClickUnsubscribe));
 
+  if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
+    app.use('/', express.static(process.env['DOCUMENT_ROOT']));
+  }
+
   app.listen(port, () => {
     console.log(`Listening on http://0.0.0.0:${port}`);
   });

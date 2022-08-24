@@ -133,8 +133,12 @@ ssl:
 			--email gurdiga@gmail.com" certbot
 	docker kill --signal=SIGHUP website
 
-node-api:
-	node_modules/.bin/ts-node src/api/server.ts
+dev:
+	cp --target-directory=src/api/web-ui-scripts \
+		./node_modules/systemjs/dist/system.min.js* \
+		./src/web-ui/systemjs-resolve-patch.js
+	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json &
+	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:
 	./api-test.sh
@@ -282,13 +286,6 @@ ${RCLONE_BINARY}:
 
 ${RCLONE_CONFIG}:
 	rclone config
-
-web-ui-watch:
-	cp --target-directory=../feedsubscription.com/web-ui-scripts/ \
-		./node_modules/systemjs/dist/system.min.js* \
-		./src/web-ui/systemjs-resolve-patch.js
-
-	./node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.dev.json
 
 npm-update:
 	@npm outdated && echo "Yay!! Everything is up-to-date. 😎"
