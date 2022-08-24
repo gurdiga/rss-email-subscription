@@ -3,9 +3,9 @@ import { makeErr, Result } from '../shared/lang';
 import { makeSpy, makeStub } from '../shared/test-utils';
 import {
   fillUiElements,
-  LogFn,
   parseConfirmationLinkUrlParams,
   QuerySelectorFn,
+  reportError,
   requireUiElements,
   UiElementFillSpec,
 } from './utils';
@@ -31,7 +31,7 @@ describe(parseConfirmationLinkUrlParams.name, () => {
   });
 
   it('returns a descriptive Err value when any param is missing, and logs the specific missing field', () => {
-    const logFn = makeSpy<LogFn>();
+    const logFn = makeSpy<typeof reportError>();
     const result = parseConfirmationLinkUrlParams('', logFn);
 
     expect(result).to.deep.equal(makeErr('Invalid confirmation link'));

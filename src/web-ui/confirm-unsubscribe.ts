@@ -1,5 +1,12 @@
-import { ApiResponse, isAppError, isInputError } from '../shared/api-response';
 import { isErr } from '../shared/lang';
+import {
+  displayMainError,
+  ErrorUiElements,
+  handleApiResponse,
+  handleCommunicationError,
+  ResponseStatusUiElements,
+  sendApiRequest,
+} from './utils';
 import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
 
 function main() {
@@ -48,14 +55,14 @@ function main() {
   uiElements.inputUiContainer.removeAttribute('hidden');
   uiElements.formUiContainer.removeAttribute('hidden');
 
-  uiElements.confirmButton.addEventListener('click', () => {
-    sendUnsubscribeRequest({ id: queryParams.id })
-      .then((unsubscribeResponse) => {
-        handleApiResponse(unsubscribeResponse, uiElements);
-      })
-      .catch((error: TypeError) => {
-        handleCommunicationError(error, uiElements);
-      });
+  uiElements.confirmButton.addEventListener('click', async () => {
+    try {
+      const response = await sendApiRequest('/unsubscribe', { id: queryParams.id });
+
+      handleApiResponse(response, uiElements);
+    } catch (error) {
+      handleCommunicationError(error as TypeError, uiElements);
+    }
   });
 }
 
@@ -72,69 +79,4 @@ interface InputUiElements {
 interface FormUiElements {
   formUiContainer: Element;
   confirmButton: Element;
-}
-
-interface ErrorUiElements {
-  communicationErrorLabel: Element;
-}
-
-interface ResponseStatusUiElements {
-  successLabel: Element;
-  inputErrorLabel: Element;
-  appErrorLabel: Element;
-}
-
-function displayMainError(message: string) {
-  const initErrorElementSelector = '#init-error-message';
-  const errorMessageElement = document.querySelector(initErrorElementSelector);
-
-  if (!errorMessageElement) {
-    console.error(`Element is missing: ${initErrorElementSelector}`);
-    return;
-  }
-
-  errorMessageElement.textContent = message;
-  errorMessageElement.removeAttribute('hidden');
-}
-
-interface UnsubscribeRequest {
-  id: string;
-}
-
-function sendUnsubscribeRequest(unsubscribeRequest: UnsubscribeRequest): Promise<ApiResponse> {
-  var formData = new URLSearchParams();
-
-  formData.append('id', unsubscribeRequest.id);
-
-  return fetch('/unsubscribe', {
-    method: 'POST',
-    body: formData,
-  })
-    .then((r) => r.json())
-    .then((json) => json as ApiResponse);
-}
-
-function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusUiElements): void {
-  const { successLabel, appErrorLabel, inputErrorLabel } = uiElements;
-
-  if (isInputError(apiResponse)) {
-    inputErrorLabel.textContent = apiResponse.message;
-    inputErrorLabel.removeAttribute('hidden');
-    return;
-  }
-
-  if (isAppError(apiResponse)) {
-    appErrorLabel.textContent = apiResponse.message;
-    appErrorLabel.removeAttribute('hidden');
-    return;
-  }
-
-  successLabel.removeAttribute('hidden');
-}
-
-function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
-  const { communicationErrorLabel } = uiElements;
-
-  communicationErrorLabel.textContent = error.message;
-  communicationErrorLabel.removeAttribute('hidden');
 }

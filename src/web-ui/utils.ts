@@ -1,3 +1,4 @@
+import { ApiResponse, isAppError, isInputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
 
 export interface ConfirmationLinkUrlParams {
@@ -6,11 +7,9 @@ export interface ConfirmationLinkUrlParams {
   email: string;
 }
 
-export type LogFn = (...args: any) => void;
-
 export function parseConfirmationLinkUrlParams(
   locationSearch: string,
-  logFn: LogFn = consoleLogFn
+  logErrorFn: typeof reportError = reportError
 ): Result<ConfirmationLinkUrlParams> {
   const queryParams = new URLSearchParams(locationSearch);
   const params: ConfirmationLinkUrlParams = {
@@ -23,16 +22,12 @@ export function parseConfirmationLinkUrlParams(
 
   for (paramName in params) {
     if (!params[paramName]) {
-      logFn(`Missing parameter: ${paramName}`);
+      logErrorFn(`Missing parameter: ${paramName}`);
       return makeErr(`Invalid confirmation link`);
     }
   }
 
   return params;
-}
-
-function consoleLogFn(...args: any[]): void {
-  console.error(...args);
 }
 
 export type QuerySelectorFn = typeof document.querySelector;
@@ -75,4 +70,93 @@ export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
 
     spec.element[spec.propName] = spec.value;
   }
+}
+
+export function displayMainError(message: string) {
+  const initErrorElementSelector = '#init-error-message';
+  const errorMessageElement = document.querySelector(initErrorElementSelector);
+
+  if (!errorMessageElement) {
+    reportError(`Element is missing: ${initErrorElementSelector}`);
+    return;
+  }
+
+  errorMessageElement.textContent = message;
+  errorMessageElement.removeAttribute('hidden');
+}
+
+export interface ResponseStatusUiElements {
+  successLabel: Element;
+  inputErrorLabel: Element;
+  appErrorLabel: Element;
+}
+
+export function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusUiElements): void {
+  const { successLabel, appErrorLabel, inputErrorLabel } = uiElements;
+
+  if (isInputError(apiResponse)) {
+    inputErrorLabel.textContent = apiResponse.message;
+    inputErrorLabel.removeAttribute('hidden');
+    return;
+  }
+
+  if (isAppError(apiResponse)) {
+    appErrorLabel.textContent = apiResponse.message;
+    appErrorLabel.removeAttribute('hidden');
+    return;
+  }
+
+  successLabel.removeAttribute('hidden');
+}
+
+export interface ErrorUiElements {
+  communicationErrorLabel: Element;
+}
+
+export function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
+  const { communicationErrorLabel } = uiElements;
+
+  reportError(error);
+
+  communicationErrorLabel.textContent = error.message;
+  communicationErrorLabel.removeAttribute('hidden');
+}
+
+export function reportError(error: Error | string): void {
+  if (typeof error === 'string') {
+    error = new Error(error);
+  }
+
+  // TODO: Record somewhere remotely? nginx? Rollbar?
+  console.error('Unhandled error', error);
+}
+
+export function assertHeader(headerName: string, expectedHeaderValue: string) {
+  return (response: Response) => {
+    const contentType = response.headers.get(headerName);
+
+    if (contentType === expectedHeaderValue) {
+      return response;
+    } else {
+      throw new TypeError(`Unexpected response type: ${contentType}`);
+    }
+  };
+}
+
+export function assertFound(response: Response) {
+  if (response.status === 404) {
+    throw new TypeError(`Invalid API endpoint`);
+  } else {
+    return response;
+  }
+}
+
+export function sendApiRequest(url: string, data: Record<string, string>): Promise<ApiResponse> {
+  return fetch(url, {
+    method: 'POST',
+    body: new URLSearchParams(data),
+  })
+    .then(assertFound)
+    .then(assertHeader('content-type', 'application/json; charset=utf-8'))
+    .then(async (r) => (await r.json()) as ApiResponse);
 }

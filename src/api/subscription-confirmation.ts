@@ -41,7 +41,9 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
 
   if (!registeredEmail) {
     logWarning('Email not registered yet', { emailHash });
-    return makeInputError('Email is not registered. You first need to ask for subscription, and only then confirm.');
+    return makeInputError(
+      'Email is not registered for confirmation. Maybe the confirmation link is expired? 🤔 Please try registering again.'
+    );
   }
 
   registeredEmail.isConfirmed = true;
