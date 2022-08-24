@@ -117,7 +117,7 @@ describe('subscription', () => {
       const result = makeEmailConfirmationUrl(hashedEmail, feedId, feedDisplayName).toString();
 
       expect(result).to.equal(
-        `https://${DOMAIN_NAME}/confirm.html` +
+        `https://${DOMAIN_NAME}/confirm-subscription.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${encodeSearchParamValue(feedDisplayName)}` +
           `&email=${encodeSearchParamValue(emailAddress.value)}`
