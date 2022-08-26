@@ -1,13 +1,14 @@
-// NOTE: This file is intended to be self-contained, this is why it has no imports.
+// NOTE:
+// This is the script that will be injected into blogger’s pages and is
+// intended to be self-contained, that’s why no imports.
 (function () {
   function main() {
     findScripts().forEach((script, index) => {
-      const { dataset } = script;
-
-      if (dataset['isInitialized'] === 'true') {
+      if (isInitialized(script)) {
         return;
       }
 
+      const { dataset } = script;
       const { feedId } = dataset;
 
       if (!feedId) {
@@ -40,11 +41,24 @@
       uiContainer.append(formArea, messageArea);
 
       script.insertAdjacentElement('afterend', uiContainer);
-      dataset['isInitialized'] = 'true';
+      markAsInitialized(script);
     });
   }
 
-  main();
+  function isInitialized(script: HTMLScriptElement): boolean {
+    const { dataAttrName, dataAttrValue } = isInitialized;
+
+    return script.dataset[dataAttrName] === dataAttrValue;
+  }
+
+  isInitialized.dataAttrName = 'isInitialized';
+  isInitialized.dataAttrValue = 'true';
+
+  function markAsInitialized(script: HTMLScriptElement): void {
+    const { dataAttrName, dataAttrValue } = isInitialized;
+
+    script.dataset[dataAttrName] = dataAttrValue;
+  }
 
   function setupFormSending(
     feedId: string,
@@ -181,39 +195,39 @@
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
-    var formData = new URLSearchParams({
+    const url = `${origin}/subscribe`;
+    const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,
     });
 
-    const url = `${origin}/subscribe`;
+    const handleApiResponse = async (response: Response): Promise<void> => {
+      try {
+        const { message, kind } = await response.json();
 
-    return fetch(url, {
-      method: 'POST',
-      body: formData,
-    })
-      .then(async (response) => {
-        try {
-          const { message, kind } = await response.json();
+        displayMessage(message);
 
-          displayMessage(message);
-
-          if (kind === 'Success') {
-            clearField();
-          }
-        } catch (error) {
-          console.error(error);
-          displayMessage(`Error: invalid response from the server! Please try again.`);
+        if (kind === 'Success') {
+          clearField();
         }
-      })
-      .catch((error) => {
-        let { message } = error;
+      } catch (error) {
+        console.error(error);
+        displayMessage(`Error: invalid response from the server! Please try again.`);
+      }
+    };
 
-        if (message === 'Failed to fetch') {
-          message = 'Can’t connect to the server! Please try again.';
-        }
+    const handleError = (error: Error) => {
+      let { message } = error;
 
-        displayMessage(`Error: ${message} 😢`);
-      });
+      if (message === 'Failed to fetch') {
+        message = 'Can’t connect to the server! Please try again.';
+      }
+
+      displayMessage(`Error: ${message} 😢`);
+    };
+
+    return fetch(url, { method: 'POST', body: formData }).then(handleApiResponse).catch(handleError);
   }
+
+  main();
 })();
