@@ -1,13 +1,7 @@
 import { isErr } from '../shared/lang';
-import {
-  displayMainError,
-  ErrorUiElements,
-  handleApiResponse,
-  handleCommunicationError,
-  ResponseStatusUiElements,
-  sendApiRequest,
-} from './utils';
-import { fillUiElements, parseConfirmationLinkUrlParams, requireUiElements, UiElementFillSpec } from './utils';
+import { displayMainError, ErrorUiElements, fillUiElements, handleApiResponse } from './utils';
+import { handleCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './utils';
+import { ResponseStatusUiElements, sendApiRequest, UiElementFillSpec } from './utils';
 
 function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);

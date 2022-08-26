@@ -133,11 +133,16 @@ ssl:
 			--email gurdiga@gmail.com" certbot
 	docker kill --signal=SIGHUP website
 
-dev:
+web-ui-systemjs:
+	mkdir -p src/api/web-ui-scripts
 	cp --target-directory=src/api/web-ui-scripts \
 		./node_modules/systemjs/dist/system.min.js* \
 		./src/web-ui/systemjs-resolve-patch.js
+
+web-ui-watch:
 	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json &
+
+start-dev: web-ui-systemjs web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:

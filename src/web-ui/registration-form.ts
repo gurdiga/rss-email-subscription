@@ -1,3 +1,4 @@
+// NOTE: This file is intended to be self-contained, this is why it has no imports.
 (function () {
   function main() {
     findScripts().forEach((script, index) => {
