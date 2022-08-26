@@ -217,7 +217,7 @@ subscribe-report:
 				echo "From: RES <subscribe-report@feedsubscription.com>"; \
 				echo ""; \
 			) - \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		| if [ -t 1 ]; then cat; else ifne | ssmtp gurdiga@gmail.com; fi
 
 # cron 59 23 * * *
 delivery-report:
