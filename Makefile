@@ -89,10 +89,9 @@ start-api: app
 
 start-website: new-website start-api
 
-open-website:
-	open https://localhost
-
-ow: open-website
+o: open
+open:
+	open http://localhost:3000/
 
 start-testblog:
 	cd ~/tmp/testblog && make start
