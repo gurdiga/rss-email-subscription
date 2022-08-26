@@ -32,24 +32,9 @@
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
 
-      submitButton.addEventListener('click', () => {
-        const { origin } = new URL(script.src);
-        const data = {
-          feedId,
-          emailAddressText: fieldTextbox.value,
-        };
+      const { origin } = new URL(script.src);
 
-        const displayMessage = (message: string) => {
-          messageContent.textContent = message;
-        };
-
-        const clearField = () => {
-          fieldTextbox.value = '';
-        };
-
-        preventDoubleClick(submitButton, () => submitEmailToApi(origin, data, displayMessage, clearField));
-      });
-
+      setupFormSending(feedId, submitButton, fieldTextbox, messageContent, origin);
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
       uiContainer.append(formArea, messageArea);
@@ -60,6 +45,42 @@
   }
 
   main();
+
+  function setupFormSending(
+    feedId: string,
+    submitButton: HTMLButtonElement,
+    fieldTextbox: HTMLInputElement,
+    messageContent: HTMLElement,
+    origin: string
+  ) {
+    const submitForm = () => {
+      const data = {
+        feedId,
+        emailAddressText: fieldTextbox.value,
+      };
+
+      const displayMessage = (message: string) => {
+        messageContent.textContent = message;
+      };
+
+      const clearField = () => {
+        fieldTextbox.value = '';
+      };
+
+      preventDoubleClick(submitButton, () => submitEmailToApi(origin, data, displayMessage, clearField));
+    };
+
+    const ifKey = (key: string, handler: () => void) => {
+      return (event: KeyboardEvent) => {
+        if (event.key === key) {
+          handler();
+        }
+      };
+    };
+
+    submitButton.addEventListener('click', submitForm);
+    fieldTextbox.addEventListener('keypress', ifKey('Enter', submitForm));
+  }
 
   function createUiContainer(): HTMLDivElement {
     return createElement('div', { className: 'res-ui-containter' });
