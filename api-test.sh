@@ -42,7 +42,7 @@ function get {
 	curl -ks --fail-with-body $BASE_URL"$@"
 }
 
-function head {
+function get_headers {
 	# shellcheck disable=SC2145
 	curl -ks --head $BASE_URL"$@"
 }
@@ -148,10 +148,10 @@ function unsubscribe_failure_verify {
 }
 
 function web_ui_scripts {
-	if get /web-ui-scripts/web-ui/unsubscription.js | head -5; then
+	if get /web-ui-scripts/web-ui/confirm-unsubscribe.js | head -5; then
 		print_success
 	else
-		print_failure ☝️
+		print_failure
 	fi
 }
 
@@ -159,7 +159,7 @@ function assert_header {
 	local url="$1"
 	local header="$2"
 
-	if head "$url" | grep "$header"; then
+	if get_headers "$url" | grep "$header"; then
 		print_success
 	else
 		print_failure "Header missing? \"$header\""
