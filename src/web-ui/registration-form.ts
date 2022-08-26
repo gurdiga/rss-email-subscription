@@ -162,7 +162,6 @@
     var formData = new URLSearchParams({
       feedId: feedId,
       email: emailAddressText,
-      skipDoubleOptIn: 'true', // TODO: Remove once the double-opt-in confirmation page is done.
     });
 
     const url = `${origin}/subscribe`;
