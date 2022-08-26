@@ -27,7 +27,7 @@ function main() {
     formUiContainer: '#form-ui',
     confirmButton: '#confirm-button',
     communicationErrorLabel: '#communication-error-label',
-    successLabel: '#unsubscription-success-label',
+    successLabel: '#subscription-success-label',
     inputErrorLabel: '#input-error-label',
     appErrorLabel: '#app-error-label',
   });

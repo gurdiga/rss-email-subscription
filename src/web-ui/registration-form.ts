@@ -155,13 +155,13 @@
 
   function submitEmailToApi(
     origin: string,
-    { feedId, emailAddressText }: DataToSubmit,
+    data: DataToSubmit,
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
     var formData = new URLSearchParams({
-      feedId: feedId,
-      email: emailAddressText,
+      feedId: data.feedId,
+      email: data.emailAddressText,
     });
 
     const url = `${origin}/subscribe`;
