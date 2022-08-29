@@ -110,12 +110,12 @@ reload-app:
 # cron @weekly
 reload-website:
 	@docker kill --signal=SIGHUP website | \
-	cat <(
-		echo "Subject: RES reload-website";
-		echo "From: reload-website@feedsubscription.com";
-		echo;
+	cat <( \
+		echo "Subject: RES reload-website"; \
+		echo "From: reload-website@feedsubscription.com"; \
+		echo; \
 	) - \
-	| ssmtp gurdiga@gmail.com
+	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
