@@ -120,6 +120,7 @@ reload-website:
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
 
+# NOTE: When changing certificate domains, rm -rf ll ./.tmp/certbot/conf/ first.
 ssl:
 	docker-compose --project-name res run --rm --entrypoint "\
 	  certbot certonly \
