@@ -123,8 +123,9 @@ purge-smtp-queue:
 ssl:
 	docker-compose --project-name res run --rm --entrypoint "\
 	  certbot certonly \
-			--webroot --webroot-path /var/www/certbot --domains feedsubscription.com \
-			--webroot --webroot-path /var/www/certbot/new --domains new.feedsubscription.com \
+			--webroot --webroot-path /var/www/certbot \
+			--domains feedsubscription.com \
+			--domains localhost.feedsubscription.com \
 			--expand \
 			--rsa-key-size 4096 \
 			--agree-tos \
