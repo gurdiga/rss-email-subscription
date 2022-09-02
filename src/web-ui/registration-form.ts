@@ -108,7 +108,7 @@
     return createElement('label', {
       htmlFor: fieldId(index),
       textContent: textContent || 'Subscribe to receive new posts:',
-      className: className,
+      className: className || '',
       style: <CSSStyleDeclaration>{
         marginRight: '0.5em',
       },
@@ -123,12 +123,18 @@
       style: <CSSStyleDeclaration>{
         marginRight: '0.25em',
       },
-      className: className,
+      className: className || '',
     });
   }
 
   function createSubmitButton(className?: string, buttonLabel?: string): HTMLButtonElement {
-    return createElement('button', { className }, buttonLabel || 'Submit');
+    return createElement(
+      'button',
+      {
+        className: className || '',
+      },
+      buttonLabel || 'Submit'
+    );
   }
 
   function createMessageArea(): HTMLDivElement {
