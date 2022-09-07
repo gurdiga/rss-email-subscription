@@ -126,6 +126,7 @@ ssl:
 	  certbot certonly \
 			--webroot --webroot-path /var/www/certbot \
 			--domains feedsubscription.com \
+			--domains www.feedsubscription.com \
 			--domains localhost.feedsubscription.com \
 			--expand \
 			--rsa-key-size 4096 \
