@@ -8,6 +8,7 @@ import { subscribe } from './subscription';
 import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 import { basename } from 'path';
+import { createAccount } from './create-account';
 
 async function main() {
   const port = 3000;
@@ -25,6 +26,7 @@ async function main() {
   app.post('/confirm-subscription', await makeRequestHandler(confirmSubscription));
   app.post('/unsubscribe', await makeRequestHandler(unsubscribe));
   app.post('/unsubscribe/:id', await makeRequestHandler(oneClickUnsubscribe));
+  app.post('/create-account', await makeRequestHandler(createAccount));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     app.use('/', express.static(process.env['DOCUMENT_ROOT']));
