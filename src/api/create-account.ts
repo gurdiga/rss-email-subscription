@@ -1,5 +1,6 @@
-import { EmailAddress } from '../app/email-sending/emails';
+import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AppError, InputError, makeAppError, makeInputError } from '../shared/api-response';
+import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './shared';
 
@@ -36,8 +37,42 @@ interface ProcessedInput {
   password: string; // require min len of 16
 }
 
-type PlanId = 'minimal' | 'standard' | 'sde';
+export type PlanId = 'minimal' | 'standard' | 'sde';
 
-function processInput({}: Input): ProcessedInput | InputError | AppError {
+function processInput(input: Input): ProcessedInput | InputError | AppError {
+  const { logWarning } = makeCustomLoggers({
+    plan: input.plan,
+    email: input.email,
+    module: `${createAccount.name}:${processInput.name}`,
+  });
+
+  const plan = makePlanId(input.plan);
+  const email = makeEmailAddress(input.email);
+
+  if (isErr(email)) {
+    logWarning('Invalid email', { emailAddress: email });
+    return makeInputError('Invalid email');
+  }
+
+  const password = makePassword(input.password);
+
+  console.log({ plan, email, password });
+
   return makeInputError('Not implemented');
+}
+
+export function makePlanId(planId: string) {
+  const validPlanIds: PlanId[] = ['minimal', 'standard', 'sde'];
+
+  planId = planId.trim();
+
+  if (!validPlanIds.includes(planId as any)) {
+    return makeInputError(`Invalid plan ID: ${planId}`);
+  }
+
+  return planId;
+}
+
+export function makePassword(_password: string) {
+  throw new Error('Function not implemented.');
 }
