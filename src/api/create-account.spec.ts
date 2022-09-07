@@ -1,13 +1,13 @@
 import { expect } from 'chai';
-import { makeInputError } from '../shared/api-response';
+import { makeErr } from '../shared/lang';
 import { makePlanId } from './create-account';
 
 describe('create-account', () => {
   describe('makePlanId', () => {
-    it('returns an InputError value if not one of the valid plan IDs', () => {
+    it('returns an Err value if not one of the valid plan IDs', () => {
       const planId = 'all-inclusive';
 
-      expect(makePlanId(planId)).to.deep.equal(makeInputError(`Invalid plan ID: ${planId}`));
+      expect(makePlanId(planId)).to.deep.equal(makeErr(`Invalid plan ID: ${planId}`));
     });
 
     it('trims the input', () => {

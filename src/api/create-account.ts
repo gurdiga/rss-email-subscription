@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AppError, InputError, makeAppError, makeInputError } from '../shared/api-response';
-import { isErr } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './shared';
 
@@ -47,10 +47,16 @@ function processInput(input: Input): ProcessedInput | InputError | AppError {
   });
 
   const plan = makePlanId(input.plan);
+
+  if (isErr(plan)) {
+    logWarning(plan.reason, { input: input.plan });
+    return makeInputError('Invalid plan');
+  }
+
   const email = makeEmailAddress(input.email);
 
   if (isErr(email)) {
-    logWarning('Invalid email', { emailAddress: email });
+    logWarning('Invalid email', { emailAddress: input.email });
     return makeInputError('Invalid email');
   }
 
@@ -61,16 +67,16 @@ function processInput(input: Input): ProcessedInput | InputError | AppError {
   return makeInputError('Not implemented');
 }
 
-export function makePlanId(planId: string) {
+export function makePlanId(planId: string): Result<PlanId> {
   const validPlanIds: PlanId[] = ['minimal', 'standard', 'sde'];
 
   planId = planId.trim();
 
   if (!validPlanIds.includes(planId as any)) {
-    return makeInputError(`Invalid plan ID: ${planId}`);
+    return makeErr(`Invalid plan ID: ${planId}`);
   }
 
-  return planId;
+  return planId as PlanId;
 }
 
 export function makePassword(_password: string) {
