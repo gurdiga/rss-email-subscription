@@ -9,8 +9,6 @@ import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 import { basename } from 'path';
 
-let requestCounter = 0;
-
 async function main() {
   const port = 3000;
   const app = express();
@@ -50,7 +48,7 @@ async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHa
   }
 
   return async (req, res) => {
-    const reqId = ++requestCounter;
+    const reqId = +new Date();
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: basename(__filename) });
 
     const reqBody = req.body || {};
