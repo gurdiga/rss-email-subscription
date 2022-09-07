@@ -37,7 +37,7 @@ async function main() {
   });
 
   process.on('SIGTERM', () => {
-    console.info('SIGTERM signal received.');
+    console.info('Received SIGTERM. Will shut down.');
   });
 }
 

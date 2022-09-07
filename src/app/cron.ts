@@ -29,6 +29,10 @@ function main() {
     cronJobs = scheduleFeedChecks(dataDirRoot);
   });
 
+  process.on('SIGTERM', () => {
+    console.info('Received SIGTERM. Will shut down.');
+  });
+
   scheduleErrorReportingCheck();
 }
 
