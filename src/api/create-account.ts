@@ -60,7 +60,7 @@ function processInput(input: Input): ProcessedInput | InputError | AppError {
     return makeInputError('Invalid email');
   }
 
-  const password = makePassword(input.password);
+  const password = makeNewPassword(input.password);
 
   console.log({ plan, email, password });
 
@@ -79,6 +79,33 @@ export function makePlanId(planId: string): Result<PlanId> {
   return planId as PlanId;
 }
 
-export function makePassword(_password: string) {
-  throw new Error('Function not implemented.');
+interface NewPassword {
+  kind: 'NewPassword';
+  value: string;
+}
+
+export const minPasswordLength = 16;
+export const maxPasswordLength = 128;
+
+export function makeNewPassword(password: string): Result<NewPassword> {
+  if (/^\s/.test(password)) {
+    return makeErr('Has leading spaces');
+  }
+
+  if (/\s$/.test(password)) {
+    return makeErr('Has trailing spaces');
+  }
+
+  if (password.length < minPasswordLength) {
+    return makeErr('Too short');
+  }
+
+  if (password.length > maxPasswordLength) {
+    return makeErr('Too long');
+  }
+
+  return {
+    kind: 'NewPassword',
+    value: password,
+  };
 }
