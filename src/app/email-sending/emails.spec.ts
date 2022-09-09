@@ -17,14 +17,22 @@ import {
 
 describe(parseEmails.name, () => {
   it('parses the emails from a one-per-line string', async () => {
-    const emailList = ['test1@test.com', 'test2@test.com', 'test3@test.com'].join('\n');
+    const emailList = [
+      // prettier: keep these stacked
+      'test1@test.com',
+      'test2@test.com',
+      'test3@test.com',
+    ].join('\n');
+
     const result = await parseEmails(emailList);
+
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
-        { kind: 'EmailAddress', value: 'test1@test.com' },
-        { kind: 'EmailAddress', value: 'test2@test.com' },
-        { kind: 'EmailAddress', value: 'test3@test.com' },
+        // prettier: keep these stacked
+        email('test1@test.com'),
+        email('test2@test.com'),
+        email('test3@test.com'),
       ],
       invalidEmails: [],
     };
@@ -34,7 +42,8 @@ describe(parseEmails.name, () => {
 
   it('eliminates duplicates and ignores empty lines', async () => {
     const emailList = [
-      'a@test.com', // prettier: keep these stacked
+      // prettier: keep these stacked
+      'a@test.com',
       'a@test.com',
       ' b@test.com',
       ' ',
@@ -44,12 +53,14 @@ describe(parseEmails.name, () => {
       'b@test.com',
       'b@test.com',
     ].join('\n');
+
     const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
-        { kind: 'EmailAddress', value: 'a@test.com' },
-        { kind: 'EmailAddress', value: 'b@test.com' },
+        // prettier: keep these stacked
+        email('a@test.com'),
+        email('b@test.com'),
       ],
       invalidEmails: [],
     };
@@ -58,13 +69,21 @@ describe(parseEmails.name, () => {
   });
 
   it('also returns invalid emails if any', async () => {
-    const emailList = ['a@test.com', '+@test.com', 'b@test', 'b@test.com'].join('\n');
+    const emailList = [
+      // prettier: keep these stacked
+      'a@test.com',
+      '+@test.com',
+      'b@test',
+      'b@test.com',
+    ].join('\n');
+
     const result = await parseEmails(emailList);
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
-        { kind: 'EmailAddress', value: 'a@test.com' },
-        { kind: 'EmailAddress', value: 'b@test.com' },
+        // prettier: keep these stacked
+        email('a@test.com'),
+        email('b@test.com'),
       ],
       invalidEmails: ['Syntactically invalid email: "+@test.com"', 'Syntactically invalid email: "b@test"'],
     };
@@ -139,14 +158,22 @@ describe(readEmailListFromCsvFile.name, () => {
   const filePath = '/some/file.txt';
 
   it('reads and parses the emails from the given one-per-line file', () => {
-    const readFile = makeStub<ReadFileFn>(() => ['a@test.com', 'b@test.com', 'c@test.com'].join('\n'));
+    const readFile = makeStub<ReadFileFn>(() =>
+      [
+        // prettier: keep these stacked
+        'a@test.com',
+        'b@test.com',
+        'c@test.com',
+      ].join('\n')
+    );
 
     const expectedResult: EmailList = {
       kind: 'EmailList',
       validEmails: [
-        { kind: 'EmailAddress', value: 'a@test.com' },
-        { kind: 'EmailAddress', value: 'b@test.com' },
-        { kind: 'EmailAddress', value: 'c@test.com' },
+        // prettier: keep these stacked
+        email('a@test.com'),
+        email('b@test.com'),
+        email('c@test.com'),
       ],
       invalidEmails: [],
     };
@@ -271,8 +298,8 @@ describe(loadStoredEmails.name, () => {
       makeErr(`Can’t read file /some/path/emails.json: ${error.message}`)
     );
   });
-
-  function email(s: string) {
-    return makeEmailAddress(s) as EmailAddress;
-  }
 });
+
+function email(s: string) {
+  return makeEmailAddress(s) as EmailAddress;
+}
