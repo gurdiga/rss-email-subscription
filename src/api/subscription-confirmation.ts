@@ -12,7 +12,7 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
   _reqParams,
   dataDirRoot
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
 
@@ -54,6 +54,8 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
     logError('Can’t store emails on confirm', { reason: storeResult.reason });
     return makeAppError('Database write error: registering confirmation failed');
   }
+
+  logInfo('Confirmed email', { email: registeredEmail.emailAddress.value });
 
   return {
     kind: 'Success',
