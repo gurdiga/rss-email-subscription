@@ -8,11 +8,22 @@ export interface LogRecord {
   data?: object;
 }
 
-// Only exported for tests
+export const maxStringValue = 1024;
+
 export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
-  const message = JSON.stringify(record);
+  const message = JSON.stringify(record, (_key, value) => maybeTruncate(value));
 
   stdOutPrinterFn(message);
+}
+
+function maybeTruncate(value: string): string {
+  if (typeof value === 'string' && value.length > maxStringValue) {
+    const truncationNote = `[...truncated ${value.length - maxStringValue} characters]`;
+
+    return value.substring(0, maxStringValue) + truncationNote;
+  } else {
+    return value;
+  }
 }
 
 function logInfo(message: LogRecord['message'], data?: LogRecord['data']): void {

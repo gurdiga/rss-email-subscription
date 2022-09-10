@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { StdOutPrinterFn } from './io';
-import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers } from './logging';
+import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers, maxStringValue } from './logging';
 import { Spy, makeSpy } from './test-utils';
 
 describe(log.name, () => {
@@ -19,6 +19,33 @@ describe(log.name, () => {
 
     log(record, mockStdOutPrinter);
     expect(mockStdOutPrinter.calls).to.deep.equal([[expectedMessage]]);
+  });
+
+  it(`truncates message and data string values to ${maxStringValue} characters`, () => {
+    const hugeLength = 2000;
+    const tooLongStringValue = 's'.repeat(hugeLength);
+
+    const truncatedStringValue = 's'.repeat(maxStringValue);
+    const truncationNote = `[...truncated ${hugeLength - maxStringValue} characters]`;
+
+    const record: LogRecord = {
+      severity: 'info',
+      message: tooLongStringValue,
+      data: {
+        aString: tooLongStringValue,
+      },
+    };
+
+    const mockStdOutPrinter = makeSpy<StdOutPrinterFn>();
+
+    log(record, mockStdOutPrinter);
+
+    const loggedRecord = JSON.parse(mockStdOutPrinter.calls[0]![0]) as LogRecord;
+    const loggedMessage = loggedRecord.message;
+    const loggedDataString = (loggedRecord.data as any)['aString']!;
+
+    expect(loggedMessage).to.equal(`${truncatedStringValue}${truncationNote}`);
+    expect(loggedDataString).to.equal(`${truncatedStringValue}${truncationNote}`);
   });
 });
 
