@@ -39,9 +39,16 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
   };
 }
 
+export const maxEmailLength = 100;
+
 export function makeEmailAddress(input: any): Result<EmailAddress> {
   const emailString = `${input}`;
   const email = emailString.trim().toLocaleLowerCase();
+
+  if (email.length > maxEmailLength) {
+    return makeErr('Email too long');
+  }
+
   const err = makeErr(`Syntactically invalid email: "${emailString}"`);
 
   if (!email) {

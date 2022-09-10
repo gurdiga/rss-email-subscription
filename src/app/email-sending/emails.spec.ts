@@ -13,6 +13,7 @@ import {
   EmailIndex,
   StoredEmails,
   loadStoredEmails,
+  maxEmailLength,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -132,6 +133,12 @@ describe(makeEmailAddress.name, () => {
       kind: 'EmailAddress',
       value: 'c@test.com',
     } as EmailAddress);
+  });
+
+  it(`returns an Err value when the email is longer than ${maxEmailLength}`, () => {
+    const tooLongAnEmail = `${'a'.repeat(maxEmailLength)}@toolong.com`;
+
+    expect(makeEmailAddress(tooLongAnEmail)).to.deep.equal(makeErr('Email too long'));
   });
 
   it('returns an Err value when the email is invalid', () => {
