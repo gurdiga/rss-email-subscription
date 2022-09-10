@@ -34,7 +34,7 @@ interface ProcessedInput {
   kind: 'ProcessedInput';
   plan: PlanId;
   email: EmailAddress;
-  password: string; // require min len of 16
+  password: NewPassword;
 }
 
 export type PlanId = 'minimal' | 'standard' | 'sde';
@@ -56,15 +56,23 @@ function processInput(input: Input): ProcessedInput | InputError | AppError {
   const email = makeEmailAddress(input.email);
 
   if (isErr(email)) {
-    logWarning('Invalid email', { emailAddress: input.email });
+    logWarning('Invalid email', { input: input.email });
     return makeInputError('Invalid email');
   }
 
   const password = makeNewPassword(input.password);
 
-  console.log({ plan, email, password });
+  if (isErr(password)) {
+    logWarning('Invalid new password', { input: input.password });
+    return makeInputError(`Invalid password: ${password.reason}`);
+  }
 
-  return makeInputError('Not implemented');
+  return {
+    kind: 'ProcessedInput',
+    plan,
+    email,
+    password,
+  };
 }
 
 export function makePlanId(planId: string): Result<PlanId> {
