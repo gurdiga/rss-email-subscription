@@ -299,3 +299,7 @@ npm-update:
 
 format-check:
 	prettier --check 'src/**/*.ts'
+
+clean: stop
+	docker image rm --force app
+	rm -rf website/html/
