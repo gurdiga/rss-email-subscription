@@ -142,7 +142,7 @@
   }
 
   function createMessageContent(): HTMLElement {
-    return createElement('small');
+    return createElement('p');
   }
 
   function findScripts(): HTMLScriptElement[] {
