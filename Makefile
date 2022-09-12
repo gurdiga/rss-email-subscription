@@ -155,7 +155,7 @@ snyk:
 
 # cron @reboot
 watch-app:
-	tail -n0 -f --retry .tmp/logs/feedsubscription/{app,api}.log \
+	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log \
 		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"Sending report")' \
 		| while read -r _skip_timestamp _skip_namespace _skip_app json;
 		do
@@ -171,7 +171,7 @@ watch-app:
 
 # cron @reboot
 watch-smtp-out:
-	tail -n0 -f --retry .tmp/logs/feedsubscription/smtp-out.log \
+	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log \
 		| grep --line-buffered -P '(warning|error|fatal|panic|reject):' \
 		| while read -r _1 _2 _3 timestamp level message;
 		do
