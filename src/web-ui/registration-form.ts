@@ -142,7 +142,7 @@
   }
 
   function createMessageContent(): HTMLElement {
-    return createElement('p');
+    return createElement('span');
   }
 
   function findScripts(): HTMLScriptElement[] {
