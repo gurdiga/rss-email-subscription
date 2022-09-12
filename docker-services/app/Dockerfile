@@ -1,4 +1,4 @@
-FROM node:16.15-alpine3.15
+FROM node:16.17-alpine3.16
 
 RUN apk -U upgrade
 
