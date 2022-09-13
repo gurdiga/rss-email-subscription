@@ -7,7 +7,7 @@ describe('create-account', () => {
     it('returns an Err value if not one of the valid plan IDs', () => {
       const planId = 'all-inclusive';
 
-      expect(makePlanId(planId)).to.deep.equal(makeErr(`Invalid plan ID: ${planId}`));
+      expect(makePlanId(planId)).to.deep.equal(makeErr(`Unknown plan ID: ${planId}`));
     });
 
     it('trims the input', () => {
