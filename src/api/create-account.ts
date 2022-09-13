@@ -4,12 +4,7 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './shared';
 
-export const createAccount: AppRequestHandler = async function oneClickUnsubscribe(
-  reqId,
-  reqBody,
-  _reqParams,
-  dataDirRoot
-) {
+export const createAccount: AppRequestHandler = async function createAccount(reqId, reqBody, _reqParams, dataDirRoot) {
   const { plan, email, password } = reqBody;
   const inputProcessingResult = processInput({ plan, email, password });
 

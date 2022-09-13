@@ -127,7 +127,7 @@ function processInput({
 
   if (isErr(dataDir)) {
     logWarning('Invalid dataDir', { feedId });
-    return makeInputError('Invalid feed id');
+    return makeInputError('Invalid feed ID');
   }
 
   const feedSettings = getFeedSettings(dataDir);
