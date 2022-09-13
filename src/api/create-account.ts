@@ -1,10 +1,10 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { InputError, isInputError, makeInputError } from '../shared/api-response';
+import { AppError, InputError, isAppError, isInputError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './shared';
 
-export const createAccount: AppRequestHandler = async function createAccount(reqId, reqBody, _reqParams, dataDirRoot) {
+export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, dataDirRoot) {
   const { plan, email, password } = reqBody;
   const inputProcessingResult = processInput({ plan, email, password });
 
@@ -12,20 +12,13 @@ export const createAccount: AppRequestHandler = async function createAccount(req
     return inputProcessingResult;
   }
 
-  const { logWarning, logError } = makeCustomLoggers({ plan, email, module: createAccount.name });
+  const initResult = initAccount(dataDirRoot, inputProcessingResult);
 
-  // const initResult = initAccount(inputProcessingResult);
+  if (isAppError(initResult)) {
+    return initResult;
+  }
 
-  // TODO:
-  // - Create account directory; ++new Date(); fail with Improbable Duplicate Millisecond ID Error when ID exists
-  // - Store account data: plan, email, password hash, feed IDs, timestamps, etc.
-
-  console.log({ plan, email, password }, { reqId, dataDirRoot, logWarning, logError });
-
-  return {
-    kind: 'Success',
-    message: 'Account created. Welcome aboard! 🙂',
-  };
+  return makeSuccess('Account created. Welcome aboard! 🙂');
 };
 
 interface Input {
@@ -120,4 +113,21 @@ export function makeNewPassword(password: string): Result<NewPassword> {
     kind: 'NewPassword',
     value: password,
   };
+}
+
+function initAccount(dataDirRoot: string, input: ProcessedInput): void | AppError {
+  // logWarning, logError
+  const {} = makeCustomLoggers({
+    module: `${createAccount.name}:${initAccount.name}`,
+  });
+
+  // TODO:
+  // - Create account directory; ++new Date(); fail with Improbable
+  //   Duplicate Millisecond ID Error when ID exists
+  // - Store account data: plan, email, password hash, feed IDs,
+  //   timestamps, etc.
+
+  console.log({ dataDirRoot, input });
+
+  throw new Error('Function not implemented.');
 }

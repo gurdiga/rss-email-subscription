@@ -10,6 +10,14 @@ export function isSuccess(x: any): x is Success {
   return x.kind === 'Success';
 }
 
+export function makeSuccess(message: string, logData?: Object): Success {
+  return {
+    kind: 'Success',
+    message,
+    logData,
+  };
+}
+
 export interface InputError {
   kind: 'InputError';
   message: string;

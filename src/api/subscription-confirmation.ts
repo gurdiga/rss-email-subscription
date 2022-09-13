@@ -3,7 +3,7 @@ import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, parseSubscriptionId } from './shared';
-import { makeAppError, makeInputError } from '../shared/api-response';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { storeEmails } from './subscription';
 
 export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
@@ -57,8 +57,5 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
 
   logInfo('Confirmed email', { email: registeredEmail.emailAddress.value });
 
-  return {
-    kind: 'Success',
-    message: 'Emai confirmed. Welcome aboard! 😎',
-  };
+  return makeSuccess('Emai confirmed. Welcome aboard! 😎');
 };

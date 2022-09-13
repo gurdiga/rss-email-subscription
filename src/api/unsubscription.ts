@@ -3,7 +3,7 @@ import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, parseSubscriptionId } from './shared';
-import { makeAppError, makeInputError } from '../shared/api-response';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { storeEmails } from './subscription';
 
 export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
@@ -48,10 +48,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
     return makeAppError('Database write error: registering unsubscription failed');
   }
 
-  return {
-    kind: 'Success',
-    message: 'Your have been unsubscribed. Sorry to see you go! 👋🙂',
-  };
+  return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
 
 export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscribe(
