@@ -1,4 +1,6 @@
+# only works for GNU Make 3.82+
 .ONESHELL:
+
 SHELL = bash
 
 default: pre-commit
@@ -275,14 +277,14 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@rclone \
 		--stats=0 \
 		--verbose \
-		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S` \
-	2>&1 | \
+		copy $${DATA_DIR_ROOT:-.tmp/docker-data} gdrive-res:/RES-backups/`date +%F-%H-%M-%S` |
+	2>&1 |
 	cat <(
-		echo "Subject: RES backup-report"
-		echo "From: RES <backup-report@feedsubscription.com>"
+		echo "Subject: RES backup"
+		echo "From: RES <backup@feedsubscription.com>"
 		echo ""
-	) - \
-	| ssmtp gurdiga@gmail.com
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 backup-purge:
 	@rclone lsf gdrive-res:RES-backups |
