@@ -1,21 +1,23 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { AppError, InputError, isAppError, isInputError, makeInputError, makeSuccess } from '../shared/api-response';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { getRandomString, hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
+import { storeItem } from '../shared/storage';
 import { AppRequestHandler } from './shared';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, dataDirRoot) {
   const { plan, email, password } = reqBody;
   const inputProcessingResult = processInput({ plan, email, password });
 
-  if (isInputError(inputProcessingResult)) {
-    return inputProcessingResult;
+  if (isErr(inputProcessingResult)) {
+    return makeInputError(inputProcessingResult.reason);
   }
 
-  const initResult = initAccount(dataDirRoot, inputProcessingResult);
+  const initResult = await initAccount(dataDirRoot, inputProcessingResult);
 
-  if (isAppError(initResult)) {
-    return initResult;
+  if (isErr(initResult)) {
+    return makeAppError(initResult.reason);
   }
 
   return makeSuccess('Account created. Welcome aboard! 🙂');
@@ -34,9 +36,16 @@ interface ProcessedInput {
   password: NewPassword;
 }
 
+function makeProcessedInput(props: Omit<ProcessedInput, 'kind'>): ProcessedInput {
+  return {
+    kind: 'ProcessedInput',
+    ...props,
+  };
+}
+
 export type PlanId = 'minimal' | 'standard' | 'sde';
 
-function processInput(input: Input): ProcessedInput | InputError {
+function processInput(input: Input): Result<ProcessedInput> {
   const { logWarning } = makeCustomLoggers({
     plan: input.plan,
     email: input.email,
@@ -47,29 +56,28 @@ function processInput(input: Input): ProcessedInput | InputError {
 
   if (isErr(plan)) {
     logWarning('Invalid plan', { input: input.plan, reason: plan.reason });
-    return makeInputError(`Invalid plan: ${plan.reason}`);
+    return makeErr(`Invalid plan: ${plan.reason}`);
   }
 
   const email = makeEmailAddress(input.email);
 
   if (isErr(email)) {
     logWarning('Invalid email', { input: input.email, reason: email.reason });
-    return makeInputError(`Invalid email: ${email.reason}`);
+    return makeErr(`Invalid email: ${email.reason}`);
   }
 
   const password = makeNewPassword(input.password);
 
   if (isErr(password)) {
     logWarning('Invalid new password', { input: input.password, reason: password.reason });
-    return makeInputError(`Invalid password: ${password.reason}`);
+    return makeErr(`Invalid password: ${password.reason}`);
   }
 
-  return {
-    kind: 'ProcessedInput',
+  return makeProcessedInput({
     plan,
     email,
     password,
-  };
+  });
 }
 
 export function makePlanId(planId: string): Result<PlanId> {
@@ -115,19 +123,26 @@ export function makeNewPassword(password: string): Result<NewPassword> {
   };
 }
 
-function initAccount(dataDirRoot: string, input: ProcessedInput): void | AppError {
-  // logWarning, logError
-  const {} = makeCustomLoggers({
+async function initAccount(dataDirRoot: string, input: ProcessedInput): Promise<Result<void>> {
+  const { logInfo, logError } = makeCustomLoggers({
     module: `${createAccount.name}:${initAccount.name}`,
   });
 
-  // TODO:
-  // - Create account directory; ++new Date(); fail with Improbable
-  //   Duplicate Millisecond ID Error when ID exists
-  // - Store account data: plan, email, password hash, feed IDs,
-  //   timestamps, etc.
+  const accountId = new Date().getTime();
+  const hashingSalt = getRandomString(16);
 
-  console.log({ dataDirRoot, input });
+  const accountData = {
+    plan: input.plan,
+    email: input.email.value,
+    hashingSalt,
+    passwordHash: hash(input.password.value, hashingSalt),
+  };
 
-  throw new Error('Function not implemented.');
+  try {
+    await storeItem(`/accounts/${accountId}/account.json`, accountData, dataDirRoot);
+    logInfo('Created new account', accountData);
+  } catch (exception) {
+    logError(`${storeItem.name} failed`, { exception });
+    return makeErr('Couldn’t store account data');
+  }
 }
