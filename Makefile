@@ -1,4 +1,4 @@
-# only works for GNU Make 3.82+
+# .ONESHELL only works for GNU Make 3.82+
 .ONESHELL:
 
 SHELL = bash
