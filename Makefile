@@ -285,7 +285,18 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	| ssmtp gurdiga@gmail.com
 
 backup-purge:
-	# TODO Delete old backups
+	@rclone lsf gdrive-res:RES-backups |
+	sort |
+	head --lines=-31 | # exlude last 31
+	tee /dev/stderr | # include dirs in email body
+	xargs -I {} rclone purge gdrive-res:RES-backups/{} |
+	2>&1 |
+	cat <(
+		echo "Subject: RES backup-purge"
+		echo "From: RES <backup-purge@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 ${RCLONE_BINARY}:
 	curl https://rclone.org/install.sh | sudo bash
