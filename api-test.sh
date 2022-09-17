@@ -140,7 +140,7 @@ function resubscribe_failure_verify {
 function unsubscribe_failure_verify {
 	if diff -u \
 		<(post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH) \
-		<(printf '{"kind":"InputError","message":"Email is not subscribed, or, you have already unsubscribed. — Which one is it? 🤔"}'); then
+		<(printf '{"kind":"InputError","message":"Email is not subscribed. 🤔"}'); then
 		print_success
 	else
 		print_failure
