@@ -70,7 +70,7 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
 
     const { cronPattern } = feedSettings;
 
-    logInfo(`Scheduling feed check`, { dataDirString, cronPattern });
+    logInfo(`Scheduling feed check`, { dataDirString, feedSettings });
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
