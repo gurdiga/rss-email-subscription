@@ -267,7 +267,7 @@ mailq-report:
 	| ifne bash -c send_report
 
 new-website:
-	cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build
+	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build )
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
 
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
