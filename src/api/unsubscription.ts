@@ -36,7 +36,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
 
   if (!emailSubscribed) {
     logWarning('Email not found by hash', { emailHash });
-    return makeInputError('Email is not subscribed. 🤔');
+    return makeInputError('Solidly unsubscribed.');
   }
 
   storedEmails.validEmails = validEmails.filter((x) => x.saltedHash !== emailHash);
