@@ -313,3 +313,11 @@ format-check:
 clean: stop
 	docker image rm --force app
 	rm -rf website/html/
+
+init-data-dir:
+	@if [ -v DATA_DIR_ROOT ]; then
+		set -e
+		mkdir $$DATA_DIR_ROOT/feeds
+		mkdir $$DATA_DIR_ROOT/accounts
+		echo "Initialized data dir: $$DATA_DIR_ROOT"
+	fi
