@@ -8,16 +8,16 @@ import { AppRequestHandler } from './shared';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, dataDirRoot) {
   const { plan, email, password } = reqBody;
-  const inputProcessingResult = processInput({ plan, email, password });
+  const processInputResult = processInput({ plan, email, password });
 
-  if (isErr(inputProcessingResult)) {
-    return makeInputError(inputProcessingResult.reason);
+  if (isErr(processInputResult)) {
+    return makeInputError(processInputResult.reason);
   }
 
-  const initResult = await initAccount(dataDirRoot, inputProcessingResult);
+  const initAccountResult = initAccount(dataDirRoot, processInputResult);
 
-  if (isErr(initResult)) {
-    return makeAppError(initResult.reason);
+  if (isErr(initAccountResult)) {
+    return makeAppError(initAccountResult.reason);
   }
 
   return makeSuccess('Account created. Welcome aboard! 🙂');
@@ -123,7 +123,7 @@ export function makeNewPassword(password: string): Result<NewPassword> {
   };
 }
 
-async function initAccount(dataDirRoot: string, input: ProcessedInput): Promise<Result<void>> {
+function initAccount(dataDirRoot: string, input: ProcessedInput): Result<void> {
   const { logInfo, logError } = makeCustomLoggers({
     module: `${createAccount.name}:${initAccount.name}`,
   });
@@ -138,11 +138,12 @@ async function initAccount(dataDirRoot: string, input: ProcessedInput): Promise<
     passwordHash: hash(input.password.value, hashingSalt),
   };
 
-  try {
-    await storeItem(`/accounts/${accountId}/account.json`, accountData, dataDirRoot);
-    logInfo('Created new account', accountData);
-  } catch (exception) {
-    logError(`${storeItem.name} failed`, { exception });
+  const result = storeItem(`/accounts/${accountId}/account.json`, accountData, dataDirRoot);
+
+  if (isErr(result)) {
+    logError(`${storeItem.name} failed`, { reason: result.reason });
     return makeErr('Couldn’t store account data');
   }
+
+  logInfo('Created new account', accountData);
 }
