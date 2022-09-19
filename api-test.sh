@@ -10,6 +10,8 @@ FEED_ID=gurdiga
 DATA_FILE=.tmp/development-docker-data/$FEED_ID/emails.json
 
 function main {
+	create_account
+	create_account_verify
 	subscribe_without_double_opt_in
 	subscribe_without_double_opt_in_verify
 	unsubscribe
@@ -45,6 +47,49 @@ function get {
 function get_headers {
 	# shellcheck disable=SC2145
 	curl -ks --head $BASE_URL"$@"
+}
+
+ACCOUNT_PLAN=standard
+ACCOUNT_EMAIL=blogger@test.com
+
+function create_account {
+	if post /create-account -d plan=$ACCOUNT_PLAN -d email=$ACCOUNT_EMAIL -d password=A-long-S3cre7-password; then
+		print_success
+	else
+		print_failure "POST /create-account failed: exit code $?"
+	fi
+}
+
+function create_account_verify {
+	account_file=$(
+		find "$DATA_DIR_ROOT/accounts" -name account.json |
+			while read -r account_file_path; do
+				if grep "\"email\":\"$ACCOUNT_EMAIL\"" "$account_file_path" >/dev/null; then
+					echo "$account_file_path"
+				fi
+			done
+	)
+
+	file_count=$(wc -l <<<"$account_file")
+
+	if [ "$file_count" -eq "0" ]; then
+		print_failure "Account file not found"
+	elif [ "$file_count" -gt "1" ]; then
+		print_failure "Found more than one account files with for $ACCOUNT_EMAIL"
+	fi
+
+	snapshot='{"plan":"standard","email":"blogger@test.com","hashingSalt":".+","passwordHash":".+"}'
+
+	if grep -E "$snapshot" "$account_file" >/dev/null; then
+		print_success
+	else
+		echo -e "Expected: '$snapshot'\n"
+		echo -e "Actual: '$(cat "$account_file")'\n"
+
+		print_failure 'Account file contents does not match'
+	fi
+
+	rm -vfr "$(dirname "$account_file")"
 }
 
 function subscribe {
