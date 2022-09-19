@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName } from './lang';
+import { getErrorMessage, getTypeName, makeErr } from './lang';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -56,6 +56,26 @@ describe(getErrorMessage.name, () => {
       const error = { toString: null };
 
       expect(getErrorMessage(error)).to.equal(`[UNEXPECTED ERROR OBJECT: [object Object]]`);
+    });
+  });
+});
+
+describe(makeErr.name, () => {
+  it('returns an Err value with the given string', () => {
+    const stringValue = 'Boom!';
+
+    expect(makeErr(stringValue)).to.deep.equal({
+      kind: 'Err',
+      reason: stringValue,
+    });
+  });
+
+  it('returns an Err value from a caught exception (of type unknown)', () => {
+    const error = new Error('Umm...');
+
+    expect(makeErr(error)).to.deep.equal({
+      kind: 'Err',
+      reason: error.message,
     });
   });
 });

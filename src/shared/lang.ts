@@ -9,10 +9,10 @@ export function isErr(value: any): value is Err {
   return value?.kind === 'Err';
 }
 
-export function makeErr(reason: string): Err {
+export function makeErr(reason: string | unknown): Err {
   return {
     kind: 'Err',
-    reason,
+    reason: typeof reason === 'string' ? reason : getErrorMessage(reason),
   };
 }
 
