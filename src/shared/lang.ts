@@ -49,3 +49,16 @@ export function getErrorMessage(error: unknown): string {
 
   return `[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
 }
+
+type AnyFunction = (...args: any[]) => any;
+
+/**
+ * This is me trying to shoehorn the try/catch construct into railway programming.
+ */
+export function attempt<F extends AnyFunction>(f: F): Result<ReturnType<F>> {
+  try {
+    return f();
+  } catch (error) {
+    return makeErr(error);
+  }
+}
