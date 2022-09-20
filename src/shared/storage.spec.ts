@@ -28,18 +28,18 @@ describe(makeStorage.name, () => {
     });
 
     it('returns an Err value when can’t create directory structure', () => {
-      const errorMessage = 'Can’t create directory structure!!';
+      const errorMessage = 'No space left on device!!';
       const mkdirpFn = makeStub<MkdirpFn>(() => {
         throw new Error(errorMessage);
       });
       const result = storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
       expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'tries to create the necessary directory structure');
-      expect(result).to.deep.equal(makeErr(errorMessage));
+      expect(result).to.deep.equal(makeErr('Can’t create storage directory structure: No space left on device!!'));
     });
 
     it('returns an Err value when can’t write file', () => {
-      const errorMessage = 'Can’t write file!!';
+      const errorMessage = 'Disk is full!!';
       const writeFileFn = makeStub<WriteFileFn>(() => {
         throw new Error(errorMessage);
       });
@@ -49,7 +49,7 @@ describe(makeStorage.name, () => {
         ['/data/path/destination.json', JSON.stringify(value)],
         'stores data in the given file'
       );
-      expect(result).to.deep.equal(makeErr(errorMessage));
+      expect(result).to.deep.equal(makeErr(`Couldn’t write file: Disk is full!!`));
     });
   });
 
