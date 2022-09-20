@@ -7,7 +7,7 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { storeEmails } from './subscription';
 
 export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
-  const { logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
 
@@ -33,6 +33,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
 
   const { validEmails } = storedEmails;
   const emailSubscribed = validEmails.some((x) => x.saltedHash === emailHash);
+  const email = validEmails.find((x) => x.saltedHash === emailHash);
 
   if (!emailSubscribed) {
     logWarning('Email not found by hash', { emailHash });
@@ -47,6 +48,8 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
     logError('Can’t store emails on unsubscribe', { reason: storeResult.reason });
     return makeAppError('Database write error: registering unsubscription failed');
   }
+
+  logInfo('Unsubscribed', { email: email?.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
