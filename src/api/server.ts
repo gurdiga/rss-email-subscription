@@ -9,6 +9,7 @@ import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 import { basename } from 'path';
 import { createAccount } from './create-account';
+import { makeStorage } from '../shared/storage';
 
 async function main() {
   const port = 3000;
@@ -59,7 +60,8 @@ async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHa
 
     logInfo(action, { reqId, action, reqBody, reqParams, dataDirRoot });
 
-    const result = await handler(reqId, reqBody, reqParams, dataDirRoot);
+    const storage = makeStorage(dataDirRoot);
+    const result = await handler(reqId, reqBody, reqParams, dataDirRoot, storage);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);

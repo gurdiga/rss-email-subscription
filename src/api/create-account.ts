@@ -3,10 +3,16 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { getRandomString, hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { storeItem } from '../shared/storage';
+import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './shared';
 
-export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, dataDirRoot) {
+export const createAccount: AppRequestHandler = async function createAccount(
+  _reqId,
+  reqBody,
+  _reqParams,
+  _dataDirRoot,
+  storage
+) {
   const { plan, email, password } = reqBody;
   const processInputResult = processInput({ plan, email, password });
 
@@ -14,7 +20,7 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeInputError(processInputResult.reason);
   }
 
-  const initAccountResult = initAccount(dataDirRoot, processInputResult);
+  const initAccountResult = initAccount(storage!, processInputResult);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);
@@ -123,7 +129,7 @@ export function makeNewPassword(password: string): Result<NewPassword> {
   };
 }
 
-function initAccount(dataDirRoot: string, input: ProcessedInput): Result<void> {
+function initAccount(storage: AppStorage, input: ProcessedInput): Result<void> {
   const { logInfo, logError } = makeCustomLoggers({
     module: `${createAccount.name}:${initAccount.name}`,
   });
@@ -138,10 +144,10 @@ function initAccount(dataDirRoot: string, input: ProcessedInput): Result<void> {
     passwordHash: hash(input.password.value, hashingSalt),
   };
 
-  const result = storeItem(`/accounts/${accountId}/account.json`, accountData, dataDirRoot);
+  const result = storage.storeItem(`/accounts/${accountId}/account.json`, accountData);
 
   if (isErr(result)) {
-    logError(`${storeItem.name} failed`, { reason: result.reason });
+    logError(`${storage.storeItem.name} failed`, { reason: result.reason });
     return makeErr('Couldn’t store account data');
   }
 
