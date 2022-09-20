@@ -1,12 +1,14 @@
 import { EmailHash } from '../app/email-sending/emails';
 import { Result, makeErr } from '../shared/lang';
 import { ApiResponse } from '../shared/api-response';
+import { AppStorage } from '../shared/storage';
 
 export type AppRequestHandler = (
   reqId: number,
   reqBody: Record<string, any>,
   reqParams: Record<string, any>,
-  dataDirRoot: string
+  dataDirRoot: string,
+  storage?: AppStorage // TODO: Make this required
 ) => Promise<ApiResponse>;
 
 interface SubscriptionId {
