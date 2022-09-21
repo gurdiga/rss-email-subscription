@@ -5,6 +5,7 @@ import { attempt, isErr, makeErr, Result } from './lang';
 export interface AppStorage {
   storeItem: StoreItemFn;
   loadItem: LoadItemFn;
+  hasItem: HasItemFn;
 }
 
 type StoreItemFn = (
@@ -16,6 +17,7 @@ type StoreItemFn = (
 ) => Result<true>;
 
 type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
+type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
 
 type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
@@ -65,9 +67,21 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return jsonParseResult;
   };
 
+  const hasItem: HasItemFn = function hasItem(key: string, fileExistsFn = fileExists) {
+    const filePath = join(dataDirRoot, key);
+    const fileExistsResult = attempt(() => fileExistsFn(filePath));
+
+    if (isErr(fileExistsResult)) {
+      return makeErr(`Can’t check file: ${fileExistsResult.reason}`);
+    }
+
+    return fileExistsResult;
+  };
+
   return {
     storeItem,
     loadItem,
+    hasItem,
   };
 }
 
