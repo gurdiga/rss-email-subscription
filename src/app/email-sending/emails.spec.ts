@@ -13,6 +13,9 @@ import {
   StoredEmails,
   loadStoredEmails,
   maxEmailLength,
+  addEmail,
+  EmailHashFn,
+  HashedEmail,
 } from './emails';
 
 describe(parseEmails.name, () => {
@@ -89,6 +92,50 @@ describe(parseEmails.name, () => {
     };
 
     expect(result).to.deep.equal(expectedResult);
+  });
+});
+
+describe(addEmail.name, () => {
+  const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
+  const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
+
+  it('adds an email address to a StoredEmails', () => {
+    const storedEmails: StoredEmails = {
+      validEmails: [],
+      invalidEmails: [],
+    };
+
+    const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
+    const expectedHashedEmail: HashedEmail = {
+      kind: 'HashedEmail',
+      emailAddress: emailAddress,
+      saltedHash: emailHashFn(emailAddress),
+      isConfirmed: false,
+    };
+
+    expect(newEmails.validEmails).to.have.lengthOf(1);
+    expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
+    expect(newEmails.invalidEmails).to.be.empty;
+  });
+
+  it('marks the email as confirmed when skipping double-opt-in', () => {
+    const storedEmails: StoredEmails = {
+      validEmails: [],
+      invalidEmails: [],
+    };
+    const skipDoubleOptIn = true;
+
+    const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, skipDoubleOptIn);
+    const expectedHashedEmail: HashedEmail = {
+      kind: 'HashedEmail',
+      emailAddress: emailAddress,
+      saltedHash: emailHashFn(emailAddress),
+      isConfirmed: true,
+    };
+
+    expect(newEmails.validEmails).to.have.lengthOf(1);
+    expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
+    expect(newEmails.invalidEmails).to.be.empty;
   });
 });
 

@@ -1,10 +1,9 @@
-import { loadStoredEmails } from '../app/email-sending/emails';
+import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, parseSubscriptionId } from './shared';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { storeEmails } from './subscription';
 
 export const unsubscribe: AppRequestHandler = async function unsubscribe(
   reqId,
@@ -48,7 +47,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(
 
   storedEmails.validEmails = validEmails.filter((x) => x.saltedHash !== emailHash);
 
-  const storeResult = storeEmails(storedEmails.validEmails, dataDir);
+  const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
     logError('Can’t store emails on unsubscribe', { reason: storeResult.reason });

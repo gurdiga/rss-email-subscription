@@ -233,3 +233,33 @@ function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown)
     return makeTypeMismatchErr(emailInformation, `EmailInformation object`);
   }
 }
+
+export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage: AppStorage): Result<true> {
+  const emailIndex: EmailIndex = {};
+
+  hashedEmails.forEach((e) => {
+    emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
+  });
+
+  const storageKey = `/${feedId}/${emailsFileName}`;
+  const storeItemResult = storage.storeItem(storageKey, emailIndex);
+
+  if (isErr(storeItemResult)) {
+    return makeErr(`Could not store emails: ${storeItemResult.reason}`);
+  }
+
+  return true;
+}
+
+export function addEmail(
+  storedEmails: StoredEmails,
+  emailAddress: EmailAddress,
+  emailHashFn: EmailHashFn,
+  isConfirmed = false
+): StoredEmails {
+  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn, isConfirmed);
+
+  storedEmails.validEmails.push(hashedEmail);
+
+  return storedEmails;
+}

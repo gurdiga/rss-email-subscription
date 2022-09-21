@@ -1,11 +1,17 @@
 import path from 'path';
-import { addEmail, storeEmails } from '../../api/subscription';
-import { makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
+import {
+  addEmail,
+  makeEmailHashFn,
+  readEmailListFromCsvFile,
+  StoredEmails,
+  storeEmails,
+} from '../email-sending/emails';
 import { makeDataDir } from '../../shared/data-dir';
 import { getFeedSettings } from '../../shared/feed-settings';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg, programFilePath } from '../../shared/process-utils';
+import { makeStorage } from '../../shared/storage';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
@@ -23,6 +29,7 @@ async function main(): Promise<number | undefined> {
     process.exit(1);
   }
 
+  const storage = makeStorage(dataDirRoot);
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
@@ -68,7 +75,7 @@ async function main(): Promise<number | undefined> {
     storedEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   }
 
-  const result = storeEmails(storedEmails.validEmails, dataDir);
+  const result = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });

@@ -1,10 +1,9 @@
-import { loadStoredEmails } from '../app/email-sending/emails';
+import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, parseSubscriptionId } from './shared';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { storeEmails } from './subscription';
 
 export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
   reqId,
@@ -49,7 +48,7 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
 
   registeredEmail.isConfirmed = true;
 
-  const storeResult = storeEmails(storedEmails.validEmails, dataDir);
+  const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
     logError('Can’t store emails on confirm', { reason: storeResult.reason });

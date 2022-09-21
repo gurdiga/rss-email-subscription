@@ -1,4 +1,3 @@
-import path from 'path';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import {
   makeEmailAddress,
@@ -6,19 +5,17 @@ import {
   makeEmailHashFn,
   StoredEmails,
   EmailAddress,
-  EmailHashFn,
   makeHashedEmail,
   HashedEmail,
-  makeEmailInformation,
-  EmailIndex,
   makeFullEmailAddress,
+  storeEmails,
+  addEmail,
 } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { makeDataDir, DataDir } from '../shared/data-dir';
+import { makeDataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
-import { writeFile, WriteFileFn } from '../shared/io';
-import { Result, isErr, makeErr, getErrorMessage } from '../shared/lang';
+import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppRequestHandler } from './shared';
@@ -33,7 +30,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
   }
 
   const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, skipDoubleOptIn, module: subscribe.name });
-  const { emailAddress, dataDir, feedSettings, isConfirmed } = inputProcessingResult;
+  const { emailAddress, feedSettings, isConfirmed } = inputProcessingResult;
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
@@ -59,7 +56,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
   const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, isConfirmed);
-  const result = storeEmails(newEmails.validEmails, dataDir);
+  const result = storeEmails(newEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
@@ -97,7 +94,6 @@ interface Input {
 interface ProcessedInput {
   kind: 'ProcessedInput';
   emailAddress: EmailAddress;
-  dataDir: DataDir;
   feedSettings: FeedSettings;
   isConfirmed: boolean;
 }
@@ -139,44 +135,9 @@ function processInput({
   return {
     kind: 'ProcessedInput',
     emailAddress,
-    dataDir,
     feedSettings,
     isConfirmed: !!skipDoubleOptIn,
   };
-}
-
-export function storeEmails(
-  hashedEmails: HashedEmail[],
-  dataDir: DataDir,
-  writeFileFn: WriteFileFn = writeFile
-): Result<void> {
-  const emailIndex: EmailIndex = {};
-
-  hashedEmails.forEach((e) => {
-    emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
-  });
-
-  const fileContents = JSON.stringify(emailIndex);
-  const filePath = path.join(dataDir.value, 'emails.json');
-
-  try {
-    writeFileFn(filePath, fileContents);
-  } catch (error) {
-    return makeErr(`Could not store emails: ${getErrorMessage(error)}`);
-  }
-}
-
-export function addEmail(
-  storedEmails: StoredEmails,
-  emailAddress: EmailAddress,
-  emailHashFn: EmailHashFn,
-  isConfirmed = false
-): StoredEmails {
-  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn, isConfirmed);
-
-  storedEmails.validEmails.push(hashedEmail);
-
-  return storedEmails;
 }
 
 function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmails): boolean {

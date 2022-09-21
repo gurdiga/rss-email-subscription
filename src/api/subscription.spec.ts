@@ -1,97 +1,12 @@
 import { expect } from 'chai';
-import {
-  EmailAddress,
-  EmailHashFn,
-  EmailIndex,
-  HashedEmail,
-  makeEmailAddress,
-  makeHashedEmail,
-  StoredEmails,
-} from '../app/email-sending/emails';
-import { DataDir, makeDataDir } from '../shared/data-dir';
+import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail } from '../app/email-sending/emails';
 import { DOMAIN_NAME } from '../shared/feed-settings';
-import { WriteFileFn } from '../shared/io';
-import { makeErr } from '../shared/lang';
-import { encodeSearchParamValue, makeSpy, makeThrowingStub } from '../shared/test-utils';
-import { addEmail, makeConfirmationEmailContent, makeEmailConfirmationUrl, storeEmails } from './subscription';
+import { encodeSearchParamValue } from '../shared/test-utils';
+import { makeConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
 
 describe('subscription', () => {
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
   const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
-
-  describe(addEmail.name, () => {
-    it('adds an email address to a StoredEmails', () => {
-      const storedEmails: StoredEmails = {
-        validEmails: [],
-        invalidEmails: [],
-      };
-
-      const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
-      const expectedHashedEmail: HashedEmail = {
-        kind: 'HashedEmail',
-        emailAddress: emailAddress,
-        saltedHash: emailHashFn(emailAddress),
-        isConfirmed: false,
-      };
-
-      expect(newEmails.validEmails).to.have.lengthOf(1);
-      expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
-      expect(newEmails.invalidEmails).to.be.empty;
-    });
-
-    it('marks the email as confirmed when skipping double-opt-in', () => {
-      const storedEmails: StoredEmails = {
-        validEmails: [],
-        invalidEmails: [],
-      };
-      const skipDoubleOptIn = true;
-
-      const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, skipDoubleOptIn);
-      const expectedHashedEmail: HashedEmail = {
-        kind: 'HashedEmail',
-        emailAddress: emailAddress,
-        saltedHash: emailHashFn(emailAddress),
-        isConfirmed: true,
-      };
-
-      expect(newEmails.validEmails).to.have.lengthOf(1);
-      expect(newEmails.validEmails[0]).to.deep.equal(expectedHashedEmail);
-      expect(newEmails.invalidEmails).to.be.empty;
-    });
-  });
-
-  describe(storeEmails.name, () => {
-    const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-    const newEmails: StoredEmails = {
-      validEmails: [hashedEmail],
-      invalidEmails: ['not-an-email'],
-    };
-    const dataDir: DataDir = makeDataDir('/test/feed-data-dir') as DataDir;
-
-    it('stores a StoredEmails to a DataDir', () => {
-      const writeFileFn = makeSpy<WriteFileFn>();
-      const result = storeEmails(newEmails.validEmails, dataDir, writeFileFn);
-
-      const expectedData: EmailIndex = {
-        [hashedEmail.saltedHash]: {
-          emailAddress: hashedEmail.emailAddress.value,
-          isConfirmed: hashedEmail.isConfirmed,
-        },
-      };
-
-      expect(result).to.be.undefined;
-      expect(writeFileFn.calls).to.deep.equal([[`${dataDir.value}/emails.json`, JSON.stringify(expectedData)]]);
-    });
-
-    it('reports file write errors', () => {
-      const error = new Error('No space on disk');
-      const writeFileFn = makeThrowingStub<WriteFileFn>(error);
-
-      const result = storeEmails(newEmails.validEmails, dataDir, writeFileFn);
-
-      expect(result).to.deep.equal(makeErr(`Could not store emails: ${error.message}`));
-    });
-  });
 
   describe(makeConfirmationEmailContent.name, () => {
     it('prepares the confirmation email contents', () => {
