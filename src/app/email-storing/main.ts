@@ -17,6 +17,12 @@ async function main(): Promise<number | undefined> {
   }
 
   const feedId = getFirstCliArg(process);
+
+  if (!feedId) {
+    logError(`First argument is required: feedId`);
+    process.exit(1);
+  }
+
   const dataDir = makeDataDir(feedId, dataDirRoot);
 
   if (isErr(dataDir)) {
