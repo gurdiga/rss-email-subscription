@@ -6,10 +6,10 @@ import { makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem } = makeStorage(dataDirRoot);
+  const { loadItem, storeItem, hasItem } = makeStorage(dataDirRoot);
+  const key = '/path/destination.json';
 
   describe(storeItem.name, () => {
-    const key = '/path/destination.json';
     const value = { number: 1, string: 'string', date: new Date() };
 
     const fileExistsFn = makeStub<FileExistsFn>(() => false);
@@ -54,7 +54,6 @@ describe(makeStorage.name, () => {
   });
 
   describe(loadItem.name, () => {
-    const key = '/path/destination.json';
     const value = { number: 1, string: 'string', date: new Date() };
 
     const readFileFn = makeStub<ReadFileFn>(() => JSON.stringify(value));
@@ -78,6 +77,27 @@ describe(makeStorage.name, () => {
       const result = loadItem(key, readFileFn);
 
       expect(result).to.deep.equal(makeErr('Can’t parse JSON: Unexpected token o in JSON at position 1'));
+    });
+  });
+
+  describe(hasItem.name, () => {
+    it('tells if the corresponding file exists', () => {
+      let fileExistsFn = makeStub<FileExistsFn>(() => true);
+      let result = hasItem(key, fileExistsFn);
+
+      expect(result).to.equal(true);
+
+      fileExistsFn = makeStub<FileExistsFn>(() => false);
+      result = hasItem(key, fileExistsFn);
+
+      expect(result).to.equal(false);
+    });
+
+    it('returns an Err value when can’t cheeck for some reason', () => {
+      let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Nope!!'));
+      let result = hasItem(key, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t check file: Nope!!'));
     });
   });
 });
