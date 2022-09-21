@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { DeleteFileFn, FileExistsFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
+import { DeleteFileFn, FileExistsFn, ListFilesFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
 import { makeErr } from './lang';
 import { makeStorage } from './storage';
 import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem, hasItem, removeItem } = makeStorage(dataDirRoot);
+  const { loadItem, storeItem, hasItem, removeItem, listItems } = makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = `${dataDirRoot}${key}`;
 
@@ -136,6 +136,33 @@ describe(makeStorage.name, () => {
       result = removeItem(key, deleteFileFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Can’t delete file: Boom on delete!!'));
+    });
+  });
+
+  describe(listItems.name, () => {
+    it('returns the list of files at the given path', () => {
+      const fileNames = ['one.json', 'two.json', 'three.json'];
+      const listFilesFn = makeStub<ListFilesFn>(() => fileNames);
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+      const result = listItems('/key', listFilesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(fileNames);
+    });
+
+    it('returns an Err value when fail to check the key exists', () => {
+      const listFilesFn = makeStub<ListFilesFn>(() => []);
+      const fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom!?'));
+      const result = listItems('/key', listFilesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t check file exists: Boom!?'));
+    });
+
+    it('returns an Err value when fail to list files', () => {
+      const listFilesFn = makeThrowingStub<ListFilesFn>(new Error('Boom on list files!?'));
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+      const result = listItems('/key', listFilesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t list files: Boom on list files!?'));
     });
   });
 });

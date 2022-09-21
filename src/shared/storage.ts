@@ -4,6 +4,8 @@ import {
   DeleteFileFn,
   fileExists,
   FileExistsFn,
+  listFiles,
+  ListFilesFn,
   mkdirp,
   MkdirpFn,
   readFile,
@@ -18,6 +20,7 @@ export interface AppStorage {
   loadItem: LoadItemFn; // TODO: Rename to getItem to align to align with Web storage
   hasItem: HasItemFn;
   removeItem: RemoveItemFn;
+  listItems: ListItemsFn;
 }
 
 type StoreItemFn = (
@@ -31,6 +34,7 @@ type StoreItemFn = (
 type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
 type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
 type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<true>;
+type ListItemsFn = (key: StorageKey, lisstFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
 
 type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
@@ -80,7 +84,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return jsonParseResult;
   };
 
-  const hasItem: HasItemFn = function hasItem(key: string, fileExistsFn = fileExists) {
+  const hasItem: HasItemFn = function hasItem(key, fileExistsFn = fileExists) {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -91,11 +95,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return fileExistsResult;
   };
 
-  const removeItem: RemoveItemFn = function removeItem(
-    key: string,
-    deleteFileFn = deleteFile,
-    fileExistsFn = fileExists
-  ) {
+  const removeItem: RemoveItemFn = function removeItem(key, deleteFileFn = deleteFile, fileExistsFn = fileExists) {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -116,11 +116,29 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return true;
   };
 
+  const listItems: ListItemsFn = function listItems(key, listFilesFn = listFiles, fileExistsFn = fileExists) {
+    const filePath = join(dataDirRoot, key);
+    const fileExistsResult = attempt(() => fileExistsFn(filePath));
+
+    if (isErr(fileExistsResult)) {
+      return makeErr(`Can’t check file exists: ${fileExistsResult.reason}`);
+    }
+
+    const listFilesResult = attempt(() => listFilesFn(filePath));
+
+    if (isErr(listFilesResult)) {
+      return makeErr(`Can’t list files: ${listFilesResult.reason}`);
+    }
+
+    return listFilesResult;
+  };
+
   return {
     storeItem,
     loadItem,
     hasItem,
     removeItem,
+    listItems,
   };
 }
 
