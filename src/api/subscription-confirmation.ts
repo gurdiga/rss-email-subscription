@@ -10,7 +10,8 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
   reqId,
   reqBody,
   _reqParams,
-  dataDirRoot
+  dataDirRoot,
+  storage
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
   const { id } = reqBody;

@@ -6,7 +6,13 @@ import { AppRequestHandler, parseSubscriptionId } from './shared';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { storeEmails } from './subscription';
 
-export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+export const unsubscribe: AppRequestHandler = async function unsubscribe(
+  reqId,
+  reqBody,
+  _reqParams,
+  dataDirRoot,
+  storage
+) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
@@ -58,7 +64,8 @@ export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscri
   reqId,
   _reqBody,
   reqParams,
-  dataDirRoot
+  dataDirRoot,
+  storage
 ) {
-  return unsubscribe(reqId, reqParams, {}, dataDirRoot);
+  return unsubscribe(reqId, reqParams, {}, dataDirRoot, storage);
 };

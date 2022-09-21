@@ -24,7 +24,7 @@ import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppRequestHandler } from './shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 
-export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot) {
+export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot, storage) {
   const { feedId, email, skipDoubleOptIn } = reqBody;
   const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot, skipDoubleOptIn });
 

@@ -7,8 +7,8 @@ export type AppRequestHandler = (
   reqId: number,
   reqBody: Record<string, any>,
   reqParams: Record<string, any>,
-  dataDirRoot: string,
-  storage?: AppStorage // TODO: Make this required
+  dataDirRoot: string, // TODO: drop this when not used any more
+  storage: AppStorage
 ) => Promise<ApiResponse>;
 
 interface SubscriptionId {
