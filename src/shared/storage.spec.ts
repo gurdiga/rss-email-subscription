@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { FileExistsFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
 import { makeErr } from './lang';
 import { makeStorage } from './storage';
-import { makeStub } from './test-utils';
+import { makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
@@ -65,7 +65,19 @@ describe(makeStorage.name, () => {
       expect(result).to.deep.equal(value);
     });
 
-    it('returns an Err value when can’t read settings.json file');
-    it('returns an Err value when can’t parse settings.json contents');
+    it('returns an Err value when can’t read file', () => {
+      const error = new Error('Permission denied!!');
+      const readFileFn = makeThrowingStub<ReadFileFn>(error);
+      const result = loadItem(key, readFileFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t read file: Permission denied!!'));
+    });
+
+    it('returns an Err value when can’t parse JSON contents', () => {
+      const readFileFn = makeStub<ReadFileFn>(() => 'non-json-string');
+      const result = loadItem(key, readFileFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t parse JSON: Unexpected token o in JSON at position 1'));
+    });
   });
 });
