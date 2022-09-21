@@ -54,7 +54,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(
     return makeAppError('Database write error: registering unsubscription failed');
   }
 
-  logInfo('Unsubscribed', { email: email?.emailAddress.value });
+  logInfo('Unsubscribed', { feedId, email: email?.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
