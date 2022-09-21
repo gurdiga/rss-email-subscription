@@ -1,13 +1,10 @@
-import path from 'path';
-import { DataDir } from '../../shared/data-dir';
 import { RssItem } from '../../shared/rss-item';
-import { WriteFileFn, writeFile } from '../../shared/io';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
-import { makeErr, Result } from '../../shared/lang';
+import { isErr, makeErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
 
 export function getLastPostMetadata(feedId: string, storage: AppStorage): Result<LastPostMetadata | undefined> {
-  const storageKey = `/${feedId}/lastPostMetadata.json`;
+  const storageKey = getStorageKey(feedId);
 
   if (!storage.hasItem(storageKey)) {
     return;
@@ -35,9 +32,9 @@ export interface LastPostMetadata {
 }
 
 export function recordLastPostMetadata(
-  dataDir: DataDir,
-  items: RssItem[],
-  writeFileFn: WriteFileFn = writeFile
+  feedId: string,
+  storage: AppStorage,
+  items: RssItem[]
 ): Result<LastPostMetadata | undefined> {
   if (isEmpty(items)) {
     return;
@@ -49,18 +46,16 @@ export function recordLastPostMetadata(
     guid: lastItem.guid,
   };
 
-  const filePath = getLastPostMetadataFileName(dataDir);
-  const fileContent = JSON.stringify(metadata);
+  const storageKey = getStorageKey(feedId);
+  const storeItemResult = storage.storeItem(storageKey, metadata);
 
-  try {
-    writeFileFn(filePath, fileContent);
-
-    return metadata;
-  } catch (error) {
-    return makeErr(`Cant record last post timestamp: ${error}, content: ${fileContent}`);
+  if (isErr(storeItemResult)) {
+    return makeErr(`Cant record last post timestamp: ${storeItemResult.reason}`);
   }
+
+  return metadata;
 }
 
-function getLastPostMetadataFileName(dataDir: DataDir) {
-  return path.join(dataDir.value, 'lastPostMetadata.json');
+function getStorageKey(feedId: string) {
+  return `/${feedId}/lastPostMetadata.json`;
 }

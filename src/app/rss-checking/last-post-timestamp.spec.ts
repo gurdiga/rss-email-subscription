@@ -1,17 +1,13 @@
 import { expect } from 'chai';
-import { makeDataDir, DataDir } from '../../shared/data-dir';
-import { WriteFileFn } from '../../shared/io';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
 import { AppStorage, makeStorage } from '../../shared/storage';
-import { makeSpy, makeStub, makeThrowingStub } from '../../shared/test-utils';
+import { makeSpy, makeStub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
-  const dataDirPathString = '/some/path';
-  const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
   const dataDirRoot = '/data';
   const feedId = 'testblog';
   const storage = {
@@ -102,36 +98,34 @@ describe('Last post timestamp', () => {
       pubDate: lastPost.pubDate,
       guid: lastPost.guid,
     };
-    const expectedFileContent = JSON.stringify(expectedLastPostMetadata);
 
     it('writes pubDate of the last item to lastPostMetadata.json', () => {
-      const writeFileFn = makeSpy<WriteFileFn>();
+      const storageStub = { ...storage, storeItem: makeSpy<AppStorage['storeItem']>() };
       const initialRssItems = [...mockRssItems];
-
-      const result = recordLastPostMetadata(mockDataDir, mockRssItems, writeFileFn);
+      const result = recordLastPostMetadata(feedId, storageStub, mockRssItems);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
-      expect(writeFileFn.calls).to.deep.equal([[`${mockDataDir.value}/lastPostMetadata.json`, expectedFileContent]]);
+      expect(storageStub.storeItem.calls).to.deep.equal([
+        [`/${feedId}/lastPostMetadata.json`, expectedLastPostMetadata],
+      ]);
       expect(result).to.deep.equal(expectedLastPostMetadata);
     });
 
     it('reports the error when can’t write file', () => {
-      const mockError = new Error('No write access');
-      const writeFileFn = makeThrowingStub<WriteFileFn>(mockError);
-      const result = recordLastPostMetadata(mockDataDir, mockRssItems, writeFileFn);
+      const mockError = 'No write access';
+      const storageStub = { ...storage, storeItem: makeStub<AppStorage['storeItem']>(() => makeErr(mockError)) };
+      const result = recordLastPostMetadata(feedId, storageStub, mockRssItems);
 
-      expect(result).to.deep.equal(
-        makeErr(`Cant record last post timestamp: ${mockError}, content: ${expectedFileContent}`)
-      );
+      expect(result).to.deep.equal(makeErr(`Cant record last post timestamp: ${mockError}`));
     });
 
     it('does nothing when there are no items', () => {
-      const writeFileFn = makeSpy<WriteFileFn>();
+      const storageStub = { ...storage, storeItem: makeSpy<AppStorage['storeItem']>() };
       const newRssItems: RssItem[] = [];
 
-      recordLastPostMetadata(mockDataDir, newRssItems, writeFileFn);
+      recordLastPostMetadata(feedId, storageStub, newRssItems);
 
-      expect(writeFileFn.calls).to.be.empty;
+      expect(storageStub.storeItem.calls).to.be.empty;
     });
   });
 });

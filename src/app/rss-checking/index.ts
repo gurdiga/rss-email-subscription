@@ -75,7 +75,7 @@ export async function checkRss(
 
   logInfo(`Feed checking report`, { report });
 
-  const result = recordLastPostMetadata(dataDir, newItems);
+  const result = recordLastPostMetadata(feedId, storage, newItems);
 
   if (isErr(result)) {
     logError(`Failed recording last post metadata`, { reason: result.reason });
