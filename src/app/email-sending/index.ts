@@ -94,7 +94,7 @@ export async function sendEmails(
       }
     }
 
-    const deletionResult = deleteItem(dataDir, storedItem);
+    const deletionResult = deleteItem(feedId, storage, storedItem);
 
     if (isErr(deletionResult)) {
       logError(deletionResult.reason);

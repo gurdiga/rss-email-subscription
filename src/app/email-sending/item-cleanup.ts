@@ -1,20 +1,15 @@
-import path from 'path';
 import { inboxDirName } from '../rss-checking/new-item-recording';
-import { DataDir } from '../../shared/data-dir';
-import { deleteFile, DeleteFileFn } from '../../shared/io';
-import { getErrorMessage, makeErr, Result } from '../../shared/lang';
+import { isErr, makeErr, Result } from '../../shared/lang';
 import { ValidStoredRssItem } from './rss-item-reading';
+import { AppStorage } from '../../shared/storage';
 
-export function deleteItem(
-  dataDir: DataDir,
-  storedRssItem: ValidStoredRssItem,
-  deleteFileFn: DeleteFileFn = deleteFile
-): Result<void> {
-  const itemFilePath = path.join(dataDir.value, inboxDirName, storedRssItem.fileName);
+export function deleteItem(feedId: string, storage: AppStorage, storedRssItem: ValidStoredRssItem): Result<true> {
+  const storageKey = `/${feedId}/${inboxDirName}/${storedRssItem.fileName}`;
+  const removeItemResult = storage.removeItem(storageKey);
 
-  try {
-    deleteFileFn(itemFilePath);
-  } catch (error) {
-    return makeErr(`Can’t delete sent item file ${itemFilePath}: ${getErrorMessage(error)}`);
+  if (isErr(removeItemResult)) {
+    return makeErr(`Can’t delete stored RSS item: ${removeItemResult.reason}`);
   }
+
+  return true;
 }

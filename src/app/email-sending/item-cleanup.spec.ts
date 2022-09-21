@@ -1,14 +1,14 @@
 import { expect } from 'chai';
-import { DataDir, makeDataDir } from '../../shared/data-dir';
-import { DeleteFileFn } from '../../shared/io';
 import { makeErr } from '../../shared/lang';
-import { makeSpy, makeThrowingStub } from '../../shared/test-utils';
+import { AppStorage, makeStorage } from '../../shared/storage';
+import { makeStub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { ValidStoredRssItem } from './rss-item-reading';
 
 describe(deleteItem.name, () => {
-  const dataDirPathString = '/some/path';
-  const dataDir = makeDataDir(dataDirPathString) as DataDir;
+  const dataDirRoot = '/test-data';
+  const feedId = 'testblog';
+  const storage = makeStorage(dataDirRoot);
 
   const storedRssItem: ValidStoredRssItem = {
     kind: 'ValidStoredRssItem',
@@ -24,21 +24,18 @@ describe(deleteItem.name, () => {
     fileName: 'rss-item-hash.json',
   };
 
-  it('removes the given item from the given dataDir', () => {
-    const deleteFileFn = makeSpy<DeleteFileFn>();
-    const result = deleteItem(dataDir, storedRssItem, deleteFileFn);
+  it('removes the corresponding item from storage', () => {
+    const storageStub = { ...storage, removeItem: makeStub<AppStorage['removeItem']>(() => true) };
+    const result = deleteItem(feedId, storageStub, storedRssItem);
 
-    expect(deleteFileFn.calls).to.deep.equal([[`${dataDirPathString}/inbox/${storedRssItem.fileName}`]]);
-    expect(result).to.be.undefined;
+    expect(storageStub.removeItem.calls).to.deep.equal([[`/${feedId}/inbox/${storedRssItem.fileName}`]]);
+    expect(result).to.be.true;
   });
 
-  it('returns an Err value when can’t delete (maybe it’s not there?)', () => {
-    const error = new Error('Can’t access?!');
-    const mockDeleteFileFn = makeThrowingStub<DeleteFileFn>(error);
+  it('returns an Err value when can’t delete', () => {
+    const storageStub = { ...storage, removeItem: makeStub<AppStorage['removeItem']>(() => makeErr('Can’t delete!!')) };
+    const result = deleteItem(feedId, storageStub, storedRssItem);
 
-    const result = deleteItem(dataDir, storedRssItem, mockDeleteFileFn);
-    expect(result).to.deep.equal(
-      makeErr(`Can’t delete sent item file ${dataDirPathString}/inbox/${storedRssItem.fileName}: ${error.message}`)
-    );
+    expect(result).to.deep.equal(makeErr(`Can’t delete stored RSS item: Can’t delete!!`));
   });
 });
