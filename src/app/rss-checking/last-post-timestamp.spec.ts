@@ -1,8 +1,9 @@
 import { expect } from 'chai';
 import { makeDataDir, DataDir } from '../../shared/data-dir';
-import { FileExistsFn, ReadFileFn, WriteFileFn } from '../../shared/io';
+import { WriteFileFn } from '../../shared/io';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
+import { AppStorage, makeStorage } from '../../shared/storage';
 import { makeSpy, makeStub, makeThrowingStub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
@@ -11,17 +12,21 @@ describe('Last post timestamp', () => {
   const aGuid = 'some-GUID-string';
   const dataDirPathString = '/some/path';
   const mockDataDir = makeDataDir(dataDirPathString) as DataDir;
+  const dataDirRoot = '/data';
+  const feedId = 'testblog';
+  const storage = {
+    ...makeStorage(dataDirRoot),
+    hasItem: makeStub<AppStorage['hasItem']>(() => true),
+  };
 
   describe(getLastPostMetadata.name, () => {
-    const fileExistsFn = makeStub<FileExistsFn>(() => true);
-
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
       const lastPostMetadata: LastPostMetadata = {
         pubDate: aTimestamp,
         guid: aGuid,
       };
-      const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
-      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
+      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => lastPostMetadata) };
+      const result = getLastPostMetadata(feedId, storageStub);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,
@@ -29,38 +34,22 @@ describe('Last post timestamp', () => {
       };
 
       expect(result).to.deep.equal(expectedResult);
-      expect(fileReaderFn.calls).to.deep.equal([[`${dataDirPathString}/lastPostMetadata.json`]]);
-    });
-
-    it('returns an Err value when can’t read lastPostMetadata.json', () => {
-      const fileReaderFn = makeThrowingStub<ReadFileFn>(new Error('Some IO error?!'));
-      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
-
-      expect(result).to.deep.equal(makeErr(`Can’t read ${dataDirPathString}/lastPostMetadata.json: Some IO error?!`));
+      expect(storageStub.loadItem.calls).to.deep.equal([[`/${feedId}/lastPostMetadata.json`]]);
     });
 
     it('returns undefined value when lastPostMetadata.json does not exist', () => {
-      const fileExistsFn = makeStub<FileExistsFn>(() => false);
-      const result = getLastPostMetadata(mockDataDir, undefined, fileExistsFn);
+      const storageStub = { ...storage, hasItem: makeStub<AppStorage['hasItem']>(() => false) };
+      const result = getLastPostMetadata(feedId, storageStub);
 
       expect(result).to.be.undefined;
     });
 
-    it('returns an Err value when lastPostMetadata.json does not contain valid JSON', () => {
-      const nonJsonString = 'not a valid JSON string';
-      const fileReaderFn = makeStub<ReadFileFn>(() => nonJsonString);
-      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
-
-      expect(result).to.deep.equal(
-        makeErr(`Invalid JSON in ${dataDirPathString}/lastPostMetadata.json: ${nonJsonString}`)
-      );
-    });
-
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
-      const fileReaderFn = makeStub<ReadFileFn>(() => '{"pubDate": "not a JSON date"}');
-      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
+      const storedValue = { pubDate: new Date('not a JSON date') };
+      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => storedValue) };
+      const result = getLastPostMetadata(feedId, storageStub);
 
-      expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${dataDirPathString}/lastPostMetadata.json`));
+      expect(result).to.deep.equal(makeErr(`Invalid timestamp in /${feedId}/lastPostMetadata.json`));
     });
 
     it('defaults guid to empty string', () => {
@@ -68,8 +57,8 @@ describe('Last post timestamp', () => {
         pubDate: aTimestamp,
         guid: undefined as any as string,
       };
-      const fileReaderFn = makeStub<ReadFileFn>(() => JSON.stringify(lastPostMetadata));
-      const result = getLastPostMetadata(mockDataDir, fileReaderFn, fileExistsFn);
+      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => lastPostMetadata) };
+      const result = getLastPostMetadata(feedId, storageStub);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,

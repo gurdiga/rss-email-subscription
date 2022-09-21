@@ -1,45 +1,32 @@
 import path from 'path';
 import { DataDir } from '../../shared/data-dir';
 import { RssItem } from '../../shared/rss-item';
-import { readFile, ReadFileFn, FileExistsFn, fileExists, WriteFileFn, writeFile } from '../../shared/io';
+import { WriteFileFn, writeFile } from '../../shared/io';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
-import { getErrorMessage, makeErr, Result } from '../../shared/lang';
+import { makeErr, Result } from '../../shared/lang';
+import { AppStorage } from '../../shared/storage';
 
-export function getLastPostMetadata(
-  dataDir: DataDir,
-  readFileFn: ReadFileFn = readFile,
-  fileExistsFn: FileExistsFn = fileExists
-): Result<LastPostMetadata | undefined> {
-  const filePath = getLastPostMetadataFileName(dataDir);
+export function getLastPostMetadata(feedId: string, storage: AppStorage): Result<LastPostMetadata | undefined> {
+  const storageKey = `/${feedId}/lastPostMetadata.json`;
 
-  if (!fileExistsFn(filePath)) {
+  if (!storage.hasItem(storageKey)) {
     return;
   }
 
-  try {
-    const jsonString = readFileFn(filePath);
+  const data = storage.loadItem(storageKey);
+  const pubDate = new Date(data.pubDate);
 
-    try {
-      const data = JSON.parse(jsonString);
-      const pubDate = new Date(data.pubDate);
-
-      if (pubDate.toString() === 'Invalid Date') {
-        return makeErr(`Invalid timestamp in ${filePath}`);
-      }
-
-      const defaultGuid = '';
-      const guid = data.guid || defaultGuid;
-
-      return {
-        pubDate,
-        guid,
-      };
-    } catch (jsonParsingError) {
-      return makeErr(`Invalid JSON in ${filePath}: ${jsonString}`);
-    }
-  } catch (ioError) {
-    return makeErr(`Can’t read ${filePath}: ${getErrorMessage(ioError)}`);
+  if (pubDate.toString() === 'Invalid Date') {
+    return makeErr(`Invalid timestamp in ${storageKey}`);
   }
+
+  const defaultGuid = '';
+  const guid = data.guid || defaultGuid;
+
+  return {
+    pubDate,
+    guid,
+  };
 }
 
 export interface LastPostMetadata {

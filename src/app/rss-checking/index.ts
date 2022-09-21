@@ -14,7 +14,7 @@ import { fetchRss } from './rss-response';
 export async function checkRss(
   dataDir: DataDir,
   feedSettings: FeedSettings,
-  _storage: AppStorage
+  storage: AppStorage
 ): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
   const feedDisplayName = feedSettings.displayName;
@@ -45,7 +45,7 @@ export async function checkRss(
     return 1;
   }
 
-  let lastPostMetadata = getLastPostMetadata(dataDir);
+  let lastPostMetadata = getLastPostMetadata(feedId, storage);
 
   if (isErr(lastPostMetadata)) {
     logError(`Failed reading last post metadata`, { reason: lastPostMetadata.reason });
