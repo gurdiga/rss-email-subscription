@@ -1,11 +1,23 @@
 import { dirname, join } from 'node:path';
-import { fileExists, FileExistsFn, mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn } from './io';
+import {
+  deleteFile,
+  DeleteFileFn,
+  fileExists,
+  FileExistsFn,
+  mkdirp,
+  MkdirpFn,
+  readFile,
+  ReadFileFn,
+  writeFile,
+  WriteFileFn,
+} from './io';
 import { attempt, isErr, makeErr, Result } from './lang';
 
 export interface AppStorage {
   storeItem: StoreItemFn;
   loadItem: LoadItemFn;
   hasItem: HasItemFn;
+  removeItem: RemoveItemFn;
 }
 
 type StoreItemFn = (
@@ -18,6 +30,7 @@ type StoreItemFn = (
 
 type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
 type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
+type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<true>;
 
 type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
@@ -78,10 +91,36 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return fileExistsResult;
   };
 
+  const removeItem: RemoveItemFn = function removeItem(
+    key: string,
+    deleteFileFn = deleteFile,
+    fileExistsFn = fileExists
+  ) {
+    const filePath = join(dataDirRoot, key);
+    const fileExistsResult = attempt(() => fileExistsFn(filePath));
+
+    if (isErr(fileExistsResult)) {
+      return makeErr(`Can’t check file exists: ${fileExistsResult.reason}`);
+    }
+
+    if (fileExistsResult === false) {
+      return true;
+    }
+
+    const deleteFileResult = attempt(() => deleteFileFn(filePath));
+
+    if (isErr(deleteFileResult)) {
+      return makeErr(`Can’t delete file: ${deleteFileResult.reason}`);
+    }
+
+    return true;
+  };
+
   return {
     storeItem,
     loadItem,
     hasItem,
+    removeItem,
   };
 }
 
