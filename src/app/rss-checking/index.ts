@@ -4,13 +4,18 @@ import { DataDir } from '../../shared/data-dir';
 import { FeedSettings } from '../../shared/feed-settings';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
+import { AppStorage } from '../../shared/storage';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function checkRss(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+export async function checkRss(
+  dataDir: DataDir,
+  feedSettings: FeedSettings,
+  _storage: AppStorage
+): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
   const feedDisplayName = feedSettings.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });

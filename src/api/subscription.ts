@@ -41,7 +41,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
     return makeAppError('Environment error');
   }
 
-  const storedEmails = loadStoredEmails(dataDir);
+  const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { reason: storedEmails.reason });

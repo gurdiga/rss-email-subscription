@@ -10,8 +10,13 @@ import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { FeedSettings } from '../../shared/feed-settings';
 import { basename } from 'path';
+import { AppStorage } from '../../shared/storage';
 
-export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): Promise<number | undefined> {
+export async function sendEmails(
+  dataDir: DataDir,
+  feedSettings: FeedSettings,
+  storage: AppStorage
+): Promise<number | undefined> {
   const feedId = basename(dataDir.value);
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
@@ -41,7 +46,7 @@ export async function sendEmails(dataDir: DataDir, feedSettings: FeedSettings): 
   }
 
   const { fromAddress } = feedSettings;
-  const storedEmails = loadStoredEmails(dataDir);
+  const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
     logError(`Could not read emails`, { reason: storedEmails.reason });

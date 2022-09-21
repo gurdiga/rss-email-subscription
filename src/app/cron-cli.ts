@@ -5,6 +5,7 @@ import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
+import { makeStorage } from '../shared/storage';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
 const dataDirRoot = process.env['DATA_DIR_ROOT'];
@@ -14,6 +15,7 @@ if (!dataDirRoot) {
   process.exit(1);
 }
 
+const storage = makeStorage(dataDirRoot);
 const command = getFirstCliArg(process) || '[missing-command]';
 
 if (!['rss-checking', 'email-sending'].includes(command)) {
@@ -43,7 +45,7 @@ if (feedSettings.kind === 'FeedNotFound') {
   process.exit(1);
 }
 
-main(dataDir, feedSettings).then((exitCode) => process.exit(exitCode));
+main(dataDir, feedSettings, storage).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {
   logError(`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);

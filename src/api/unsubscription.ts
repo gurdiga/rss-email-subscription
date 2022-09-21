@@ -30,7 +30,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(
     return makeAppError('Invalid confirmation link');
   }
 
-  const storedEmails = loadStoredEmails(dataDir);
+  const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { reason: storedEmails.reason });

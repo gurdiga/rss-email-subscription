@@ -1,7 +1,5 @@
-import path from 'path';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
-import { DataDir } from '../../shared/data-dir';
 import { readFile, ReadFileFn } from '../../shared/io';
 import {
   getErrorMessage,
@@ -13,6 +11,7 @@ import {
   Result,
 } from '../../shared/lang';
 import { isObject } from '../../shared/object-utils';
+import { AppStorage } from '../../shared/storage';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -165,42 +164,32 @@ function isHashedEmail(value: any): value is HashedEmail {
   return value.kind === 'HashedEmail';
 }
 
-export function loadStoredEmails(dataDir: DataDir, readFileFn: ReadFileFn = readFile): Result<StoredEmails> {
-  const filePath = path.join(dataDir.value, emailsFileName);
+export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails> {
+  const storageKey = `/${feedId}/${emailsFileName}`;
+  const index = storage.loadItem(storageKey);
 
-  try {
-    const json = readFileFn(filePath);
-
-    try {
-      const index = JSON.parse(json) as EmailIndex;
-
-      if (getTypeName(index) !== 'object') {
-        return makeErr(
-          'Email index JSON is expected to be an object with hashes as keys and emails or email info as values'
-        );
-      }
-
-      const results = Object.entries(index).map(([key, value]) => {
-        if (typeof value === 'string') {
-          return parseSimpleIndexEntry(key, value);
-        } else {
-          return parseExtendedIndexEntry(key, value);
-        }
-      });
-
-      const validEmails = results.filter(isHashedEmail);
-      const invalidEmails = results.filter(isErr).map((error) => error.reason);
-
-      return {
-        validEmails,
-        invalidEmails,
-      };
-    } catch (error) {
-      return makeErr(`Invalid JSON in ${filePath}`);
-    }
-  } catch (error) {
-    return makeErr(`Can’t read file ${filePath}: ${getErrorMessage(error)}`);
+  if (isErr(index)) {
+    // TODO: Log error?
+    return makeErr(`Could not read email list at ${storageKey}`);
   }
+
+  const indexTypeName = getTypeName(index);
+
+  if (indexTypeName !== 'object') {
+    return makeErr(`Invalid email list format: ${indexTypeName} at ${storageKey} for feedId ${feedId}`);
+  }
+
+  const results = Object.entries(index).map(([key, value]) =>
+    typeof value === 'string' ? parseSimpleIndexEntry(key, value) : parseExtendedIndexEntry(key, value)
+  );
+
+  const validEmails = results.filter(isHashedEmail);
+  const invalidEmails = results.filter(isErr).map((error) => error.reason);
+
+  return {
+    validEmails,
+    invalidEmails,
+  };
 }
 
 function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {

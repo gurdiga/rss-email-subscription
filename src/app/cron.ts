@@ -7,6 +7,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeDataDir } from '../shared/data-dir';
+import { AppStorage, makeStorage } from '../shared/storage';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -20,13 +21,14 @@ function main() {
     return;
   }
 
-  let cronJobs = scheduleFeedChecks(dataDirRoot);
+  const storage = makeStorage(dataDirRoot);
+  let cronJobs = scheduleFeedChecks(dataDirRoot, storage);
 
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will reload.');
 
     cronJobs.forEach((j) => j.stop());
-    cronJobs = scheduleFeedChecks(dataDirRoot);
+    cronJobs = scheduleFeedChecks(dataDirRoot, storage);
   });
 
   process.on('SIGTERM', () => {
@@ -36,7 +38,7 @@ function main() {
   scheduleErrorReportingCheck();
 }
 
-function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
+function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
   const dataDirs = readdirSync(dataDirRoot, { withFileTypes: true }).filter((x) => x.isDirectory());
 
@@ -74,8 +76,8 @@ function scheduleFeedChecks(dataDirRoot: string): CronJob[] {
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
-        await checkRss(dataDir, feedSettings);
-        await sendEmails(dataDir, feedSettings);
+        await checkRss(dataDir, feedSettings, storage);
+        await sendEmails(dataDir, feedSettings, storage);
       })
     );
   }

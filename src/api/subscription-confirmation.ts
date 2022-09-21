@@ -30,10 +30,10 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
     return makeAppError('Invalid confirmation link');
   }
 
-  const storedEmails = loadStoredEmails(dataDir);
+  const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { reason: storedEmails.reason });
+    logError('Can’t load stored emails', { feedId, reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
