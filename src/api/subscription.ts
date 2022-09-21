@@ -20,10 +20,11 @@ import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
 import { AppRequestHandler } from './shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { AppStorage } from '../shared/storage';
 
 export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot, storage) {
   const { feedId, email, skipDoubleOptIn } = reqBody;
-  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot, skipDoubleOptIn });
+  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot, skipDoubleOptIn }, storage);
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
@@ -98,13 +99,10 @@ interface ProcessedInput {
   isConfirmed: boolean;
 }
 
-function processInput({
-  reqId,
-  email,
-  feedId,
-  dataDirRoot,
-  skipDoubleOptIn,
-}: Input): ProcessedInput | InputError | AppError {
+function processInput(
+  { reqId, email, feedId, dataDirRoot, skipDoubleOptIn }: Input,
+  storage: AppStorage
+): ProcessedInput | InputError | AppError {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
 
@@ -120,7 +118,7 @@ function processInput({
     return makeInputError('Invalid feed ID');
   }
 
-  const feedSettings = getFeedSettings(dataDir);
+  const feedSettings = getFeedSettings(feedId, storage);
 
   if (feedSettings.kind === 'FeedNotFound') {
     logWarning('Feed not found', { feedId });

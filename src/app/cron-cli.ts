@@ -33,7 +33,13 @@ if (isErr(dataDir)) {
   process.exit(1);
 }
 
-const feedSettings = getFeedSettings(dataDir);
+if (!feedId) {
+  logError(`Second argument required: feedId`);
+  displayUsage();
+  process.exit(1);
+}
+
+const feedSettings = getFeedSettings(feedId, storage);
 
 if (isErr(feedSettings)) {
   logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });

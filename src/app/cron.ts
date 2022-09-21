@@ -58,7 +58,7 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
       continue;
     }
 
-    const feedSettings = getFeedSettings(dataDir);
+    const feedSettings = getFeedSettings(name, storage);
 
     if (isErr(feedSettings)) {
       logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });

@@ -1,17 +1,17 @@
 import { expect } from 'chai';
-import { basename } from 'path';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { DataDir, makeDataDir } from './data-dir';
 import { FeedSettings, getFeedSettings } from './feed-settings';
-import { FileExistsFn, ReadFileFn } from './io';
 import { makeErr } from './lang';
+import { AppStorage, makeStorage } from './storage';
 import { makeStub } from './test-utils';
 
 describe(getFeedSettings.name, () => {
+  const dataDirRoot = '/test-data';
+  const storage = {
+    ...makeStorage(dataDirRoot),
+    hasItem: makeStub<AppStorage['hasItem']>(() => true),
+  };
   const feedId = 'jalas';
-  const dataDirPathString = `/some/path/${feedId}`;
-  const dataDir = makeDataDir(dataDirPathString) as DataDir;
-  const fileExistsFn = makeStub<FileExistsFn>(() => true);
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -22,10 +22,10 @@ describe(getFeedSettings.name, () => {
   };
 
   it('returns a FeedSettings value from feed.json', () => {
-    const readFileFn = makeStub<ReadFileFn>((_path) => JSON.stringify(data));
-    const result = getFeedSettings(dataDir, readFileFn, fileExistsFn);
+    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
+    const result = getFeedSettings(feedId, storageStub);
 
-    expect(readFileFn.calls).to.deep.equal([[`${dataDirPathString}/feed.json`]]);
+    expect(storageStub.loadItem.calls).to.deep.equal([[`/${feedId}/feed.json`]]);
 
     const expectedResult: FeedSettings = {
       kind: 'FeedSettings',
@@ -42,8 +42,8 @@ describe(getFeedSettings.name, () => {
 
   it('defaults cronPattern to every hour', () => {
     const dataWithoutCronPattern = { ...data, cronPattern: undefined };
-    const readFileFn = makeStub((_path: string) => JSON.stringify(dataWithoutCronPattern));
-    const result = getFeedSettings(dataDir, readFileFn, fileExistsFn) as FeedSettings;
+    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => dataWithoutCronPattern) };
+    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
 
     expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
@@ -55,9 +55,8 @@ describe(getFeedSettings.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
-
-    const readFileFn = makeStub<ReadFileFn>((_path: string) => JSON.stringify(data));
-    const result = getFeedSettings(dataDir, readFileFn, fileExistsFn) as FeedSettings;
+    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
+    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
 
     expect(result.replyTo.value).to.equal('feedback@feedsubscription.com');
   });
@@ -68,38 +67,38 @@ describe(getFeedSettings.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
+    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
+    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
 
-    const readFileFn = makeStub<ReadFileFn>((_path: string) => JSON.stringify(data));
-    const result = getFeedSettings(dataDir, readFileFn, fileExistsFn) as FeedSettings;
-
-    expect(result.displayName).to.deep.equal(basename(dataDir.value));
+    expect(result.displayName).to.equal(feedId);
   });
 
-  it('returns an FeedNotFound value when feed.json is not found', () => {
-    const readFileFn = makeStub<ReadFileFn>();
-    const fileExistsFn = makeStub<FileExistsFn>(() => false);
-
-    const result = getFeedSettings(dataDir, readFileFn, fileExistsFn);
+  it('returns an FeedNotFound value not found', () => {
+    const storageStub = {
+      ...storage,
+      loadItem: makeStub<AppStorage['loadItem']>(),
+      hasItem: makeStub<AppStorage['hasItem']>(() => false),
+    };
+    const result = getFeedSettings(feedId, storageStub);
 
     expect(result).to.deep.equal({ kind: 'FeedNotFound' });
   });
 
   it('returns an Err value when the data is invalid', () => {
-    const resultForJson = (jsonString: string): ReturnType<typeof getFeedSettings> => {
-      return getFeedSettings(dataDir, () => jsonString, fileExistsFn);
+    const resultForJson = (data: Object): ReturnType<typeof getFeedSettings> => {
+      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
+
+      return getFeedSettings(feedId, storageStub);
     };
 
-    expect(resultForJson('non-json-string')).to.deep.equal(
-      makeErr(`Can’t parse JSON in ${dataDirPathString}/feed.json: Unexpected token o in JSON at position 1,`)
+    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(
+      makeErr(`Invalid feed URL in /${feedId}/feed.json: not-a-url`)
     );
-    expect(resultForJson('{"url": "not-a-url"}')).to.deep.equal(
-      makeErr(`Invalid feed URL in ${dataDirPathString}/feed.json: not-a-url`)
+    expect(resultForJson({ url: 'https://a.com', hashingSalt: 42 })).to.deep.equal(
+      makeErr(`Invalid hashing salt in /${feedId}/feed.json: 42`)
     );
-    expect(resultForJson('{"url": "https://a.com", "hashingSalt": 42}')).to.deep.equal(
-      makeErr(`Invalid hashing salt in ${dataDirPathString}/feed.json: 42`)
-    );
-    expect(resultForJson('{"url": "https://a.com", "hashingSalt": "seeeeedd"}')).to.deep.equal(
-      makeErr(`Hashing salt is too short in ${dataDirPathString}/feed.json: at least 16 non-space characters required`)
+    expect(resultForJson({ url: 'https://a.com', hashingSalt: 'seeeeedd' })).to.deep.equal(
+      makeErr(`Hashing salt is too short in /${feedId}/feed.json: at least 16 non-space characters required`)
     );
   });
 });

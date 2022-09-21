@@ -39,7 +39,7 @@ async function main(): Promise<number | undefined> {
   }
 
   const inputFilePath = path.join(dataDir.value, 'emails.csv');
-  const feedSettings = getFeedSettings(dataDir);
+  const feedSettings = getFeedSettings(feedId, storage);
 
   if (isErr(feedSettings)) {
     logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });
