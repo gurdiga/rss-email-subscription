@@ -12,13 +12,13 @@ testblog-local-test:
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
 
 email-sending:
-	node_modules/.bin/ts-node src/cron-cli.ts email-sending testblog
+	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
 
 rss-checking:
 	rm -v .tmp/development-docker-data/{gurdiga,testblog,blogger}/lastPostMetadata.json
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking testblog
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking gurdiga
-	node_modules/.bin/ts-node src/cron-cli.ts rss-checking blogger
+	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
+	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking gurdiga
+	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking blogger
 
 test:
 	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
