@@ -1,12 +1,10 @@
 import { CronJob } from 'cron';
 import { readdirSync } from 'fs';
-import path from 'path';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
-import { makeDataDir } from '../shared/data-dir';
 import { AppStorage, makeStorage } from '../shared/storage';
 
 function main() {
@@ -40,39 +38,31 @@ function main() {
 
 function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
-  const dataDirs = readdirSync(dataDirRoot, { withFileTypes: true }).filter((x) => x.isDirectory());
+  const feedDirs = readdirSync(dataDirRoot, { withFileTypes: true }).filter((x) => x.isDirectory());
 
-  if (dataDirs.length === 0) {
-    logError(`No dataDirs in dataDirRoot`, { dataDirRoot });
+  if (feedDirs.length === 0) {
+    logError(`No feedDirs in dataDirRoot`, { dataDirRoot });
     return [];
   }
 
   const cronJobs: CronJob[] = [];
 
-  for (const { name } of dataDirs) {
-    const dataDirString = path.join(dataDirRoot, name);
-    const dataDir = makeDataDir(dataDirString);
-
-    if (isErr(dataDir)) {
-      logError(`Invalid dataDir`, { dataDirString, reason: dataDir.reason });
-      continue;
-    }
-
+  for (const { name } of feedDirs) {
     const feedSettings = getFeedSettings(name, storage);
 
     if (isErr(feedSettings)) {
-      logError(`Invalid feed settings`, { dataDirString, reason: feedSettings.reason });
+      logError(`Invalid feed settings`, { name, reason: feedSettings.reason });
       continue;
     }
 
     if (feedSettings.kind === 'FeedNotFound') {
-      logError('Feed not found', { dataDir });
+      logError('Feed not found', { name });
       continue;
     }
 
     const { cronPattern } = feedSettings;
 
-    logInfo(`Scheduling feed check`, { dataDirString, feedSettings });
+    logInfo(`Scheduling feed check`, { name, feedSettings });
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
