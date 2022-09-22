@@ -59,7 +59,7 @@ export async function checkRss(
     return;
   }
 
-  const recordingResult = recordNewRssItems(dataDir, newItems);
+  const recordingResult = recordNewRssItems(feedId, storage, newItems);
 
   if (isErr(recordingResult)) {
     logError(`Failed recording new items`, { reason: recordingResult.reason });

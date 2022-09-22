@@ -1,41 +1,31 @@
-import path from 'path';
 import { HashFn, hash } from '../../shared/crypto';
-import { DataDir } from '../../shared/data-dir';
-import { mkdirp, MkdirpFn, writeFile, WriteFileFn } from '../../shared/io';
-import { makeErr, Result } from '../../shared/lang';
+import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
+import { AppStorage } from '../../shared/storage';
 
 export type NameFileFn = (item: RssItem) => string;
 
 export const inboxDirName = 'inbox';
 
 export function recordNewRssItems(
-  dataDir: DataDir,
+  feedId: string,
+  storage: AppStorage,
   rssItems: RssItem[],
-  mkdirpFn: MkdirpFn = mkdirp,
-  writeFileFn: WriteFileFn = writeFile,
   nameFileFn: NameFileFn = itemFileName
 ): Result<number> {
-  const inboxDirPath = path.resolve(dataDir.value, inboxDirName);
   let writtenItemCount = 0;
-
-  try {
-    mkdirpFn(inboxDirPath);
-  } catch (error) {
-    return makeErr(`Cant create ${inboxDirPath} directory: ${error}`);
-  }
 
   for (const item of rssItems) {
     const fileName = nameFileFn(item);
-    const filePath = path.resolve(inboxDirPath, fileName);
-    const fileContent = JSON.stringify(item);
+    const storageKey = `/${feedId}/${inboxDirName}/${fileName}`;
 
-    try {
-      writeFileFn(filePath, fileContent);
-      writtenItemCount++;
-    } catch (error) {
-      return makeErr(`Cant write RSS item file to inbox: ${error}, item: ${fileContent}`);
+    const storeItemResult = storage.storeItem(storageKey, item);
+
+    if (isErr(storeItemResult)) {
+      return makeErr(`Cant write RSS item file to inbox: ${storeItemResult.reason}, item: ${JSON.stringify(item)}`);
     }
+
+    writtenItemCount++;
   }
 
   return writtenItemCount;

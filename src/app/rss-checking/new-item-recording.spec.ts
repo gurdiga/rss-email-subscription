@@ -1,13 +1,14 @@
 import { expect } from 'chai';
 import { RssItem } from '../../shared/rss-item';
-import { makeDataDir, DataDir } from '../../shared/data-dir';
 import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../../shared/lang';
-import { makeSpy, makeStub, makeThrowingStub } from '../../shared/test-utils';
-import { MkdirpFn, WriteFileFn } from '../../shared/io';
+import { makeSpy, makeStub } from '../../shared/test-utils';
+import { AppStorage, makeStorage } from '../../shared/storage';
 
 describe(recordNewRssItems.name, () => {
-  const dataDir = makeDataDir('/some/dir/') as DataDir;
+  const feedId = 'testblog';
+  const storage = makeStorage('/test-data');
+
   const rssItems: RssItem[] = [
     {
       title: 'Item one',
@@ -34,45 +35,33 @@ describe(recordNewRssItems.name, () => {
       guid: '3',
     },
   ];
-  const mkdirp = makeStub<MkdirpFn>();
-  const writeFile = makeStub<WriteFileFn>();
-
-  it('creates the ./data/inbox directory if it does not exist', () => {
-    const mkdirp = makeSpy<MkdirpFn>();
-
-    recordNewRssItems(dataDir, rssItems, mkdirp, writeFile);
-    expect(mkdirp.calls).to.deep.equal([['/some/dir/inbox']]);
-  });
-
-  it('reports when cant create the ./data/inbox directory', () => {
-    const error = new Error('Disk is full');
-    const mkdirp = makeThrowingStub<MkdirpFn>(error);
-    const result = recordNewRssItems(dataDir, rssItems, mkdirp);
-
-    expect(result).to.deep.equal(makeErr(`Cant create /some/dir/inbox directory: ${error}`));
-  });
 
   it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
-    const writeFile = makeSpy<WriteFileFn>();
+    const storageStub = {
+      ...storage,
+      storeItem: makeSpy<AppStorage['storeItem']>(),
+    };
     const nameFile = makeStub<NameFileFn>((item) => item.pubDate.toJSON() + '.json');
+    const result = recordNewRssItems(feedId, storageStub, rssItems, nameFile);
 
-    const result = recordNewRssItems(dataDir, rssItems, mkdirp, writeFile, nameFile);
-
-    expect(writeFile.calls).to.deep.equal([
-      [`/some/dir/inbox/${nameFile(rssItems[0]!)}`, JSON.stringify(rssItems[0])],
-      [`/some/dir/inbox/${nameFile(rssItems[1]!)}`, JSON.stringify(rssItems[1])],
-      [`/some/dir/inbox/${nameFile(rssItems[2]!)}`, JSON.stringify(rssItems[2])],
+    expect(storageStub.storeItem.calls).to.deep.equal([
+      [`/${feedId}/inbox/${nameFile(rssItems[0]!)}`, rssItems[0]],
+      [`/${feedId}/inbox/${nameFile(rssItems[1]!)}`, rssItems[1]],
+      [`/${feedId}/inbox/${nameFile(rssItems[2]!)}`, rssItems[2]],
     ]);
     expect(result).to.equal(rssItems.length);
   });
 
   it('reports the error when can’t write file', () => {
-    const error = new Error('No write access');
-    const writeFile = makeThrowingStub<WriteFileFn>(error);
-    const result = recordNewRssItems(dataDir, rssItems, mkdirp, writeFile);
+    const err = makeErr('No write access');
+    const storageStub = {
+      ...storage,
+      storeItem: makeStub<AppStorage['storeItem']>(() => err),
+    };
+    const result = recordNewRssItems(feedId, storageStub, rssItems);
 
     expect(result).to.deep.equal(
-      makeErr(`Cant write RSS item file to inbox: ${error}, item: ${JSON.stringify(rssItems[0])}`)
+      makeErr(`Cant write RSS item file to inbox: ${err.reason}, item: ${JSON.stringify(rssItems[0])}`)
     );
   });
 
