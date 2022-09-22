@@ -6,11 +6,10 @@ import {
   StoredEmails,
   storeEmails,
 } from '../email-sending/emails';
-import { makeDataDir } from '../../shared/data-dir';
 import { getFeedSettings } from '../../shared/feed-settings';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
-import { getFirstCliArg, programFilePath } from '../../shared/process-utils';
+import { getFirstCliArg } from '../../shared/process-utils';
 import { makeStorage } from '../../shared/storage';
 
 async function main(): Promise<number | undefined> {
@@ -30,24 +29,17 @@ async function main(): Promise<number | undefined> {
   }
 
   const storage = makeStorage(dataDirRoot);
-  const dataDir = makeDataDir(feedId, dataDirRoot);
 
-  if (isErr(dataDir)) {
-    logError(`Invalid args`, { feedId, reason: dataDir.reason });
-    logError(`USAGE: ${programFilePath(process)} <DATA_DIR>`);
-    return 1;
-  }
-
-  const inputFilePath = path.join(dataDir.value, 'emails.csv');
+  const inputFilePath = path.join(dataDirRoot, feedId, 'emails.csv');
   const feedSettings = getFeedSettings(feedId, storage);
 
   if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { dataDir: dataDir.value, reason: feedSettings.reason });
+    logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
     return 1;
   }
 
   if (feedSettings.kind === 'FeedNotFound') {
-    logError('Feed not found', { dataDir });
+    logError('Feed not found', { feedId });
     return 1;
   }
 
@@ -83,7 +75,7 @@ async function main(): Promise<number | undefined> {
   }
 
   logInfo('Stored emails', {
-    dataDirString: feedId,
+    feedId,
     validEmails: storedEmails.validEmails.length,
     invalidEmails: storedEmails.invalidEmails,
   });
