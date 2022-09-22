@@ -225,7 +225,6 @@ subscribe-report:
 	DATE="$${DATE:=$$TODAY}"; \
 	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
 		| grep '"message":"Confirmed email"' \
-		| grep '"feedId":"justaddlightandstir"' \
 		| cat <( \
 				echo "Subject: RES subscribe-report"; \
 				echo "From: RES <subscribe-report@feedsubscription.com>"; \
