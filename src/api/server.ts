@@ -58,10 +58,10 @@ async function makeRequestHandler(handler: AppRequestHandler): Promise<RequestHa
     const reqParams = req.params || {};
     const action = handler.name;
 
-    logInfo(action, { reqId, action, reqBody, reqParams, dataDirRoot });
+    logInfo(action, { reqId, action, reqBody, reqParams });
 
     const storage = makeStorage(dataDirRoot);
-    const result = await handler(reqId, reqBody, reqParams, dataDirRoot, storage);
+    const result = await handler(reqId, reqBody, reqParams, storage);
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, result.logData);

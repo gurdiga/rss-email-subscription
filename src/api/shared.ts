@@ -7,7 +7,6 @@ export type AppRequestHandler = (
   reqId: number,
   reqBody: Record<string, any>,
   reqParams: Record<string, any>,
-  dataDirRoot: string, // TODO: drop this when not used any more
   storage: AppStorage
 ) => Promise<ApiResponse>;
 

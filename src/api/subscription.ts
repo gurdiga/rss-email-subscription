@@ -12,7 +12,6 @@ import {
   addEmail,
 } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { makeDataDir } from '../shared/data-dir';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
 import { isErr } from '../shared/lang';
@@ -22,9 +21,9 @@ import { AppRequestHandler } from './shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../shared/storage';
 
-export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, dataDirRoot, storage) {
+export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, storage) {
   const { feedId, email, skipDoubleOptIn } = reqBody;
-  const inputProcessingResult = processInput({ reqId, feedId, email, dataDirRoot, skipDoubleOptIn }, storage);
+  const inputProcessingResult = processInput({ reqId, feedId, email, skipDoubleOptIn }, storage);
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
@@ -88,7 +87,6 @@ interface Input {
   reqId: number;
   email: string;
   feedId: string;
-  dataDirRoot: string;
   skipDoubleOptIn: any;
 }
 
@@ -100,7 +98,7 @@ interface ProcessedInput {
 }
 
 function processInput(
-  { reqId, email, feedId, dataDirRoot, skipDoubleOptIn }: Input,
+  { reqId, email, feedId, skipDoubleOptIn }: Input,
   storage: AppStorage
 ): ProcessedInput | InputError | AppError {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
@@ -109,13 +107,6 @@ function processInput(
   if (isErr(emailAddress)) {
     logWarning('Invalid email', { emailAddress });
     return makeInputError('Invalid email');
-  }
-
-  const dataDir = makeDataDir(feedId, dataDirRoot);
-
-  if (isErr(dataDir)) {
-    logWarning('Invalid dataDir', { feedId });
-    return makeInputError('Invalid feed ID');
   }
 
   const feedSettings = getFeedSettings(feedId, storage);

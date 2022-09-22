@@ -1,17 +1,10 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
-import { makeDataDir } from '../shared/data-dir';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler, parseSubscriptionId } from './shared';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 
-export const unsubscribe: AppRequestHandler = async function unsubscribe(
-  reqId,
-  reqBody,
-  _reqParams,
-  dataDirRoot,
-  storage
-) {
+export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, storage) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
@@ -22,13 +15,6 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(
   }
 
   const { feedId, emailHash } = parseResult;
-  const dataDir = makeDataDir(feedId, dataDirRoot);
-
-  if (isErr(dataDir)) {
-    logError(`Can’t make data dir from feedId "${feedId}": ${dataDir.reason}`);
-    return makeAppError('Invalid confirmation link');
-  }
-
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
@@ -63,8 +49,7 @@ export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscri
   reqId,
   _reqBody,
   reqParams,
-  dataDirRoot,
   storage
 ) {
-  return unsubscribe(reqId, reqParams, {}, dataDirRoot, storage);
+  return unsubscribe(reqId, reqParams, {}, storage);
 };

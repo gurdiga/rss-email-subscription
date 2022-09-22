@@ -6,13 +6,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './shared';
 
-export const createAccount: AppRequestHandler = async function createAccount(
-  _reqId,
-  reqBody,
-  _reqParams,
-  _dataDirRoot,
-  storage
-) {
+export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, storage) {
   const { plan, email, password } = reqBody;
   const processInputResult = processInput({ plan, email, password });
 
