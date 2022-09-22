@@ -17,7 +17,7 @@ import { attempt, isErr, makeErr, Result } from './lang';
 
 export interface AppStorage {
   storeItem: StoreItemFn;
-  loadItem: LoadItemFn; // TODO: Rename to getItem to align to align with Web storage
+  loadItem: LoadItemFn;
   hasItem: HasItemFn;
   removeItem: RemoveItemFn;
   listItems: ListItemsFn;
