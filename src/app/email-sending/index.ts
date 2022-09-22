@@ -5,19 +5,16 @@ import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
 import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
-import { DataDir } from '../../shared/data-dir';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { FeedSettings } from '../../shared/feed-settings';
-import { basename } from 'path';
 import { AppStorage } from '../../shared/storage';
 
 export async function sendEmails(
-  dataDir: DataDir,
+  feedId: string,
   feedSettings: FeedSettings,
   storage: AppStorage
 ): Promise<number | undefined> {
-  const feedId = basename(dataDir.value);
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);

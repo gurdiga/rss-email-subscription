@@ -1,6 +1,4 @@
-import { basename } from 'path';
 import { isEmpty } from '../../shared/array-utils';
-import { DataDir } from '../../shared/data-dir';
 import { FeedSettings } from '../../shared/feed-settings';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
@@ -12,11 +10,10 @@ import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
 export async function checkRss(
-  dataDir: DataDir,
+  feedId: string,
   feedSettings: FeedSettings,
   storage: AppStorage
 ): Promise<number | undefined> {
-  const feedId = basename(dataDir.value);
   const feedDisplayName = feedSettings.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });
   const { url } = feedSettings;

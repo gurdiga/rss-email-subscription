@@ -76,8 +76,8 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
-        await checkRss(dataDir, feedSettings, storage);
-        await sendEmails(dataDir, feedSettings, storage);
+        await checkRss(name, feedSettings, storage);
+        await sendEmails(name, feedSettings, storage);
       })
     );
   }
