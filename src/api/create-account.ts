@@ -14,7 +14,7 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeInputError(processInputResult.reason);
   }
 
-  const initAccountResult = initAccount(storage!, processInputResult);
+  const initAccountResult = initAccount(storage, processInputResult);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);
