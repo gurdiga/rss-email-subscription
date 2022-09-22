@@ -1,11 +1,9 @@
-import path from 'path';
 import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../../shared/array-utils';
-import { DataDir } from '../../shared/data-dir';
-import { listFiles, ListFilesFn, readFile, ReadFileFn } from '../../shared/io';
-import { getErrorMessage, isErr, makeErr, Result } from '../../shared/lang';
+import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
 import { makeUrl } from '../../shared/url';
+import { AppStorage } from '../../shared/storage';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -33,25 +31,20 @@ function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
   return value.kind === 'InvalidStoredRssItem';
 }
 
-export function readStoredRssItems(
-  dataDir: DataDir,
-  readFileFn: ReadFileFn = readFile,
-  listFilesFn: ListFilesFn = listFiles
-): Result<RssReadingResult> {
-  const inboxDirPath = path.join(dataDir.value, inboxDirName);
-  let fileNames: string[] = [];
+export function readStoredRssItems(feedId: string, storage: AppStorage): Result<RssReadingResult> {
+  const storageKey = `/${feedId}/${inboxDirName}`;
+  const fileNamesResult = storage.listItems(storageKey);
 
-  try {
-    fileNames = listFilesFn(inboxDirPath);
-  } catch (error) {
-    return makeErr(`Can’t list files in ${inboxDirPath}: ${getErrorMessage(error)}`);
+  if (isErr(fileNamesResult)) {
+    return makeErr(`Can’t list files in ${storageKey}: ${fileNamesResult.reason}`);
   }
 
   const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
-  const rssItems = fileNames
+  const rssItems = fileNamesResult
     .filter((fileName) => fileNameFormat.test(fileName))
-    .map((fileName) => [fileName, readFileFn(`${inboxDirPath}/${fileName}`)])
-    .map(([fileName, fileContents]) => makeStoredRssItem(fileName!, fileContents!));
+    // ASSUMPTION: storage.loadItem() never fails here
+    .map((fileName) => [fileName, storage.loadItem(`/${feedId}/${inboxDirName}/${fileName}`)])
+    .map(([fileName, fileContents]) => makeStoredRssItem(fileName, fileContents!));
 
   const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
   const invalidItems = rssItems.filter(isInvalidStoredRssItem);

@@ -27,7 +27,7 @@ export async function sendEmails(
     return 1;
   }
 
-  const storedRssItems = readStoredRssItems(dataDir);
+  const storedRssItems = readStoredRssItems(feedId, storage);
 
   if (isErr(storedRssItems)) {
     logError(`Failed to read RSS items`, { reason: storedRssItems.reason });
