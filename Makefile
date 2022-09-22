@@ -7,9 +7,9 @@ default: pre-commit
 
 # make start-testblog first
 testblog-local-test:
-	rm -v .tmp/development-docker-data/testblog/lastPostMetadata.json
-	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
+	# +++ Maybe rm -v .tmp/development-docker-data/testblog/lastPostMetadata.json
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
+	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
 
 email-sending:
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
