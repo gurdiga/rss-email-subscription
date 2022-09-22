@@ -22,15 +22,15 @@ import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from 
 import { AppStorage } from '../shared/storage';
 
 export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, storage) {
-  const { feedId, email, skipDoubleOptIn } = reqBody;
-  const inputProcessingResult = processInput({ reqId, feedId, email, skipDoubleOptIn }, storage);
+  const { feedId, email } = reqBody;
+  const inputProcessingResult = processInput({ reqId, feedId, email }, storage);
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
   }
 
-  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, skipDoubleOptIn, module: subscribe.name });
-  const { emailAddress, feedSettings, isConfirmed } = inputProcessingResult;
+  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscribe.name });
+  const { emailAddress, feedSettings } = inputProcessingResult;
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
@@ -55,16 +55,12 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
   }
 
   const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
-  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn, isConfirmed);
+  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   const result = storeEmails(newEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
     logError('Can’t store emails', { reason: result.reason });
     return makeAppError('Database write error');
-  }
-
-  if (isConfirmed) {
-    return makeSuccess('Thank you for subscribing. Welcome aboard! 🤓');
   }
 
   const { displayName, fromAddress, replyTo } = feedSettings;
@@ -87,20 +83,15 @@ interface Input {
   reqId: number;
   email: string;
   feedId: string;
-  skipDoubleOptIn: any;
 }
 
 interface ProcessedInput {
   kind: 'ProcessedInput';
   emailAddress: EmailAddress;
   feedSettings: FeedSettings;
-  isConfirmed: boolean;
 }
 
-function processInput(
-  { reqId, email, feedId, skipDoubleOptIn }: Input,
-  storage: AppStorage
-): ProcessedInput | InputError | AppError {
+function processInput({ reqId, email, feedId }: Input, storage: AppStorage): ProcessedInput | InputError | AppError {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
 
@@ -125,7 +116,6 @@ function processInput(
     kind: 'ProcessedInput',
     emailAddress,
     feedSettings,
-    isConfirmed: !!skipDoubleOptIn,
   };
 }
 

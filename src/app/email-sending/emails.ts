@@ -254,10 +254,9 @@ export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage
 export function addEmail(
   storedEmails: StoredEmails,
   emailAddress: EmailAddress,
-  emailHashFn: EmailHashFn,
-  isConfirmed = false
+  emailHashFn: EmailHashFn
 ): StoredEmails {
-  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn, isConfirmed);
+  const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
 
   storedEmails.validEmails.push(hashedEmail);
 
