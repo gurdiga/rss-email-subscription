@@ -24,7 +24,7 @@ function isValidStoredRssItem(value: any): value is ValidStoredRssItem {
 interface InvalidStoredRssItem {
   kind: 'InvalidStoredRssItem';
   reason: string;
-  json: string;
+  json: any;
 }
 
 function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
@@ -44,7 +44,7 @@ export function readStoredRssItems(feedId: string, storage: AppStorage): Result<
     .filter((fileName) => fileNameFormat.test(fileName))
     // ASSUMPTION: storage.loadItem() never fails here
     .map((fileName) => [fileName, storage.loadItem(`/${feedId}/${inboxDirName}/${fileName}`)])
-    .map(([fileName, fileContents]) => makeStoredRssItem(fileName, fileContents!));
+    .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 
   const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
   const invalidItems = rssItems.filter(isInvalidStoredRssItem);
@@ -56,44 +56,40 @@ export function readStoredRssItems(feedId: string, storage: AppStorage): Result<
   };
 }
 
-export function makeStoredRssItem(fileName: string, json: string): ValidStoredRssItem | InvalidStoredRssItem {
+export function makeStoredRssItem(fileName: string, json: any): ValidStoredRssItem | InvalidStoredRssItem {
   const invalid = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
 
-  try {
-    let { title, content, author, pubDate, link, guid } = JSON.parse(json);
+  let { title, content, author, pubDate, link, guid } = json;
 
-    if (!title || typeof title !== 'string') {
-      return invalid('The "title" property is not a present string');
-    }
-
-    if (!content || typeof content !== 'string') {
-      return invalid('The "content" property is not a present string');
-    }
-
-    if (!author || typeof author !== 'string') {
-      return invalid('The "author" property is not a present string');
-    }
-
-    pubDate = new Date(pubDate);
-
-    if (pubDate.toString() === 'Invalid Date') {
-      return invalid('The "pubDate" property is not a valid JSON Date string');
-    }
-
-    link = makeUrl(link);
-
-    if (isErr(link)) {
-      return invalid('The "link" property is not a valid URL');
-    }
-
-    if (!guid || typeof guid !== 'string') {
-      return invalid('The "guid" property is not a present string');
-    }
-
-    const item: RssItem = { title, content, author, pubDate, link, guid };
-
-    return { kind: 'ValidStoredRssItem', item, fileName };
-  } catch (error) {
-    return invalid('Could not parse JSON');
+  if (!title || typeof title !== 'string') {
+    return invalid('The "title" property is not a present string');
   }
+
+  if (!content || typeof content !== 'string') {
+    return invalid('The "content" property is not a present string');
+  }
+
+  if (!author || typeof author !== 'string') {
+    return invalid('The "author" property is not a present string');
+  }
+
+  pubDate = new Date(pubDate);
+
+  if (pubDate.toString() === 'Invalid Date') {
+    return invalid('The "pubDate" property is not a valid JSON Date string');
+  }
+
+  link = makeUrl(link);
+
+  if (isErr(link)) {
+    return invalid('The "link" property is not a valid URL');
+  }
+
+  if (!guid || typeof guid !== 'string') {
+    return invalid('The "guid" property is not a present string');
+  }
+
+  const item: RssItem = { title, content, author, pubDate, link, guid };
+
+  return { kind: 'ValidStoredRssItem', item, fileName };
 }

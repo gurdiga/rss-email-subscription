@@ -11,15 +11,15 @@ describe(readStoredRssItems.name, () => {
   const storage = makeStorage(dataDirRoot);
   const feedId = 'testblog';
 
-  interface MockFile {
-    fileName: string;
-    fileContent: string;
+  interface MockStorageItem {
+    key: string;
+    value: any;
   }
 
-  const files: MockFile[] = [
+  const files: MockStorageItem[] = [
     {
-      fileName: 'rss-item-c86ddb2b80f258a6fe4c5005282bf21a6fd6a5f08ed4efce15ee5f6b20599df4.json',
-      fileContent: JSON.stringify({
+      key: 'rss-item-c86ddb2b80f258a6fe4c5005282bf21a6fd6a5f08ed4efce15ee5f6b20599df4.json',
+      value: {
         title: 'Welcome to Jekyll!',
         content:
           '<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>\n\n<p>Jekyll requires blog post files to be named according to the following format:</p>\n\n<p><code class="language-plaintext highlighter-rouge">YEAR-MONTH-DAY-title.MARKUP</code></p>\n\n<p>Where <code class="language-plaintext highlighter-rouge">YEAR</code> is a four-digit number, <code class="language-plaintext highlighter-rouge">MONTH</code> and <code class="language-plaintext highlighter-rouge">DAY</code> are both two-digit numbers, and <code class="language-plaintext highlighter-rouge">MARKUP</code> is the file extension representing the format used in the file. After that, include the necessary front matter. Take a look at the source for this post to get an idea about how it works.</p>\n\n<p>Jekyll also offers powerful support for code snippets:</p>\n\n<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>\n  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>\n<span class="k">end</span>\n<span class="n">print_hi</span><span class="p">(</span><span class="s1">\'Tom\'</span><span class="p">)</span>\n<span class="c1">#=&gt; prints \'Hi, Tom\' to STDOUT.</span></code></pre></figure>\n\n<p>Check out the <a href="https://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>',
@@ -27,36 +27,36 @@ describe(readStoredRssItems.name, () => {
         pubDate: '2021-06-12T15:50:16.000Z',
         link: 'http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html',
         guid: '1',
-      }),
+      },
     },
     {
-      fileName: 'rss-item-c4feefb067a209bc98eff2744f54e785473287cc9c66034621a7845b024c4256.json',
-      fileContent: JSON.stringify({
+      key: 'rss-item-c4feefb067a209bc98eff2744f54e785473287cc9c66034621a7845b024c4256.json',
+      value: {
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
         content: '<div type="html" xml:base="/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html"/>',
         author: 'John DOE',
         pubDate: '2021-06-12T16:05:00.000Z',
         link: 'http://localhost:4000/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html',
         guid: '2',
-      }),
+      },
     },
     {
-      fileName: 'rss-item-e16d90d96b5c0e1d70d990855ecc214c181800c912fa68946cca340524211286.json',
-      fileContent: JSON.stringify({
+      key: 'rss-item-e16d90d96b5c0e1d70d990855ecc214c181800c912fa68946cca340524211286.json',
+      value: {
         title: 'A new post',
         content: '<div type="html" xml:base="/2021/06/12/a-new-post.html"/>',
         author: 'John DOE',
         pubDate: '2021-06-12T16:03:00.000Z',
         link: 'http://localhost:4000/2021/06/12/a-new-post.html',
         guid: '3',
-      }),
+      },
     },
   ];
 
   it('returns the list of items in inbox ordered by pubDate', () => {
     const storageStub = {
       ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => files.map((f) => f.fileName)),
+      listItems: makeStub<AppStorage['listItems']>(() => files.map((f) => f.key)),
       loadItem: makeLoadItemFnStub(files),
     };
     const expectedResul: RssReadingResult = {
@@ -69,41 +69,15 @@ describe(readStoredRssItems.name, () => {
     expect(storageStub.listItems.calls).to.deep.equal([[`/${feedId}/inbox`]]);
   });
 
-  it('also returns the files with unparsable JSON', () => {
-    const invalidFile: MockFile = {
-      fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
-      fileContent: 'not-a-valid-json-string',
-    };
-    const filesWithInvalidItems = [...files, invalidFile];
-    const storageStub = {
-      ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.fileName)),
-      loadItem: makeLoadItemFnStub(filesWithInvalidItems),
-    };
-    const expectedResul: RssReadingResult = {
-      kind: 'RssReadingResult',
-      validItems: makeMockValidItems(files),
-      invalidItems: [
-        {
-          kind: 'InvalidStoredRssItem',
-          reason: 'Could not parse JSON',
-          json: invalidFile.fileContent,
-        },
-      ],
-    };
-
-    expect(readStoredRssItems(feedId, storageStub)).to.deep.equal(expectedResul);
-  });
-
   it('also returns the files with invalid data', () => {
-    const invalidFile: MockFile = {
-      fileName: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
-      fileContent: '{"invalid-data": true}',
+    const invalidFile: MockStorageItem = {
+      key: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
+      value: '{"invalid-data": true}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
     const storageStub = {
       ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.fileName)),
+      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.key)),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     };
     const expectedResul: RssReadingResult = {
@@ -113,7 +87,7 @@ describe(readStoredRssItems.name, () => {
         {
           kind: 'InvalidStoredRssItem',
           reason: 'The "title" property is not a present string',
-          json: invalidFile.fileContent,
+          json: invalidFile.value,
         },
       ],
     };
@@ -122,14 +96,14 @@ describe(readStoredRssItems.name, () => {
   });
 
   it('ignores files that do not match expected naming convention', () => {
-    const invalidFile: MockFile = {
-      fileName: 'some-file.json',
-      fileContent: '{"some": "json-data"}',
+    const invalidFile: MockStorageItem = {
+      key: 'some-file.json',
+      value: '{"some": "json-data"}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
     const storageStub = {
       ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.fileName)),
+      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.key)),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     };
     const expectedResult: RssReadingResult = {
@@ -153,13 +127,13 @@ describe(readStoredRssItems.name, () => {
     );
   });
 
-  function makeLoadItemFnStub(mockFiles: MockFile[]): AppStorage['loadItem'] {
-    return (path) => mockFiles.find((f) => f.fileName === basename(path))?.fileContent!;
+  function makeLoadItemFnStub(mockFiles: MockStorageItem[]): AppStorage['loadItem'] {
+    return (path) => mockFiles.find((f) => f.key === basename(path))?.value!;
   }
 
-  function makeMockValidItems(mockFiles: MockFile[]): ValidStoredRssItem[] {
-    return mockFiles
-      .map((f) => makeStoredRssItem(f.fileName, f.fileContent) as ValidStoredRssItem)
+  function makeMockValidItems(mockItems: MockStorageItem[]): ValidStoredRssItem[] {
+    return mockItems
+      .map((f) => makeStoredRssItem(f.key, f.value) as ValidStoredRssItem)
       .sort(sortBy(({ item }) => item.pubDate));
   }
 
@@ -176,7 +150,7 @@ describe(readStoredRssItems.name, () => {
     };
 
     it('returns a ValidRssItem value from a valid JSON string', () => {
-      const json = JSON.stringify(data);
+      const json = data;
       const expectedResult: ValidStoredRssItem = {
         kind: 'ValidStoredRssItem',
         item: {
@@ -192,11 +166,11 @@ describe(readStoredRssItems.name, () => {
     });
 
     it('returns an Err value when aything is wrong or missing', () => {
-      const result = (data: object) => makeStoredRssItem(fileName, JSON.stringify(data));
+      const result = (data: object) => makeStoredRssItem(fileName, data);
       const err = (data: object, reason: string) => ({
         kind: 'InvalidStoredRssItem',
         reason,
-        json: JSON.stringify(data),
+        json: data,
       });
 
       let invalidInput: Partial<typeof data> = { ...data, title: undefined };
