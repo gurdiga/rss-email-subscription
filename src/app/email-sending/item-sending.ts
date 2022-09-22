@@ -1,5 +1,3 @@
-import path from 'path';
-import { DataDir } from '../../shared/data-dir';
 import { DOMAIN_NAME } from '../../shared/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
@@ -55,9 +53,8 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
   };
 }
 
-export function makeUnsubscribeUrl(dataDir: DataDir, hashedEmail: HashedEmail, displayName: string): URL {
+export function makeUnsubscribeUrl(feedId: string, hashedEmail: HashedEmail, displayName: string): URL {
   const url = new URL(`https://${DOMAIN_NAME}/unsubscribe.html`);
-  const feedId = path.basename(dataDir.value);
 
   url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
   url.searchParams.set('displayName', displayName || feedId);

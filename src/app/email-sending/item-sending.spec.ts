@@ -1,6 +1,4 @@
 import { expect } from 'chai';
-import path from 'path';
-import { DataDir, makeDataDir } from '../../shared/data-dir';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
 import { encodeSearchParamValue, makeThrowingStub } from '../../shared/test-utils';
@@ -10,7 +8,6 @@ import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from '.
 
 describe('item-sending', () => {
   const feedId = 'uniqid';
-  const dataDir = makeDataDir(`/some/path/${feedId}`) as DataDir;
   const from = makeFullEmailAddress('John DOE', makeEmailAddress('from@email.com') as EmailAddress);
   const to = makeEmailAddress('to@email.com') as EmailAddress;
   const replyTo = makeEmailAddress('replyTo@email.com') as EmailAddress;
@@ -83,7 +80,6 @@ describe('item-sending', () => {
 
   describe(makeUnsubscribeUrl.name, () => {
     const displayName = 'Just Add Light and Stir';
-    const feedId = path.basename(dataDir.value);
 
     const hashedEmail: HashedEmail = {
       kind: 'HashedEmail',
@@ -93,7 +89,7 @@ describe('item-sending', () => {
     };
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {
-      const result = makeUnsubscribeUrl(dataDir, hashedEmail, displayName);
+      const result = makeUnsubscribeUrl(feedId, hashedEmail, displayName);
 
       expect(result.toString()).to.equal(
         `https://feedsubscription.com/unsubscribe.html` +
@@ -104,7 +100,7 @@ describe('item-sending', () => {
     });
 
     it('uses feedId when displayName is empty', () => {
-      const result = makeUnsubscribeUrl(dataDir, hashedEmail, '');
+      const result = makeUnsubscribeUrl(feedId, hashedEmail, '');
 
       expect(result.toString()).to.equal(
         `https://feedsubscription.com/unsubscribe.html` +

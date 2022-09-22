@@ -80,7 +80,7 @@ export async function sendEmails(
         toEmail: hashedEmail.emailAddress.value,
       });
 
-      const unsubscribeUrl = makeUnsubscribeUrl(dataDir, hashedEmail, feedSettings.displayName);
+      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feedSettings.displayName);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
       const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feedSettings.replyTo, emailContent, env);
