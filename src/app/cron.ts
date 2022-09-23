@@ -30,7 +30,7 @@ function main() {
   });
 
   process.on('SIGTERM', () => {
-    console.info('Received SIGTERM. Will shut down.');
+    logInfo('Received SIGTERM. Will shut down.');
   });
 
   scheduleErrorReportingCheck();
