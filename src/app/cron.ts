@@ -1,5 +1,4 @@
 import { CronJob } from 'cron';
-import { readdirSync } from 'fs';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
@@ -38,36 +37,43 @@ function main() {
 
 function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
-  const feedDirs = readdirSync(dataDirRoot, { withFileTypes: true }).filter((x) => x.isDirectory());
+  let feedDirs = storage.listSubdirectories('/');
+
+  if (isErr(feedDirs)) {
+    logError(`Can’t list feed subdirectories`, { reason: feedDirs.reason });
+    process.exit(1);
+  }
+
+  feedDirs = feedDirs.filter((x) => x !== 'accounts'); // TODO: Remove after moving feed directories to /feeds
 
   if (feedDirs.length === 0) {
     logError(`No feedDirs in dataDirRoot`, { dataDirRoot });
-    process.exit();
+    process.exit(1);
   }
 
   const cronJobs: CronJob[] = [];
 
-  for (const { name } of feedDirs) {
-    const feedSettings = getFeedSettings(name, storage);
+  for (const feedId of feedDirs) {
+    const feedSettings = getFeedSettings(feedId, storage);
 
     if (isErr(feedSettings)) {
-      logError(`Invalid feed settings`, { name, reason: feedSettings.reason });
+      logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
       continue;
     }
 
     if (feedSettings.kind === 'FeedNotFound') {
-      logError('Feed not found', { name });
+      logError('feed.json not found?!', { feedId });
       continue;
     }
 
     const { cronPattern } = feedSettings;
 
-    logInfo(`Scheduling feed check`, { name, feedSettings });
+    logInfo(`Scheduling feed check`, { feedId, feedSettings });
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
-        await checkRss(name, feedSettings, storage);
-        await sendEmails(name, feedSettings, storage);
+        await checkRss(feedId, feedSettings, storage);
+        await sendEmails(feedId, feedSettings, storage);
       })
     );
   }
