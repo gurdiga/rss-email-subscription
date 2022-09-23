@@ -39,7 +39,7 @@ type ListItemsFn = (key: StorageKey, lisstFilesFn?: ListFilesFn, fileExistsFn?: 
 type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
 
-export function makeStorage(dataDirRoot: string): Result<AppStorage> {
+export function makeStorage(dataDirRoot: string): AppStorage {
   const storeItem: StoreItemFn = function storeItem(
     key,
     value,

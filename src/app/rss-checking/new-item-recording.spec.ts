@@ -7,7 +7,7 @@ import { AppStorage, makeStorage } from '../../shared/storage';
 
 describe(recordNewRssItems.name, () => {
   const feedId = 'testblog';
-  const storage = makeStorage('/test-data') as AppStorage;
+  const storage = makeStorage('/test-data');
 
   const rssItems: RssItem[] = [
     {

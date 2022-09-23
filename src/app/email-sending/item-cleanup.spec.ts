@@ -8,7 +8,7 @@ import { ValidStoredRssItem } from './rss-item-reading';
 describe(deleteItem.name, () => {
   const dataDirRoot = '/test-data';
   const feedId = 'testblog';
-  const storage = makeStorage(dataDirRoot) as AppStorage;
+  const storage = makeStorage(dataDirRoot);
 
   const storedRssItem: ValidStoredRssItem = {
     kind: 'ValidStoredRssItem',

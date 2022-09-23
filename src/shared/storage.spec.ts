@@ -1,12 +1,12 @@
 import { expect } from 'chai';
 import { DeleteFileFn, FileExistsFn, ListFilesFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
 import { makeErr } from './lang';
-import { AppStorage, makeStorage } from './storage';
+import { makeStorage } from './storage';
 import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem, hasItem, removeItem, listItems } = makeStorage(dataDirRoot) as AppStorage;
+  const { loadItem, storeItem, hasItem, removeItem, listItems } = makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = `${dataDirRoot}${key}`;
 

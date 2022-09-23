@@ -29,12 +29,6 @@ async function main(): Promise<number | undefined> {
   }
 
   const storage = makeStorage(dataDirRoot);
-
-  if (isErr(storage)) {
-    logError(`Failed to init app storage: ${storage.reason}`);
-    process.exit(1);
-  }
-
   const inputFilePath = path.join(dataDirRoot, feedId, 'emails.csv');
   const feedSettings = getFeedSettings(feedId, storage);
 

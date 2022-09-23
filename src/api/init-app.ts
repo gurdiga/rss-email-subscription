@@ -16,12 +16,6 @@ export function initApp(): App {
   }
 
   const storage = makeStorage(dataDirRoot);
-
-  if (isErr(storage)) {
-    console.error(storage.reason);
-    process.exit(1);
-  }
-
   const settings = loadAppSettings(storage);
 
   if (isErr(settings)) {

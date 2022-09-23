@@ -8,7 +8,7 @@ import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRss
 
 describe(readStoredRssItems.name, () => {
   const dataDirRoot = '/test-data';
-  const storage = makeStorage(dataDirRoot) as AppStorage;
+  const storage = makeStorage(dataDirRoot);
   const feedId = 'testblog';
 
   interface MockStorageItem {

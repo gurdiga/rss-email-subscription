@@ -20,12 +20,6 @@ function main() {
   }
 
   const storage = makeStorage(dataDirRoot);
-
-  if (isErr(storage)) {
-    logError(`Failed to init app storage: ${storage.reason}`);
-    return;
-  }
-
   let cronJobs = scheduleFeedChecks(dataDirRoot, storage);
 
   process.on('SIGHUP', () => {

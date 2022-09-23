@@ -5,7 +5,7 @@ import { AppStorage, makeStorage } from './storage';
 import { makeStub } from './test-utils';
 
 describe(loadAppSettings.name, () => {
-  const storage = makeStorage('/test-data') as AppStorage;
+  const storage = makeStorage('/test-data');
 
   it('returns a AppSettings value containing the data from /settings.json', () => {
     const data = { hashingSalt: 'random-16-bytes.' };
