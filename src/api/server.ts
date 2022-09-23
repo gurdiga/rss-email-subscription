@@ -7,8 +7,11 @@ import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
 import { createAccount } from './create-account';
 import { makeRequestHandler } from './request-handler';
 import { initApp } from './init-app';
+import { makeCustomLoggers } from '../shared/logging';
 
 async function main() {
+  const { logInfo, logWarning } = makeCustomLoggers({ module: 'server' });
+
   const port = 3000;
   const server = express();
   const app = initApp();
@@ -32,11 +35,11 @@ async function main() {
   }
 
   server.listen(port, () => {
-    console.log(`Listening on http://0.0.0.0:${port}`);
+    logInfo(`Listening on http://0.0.0.0:${port}`);
   });
 
   process.on('SIGTERM', () => {
-    console.info('Received SIGTERM. Will shut down.');
+    logWarning('Received SIGTERM. Will shut down.');
   });
 }
 
