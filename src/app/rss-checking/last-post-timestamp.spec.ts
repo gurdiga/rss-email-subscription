@@ -11,7 +11,7 @@ describe('Last post timestamp', () => {
   const dataDirRoot = '/data';
   const feedId = 'testblog';
   const storage = {
-    ...makeStorage(dataDirRoot),
+    ...(makeStorage(dataDirRoot) as AppStorage),
     hasItem: makeStub<AppStorage['hasItem']>(() => true),
   };
 

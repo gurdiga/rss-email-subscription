@@ -1,4 +1,4 @@
-import { makeErr, Result } from './lang';
+import { isErr, makeErr, Result } from './lang';
 import { AppStorage } from './storage';
 
 export interface AppSettings {
@@ -9,7 +9,13 @@ export interface AppSettings {
 const hashingSaltLength = 16;
 
 export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
-  const { hashingSalt } = storage.loadItem('/settings.json');
+  const loadItemResult = storage.loadItem('/settings.json');
+
+  if (isErr(loadItemResult)) {
+    return makeErr('Could not read app settings.');
+  }
+
+  const { hashingSalt } = loadItemResult;
 
   if (!hashingSalt) {
     return makeErr('Hashing salt is missing in app settings.');

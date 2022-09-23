@@ -228,7 +228,7 @@ describe(readEmailListFromCsvFile.name, () => {
 describe(loadStoredEmails.name, () => {
   const feedId = 'path';
   const storageKey = '/path/emails.json';
-  const storage = makeStorage('/data');
+  const storage = makeStorage('/data') as AppStorage;
 
   const index: EmailIndex = {
     hash1: 'email1@test.com',

@@ -8,7 +8,7 @@ import { makeStub } from './test-utils';
 describe(getFeedSettings.name, () => {
   const dataDirRoot = '/test-data';
   const storage = {
-    ...makeStorage(dataDirRoot),
+    ...(makeStorage(dataDirRoot) as AppStorage),
     hasItem: makeStub<AppStorage['hasItem']>(() => true),
   };
   const feedId = 'jalas';

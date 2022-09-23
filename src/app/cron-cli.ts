@@ -15,6 +15,12 @@ if (!dataDirRoot) {
 }
 
 const storage = makeStorage(dataDirRoot);
+
+if (isErr(storage)) {
+  logError(`Failed to init app storage: ${storage.reason}`);
+  process.exit(1);
+}
+
 const command = getFirstCliArg(process) || '[missing-command]';
 
 if (!['rss-checking', 'email-sending'].includes(command)) {
