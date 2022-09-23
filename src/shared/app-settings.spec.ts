@@ -34,6 +34,6 @@ describe(loadAppSettings.name, () => {
     expect(result({ hashingSalt: 42 })).to.deep.equal(makeErr('Hashing salt is not a string in app settings.'));
     expect(result({ hashingSalt: '' })).to.deep.equal(makeErr('Hashing salt is missing in app settings.'));
     expect(result({ hashingSalt: 'too-short' })).to.deep.equal(makeErr('Hashing salt is too short in app settings.'));
-    expect(result(makeErr('Storage failed'))).to.deep.equal(makeErr('Could not read app settings.'));
+    expect(result(makeErr('Storage failed'))).to.deep.equal(makeErr('Could not read app settings: Storage failed.'));
   });
 });

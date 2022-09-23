@@ -12,7 +12,7 @@ export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
   const loadItemResult = storage.loadItem('/settings.json');
 
   if (isErr(loadItemResult)) {
-    return makeErr('Could not read app settings.');
+    return makeErr(`Could not read app settings: ${loadItemResult.reason}.`);
   }
 
   const { hashingSalt } = loadItemResult;
