@@ -325,4 +325,18 @@ init-data-dir:
 		mkdir $$DATA_DIR_ROOT/feeds
 		mkdir $$DATA_DIR_ROOT/accounts
 		echo "Initialized data dir: $$DATA_DIR_ROOT"
+	else
+		echo "ERROR: Missing envar: DATA_DIR_ROOT"
+	fi
+
+init-app-settings:
+	@if [ -v DATA_DIR_ROOT ]; then
+		template='{"hashingSalt": "HASING_SALT_SLOT"}'
+		hashing_salt=`tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''`
+		output_file="$$DATA_DIR_ROOT/settings.json"
+
+		echo $$template | sed "s/HASING_SALT_SLOT/$$hashing_salt/" > $$output_file
+		echo "Created $$output_file"
+	else
+		echo "ERROR: Missing envar: DATA_DIR_ROOT"
 	fi
