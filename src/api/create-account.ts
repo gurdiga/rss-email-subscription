@@ -4,9 +4,9 @@ import { getRandomString, hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
-import { AppRequestHandler } from './shared';
+import { AppRequestHandler } from './request-handler';
 
-export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, storage) {
+export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
   const processInputResult = processInput({ plan, email, password });
 
@@ -14,7 +14,7 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeInputError(processInputResult.reason);
   }
 
-  const initAccountResult = initAccount(storage, processInputResult);
+  const initAccountResult = initAccount(app.storage, processInputResult);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);

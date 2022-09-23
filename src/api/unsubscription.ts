@@ -1,10 +1,11 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, parseSubscriptionId } from './shared';
+import { parseSubscriptionId } from './subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { AppRequestHandler } from './request-handler';
 
-export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, storage) {
+export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, { storage }) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
@@ -45,11 +46,6 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
 
-export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscribe(
-  reqId,
-  _reqBody,
-  reqParams,
-  storage
-) {
-  return unsubscribe(reqId, reqParams, {}, storage);
+export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscribe(reqId, _reqBody, reqParams, app) {
+  return unsubscribe(reqId, reqParams, {}, app);
 };

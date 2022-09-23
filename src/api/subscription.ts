@@ -17,11 +17,11 @@ import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-setti
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
-import { AppRequestHandler } from './shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../shared/storage';
+import { AppRequestHandler } from './request-handler';
 
-export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, storage) {
+export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, { storage }) {
   const { feedId, email } = reqBody;
   const inputProcessingResult = processInput({ reqId, feedId, email }, storage);
 

@@ -1,14 +1,5 @@
 import { EmailHash } from '../app/email-sending/emails';
 import { Result, makeErr } from '../shared/lang';
-import { ApiResponse } from '../shared/api-response';
-import { AppStorage } from '../shared/storage';
-
-export type AppRequestHandler = (
-  reqId: number,
-  reqBody: Record<string, any>,
-  reqParams: Record<string, any>,
-  storage: AppStorage
-) => Promise<ApiResponse>;
 
 interface SubscriptionId {
   feedId: string;

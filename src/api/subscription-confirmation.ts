@@ -1,14 +1,15 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler, parseSubscriptionId } from './shared';
+import { parseSubscriptionId } from './subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { AppRequestHandler } from './request-handler';
 
 export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
   reqId,
   reqBody,
   _reqParams,
-  storage
+  { storage }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
   const { id } = reqBody;

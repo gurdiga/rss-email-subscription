@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
-import { parseSubscriptionId } from './shared';
+import { parseSubscriptionId } from './subscription-id';
 
 describe(parseSubscriptionId.name, () => {
   it('parses a feedId-emailHash tuple', () => {
