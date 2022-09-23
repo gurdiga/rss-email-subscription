@@ -57,7 +57,6 @@ lint-shell-scripts:
 		-name '*.sh' \
 	| xargs shellcheck
 
-# The required configuration is expected in the environment
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
