@@ -48,7 +48,7 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
 
   if (feedDirs.length === 0) {
     logError(`No feedDirs in dataDirRoot`, { dataDirRoot });
-    return [];
+    process.exit();
   }
 
   const cronJobs: CronJob[] = [];
