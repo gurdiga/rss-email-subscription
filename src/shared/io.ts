@@ -38,6 +38,14 @@ export function listFiles(dirPath: string): string[] {
     .map((e) => e.name);
 }
 
+export type ListDirectoriesFn = (path: string) => string[];
+
+export function listDirectories(dirPath: string): string[] {
+  return readdirSync(dirPath, { withFileTypes: true })
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name);
+}
+
 export type StdOutPrinterFn = (message: string) => void;
 
 export function stdOutPrinter(message: string): void {

@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { DeleteFileFn, FileExistsFn, ListFilesFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
+import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn, ReadFileFn, WriteFileFn } from './io';
 import { makeErr } from './lang';
 import { makeStorage } from './storage';
 import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem, hasItem, removeItem, listItems } = makeStorage(dataDirRoot);
+  const { loadItem, storeItem, hasItem, removeItem, listItems, listSubdirectories } = makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = `${dataDirRoot}${key}`;
 
@@ -154,13 +154,40 @@ describe(makeStorage.name, () => {
       const fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom!?'));
       const result = listItems('/key', listFilesFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t check file exists: Boom!?'));
+      expect(result).to.deep.equal(makeErr('Can’t check directory exists: Boom!?'));
     });
 
     it('returns an Err value when fail to list files', () => {
       const listFilesFn = makeThrowingStub<ListFilesFn>(new Error('Boom on list files!?'));
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
       const result = listItems('/key', listFilesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t list files: Boom on list files!?'));
+    });
+  });
+
+  describe(listSubdirectories.name, () => {
+    it('returns the list of subdirectories at the given path', () => {
+      const dirNames = ['one', 'two', 'three'];
+      const listDirectoriesFn = makeStub<ListDirectoriesFn>(() => dirNames);
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+      const result = listSubdirectories('/key', listDirectoriesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(dirNames);
+    });
+
+    it('returns an Err value when fail to check the key exists', () => {
+      const listDirectoriesFn = makeStub<ListDirectoriesFn>(() => []);
+      const fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom!?'));
+      const result = listSubdirectories('/key', listDirectoriesFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Can’t check directory exists: Boom!?'));
+    });
+
+    it('returns an Err value when fail to list files', () => {
+      const listDirectoriesFn = makeThrowingStub<ListDirectoriesFn>(new Error('Boom on list files!?'));
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+      const result = listItems('/key', listDirectoriesFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Can’t list files: Boom on list files!?'));
     });

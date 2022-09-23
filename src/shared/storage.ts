@@ -5,6 +5,7 @@ import {
   fileExists,
   FileExistsFn,
   listFiles,
+  listDirectories,
   ListFilesFn,
   mkdirp,
   MkdirpFn,
@@ -12,6 +13,7 @@ import {
   ReadFileFn,
   writeFile,
   WriteFileFn,
+  ListDirectoriesFn,
 } from './io';
 import { attempt, isErr, makeErr, Result } from './lang';
 
@@ -21,6 +23,7 @@ export interface AppStorage {
   hasItem: HasItemFn;
   removeItem: RemoveItemFn;
   listItems: ListItemsFn;
+  listSubdirectories: ListSubdirectoriesFn;
 }
 
 type StoreItemFn = (
@@ -35,6 +38,11 @@ type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageVa
 type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
 type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<true>;
 type ListItemsFn = (key: StorageKey, lisstFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
+type ListSubdirectoriesFn = (
+  key: StorageKey,
+  listDirectoriesFn?: ListDirectoriesFn,
+  fileExistsFn?: FileExistsFn
+) => Result<StorageKey[]>;
 
 type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
@@ -121,7 +129,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
     if (isErr(fileExistsResult)) {
-      return makeErr(`Can’t check file exists: ${fileExistsResult.reason}`);
+      return makeErr(`Can’t check directory exists: ${fileExistsResult.reason}`);
     }
 
     const listFilesResult = attempt(() => listFilesFn(filePath));
@@ -133,12 +141,34 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return listFilesResult;
   };
 
+  const listSubdirectories: ListSubdirectoriesFn = function listSubdirectories(
+    key,
+    listDirectoriesFn = listDirectories,
+    fileExistsFn = fileExists
+  ) {
+    const filePath = join(dataDirRoot, key);
+    const fileExistsResult = attempt(() => fileExistsFn(filePath));
+
+    if (isErr(fileExistsResult)) {
+      return makeErr(`Can’t check directory exists: ${fileExistsResult.reason}`);
+    }
+
+    const listDirectoriesResult = attempt(() => listDirectoriesFn(filePath));
+
+    if (isErr(listDirectoriesResult)) {
+      return makeErr(`Can’t list directories: ${listDirectoriesResult.reason}`);
+    }
+
+    return listDirectoriesResult;
+  };
+
   return {
     storeItem,
     loadItem,
     hasItem,
     removeItem,
     listItems,
+    listSubdirectories,
   };
 }
 
