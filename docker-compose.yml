@@ -12,8 +12,8 @@ x-logging: &logging
 x-app-env: &app-env
   TZ: UTC
   DATA_DIR_ROOT: /data
-  NODE_ENV: ${NODE_ENV:-production} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
-  SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING:-smtp://smtp-out:587}
+  NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+  SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
 
 services:
   smtp-out:
@@ -24,7 +24,7 @@ services:
     ports: ['127.0.0.1:1587:587']
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
-      - ${POSTFIX_DIR_ROOT:-./.tmp/var/spool/postfix}:/var/spool/postfix # to persist queue during container restarts
+      - ${POSTFIX_DIR_ROOT?}:/var/spool/postfix # to persist queue during container restarts
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
@@ -69,7 +69,7 @@ services:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     volumes:
-      - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
+      - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
     command: node_modules/.bin/ts-node src/app/cron.ts
@@ -83,7 +83,7 @@ services:
     ports: ['127.0.0.1:3000:3000']
     command: node_modules/.bin/ts-node src/api/server.ts
     volumes:
-      - ${DATA_DIR_ROOT:-.tmp/docker-data}:/data
+      - ${DATA_DIR_ROOT?}:/data
     environment:
       # DEBUG: 'express:*'
       # TS_NODE_DEBUG: 'true'
