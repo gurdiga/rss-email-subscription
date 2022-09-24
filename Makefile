@@ -336,3 +336,10 @@ init-app-settings:
 	else
 		echo "ERROR: Missing envar: DATA_DIR_ROOT"
 	fi
+
+init-account-index:
+	@if [ -v DATA_DIR_ROOT ]; then
+		echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
+	else
+		echo "ERROR: Missing envar: DATA_DIR_ROOT"
+	fi
