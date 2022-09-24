@@ -11,7 +11,7 @@ export type AppRequestHandler = (
   app: App
 ) => Promise<ApiResponse>;
 
-export async function makeRequestHandler(handler: AppRequestHandler, app: App): Promise<RequestHandler> {
+export function makeRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
   return async (req, res) => {
     const reqId = +new Date();
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: basename(__filename) });

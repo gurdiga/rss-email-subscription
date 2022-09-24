@@ -24,11 +24,11 @@ async function main() {
   server.use(helmet());
   server.use(cors());
   server.use(express.urlencoded({ extended: true }));
-  server.post('/subscribe', await makeRequestHandler(subscribe, app));
-  server.post('/confirm-subscription', await makeRequestHandler(confirmSubscription, app));
-  server.post('/unsubscribe', await makeRequestHandler(unsubscribe, app));
-  server.post('/unsubscribe/:id', await makeRequestHandler(oneClickUnsubscribe, app));
-  server.post('/create-account', await makeRequestHandler(createAccount, app));
+  server.post('/subscribe', makeRequestHandler(subscribe, app));
+  server.post('/confirm-subscription', makeRequestHandler(confirmSubscription, app));
+  server.post('/unsubscribe', makeRequestHandler(unsubscribe, app));
+  server.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe, app));
+  server.post('/create-account', makeRequestHandler(createAccount, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));
