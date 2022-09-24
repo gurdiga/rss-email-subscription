@@ -1,4 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { AccountData, PlanId } from '../domain/account';
+import { recordAccount } from '../domain/account-index';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -36,15 +38,6 @@ interface ProcessedInput {
   password: NewPassword;
 }
 
-function makeProcessedInput(props: Omit<ProcessedInput, 'kind'>): ProcessedInput {
-  return {
-    kind: 'ProcessedInput',
-    ...props,
-  };
-}
-
-export type PlanId = 'minimal' | 'standard' | 'sde';
-
 function processInput(input: Input): Result<ProcessedInput> {
   const { logWarning } = makeCustomLoggers({
     plan: input.plan,
@@ -73,11 +66,12 @@ function processInput(input: Input): Result<ProcessedInput> {
     return makeErr(`Invalid password: ${password.reason}`);
   }
 
-  return makeProcessedInput({
+  return {
+    kind: 'ProcessedInput',
     plan,
     email,
     password,
-  });
+  };
 }
 
 export function makePlanId(planId: string): Result<PlanId> {
@@ -129,12 +123,12 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   });
 
   const accountId = new Date().getTime();
-  const passwordHash = hash(input.password.value, settings.hashingSalt);
+  const hashedPassword = hash(input.password.value, settings.hashingSalt);
 
-  const accountData = {
+  const accountData: AccountData = {
     plan: input.plan,
     email: input.email.value,
-    passwordHash,
+    hashedPassword: hashedPassword,
   };
 
   const result = storage.storeItem(`/accounts/${accountId}/account.json`, accountData);
@@ -142,6 +136,13 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   if (isErr(result)) {
     logError(`${storage.storeItem.name} failed`, { reason: result.reason });
     return makeErr('Couldn’t store account data');
+  }
+
+  const recordAccountResult = recordAccount(storage, accountId, input.email);
+
+  if (isErr(recordAccountResult)) {
+    logError('Couldn’t record account', { accountId, email: input.email.value, reason: recordAccountResult.reason });
+    return makeErr('Couldn’t record account');
   }
 
   logInfo('Created new account', accountData);

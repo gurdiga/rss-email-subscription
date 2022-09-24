@@ -16,7 +16,9 @@ USER_PASSWORD=A-long-S3cre7-password
 function main {
 	create_account $USER_PLAN $USER_EMAIL $USER_PASSWORD
 	create_account_verify $USER_PLAN $USER_EMAIL
+	authenticate $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
+	return
 	unsubscribe
 	unsubscribe_verify
 	subscribe
@@ -53,9 +55,9 @@ function get_headers {
 }
 
 function create_account {
-	local account_plan=$1
-	local account_email=$2
-	local account_password=$3
+	local account_plan=${1:?}
+	local account_email=${2:?}
+	local account_password=${3:?}
 
 	if post /create-account -d plan="$account_plan" -d email="$account_email" -d password="$account_password"; then
 		print_success
@@ -77,7 +79,7 @@ function create_account_verify {
 		print_failure "Found more than one account files with for $account_email"
 	fi
 
-	snapshot='{"plan":"'$account_plan'","email":"'$account_email'","passwordHash":".+"}'
+	snapshot='{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+"}'
 
 	if grep -E "$snapshot" "$account_file" >/dev/null; then
 		print_success
@@ -86,6 +88,17 @@ function create_account_verify {
 		echo -e "$(yellow Actual:) $(cat "$account_file")\n"
 
 		print_failure 'Account file contents does not match'
+	fi
+}
+
+function authenticate {
+	local account_email=${1:?}
+	local account_password=${2:?}
+
+	if post /authenticate -d email="$account_email" -d password="$account_password"; then
+		print_success
+	else
+		print_failure "POST /authenticate failed: exit code $?"
 	fi
 }
 
@@ -223,7 +236,7 @@ function print_success {
 
 function print_failure {
 	local caller_name="${FUNCNAME[1]}"
-	local prefix && prefix=$(red FAILURE in "$caller_name")
+	local prefix && prefix="$(red FAILURE in "$caller_name")"
 
 	if test -z "$@"; then
 		# shellcheck disable=SC2059

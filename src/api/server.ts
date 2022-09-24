@@ -8,6 +8,7 @@ import { createAccount } from './create-account';
 import { makeRequestHandler } from './request-handler';
 import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
+import { authenticate } from './authenticate';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'server' });
@@ -29,6 +30,7 @@ async function main() {
   server.post('/unsubscribe', makeRequestHandler(unsubscribe, app));
   server.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe, app));
   server.post('/create-account', makeRequestHandler(createAccount, app));
+  server.post('/authenticate', makeRequestHandler(authenticate, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));
