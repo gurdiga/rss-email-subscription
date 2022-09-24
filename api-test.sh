@@ -3,20 +3,20 @@
 set -euo pipefail
 
 BASE_URL=https://localhost.feedsubscription.com
-EMAIL=test@gmail.com
-# echo -n "${EMAIL}${FEED_HASHING_SALT}" | sha256sum
+SUBSCRIBER_EMAIL=test@gmail.com
+# echo -n "${SUBSCRIBER_EMAIL}${FEED_HASHING_SALT}" | sha256sum
 EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
 FEED_ID=gurdiga
 EMAIL_DATA_FILE=$DATA_DIR_ROOT/$FEED_ID/emails.json
 
-ACCOUNT_PLAN=standard
-ACCOUNT_EMAIL=blogger@test.com
-ACCOUNT_PASSWORD=A-long-S3cre7-password
+USER_PLAN=standard
+USER_EMAIL=blogger@test.com
+USER_PASSWORD=A-long-S3cre7-password
 
 function main {
-	create_account $ACCOUNT_PLAN $ACCOUNT_EMAIL $ACCOUNT_PASSWORD
-	create_account_verify $ACCOUNT_PLAN $ACCOUNT_EMAIL
-	remove_accounts $ACCOUNT_EMAIL
+	create_account $USER_PLAN $USER_EMAIL $USER_PASSWORD
+	create_account_verify $USER_PLAN $USER_EMAIL
+	remove_accounts $USER_EMAIL
 	unsubscribe
 	unsubscribe_verify
 	subscribe
@@ -109,7 +109,7 @@ function find_account_files_by_email {
 }
 
 function subscribe {
-	if post /subscribe -d feedId=$FEED_ID -d email=$EMAIL; then
+	if post /subscribe -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL; then
 		print_success
 	else
 		print_failure "POST /subscribe failed: exit code $?"
@@ -172,7 +172,7 @@ function unsubscribe_1click {
 
 function resubscribe_failure_verify {
 	if diff -u \
-		<(post /subscribe -d feedId=$FEED_ID -d email=$EMAIL) \
+		<(post /subscribe -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL) \
 		<(printf '{"kind":"InputError","message":"Email is already subscribed"}'); then
 		print_success
 	else
