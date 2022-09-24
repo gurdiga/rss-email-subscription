@@ -194,29 +194,23 @@ watch-smtp-out:
 
 # cron 59 23 * * *
 unsubscribe-report:
-	@function send_report() {
-		(
+	@TODAY=`date +%F`
+	DATE="$${DATE:=$$TODAY}"
+
+	grep "^$$DATE" .tmp/logs/feedsubscription/api.log |
+	grep '"message":"unsubscribe"' |
+	grep -Po 'justaddlightandstir-[^"]+' |
+	while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done |
+	grep 'POST /unsubscribe' |
+	grep -Po '(?<=&email=)[^"]+' |
+	sort -u |
+	sed 's/%40/@/' |
+	cat <(
 			echo "Subject: RES unsubscribe-report"
 			echo "From: RES <unsubscribe-report@feedsubscription.com>"
 			echo ""
-			cat
-		) \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
-	}
-
-	export -f send_report
-
-	TODAY=`date +%F`
-	DATE="$${DATE:=$$TODAY}"
-
-	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
-		| grep '"message":"unsubscribe"' \
-		| grep -Po 'justaddlightandstir-[^"]+' | while read id; do grep $$id .tmp/logs/feedsubscription/website.log; done \
-		| grep 'POST /unsubscribe' \
-		| grep -Po '(?<=&email=)[^"]+' \
-		| sort -u \
-		| sed 's/%40/@/' \
-		| ifne bash -c send_report
+	) - |
+	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 # cron 59 23 * * *
 subscribe-report:
@@ -228,7 +222,7 @@ subscribe-report:
 	while read -r _timestamp _p_name _s_name json; do echo $$json; done |
 	jq -r .data.email |
 	sort -u |
-	cat <( \
+	cat <(
 		echo "Subject: RES subscribe-report"
 		echo "From: RES <subscribe-report@feedsubscription.com>"
 		echo ""
