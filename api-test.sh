@@ -7,7 +7,7 @@ EMAIL=test@gmail.com
 # echo -n "${EMAIL}${FEED_HASHING_SALT}" | sha256sum
 EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
 FEED_ID=gurdiga
-DATA_FILE=$DATA_DIR_ROOT/$FEED_ID/emails.json
+EMAIL_DATA_FILE=$DATA_DIR_ROOT/$FEED_ID/emails.json
 
 function main {
 	create_account
@@ -99,10 +99,10 @@ function subscribe {
 }
 
 function subscribe_verify {
-	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" "$DATA_FILE"; then
+	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" "$EMAIL_DATA_FILE"; then
 		print_success
 	else
-		jq . "$DATA_FILE"
+		jq . "$EMAIL_DATA_FILE"
 		print_failure "Email not saved in emails.json? ☝️🤔"
 		exit 1
 	fi
@@ -117,11 +117,11 @@ function confirm {
 }
 
 function confirm_verify {
-	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == true)" "$DATA_FILE"; then
+	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == true)" "$EMAIL_DATA_FILE"; then
 		print_success
 	else
 		print_failure "Email does not have isConfirmed of true in emails.json"
-		jq .$EMAIL_HASH "$DATA_FILE"
+		jq .$EMAIL_HASH "$EMAIL_DATA_FILE"
 		exit 1
 	fi
 }
@@ -135,9 +135,9 @@ function unsubscribe {
 }
 
 function unsubscribe_verify {
-	if jq --exit-status ".$EMAIL_HASH" "$DATA_FILE"; then
+	if jq --exit-status ".$EMAIL_HASH" "$EMAIL_DATA_FILE"; then
 		print_failure "Email not removed from emails.json"
-		jq . "$DATA_FILE"
+		jq . "$EMAIL_DATA_FILE"
 		exit 1
 	else
 		print_success
