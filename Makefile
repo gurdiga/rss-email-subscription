@@ -94,7 +94,7 @@ start-api: app
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api
 
-start-website: new-website start-api
+start-website: website start-api
 
 o: open
 open:
@@ -270,7 +270,7 @@ mailq-report:
 	docker exec smtp-out mailq \
 	| ifne bash -c send_report
 
-new-website:
+website:
 	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build )
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
 
