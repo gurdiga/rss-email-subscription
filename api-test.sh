@@ -18,7 +18,6 @@ function main {
 	create_account_verify $USER_PLAN $USER_EMAIL
 	authenticate $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
-	return
 	unsubscribe
 	unsubscribe_verify
 	subscribe
