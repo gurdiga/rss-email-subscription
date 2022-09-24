@@ -220,16 +220,20 @@ unsubscribe-report:
 
 # cron 59 23 * * *
 subscribe-report:
-	@TODAY=`date +%F`; \
-	DATE="$${DATE:=$$TODAY}"; \
-	grep "^$$DATE" .tmp/logs/feedsubscription/api.log \
-		| grep '"message":"Confirmed email"' \
-		| cat <( \
-				echo "Subject: RES subscribe-report"; \
-				echo "From: RES <subscribe-report@feedsubscription.com>"; \
-				echo ""; \
-			) - \
-		| if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	@TODAY=`date +%F`
+	DATE="$${DATE:=$$TODAY}"
+
+	grep "^$$DATE" .tmp/logs/feedsubscription/api.log |
+	grep '"message":"Confirmed email"' |
+	while read -r _timestamp _p_name _s_name json; do echo $$json; done |
+	jq -r .data.email |
+	sort -u |
+	cat <( \
+		echo "Subject: RES subscribe-report"
+		echo "From: RES <subscribe-report@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 # cron 59 23 * * *
 delivery-report:
