@@ -76,7 +76,7 @@ function create_account_verify {
 		print_failure "Found more than one account files with for $ACCOUNT_EMAIL"
 	fi
 
-	snapshot='{"plan":"standard","email":"blogger@test.com","hashingSalt":".+","passwordHash":".+"}'
+	snapshot='{"plan":"standard","email":"blogger@test.com","passwordHash":".+"}'
 
 	if grep -E "$snapshot" "$account_file" >/dev/null; then
 		print_success

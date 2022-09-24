@@ -1,9 +1,9 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { getRandomString, hash } from '../shared/crypto';
+import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppStorage } from '../shared/storage';
+import { App } from './init-app';
 import { AppRequestHandler } from './request-handler';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
@@ -14,7 +14,7 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeInputError(processInputResult.reason);
   }
 
-  const initAccountResult = initAccount(app.storage, processInputResult);
+  const initAccountResult = initAccount(app, processInputResult);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);
@@ -123,19 +123,18 @@ export function makeNewPassword(password: string): Result<NewPassword> {
   };
 }
 
-function initAccount(storage: AppStorage, input: ProcessedInput): Result<void> {
+function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {
   const { logInfo, logError } = makeCustomLoggers({
     module: `${createAccount.name}:${initAccount.name}`,
   });
 
   const accountId = new Date().getTime();
-  const hashingSalt = getRandomString(16);
+  const passwordHash = hash(input.password.value, settings.hashingSalt);
 
   const accountData = {
     plan: input.plan,
     email: input.email.value,
-    hashingSalt,
-    passwordHash: hash(input.password.value, hashingSalt),
+    passwordHash,
   };
 
   const result = storage.storeItem(`/accounts/${accountId}/account.json`, accountData);
