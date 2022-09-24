@@ -95,7 +95,7 @@ describe(makeStorage.name, () => {
       expect(result).to.be.false;
     });
 
-    it('returns an Err value when can’t cheeck for some reason', () => {
+    it('returns an Err value when can’t check for some reason', () => {
       let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Nope!!'));
       let result = hasItem(key, fileExistsFn);
 
