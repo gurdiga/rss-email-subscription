@@ -9,14 +9,28 @@ export interface LogRecord {
 }
 
 export const maxStringValue = 1024;
+export const sensibleKeywords = ['password'];
 
 export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
-  const message = JSON.stringify(record, (_key, value) => maybeTruncate(value));
+  const message = JSON.stringify(record, (key, value) => {
+    value = maybeTruncate(value);
+    value = maskSensibleAttributes(key, value);
+
+    return value;
+  });
 
   stdOutPrinterFn(message);
 }
 
-function maybeTruncate(value: string): string {
+function maskSensibleAttributes(key: string, value: string): string {
+  if (sensibleKeywords.some((x) => key.toLowerCase().includes(x))) {
+    return '[**masked**]';
+  }
+
+  return value;
+}
+
+function maybeTruncate(value: any): string {
   if (typeof value === 'string' && value.length > maxStringValue) {
     const truncationNote = `[...truncated ${value.length - maxStringValue} characters]`;
 

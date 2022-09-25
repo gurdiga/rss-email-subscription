@@ -47,6 +47,28 @@ describe(log.name, () => {
     expect(loggedMessage).to.equal(`${truncatedStringValue}${truncationNote}`);
     expect(loggedDataString).to.equal(`${truncatedStringValue}${truncationNote}`);
   });
+
+  it('masks value when key contains any of the sensible keywords', () => {
+    const record: LogRecord = {
+      severity: 'info',
+      message: 'Something about registration or login',
+      data: {
+        password: 'some-secret',
+        newPassword: 'some-new-secret',
+      },
+    };
+
+    const mockStdOutPrinter = makeSpy<StdOutPrinterFn>();
+
+    log(record, mockStdOutPrinter);
+
+    const loggedRecord = JSON.parse(mockStdOutPrinter.calls[0]![0]) as LogRecord;
+    const loggedDataPassword = (loggedRecord.data as any)['password']!;
+    const loggedDataNewPassword = (loggedRecord.data as any)['newPassword']!;
+
+    expect(loggedDataPassword).to.equal('[**masked**]');
+    expect(loggedDataNewPassword).to.equal('[**masked**]');
+  });
 });
 
 describe(makeCustomLoggers.name, () => {
