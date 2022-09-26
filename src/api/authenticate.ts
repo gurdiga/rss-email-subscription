@@ -81,7 +81,7 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
   }
 
   const inputHashedPassword = hash(input.password.value, settings.hashingSalt);
-  const storedHashedPassword = account.hashedPassword;
+  const storedHashedPassword = account.hashedPassword.value;
 
   if (inputHashedPassword !== storedHashedPassword) {
     logWarning(`Icorrect password`, { email: input.email.value, inputHashedPassword, storedHashedPassword });

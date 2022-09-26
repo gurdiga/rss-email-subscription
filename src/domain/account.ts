@@ -1,15 +1,16 @@
 import { makePlanId } from '../api/create-account';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { getTypeName, isErr, makeErr, Result } from '../shared/lang';
-import { AppStorage } from '../shared/storage';
+import { isErr, makeErr, Result } from '../shared/lang';
+import { AppStorage, StorageKey } from '../shared/storage';
 import { AccountId } from './account-index';
+import { HashedPassword, makeHashedPassword } from './hashed-password';
 
 export type PlanId = 'minimal' | 'standard' | 'sde';
 
 export interface Account {
   plan: PlanId;
   email: EmailAddress;
-  hashedPassword: string;
+  hashedPassword: HashedPassword;
 }
 
 export interface AccountData {
@@ -18,8 +19,12 @@ export interface AccountData {
   hashedPassword: string;
 }
 
-export function loadAccount(storage: AppStorage, accountIn: AccountId): Result<Account> {
-  const loadItemResult = storage.loadItem(`/accounts/${accountIn}/account.json`);
+export function loadAccount(
+  storage: AppStorage,
+  accountIn: AccountId,
+  storageKey: StorageKey = `/accounts/${accountIn}/account.json`
+): Result<Account> {
+  const loadItemResult = storage.loadItem(storageKey);
 
   if (isErr(loadItemResult)) {
     return makeErr(`Can’t load account data: ${loadItemResult.reason}`);
@@ -37,7 +42,7 @@ export function loadAccount(storage: AppStorage, accountIn: AccountId): Result<A
     return makeErr(`Invalid plan ID while loading account ${accountIn}: ${plan.reason}`);
   }
 
-  const hashedPassword = verifyHashedPassword(loadItemResult.hashedPassword);
+  const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
 
   if (isErr(hashedPassword)) {
     return makeErr(`Invalid hashed password while loading account ${accountIn}: ${hashedPassword.reason}`);
@@ -48,18 +53,4 @@ export function loadAccount(storage: AppStorage, accountIn: AccountId): Result<A
     email,
     hashedPassword,
   };
-}
-
-const hashedPasswordLength = 64;
-
-function verifyHashedPassword(hashedPassword: any): Result<string> {
-  if (typeof hashedPassword !== 'string') {
-    return makeErr(`Invalid hashed password: expected string got ${getTypeName(hashedPassword)}`);
-  }
-
-  if (hashedPassword.length !== hashedPasswordLength) {
-    return makeErr(`Invalid hashed password length: ${hashedPassword.length}`);
-  }
-
-  return hashedPassword;
 }

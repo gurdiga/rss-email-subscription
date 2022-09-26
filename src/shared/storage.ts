@@ -17,6 +17,9 @@ import {
 } from './io';
 import { attempt, isErr, makeErr, Result } from './lang';
 
+export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
+type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
+
 export interface AppStorage {
   storeItem: StoreItemFn;
   loadItem: LoadItemFn;
@@ -43,9 +46,6 @@ type ListSubdirectoriesFn = (
   listDirectoriesFn?: ListDirectoriesFn,
   fileExistsFn?: FileExistsFn
 ) => Result<StorageKey[]>;
-
-type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
-type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
 
 export function makeStorage(dataDirRoot: string): AppStorage {
   const storeItem: StoreItemFn = function storeItem(
