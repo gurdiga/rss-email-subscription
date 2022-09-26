@@ -25,6 +25,22 @@ export function addAccountToIndex(storage: AppStorage, accountId: AccountId, ema
   }
 }
 
+export function deleteAccountFromIndex(storage: AppStorage, email: EmailAddress): Result<void> {
+  const accountIndex = loadAccountIndex(storage);
+
+  if (isErr(accountIndex)) {
+    return makeErr(`Can’t load account index: ${accountIndex.reason}`);
+  }
+
+  (accountIndex as any)[email.value] = undefined;
+
+  const storeAccountIndexResult = storedAccountIndex(storage, accountIndex);
+
+  if (isErr(storeAccountIndexResult)) {
+    return makeErr(`Can’t store account index: ${storeAccountIndexResult.reason}`);
+  }
+}
+
 export function findAccountByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId> {
   const loadItemResult = loadAccountIndex(storage);
 
