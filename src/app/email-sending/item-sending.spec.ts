@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { encodeSearchParamValue, makeThrowingStub } from '../../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';

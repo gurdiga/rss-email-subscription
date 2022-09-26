@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { AppStorage, makeStorage } from '../../shared/storage';
 import { makeSpy, makeStub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';

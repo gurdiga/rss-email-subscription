@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { readFileSync } from 'fs';
 import { Err, makeErr } from '../../shared/lang';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
 import {
   buildRssItem,

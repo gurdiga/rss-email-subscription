@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStub } from '../../shared/test-utils';

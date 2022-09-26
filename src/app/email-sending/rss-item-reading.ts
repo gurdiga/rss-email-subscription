@@ -1,7 +1,7 @@
 import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
 

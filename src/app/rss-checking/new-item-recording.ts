@@ -1,6 +1,6 @@
 import { HashFn, hash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
 
 export type NameFileFn = (item: RssItem) => string;

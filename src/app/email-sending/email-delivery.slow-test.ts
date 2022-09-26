@@ -4,7 +4,7 @@ import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent } from './item-sending';
-import { RssItem } from '../../shared/rss-item';
+import { RssItem } from '../../domain/rss-item';
 import { makeConfirmationEmailContent } from '../../api/subscription';
 
 async function main(): Promise<number> {
