@@ -18,6 +18,7 @@ function main {
 	create_account_verify $USER_PLAN $USER_EMAIL
 	authenticate $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
+	return
 	unsubscribe
 	unsubscribe_verify
 	subscribe
@@ -105,7 +106,7 @@ function remove_accounts {
 	local account_email=${1:?}
 
 	for account_file in $(find_account_files_by_email "${account_email}"); do
-		rm -vfr "$(dirname "$account_file")"
+		ts-node src/api/delete-account-cli.ts blogger@test.com
 	done
 }
 
