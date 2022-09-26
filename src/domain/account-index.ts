@@ -2,14 +2,14 @@ import { EmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 
-interface AccountIndex {
+export interface AccountIndex {
   version: number;
   [email: string]: AccountId;
 }
 
 export type AccountId = number;
 
-export function addAccountToIndex(storage: AppStorage, accountId: AccountId, email: EmailAddress): Result<void> {
+export function addEmailToIndex(storage: AppStorage, accountId: AccountId, email: EmailAddress): Result<void> {
   const accountIndex = loadAccountIndex(storage);
 
   if (isErr(accountIndex)) {
@@ -25,7 +25,7 @@ export function addAccountToIndex(storage: AppStorage, accountId: AccountId, ema
   }
 }
 
-export function deleteAccountFromIndex(storage: AppStorage, email: EmailAddress): Result<void> {
+export function removeEmailFromIndex(storage: AppStorage, email: EmailAddress): Result<void> {
   const accountIndex = loadAccountIndex(storage);
 
   if (isErr(accountIndex)) {
@@ -58,8 +58,10 @@ export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): 
   return accountId;
 }
 
+export const accountIndexStorageKey = '/accounts/index.json';
+
 function loadAccountIndex(storage: AppStorage): Result<AccountIndex> {
-  const loadItemResult = storage.loadItem(`/accounts/index.json`);
+  const loadItemResult = storage.loadItem(accountIndexStorageKey);
 
   if (isErr(loadItemResult)) {
     return makeErr(`Can’t read account index: ${loadItemResult.reason}`);
@@ -68,7 +70,11 @@ function loadAccountIndex(storage: AppStorage): Result<AccountIndex> {
   return loadItemResult;
 }
 
-function storedAccountIndex(storage: AppStorage, accountIndex: AccountIndex): Result<void> {
+export function storedAccountIndex(
+  storage: AppStorage,
+  accountIndex: AccountIndex,
+  generateIndexVersionFn = generateIndexVersion
+): Result<void> {
   const mostRecentStoredIndex = loadAccountIndex(storage);
 
   if (isErr(mostRecentStoredIndex)) {
@@ -79,12 +85,12 @@ function storedAccountIndex(storage: AppStorage, accountIndex: AccountIndex): Re
 
   if (mostRecentIndexVersion !== accountIndex.version) {
     // This can only happen with multiple Node processes working with the same storage.
-    return makeErr('Account index changed since last read');
+    return makeErr('Account index version changed since last read');
   }
 
-  accountIndex.version = generateIndexVersion();
+  accountIndex.version = generateIndexVersionFn();
 
-  const storeItemResult = storage.storeItem(`/accounts/index.json`, accountIndex);
+  const storeItemResult = storage.storeItem(accountIndexStorageKey, accountIndex);
 
   if (isErr(storeItemResult)) {
     return makeErr(`Can’t record index: ${storeItemResult.reason}`);

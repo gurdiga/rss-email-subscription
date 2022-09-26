@@ -3,7 +3,7 @@
 import { rmSync } from 'node:fs';
 import { basename } from 'node:path';
 import { makeEmailAddress } from '../app/email-sending/emails';
-import { deleteAccountFromIndex, findAccountIdByEmail } from '../domain/account-index';
+import { removeEmailFromIndex, findAccountIdByEmail } from '../domain/account-index';
 import { requireEnv } from '../shared/env';
 import { attempt, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -40,7 +40,7 @@ function main(): void {
   const storage = makeStorage(env.DATA_DIR_ROOT);
   const accountId = findAccountIdByEmail(storage, email);
 
-  deleteAccountFromIndex(storage, email);
+  removeEmailFromIndex(storage, email);
 
   const rmDataResult = attempt(() => {
     rmSync(`${env.DATA_DIR_ROOT}/accounts/${accountId}/account.json`);
