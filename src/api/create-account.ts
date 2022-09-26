@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AccountData, PlanId } from '../domain/account';
-import { recordAccount } from '../domain/account-index';
+import { addAccountToIndex } from '../domain/account-index';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -138,11 +138,11 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     return makeErr('Couldn’t store account data');
   }
 
-  const recordAccountResult = recordAccount(storage, accountId, input.email);
+  const addAccountResult = addAccountToIndex(storage, accountId, input.email);
 
-  if (isErr(recordAccountResult)) {
-    logError('Couldn’t record account', { accountId, email: input.email.value, reason: recordAccountResult.reason });
-    return makeErr('Couldn’t record account');
+  if (isErr(addAccountResult)) {
+    logError('Couldn’t add account to index', { accountId, email: input.email.value, reason: addAccountResult.reason });
+    return makeErr('Couldn’t create account');
   }
 
   logInfo('Created new account', accountData);

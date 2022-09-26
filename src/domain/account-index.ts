@@ -9,7 +9,7 @@ interface AccountIndex {
 
 export type AccountId = number;
 
-export function recordAccount(storage: AppStorage, accountId: AccountId, email: EmailAddress): Result<void> {
+export function addAccountToIndex(storage: AppStorage, accountId: AccountId, email: EmailAddress): Result<void> {
   const accountIndex = loadAccountIndex(storage);
 
   if (isErr(accountIndex)) {
