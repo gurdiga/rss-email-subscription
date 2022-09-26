@@ -1,5 +1,5 @@
-import { isErr, makeErr, Result } from './lang';
-import { AppStorage } from './storage';
+import { isErr, makeErr, Result } from '../shared/lang';
+import { AppStorage } from '../shared/storage';
 
 export interface AppSettings {
   kind: 'AppSettings';

@@ -1,4 +1,4 @@
-import { AppSettings, loadAppSettings } from '../shared/app-settings';
+import { AppSettings, loadAppSettings } from '../domain/app-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage, makeStorage } from '../shared/storage';

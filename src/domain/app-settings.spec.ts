@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { loadAppSettings } from './app-settings';
-import { makeErr, Result } from './lang';
-import { AppStorage, makeStorage } from './storage';
-import { makeStub } from './test-utils';
+import { makeErr, Result } from '../shared/lang';
+import { AppStorage, makeStorage } from '../shared/storage';
+import { makeStub } from '../shared/test-utils';
 
 describe(loadAppSettings.name, () => {
   const storage = makeStorage('/test-data');
