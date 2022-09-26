@@ -1,19 +1,13 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { AppStorage, makeStorage } from '../../shared/storage';
-import { makeSpy, makeStub } from '../../shared/test-utils';
+import { makeSpy, makeStorageStub, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
-  const dataDirRoot = '/data';
   const feedId = 'testblog';
-  const storage = {
-    ...makeStorage(dataDirRoot),
-    hasItem: makeStub<AppStorage['hasItem']>(() => true),
-  };
 
   describe(getLastPostMetadata.name, () => {
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
@@ -21,8 +15,11 @@ describe('Last post timestamp', () => {
         pubDate: aTimestamp,
         guid: aGuid,
       };
-      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => lastPostMetadata) };
-      const result = getLastPostMetadata(feedId, storageStub);
+      const storage = makeStorageStub({
+        loadItem: () => lastPostMetadata,
+        hasItem: () => true,
+      });
+      const result = getLastPostMetadata(feedId, storage);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,
@@ -30,20 +27,20 @@ describe('Last post timestamp', () => {
       };
 
       expect(result).to.deep.equal(expectedResult);
-      expect(storageStub.loadItem.calls).to.deep.equal([[`/${feedId}/lastPostMetadata.json`]]);
+      expect((storage.loadItem as Stub).calls).to.deep.equal([[`/${feedId}/lastPostMetadata.json`]]);
     });
 
     it('returns undefined value when lastPostMetadata.json does not exist', () => {
-      const storageStub = { ...storage, hasItem: makeStub<AppStorage['hasItem']>(() => false) };
-      const result = getLastPostMetadata(feedId, storageStub);
+      const storage = makeStorageStub({ hasItem: () => false });
+      const result = getLastPostMetadata(feedId, storage);
 
       expect(result).to.be.undefined;
     });
 
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
-      const storedValue = { pubDate: new Date('not a JSON date') };
-      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => storedValue) };
-      const result = getLastPostMetadata(feedId, storageStub);
+      const storedValue = { pubDate: new Date('not a date') };
+      const storage = makeStorageStub({ loadItem: () => storedValue, hasItem: () => true as const });
+      const result = getLastPostMetadata(feedId, storage);
 
       expect(result).to.deep.equal(makeErr(`Invalid timestamp in /${feedId}/lastPostMetadata.json`));
     });
@@ -53,8 +50,8 @@ describe('Last post timestamp', () => {
         pubDate: aTimestamp,
         guid: undefined as any as string,
       };
-      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => lastPostMetadata) };
-      const result = getLastPostMetadata(feedId, storageStub);
+      const storage = makeStorageStub({ loadItem: () => lastPostMetadata, hasItem: () => true as const });
+      const result = getLastPostMetadata(feedId, storage);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,
@@ -100,12 +97,12 @@ describe('Last post timestamp', () => {
     };
 
     it('writes pubDate of the last item to lastPostMetadata.json', () => {
-      const storageStub = { ...storage, storeItem: makeSpy<AppStorage['storeItem']>() };
+      const storage = makeStorageStub({ storeItem: makeSpy() });
       const initialRssItems = [...mockRssItems];
-      const result = recordLastPostMetadata(feedId, storageStub, mockRssItems);
+      const result = recordLastPostMetadata(feedId, storage, mockRssItems);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
-      expect(storageStub.storeItem.calls).to.deep.equal([
+      expect((storage.storeItem as Stub).calls).to.deep.equal([
         [`/${feedId}/lastPostMetadata.json`, expectedLastPostMetadata],
       ]);
       expect(result).to.deep.equal(expectedLastPostMetadata);
@@ -113,19 +110,19 @@ describe('Last post timestamp', () => {
 
     it('reports the error when can’t write file', () => {
       const mockError = 'No write access';
-      const storageStub = { ...storage, storeItem: makeStub<AppStorage['storeItem']>(() => makeErr(mockError)) };
-      const result = recordLastPostMetadata(feedId, storageStub, mockRssItems);
+      const storage = makeStorageStub({ storeItem: () => makeErr(mockError) });
+      const result = recordLastPostMetadata(feedId, storage, mockRssItems);
 
       expect(result).to.deep.equal(makeErr(`Cant record last post timestamp: ${mockError}`));
     });
 
     it('does nothing when there are no items', () => {
-      const storageStub = { ...storage, storeItem: makeSpy<AppStorage['storeItem']>() };
+      const storage = makeStorageStub({ storeItem: makeSpy() });
       const newRssItems: RssItem[] = [];
 
-      recordLastPostMetadata(feedId, storageStub, newRssItems);
+      recordLastPostMetadata(feedId, storage, newRssItems);
 
-      expect(storageStub.storeItem.calls).to.be.empty;
+      expect((storage.storeItem as Spy).calls).to.be.empty;
     });
   });
 });

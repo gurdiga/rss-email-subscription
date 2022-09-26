@@ -1,20 +1,14 @@
 import { expect } from 'chai';
 import { loadAppSettings } from './app-settings';
 import { makeErr, Result } from '../shared/lang';
-import { AppStorage, makeStorage } from '../shared/storage';
-import { makeStub } from '../shared/test-utils';
+import { makeStorageStub } from '../shared/test-utils';
 
 describe(loadAppSettings.name, () => {
-  const storage = makeStorage('/test-data');
-
   it('returns a AppSettings value containing the data from /settings.json', () => {
     const data = { hashingSalt: 'random-16-bytes.' };
-    const storageStub = {
-      ...storage,
-      loadItem: makeStub<AppStorage['loadItem']>(() => data),
-    };
+    const storage = makeStorageStub({ loadItem: () => data });
 
-    expect(loadAppSettings(storageStub)).to.deep.equal({
+    expect(loadAppSettings(storage)).to.deep.equal({
       kind: 'AppSettings',
       hashingSalt: 'random-16-bytes.',
     });
@@ -22,12 +16,9 @@ describe(loadAppSettings.name, () => {
 
   it('returns an Err value if hashingSalt is no good', () => {
     const result = (data: Result<{ hashingSalt: any }>): ReturnType<typeof loadAppSettings> => {
-      const storageStub = {
-        ...storage,
-        loadItem: makeStub<AppStorage['loadItem']>(() => data),
-      };
+      const storage = makeStorageStub({ loadItem: () => data });
 
-      return loadAppSettings(storageStub);
+      return loadAppSettings(storage);
     };
 
     expect(result({ hashingSalt: undefined })).to.deep.equal(makeErr('Hashing salt is missing in app settings.'));

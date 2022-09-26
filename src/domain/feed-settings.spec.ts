@@ -2,15 +2,9 @@ import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { FeedSettings, getFeedSettings } from './feed-settings';
 import { makeErr } from '../shared/lang';
-import { AppStorage, makeStorage } from '../shared/storage';
-import { makeStub } from '../shared/test-utils';
+import { makeStorageStub, Stub } from '../shared/test-utils';
 
 describe(getFeedSettings.name, () => {
-  const dataDirRoot = '/test-data';
-  const storage = {
-    ...makeStorage(dataDirRoot),
-    hasItem: makeStub<AppStorage['hasItem']>(() => true),
-  };
   const feedId = 'jalas';
 
   const data = {
@@ -22,10 +16,10 @@ describe(getFeedSettings.name, () => {
   };
 
   it('returns a FeedSettings value from feed.json', () => {
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
-    const result = getFeedSettings(feedId, storageStub);
+    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
+    const result = getFeedSettings(feedId, storage);
 
-    expect(storageStub.loadItem.calls).to.deep.equal([[`/${feedId}/feed.json`]]);
+    expect((storage.loadItem as Stub).calls).to.deep.equal([[`/${feedId}/feed.json`]]);
 
     const expectedResult: FeedSettings = {
       kind: 'FeedSettings',
@@ -42,8 +36,8 @@ describe(getFeedSettings.name, () => {
 
   it('defaults cronPattern to every hour', () => {
     const dataWithoutCronPattern = { ...data, cronPattern: undefined };
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => dataWithoutCronPattern) };
-    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
+    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => dataWithoutCronPattern });
+    const result = getFeedSettings(feedId, storage) as FeedSettings;
 
     expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
@@ -55,8 +49,8 @@ describe(getFeedSettings.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
-    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
+    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
+    const result = getFeedSettings(feedId, storage) as FeedSettings;
 
     expect(result.replyTo.value).to.equal('feedback@feedsubscription.com');
   });
@@ -67,28 +61,24 @@ describe(getFeedSettings.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
-    const result = getFeedSettings(feedId, storageStub) as FeedSettings;
+    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
+    const result = getFeedSettings(feedId, storage) as FeedSettings;
 
     expect(result.displayName).to.equal(feedId);
   });
 
-  it('returns an FeedNotFound value not found', () => {
-    const storageStub = {
-      ...storage,
-      loadItem: makeStub<AppStorage['loadItem']>(),
-      hasItem: makeStub<AppStorage['hasItem']>(() => false),
-    };
-    const result = getFeedSettings(feedId, storageStub);
+  it('returns an FeedNotFound when value not found', () => {
+    const storage = makeStorageStub({ loadItem: () => undefined, hasItem: () => false });
+    const result = getFeedSettings(feedId, storage);
 
     expect(result).to.deep.equal({ kind: 'FeedNotFound' });
   });
 
   it('returns an Err value when the data is invalid', () => {
     const resultForJson = (data: Object): ReturnType<typeof getFeedSettings> => {
-      const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => data) };
+      const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
 
-      return getFeedSettings(feedId, storageStub);
+      return getFeedSettings(feedId, storage);
     };
 
     expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(

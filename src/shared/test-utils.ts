@@ -1,3 +1,6 @@
+import { AppStorage, makeStorage } from './storage';
+
+export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
   calls: any[][];
 };
@@ -31,4 +34,26 @@ export function makeThrowingStub<F extends Function>(error: Error): Spy<F> {
 /** URL-encodes string */
 export function encodeSearchParamValue(string: string): string | undefined {
   return new URLSearchParams({ string }).toString().split('=')[1];
+}
+
+interface AppStorageStub extends AppStorage {
+  storeItem: Stub<AppStorage['storeItem']> | AppStorage['storeItem'];
+  loadItem: Stub<AppStorage['loadItem']> | AppStorage['loadItem'];
+  hasItem: Stub<AppStorage['hasItem']> | AppStorage['hasItem'];
+  removeItem: Stub<AppStorage['removeItem']> | AppStorage['removeItem'];
+  listItems: Stub<AppStorage['listItems']> | AppStorage['listItems'];
+  listSubdirectories: Stub<AppStorage['listSubdirectories']> | AppStorage['listSubdirectories'];
+}
+
+export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K, AppStorageStub[K]>): AppStorageStub {
+  let methodStubs: any = {};
+
+  for (const methodName in stubBodies) {
+    methodStubs[methodName] = makeStub(stubBodies[methodName]);
+  }
+
+  return {
+    ...makeStorage('/test-data'),
+    ...methodStubs,
+  };
 }

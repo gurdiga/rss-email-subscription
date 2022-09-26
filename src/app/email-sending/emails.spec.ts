@@ -1,8 +1,7 @@
 import { expect } from 'chai';
 import { ReadFileFn } from '../../shared/io';
 import { Err, isErr, makeErr } from '../../shared/lang';
-import { AppStorage, makeStorage } from '../../shared/storage';
-import { makeStub, makeThrowingStub } from '../../shared/test-utils';
+import { makeStorageStub, makeStub, makeThrowingStub, Stub } from '../../shared/test-utils';
 import {
   EmailAddress,
   EmailList,
@@ -228,7 +227,6 @@ describe(readEmailListFromCsvFile.name, () => {
 describe(loadStoredEmails.name, () => {
   const feedId = 'path';
   const storageKey = '/path/emails.json';
-  const storage = makeStorage('/data');
 
   const index: EmailIndex = {
     hash1: 'email1@test.com',
@@ -237,10 +235,10 @@ describe(loadStoredEmails.name, () => {
   };
 
   it('returns a list of stored emails with their hashes', () => {
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => index) };
-    const result = loadStoredEmails(feedId, storageStub);
+    const storage = makeStorageStub({ loadItem: () => index });
+    const result = loadStoredEmails(feedId, storage);
 
-    expect(storageStub.loadItem.calls).to.deep.equal([[storageKey]]);
+    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
       validEmails: [
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: true },
@@ -259,10 +257,10 @@ describe(loadStoredEmails.name, () => {
       hash4: 'email4@test.com',
     };
 
-    const storageStub = { ...storage, loadItem: makeStub<AppStorage['loadItem']>(() => extendedIndex) };
-    const result = loadStoredEmails(feedId, storageStub);
+    const storage = makeStorageStub({ loadItem: () => extendedIndex });
+    const result = loadStoredEmails(feedId, storage);
 
-    expect(storageStub.loadItem.calls).to.deep.equal([[storageKey]]);
+    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
       validEmails: [
         { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: false },
@@ -286,8 +284,8 @@ describe(loadStoredEmails.name, () => {
       hash7: {},
     };
 
-    const storageStub = { ...storage, loadItem: () => index };
-    const result = loadStoredEmails(feedId, storageStub);
+    const storage = makeStorageStub({ loadItem: () => index });
+    const result = loadStoredEmails(feedId, storage);
 
     expect(result).to.deep.equal({
       validEmails: [
@@ -309,8 +307,8 @@ describe(loadStoredEmails.name, () => {
     const invalidJsonStrings = ['null', '[]', '"string"', '42', 'true'];
 
     for (const storedValue of invalidJsonStrings) {
-      const storageStub = { ...storage, loadItem: () => storedValue };
-      const result = loadStoredEmails(feedId, storageStub) as Err;
+      const storage = makeStorageStub({ loadItem: () => storedValue });
+      const result = loadStoredEmails(feedId, storage) as Err;
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
@@ -321,11 +319,9 @@ describe(loadStoredEmails.name, () => {
   });
 
   it('returns an Err value when can’t load storage value', () => {
-    const storageStub = { ...storage, loadItem: () => makeErr('File access denied?!') };
+    const storage = makeStorageStub({ loadItem: () => makeErr('File access denied?!') });
 
-    expect(loadStoredEmails(feedId, storageStub)).to.deep.equal(
-      makeErr(`Could not read email list at /path/emails.json`)
-    );
+    expect(loadStoredEmails(feedId, storage)).to.deep.equal(makeErr(`Could not read email list at /path/emails.json`));
   });
 });
 

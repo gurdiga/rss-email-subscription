@@ -2,13 +2,11 @@ import { expect } from 'chai';
 import { basename } from 'path';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
-import { AppStorage, makeStorage } from '../../shared/storage';
-import { makeStub } from '../../shared/test-utils';
+import { AppStorage } from '../../shared/storage';
+import { makeStorageStub, Stub } from '../../shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
 describe(readStoredRssItems.name, () => {
-  const dataDirRoot = '/test-data';
-  const storage = makeStorage(dataDirRoot);
   const feedId = 'testblog';
 
   interface MockStorageItem {
@@ -54,19 +52,18 @@ describe(readStoredRssItems.name, () => {
   ];
 
   it('returns the list of items in inbox ordered by pubDate', () => {
-    const storageStub = {
-      ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => files.map((f) => f.key)),
+    const storage = makeStorageStub({
+      listItems: () => files.map((f) => f.key),
       loadItem: makeLoadItemFnStub(files),
-    };
+    });
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
       validItems: makeMockValidItems(files),
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(feedId, storageStub)).to.deep.equal(expectedResul);
-    expect(storageStub.listItems.calls).to.deep.equal([[`/${feedId}/inbox`]]);
+    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
+    expect((storage.listItems as Stub).calls).to.deep.equal([[`/${feedId}/inbox`]]);
   });
 
   it('also returns the files with invalid data', () => {
@@ -75,11 +72,10 @@ describe(readStoredRssItems.name, () => {
       value: '{"invalid-data": true}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
-    const storageStub = {
-      ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.key)),
+    const storage = makeStorageStub({
+      listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
-    };
+    });
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
       validItems: makeMockValidItems(files),
@@ -92,7 +88,7 @@ describe(readStoredRssItems.name, () => {
       ],
     };
 
-    expect(readStoredRssItems(feedId, storageStub)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
   });
 
   it('ignores files that do not match expected naming convention', () => {
@@ -101,28 +97,24 @@ describe(readStoredRssItems.name, () => {
       value: '{"some": "json-data"}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
-    const storageStub = {
-      ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => filesWithInvalidItems.map((f) => f.key)),
+    const storage = makeStorageStub({
+      listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
-    };
+    });
     const expectedResult: RssReadingResult = {
       kind: 'RssReadingResult',
       validItems: makeMockValidItems(files),
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(feedId, storageStub)).to.deep.equal(expectedResult);
+    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when can’t list items', () => {
     const error = makeErr('Not there?!');
-    const storageStub = {
-      ...storage,
-      listItems: makeStub<AppStorage['listItems']>(() => error),
-    };
+    const storage = makeStorageStub({ listItems: () => error });
 
-    expect(readStoredRssItems(feedId, storageStub)).to.deep.equal(
+    expect(readStoredRssItems(feedId, storage)).to.deep.equal(
       makeErr(`Can’t list files in /${feedId}/inbox: ${error.reason}`)
     );
   });

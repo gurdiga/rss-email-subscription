@@ -1,14 +1,11 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
-import { AppStorage, makeStorage } from '../../shared/storage';
-import { makeStub } from '../../shared/test-utils';
+import { makeStorageStub, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { ValidStoredRssItem } from './rss-item-reading';
 
 describe(deleteItem.name, () => {
-  const dataDirRoot = '/test-data';
   const feedId = 'testblog';
-  const storage = makeStorage(dataDirRoot);
 
   const storedRssItem: ValidStoredRssItem = {
     kind: 'ValidStoredRssItem',
@@ -25,16 +22,16 @@ describe(deleteItem.name, () => {
   };
 
   it('removes the corresponding item from storage', () => {
-    const storageStub = { ...storage, removeItem: makeStub<AppStorage['removeItem']>(() => true) };
-    const result = deleteItem(feedId, storageStub, storedRssItem);
+    const storage = makeStorageStub({ removeItem: () => true as const });
+    const result = deleteItem(feedId, storage, storedRssItem);
 
-    expect(storageStub.removeItem.calls).to.deep.equal([[`/${feedId}/inbox/${storedRssItem.fileName}`]]);
+    expect((storage.removeItem as Stub).calls).to.deep.equal([[`/${feedId}/inbox/${storedRssItem.fileName}`]]);
     expect(result).to.be.true;
   });
 
   it('returns an Err value when can’t delete', () => {
-    const storageStub = { ...storage, removeItem: makeStub<AppStorage['removeItem']>(() => makeErr('Can’t delete!!')) };
-    const result = deleteItem(feedId, storageStub, storedRssItem);
+    const storage = makeStorageStub({ removeItem: () => makeErr('Can’t delete!!') });
+    const result = deleteItem(feedId, storage, storedRssItem);
 
     expect(result).to.deep.equal(makeErr(`Can’t delete stored RSS item: Can’t delete!!`));
   });
