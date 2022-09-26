@@ -6,6 +6,7 @@ import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
+import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { AppRequestHandler } from './request-handler';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
@@ -84,37 +85,6 @@ export function makePlanId(planId: string): Result<PlanId> {
   }
 
   return planId as PlanId;
-}
-
-interface NewPassword {
-  kind: 'NewPassword';
-  value: string;
-}
-
-export const minPasswordLength = 16;
-export const maxPasswordLength = 128;
-
-export function makeNewPassword(password: string): Result<NewPassword> {
-  if (/^\s/.test(password)) {
-    return makeErr('Has leading spaces');
-  }
-
-  if (/\s$/.test(password)) {
-    return makeErr('Has trailing spaces');
-  }
-
-  if (password.length < minPasswordLength) {
-    return makeErr('Too short');
-  }
-
-  if (password.length > maxPasswordLength) {
-    return makeErr('Too long');
-  }
-
-  return {
-    kind: 'NewPassword',
-    value: password,
-  };
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {
