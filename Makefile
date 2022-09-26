@@ -316,30 +316,24 @@ clean: stop
 	rm -rf website/html/
 
 init-data-dir:
-	@if [ -v DATA_DIR_ROOT ]; then
-		set -e
-		mkdir $$DATA_DIR_ROOT/feeds
-		mkdir $$DATA_DIR_ROOT/accounts
-		echo "Initialized data dir: $$DATA_DIR_ROOT"
-	else
-		echo "ERROR: Missing envar: DATA_DIR_ROOT"
-	fi
+	@require=$${DATA_DIR_ROOT:?envar is missing}
+
+	set -e
+	mkdir $$DATA_DIR_ROOT/feeds
+	mkdir $$DATA_DIR_ROOT/accounts
+	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
 init-app-settings:
-	@if [ -v DATA_DIR_ROOT ]; then
-		template='{"hashingSalt": "HASING_SALT_SLOT"}'
-		hashing_salt=`tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''`
-		output_file="$$DATA_DIR_ROOT/settings.json"
+	@require=$${DATA_DIR_ROOT:?envar is missing}
 
-		echo $$template | sed "s/HASING_SALT_SLOT/$$hashing_salt/" > $$output_file
-		echo "Created $$output_file"
-	else
-		echo "ERROR: Missing envar: DATA_DIR_ROOT"
-	fi
+	template='{"hashingSalt": "HASING_SALT_SLOT"}'
+	hashing_salt=`tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''`
+	output_file="$$DATA_DIR_ROOT/settings.json"
+
+	echo $$template | sed "s/HASING_SALT_SLOT/$$hashing_salt/" > $$output_file
+	echo "Created $$output_file"
 
 init-account-index:
-	@if [ -v DATA_DIR_ROOT ]; then
-		echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
-	else
-		echo "ERROR: Missing envar: DATA_DIR_ROOT"
-	fi
+	@require=$${DATA_DIR_ROOT:?envar is missing}
+
+	echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
