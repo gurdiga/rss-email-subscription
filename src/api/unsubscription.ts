@@ -1,7 +1,7 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { parseSubscriptionId } from './subscription-id';
+import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppRequestHandler } from './request-handler';
 
