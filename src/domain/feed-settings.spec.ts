@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { FeedSettings, getFeedSettings } from './feed-settings';
-import { makeErr } from './lang';
-import { AppStorage, makeStorage } from './storage';
-import { makeStub } from './test-utils';
+import { makeErr } from '../shared/lang';
+import { AppStorage, makeStorage } from '../shared/storage';
+import { makeStub } from '../shared/test-utils';
 
 describe(getFeedSettings.name, () => {
   const dataDirRoot = '/test-data';

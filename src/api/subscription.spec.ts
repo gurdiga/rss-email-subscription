@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail } from '../app/email-sending/emails';
-import { DOMAIN_NAME } from '../shared/feed-settings';
+import { DOMAIN_NAME } from '../domain/feed-settings';
 import { encodeSearchParamValue } from '../shared/test-utils';
 import { makeConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
 

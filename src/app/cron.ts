@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
-import { getFeedSettings } from '../shared/feed-settings';
+import { getFeedSettings } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../shared/storage';
 

@@ -1,5 +1,5 @@
 import { requireEnv } from '../../shared/env';
-import { DOMAIN_NAME } from '../../shared/feed-settings';
+import { DOMAIN_NAME } from '../../domain/feed-settings';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';

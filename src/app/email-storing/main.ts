@@ -6,7 +6,7 @@ import {
   StoredEmails,
   storeEmails,
 } from '../email-sending/emails';
-import { getFeedSettings } from '../../shared/feed-settings';
+import { getFeedSettings } from '../../domain/feed-settings';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';

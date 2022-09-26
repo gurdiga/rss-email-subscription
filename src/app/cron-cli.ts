@@ -1,6 +1,6 @@
 import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
-import { getFeedSettings } from '../shared/feed-settings';
+import { getFeedSettings } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';

@@ -13,7 +13,7 @@ import {
 } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../shared/feed-settings';
+import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';

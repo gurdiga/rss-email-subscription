@@ -1,4 +1,4 @@
-import { DOMAIN_NAME } from '../../shared/feed-settings';
+import { DOMAIN_NAME } from '../../domain/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../shared/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';

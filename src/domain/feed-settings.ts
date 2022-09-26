@@ -1,7 +1,7 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { isErr, makeErr, Result } from './lang';
-import { AppStorage } from './storage';
-import { makeUrl } from './url';
+import { isErr, makeErr, Result } from '../shared/lang';
+import { AppStorage } from '../shared/storage';
+import { makeUrl } from '../shared/url';
 
 export const DOMAIN_NAME = 'feedsubscription.com';
 

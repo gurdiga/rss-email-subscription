@@ -7,7 +7,7 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { FeedSettings } from '../../shared/feed-settings';
+import { FeedSettings } from '../../domain/feed-settings';
 import { AppStorage } from '../../shared/storage';
 
 export async function sendEmails(
