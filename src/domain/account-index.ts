@@ -62,7 +62,8 @@ function storedAccountIndex(storage: AppStorage, accountIndex: AccountIndex): Re
   const mostRecentIndexVersion = mostRecentStoredIndex.version;
 
   if (mostRecentIndexVersion !== accountIndex.version) {
-    return makeErr('Account index version conflict');
+    // This can only happen with multiple Node processes working with the same storage.
+    return makeErr('Account index changed since last read');
   }
 
   accountIndex.version = generateIndexVersion();
