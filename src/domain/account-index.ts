@@ -41,7 +41,7 @@ export function deleteAccountFromIndex(storage: AppStorage, email: EmailAddress)
   }
 }
 
-export function findAccountByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId> {
+export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId> {
   const loadItemResult = loadAccountIndex(storage);
 
   if (isErr(loadItemResult)) {

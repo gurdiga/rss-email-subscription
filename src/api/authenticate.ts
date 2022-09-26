@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { loadAccount } from '../domain/account';
-import { AccountId, findAccountByEmail } from '../domain/account-index';
+import { AccountId, findAccountIdByEmail } from '../domain/account-index';
 import { makePassword, Password } from '../domain/password';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -65,7 +65,7 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     module: `${authenticate.name}:${checkCredentials.name}`,
   });
-  const findAccountResult = findAccountByEmail(storage, input.email);
+  const findAccountResult = findAccountIdByEmail(storage, input.email);
 
   if (isErr(findAccountResult)) {
     logWarning(`Can’t find account by email`, { email: input.email.value, reason: findAccountResult.reason });

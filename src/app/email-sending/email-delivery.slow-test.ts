@@ -85,7 +85,7 @@ function getEnv(): Result<EmailDeliveryEnv> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
-    return makeErr(`\nInvalid environment variables: ${env.reason}`);
+    return makeErr(`Invalid environment variables: ${env.reason}`);
   }
 
   return env;
