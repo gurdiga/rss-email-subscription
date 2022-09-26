@@ -1,4 +1,4 @@
-import { Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 
 export interface Password {
   kind: 'Password';
@@ -6,6 +6,18 @@ export interface Password {
 }
 
 export function makePassword(input: string): Result<Password> {
+  if (input.length === 0) {
+    return makeErr('Is empty');
+  }
+
+  if (/^\s/.test(input)) {
+    return makeErr('Has leading spaces');
+  }
+
+  if (/\s$/.test(input)) {
+    return makeErr('Has trailing spaces');
+  }
+
   return {
     kind: 'Password',
     value: input,
