@@ -32,10 +32,6 @@ async function main() {
   server.post('/create-account', makeRequestHandler(createAccount, app));
   server.post('/authenticate', makeRequestHandler(authenticate, app));
 
-  if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
-    server.use('/', express.static(process.env['DOCUMENT_ROOT']));
-  }
-
   server.listen(port, () => {
     logInfo(`Listening on http://0.0.0.0:${port}`);
   });
