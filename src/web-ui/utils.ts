@@ -73,53 +73,36 @@ export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
 }
 
 export function displayMainError(message: string) {
-  const initErrorElementSelector = '#init-error-message';
-  const errorMessageElement = document.querySelector(initErrorElementSelector);
+  const errorMessageSelector = '#init-error-message';
+  const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
-    reportError(`Element is missing: ${initErrorElementSelector}`);
+    reportError(`Element is missing: ${errorMessageSelector}`);
     return;
   }
 
   errorMessageElement.textContent = message;
-  errorMessageElement.removeAttribute('hidden');
+  errorMessageElement.className = 'alert alert-danger';
 }
 
 export interface ResponseStatusUiElements {
-  successLabel: Element;
-  inputErrorLabel: Element;
-  appErrorLabel: Element;
+  apiResponseMessage: Element;
 }
 
-export function handleApiResponse(apiResponse: ApiResponse, uiElements: ResponseStatusUiElements): void {
-  const { successLabel, appErrorLabel, inputErrorLabel } = uiElements;
+export function handleApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
+  const className = isInputError(apiResponse) || isAppError(apiResponse) ? 'alert alert-danger' : 'alert alert-success';
 
-  if (isInputError(apiResponse)) {
-    inputErrorLabel.textContent = apiResponse.message;
-    inputErrorLabel.removeAttribute('hidden');
-    return;
-  }
-
-  if (isAppError(apiResponse)) {
-    appErrorLabel.textContent = apiResponse.message;
-    appErrorLabel.removeAttribute('hidden');
-    return;
-  }
-
-  successLabel.removeAttribute('hidden');
+  messageElement.textContent = apiResponse.message;
+  messageElement.setAttribute('role', 'alert');
+  messageElement.className = className;
 }
 
-export interface ErrorUiElements {
-  communicationErrorLabel: Element;
-}
-
-export function handleCommunicationError(error: TypeError, uiElements: ErrorUiElements): void {
-  const { communicationErrorLabel } = uiElements;
-
+export function handleCommunicationError(error: TypeError, messageElement: Element): void {
   reportError(error);
 
-  communicationErrorLabel.textContent = error.message;
-  communicationErrorLabel.removeAttribute('hidden');
+  messageElement.textContent = error.message;
+  messageElement.setAttribute('role', 'alert');
+  messageElement.className = 'alert alert-danger';
 }
 
 export function reportError(error: Error | string): void {

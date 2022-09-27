@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { displayMainError, ErrorUiElements, fillUiElements, handleApiResponse } from './utils';
+import { displayMainError, fillUiElements, handleApiResponse } from './utils';
 import { handleCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './utils';
 import { ResponseStatusUiElements, sendApiRequest, UiElementFillSpec } from './utils';
 
@@ -7,7 +7,7 @@ function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
 
   if (isErr(queryParams)) {
-    displayMainError(queryParams.reason);
+    displayMainError('Invalid unsubscribe link');
     return;
   }
 
@@ -17,10 +17,7 @@ function main() {
     emailLabel: '#email-label',
     formUiContainer: '#form-ui',
     confirmButton: '#confirm-button',
-    communicationErrorLabel: '#communication-error-label',
-    successLabel: '#unsubscription-success-label',
-    inputErrorLabel: '#input-error-label',
-    appErrorLabel: '#app-error-label',
+    apiResponseMessage: '#api-response-message',
   });
 
   if (isErr(uiElements)) {
@@ -53,16 +50,16 @@ function main() {
     try {
       const response = await sendApiRequest('/unsubscribe', { id: queryParams.id });
 
-      handleApiResponse(response, uiElements);
+      handleApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {
-      handleCommunicationError(error as TypeError, uiElements);
+      handleCommunicationError(error as TypeError, uiElements.apiResponseMessage);
     }
   });
 }
 
 main();
 
-interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ErrorUiElements, ResponseStatusUiElements {}
+interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ResponseStatusUiElements {}
 
 interface InputUiElements {
   inputUiContainer: Element;
