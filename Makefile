@@ -143,16 +143,15 @@ ssl:
 	docker kill --signal=SIGHUP website
 
 web-ui-systemjs:
-	cp --target-directory=$${DOCUMENT_ROOT:?}/src/web-ui-scripts \
+	mkdir -p src/api/web-ui-scripts
+	cp --target-directory=src/api/web-ui-scripts \
 		./node_modules/systemjs/dist/system.min.js* \
 		./src/web-ui/systemjs-resolve-patch.js
 
 web-ui-watch:
-	node_modules/.bin/tsc --watch \
-		--project src/web-ui/tsconfig.json \
-		--outDir $${DOCUMENT_ROOT:?}/src/web-ui-scripts &
+	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json &
 
-start-web-ui-dev: web-ui-systemjs web-ui-watch
+start-dev: web-ui-systemjs web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:
