@@ -35,11 +35,11 @@ type StoreItemFn = (
   mkdirpFn?: MkdirpFn,
   writeFileFn?: WriteFileFn,
   fileExistsFn?: FileExistsFn
-) => Result<true>;
+) => Result<void>;
 
 type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
 type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
-type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<true>;
+type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<void>;
 type ListItemsFn = (key: StorageKey, lisstFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
 type ListSubdirectoriesFn = (
   key: StorageKey,
@@ -54,7 +54,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     mkdirpFn = mkdirp,
     writeFileFn = writeFile,
     fileExistsFn = fileExists
-  ) {
+  ): Result<void> {
     const filePath = join(dataDirRoot, key);
     const dirPath = dirname(filePath);
 
@@ -71,8 +71,6 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     if (isErr(writeFileResult)) {
       return makeErr(`Couldn’t write file: ${writeFileResult.reason}`);
     }
-
-    return true;
   };
 
   const loadItem: LoadItemFn = function loadItem(key, readFileFn = readFile) {
@@ -103,7 +101,11 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return fileExistsResult;
   };
 
-  const removeItem: RemoveItemFn = function removeItem(key, deleteFileFn = deleteFile, fileExistsFn = fileExists) {
+  const removeItem: RemoveItemFn = function removeItem(
+    key,
+    deleteFileFn = deleteFile,
+    fileExistsFn = fileExists
+  ): Result<void> {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -112,7 +114,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
 
     if (fileExistsResult === false) {
-      return true;
+      return;
     }
 
     const deleteFileResult = attempt(() => deleteFileFn(filePath));
@@ -120,8 +122,6 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     if (isErr(deleteFileResult)) {
       return makeErr(`Can’t delete file: ${deleteFileResult.reason}`);
     }
-
-    return true;
   };
 
   const listItems: ListItemsFn = function listItems(key, listFilesFn = listFiles, fileExistsFn = fileExists) {

@@ -18,14 +18,13 @@ describe(makeStorage.name, () => {
     const mkdirpFn = makeStub<MkdirpFn>();
 
     it('stores the given value JSONified in the given file', () => {
-      const result = storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
+      storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
       expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'creates the necessary directory structure');
       expect(writeFileFn.calls[0]).deep.equal(
         [expectedFilePath, JSON.stringify(value)],
         'stores data in the given file'
       );
-      expect(result).to.be.true;
     });
 
     it('returns an Err value when can’t create directory structure', () => {
@@ -107,21 +106,21 @@ describe(makeStorage.name, () => {
     it('removes the corresponding file', () => {
       const deleteFileFn = makeSpy<DeleteFileFn>();
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
-      const result = removeItem(key, deleteFileFn, fileExistsFn);
+
+      removeItem(key, deleteFileFn, fileExistsFn);
 
       expect(fileExistsFn.calls).to.deep.equal([[expectedFilePath]]);
       expect(deleteFileFn.calls).to.deep.equal([[expectedFilePath]]);
-      expect(result).to.be.true;
     });
 
     it('succeedes if the file does not exist', () => {
       const deleteFileFn = makeSpy<DeleteFileFn>();
       const fileExistsFn = makeStub<FileExistsFn>(() => false);
-      const result = removeItem(key, deleteFileFn, fileExistsFn);
+
+      removeItem(key, deleteFileFn, fileExistsFn);
 
       expect(fileExistsFn.calls).to.deep.equal([[expectedFilePath]]);
       expect(deleteFileFn.calls).to.be.empty;
-      expect(result).to.be.true;
     });
 
     it('returns an Err value when can’t check file exists or can’t delete it', () => {

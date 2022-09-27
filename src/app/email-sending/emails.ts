@@ -2,6 +2,7 @@ import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io';
 import {
+  Err,
   getErrorMessage,
   getTypeName,
   isErr,
@@ -234,7 +235,7 @@ function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown)
   }
 }
 
-export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage: AppStorage): Result<true> {
+export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage: AppStorage): Err | void {
   const emailIndex: EmailIndex = {};
 
   hashedEmails.forEach((e) => {
@@ -247,8 +248,6 @@ export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage
   if (isErr(storeItemResult)) {
     return makeErr(`Could not store emails: ${storeItemResult.reason}`);
   }
-
-  return true;
 }
 
 export function addEmail(

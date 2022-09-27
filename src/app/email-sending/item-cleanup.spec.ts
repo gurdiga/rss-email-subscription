@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
-import { makeStorageStub, Stub } from '../../shared/test-utils';
+import { makeSpy, makeStorageStub, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { ValidStoredRssItem } from './rss-item-reading';
 
@@ -22,11 +22,11 @@ describe(deleteItem.name, () => {
   };
 
   it('removes the corresponding item from storage', () => {
-    const storage = makeStorageStub({ removeItem: () => true as const });
-    const result = deleteItem(feedId, storage, storedRssItem);
+    const storage = makeStorageStub({ removeItem: makeSpy() });
+
+    deleteItem(feedId, storage, storedRssItem);
 
     expect((storage.removeItem as Stub).calls).to.deep.equal([[`/${feedId}/inbox/${storedRssItem.fileName}`]]);
-    expect(result).to.be.true;
   });
 
   it('returns an Err value when can’t delete', () => {
