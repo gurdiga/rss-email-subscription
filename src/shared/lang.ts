@@ -3,17 +3,24 @@ export type Result<T> = T | Err;
 export interface Err {
   kind: 'Err';
   reason: string;
+  field?: string;
 }
 
 export function isErr(value: any): value is Err {
   return value?.kind === 'Err';
 }
 
-export function makeErr(reason: string | unknown): Err {
-  return {
+export function makeErr(reason: string | unknown, field?: Err['field']): Err {
+  const err: Err = {
     kind: 'Err',
     reason: typeof reason === 'string' ? reason : getErrorMessage(reason),
   };
+
+  if (field) {
+    err.field = field;
+  }
+
+  return err;
 }
 
 export function makeTypeMismatchErr(value: any, expectedType: string): Err {
