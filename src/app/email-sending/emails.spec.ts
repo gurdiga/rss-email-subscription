@@ -87,7 +87,11 @@ describe(parseEmails.name, () => {
         email('a@test.com'),
         email('b@test.com'),
       ],
-      invalidEmails: ['Syntactically invalid email: "+@test.com"', 'Syntactically invalid email: "b@test"'],
+      invalidEmails: [
+        // prettier: keep these stacked
+        'Email is syntactically incorrect: "+@test.com"',
+        'Email is syntactically incorrect: "b@test"',
+      ],
     };
 
     expect(result).to.deep.equal(expectedResult);
@@ -167,22 +171,24 @@ describe(makeEmailAddress.name, () => {
   });
 
   it('returns an Err value when the email is invalid', () => {
-    expect(makeEmailAddress('')).to.deep.equal(makeErr('Syntactically invalid email: ""'));
-    expect(makeEmailAddress(' \r\n\t')).to.deep.equal(makeErr('Syntactically invalid email: " \r\n\t"'));
-    expect(makeEmailAddress('@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "@test.com"'));
-    expect(makeEmailAddress('a+@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a+@test.com"'));
-    expect(makeEmailAddress('a++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "a++2@test.com"'));
-    expect(makeEmailAddress('++2@test.com')).to.deep.equal(makeErr('Syntactically invalid email: "++2@test.com"'));
-    expect(makeEmailAddress('a@test')).to.deep.equal(makeErr('Syntactically invalid email: "a@test"'));
-    expect(makeEmailAddress('a@too-short-tld.i')).to.deep.equal(
-      makeErr('Syntactically invalid email: "a@too-short-tld.i"')
+    expect(makeEmailAddress('')).to.deep.equal(makeErr('Email is empty'));
+    expect(makeEmailAddress(' \r\n\t')).to.deep.equal(makeErr('Email is empty'));
+    expect(makeEmailAddress('@test.com')).to.deep.equal(makeErr('Email is syntactically incorrect: "@test.com"'));
+    expect(makeEmailAddress('a+@test.com')).to.deep.equal(makeErr('Email is syntactically incorrect: "a+@test.com"'));
+    expect(makeEmailAddress('a++2@test.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a++2@test.com"')
     );
-    expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Syntactically invalid email: "a@bad."'));
-    expect(makeEmailAddress(42)).to.deep.equal(makeErr('Syntactically invalid email: "42"'));
-    expect(makeEmailAddress(undefined)).to.deep.equal(makeErr('Syntactically invalid email: "undefined"'));
-    expect(makeEmailAddress(null)).to.deep.equal(makeErr('Syntactically invalid email: "null"'));
-    expect(makeEmailAddress({})).to.deep.equal(makeErr('Syntactically invalid email: "[object Object]"'));
-    expect(makeEmailAddress([])).to.deep.equal(makeErr('Syntactically invalid email: ""'));
+    expect(makeEmailAddress('++2@test.com')).to.deep.equal(makeErr('Email is syntactically incorrect: "++2@test.com"'));
+    expect(makeEmailAddress('a@test')).to.deep.equal(makeErr('Email is syntactically incorrect: "a@test"'));
+    expect(makeEmailAddress('a@too-short-tld.i')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@too-short-tld.i"')
+    );
+    expect(makeEmailAddress('a@bad.')).to.deep.equal(makeErr('Email is syntactically incorrect: "a@bad."'));
+    expect(makeEmailAddress(42)).to.deep.equal(makeErr('Email must be a string'));
+    expect(makeEmailAddress(undefined)).to.deep.equal(makeErr('Email is empty'));
+    expect(makeEmailAddress(null)).to.deep.equal(makeErr('Email is empty'));
+    expect(makeEmailAddress({})).to.deep.equal(makeErr('Email must be a string'));
+    expect(makeEmailAddress([])).to.deep.equal(makeErr('Email must be a string'));
   });
 });
 
@@ -293,7 +299,7 @@ describe(loadStoredEmails.name, () => {
         { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: true },
       ],
       invalidEmails: [
-        'Syntactically invalid email: "not-an-email"', // prettier: keep these stacked please
+        'Email is syntactically incorrect: "not-an-email"', // prettier: keep these stacked please
         'Expected non-empty hash string but got string: "" ""',
         'Expected email string but got number: "42"',
         'Expected EmailInformation object but got null: "null"',

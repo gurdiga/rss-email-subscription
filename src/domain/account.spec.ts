@@ -41,7 +41,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, 123);
 
     expect(result).to.deep.equal(
-      makeErr('Invalid email while loading account 123: Syntactically invalid email: "not-an-email-really"')
+      makeErr('Invalid email while loading account 123: Email is syntactically incorrect: "not-an-email-really"')
     );
   });
 

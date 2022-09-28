@@ -42,18 +42,26 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
 export const maxEmailLength = 100;
 
 export function makeEmailAddress(input: any): Result<EmailAddress> {
+  if (!input) {
+    return makeErr('Email is empty');
+  }
+
+  if (typeof input !== 'string') {
+    return makeErr('Email must be a string');
+  }
+
   const emailString = `${input}`;
   const email = emailString.trim().toLocaleLowerCase();
+
+  if (!email) {
+    return makeErr('Email is empty');
+  }
 
   if (email.length > maxEmailLength) {
     return makeErr('Email too long');
   }
 
-  const err = makeErr(`Syntactically invalid email: "${emailString}"`);
-
-  if (!email) {
-    return err;
-  }
+  const err = makeErr(`Email is syntactically incorrect: "${emailString}"`);
 
   const keyCharacters = ['.', '@'];
   const containsKeyCharacters = keyCharacters.every((c) => email.includes(c));
