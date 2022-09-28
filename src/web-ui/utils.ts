@@ -93,16 +93,16 @@ export function handleApiResponse(apiResponse: ApiResponse, messageElement: Elem
   const className = isInputError(apiResponse) || isAppError(apiResponse) ? 'alert alert-danger' : 'alert alert-success';
 
   messageElement.textContent = apiResponse.message;
-  messageElement.setAttribute('role', 'alert');
   messageElement.className = className;
+  messageElement.setAttribute('role', 'alert');
 }
 
 export function handleCommunicationError(error: unknown, messageElement: Element): void {
   reportError(error as Error);
 
   messageElement.textContent = 'Can’t connect to the server. Please try again in a few moments.';
-  messageElement.setAttribute('role', 'alert');
   messageElement.className = 'alert alert-danger';
+  messageElement.setAttribute('role', 'alert');
 }
 
 export function reportError(error: Error | string): void {
