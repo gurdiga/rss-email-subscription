@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AccountData, PlanId } from '../domain/account';
-import { addEmailToIndex } from '../domain/account-index';
+import { addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -8,10 +8,11 @@ import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { AppRequestHandler } from './request-handler';
+import { AppStorage } from '../shared/storage';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
-  const processInputResult = processInput({ plan, email, password });
+  const processInputResult = processInput(app.storage, { plan, email, password });
 
   if (isErr(processInputResult)) {
     return makeInputError(processInputResult.reason);
@@ -39,7 +40,7 @@ interface ProcessedInput {
   password: NewPassword;
 }
 
-function processInput(input: Input): Result<ProcessedInput> {
+function processInput(storage: AppStorage, input: Input): Result<ProcessedInput> {
   const { logWarning } = makeCustomLoggers({
     plan: input.plan,
     email: input.email,
@@ -57,7 +58,19 @@ function processInput(input: Input): Result<ProcessedInput> {
 
   if (isErr(email)) {
     logWarning('Invalid email', { input: input.email, reason: email.reason });
-    return makeErr(`Invalid email: ${email.reason}`);
+    return email;
+  }
+
+  const accountId = findAccountIdByEmail(storage, email);
+
+  if (isErr(accountId)) {
+    logWarning('Can’t verify email taken', { input: input.email, reason: accountId.reason });
+    return makeErr(`Can’t verify email taken`);
+  }
+
+  if (accountId) {
+    logWarning('Email already taken', { input: input.email });
+    return makeErr('Email already taken');
   }
 
   const password = makeNewPassword(input.password);
