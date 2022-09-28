@@ -21,13 +21,20 @@ export function makeSuccess(message: string, logData?: Object): Success {
 export interface InputError {
   kind: 'InputError';
   message: string;
+  field?: string;
 }
 
-export function makeInputError(message: string): InputError {
-  return {
+export function makeInputError(message: string, field?: InputError['field']): InputError {
+  const inputError: InputError = {
     kind: 'InputError',
     message,
   };
+
+  if (field) {
+    inputError.field = field;
+  }
+
+  return inputError;
 }
 
 export function isInputError(x: any): x is InputError {
