@@ -97,8 +97,8 @@ export function handleApiResponse(apiResponse: ApiResponse, messageElement: Elem
   messageElement.className = className;
 }
 
-export function handleCommunicationError(error: TypeError, messageElement: Element): void {
-  reportError(error);
+export function handleCommunicationError(error: unknown, messageElement: Element): void {
+  reportError(error as Error);
 
   messageElement.textContent = 'Can’t connect to the server. Please try again in a few moments.';
   messageElement.setAttribute('role', 'alert');

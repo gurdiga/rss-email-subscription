@@ -52,7 +52,7 @@ function main() {
 
       handleApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {
-      handleCommunicationError(error as TypeError, uiElements.apiResponseMessage);
+      handleCommunicationError(error, uiElements.apiResponseMessage);
     }
   });
 }
