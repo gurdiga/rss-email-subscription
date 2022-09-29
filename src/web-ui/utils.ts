@@ -9,7 +9,7 @@ export interface ConfirmationLinkUrlParams {
 
 export function parseConfirmationLinkUrlParams(
   locationSearch: string,
-  logErrorFn: typeof reportError = reportError
+  logErrorFn: typeof logError = logError
 ): Result<ConfirmationLinkUrlParams> {
   const queryParams = new URLSearchParams(locationSearch);
   const params: ConfirmationLinkUrlParams = {
@@ -77,7 +77,7 @@ export function displayMainError(message: string) {
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
-    reportError(`Element is missing: ${errorMessageSelector}`);
+    logError(`Element is missing: ${errorMessageSelector}`);
     return;
   }
 
@@ -98,14 +98,14 @@ export function handleApiResponse(apiResponse: ApiResponse, messageElement: Elem
 }
 
 export function handleCommunicationError(error: unknown, messageElement: Element): void {
-  reportError(error as Error);
+  logError(error as Error);
 
   messageElement.textContent = 'Can’t connect to the server. Please try again in a few moments.';
   messageElement.className = 'alert alert-danger';
   messageElement.setAttribute('role', 'alert');
 }
 
-export function reportError(error: Error | string): void {
+export function logError(error: Error | string): void {
   if (typeof error === 'string') {
     error = new Error(error);
   }
