@@ -15,7 +15,7 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
   const processInputResult = processInput(app.storage, { plan, email, password });
 
   if (isErr(processInputResult)) {
-    return makeInputError(processInputResult.reason);
+    return makeInputError(processInputResult.reason, processInputResult.field);
   }
 
   const initAccountResult = initAccount(app, processInputResult);
@@ -51,33 +51,33 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
 
   if (isErr(plan)) {
     logWarning('Invalid plan', { input: input.plan, reason: plan.reason });
-    return makeErr(`Invalid plan: ${plan.reason}`);
+    return { ...plan, field: 'plan' };
   }
 
   const email = makeEmailAddress(input.email);
 
   if (isErr(email)) {
     logWarning('Invalid email', { input: input.email, reason: email.reason });
-    return email;
+    return { ...email, field: 'email' };
   }
 
   const accountId = findAccountIdByEmail(storage, email);
 
   if (isErr(accountId)) {
     logWarning('Can’t verify email taken', { input: input.email, reason: accountId.reason });
-    return makeErr(`Can’t verify email taken`);
+    return makeErr('Can’t verify email taken', 'email');
   }
 
   if (accountId) {
     logWarning('Email already taken', { input: input.email });
-    return makeErr('Email already taken');
+    return makeErr('Email already taken', 'email');
   }
 
   const password = makeNewPassword(input.password);
 
   if (isErr(password)) {
     logWarning('Invalid new password', { input: input.password, reason: password.reason });
-    return makeErr(`Invalid password: ${password.reason}`);
+    return makeErr(`Invalid password: ${password.reason}`, 'password');
   }
 
   return {
