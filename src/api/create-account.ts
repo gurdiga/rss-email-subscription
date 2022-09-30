@@ -1,5 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { AccountData, PlanId } from '../domain/account';
+import { AccountData } from '../domain/account';
 import { addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -9,6 +9,7 @@ import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { AppRequestHandler } from './request-handler';
 import { AppStorage } from '../shared/storage';
+import { makePlanId, PlanId } from '../domain/plan';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
@@ -86,18 +87,6 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
     email,
     password,
   };
-}
-
-export function makePlanId(planId: string): Result<PlanId> {
-  const validPlanIds: PlanId[] = ['minimal', 'standard', 'sde'];
-
-  planId = planId.trim();
-
-  if (!validPlanIds.includes(planId as any)) {
-    return makeErr(`Unknown plan ID: ${planId}`);
-  }
-
-  return planId as PlanId;
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {

@@ -1,3 +1,4 @@
+import { isPlanId, makePlanId } from '../domain/plan';
 import { InputError } from '../shared/api-response';
 import { createElement, insertAdjacentElement } from './dom';
 import { logError, ResponseStatusUiElements } from './utils';
@@ -57,9 +58,10 @@ export function getOrCreateValidationMessage(
 }
 
 export function maybePreselectPlan(planDropDown: HTMLSelectElement, locationHref: string) {
-  const planId = new URL(locationHref).searchParams.get('plan');
+  const planParam = new URL(locationHref).searchParams.get('plan')!;
+  const planId = makePlanId(planParam);
 
-  if (planId) {
+  if (isPlanId(planId)) {
     planDropDown.value = planId;
   }
 }

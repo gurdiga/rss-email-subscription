@@ -1,11 +1,9 @@
-import { makePlanId } from '../api/create-account';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { AccountId } from './account-index';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
-
-export type PlanId = 'minimal' | 'standard' | 'sde';
+import { makePlanId, PlanId } from './plan';
 
 export interface Account {
   plan: PlanId;

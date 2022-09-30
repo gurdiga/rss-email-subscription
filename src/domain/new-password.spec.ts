@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { makePlanId } from '../api/create-account';
 import { makeErr } from '../shared/lang';
 import { makeNewPassword, maxPasswordLength, minPasswordLength } from './new-password';
+import { makePlanId } from './plan';
 
 describe(makeNewPassword.name, () => {
   it('returns an Err value if not one of the valid plan IDs', () => {
