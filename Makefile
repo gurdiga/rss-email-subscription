@@ -268,6 +268,7 @@ mailq-report:
 	docker exec smtp-out mailq \
 	| ifne bash -c send_report
 
+.PHONY: website
 website:
 	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build )
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
