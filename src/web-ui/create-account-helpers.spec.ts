@@ -74,4 +74,13 @@ describe(maybePreselectPlan.name, () => {
 
     expect(planDropDown.value).to.equal('initial');
   });
+
+  it('doesn’t do anything if "plan" query string param is not a valid value', () => {
+    const planDropDown = { value: 'initial' } as HTMLSelectElement;
+    const locationHref = 'https://test.com/create-account.html?plan=all-inclusive';
+
+    maybePreselectPlan(planDropDown, locationHref);
+
+    expect(planDropDown.value).to.equal('initial');
+  });
 });
