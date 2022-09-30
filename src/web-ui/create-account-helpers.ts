@@ -30,12 +30,11 @@ export function displayValidationError(
   const fieldElement = formFields[field];
 
   fieldElement.className += ' is-invalid';
+  fieldElement.focus();
 
   const validationMessage = getOrCreateValidationMessageFn(fieldElement);
 
   validationMessage.textContent = response.message;
-
-  // TODO?
 }
 
 export function getOrCreateValidationMessage(

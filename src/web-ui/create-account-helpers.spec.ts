@@ -18,9 +18,10 @@ describe(displayValidationError.name, () => {
       field: 'email' as keyof FormFields,
     };
 
+    const focusSpy = makeSpy();
     const formFields: FormFields = {
       plan: {} as HTMLSelectElement,
-      email: {} as HTMLInputElement,
+      email: { focus: focusSpy } as any as HTMLInputElement,
       password: {} as HTMLInputElement,
     };
 
@@ -30,6 +31,7 @@ describe(displayValidationError.name, () => {
     displayValidationError(response, formFields, getOrCreateValidationMessageFn);
 
     expect(formFields.email.className.split(/\s+/)).to.include('is-invalid');
+    expect(focusSpy.calls.length).to.equal(1);
     expect(nextSibling.textContent).to.equal('Something’s wrong');
   });
 });
