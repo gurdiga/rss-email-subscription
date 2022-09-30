@@ -143,3 +143,17 @@ export function sendApiRequest(url: string, data: Record<string, string>): Promi
     .then(assertHeader('content-type', 'application/json; charset=utf-8'))
     .then(async (r) => (await r.json()) as ApiResponse);
 }
+
+export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<void>): void {
+  const initialTextContent = button.textContent;
+
+  button.disabled = true;
+  button.textContent = 'Wait…';
+
+  f().then(() => {
+    setTimeout(() => {
+      button.disabled = false;
+      button.textContent = initialTextContent;
+    }, 500);
+  });
+}

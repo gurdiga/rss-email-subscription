@@ -6,7 +6,7 @@ import {
   displayValidationError,
   maybePreselectPlan,
 } from './create-account-helpers';
-import { displayMainError, handleApiResponse, handleCommunicationError } from './utils';
+import { displayMainError, handleApiResponse, handleCommunicationError, preventDoubleClick } from './utils';
 import { requireUiElements, sendApiRequest } from './utils';
 
 function main() {
@@ -30,31 +30,33 @@ function main() {
 
     clearValidationErrors(uiElements);
 
-    const response = await attempt(
-      async () =>
-        await sendApiRequest('/create-account', {
-          plan: uiElements.plan.value,
-          email: uiElements.email.value,
-          password: uiElements.password.value,
-        })
-    );
+    preventDoubleClick(uiElements.submitButton, async () => {
+      const response = await attempt(
+        async () =>
+          await sendApiRequest('/create-account', {
+            plan: uiElements.plan.value,
+            email: uiElements.email.value,
+            password: uiElements.password.value,
+          })
+      );
 
-    if (isErr(response)) {
-      handleCommunicationError(response, uiElements.apiResponseMessage);
-      return;
-    }
+      if (isErr(response)) {
+        handleCommunicationError(response, uiElements.apiResponseMessage);
+        return;
+      }
 
-    if (isInputError(response)) {
-      console.log('isInputError', response);
-      displayValidationError(response, uiElements);
-      return;
-    }
+      if (isInputError(response)) {
+        console.log('isInputError', response);
+        displayValidationError(response, uiElements);
+        return;
+      }
 
-    handleApiResponse(response, uiElements.apiResponseMessage);
+      handleApiResponse(response, uiElements.apiResponseMessage);
 
-    if (isSuccess(response)) {
-      // TODO: Redirect to dashboard
-    }
+      if (isSuccess(response)) {
+        // TODO: Redirect to dashboard
+      }
+    });
   });
 }
 
