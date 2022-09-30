@@ -41,7 +41,11 @@ export function removeEmailFromIndex(storage: AppStorage, email: EmailAddress): 
   }
 }
 
-export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId> {
+export interface AccountNotFound {
+  kind: 'AccountNotFound';
+}
+
+export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId | AccountNotFound> {
   const loadItemResult = loadAccountIndex(storage);
 
   if (isErr(loadItemResult)) {
@@ -52,7 +56,7 @@ export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): 
   const accountId = accountIndex[email.value];
 
   if (!accountId) {
-    return makeErr(`Can’t find account ID by email ${email.value}`);
+    return { kind: 'AccountNotFound' };
   }
 
   return accountId;

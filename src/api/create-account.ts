@@ -69,7 +69,7 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
     return makeErr('Can’t verify email taken', 'email');
   }
 
-  if (accountId) {
+  if (typeof accountId === 'number') {
     logWarning('Email already taken', { input: input.email });
     return makeErr('Email already taken', 'email');
   }
