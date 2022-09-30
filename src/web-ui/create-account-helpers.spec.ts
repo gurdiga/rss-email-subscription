@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { InputError } from '../shared/api-response';
-import { makeStub } from '../shared/test-utils';
+import { makeSpy, makeStub } from '../shared/test-utils';
 import {
+  clearValidationErrors,
   displayValidationError,
   FormFields,
   getOrCreateValidationMessage,
@@ -82,5 +83,45 @@ describe(maybePreselectPlan.name, () => {
     maybePreselectPlan(planDropDown, locationHref);
 
     expect(planDropDown.value).to.equal('initial');
+  });
+});
+
+describe(clearValidationErrors.name, () => {
+  it('removes the "is-invalid" class from the field', () => {
+    const formElements = {
+      firstName: { className: 'is-invalid mt-0' } as HTMLInputElement,
+      lastName: { className: 'is-invalid   p-5  m-0' } as HTMLInputElement,
+    };
+
+    clearValidationErrors(formElements as any as FormFields);
+
+    expect(formElements.firstName.className).to.equal('mt-0');
+    expect(formElements.lastName.className).to.equal('p-5 m-0');
+  });
+
+  it('removes field’s associated .validation-message.invalid-feedback if any', () => {
+    const firstNameRemove = makeSpy();
+    const lastNameRemove = makeSpy();
+    const formElements = {
+      firstName: {
+        className: 'is-invalid',
+        nextElementSibling: {
+          remove: firstNameRemove,
+          className: 'validation-message invalid-feedback p-0',
+        } as any as HTMLElement,
+      } as any as HTMLInputElement,
+      lastName: {
+        className: '',
+        nextElementSibling: {
+          remove: lastNameRemove,
+          className: 'mt-2',
+        } as any as HTMLElement,
+      } as any as HTMLInputElement,
+    };
+
+    clearValidationErrors(formElements as any as FormFields);
+
+    expect(firstNameRemove.calls.length).to.equal(1);
+    expect(lastNameRemove.calls.length).to.equal(0);
   });
 });

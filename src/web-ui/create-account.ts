@@ -1,6 +1,11 @@
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { CreateAccountUiElements, displayValidationError, maybePreselectPlan } from './create-account-helpers';
+import {
+  clearValidationErrors,
+  CreateAccountUiElements,
+  displayValidationError,
+  maybePreselectPlan,
+} from './create-account-helpers';
 import { displayMainError, handleApiResponse, handleCommunicationError } from './utils';
 import { requireUiElements, sendApiRequest } from './utils';
 
@@ -22,6 +27,8 @@ function main() {
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
+
+    clearValidationErrors(uiElements);
 
     const response = await attempt(
       async () =>

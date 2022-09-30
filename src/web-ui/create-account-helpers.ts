@@ -17,7 +17,7 @@ export interface FormUiElements extends FormFields {
 
 export function displayValidationError(
   response: InputError,
-  formElements: FormFields,
+  formFields: FormFields,
   getOrCreateValidationMessageFn = getOrCreateValidationMessage
 ) {
   const field = response.field as keyof FormFields;
@@ -27,7 +27,7 @@ export function displayValidationError(
     return;
   }
 
-  const fieldElement = formElements[field];
+  const fieldElement = formFields[field];
 
   fieldElement.className += ' is-invalid';
 
@@ -63,5 +63,33 @@ export function maybePreselectPlan(planDropDown: HTMLSelectElement, locationHref
 
   if (isPlanId(planId)) {
     planDropDown.value = planId;
+  }
+}
+
+export function clearValidationErrors(formFields: FormFields): void {
+  for (const field in formFields) {
+    const fieldElement = formFields[field as keyof FormFields];
+    const isInvalid = fieldElement.className.split(/\s+/).includes('is-invalid');
+
+    if (!isInvalid) {
+      continue;
+    }
+
+    fieldElement.className = fieldElement.className
+      .split(/\s+/)
+      .filter((x) => x !== 'is-invalid')
+      .join(' ');
+
+    const errorMessageElement = fieldElement.nextElementSibling;
+
+    if (!errorMessageElement) {
+      continue;
+    }
+
+    const classNames = errorMessageElement.className.split(/\s+/);
+
+    if (classNames.includes('validation-message') && classNames.includes('invalid-feedback')) {
+      errorMessageElement.remove();
+    }
   }
 }
