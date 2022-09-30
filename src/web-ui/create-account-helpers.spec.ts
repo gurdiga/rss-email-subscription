@@ -28,7 +28,7 @@ describe(displayValidationError.name, () => {
 
     displayValidationError(response, formFields, getOrCreateValidationMessageFn);
 
-    expect(formFields.email.className).to.include('is-invalid');
+    expect(formFields.email.className.split(/\s+/)).to.include('is-invalid');
     expect(nextSibling.textContent).to.equal('Something’s wrong');
   });
 });
