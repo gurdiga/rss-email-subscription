@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { InputError } from '../shared/api-response';
-import { makeMockElement, makeStub } from '../shared/test-utils';
+import { makeStub } from '../shared/test-utils';
 import { displayValidationError, FormFields, getOrCreateValidationMessage } from './create-account-helpers';
 import { createElement, insertAdjacentElement } from './dom';
 
@@ -13,12 +13,12 @@ describe(displayValidationError.name, () => {
     };
 
     const formFields: FormFields = {
-      plan: makeMockElement<HTMLSelectElement>(),
-      email: makeMockElement<HTMLInputElement>(),
-      password: makeMockElement<HTMLInputElement>(),
+      plan: {} as HTMLSelectElement,
+      email: {} as HTMLInputElement,
+      password: {} as HTMLInputElement,
     };
 
-    const nextSibling = makeMockElement<HTMLElement>();
+    const nextSibling = {} as HTMLElement;
     const getOrCreateValidationMessageFn = makeStub<typeof getOrCreateValidationMessage>(() => nextSibling);
 
     displayValidationError(response, formFields, getOrCreateValidationMessageFn);
@@ -30,16 +30,16 @@ describe(displayValidationError.name, () => {
 
 describe(getOrCreateValidationMessage.name, () => {
   it('returns the existing div if it’s .validation-message', () => {
-    const existingDiv = makeMockElement<HTMLDivElement>({ className: 'validation-message' });
-    const fieldElement = makeMockElement<HTMLSelectElement>({ nextElementSibling: existingDiv });
+    const existingDiv = { className: 'validation-message' } as HTMLDivElement;
+    const fieldElement = { nextElementSibling: existingDiv } as any as HTMLSelectElement;
 
     expect(getOrCreateValidationMessage(fieldElement)).to.equal(existingDiv);
   });
 
   it('inserts a new div.validation-message if none exist next to the field', () => {
-    const newDiv = makeMockElement<HTMLDivElement>({});
+    const newDiv = {} as HTMLDivElement;
 
-    const fieldElement = makeMockElement<HTMLSelectElement>({});
+    const fieldElement = {} as HTMLSelectElement;
     const createElementFn = makeStub<typeof createElement>(() => newDiv);
     const insertAdjacentElementFn = makeStub<typeof insertAdjacentElement>();
 

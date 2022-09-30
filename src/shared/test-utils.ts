@@ -57,24 +57,3 @@ export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K
     ...methodStubs,
   };
 }
-
-export function makeMockElement<T extends HTMLElement>(props: Partial<T> = {}): T {
-  if ('classList' in props) {
-    (props.classList as any) = makeClassList();
-  }
-
-  return props as T;
-
-  function makeClassList() {
-    let _classList = new Set<string>();
-
-    return {
-      add: (...classNames: string[]) => {
-        classNames.forEach((className) => _classList.add(className));
-      },
-      contains: (className: string) => {
-        return _classList.has(className);
-      },
-    } as DOMTokenList;
-  }
-}
