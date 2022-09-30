@@ -27,17 +27,15 @@ function main() {
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
-
     clearValidationErrors(uiElements);
 
     preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await attempt(
-        async () =>
-          await sendApiRequest('/create-account', {
-            plan: uiElements.plan.value,
-            email: uiElements.email.value,
-            password: uiElements.password.value,
-          })
+      const response = await attempt(() =>
+        sendApiRequest('/create-account', {
+          plan: uiElements.plan.value,
+          email: uiElements.email.value,
+          password: uiElements.password.value,
+        })
       );
 
       if (isErr(response)) {
