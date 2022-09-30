@@ -1,6 +1,6 @@
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { CreateAccountUiElements, displayValidationError } from './create-account-helpers';
+import { CreateAccountUiElements, displayValidationError, maybePreselectPlan } from './create-account-helpers';
 import { displayMainError, handleApiResponse, handleCommunicationError } from './utils';
 import { requireUiElements, sendApiRequest } from './utils';
 
@@ -18,7 +18,7 @@ function main() {
     return;
   }
 
-  maybePreselectPlan(uiElements.plan);
+  maybePreselectPlan(uiElements.plan, location.href);
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
@@ -49,14 +49,6 @@ function main() {
       // TODO: Redirect to dashboard
     }
   });
-}
-
-function maybePreselectPlan(planDropDown: HTMLSelectElement) {
-  const planId = new URL(location.href).searchParams.get('plan');
-
-  if (planId) {
-    planDropDown.value = planId;
-  }
 }
 
 main();

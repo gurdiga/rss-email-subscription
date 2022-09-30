@@ -55,3 +55,11 @@ export function getOrCreateValidationMessage(
     return newElement;
   }
 }
+
+export function maybePreselectPlan(planDropDown: HTMLSelectElement, locationHref: string) {
+  const planId = new URL(locationHref).searchParams.get('plan');
+
+  if (planId) {
+    planDropDown.value = planId;
+  }
+}
