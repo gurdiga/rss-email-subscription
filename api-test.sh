@@ -105,7 +105,7 @@ function remove_accounts {
 	local account_email=${1:?}
 
 	for account_file in $(find_account_files_by_email "${account_email}"); do
-		ts-node src/api/delete-account-cli.ts blogger@test.com
+		ts-node src/api/delete-account-cli.ts "${account_email}"
 	done
 }
 

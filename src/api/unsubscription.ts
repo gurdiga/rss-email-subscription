@@ -24,10 +24,10 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
   }
 
   const { validEmails } = storedEmails;
-  const emailSubscribed = validEmails.some((x) => x.saltedHash === emailHash);
-  const email = validEmails.find((x) => x.saltedHash === emailHash);
+  const existingEmail = validEmails.find((x) => x.saltedHash === emailHash);
+  const isEmailSubscribed = !!existingEmail;
 
-  if (!emailSubscribed) {
+  if (!isEmailSubscribed) {
     logWarning('Email not found by hash', { emailHash });
     return makeSuccess('Solidly unsubscribed.');
   }
@@ -41,7 +41,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
     return makeAppError('Database write error: registering unsubscription failed');
   }
 
-  logInfo('Unsubscribed', { feedId, email: email?.emailAddress.value });
+  logInfo('Unsubscribed', { feedId, email: existingEmail.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };

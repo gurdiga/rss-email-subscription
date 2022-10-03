@@ -44,7 +44,6 @@ function main() {
       }
 
       if (isInputError(response)) {
-        console.log('isInputError', response);
         displayValidationError(response, uiElements);
         return;
       }
