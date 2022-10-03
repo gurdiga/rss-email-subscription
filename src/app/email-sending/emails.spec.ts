@@ -325,9 +325,12 @@ describe(loadStoredEmails.name, () => {
   });
 
   it('returns an Err value when can’t load storage value', () => {
-    const storage = makeStorageStub({ loadItem: () => makeErr('File access denied?!') });
+    const err = makeErr('File access denied?!');
+    const storage = makeStorageStub({ loadItem: () => err });
 
-    expect(loadStoredEmails(feedId, storage)).to.deep.equal(makeErr(`Could not read email list at /path/emails.json`));
+    expect(loadStoredEmails(feedId, storage)).to.deep.equal(
+      makeErr(`Could not read email list at /path/emails.json: ${err.reason}`)
+    );
   });
 });
 

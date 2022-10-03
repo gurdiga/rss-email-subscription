@@ -178,8 +178,7 @@ export function loadStoredEmails(feedId: string, storage: AppStorage): Result<St
   const index = storage.loadItem(storageKey);
 
   if (isErr(index)) {
-    // TODO: Log error?
-    return makeErr(`Could not read email list at ${storageKey}`);
+    return makeErr(`Could not read email list at ${storageKey}: ${index.reason}`);
   }
 
   const indexTypeName = getTypeName(index);
