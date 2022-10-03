@@ -51,7 +51,9 @@ function main() {
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       if (isSuccess(response)) {
-        // TODO: Redirect to dashboard
+        setTimeout(() => {
+          location.href = '/dashboard.html';
+        }, 2000);
       }
     });
   });
