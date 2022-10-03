@@ -7,15 +7,15 @@ export interface Password {
 
 export function makePassword(input: string): Result<Password> {
   if (input.length === 0) {
-    return makeErr('Is empty');
+    return makeErr('Password is empty');
   }
 
   if (/^\s/.test(input)) {
-    return makeErr('Has leading spaces');
+    return makeErr('Password has leading spaces');
   }
 
   if (/\s$/.test(input)) {
-    return makeErr('Has trailing spaces');
+    return makeErr('Password has trailing spaces');
   }
 
   return {

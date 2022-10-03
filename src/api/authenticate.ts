@@ -44,14 +44,14 @@ function processInput(input: Input): Result<ProcessedInput> {
 
   if (isErr(email)) {
     logWarning('Invalid email', { input: input.email, reason: email.reason });
-    return makeErr(`Invalid email: ${email.reason}`, 'email');
+    return makeErr(email.reason, 'email');
   }
 
   const password = makePassword(input.password);
 
   if (isErr(password)) {
     logWarning('Invalid input password', { input: input.password, reason: password.reason });
-    return makeErr(`Invalid input password: ${password.reason}`, 'password');
+    return makeErr(password.reason, 'password');
   }
 
   return {
@@ -91,7 +91,7 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
 
   if (inputHashedPassword !== storedHashedPassword) {
     logWarning(`Icorrect password`, { inputHashedPassword, storedHashedPassword });
-    return makeErr(`Icorrect password`, 'password');
+    return makeErr(`Password doesn’t match… 🤔`, 'password');
   }
 
   logInfo('Authenticated user');
