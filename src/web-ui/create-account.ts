@@ -1,13 +1,14 @@
+import { isPlanId, makePlanId } from '../domain/plan';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
 import {
-  clearValidationErrors,
-  CreateAccountUiElements,
-  displayValidationError,
-  maybePreselectPlan,
-} from './create-account-helpers';
-import { displayMainError, displayApiResponse, displayCommunicationError, preventDoubleClick } from './utils';
-import { requireUiElements, sendApiRequest } from './utils';
+  displayMainError,
+  displayApiResponse,
+  displayCommunicationError,
+  preventDoubleClick,
+  ApiResponseUiElements,
+} from './shared';
+import { requireUiElements, sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
 function main() {
   const uiElements = requireUiElements<CreateAccountUiElements>({
@@ -59,4 +60,25 @@ function main() {
   });
 }
 
-main();
+export interface CreateAccountUiElements extends FormUiElements, ApiResponseUiElements {}
+
+export interface FormFields {
+  plan: HTMLSelectElement;
+  email: HTMLInputElement;
+  password: HTMLInputElement;
+}
+
+export interface FormUiElements extends FormFields {
+  submitButton: HTMLButtonElement;
+}
+
+export function maybePreselectPlan(planDropDown: HTMLSelectElement, locationHref: string) {
+  const planParam = new URL(locationHref).searchParams.get('plan')!;
+  const planId = makePlanId(planParam);
+
+  if (isPlanId(planId)) {
+    planDropDown.value = planId;
+  }
+}
+
+globalThis.window && main();

@@ -16,7 +16,7 @@ import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { ConfirmationLinkUrlParams } from '../web-ui/utils';
+import { ConfirmationLinkUrlParams } from '../web-ui/shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';

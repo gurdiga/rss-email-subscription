@@ -1,7 +1,7 @@
 import { isErr } from '../shared/lang';
-import { displayMainError, fillUiElements, displayApiResponse } from './utils';
-import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './utils';
-import { ResponseStatusUiElements, sendApiRequest, UiElementFillSpec } from './utils';
+import { displayMainError, fillUiElements, displayApiResponse } from './shared';
+import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
+import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
 
 function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
@@ -59,7 +59,7 @@ function main() {
 
 main();
 
-interface SubscriptionUiElements extends InputUiElements, FormUiElements, ResponseStatusUiElements {}
+interface SubscriptionUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
 
 interface InputUiElements {
   inputUiContainer: Element;

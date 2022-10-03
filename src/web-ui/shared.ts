@@ -1,5 +1,6 @@
-import { ApiResponse, isAppError, isInputError } from '../shared/api-response';
+import { ApiResponse, InputError, isAppError, isInputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
+import { createElement, insertAdjacentElement, querySelector } from './dom';
 
 export interface ConfirmationLinkUrlParams {
   id: string;
@@ -30,17 +31,12 @@ export function parseConfirmationLinkUrlParams(
   return params;
 }
 
-export type QuerySelectorFn = typeof document.querySelector;
-
-export function requireUiElements<T>(
-  selectors: Record<keyof T, string>,
-  querySelector: QuerySelectorFn = (s: string) => document.querySelector(s)
-): Result<T> {
+export function requireUiElements<T>(selectors: Record<keyof T, string>, querySelectorFn = querySelector): Result<T> {
   const uiElements = {} as T;
 
   for (const name in selectors) {
     const selector = selectors[name];
-    const element = querySelector(selector);
+    const element = querySelectorFn(selector);
 
     if (!element) {
       return makeErr(`Element not found by selector: "${selector}"`);
@@ -85,8 +81,8 @@ export function displayMainError(message: string) {
   errorMessageElement.className = 'alert alert-danger';
 }
 
-export interface ResponseStatusUiElements {
-  apiResponseMessage: Element;
+export interface ApiResponseUiElements {
+  apiResponseMessage: HTMLElement;
 }
 
 export function displayApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
@@ -156,4 +152,73 @@ export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<v
       button.textContent = initialTextContent;
     }, 500);
   });
+}
+
+export function displayValidationError<FF>(
+  response: InputError,
+  formFields: FF,
+  getOrCreateValidationMessageFn = getOrCreateValidationMessage
+) {
+  const field = response.field as keyof FF;
+
+  if (!field) {
+    logError('No "field" prop in InputError from API.');
+    return;
+  }
+
+  const fieldElement = formFields[field] as HTMLElement;
+
+  fieldElement.className += ' is-invalid';
+  fieldElement.focus();
+
+  const validationMessage = getOrCreateValidationMessageFn(fieldElement);
+
+  validationMessage.textContent = response.message;
+}
+
+export function getOrCreateValidationMessage(
+  fieldElement: HTMLElement,
+  createElementFn = createElement,
+  insertAdjacentElementFn = insertAdjacentElement
+): HTMLElement {
+  const existingElement = fieldElement.nextElementSibling as HTMLElement;
+
+  if (existingElement && existingElement.className.includes('validation-message')) {
+    return existingElement;
+  } else {
+    const newElement = createElementFn('div');
+
+    newElement.className = 'validation-message invalid-feedback';
+    insertAdjacentElementFn(fieldElement, 'afterend', newElement);
+
+    return newElement;
+  }
+}
+
+export function clearValidationErrors<FF>(formFields: FF): void {
+  for (const field in formFields) {
+    const fieldElement = formFields[field as keyof FF] as HTMLElement;
+    const isInvalid = fieldElement.className.split(/\s+/).includes('is-invalid');
+
+    if (!isInvalid) {
+      continue;
+    }
+
+    fieldElement.className = fieldElement.className
+      .split(/\s+/)
+      .filter((x) => x !== 'is-invalid')
+      .join(' ');
+
+    const errorMessageElement = fieldElement.nextElementSibling;
+
+    if (!errorMessageElement) {
+      continue;
+    }
+
+    const classNames = errorMessageElement.className.split(/\s+/);
+
+    if (classNames.includes('validation-message') && classNames.includes('invalid-feedback')) {
+      errorMessageElement.remove();
+    }
+  }
 }
