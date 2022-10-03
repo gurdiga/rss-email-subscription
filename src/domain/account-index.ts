@@ -45,6 +45,10 @@ export interface AccountNotFound {
   kind: 'AccountNotFound';
 }
 
+export function isAccountNotFound(value: any): value is AccountNotFound {
+  return value && value.kind === 'AccountNotFound';
+}
+
 export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId | AccountNotFound> {
   const loadItemResult = loadAccountIndex(storage);
 
