@@ -5,7 +5,7 @@ import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-de
 import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent } from './item-sending';
 import { RssItem } from '../../domain/rss-item';
-import { makeConfirmationEmailContent } from '../../api/subscription';
+import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
 
 async function main(): Promise<number> {
   const env = getEnv();
@@ -66,7 +66,11 @@ async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, re
   const confirmationLinkUrl = new URL('https://test.com/confirmation-url');
   const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
 
-  const { subject, htmlBody } = makeConfirmationEmailContent(feedDisplayName, confirmationLinkUrl, listEmailAddress);
+  const { subject, htmlBody } = makeSubscriptionConfirmationEmailContent(
+    feedDisplayName,
+    confirmationLinkUrl,
+    listEmailAddress
+  );
   const emailDeliveryRequest: EmailDeliveryRequest = {
     from,
     to,

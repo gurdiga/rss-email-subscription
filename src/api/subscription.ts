@@ -54,7 +54,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
     logWarning('Found invalid emails stored', { invalidEmails: storedEmails.invalidEmails });
   }
 
-  if (emailAlreadyExists(emailAddress, storedEmails)) {
+  if (doesEmailAlreadyExist(emailAddress, storedEmails)) {
     logWarning('Already registered', { email: emailAddress.value });
     return makeInputError('Email is already subscribed');
   }
@@ -73,7 +73,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
   const from = makeFullEmailAddress(displayName, fromAddress);
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
   const confirmationLink = makeEmailConfirmationUrl(hashedEmail, feedId, displayName);
-  const emailContent = makeConfirmationEmailContent(displayName, confirmationLink, fromAddress);
+  const emailContent = makeSubscriptionConfirmationEmailContent(displayName, confirmationLink, fromAddress);
   const sendingResult = await sendEmail(from, emailAddress, replyTo, emailContent, env);
 
   if (isErr(sendingResult)) {
@@ -124,14 +124,14 @@ function processInput({ reqId, email, feedId }: Input, storage: AppStorage): Pro
   };
 }
 
-function emailAlreadyExists(emailAddress: EmailAddress, storedEmails: StoredEmails): boolean {
+function doesEmailAlreadyExist(emailAddress: EmailAddress, storedEmails: StoredEmails): boolean {
   const { validEmails } = storedEmails;
-  const alreadyExists = validEmails.some((x) => x.emailAddress.value === emailAddress.value);
+  const does = validEmails.some((x) => x.emailAddress.value === emailAddress.value);
 
-  return alreadyExists;
+  return does;
 }
 
-export function makeConfirmationEmailContent(
+export function makeSubscriptionConfirmationEmailContent(
   feedDisplayName: string,
   confirmationLinkUrl: URL,
   listEmailAddress: EmailAddress

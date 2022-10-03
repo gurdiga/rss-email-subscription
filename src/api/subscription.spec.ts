@@ -2,19 +2,19 @@ import { expect } from 'chai';
 import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail } from '../app/email-sending/emails';
 import { DOMAIN_NAME } from '../domain/feed-settings';
 import { encodeSearchParamValue } from '../shared/test-utils';
-import { makeConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
+import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
 
 describe('subscription', () => {
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
   const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
 
-  describe(makeConfirmationEmailContent.name, () => {
+  describe(makeSubscriptionConfirmationEmailContent.name, () => {
     it('prepares the confirmation email contents', () => {
       const feedDisplayName = 'Just Add Light and Stir';
       const confirmationUrl = new URL('https://test.com/confirm');
       const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
 
-      const emailContent = makeConfirmationEmailContent(feedDisplayName, confirmationUrl, listEmailAddress);
+      const emailContent = makeSubscriptionConfirmationEmailContent(feedDisplayName, confirmationUrl, listEmailAddress);
 
       expect(emailContent.subject).to.equal('Please confirm feed subscription');
       expect(emailContent.htmlBody).to.include(`<a href="${confirmationUrl}">`);

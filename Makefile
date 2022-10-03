@@ -46,7 +46,7 @@ pc: pre-commit
 lint: lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
 l: lint
 
-# docker cp website:/etc/nginx/nginx.conf website/nginx/conf.d/ # + comment out irrelevant pieces
+# docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
 # sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
 lint-nginx-config:
 	nginx -t -c `pwd`/website/nginx/nginx.conf
