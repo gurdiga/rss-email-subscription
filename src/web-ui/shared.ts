@@ -198,14 +198,13 @@ export function getOrCreateValidationMessage(
 export function clearValidationErrors<FF>(formFields: FF): void {
   for (const field in formFields) {
     const fieldElement = formFields[field as keyof FF] as HTMLElement;
-    const isInvalid = fieldElement.className.split(/\s+/).includes('is-invalid');
+    const isInvalid = getClassNames(fieldElement).includes('is-invalid');
 
     if (!isInvalid) {
       continue;
     }
 
-    fieldElement.className = fieldElement.className
-      .split(/\s+/)
+    fieldElement.className = getClassNames(fieldElement)
       .filter((x) => x !== 'is-invalid')
       .join(' ');
 
@@ -215,10 +214,14 @@ export function clearValidationErrors<FF>(formFields: FF): void {
       continue;
     }
 
-    const classNames = errorMessageElement.className.split(/\s+/);
+    const classNames = getClassNames(errorMessageElement);
 
     if (classNames.includes('validation-message') && classNames.includes('invalid-feedback')) {
       errorMessageElement.remove();
     }
   }
+}
+
+export function getClassNames(element: Element): string[] {
+  return element.className.split(/\s+/).filter((x) => !!x);
 }

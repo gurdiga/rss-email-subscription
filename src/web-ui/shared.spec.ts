@@ -12,6 +12,7 @@ import {
   displayValidationError,
   getOrCreateValidationMessage,
   clearValidationErrors,
+  getClassNames,
 } from './shared';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
@@ -151,7 +152,7 @@ describe(displayValidationError.name, () => {
 
     displayValidationError(response, formFields, getOrCreateValidationMessageFn);
 
-    expect(formFields.email.className.split(/\s+/)).to.include('is-invalid');
+    expect(getClassNames(formFields.email)).to.include('is-invalid');
     expect(focusSpy.calls.length).to.equal(1);
     expect(nextSibling.textContent).to.equal('Something’s wrong');
   });
