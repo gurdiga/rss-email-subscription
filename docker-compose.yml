@@ -99,7 +99,7 @@ services:
     ports: ['80:80', '443:443']
     volumes:
       - ./website/html:/usr/share/nginx/html:ro
-      - ./website/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./website/nginx/conf.d/website.conf:/etc/nginx/conf.d/website.conf:ro
       - ./.tmp/certbot/conf:/etc/letsencrypt
       - ./.tmp/certbot/www:/var/www/certbot
     environment:
