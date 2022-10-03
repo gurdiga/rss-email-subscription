@@ -89,7 +89,7 @@ export interface ResponseStatusUiElements {
   apiResponseMessage: Element;
 }
 
-export function handleApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
+export function displayApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
   const className = isInputError(apiResponse) || isAppError(apiResponse) ? 'alert alert-danger' : 'alert alert-success';
 
   messageElement.textContent = apiResponse.message;
@@ -97,7 +97,7 @@ export function handleApiResponse(apiResponse: ApiResponse, messageElement: Elem
   messageElement.setAttribute('role', 'alert');
 }
 
-export function handleCommunicationError(error: unknown, messageElement: Element): void {
+export function displayCommunicationError(error: unknown, messageElement: Element): void {
   logError(error as Error);
 
   messageElement.textContent = 'Can’t connect to the server. Please try again in a few moments.';

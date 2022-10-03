@@ -6,7 +6,7 @@ import {
   displayValidationError,
   maybePreselectPlan,
 } from './create-account-helpers';
-import { displayMainError, handleApiResponse, handleCommunicationError, preventDoubleClick } from './utils';
+import { displayMainError, displayApiResponse, displayCommunicationError, preventDoubleClick } from './utils';
 import { requireUiElements, sendApiRequest } from './utils';
 
 function main() {
@@ -39,7 +39,7 @@ function main() {
       );
 
       if (isErr(response)) {
-        handleCommunicationError(response, uiElements.apiResponseMessage);
+        displayCommunicationError(response, uiElements.apiResponseMessage);
         return;
       }
 
@@ -48,7 +48,7 @@ function main() {
         return;
       }
 
-      handleApiResponse(response, uiElements.apiResponseMessage);
+      displayApiResponse(response, uiElements.apiResponseMessage);
 
       if (isSuccess(response)) {
         // TODO: Redirect to dashboard

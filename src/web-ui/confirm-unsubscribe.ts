@@ -1,6 +1,6 @@
 import { isErr } from '../shared/lang';
-import { displayMainError, fillUiElements, handleApiResponse } from './utils';
-import { handleCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './utils';
+import { displayMainError, fillUiElements, displayApiResponse } from './utils';
+import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './utils';
 import { ResponseStatusUiElements, sendApiRequest, UiElementFillSpec } from './utils';
 
 function main() {
@@ -50,9 +50,9 @@ function main() {
     try {
       const response = await sendApiRequest('/unsubscribe', { id: queryParams.id, email: queryParams.email });
 
-      handleApiResponse(response, uiElements.apiResponseMessage);
+      displayApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {
-      handleCommunicationError(error, uiElements.apiResponseMessage);
+      displayCommunicationError(error, uiElements.apiResponseMessage);
     }
   });
 }
