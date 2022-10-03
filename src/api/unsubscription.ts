@@ -7,7 +7,7 @@ import { AppRequestHandler } from './request-handler';
 
 export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, { storage }) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
-  const { id } = reqBody;
+  const { id, email } = reqBody;
   const parseResult = parseSubscriptionId(id);
 
   if (isErr(parseResult)) {
@@ -28,7 +28,7 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
   const isEmailSubscribed = !!existingEmail;
 
   if (!isEmailSubscribed) {
-    logWarning('Email not found by hash', { emailHash });
+    logWarning('Email not found by hash', { email, emailHash });
     return makeSuccess('Solidly unsubscribed.');
   }
 

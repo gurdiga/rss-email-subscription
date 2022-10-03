@@ -48,7 +48,7 @@ function main() {
 
   uiElements.confirmButton.addEventListener('click', async () => {
     try {
-      const response = await sendApiRequest('/unsubscribe', { id: queryParams.id });
+      const response = await sendApiRequest('/unsubscribe', { id: queryParams.id, email: queryParams.email });
 
       handleApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {
