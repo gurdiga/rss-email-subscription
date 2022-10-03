@@ -19,6 +19,10 @@ export interface FeedNotFound {
   kind: 'FeedNotFound';
 }
 
+export function isFeedNotFound(value: any): value is FeedNotFound {
+  return value && value.kind === 'FeedNotFound';
+}
+
 export function getFeedSettings(feedId: string, storage: AppStorage): Result<FeedSettings | FeedNotFound> {
   const storageKey = `/${feedId}/feed.json`;
 

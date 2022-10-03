@@ -1,3 +1,4 @@
+import { FeedNotFound } from '../../domain/feed-settings';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io';
@@ -173,8 +174,19 @@ function isHashedEmail(value: any): value is HashedEmail {
   return value.kind === 'HashedEmail';
 }
 
-export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails> {
+export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
   const storageKey = `/${feedId}/${emailsFileName}`;
+
+  const hasItemResult = storage.hasItem(storageKey);
+
+  if (isErr(hasItemResult)) {
+    return makeErr(`Could not check feed exists at ${storageKey}: ${hasItemResult.reason}`);
+  }
+
+  if (!hasItemResult) {
+    return { kind: 'FeedNotFound' };
+  }
+
   const index = storage.loadItem(storageKey);
 
   if (isErr(index)) {

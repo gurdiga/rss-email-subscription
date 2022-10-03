@@ -4,6 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppRequestHandler } from './request-handler';
+import { isFeedNotFound } from '../domain/feed-settings';
 
 export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
   reqId,
@@ -26,6 +27,11 @@ export const confirmSubscription: AppRequestHandler = async function confirmSubs
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { feedId, reason: storedEmails.reason });
     return makeAppError('Database read error');
+  }
+
+  if (isFeedNotFound(storedEmails)) {
+    logError('Feed not found', { feedId });
+    return makeInputError('Feed not found');
   }
 
   const { validEmails } = storedEmails;

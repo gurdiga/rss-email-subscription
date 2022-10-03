@@ -13,7 +13,7 @@ import {
 } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { DOMAIN_NAME, FeedSettings, getFeedSettings } from '../domain/feed-settings';
+import { DOMAIN_NAME, FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/utils';
@@ -43,6 +43,11 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
   if (isErr(storedEmails)) {
     logError('Can’t load stored emails', { reason: storedEmails.reason });
     return makeAppError('Database read error');
+  }
+
+  if (isFeedNotFound(storedEmails)) {
+    logError('Feed not found', { feedId });
+    return makeInputError('Feed not found');
   }
 
   if (storedEmails.invalidEmails.length > 0) {

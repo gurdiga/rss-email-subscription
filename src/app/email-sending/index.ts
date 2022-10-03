@@ -7,7 +7,7 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { FeedSettings } from '../../domain/feed-settings';
+import { FeedSettings, isFeedNotFound } from '../../domain/feed-settings';
 import { AppStorage } from '../../shared/storage';
 
 export async function sendEmails(
@@ -47,6 +47,11 @@ export async function sendEmails(
 
   if (isErr(storedEmails)) {
     logError(`Could not read emails`, { reason: storedEmails.reason });
+    return 1;
+  }
+
+  if (isFeedNotFound(storedEmails)) {
+    logError(`Feed not found`);
     return 1;
   }
 

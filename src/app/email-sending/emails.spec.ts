@@ -241,7 +241,7 @@ describe(loadStoredEmails.name, () => {
   };
 
   it('returns a list of stored emails with their hashes', () => {
-    const storage = makeStorageStub({ loadItem: () => index });
+    const storage = makeStorageStub({ loadItem: () => index, hasItem: () => true });
     const result = loadStoredEmails(feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
@@ -263,7 +263,7 @@ describe(loadStoredEmails.name, () => {
       hash4: 'email4@test.com',
     };
 
-    const storage = makeStorageStub({ loadItem: () => extendedIndex });
+    const storage = makeStorageStub({ loadItem: () => extendedIndex, hasItem: () => true });
     const result = loadStoredEmails(feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
@@ -290,7 +290,7 @@ describe(loadStoredEmails.name, () => {
       hash7: {},
     };
 
-    const storage = makeStorageStub({ loadItem: () => index });
+    const storage = makeStorageStub({ loadItem: () => index, hasItem: () => true });
     const result = loadStoredEmails(feedId, storage);
 
     expect(result).to.deep.equal({
@@ -313,7 +313,7 @@ describe(loadStoredEmails.name, () => {
     const invalidJsonStrings = ['null', '[]', '"string"', '42', 'true'];
 
     for (const storedValue of invalidJsonStrings) {
-      const storage = makeStorageStub({ loadItem: () => storedValue });
+      const storage = makeStorageStub({ loadItem: () => storedValue, hasItem: () => true });
       const result = loadStoredEmails(feedId, storage) as Err;
 
       expect(isErr(result)).to.be.true;
@@ -326,7 +326,7 @@ describe(loadStoredEmails.name, () => {
 
   it('returns an Err value when can’t load storage value', () => {
     const err = makeErr('File access denied?!');
-    const storage = makeStorageStub({ loadItem: () => err });
+    const storage = makeStorageStub({ loadItem: () => err, hasItem: () => true });
 
     expect(loadStoredEmails(feedId, storage)).to.deep.equal(
       makeErr(`Could not read email list at /path/emails.json: ${err.reason}`)
