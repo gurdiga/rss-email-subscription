@@ -14,6 +14,7 @@ import { AppSettings } from '../domain/app-settings';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
+import { DOMAIN_NAME } from '../domain/feed-settings';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
@@ -59,7 +60,7 @@ async function sendRegistrationConfirmationEmail(
 
   const from = settings.fullEmailAddress;
   const replyTo = settings.fullEmailAddress.emailAddress;
-  const confirmationLink = makeRegistrationConfirmationLink(to);
+  const confirmationLink = makeRegistrationConfirmationLink(to, settings.hashingSalt);
   const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
   const sendEmailResult = await sendEmail(from, to, replyTo, emailContent, env);
 
@@ -69,8 +70,12 @@ async function sendRegistrationConfirmationEmail(
   }
 }
 
-function makeRegistrationConfirmationLink(_to: EmailAddress): URL {
-  return new URL('TODO');
+export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string): URL {
+  const url = new URL(`https://${DOMAIN_NAME}/confirm-registration.html`);
+
+  url.searchParams.set('secret', hash(to.value, appHashingSalt));
+
+  return url;
 }
 
 function makeRegistrationConfirmationEmailContent(_confirmationLink: URL): EmailContent {
