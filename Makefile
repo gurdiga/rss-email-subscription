@@ -330,20 +330,6 @@ init-data-dir:
 	mkdir $$DATA_DIR_ROOT/accounts
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
-init-app-settings:
-	@require=$${DATA_DIR_ROOT:?envar is missing}
-
-	template='{
-		"hashingSalt": "HASING_SALT_SLOT",
-		"displayName": "FeedSubscription.com",
-		"emailAddress": "hello@feedsubscription.com"
-	}'
-	hashing_salt=`tr -dc A-Za-z0-9 </dev/urandom | head -c 16 ; echo ''`
-	output_file="$$DATA_DIR_ROOT/settings.json"
-
-	echo $$template | sed "s/HASING_SALT_SLOT/$$hashing_salt/" | jq . > $$output_file
-	echo "Created $$output_file"
-
 init-account-index:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
 
