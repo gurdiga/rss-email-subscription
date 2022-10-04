@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { DOMAIN_NAME } from '../domain/feed-settings';
 import { hash } from '../shared/crypto';
-import { makeRegistrationConfirmationLink } from './create-account';
+import { makeRegistrationConfirmationEmailContent, makeRegistrationConfirmationLink } from './create-account';
 
 describe(makeRegistrationConfirmationLink.name, () => {
   it('builds an URL with the blogger email’s hash in the "secret" query string param', () => {
@@ -16,5 +16,15 @@ describe(makeRegistrationConfirmationLink.name, () => {
     expect(url.hostname).to.equal(DOMAIN_NAME);
     expect(url.pathname).to.equal('/confirm-registration.html');
     expect(url.searchParams.get('secret')).to.equal(expectedSecret);
+  });
+});
+
+describe(makeRegistrationConfirmationEmailContent.name, () => {
+  it('builds an email message containing the given confirmation link', () => {
+    const confirmationLink = new URL('https://confirmation.link');
+    const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
+
+    expect(emailContent.subject).to.equal('Please confirm FeedSubscription registration');
+    expect(emailContent.htmlBody).to.include(confirmationLink.toString());
   });
 });

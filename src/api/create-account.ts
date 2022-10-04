@@ -46,7 +46,7 @@ async function sendRegistrationConfirmationEmail(
   to: EmailAddress,
   settings: AppSettings
 ): Promise<Result<void | AppError>> {
-  const { logError } = makeCustomLoggers({
+  const { logError, logInfo } = makeCustomLoggers({
     email: to.value,
     module: `${createAccount.name}:${sendRegistrationConfirmationEmail.name}`,
   });
@@ -68,6 +68,8 @@ async function sendRegistrationConfirmationEmail(
     logError('Can’t send registration confirmation email', { reason: sendEmailResult.reason });
     return makeAppError('Error sending registration confirmation email');
   }
+
+  logInfo('Sent registration confirmation email');
 }
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string): URL {
@@ -78,12 +80,20 @@ export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSal
   return url;
 }
 
-function makeRegistrationConfirmationEmailContent(_confirmationLink: URL): EmailContent {
-  // const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-
+export function makeRegistrationConfirmationEmailContent(confirmationLink: URL): EmailContent {
   return {
-    subject: 'TODO',
-    htmlBody: 'TODO',
+    subject: 'Please confirm FeedSubscription registration',
+    htmlBody: `
+      <p>Hi there,</p>
+
+      <p>Please confirm FeedSubscription registration by clicking the link below:</p>
+
+      <p><a href="${confirmationLink}">Yes, I confirm registration</a>.</p>
+
+      <p>If you did not register, please ignore this message.</p>
+
+      <p>Have a nice day.</p>
+    `,
   };
 }
 
