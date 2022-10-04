@@ -1,7 +1,7 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AccountData } from '../domain/account';
 import { addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
-import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -10,6 +10,10 @@ import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { AppRequestHandler } from './request-handler';
 import { AppStorage } from '../shared/storage';
 import { makePlanId, PlanId } from '../domain/plan';
+import { AppSettings } from '../domain/app-settings';
+import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
+import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
+import { requireEnv } from '../shared/env';
 
 export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
@@ -25,8 +29,58 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeAppError(initAccountResult.reason);
   }
 
+  const sendRegistrationConfirmationEmailResult = await sendRegistrationConfirmationEmail(
+    processInputResult.email,
+    app.settings
+  );
+
+  if (isErr(sendRegistrationConfirmationEmailResult)) {
+    return makeAppError(sendRegistrationConfirmationEmailResult.reason);
+  }
+
   return makeSuccess('Account created. Welcome aboard! 🙂');
 };
+
+async function sendRegistrationConfirmationEmail(
+  to: EmailAddress,
+  settings: AppSettings
+): Promise<Result<void | AppError>> {
+  const { logError } = makeCustomLoggers({
+    email: to.value,
+    module: `${createAccount.name}:${sendRegistrationConfirmationEmail.name}`,
+  });
+
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+
+  if (isErr(env)) {
+    logError(`Invalid environment`, { reason: env.reason });
+    return makeAppError('Environment error');
+  }
+
+  const from = settings.fullEmailAddress;
+  const replyTo = settings.fullEmailAddress.emailAddress;
+  const confirmationLink = makeRegistrationConfirmationLink(to);
+  const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
+  const sendEmailResult = await sendEmail(from, to, replyTo, emailContent, env);
+
+  if (isErr(sendEmailResult)) {
+    logError('Can’t send registration confirmation email', { reason: sendEmailResult.reason });
+    return makeAppError('Error sending registration confirmation email');
+  }
+}
+
+function makeRegistrationConfirmationLink(_to: EmailAddress): URL {
+  return new URL('TODO');
+}
+
+function makeRegistrationConfirmationEmailContent(_confirmationLink: URL): EmailContent {
+  // const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
+
+  return {
+    subject: 'TODO',
+    htmlBody: 'TODO',
+  };
+}
 
 interface Input {
   plan: string;
