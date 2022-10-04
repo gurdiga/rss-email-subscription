@@ -1,36 +1,83 @@
+import { FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 
 export interface AppSettings {
   kind: 'AppSettings';
   hashingSalt: string;
+  fullEmailAddress: FullEmailAddress;
+}
+
+export interface SettingsJson {
+  hashingSalt: string;
+  displayName: string;
+  emailAddress: string;
 }
 
 const hashingSaltLength = 16;
 
 export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
-  const loadItemResult = storage.loadItem('/settings.json');
+  const loadItemResult = storage.loadItem('/settings.json') as SettingsJson;
 
   if (isErr(loadItemResult)) {
     return makeErr(`Could not read app settings: ${loadItemResult.reason}.`);
   }
 
-  const { hashingSalt } = loadItemResult;
+  const hashingSalt = makeHashingSalt(loadItemResult.hashingSalt);
 
-  if (!hashingSalt) {
-    return makeErr('Hashing salt is missing in app settings.');
+  if (isErr(hashingSalt)) {
+    return hashingSalt;
   }
 
-  if (typeof hashingSalt !== 'string') {
-    return makeErr('Hashing salt is not a string in app settings.');
+  const displayName = makeDisplayName(loadItemResult.displayName);
+
+  if (isErr(displayName)) {
+    return displayName;
   }
 
-  if (hashingSalt.length !== hashingSaltLength) {
-    return makeErr('Hashing salt is too short in app settings.');
+  const emailAddress = makeEmailAddress(loadItemResult.emailAddress);
+
+  if (isErr(emailAddress)) {
+    return emailAddress;
   }
+
+  const fullEmailAddress = makeFullEmailAddress(displayName, emailAddress);
 
   return {
     kind: 'AppSettings',
     hashingSalt,
+    fullEmailAddress,
   };
+}
+
+function makeHashingSalt(value: any): Result<string> {
+  if (!value) {
+    return makeErr('Hashing salt is missing in app settings.');
+  }
+
+  if (typeof value !== 'string') {
+    return makeErr('Hashing salt is not a string in app settings.');
+  }
+
+  if (value.length !== hashingSaltLength) {
+    return makeErr('Hashing salt is too short in app settings.');
+  }
+
+  return value;
+}
+
+function makeDisplayName(value: any): Result<string> {
+  if (!value) {
+    return makeErr('Display name is missing in app settings.');
+  }
+
+  if (typeof value !== 'string') {
+    return makeErr('Display name is not a string in app settings.');
+  }
+
+  if (value.length === 0) {
+    return makeErr('Display name is empty in app settings.');
+  }
+
+  return value;
 }
