@@ -4,7 +4,7 @@ import cors from 'cors';
 import { subscribe } from './subscription';
 import { confirmSubscription } from './subscription-confirmation';
 import { oneClickUnsubscribe, unsubscribe } from './unsubscription';
-import { createAccount } from './registration';
+import { registration } from './registration';
 import { makeRequestHandler } from './request-handler';
 import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
@@ -29,7 +29,7 @@ async function main() {
   server.post('/confirm-subscription', makeRequestHandler(confirmSubscription, app));
   server.post('/unsubscribe', makeRequestHandler(unsubscribe, app));
   server.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe, app));
-  server.post('/registration', makeRequestHandler(createAccount, app));
+  server.post('/registration', makeRequestHandler(registration, app));
   server.post('/authenticate', makeRequestHandler(authenticate, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {

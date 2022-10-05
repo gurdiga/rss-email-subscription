@@ -16,7 +16,7 @@ import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME } from '../domain/feed-settings';
 
-export const createAccount: AppRequestHandler = async function createAccount(_reqId, reqBody, _reqParams, app) {
+export const registration: AppRequestHandler = async function registration(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
   const processInputResult = processInput(app.storage, { plan, email, password });
 
@@ -44,7 +44,7 @@ async function sendRegistrationConfirmationEmail(
   to: EmailAddress,
   settings: AppSettings
 ): Promise<Result<void | AppError>> {
-  const module = `${createAccount.name}:${sendRegistrationConfirmationEmail.name}`;
+  const module = `${registration.name}:${sendRegistrationConfirmationEmail.name}`;
   const { logError, logInfo } = makeCustomLoggers({ email: to.value, module });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
@@ -107,7 +107,7 @@ interface ProcessedInput {
 }
 
 function processInput(storage: AppStorage, input: Input): Result<ProcessedInput> {
-  const module = `${createAccount.name}:${processInput.name}`;
+  const module = `${registration.name}:${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
   const plan = makePlanId(input.plan);
@@ -152,7 +152,7 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {
-  const module = `${createAccount.name}:${initAccount.name}`;
+  const module = `${registration.name}:${initAccount.name}`;
   const { logInfo, logError } = makeCustomLoggers({ module });
 
   const accountId = new Date().getTime();
