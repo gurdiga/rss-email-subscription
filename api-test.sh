@@ -235,7 +235,7 @@ function print_success {
 
 function print_failure {
 	local caller_name="${FUNCNAME[1]}"
-	local prefix && prefix="$(red FAILURE in "$caller_name")"
+	local prefix && prefix="$(red "FAILURE in $caller_name")"
 
 	if test -z "$@"; then
 		# shellcheck disable=SC2059
