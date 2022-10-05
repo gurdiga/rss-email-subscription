@@ -146,7 +146,7 @@
   }
 
   function findScripts(): HTMLScriptElement[] {
-    return [...document.querySelectorAll<HTMLScriptElement>('script[res-registration-form]')];
+    return [...document.querySelectorAll<HTMLScriptElement>('script[res-subscription-form]')];
   }
 
   function fieldId(index: number): string {
