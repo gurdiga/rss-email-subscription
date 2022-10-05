@@ -1,17 +1,12 @@
 import { isPlanId, makePlanId } from '../domain/plan';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import {
-  displayMainError,
-  displayApiResponse,
-  displayCommunicationError,
-  preventDoubleClick,
-  ApiResponseUiElements,
-} from './shared';
-import { requireUiElements, sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
+import { displayMainError, displayApiResponse, displayCommunicationError } from './shared';
+import { preventDoubleClick, ApiResponseUiElements, requireUiElements } from './shared';
+import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
 function main() {
-  const uiElements = requireUiElements<CreateAccountUiElements>({
+  const uiElements = requireUiElements<RegistrationUiElements>({
     plan: '#plan',
     email: '#email',
     password: '#password',
@@ -32,7 +27,7 @@ function main() {
 
     preventDoubleClick(uiElements.submitButton, async () => {
       const response = await attempt(() =>
-        sendApiRequest('/create-account', {
+        sendApiRequest('/registration', {
           plan: uiElements.plan.value,
           email: uiElements.email.value,
           password: uiElements.password.value,
@@ -60,7 +55,7 @@ function main() {
   });
 }
 
-export interface CreateAccountUiElements extends FormUiElements, ApiResponseUiElements {}
+export interface RegistrationUiElements extends FormUiElements, ApiResponseUiElements {}
 
 export interface FormFields {
   plan: HTMLSelectElement;

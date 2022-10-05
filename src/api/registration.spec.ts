@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { DOMAIN_NAME } from '../domain/feed-settings';
 import { hash } from '../shared/crypto';
-import { makeRegistrationConfirmationEmailContent, makeRegistrationConfirmationLink } from './create-account';
+import { makeRegistrationConfirmationEmailContent, makeRegistrationConfirmationLink } from './registration';
 
 describe(makeRegistrationConfirmationLink.name, () => {
   it('builds an URL with the blogger email’s hash in the "secret" query string param', () => {

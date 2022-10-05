@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { maybePreselectPlan } from './create-account';
+import { maybePreselectPlan } from './registration';
 
 describe(maybePreselectPlan.name, () => {
   it('pre-selects the Plan from query string', () => {
