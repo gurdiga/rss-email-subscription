@@ -14,8 +14,8 @@ USER_EMAIL=blogger@test.com
 USER_PASSWORD=A-long-S3cre7-password
 
 function main {
-	create_account $USER_PLAN $USER_EMAIL $USER_PASSWORD
-	create_account_verify $USER_PLAN $USER_EMAIL
+	registration $USER_PLAN $USER_EMAIL $USER_PASSWORD
+	registration_verify $USER_PLAN $USER_EMAIL
 	authenticate $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
 	unsubscribe
@@ -53,19 +53,19 @@ function get_headers {
 	curl -ks --head $BASE_URL"$@"
 }
 
-function create_account {
+function registration {
 	local account_plan=${1:?}
 	local account_email=${2:?}
 	local account_password=${3:?}
 
-	if post /create-account -d plan="$account_plan" -d email="$account_email" -d password="$account_password"; then
+	if post /registration -d plan="$account_plan" -d email="$account_email" -d password="$account_password"; then
 		print_success
 	else
-		print_failure "POST /create-account failed: exit code $?"
+		print_failure "POST /registration failed: exit code $?"
 	fi
 }
 
-function create_account_verify {
+function registration_verify {
 	local account_plan=${1:?}
 	local account_email=${2:?}
 
