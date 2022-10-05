@@ -222,7 +222,7 @@ function assert_header {
 }
 
 function verify_allows_embedding_js {
-	assert_header /web-ui-scripts/web-ui/registration-form.js 'cross-origin-resource-policy: cross-origin'
+	assert_header /web-ui-scripts/web-ui/subscription-form.ts 'cross-origin-resource-policy: cross-origin'
 }
 
 function verify_has_cors_enabled {
