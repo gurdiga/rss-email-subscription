@@ -213,10 +213,12 @@ function web_ui_scripts {
 function assert_header {
 	local url="$1"
 	local header="$2"
+	local actual_headers && actual_headers="$(get_headers "$url")"
 
-	if get_headers "$url" | grep "$header"; then
+	if echo "$actual_headers" | grep "$header"; then
 		print_success
 	else
+		echo "$actual_headers"
 		print_failure "Header missing? \"$header\""
 	fi
 }
