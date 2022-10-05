@@ -5,16 +5,18 @@ import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
 import { makeStorage } from '../shared/storage';
+import { requireEnv } from '../shared/env';
+import { AppEnv } from '../api/init-app';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
-const dataDirRoot = process.env['DATA_DIR_ROOT'];
+const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
 
-if (!dataDirRoot) {
-  logError(`DATA_DIR_ROOT envar missing`);
+if (isErr(env)) {
+  logError(`Invalid environment`, { reason: env.reason });
   process.exit(1);
 }
 
-const storage = makeStorage(dataDirRoot);
+const storage = makeStorage(env.DATA_DIR_ROOT);
 const command = getFirstCliArg(process) || '[missing-command]';
 
 if (!['rss-checking', 'email-sending'].includes(command)) {

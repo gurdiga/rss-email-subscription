@@ -5,19 +5,22 @@ import { makeCustomLoggers } from '../shared/logging';
 import { getFeedSettings } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../shared/storage';
+import { requireEnv } from '../shared/env';
+import { AppEnv } from '../api/init-app';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
 
   logInfo('Starting cron');
 
-  const dataDirRoot = process.env['DATA_DIR_ROOT'];
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
 
-  if (!dataDirRoot) {
-    logError(`DATA_DIR_ROOT envar missing`);
+  if (isErr(env)) {
+    logError(`Invalid environment`, { reason: env.reason });
     return;
   }
 
+  const dataDirRoot = env.DATA_DIR_ROOT;
   const storage = makeStorage(dataDirRoot);
   let cronJobs = scheduleFeedChecks(dataDirRoot, storage);
 

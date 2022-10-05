@@ -11,16 +11,19 @@ import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
 import { makeStorage } from '../../shared/storage';
+import { requireEnv } from '../../shared/env';
+import { AppEnv } from '../../api/init-app';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
-  const dataDirRoot = process.env['DATA_DIR_ROOT'];
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
 
-  if (!dataDirRoot) {
-    logError(`DATA_DIR_ROOT envar missing`);
+  if (isErr(env)) {
+    logError(`Invalid environment`, { reason: env.reason });
     process.exit(1);
   }
 
+  const dataDirRoot = env.DATA_DIR_ROOT;
   const feedId = getFirstCliArg(process);
 
   if (!feedId) {
