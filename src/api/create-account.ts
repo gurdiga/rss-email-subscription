@@ -30,10 +30,8 @@ export const createAccount: AppRequestHandler = async function createAccount(_re
     return makeAppError(initAccountResult.reason);
   }
 
-  const sendRegistrationConfirmationEmailResult = await sendRegistrationConfirmationEmail(
-    processInputResult.email,
-    app.settings
-  );
+  const bloggerEmail = processInputResult.email;
+  const sendRegistrationConfirmationEmailResult = await sendRegistrationConfirmationEmail(bloggerEmail, app.settings);
 
   if (isErr(sendRegistrationConfirmationEmailResult)) {
     return makeAppError(sendRegistrationConfirmationEmailResult.reason);
@@ -46,10 +44,8 @@ async function sendRegistrationConfirmationEmail(
   to: EmailAddress,
   settings: AppSettings
 ): Promise<Result<void | AppError>> {
-  const { logError, logInfo } = makeCustomLoggers({
-    email: to.value,
-    module: `${createAccount.name}:${sendRegistrationConfirmationEmail.name}`,
-  });
+  const module = `${createAccount.name}:${sendRegistrationConfirmationEmail.name}`;
+  const { logError, logInfo } = makeCustomLoggers({ email: to.value, module });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
@@ -111,11 +107,8 @@ interface ProcessedInput {
 }
 
 function processInput(storage: AppStorage, input: Input): Result<ProcessedInput> {
-  const { logWarning } = makeCustomLoggers({
-    plan: input.plan,
-    email: input.email,
-    module: `${createAccount.name}:${processInput.name}`,
-  });
+  const module = `${createAccount.name}:${processInput.name}`;
+  const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
   const plan = makePlanId(input.plan);
 
@@ -127,19 +120,19 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
   const email = makeEmailAddress(input.email);
 
   if (isErr(email)) {
-    logWarning('Invalid email', { input: input.email, reason: email.reason });
+    logWarning('Invalid email', { reason: email.reason });
     return { ...email, field: 'email' };
   }
 
   const accountId = findAccountIdByEmail(storage, email);
 
   if (isErr(accountId)) {
-    logWarning('Can’t verify email taken', { input: input.email, reason: accountId.reason });
+    logWarning('Can’t verify email taken', { reason: accountId.reason });
     return makeErr('Can’t verify email taken', 'email');
   }
 
   if (typeof accountId === 'number') {
-    logWarning('Email already taken', { input: input.email });
+    logWarning('Email already taken');
     return makeErr('Email already taken', 'email');
   }
 
@@ -159,9 +152,8 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {
-  const { logInfo, logError } = makeCustomLoggers({
-    module: `${createAccount.name}:${initAccount.name}`,
-  });
+  const module = `${createAccount.name}:${initAccount.name}`;
+  const { logInfo, logError } = makeCustomLoggers({ module });
 
   const accountId = new Date().getTime();
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
