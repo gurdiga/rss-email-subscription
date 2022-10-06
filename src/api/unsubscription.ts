@@ -6,8 +6,13 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { AppRequestHandler } from './request-handler';
 import { isFeedNotFound } from '../domain/feed-settings';
 
-export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, reqBody, _reqParams, { storage }) {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscribe.name });
+export const unsubscription: AppRequestHandler = async function unsubscription(
+  reqId,
+  reqBody,
+  _reqParams,
+  { storage }
+) {
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscription.name });
   const { id, email } = reqBody;
   const parseResult = parseSubscriptionId(id);
 
@@ -50,8 +55,4 @@ export const unsubscribe: AppRequestHandler = async function unsubscribe(reqId, 
   logInfo('Unsubscribed', { feedId, email: existingEmail.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
-};
-
-export const oneClickUnsubscribe: AppRequestHandler = function oneClickUnsubscribe(reqId, _reqBody, reqParams, app) {
-  return unsubscribe(reqId, reqParams, {}, app);
 };

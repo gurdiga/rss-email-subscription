@@ -11,7 +11,7 @@ function main() {
     return;
   }
 
-  const uiElements = requireUiElements<UnsubscriptionUiElements>({
+  const uiElements = requireUiElements<UnsubscriptionConfirmationUiElements>({
     inputUiContainer: '#input-ui',
     feedNameLabel: '#feed-name-label',
     emailLabel: '#email-label',
@@ -59,7 +59,7 @@ function main() {
 
 main();
 
-interface UnsubscriptionUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
+interface UnsubscriptionConfirmationUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
 
 interface InputUiElements {
   inputUiContainer: Element;

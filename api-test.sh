@@ -18,20 +18,17 @@ function main {
 	registration_verify $USER_PLAN $USER_EMAIL
 	authentication_do $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
-	unsubscribe
-	unsubscribe_verify
-	subscribe
-	subscribe_verify
+	unsubscription_do
+	unsubscription_verify
+	subscription_do
+	subscription_verify
 	confirm
 	confirm_verify
-	unsubscribe
-	unsubscribe_verify
-	subscribe
-	unsubscribe_1click
-	unsubscribe_verify
-	subscribe
+	unsubscription_do
+	unsubscription_verify
+	subscription_do
 	resubscribe_failure_verify
-	unsubscribe
+	unsubscription_do
 	unsubscribe_failure_verify
 	web_ui_scripts
 	verify_allows_embedding_js
@@ -120,7 +117,7 @@ function find_account_files_by_email {
 		done
 }
 
-function subscribe {
+function subscription_do {
 	local url="/subscription"
 
 	if post $url -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL; then
@@ -130,7 +127,7 @@ function subscribe {
 	fi
 }
 
-function subscribe_verify {
+function subscription_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == false)" "$EMAIL_DATA_FILE"; then
 		print_success
 	else
@@ -158,29 +155,23 @@ function confirm_verify {
 	fi
 }
 
-function unsubscribe {
-	if post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH; then
+function unsubscription_do {
+	local url="/unsubscription"
+
+	if post $url -d id=$FEED_ID-$EMAIL_HASH; then
 		print_success
 	else
-		print_failure "POST /unsubscribe failed: exit code $?"
+		print_failure "POST $url failed: exit code $?"
 	fi
 }
 
-function unsubscribe_verify {
+function unsubscription_verify {
 	if jq --exit-status ".$EMAIL_HASH" "$EMAIL_DATA_FILE"; then
 		print_failure "Email not removed from emails.json"
 		jq . "$EMAIL_DATA_FILE"
 		exit 1
 	else
 		print_success
-	fi
-}
-
-function unsubscribe_1click {
-	if post /unsubscribe/$FEED_ID-$EMAIL_HASH -d List-Unsubscribe=One-Click; then
-		print_success
-	else
-		print_failure "POST /unsubscribe failed: exit code $?"
 	fi
 }
 
@@ -196,7 +187,7 @@ function resubscribe_failure_verify {
 
 function unsubscribe_failure_verify {
 	if diff -u \
-		<(post /unsubscribe -d id=$FEED_ID-$EMAIL_HASH) \
+		<(post /unsubscription -d id=$FEED_ID-$EMAIL_HASH) \
 		<(printf '{"kind":"Success","message":"Solidly unsubscribed."}'); then
 		print_success
 	else
@@ -205,7 +196,7 @@ function unsubscribe_failure_verify {
 }
 
 function web_ui_scripts {
-	if get /web-ui-scripts/web-ui/confirm-unsubscribe.js | head -5; then
+	if get /web-ui-scripts/web-ui/unsubscription-confirmation.js | head -5; then
 		print_success
 	else
 		print_failure
