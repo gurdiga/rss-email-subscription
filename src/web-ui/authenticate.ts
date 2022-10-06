@@ -4,7 +4,7 @@ import { clearValidationErrors, displayApiResponse, displayCommunicationError, d
 import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
 import { sendApiRequest } from './shared';
 
-export interface AuthenticateUiElements extends FormUiElements, ApiResponseUiElements {}
+export interface AuthenticationUiElements extends FormUiElements, ApiResponseUiElements {}
 
 export interface FormFields {
   email: HTMLInputElement;
@@ -16,7 +16,7 @@ export interface FormUiElements extends FormFields {
 }
 
 function main() {
-  const uiElements = requireUiElements<AuthenticateUiElements>({
+  const uiElements = requireUiElements<AuthenticationUiElements>({
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
@@ -34,7 +34,7 @@ function main() {
 
     preventDoubleClick(uiElements.submitButton, async () => {
       const response = await attempt(() =>
-        sendApiRequest('/authenticate', {
+        sendApiRequest('/authentication', {
           email: uiElements.email.value,
           password: uiElements.password.value,
         })

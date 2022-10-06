@@ -8,7 +8,7 @@ import { registration } from './registration';
 import { makeRequestHandler } from './request-handler';
 import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
-import { authenticate } from './authenticate';
+import { authentication } from './authentication';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'server' });
@@ -30,7 +30,7 @@ async function main() {
   server.post('/unsubscribe', makeRequestHandler(unsubscribe, app));
   server.post('/unsubscribe/:id', makeRequestHandler(oneClickUnsubscribe, app));
   server.post('/registration', makeRequestHandler(registration, app));
-  server.post('/authenticate', makeRequestHandler(authenticate, app));
+  server.post('/authentication', makeRequestHandler(authentication, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));

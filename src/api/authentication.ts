@@ -9,7 +9,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { AppRequestHandler } from './request-handler';
 
-export const authenticate: AppRequestHandler = async function authenticate(_reqId, reqBody, _reqParams, app) {
+export const authentication: AppRequestHandler = async function authentication(_reqId, reqBody, _reqParams, app) {
   const { email, password } = reqBody;
   const processInputResult = processInput({ email, password });
 
@@ -38,7 +38,8 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const { logWarning } = makeCustomLoggers({ module: `${authenticate.name}:${processInput.name}` });
+  const module = `${authentication.name}:${processInput.name}`;
+  const { logWarning } = makeCustomLoggers({ module });
 
   const email = makeEmailAddress(input.email);
 
@@ -64,7 +65,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 function checkCredentials({ storage, settings }: App, input: ProcessedInput): Result<void> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: input.email.value,
-    module: `${authenticate.name}:${checkCredentials.name}`,
+    module: `${authentication.name}:${checkCredentials.name}`,
   });
   const findAccountResult = findAccountIdByEmail(storage, input.email);
 

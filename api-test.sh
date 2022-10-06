@@ -14,9 +14,9 @@ USER_EMAIL=blogger@test.com
 USER_PASSWORD=A-long-S3cre7-password
 
 function main {
-	registration $USER_PLAN $USER_EMAIL $USER_PASSWORD
+	registration_do $USER_PLAN $USER_EMAIL $USER_PASSWORD
 	registration_verify $USER_PLAN $USER_EMAIL
-	authenticate $USER_EMAIL $USER_PASSWORD
+	authentication_do $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
 	unsubscribe
 	unsubscribe_verify
@@ -53,7 +53,7 @@ function get_headers {
 	curl -ks --head $BASE_URL"$@"
 }
 
-function registration {
+function registration_do {
 	local account_plan=${1:?}
 	local account_email=${2:?}
 	local account_password=${3:?}
@@ -90,14 +90,14 @@ function registration_verify {
 	fi
 }
 
-function authenticate {
+function authentication_do {
 	local account_email=${1:?}
 	local account_password=${2:?}
 
-	if post /authenticate -d email="$account_email" -d password="$account_password"; then
+	if post /authentication -d email="$account_email" -d password="$account_password"; then
 		print_success
 	else
-		print_failure "POST /authenticate failed: exit code $?"
+		print_failure "POST /authentication failed: exit code $?"
 	fi
 }
 
