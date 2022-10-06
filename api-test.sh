@@ -121,10 +121,12 @@ function find_account_files_by_email {
 }
 
 function subscribe {
-	if post /subscribe -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL; then
+	local url="/subscription"
+
+	if post $url -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL; then
 		print_success
 	else
-		print_failure "POST /subscribe failed: exit code $?"
+		print_failure "POST $url failed: exit code $?"
 	fi
 }
 
@@ -184,7 +186,7 @@ function unsubscribe_1click {
 
 function resubscribe_failure_verify {
 	if diff -u \
-		<(post /subscribe -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL) \
+		<(post /subscription -d feedId=$FEED_ID -d email=$SUBSCRIBER_EMAIL) \
 		<(printf '{"kind":"InputError","message":"Email is already subscribed"}'); then
 		print_success
 	else
@@ -228,7 +230,7 @@ function verify_allows_embedding_js {
 }
 
 function verify_has_cors_enabled {
-	assert_header /subscribe 'access-control-allow-origin: *'
+	assert_header /subscription 'access-control-allow-origin: *'
 }
 
 function print_success {

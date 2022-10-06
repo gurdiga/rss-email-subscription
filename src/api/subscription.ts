@@ -1,16 +1,7 @@
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
-import {
-  makeEmailAddress,
-  loadStoredEmails,
-  makeEmailHashFn,
-  StoredEmails,
-  EmailAddress,
-  makeHashedEmail,
-  HashedEmail,
-  makeFullEmailAddress,
-  storeEmails,
-  addEmail,
-} from '../app/email-sending/emails';
+import { makeEmailAddress, loadStoredEmails, makeEmailHashFn, StoredEmails } from '../app/email-sending/emails';
+import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
+import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME, FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
@@ -21,7 +12,7 @@ import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from 
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
 
-export const subscribe: AppRequestHandler = async function subscribe(reqId, reqBody, _reqParams, { storage }) {
+export const subscription: AppRequestHandler = async function subscription(reqId, reqBody, _reqParams, { storage }) {
   const { feedId, email } = reqBody;
   const inputProcessingResult = processInput({ reqId, feedId, email }, storage);
 
@@ -29,7 +20,7 @@ export const subscribe: AppRequestHandler = async function subscribe(reqId, reqB
     return inputProcessingResult;
   }
 
-  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscribe.name });
+  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscription.name });
   const { emailAddress, feedSettings } = inputProcessingResult;
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 

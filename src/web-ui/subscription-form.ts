@@ -201,7 +201,7 @@
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
-    const url = `${origin}/subscribe`;
+    const url = `${origin}/subscription`;
     const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,
