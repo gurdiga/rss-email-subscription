@@ -48,7 +48,7 @@ function main() {
 
   uiElements.confirmButton.addEventListener('click', async () => {
     try {
-      const response = await sendApiRequest('/confirm-subscription', { id: queryParams.id });
+      const response = await sendApiRequest('/subscription-confirmation', { id: queryParams.id });
 
       displayApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {

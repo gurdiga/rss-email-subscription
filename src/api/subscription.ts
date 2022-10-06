@@ -151,7 +151,7 @@ export function makeSubscriptionConfirmationEmailContent(
 }
 
 function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams): URL {
-  const url = new URL(`https://${DOMAIN_NAME}/confirm-subscription.html`);
+  const url = new URL(`https://${DOMAIN_NAME}/subscription-confirmation.html`);
   let name: keyof typeof params;
 
   for (name in params) {

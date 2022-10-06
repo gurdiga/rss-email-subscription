@@ -22,8 +22,8 @@ function main {
 	unsubscription_verify
 	subscription_do
 	subscription_verify
-	confirm
-	confirm_verify
+	subscription_confirmation_do
+	subscription_confirmation_verify
 	unsubscription_do
 	unsubscription_verify
 	subscription_do
@@ -137,15 +137,17 @@ function subscription_verify {
 	fi
 }
 
-function confirm {
-	if post /confirm-subscription -d id=$FEED_ID-$EMAIL_HASH; then
+function subscription_confirmation_do {
+	local url="/subscription-confirmation"
+
+	if post $url -d id=$FEED_ID-$EMAIL_HASH; then
 		print_success
 	else
-		print_failure "POST /confirm-subscription failed: exit code $?"
+		print_failure "POST $url failed: exit code $?"
 	fi
 }
 
-function confirm_verify {
+function subscription_confirmation_verify {
 	if jq --exit-status ".$EMAIL_HASH | select(.isConfirmed == true)" "$EMAIL_DATA_FILE"; then
 		print_success
 	else

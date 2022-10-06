@@ -2,7 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import { subscription } from './subscription';
-import { confirmSubscription } from './subscription-confirmation';
+import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
 import { registration } from './registration';
 import { makeRequestHandler } from './request-handler';
@@ -26,7 +26,7 @@ async function main() {
   server.use(cors());
   server.use(express.urlencoded({ extended: true }));
   server.post('/subscription', makeRequestHandler(subscription, app));
-  server.post('/confirm-subscription', makeRequestHandler(confirmSubscription, app));
+  server.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
   server.post('/unsubscription', makeRequestHandler(unsubscription, app));
   server.post('/registration', makeRequestHandler(registration, app));
   server.post('/authentication', makeRequestHandler(authentication, app));

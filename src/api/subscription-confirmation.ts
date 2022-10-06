@@ -6,13 +6,13 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { AppRequestHandler } from './request-handler';
 import { isFeedNotFound } from '../domain/feed-settings';
 
-export const confirmSubscription: AppRequestHandler = async function confirmSubscription(
+export const subscriptionConfirmation: AppRequestHandler = async function subscriptionConfirmation(
   reqId,
   reqBody,
   _reqParams,
   { storage }
 ) {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: confirmSubscription.name });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: subscriptionConfirmation.name });
   const { id } = reqBody;
   const parseResult = parseSubscriptionId(id);
 

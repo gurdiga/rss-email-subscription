@@ -14,7 +14,7 @@ describe(makeRegistrationConfirmationLink.name, () => {
 
     expect(url.protocol).to.equal('https:');
     expect(url.hostname).to.equal(DOMAIN_NAME);
-    expect(url.pathname).to.equal('/confirm-registration.html');
+    expect(url.pathname).to.equal('/registration-confirmation.html');
     expect(url.searchParams.get('secret')).to.equal(expectedSecret);
   });
 });

@@ -69,7 +69,7 @@ async function sendRegistrationConfirmationEmail(
 }
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string): URL {
-  const url = new URL(`https://${DOMAIN_NAME}/confirm-registration.html`);
+  const url = new URL(`https://${DOMAIN_NAME}/registration-confirmation.html`);
 
   url.searchParams.set('secret', hash(to.value, appHashingSalt));
 
