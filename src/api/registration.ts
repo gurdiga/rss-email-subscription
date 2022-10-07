@@ -94,7 +94,7 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
 }
 
 interface Input {
-  plan: string;
+  plan: string; // Maybe switch to `unknown` type and see what comes out
   email: string;
   password: string;
 }

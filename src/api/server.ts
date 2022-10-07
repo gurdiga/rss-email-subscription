@@ -9,6 +9,7 @@ import { makeRequestHandler } from './request-handler';
 import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
 import { authentication } from './authentication';
+import { registrationConfirmation } from './registration-confirmation';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'server' });
@@ -29,6 +30,7 @@ async function main() {
   server.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
   server.post('/unsubscription', makeRequestHandler(unsubscription, app));
   server.post('/registration', makeRequestHandler(registration, app));
+  server.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
   server.post('/authentication', makeRequestHandler(authentication, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
