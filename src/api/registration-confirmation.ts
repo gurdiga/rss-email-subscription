@@ -1,8 +1,14 @@
-import { AccountId } from '../domain/account-index';
-import { makeAppError } from '../shared/api-response';
+import { confirmAccount as markAccountAsConfirmed } from '../domain/account';
+import {
+  deleteRegistrationConfirmationSecret,
+  getAccountIdForRegistrationConfirmationSecret,
+  makeRegistrationConfirmationSecret,
+  RegistrationConfirmationSecret,
+} from '../domain/registration-confirmation-secrets';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { App } from './init-app';
+import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
 
 interface Input {
@@ -13,22 +19,31 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   _reqId,
   reqBody,
   _reqParams,
-  app
+  { storage }
 ) {
-  const { secret } = reqBody;
-  const processInputResult = processInput(app, { secret });
+  const processInputResult = processInput({ secret: reqBody['secret'] });
 
-  console.log({ secret, processInputResult });
+  if (isErr(processInputResult)) {
+    return makeInputError(processInputResult.reason, processInputResult.field);
+  }
 
-  return makeAppError('Not implemented');
+  const confirmAccountBySecretResult = confirmAccountBySecret(storage, processInputResult.secret);
+
+  if (isErr(confirmAccountBySecretResult)) {
+    return makeAppError(confirmAccountBySecretResult.reason);
+  }
+
+  return makeSuccess('Account registration confirmed.');
   // TODO add api-test
 };
 
-interface ProcessedInput {}
+interface ProcessedInput {
+  secret: RegistrationConfirmationSecret;
+}
 
-function processInput(_app: App, input: Input): Result<ProcessedInput> {
+function processInput(input: Input): Result<ProcessedInput> {
   const module = `${registrationConfirmation.name}:${processInput.name}`;
-  const { logWarning, logError } = makeCustomLoggers({ module, secret: input.secret });
+  const { logWarning } = makeCustomLoggers({ module, secret: input.secret });
 
   const secret = makeRegistrationConfirmationSecret(input.secret);
 
@@ -37,6 +52,13 @@ function processInput(_app: App, input: Input): Result<ProcessedInput> {
     return makeErr('Invalid registration confirmation link');
   }
 
+  return { secret };
+}
+
+function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<void> {
+  const module = `${registrationConfirmation.name}:${confirmAccountBySecret.name}`;
+  const { logWarning, logError } = makeCustomLoggers({ module, secret: secret.value });
+
   const accountId = getAccountIdForRegistrationConfirmationSecret(secret);
 
   if (isErr(accountId)) {
@@ -44,10 +66,10 @@ function processInput(_app: App, input: Input): Result<ProcessedInput> {
     return makeErr('Invalid registration confirmation link');
   }
 
-  const confirmAccountResult = confirmAccount(accountId);
+  const markAccountAsConfirmedResult = markAccountAsConfirmed(storage, accountId);
 
-  if (isErr(confirmAccountResult)) {
-    logWarning('Failed to confirmAccount', { accountId, reason: confirmAccountResult.reason });
+  if (isErr(markAccountAsConfirmedResult)) {
+    logWarning('Failed to markAccountAsConfirmed', { accountId, reason: markAccountAsConfirmedResult.reason });
     return makeErr('Failed to confirm account');
   }
 
@@ -58,30 +80,7 @@ function processInput(_app: App, input: Input): Result<ProcessedInput> {
       reason: deleteRegistrationConfirmationSecretResult.reason,
       secret: secret.value,
     });
+
+    // NOTE: This is still a success for the user, so will not makeErr here.
   }
-
-  throw new Error('Function not implemented.');
-}
-
-// TODO: Consider moving to domain
-
-function deleteRegistrationConfirmationSecret(secret: RegistrationConfirmationSecret): Result<void> {
-  return makeErr(`Not implemented deleteRegistrationConfirmationSecret: ${secret}`);
-}
-
-function confirmAccount(accountId: AccountId): Result<void> {
-  return makeErr(`Not implemented confirmAccount: ${accountId}`);
-}
-
-interface RegistrationConfirmationSecret {
-  kind: 'RegistrationConfirmationSecret';
-  value: string;
-}
-
-function makeRegistrationConfirmationSecret(input: any): Result<RegistrationConfirmationSecret> {
-  return makeErr(`Not implemented makeRegistrationConfirmationSecret: ${input}`);
-}
-
-function getAccountIdForRegistrationConfirmationSecret(secret: RegistrationConfirmationSecret): Result<AccountId> {
-  return makeErr(`Not implemented getAccountIdForRegistrationConfirmationSecret: ${secret}`);
 }

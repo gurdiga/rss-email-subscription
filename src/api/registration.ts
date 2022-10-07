@@ -164,6 +164,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     hashedPassword: hashedPassword,
   };
 
+  // TODO: Replace with storeAccount
   const result = storage.storeItem(`/accounts/${accountId}/account.json`, accountData);
 
   if (isErr(result)) {
