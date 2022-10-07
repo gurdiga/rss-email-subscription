@@ -9,18 +9,20 @@ export interface Account {
   plan: PlanId;
   email: EmailAddress;
   hashedPassword: HashedPassword;
+  confirmationTimestamp?: Date;
 }
 
 export interface AccountData {
   plan: string;
   email: string;
   hashedPassword: string;
+  confirmationTimestamp?: Date;
 }
 
 export function loadAccount(
   storage: AppStorage,
   accountIn: AccountId,
-  storageKey: StorageKey = `/accounts/${accountIn}/account.json`
+  storageKey = getAccountStorageKey(accountIn)
 ): Result<Account> {
   const loadItemResult = storage.loadItem(storageKey);
 
@@ -51,4 +53,46 @@ export function loadAccount(
     email,
     hashedPassword,
   };
+}
+
+export function storeAccount(
+  storage: AppStorage,
+  accountIn: AccountId,
+  account: Account,
+  storageKey = getAccountStorageKey(accountIn)
+): Result<void> {
+  const storeItemResult = storage.storeItem(storageKey, <AccountData>{
+    plan: account.plan,
+    email: account.email.value,
+    hashedPassword: account.hashedPassword.value,
+    confirmationTimestamp: account.confirmationTimestamp,
+  });
+
+  if (isErr(storeItemResult)) {
+    return makeErr(`Couldn’t storeAccount: ${storeItemResult.reason}`);
+  }
+}
+
+function getAccountStorageKey(accountIn: AccountId): StorageKey {
+  return `/accounts/${accountIn}/account.json`;
+}
+
+export function confirmAccount(
+  storage: AppStorage,
+  accountId: AccountId,
+  getCurrentTimestampFn = () => new Date()
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return account;
+  }
+
+  account.confirmationTimestamp = getCurrentTimestampFn();
+
+  const storeAccountResult = storeAccount(storage, accountId, account);
+
+  if (isErr(storeAccountResult)) {
+    return makeErr(`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
+  }
 }

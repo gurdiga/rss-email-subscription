@@ -1,8 +1,8 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { makeErr } from '../shared/lang';
-import { makeStorageStub, Stub } from '../shared/test-utils';
-import { AccountData, loadAccount } from './account';
+import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
+import { Account, AccountData, confirmAccount, loadAccount, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 
 describe(loadAccount.name, () => {
@@ -69,5 +69,69 @@ describe(loadAccount.name, () => {
     expect(result).to.deep.equal(
       makeErr('Invalid hashed password while loading account 123: Invalid hashed password length: 8')
     );
+  });
+});
+
+describe(storeAccount.name, () => {
+  it('stores the given account', () => {
+    const accountId = 42;
+
+    const account: Account = {
+      plan: 'sde',
+      email: makeEmailAddress('test@test.com') as EmailAddress,
+      hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
+    };
+    const storage = makeStorageStub({
+      loadItem: makeStub(() => getAccountData(account)),
+      storeItem: makeSpy(),
+    });
+
+    const result = storeAccount(storage, accountId, account);
+
+    expect((storage.storeItem as Spy).calls).to.deep.equal([
+      [`/accounts/${accountId}/account.json`, getAccountData(account)],
+    ]);
+    expect(result).to.be.undefined;
+  });
+
+  function getAccountData(account: Account): AccountData {
+    return {
+      plan: account.plan,
+      email: account.email.value,
+      hashedPassword: account.hashedPassword.value,
+      confirmationTimestamp: account.confirmationTimestamp,
+    };
+  }
+});
+
+describe(confirmAccount.name, () => {
+  it('sets confirmationTimestamp on the given account', () => {
+    const accountId = 42;
+    const accountData: AccountData = {
+      plan: 'sde',
+      email: 'test@test.com',
+      hashedPassword: 'x'.repeat(hashedPasswordLength),
+    };
+    const storage = makeStorageStub({
+      loadItem: makeStub(() => accountData),
+      storeItem: makeSpy(),
+    });
+    const currentTimestamp = new Date('2022-10-07');
+
+    const result = confirmAccount(storage, accountId, () => currentTimestamp);
+
+    expect((storage.loadItem as Stub).calls).to.deep.equal([['/accounts/42/account.json']]);
+    expect((storage.storeItem as Stub).calls).to.deep.equal([
+      [
+        '/accounts/42/account.json',
+        <AccountData>{
+          plan: accountData.plan,
+          email: accountData.email,
+          hashedPassword: accountData.hashedPassword,
+          confirmationTimestamp: currentTimestamp,
+        },
+      ],
+    ]);
+    expect(result).to.be.undefined;
   });
 });
