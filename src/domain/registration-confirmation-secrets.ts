@@ -1,4 +1,4 @@
-import { makeErr, Result } from '../shared/lang';
+import { getTypeName, makeErr, Result } from '../shared/lang';
 import { AccountId } from './account-index';
 
 export interface RegistrationConfirmationSecret {
@@ -6,12 +6,29 @@ export interface RegistrationConfirmationSecret {
   value: string;
 }
 
-export function deleteRegistrationConfirmationSecret(secret: RegistrationConfirmationSecret): Result<void> {
-  return makeErr(`Not implemented deleteRegistrationConfirmationSecret: ${secret}`);
-}
+const registrationConfirmationSecretLength = 64;
 
 export function makeRegistrationConfirmationSecret(input: any): Result<RegistrationConfirmationSecret> {
-  return makeErr(`Not implemented makeRegistrationConfirmationSecret: ${input}`);
+  if (!input) {
+    return makeErr('Empty input');
+  }
+
+  if (typeof input !== 'string') {
+    return makeErr(`Input of invalid type: ${getTypeName(input)}`);
+  }
+
+  if (input.length !== registrationConfirmationSecretLength) {
+    return makeErr(`Input of invalid length; expected ${registrationConfirmationSecretLength}`);
+  }
+
+  return {
+    kind: 'RegistrationConfirmationSecret',
+    value: input,
+  };
+}
+
+export function deleteRegistrationConfirmationSecret(secret: RegistrationConfirmationSecret): Result<void> {
+  return makeErr(`Not implemented deleteRegistrationConfirmationSecret: ${secret}`);
 }
 
 export function getAccountIdForRegistrationConfirmationSecret(
