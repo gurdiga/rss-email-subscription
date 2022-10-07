@@ -1,5 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { AccountData } from '../domain/account';
+import { Account, storeAccount } from '../domain/account';
 import { addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -15,6 +15,7 @@ import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME } from '../domain/feed-settings';
+import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
 
 export const registration: AppRequestHandler = async function registration(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
@@ -157,27 +158,25 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
 
   const accountId = new Date().getTime();
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
-
-  const accountData: AccountData = {
+  const account: Account = {
     plan: input.plan,
-    email: input.email.value,
-    hashedPassword: hashedPassword,
+    email: input.email,
+    hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
   };
 
-  // TODO: Replace with storeAccount
-  const result = storage.storeItem(`/accounts/${accountId}/account.json`, accountData);
+  const storeAccountResult = storeAccount(storage, accountId, account);
 
-  if (isErr(result)) {
-    logError(`${storage.storeItem.name} failed`, { reason: result.reason });
+  if (isErr(storeAccountResult)) {
+    logError(`Couldn’t storeAccountResult`, { reason: storeAccountResult.reason });
     return makeErr('Couldn’t store account data');
   }
 
-  const addAccountResult = addEmailToIndex(storage, accountId, input.email);
+  const addEmailToIndexResult = addEmailToIndex(storage, accountId, input.email);
 
-  if (isErr(addAccountResult)) {
-    logError('Couldn’t add account to index', { accountId, email: input.email.value, reason: addAccountResult.reason });
+  if (isErr(addEmailToIndexResult)) {
+    logError('Couldn’t addEmailToIndex', { accountId, email: input.email.value, reason: addEmailToIndexResult.reason });
     return makeErr('Couldn’t create account');
   }
 
-  logInfo('Created new account', accountData);
+  logInfo('Created new account', account);
 }
