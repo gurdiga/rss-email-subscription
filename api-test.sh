@@ -3,14 +3,14 @@
 set -euo pipefail
 
 BASE_URL=https://localhost.feedsubscription.com
-SUBSCRIBER_EMAIL=test@gmail.com
+SUBSCRIBER_EMAIL=api-test@feedsubscription.com
 # echo -n "${SUBSCRIBER_EMAIL}${FEED_HASHING_SALT}" | sha256sum
-EMAIL_HASH=ea7f63853ce24fe12963ea07fd5f363dc2292f882f268c1b8f605076c672b4e9
+EMAIL_HASH="b617571ab1974d3614e5f6c48449e08dc0129aa0f28f16a9d5e3cb9ee1f7c29b"
 FEED_ID=gurdiga
 EMAIL_DATA_FILE=$DATA_DIR_ROOT/$FEED_ID/emails.json
 
 USER_PLAN=standard
-USER_EMAIL=blogger@test.com
+USER_EMAIL=api-test-blogger@feedsubscription.com
 USER_PASSWORD=A-long-S3cre7-password
 
 function main {
