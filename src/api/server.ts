@@ -23,6 +23,7 @@ async function main() {
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
     express.static(`${__dirname}/web-ui-scripts`)
   );
+  server.use('/api-version.txt', express.static(`${__dirname}/api-version.txt`));
   server.use(helmet());
   server.use(cors());
   server.use(express.urlencoded({ extended: true }));

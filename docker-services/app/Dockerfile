@@ -10,6 +10,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src/ ./src/
+COPY .git/refs/heads/main ./src/api/api-version.txt
 
 RUN ./node_modules/.bin/tsc -p src/web-ui/tsconfig.json
 RUN cp --target-directory=src/api/web-ui-scripts \

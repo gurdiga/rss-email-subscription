@@ -33,6 +33,7 @@ function main {
 	web_ui_scripts
 	verify_allows_embedding_js
 	verify_has_cors_enabled
+	verify_version_txt
 }
 
 function post {
@@ -224,6 +225,14 @@ function verify_allows_embedding_js {
 
 function verify_has_cors_enabled {
 	assert_header /subscription 'access-control-allow-origin: *'
+}
+
+function verify_version_txt {
+	if diff <(get /api-version.txt) .git/refs/heads/main; then
+		print_success
+	else
+		print_failure
+	fi
 }
 
 function print_success {
