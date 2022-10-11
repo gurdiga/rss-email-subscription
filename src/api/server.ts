@@ -38,12 +38,18 @@ async function main() {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));
   }
 
-  server.listen(port, () => {
+  const shutdownHandle = server.listen(port, () => {
     logInfo(`Listening on http://0.0.0.0:${port}`);
   });
 
   process.on('SIGTERM', () => {
-    logWarning('Received SIGTERM. Will shut down.');
+    logWarning('Received SIGTERM. Will shut down the HTTP server and exit.');
+
+    shutdownHandle.close((error?: Error) => {
+      if (error) {
+        logWarning(`Failed to shutdown HTTP server: ${error}`);
+      }
+    });
   });
 }
 
