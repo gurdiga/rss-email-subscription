@@ -1,4 +1,5 @@
 import { getTypeName, makeErr, Result } from '../shared/lang';
+import { AppStorage, StorageKey } from '../shared/storage';
 import { AccountId } from './account-index';
 
 export interface RegistrationConfirmationSecret {
@@ -8,7 +9,7 @@ export interface RegistrationConfirmationSecret {
 
 const registrationConfirmationSecretLength = 64;
 
-export function makeRegistrationConfirmationSecret(input: any): Result<RegistrationConfirmationSecret> {
+export function validateRegistrationConfirmationSecret(input: any): Result<RegistrationConfirmationSecret> {
   if (!input) {
     return makeErr('Empty input');
   }
@@ -21,18 +22,44 @@ export function makeRegistrationConfirmationSecret(input: any): Result<Registrat
     return makeErr(`Input of invalid length; expected ${registrationConfirmationSecretLength}`);
   }
 
+  return makeRegistrationConfirmationSecret(input);
+}
+
+export function makeRegistrationConfirmationSecret(input: string): RegistrationConfirmationSecret {
   return {
     kind: 'RegistrationConfirmationSecret',
     value: input,
   };
 }
 
-export function deleteRegistrationConfirmationSecret(secret: RegistrationConfirmationSecret): Result<void> {
-  return makeErr(`Not implemented deleteRegistrationConfirmationSecret: ${secret}`);
+export function storeRegistrationConfirmationSecret(
+  storage: AppStorage,
+  secret: RegistrationConfirmationSecret,
+  accountId: AccountId
+): Result<void> {
+  const storageKey = getStorageKey(secret);
+
+  return storage.storeItem(storageKey, accountId);
+}
+
+export function deleteRegistrationConfirmationSecret(
+  storage: AppStorage,
+  secret: RegistrationConfirmationSecret
+): Result<void> {
+  const storageKey = getStorageKey(secret);
+
+  return storage.removeItem(storageKey);
 }
 
 export function getAccountIdForRegistrationConfirmationSecret(
+  storage: AppStorage,
   secret: RegistrationConfirmationSecret
 ): Result<AccountId> {
-  return makeErr(`Not implemented getAccountIdForRegistrationConfirmationSecret: ${secret}`);
+  const storageKey = getStorageKey(secret);
+
+  return storage.loadItem(storageKey);
+}
+
+function getStorageKey(secret: RegistrationConfirmationSecret): StorageKey {
+  return `/confirmation-secrets/${secret.value}.json`;
 }
