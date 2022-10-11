@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { Account, storeAccount } from '../domain/account';
-import { addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
+import { AccountId, addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -16,6 +16,11 @@ import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
 import { DOMAIN_NAME } from '../domain/feed-settings';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
+import {
+  RegistrationConfirmationSecret,
+  storeRegistrationConfirmationSecret,
+  makeRegistrationConfirmationSecret,
+} from '../domain/registration-confirmation-secrets';
 
 export const registration: AppRequestHandler = async function registration(_reqId, reqBody, _reqParams, app) {
   const { plan, email, password } = reqBody;
@@ -32,21 +37,44 @@ export const registration: AppRequestHandler = async function registration(_reqI
   }
 
   const bloggerEmail = processInputResult.email;
-  const sendRegistrationConfirmationEmailResult = await sendRegistrationConfirmationEmail(bloggerEmail, app.settings);
+  const sendConfirmationEmailResult = await sendConfirmationEmail(bloggerEmail, app.settings);
 
-  if (isErr(sendRegistrationConfirmationEmailResult)) {
-    return makeAppError(sendRegistrationConfirmationEmailResult.reason);
+  if (isErr(sendConfirmationEmailResult)) {
+    return makeAppError(sendConfirmationEmailResult.reason);
+  }
+
+  const accountId = initAccountResult;
+  const storeConfirmationSecretResult = storeConfirmationSecret(app, bloggerEmail, accountId);
+
+  if (isErr(storeConfirmationSecretResult)) {
+    return makeAppError(storeConfirmationSecretResult.reason);
   }
 
   return makeSuccess('Account created. Welcome aboard! 🙂');
 };
 
-async function sendRegistrationConfirmationEmail(
-  to: EmailAddress,
-  settings: AppSettings
-): Promise<Result<void | AppError>> {
-  const module = `${registration.name}:${sendRegistrationConfirmationEmail.name}`;
-  const { logError, logInfo } = makeCustomLoggers({ email: to.value, module });
+export function storeConfirmationSecret(
+  { settings, storage }: App,
+  emailAddress: EmailAddress,
+  accountId: AccountId
+): Result<void> {
+  const module = `${registration.name}:${storeConfirmationSecret.name}`;
+  const { logError, logInfo } = makeCustomLoggers({ accountId, module });
+
+  const confirmationSecret = makeConfirmationSecret(emailAddress, settings.hashingSalt);
+  const result = storeRegistrationConfirmationSecret(storage, confirmationSecret, accountId);
+
+  if (isErr(result)) {
+    logError(`Can’t ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
+    return makeErr('Couldn’t store confirmation secret');
+  }
+
+  logInfo('Stored registration confirmation secret');
+}
+
+async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
+  const module = `${registration.name}:${sendConfirmationEmail.name}`;
+  const { logError, logInfo } = makeCustomLoggers({ email: recipient.value, module });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
@@ -57,13 +85,13 @@ async function sendRegistrationConfirmationEmail(
 
   const from = settings.fullEmailAddress;
   const replyTo = settings.fullEmailAddress.emailAddress;
-  const confirmationLink = makeRegistrationConfirmationLink(to, settings.hashingSalt);
+  const confirmationLink = makeRegistrationConfirmationLink(recipient, settings.hashingSalt);
   const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
-  const sendEmailResult = await sendEmail(from, to, replyTo, emailContent, env);
+  const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
   if (isErr(sendEmailResult)) {
-    logError('Can’t send registration confirmation email', { reason: sendEmailResult.reason });
-    return makeAppError('Error sending registration confirmation email');
+    logError(`Can’t ${sendEmail.name}`, { reason: sendEmailResult.reason });
+    return makeAppError('Couldn’t send registration confirmation email');
   }
 
   logInfo('Sent registration confirmation email');
@@ -71,10 +99,17 @@ async function sendRegistrationConfirmationEmail(
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string): URL {
   const url = new URL(`https://${DOMAIN_NAME}/registration-confirmation.html`);
+  const secret = makeConfirmationSecret(to, appHashingSalt);
 
-  url.searchParams.set('secret', hash(to.value, appHashingSalt));
+  url.searchParams.set('secret', secret.value);
 
   return url;
+}
+
+function makeConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): RegistrationConfirmationSecret {
+  const emailAddressHash = hash(emailAddress.value, appHashingSalt);
+
+  return makeRegistrationConfirmationSecret(emailAddressHash);
 }
 
 export function makeRegistrationConfirmationEmailContent(confirmationLink: URL): EmailContent {
@@ -152,7 +187,7 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
   };
 }
 
-function initAccount({ storage, settings }: App, input: ProcessedInput): Result<void> {
+function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
   const module = `${registration.name}:${initAccount.name}`;
   const { logInfo, logError } = makeCustomLoggers({ module });
 
@@ -179,4 +214,6 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   }
 
   logInfo('Created new account', account);
+
+  return accountId;
 }
