@@ -1,7 +1,6 @@
 node_modules/
 src/api/web-ui-scripts/
 website/html/
-
 .tmp/
-
-*.env
+.env
+dist/

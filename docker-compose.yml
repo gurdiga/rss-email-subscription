@@ -72,7 +72,7 @@ services:
       - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
-    command: node_modules/.bin/ts-node src/app/cron.ts
+    command: node dist/app/cron.js
     <<: *logging
 
   api:
@@ -81,7 +81,7 @@ services:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     ports: ['127.0.0.1:3000:3000']
-    command: node_modules/.bin/ts-node src/api/server.ts
+    command: node dist/api/server.js
     volumes:
       - ${DATA_DIR_ROOT?}:/data
     environment:
