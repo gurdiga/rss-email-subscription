@@ -49,7 +49,7 @@ l: lint
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
 # sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
 lint-nginx-config:
-	nginx -t -c `pwd`/website/nginx/nginx.conf
+	@nginx -q -t -c `pwd`/website/nginx/nginx.conf
 
 lint-docker-compose:
 	docker-compose --file docker-compose.yml config
