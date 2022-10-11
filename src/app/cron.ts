@@ -32,10 +32,11 @@ function main() {
   });
 
   process.on('SIGTERM', () => {
-    logInfo('Received SIGTERM. Will shut down.');
+    logInfo('Received SIGTERM. Will stop all the cron jobs and exit.');
+    [...cronJobs, errorReportingCheck].forEach((j) => j.stop());
   });
 
-  scheduleErrorReportingCheck();
+  const errorReportingCheck = scheduleErrorReportingCheck();
 }
 
 function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
@@ -86,14 +87,18 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
   return cronJobs;
 }
 
-function scheduleErrorReportingCheck() {
+function scheduleErrorReportingCheck(): CronJob {
   const { logError, logWarning } = makeCustomLoggers({ module: 'error-reporting-check' });
 
   logWarning('Starting a daily job to check error reporting');
 
-  new CronJob('0 0 * * *', async () => {
+  const job = new CronJob('0 0 * * *', async () => {
     logError('Just checking error reporting');
-  }).start();
+  });
+
+  job.start();
+
+  return job;
 }
 
 main();
