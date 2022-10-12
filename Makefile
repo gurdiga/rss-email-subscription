@@ -158,7 +158,7 @@ web-ui-watch:
 	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json &
 
 start-dev: web-ui-systemjs web-ui-watch
-	node_modules/.bin/nodemon src/api/server.ts
+	node_modules/.bin/nodemon dist/api/server.js
 
 api-test:
 	./api-test.sh
