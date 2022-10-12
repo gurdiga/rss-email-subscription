@@ -1,8 +1,8 @@
 {
   "name": "rss-email-subscription",
   "version": "0.1.0",
-  "description": "This is meant to be an email subscription system for blogs",
-  "main": "index.js",
+  "description": "See README.md",
+  "main": "dist/app/cron.js",
   "scripts": {},
   "keywords": [
     "rss-to-email",
