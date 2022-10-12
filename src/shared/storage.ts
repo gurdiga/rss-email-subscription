@@ -1,59 +1,20 @@
 import { dirname, join } from 'node:path';
-import {
-  deleteFile,
-  DeleteFileFn,
-  fileExists,
-  FileExistsFn,
-  listFiles,
-  listDirectories,
-  ListFilesFn,
-  mkdirp,
-  MkdirpFn,
-  readFile,
-  ReadFileFn,
-  writeFile,
-  WriteFileFn,
-  ListDirectoriesFn,
-} from './io';
+import { deleteFile, DeleteFileFn, fileExists, FileExistsFn, listFiles, listDirectories, ListFilesFn } from './io';
+import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io';
 import { attempt, isErr, makeErr, Result } from './lang';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
 
-export interface AppStorage {
-  storeItem: StoreItemFn;
-  loadItem: LoadItemFn;
-  hasItem: HasItemFn;
-  removeItem: RemoveItemFn;
-  listItems: ListItemsFn;
-  listSubdirectories: ListSubdirectoriesFn;
-}
+export type AppStorage = ReturnType<typeof makeStorage>;
 
-type StoreItemFn = (
-  key: StorageKey,
-  value: StorageValue,
-  mkdirpFn?: MkdirpFn,
-  writeFileFn?: WriteFileFn,
-  fileExistsFn?: FileExistsFn
-) => Result<void>;
-
-type LoadItemFn = (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
-type HasItemFn = (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
-type RemoveItemFn = (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<void>;
-type ListItemsFn = (key: StorageKey, lisstFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
-type ListSubdirectoriesFn = (
-  key: StorageKey,
-  listDirectoriesFn?: ListDirectoriesFn,
-  fileExistsFn?: FileExistsFn
-) => Result<StorageKey[]>;
-
-export function makeStorage(dataDirRoot: string): AppStorage {
-  const storeItem: StoreItemFn = function storeItem(
-    key,
-    value,
-    mkdirpFn = mkdirp,
-    writeFileFn = writeFile,
-    fileExistsFn = fileExists
+export function makeStorage(dataDirRoot: string) {
+  function storeItem(
+    key: StorageKey,
+    value: StorageValue,
+    mkdirpFn: MkdirpFn = mkdirp,
+    writeFileFn: WriteFileFn = writeFile,
+    fileExistsFn: FileExistsFn = fileExists
   ): Result<void> {
     const filePath = join(dataDirRoot, key);
     const dirPath = dirname(filePath);
@@ -71,9 +32,9 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     if (isErr(writeFileResult)) {
       return makeErr(`Couldn’t write file: ${writeFileResult.reason}`);
     }
-  };
+  }
 
-  const loadItem: LoadItemFn = function loadItem(key, readFileFn = readFile) {
+  function loadItem(key: StorageKey, readFileFn: ReadFileFn = readFile): Result<StorageValue> {
     const filePath = join(dataDirRoot, key);
     const readFileResult = attempt(() => readFileFn(filePath));
 
@@ -88,9 +49,9 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
 
     return jsonParseResult;
-  };
+  }
 
-  const hasItem: HasItemFn = function hasItem(key, fileExistsFn = fileExists) {
+  function hasItem(key: StorageKey, fileExistsFn: FileExistsFn = fileExists) {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -99,12 +60,12 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
 
     return fileExistsResult;
-  };
+  }
 
-  const removeItem: RemoveItemFn = function removeItem(
-    key,
-    deleteFileFn = deleteFile,
-    fileExistsFn = fileExists
+  function removeItem(
+    key: StorageKey,
+    deleteFileFn: DeleteFileFn = deleteFile,
+    fileExistsFn: FileExistsFn = fileExists
   ): Result<void> {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
@@ -122,9 +83,13 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     if (isErr(deleteFileResult)) {
       return makeErr(`Can’t delete file: ${deleteFileResult.reason}`);
     }
-  };
+  }
 
-  const listItems: ListItemsFn = function listItems(key, listFilesFn = listFiles, fileExistsFn = fileExists) {
+  function listItems(
+    key: StorageKey,
+    listFilesFn: ListFilesFn = listFiles,
+    fileExistsFn: FileExistsFn = fileExists
+  ): Result<StorageKey[]> {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -139,13 +104,13 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
 
     return listFilesResult;
-  };
+  }
 
-  const listSubdirectories: ListSubdirectoriesFn = function listSubdirectories(
-    key,
-    listDirectoriesFn = listDirectories,
-    fileExistsFn = fileExists
-  ) {
+  function listSubdirectories(
+    key: StorageKey,
+    listDirectoriesFn: ListDirectoriesFn = listDirectories,
+    fileExistsFn: FileExistsFn = fileExists
+  ): Result<StorageKey[]> {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
@@ -160,7 +125,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
 
     return listDirectoriesResult;
-  };
+  }
 
   return {
     storeItem,
