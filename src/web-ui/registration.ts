@@ -1,7 +1,7 @@
 import { isPlanId, makePlanId } from '../domain/plan';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { displayMainError, displayApiResponse, displayCommunicationError } from './shared';
+import { displayMainError, displayCommunicationError, unhideElement } from './shared';
 import { preventDoubleClick, ApiResponseUiElements, requireUiElements } from './shared';
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
@@ -12,6 +12,7 @@ function main() {
     password: '#password',
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
+    confirmationMessage: '#confirmation-message',
   });
 
   if (isErr(uiElements)) {
@@ -44,18 +45,16 @@ function main() {
         return;
       }
 
-      displayApiResponse(response, uiElements.apiResponseMessage);
-
       if (isSuccess(response)) {
-        setTimeout(() => {
-          location.href = '/dashboard.html';
-        }, 2000);
+        unhideElement(uiElements.confirmationMessage);
       }
     });
   });
 }
 
-export interface RegistrationUiElements extends FormUiElements, ApiResponseUiElements {}
+export interface RegistrationUiElements extends FormUiElements, ApiResponseUiElements {
+  confirmationMessage: HTMLElement;
+}
 
 export interface FormFields {
   plan: HTMLSelectElement;
