@@ -111,7 +111,7 @@ function registration_confirmation_verify {
 
 	mask='.+"creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z".+'
 
-	if grep -P "$mask" "$account_file" >/dev/null; then # TODO: Maybe intro assert_match helper func
+	if grep -P "$mask" "$account_file" >/dev/null; then
 		print_success
 	else
 		echo -e "$(yellow 'Expected:') $mask\n"
