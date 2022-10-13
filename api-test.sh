@@ -76,7 +76,7 @@ function registration_verify {
 		print_failure "Found more than one account files with for $account_email"
 	fi
 
-	snapshot='{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+","creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"}'
+	snapshot='^{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+","creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"}$'
 
 	if grep -P "$snapshot" "$account_file" >/dev/null; then
 		print_success
