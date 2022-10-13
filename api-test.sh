@@ -70,13 +70,8 @@ function registration_verify {
 	local account_email=${2:?}
 
 	local account_file && account_file=$(find_account_files_by_email "${account_email}")
-	local file_count && file_count=$(wc -l <<<"$account_file")
 
-	if [ "$file_count" -eq "0" ]; then
-		print_failure "Account file not found"
-	elif [ "$file_count" -gt "1" ]; then
-		print_failure "Found more than one account files with for $account_email"
-	fi
+	assert_line_count "$account_file" 1 'account files'
 
 	snapshot='^{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+","creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"}$'
 
@@ -94,11 +89,8 @@ function registration_confirmation_do {
 	local account_email=${1:?}
 
 	local account_file && account_file=$(find_account_files_by_email "${account_email}")
-	local file_count && file_count=$(wc -l <<<"$account_file")
 
-	if [ "$file_count" -ne "1" ]; then
-		print_failure "Expected 1 account file but found $file_count"
-	fi
+	assert_line_count "$account_file" 1 'account files'
 
 	local app_hashing_salt && app_hashing_salt=$(jq -r .hashingSalt "$DATA_DIR_ROOT/settings.json")
 	local secret && secret=$(echo -n "${account_email}${app_hashing_salt}" | sha256sum | cut -f1 -d ' ')
@@ -113,12 +105,9 @@ function registration_confirmation_do {
 function registration_confirmation_verify {
 	local account_email=${1:?}
 
-	local account_file && account_file=$(find_account_files_by_email "${account_email}") # TODO: Maybe intro assert_line_count helper func
-	local file_count && file_count=$(wc -l <<<"$account_file")
+	local account_file && account_file=$(find_account_files_by_email "${account_email}")
 
-	if [ "$file_count" -ne "1" ]; then
-		print_failure "Expected 1 account file but found $file_count"
-	fi
+	assert_line_count "$account_file" 1 'account files'
 
 	mask='.+"creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z".+'
 
@@ -300,5 +289,18 @@ function print_failure {
 function red { printf "\e[31m%s\e[0m" "$@"; }
 function green { printf "\e[32m%s\e[0m" "$@"; }
 function yellow { printf "\e[33m%s\e[0m" "$@"; }
+
+function assert_line_count {
+	local input=${1:?}
+	local expected_line_count=${2:?}
+	local description=${3:-''}
+
+	local line_count && line_count=$(wc -l <<<"$input")
+
+	if [ "$line_count" -ne "$expected_line_count" ]; then
+		if [ -n "$description" ]; then description="($description)"; fi
+		print_failure "Expected $expected_line_count lines but got $line_count $description"
+	fi
+}
 
 main
