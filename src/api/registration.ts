@@ -197,6 +197,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     plan: input.plan,
     email: input.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
+    creationTimestamp: new Date(),
   };
 
   const storeAccountResult = storeAccount(storage, accountId, account);

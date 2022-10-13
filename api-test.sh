@@ -76,13 +76,13 @@ function registration_verify {
 		print_failure "Found more than one account files with for $account_email"
 	fi
 
-	snapshot='{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+"}'
+	snapshot='{"plan":"'$account_plan'","email":"'$account_email'","hashedPassword":".+","creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"}'
 
-	if grep -E "$snapshot" "$account_file" >/dev/null; then
+	if grep -P "$snapshot" "$account_file" >/dev/null; then
 		print_success
 	else
-		echo -e "$(yellow Expected:) $snapshot\n"
-		echo -e "$(yellow Actual:) $(cat "$account_file")\n"
+		echo -e "$(yellow 'Expected:') $snapshot\n"
+		echo -e "$(yellow 'Actual:  ') $(cat "$account_file")\n"
 
 		print_failure 'Account file contents does not match'
 	fi

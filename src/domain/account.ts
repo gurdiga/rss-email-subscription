@@ -1,4 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { parseDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { AccountId } from './account-index';
@@ -9,6 +10,7 @@ export interface Account {
   plan: PlanId;
   email: EmailAddress;
   hashedPassword: HashedPassword;
+  creationTimestamp: Date;
   confirmationTimestamp?: Date;
 }
 
@@ -16,6 +18,7 @@ export interface AccountData {
   plan: string;
   email: string;
   hashedPassword: string;
+  creationTimestamp: Date;
   confirmationTimestamp?: Date;
 }
 
@@ -48,10 +51,17 @@ export function loadAccount(
     return makeErr(`Invalid hashed password while loading account ${accountIn}: ${hashedPassword.reason}`);
   }
 
+  const creationTimestamp = parseDate(loadItemResult.creationTimestamp);
+
+  if (isErr(creationTimestamp)) {
+    return makeErr(`Invalid creation timestamp while loading account ${accountIn}: ${creationTimestamp.reason}`);
+  }
+
   return {
     plan,
     email,
     hashedPassword,
+    creationTimestamp,
   };
 }
 
@@ -61,12 +71,15 @@ export function storeAccount(
   account: Account,
   storageKey = getAccountStorageKey(accountIn)
 ): Result<void> {
-  const storeItemResult = storage.storeItem(storageKey, <AccountData>{
+  const data: AccountData = {
     plan: account.plan,
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
+    creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
-  });
+  };
+
+  const storeItemResult = storage.storeItem(storageKey, data);
 
   if (isErr(storeItemResult)) {
     return makeErr(`Couldn’t storeAccount: ${storeItemResult.reason}`);

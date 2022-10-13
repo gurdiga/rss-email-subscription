@@ -4,6 +4,9 @@ import { makeErr } from '../shared/lang';
 import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
 import { Account, AccountData, confirmAccount, loadAccount, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
+import { makePlanId, PlanId } from './plan';
+
+const creationTimestamp = new Date();
 
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
@@ -12,16 +15,20 @@ describe(loadAccount.name, () => {
       plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
+      creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
     const result = loadAccount(storage, 123, storageKey);
 
-    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
-    expect(result).to.deep.equal({
+    const expectedResult: Account = {
       email: makeEmailAddress(accountData.email) as EmailAddress,
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
-      plan: accountData.plan,
-    });
+      plan: makePlanId(accountData.plan) as PlanId,
+      creationTimestamp,
+    };
+
+    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
+    expect(result).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when storage fails', () => {
@@ -36,6 +43,7 @@ describe(loadAccount.name, () => {
       plan: 'sde',
       email: 'not-an-email-really',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
+      creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
     const result = loadAccount(storage, 123);
@@ -50,6 +58,7 @@ describe(loadAccount.name, () => {
       plan: 'magic',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
+      creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
     const result = loadAccount(storage, 123);
@@ -62,6 +71,7 @@ describe(loadAccount.name, () => {
       plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'la-la-la',
+      creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
     const result = loadAccount(storage, 123);
@@ -80,6 +90,7 @@ describe(storeAccount.name, () => {
       plan: 'sde',
       email: makeEmailAddress('test@test.com') as EmailAddress,
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
+      creationTimestamp,
     };
     const storage = makeStorageStub({
       loadItem: makeStub(() => getAccountData(account)),
@@ -100,6 +111,7 @@ describe(storeAccount.name, () => {
       email: account.email.value,
       hashedPassword: account.hashedPassword.value,
       confirmationTimestamp: account.confirmationTimestamp,
+      creationTimestamp: account.creationTimestamp,
     };
   }
 });
@@ -111,27 +123,26 @@ describe(confirmAccount.name, () => {
       plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
+      creationTimestamp,
     };
     const storage = makeStorageStub({
       loadItem: makeStub(() => accountData),
       storeItem: makeSpy(),
     });
-    const currentTimestamp = new Date('2022-10-07');
+    const confirmationTimestamp = new Date('2022-10-07');
 
-    const result = confirmAccount(storage, accountId, () => currentTimestamp);
+    const result = confirmAccount(storage, accountId, () => confirmationTimestamp);
+
+    const expectedStoredData: AccountData = {
+      plan: accountData.plan,
+      email: accountData.email,
+      hashedPassword: accountData.hashedPassword,
+      confirmationTimestamp,
+      creationTimestamp,
+    };
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([['/accounts/42/account.json']]);
-    expect((storage.storeItem as Stub).calls).to.deep.equal([
-      [
-        '/accounts/42/account.json',
-        <AccountData>{
-          plan: accountData.plan,
-          email: accountData.email,
-          hashedPassword: accountData.hashedPassword,
-          confirmationTimestamp: currentTimestamp,
-        },
-      ],
-    ]);
+    expect((storage.storeItem as Stub).calls).to.deep.equal([['/accounts/42/account.json', expectedStoredData]]);
     expect(result).to.be.undefined;
   });
 });
