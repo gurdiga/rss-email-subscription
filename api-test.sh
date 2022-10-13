@@ -16,6 +16,8 @@ USER_PASSWORD=A-long-S3cre7-password
 function main {
 	registration_do $USER_PLAN $USER_EMAIL $USER_PASSWORD
 	registration_verify $USER_PLAN $USER_EMAIL
+	registration_confirmation_do $USER_EMAIL
+	registration_confirmation_verify $USER_EMAIL
 	authentication_do $USER_EMAIL $USER_PASSWORD
 	remove_accounts $USER_EMAIL
 	unsubscription_do
@@ -84,7 +86,49 @@ function registration_verify {
 		echo -e "$(yellow 'Expected:') $snapshot\n"
 		echo -e "$(yellow 'Actual:  ') $(cat "$account_file")\n"
 
-		print_failure 'Account file contents does not match'
+		print_failure 'Account file content do not match'
+	fi
+}
+
+function registration_confirmation_do {
+	local account_email=${1:?}
+
+	local account_file && account_file=$(find_account_files_by_email "${account_email}")
+	local file_count && file_count=$(wc -l <<<"$account_file")
+
+	if [ "$file_count" -ne "1" ]; then
+		print_failure "Expected 1 account file but found $file_count"
+	fi
+
+	local app_hashing_salt && app_hashing_salt=$(jq -r .hashingSalt "$DATA_DIR_ROOT/settings.json")
+	local secret && secret=$(echo -n "${account_email}${app_hashing_salt}" | sha256sum | cut -f1 -d ' ')
+
+	if post /registration-confirmation -d secret="$secret"; then
+		print_success
+	else
+		print_failure "POST /registration-confirmation failed: exit code $?"
+	fi
+}
+
+function registration_confirmation_verify {
+	local account_email=${1:?}
+
+	local account_file && account_file=$(find_account_files_by_email "${account_email}") # TODO: Maybe intro assert_line_count helper func
+	local file_count && file_count=$(wc -l <<<"$account_file")
+
+	if [ "$file_count" -ne "1" ]; then
+		print_failure "Expected 1 account file but found $file_count"
+	fi
+
+	mask='.+"creationTimestamp":"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z".+'
+
+	if grep -P "$mask" "$account_file" >/dev/null; then # TODO: Maybe intro assert_match helper func
+		print_success
+	else
+		echo -e "$(yellow 'Expected:') $mask\n"
+		echo -e "$(yellow 'Actual:  ') $(cat "$account_file")\n"
+
+		print_failure 'Account file content do not match'
 	fi
 }
 
