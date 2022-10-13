@@ -12,7 +12,7 @@ import { authentication } from './authentication';
 import { registrationConfirmation } from './registration-confirmation';
 
 async function main() {
-  const { logInfo, logWarning } = makeCustomLoggers({ module: 'server' });
+  const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
 
   const port = 3000;
   const server = express();
