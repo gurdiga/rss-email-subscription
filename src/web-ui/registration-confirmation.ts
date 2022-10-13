@@ -31,13 +31,14 @@ async function main() {
     return;
   }
 
+  hideElement(uiElements.progressIndicator);
+  displayApiResponse(response, uiElements.apiResponseMessage);
+
   if (isSuccess(response)) {
     hideElement(uiElements.progressIndicator);
-    navigateTo('/dashboard.html');
+    navigateTo('/dashboard.html', 2000);
     return;
   }
-
-  displayApiResponse(response, uiElements.apiResponseMessage);
 }
 
 function validateSecretFromQueryStringParam(locationSearch: string): Result<string> {
