@@ -233,3 +233,9 @@ export function hideElement(element: HTMLElement): void {
 export function unhideElement(element: HTMLElement): void {
   element.removeAttribute('hidden');
 }
+
+export function navigateTo(url: string, delay = 0): void {
+  setTimeout(() => {
+    location.href = url;
+  }, delay);
+}

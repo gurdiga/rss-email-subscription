@@ -1,16 +1,7 @@
 import { isSuccess } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
-import {
-  ApiResponseUiElements,
-  displayApiResponse,
-  displayCommunicationError,
-  displayMainError,
-  hideElement,
-  logError,
-  requireUiElements,
-  sendApiRequest,
-  unhideElement,
-} from './shared';
+import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
+import { hideElement, logError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
@@ -40,23 +31,13 @@ async function main() {
     return;
   }
 
-  displayApiResponse(response, uiElements.apiResponseMessage);
-
   if (isSuccess(response)) {
     hideElement(uiElements.progressIndicator);
-
-    setTimeout(() => {
-      location.href = '/dashboard.html';
-    }, 2000);
+    navigateTo('/dashboard.html');
+    return;
   }
 
-  /**
-   * Validate the confirmation secret from the query string
-   * Start the spinner #confirmation-progress
-   * POST the confirmation secret to /registration-confirmation
-   * Update the spinner
-   */
-  console.log('Hello src/web-ui/registration-confirmation.ts', { secret });
+  displayApiResponse(response, uiElements.apiResponseMessage);
 }
 
 function validateSecretFromQueryStringParam(locationSearch: string): Result<string> {
