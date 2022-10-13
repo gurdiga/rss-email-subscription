@@ -225,3 +225,11 @@ export function clearValidationErrors<FF>(formFields: FF): void {
 export function getClassNames(element: Element): string[] {
   return element.className.split(/\s+/).filter((x) => !!x);
 }
+
+export function hideElement(element: HTMLElement): void {
+  element.setAttribute('hidden', 'hidden');
+}
+
+export function unhideElement(element: HTMLElement): void {
+  element.removeAttribute('hidden');
+}
