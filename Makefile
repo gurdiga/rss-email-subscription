@@ -171,7 +171,7 @@ snyk:
 # cron @reboot
 watch-app:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log \
-		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"Sending report")' \
+		| grep --line-buffered -P '("severity":"(error|warning)"|"message":"(Sending report|Created new account|Authenticated user)")' \
 		| while read -r _skip_timestamp _skip_namespace _skip_app json;
 		do
 			(
