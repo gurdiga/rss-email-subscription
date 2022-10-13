@@ -53,7 +53,7 @@ function main() {
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       if (isSuccess(response)) {
-        navigateTo('/dashboard.html', 2000);
+        navigateTo('/dashboard.html', 1000);
       }
     });
   });
