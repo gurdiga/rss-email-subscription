@@ -58,10 +58,12 @@ lint-dockerfile:
 	find . -name Dockerfile | tee /dev/stderr | xargs hadolint
 
 lint-shell-scripts:
-	find . \
+	@find . \
 		-not -path './node_modules/*' \
 		-name '*.sh' \
 	| xargs shellcheck
+
+lsh: lint-shell-scripts
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
