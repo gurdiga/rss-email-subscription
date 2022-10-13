@@ -1,8 +1,54 @@
-import { makeErr, Result } from '../shared/lang';
-import { logError } from './shared';
+import { isSuccess } from '../shared/api-response';
+import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import {
+  ApiResponseUiElements,
+  displayApiResponse,
+  displayCommunicationError,
+  displayMainError,
+  hideElement,
+  logError,
+  requireUiElements,
+  sendApiRequest,
+  unhideElement,
+} from './shared';
 
-function main() {
-  const secret = getSecretFromQueryStringParam();
+async function main() {
+  const secret = validateSecretFromQueryStringParam(location.search);
+
+  if (isErr(secret)) {
+    logError(`Invalid registration confirmation link: ${secret.reason}`);
+    displayMainError('Invalid registration confirmation link');
+    return;
+  }
+
+  const uiElements = requireUiElements<RegistrationConfirmationUiElements>({
+    progressIndicator: '#progress-indicator',
+    apiResponseMessage: '#api-response-message',
+  });
+
+  if (isErr(uiElements)) {
+    displayMainError(uiElements.reason);
+    return;
+  }
+
+  unhideElement(uiElements.progressIndicator);
+
+  const response = await attempt(() => sendApiRequest('/registration-confirmation', { secret }));
+
+  if (isErr(response)) {
+    displayCommunicationError(response, uiElements.apiResponseMessage);
+    return;
+  }
+
+  displayApiResponse(response, uiElements.apiResponseMessage);
+
+  if (isSuccess(response)) {
+    hideElement(uiElements.progressIndicator);
+
+    setTimeout(() => {
+      location.href = '/dashboard.html';
+    }, 2000);
+  }
 
   /**
    * Validate the confirmation secret from the query string
@@ -13,16 +59,20 @@ function main() {
   console.log('Hello src/web-ui/registration-confirmation.ts', { secret });
 }
 
-function getSecretFromQueryStringParam(): Result<string> {
-  const params = new URLSearchParams(document.location.search);
-  const secret = params.get('secret');
+function validateSecretFromQueryStringParam(locationSearch: string): Result<string> {
+  const paramName = 'secret';
+  const params = new URLSearchParams(locationSearch);
+  const secret = params.get(paramName);
 
   if (!secret) {
-    logError(`Invalid registration confirmation link: ${document.location}`);
-    return makeErr('Invalid registration confirmation link');
+    return makeErr(`Missing or empty param \`${paramName}\` in "${locationSearch}"`);
   }
 
   return secret;
+}
+
+interface RegistrationConfirmationUiElements extends ApiResponseUiElements {
+  progressIndicator: HTMLElement;
 }
 
 main();
