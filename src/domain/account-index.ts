@@ -53,7 +53,7 @@ export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): 
   const loadItemResult = loadAccountIndex(storage);
 
   if (isErr(loadItemResult)) {
-    return makeErr(`Can’t read account index: ${loadItemResult.reason}`);
+    return makeErr(`Can’t findAccountIdByEmail: ${loadItemResult.reason}`);
   }
 
   const accountIndex: AccountIndex = loadItemResult;
