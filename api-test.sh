@@ -32,7 +32,7 @@ function main {
 	resubscribe_failure_verify
 	unsubscription_do
 	unsubscribe_failure_verify
-	web_ui_scripts
+	verify_web_ui_scripts
 	verify_allows_embedding_js
 	verify_has_cors_enabled
 	verify_version_txt
@@ -231,7 +231,7 @@ function unsubscribe_failure_verify {
 	fi
 }
 
-function web_ui_scripts {
+function verify_web_ui_scripts {
 	if get /web-ui-scripts/web-ui/unsubscription-confirmation.js | head -5; then
 		print_success
 	else
