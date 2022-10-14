@@ -7,6 +7,7 @@ import { AppStorage, makeStorage } from '../shared/storage';
 export interface App {
   storage: AppStorage;
   settings: AppSettings;
+  env: AppEnv;
 }
 
 export interface AppEnv {
@@ -30,5 +31,5 @@ export function initApp(): App {
     process.exit(1);
   }
 
-  return { storage, settings };
+  return { storage, settings, env };
 }
