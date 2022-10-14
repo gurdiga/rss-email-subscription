@@ -10,6 +10,7 @@ import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
 import { authentication } from './authentication';
 import { registrationConfirmation } from './registration-confirmation';
+import { makeExpressSession } from './session';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -27,6 +28,7 @@ async function main() {
   server.use(helmet());
   server.use(cors());
   server.use(express.urlencoded({ extended: true }));
+  server.use(makeExpressSession(app));
   server.post('/subscription', makeRequestHandler(subscription, app));
   server.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
   server.post('/unsubscription', makeRequestHandler(unsubscription, app));
