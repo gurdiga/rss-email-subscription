@@ -280,7 +280,7 @@ function print_failure {
 		# shellcheck disable=SC2059
 		printf "$prefix\n\n"
 	else
-		echo -e "\n$prefix: $(yellow "$@"))\n\n"
+		echo -e "\n$prefix: $(yellow "$@")\n\n"
 	fi
 
 	exit 1
