@@ -29,7 +29,7 @@
   "[shellscript]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
-  "emmet.includeLanguages": {
-    "njk": "html"
+  "search.exclude": {
+    "dist/**": true
   }
 }
