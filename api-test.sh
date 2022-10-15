@@ -32,6 +32,7 @@ function main {
 	resubscribe_failure_verify
 	unsubscription_do
 	unsubscribe_failure_verify
+	verify_http_sessions
 	verify_web_ui_scripts
 	verify_allows_embedding_js
 	verify_has_cors_enabled
@@ -228,6 +229,26 @@ function unsubscribe_failure_verify {
 		print_success
 	else
 		print_failure
+	fi
+}
+
+function verify_http_sessions {
+	local response && response=$(get /session-test)
+	local session_id && session_id=$(jq -r .logData.sessionId <<<"$response")
+	local session_file="$DATA_DIR_ROOT/sessions/$session_id.json"
+	local actual_value && actual_value=$(jq -r .works "$session_file")
+	local expected_value="true"
+
+	if [ "$actual_value" = "$expected_value" ]; then
+		rm "$session_file"
+		print_success
+	else
+		echo -n "
+    Failure context:
+     - session_id:   $session_id
+     - session_file: $session_file
+		"
+		print_failure "Expected '$expected_value' but got '$actual_value'"
 	fi
 }
 
