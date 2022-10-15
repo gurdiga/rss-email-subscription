@@ -10,6 +10,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   reqId,
   reqBody,
   _reqParams,
+  _reqSession,
   { storage }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscription.name });

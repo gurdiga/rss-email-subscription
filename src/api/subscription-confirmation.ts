@@ -10,6 +10,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
   reqId,
   reqBody,
   _reqParams,
+  _reqSession,
   { storage }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: subscriptionConfirmation.name });

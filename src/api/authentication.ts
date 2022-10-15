@@ -9,7 +9,13 @@ import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { AppRequestHandler } from './request-handler';
 
-export const authentication: AppRequestHandler = async function authentication(_reqId, reqBody, _reqParams, app) {
+export const authentication: AppRequestHandler = async function authentication(
+  _reqId,
+  reqBody,
+  _reqParams,
+  _reqSession,
+  app
+) {
   const { email, password } = reqBody;
   const processInputResult = processInput({ email, password });
 

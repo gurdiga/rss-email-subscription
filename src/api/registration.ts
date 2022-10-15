@@ -22,7 +22,13 @@ import {
   makeRegistrationConfirmationSecret,
 } from '../domain/registration-confirmation-secrets';
 
-export const registration: AppRequestHandler = async function registration(_reqId, reqBody, _reqParams, app) {
+export const registration: AppRequestHandler = async function registration(
+  _reqId,
+  reqBody,
+  _reqParams,
+  _reqSession,
+  app
+) {
   const { plan, email, password } = reqBody;
   const processInputResult = processInput(app.storage, { plan, email, password });
 

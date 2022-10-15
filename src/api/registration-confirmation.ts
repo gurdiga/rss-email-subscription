@@ -19,6 +19,7 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   _reqId,
   reqBody,
   _reqParams,
+  _reqSession,
   { storage }
 ) {
   const processInputResult = processInput({ secret: reqBody['secret'] });

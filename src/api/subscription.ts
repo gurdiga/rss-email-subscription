@@ -12,7 +12,13 @@ import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from 
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
 
-export const subscription: AppRequestHandler = async function subscription(reqId, reqBody, _reqParams, { storage }) {
+export const subscription: AppRequestHandler = async function subscription(
+  reqId,
+  reqBody,
+  _reqParams,
+  _reqSession,
+  { storage }
+) {
   const { feedId, email } = reqBody;
   const inputProcessingResult = processInput({ reqId, feedId, email }, storage);
 
