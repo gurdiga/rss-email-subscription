@@ -98,7 +98,7 @@ function processInput({ reqId, email, feedId }: Input, storage: AppStorage): Pro
   const emailAddress = makeEmailAddress(email);
 
   if (isErr(emailAddress)) {
-    logWarning('Invalid email', { email });
+    logWarning('Invalid subscriber email', { email });
     return makeInputError('Invalid email');
   }
 
