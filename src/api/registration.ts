@@ -220,7 +220,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     return makeErr('Couldn’t create account');
   }
 
-  logInfo('Created new account', account);
+  logInfo('User registered', account);
 
   return accountId;
 }

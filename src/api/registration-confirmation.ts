@@ -35,7 +35,6 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   }
 
   return makeSuccess('Account registration confirmed.');
-  // TODO add api-test
 };
 
 interface ProcessedInput {
@@ -58,7 +57,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 
 function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<void> {
   const module = `${registrationConfirmation.name}:${confirmAccountBySecret.name}`;
-  const { logWarning, logError } = makeCustomLoggers({ module, secret: secret.value });
+  const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
 
   const accountId = getAccountIdForRegistrationConfirmationSecret(storage, secret);
 
@@ -84,4 +83,6 @@ function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirm
 
     // NOTE: This is still a success for the user, so will not makeErr here.
   }
+
+  logInfo('User confirmed registration');
 }

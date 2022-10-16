@@ -101,5 +101,5 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
     return makeErr(`Password doesn’t match… 🤔`, 'password');
   }
 
-  logInfo('Authenticated user');
+  logInfo('User logged in');
 }

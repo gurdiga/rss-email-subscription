@@ -175,7 +175,7 @@ watch-app:
 			-e '"severity":"(error|warning)"' \
 			-e '"message":"Sending report"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
-			-e '"message":"(Created new account|Authenticated user)"' \
+			-e '"message":"(User registered|User confirmed registration|User logged in)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace _skip_app json; do
 		(
