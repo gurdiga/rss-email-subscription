@@ -21,8 +21,9 @@ export function makeRequestHandler(handler: AppRequestHandler, app: App): Reques
     const reqParams = req.params || {};
     const reqSession = req.session || {};
     const action = handler.name;
+    const referer = req.get('Referer');
 
-    logInfo(action, { reqId, action, reqBody, reqParams });
+    logInfo(action, { reqId, action, reqBody, reqParams, referer });
 
     const result = await handler(reqId, reqBody, reqParams, reqSession, app);
 
