@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
-import { getFeedSettings } from '../domain/feed-settings';
+import { feedRootStorageKey, getFeedSettings } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../shared/storage';
 import { requireEnv } from '../shared/env';
@@ -41,7 +41,7 @@ function main() {
 
 function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
-  let feedDirs = storage.listSubdirectories('/feeds');
+  let feedDirs = storage.listSubdirectories(feedRootStorageKey);
 
   if (isErr(feedDirs)) {
     logError(`Can’t list feed subdirectories`, { reason: feedDirs.reason });

@@ -319,7 +319,7 @@ describe(loadStoredEmails.name, () => {
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
-        new RegExp(`Invalid email list format: .+ at ${getFeedStorageKey(feedId)}/emails.json`),
+        new RegExp(`Invalid email list format: .+ at ${storageKey}`),
         `storedValue: ${storedValue}`
       );
     }

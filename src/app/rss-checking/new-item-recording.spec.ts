@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { RssItem } from '../../domain/rss-item';
-import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
+import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../../shared/test-utils';
-import { getFeedStorageKey } from '../../domain/feed-settings';
+import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 
 describe(recordNewRssItems.name, () => {
   const feedId = 'testblog';
@@ -35,15 +35,15 @@ describe(recordNewRssItems.name, () => {
     },
   ];
 
-  it('saves every RSS item in a JSON file in the ./data/inbox directory', () => {
+  it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
     const storage = makeStorageStub({ storeItem: makeSpy() });
-    const nameFile = makeStub<NameFileFn>((item) => item.pubDate.toJSON() + '.json');
+    const nameFile = makeStub<typeof itemFileName>((item) => item.pubDate.toJSON() + '.json');
     const result = recordNewRssItems(feedId, storage, rssItems, nameFile);
 
     expect((storage.storeItem as Spy).calls).to.deep.equal([
-      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[0]!)}`, rssItems[0]],
-      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[1]!)}`, rssItems[1]],
-      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[2]!)}`, rssItems[2]],
+      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[0]!)), rssItems[0]],
+      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[1]!)), rssItems[1]],
+      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[2]!)), rssItems[2]],
     ]);
     expect(result).to.equal(rssItems.length);
   });

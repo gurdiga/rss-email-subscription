@@ -3,22 +3,19 @@ import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
 import { getFeedStorageKey } from '../../domain/feed-settings';
-
-export type NameFileFn = (item: RssItem) => string;
-
-export const inboxDirName = 'inbox';
+import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 
 export function recordNewRssItems(
   feedId: string,
   storage: AppStorage,
   rssItems: RssItem[],
-  nameFileFn: NameFileFn = itemFileName
+  nameFileFn = itemFileName
 ): Result<number> {
   let writtenItemCount = 0;
 
   for (const item of rssItems) {
     const fileName = nameFileFn(item);
-    const storageKey = `${getFeedStorageKey(feedId)}/${inboxDirName}/${fileName}`;
+    const storageKey = getStoredRssItemStorageKey(feedId, fileName);
 
     const storeItemResult = storage.storeItem(storageKey, item);
 
@@ -39,4 +36,8 @@ export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
   const hash = hashFn(item.title + item.content + item.pubDate.toJSON(), hashingSalt);
 
   return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
+}
+
+export function getFeedInboxStorageKey(feedId: string): string {
+  return `${getFeedStorageKey(feedId)}/inbox`;
 }

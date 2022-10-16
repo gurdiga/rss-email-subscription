@@ -1,10 +1,9 @@
-import { inboxDirName, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
+import { getFeedInboxStorageKey, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
-import { getFeedStorageKey } from '../../domain/feed-settings';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -33,7 +32,7 @@ function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
 }
 
 export function readStoredRssItems(feedId: string, storage: AppStorage): Result<RssReadingResult> {
-  const storageKey = `${getFeedStorageKey(feedId)}/${inboxDirName}`;
+  const storageKey = getFeedInboxStorageKey(feedId);
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
@@ -93,4 +92,8 @@ export function makeStoredRssItem(fileName: string, json: any): ValidStoredRssIt
   const item: RssItem = { title, content, author, pubDate, link, guid };
 
   return { kind: 'ValidStoredRssItem', item, fileName };
+}
+
+export function getStoredRssItemStorageKey(feedId: string, fileName: string): string {
+  return `${getFeedInboxStorageKey(feedId)}/${fileName}`;
 }
