@@ -1,11 +1,12 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { FeedSettings, getFeedSettings } from './feed-settings';
+import { FeedSettings, getFeedSettings, getFeedStorageKey } from './feed-settings';
 import { makeErr } from '../shared/lang';
 import { makeStorageStub, Stub } from '../shared/test-utils';
 
 describe(getFeedSettings.name, () => {
   const feedId = 'jalas';
+  const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -19,7 +20,7 @@ describe(getFeedSettings.name, () => {
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
     const result = getFeedSettings(feedId, storage);
 
-    expect((storage.loadItem as Stub).calls).to.deep.equal([[`/${feedId}/feed.json`]]);
+    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
 
     const expectedResult: FeedSettings = {
       kind: 'FeedSettings',
@@ -81,14 +82,12 @@ describe(getFeedSettings.name, () => {
       return getFeedSettings(feedId, storage);
     };
 
-    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(
-      makeErr(`Invalid feed URL in /${feedId}/feed.json: not-a-url`)
-    );
+    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(makeErr(`Invalid feed URL in ${storageKey}: not-a-url`));
     expect(resultForJson({ url: 'https://a.com', hashingSalt: 42 })).to.deep.equal(
-      makeErr(`Invalid hashing salt in /${feedId}/feed.json: 42`)
+      makeErr(`Invalid hashing salt in ${storageKey}: 42`)
     );
     expect(resultForJson({ url: 'https://a.com', hashingSalt: 'seeeeedd' })).to.deep.equal(
-      makeErr(`Hashing salt is too short in /${feedId}/feed.json: at least 16 non-space characters required`)
+      makeErr(`Hashing salt is too short in ${storageKey}: at least 16 non-space characters required`)
     );
   });
 });

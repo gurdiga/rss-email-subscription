@@ -41,16 +41,12 @@ function main() {
 
 function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
-  let feedDirs = storage.listSubdirectories('/');
+  let feedDirs = storage.listSubdirectories('/feeds');
 
   if (isErr(feedDirs)) {
     logError(`Can’t list feed subdirectories`, { reason: feedDirs.reason });
     process.exit(1);
   }
-
-  const nonFeedDirs = ['confirmation-secrets', 'accounts', 'sessions']; // TODO: Remove after moving feed directories to /feeds
-
-  feedDirs = feedDirs.filter((x) => !nonFeedDirs.includes(x));
 
   if (feedDirs.length === 0) {
     logError(`No feedDirs in dataDirRoot`, { dataDirRoot });

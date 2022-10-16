@@ -1,4 +1,4 @@
-import { FeedNotFound } from '../../domain/feed-settings';
+import { FeedNotFound, getFeedStorageKey } from '../../domain/feed-settings';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io';
@@ -139,8 +139,6 @@ export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileF
   }
 }
 
-export const emailsFileName = 'emails.json';
-
 export interface StoredEmails {
   validEmails: HashedEmail[];
   invalidEmails: string[];
@@ -174,9 +172,12 @@ function isHashedEmail(value: any): value is HashedEmail {
   return value.kind === 'HashedEmail';
 }
 
-export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
-  const storageKey = `/${feedId}/${emailsFileName}`;
+function getStorageKey(feedId: string): string {
+  return `${getFeedStorageKey(feedId)}/emails.json`;
+}
 
+export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
+  const storageKey = getStorageKey(feedId);
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
@@ -261,7 +262,7 @@ export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage
     emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
   });
 
-  const storageKey = `/${feedId}/${emailsFileName}`;
+  const storageKey = getStorageKey(feedId);
   const storeItemResult = storage.storeItem(storageKey, emailIndex);
 
   if (isErr(storeItemResult)) {

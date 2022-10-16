@@ -1,3 +1,4 @@
+import { getFeedStorageKey } from '../../domain/feed-settings';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
@@ -57,5 +58,5 @@ export function recordLastPostMetadata(
 }
 
 function getStorageKey(feedId: string) {
-  return `/${feedId}/lastPostMetadata.json`;
+  return `${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
 }

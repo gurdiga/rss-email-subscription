@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
@@ -26,7 +27,9 @@ describe(deleteItem.name, () => {
 
     deleteItem(feedId, storage, storedRssItem);
 
-    expect((storage.removeItem as Stub).calls).to.deep.equal([[`/${feedId}/inbox/${storedRssItem.fileName}`]]);
+    expect((storage.removeItem as Stub).calls).to.deep.equal([
+      [`${getFeedStorageKey(feedId)}/inbox/${storedRssItem.fileName}`],
+    ]);
   });
 
   it('returns an Err value when can’t delete', () => {

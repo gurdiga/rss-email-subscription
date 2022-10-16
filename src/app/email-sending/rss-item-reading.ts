@@ -4,6 +4,7 @@ import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -32,7 +33,7 @@ function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
 }
 
 export function readStoredRssItems(feedId: string, storage: AppStorage): Result<RssReadingResult> {
-  const storageKey = `/${feedId}/${inboxDirName}`;
+  const storageKey = `${getFeedStorageKey(feedId)}/${inboxDirName}`;
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
@@ -43,7 +44,7 @@ export function readStoredRssItems(feedId: string, storage: AppStorage): Result<
   const rssItems = fileNamesResult
     .filter((fileName) => fileNameFormat.test(fileName))
     // ASSUMPTION: storage.loadItem() never fails here
-    .map((fileName) => [fileName, storage.loadItem(`/${feedId}/${inboxDirName}/${fileName}`)])
+    .map((fileName) => [fileName, storage.loadItem(`${storageKey}/${fileName}`)])
     .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 
   const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));

@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 import { ReadFileFn } from '../../shared/io';
 import { Err, isErr, makeErr } from '../../shared/lang';
 import { makeStorageStub, makeStub, makeThrowingStub, Stub } from '../../shared/test-utils';
@@ -232,7 +233,7 @@ describe(readEmailListFromCsvFile.name, () => {
 
 describe(loadStoredEmails.name, () => {
   const feedId = 'path';
-  const storageKey = '/path/emails.json';
+  const storageKey = `${getFeedStorageKey(feedId)}/emails.json`;
 
   const index: EmailIndex = {
     hash1: 'email1@test.com',
@@ -318,7 +319,7 @@ describe(loadStoredEmails.name, () => {
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
-        /Invalid email list format: .+ at \/path\/emails.json/,
+        new RegExp(`Invalid email list format: .+ at ${getFeedStorageKey(feedId)}/emails.json`),
         `storedValue: ${storedValue}`
       );
     }
@@ -329,7 +330,7 @@ describe(loadStoredEmails.name, () => {
     const storage = makeStorageStub({ loadItem: () => err, hasItem: () => true });
 
     expect(loadStoredEmails(feedId, storage)).to.deep.equal(
-      makeErr(`Could not read email list at /path/emails.json: ${err.reason}`)
+      makeErr(`Could not read email list at ${storageKey}: ${err.reason}`)
     );
   });
 });

@@ -23,8 +23,12 @@ export function isFeedNotFound(value: any): value is FeedNotFound {
   return value && value.kind === 'FeedNotFound';
 }
 
+export function getFeedStorageKey(feedId: string) {
+  return `/feeds/${feedId}`;
+}
+
 export function getFeedSettings(feedId: string, storage: AppStorage): Result<FeedSettings | FeedNotFound> {
-  const storageKey = `/${feedId}/feed.json`;
+  const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
 
   if (!storage.hasItem(storageKey)) {
     return { kind: 'FeedNotFound' };

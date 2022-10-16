@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'path';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
@@ -63,7 +64,7 @@ describe(readStoredRssItems.name, () => {
     };
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
-    expect((storage.listItems as Stub).calls).to.deep.equal([[`/${feedId}/inbox`]]);
+    expect((storage.listItems as Stub).calls).to.deep.equal([[`${getFeedStorageKey(feedId)}/inbox`]]);
   });
 
   it('also returns the files with invalid data', () => {
@@ -115,7 +116,7 @@ describe(readStoredRssItems.name, () => {
     const storage = makeStorageStub({ listItems: () => error });
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(
-      makeErr(`Can’t list files in /${feedId}/inbox: ${error.reason}`)
+      makeErr(`Can’t list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
     );
   });
 

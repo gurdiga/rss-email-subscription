@@ -3,6 +3,7 @@ import { RssItem } from '../../domain/rss-item';
 import { itemFileName, NameFileFn, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../../shared/test-utils';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 
 describe(recordNewRssItems.name, () => {
   const feedId = 'testblog';
@@ -40,9 +41,9 @@ describe(recordNewRssItems.name, () => {
     const result = recordNewRssItems(feedId, storage, rssItems, nameFile);
 
     expect((storage.storeItem as Spy).calls).to.deep.equal([
-      [`/${feedId}/inbox/${nameFile(rssItems[0]!)}`, rssItems[0]],
-      [`/${feedId}/inbox/${nameFile(rssItems[1]!)}`, rssItems[1]],
-      [`/${feedId}/inbox/${nameFile(rssItems[2]!)}`, rssItems[2]],
+      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[0]!)}`, rssItems[0]],
+      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[1]!)}`, rssItems[1]],
+      [`${getFeedStorageKey(feedId)}/inbox/${nameFile(rssItems[2]!)}`, rssItems[2]],
     ]);
     expect(result).to.equal(rssItems.length);
   });

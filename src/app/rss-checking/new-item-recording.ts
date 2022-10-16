@@ -2,6 +2,7 @@ import { HashFn, hash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 
 export type NameFileFn = (item: RssItem) => string;
 
@@ -17,7 +18,7 @@ export function recordNewRssItems(
 
   for (const item of rssItems) {
     const fileName = nameFileFn(item);
-    const storageKey = `/${feedId}/${inboxDirName}/${fileName}`;
+    const storageKey = `${getFeedStorageKey(feedId)}/${inboxDirName}/${fileName}`;
 
     const storeItemResult = storage.storeItem(storageKey, item);
 

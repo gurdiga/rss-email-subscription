@@ -3,11 +3,13 @@ import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeSpy, makeStorageStub, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
+import { getFeedStorageKey } from '../../domain/feed-settings';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
   const feedId = 'testblog';
+  const storageKey = `${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
 
   describe(getLastPostMetadata.name, () => {
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
@@ -27,7 +29,7 @@ describe('Last post timestamp', () => {
       };
 
       expect(result).to.deep.equal(expectedResult);
-      expect((storage.loadItem as Stub).calls).to.deep.equal([[`/${feedId}/lastPostMetadata.json`]]);
+      expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     });
 
     it('returns undefined value when lastPostMetadata.json does not exist', () => {
@@ -42,7 +44,7 @@ describe('Last post timestamp', () => {
       const storage = makeStorageStub({ loadItem: () => storedValue, hasItem: () => true as const });
       const result = getLastPostMetadata(feedId, storage);
 
-      expect(result).to.deep.equal(makeErr(`Invalid timestamp in /${feedId}/lastPostMetadata.json`));
+      expect(result).to.deep.equal(makeErr(`Invalid timestamp in ${storageKey}`));
     });
 
     it('defaults guid to empty string', () => {
@@ -102,9 +104,7 @@ describe('Last post timestamp', () => {
       const result = recordLastPostMetadata(feedId, storage, mockRssItems);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
-      expect((storage.storeItem as Stub).calls).to.deep.equal([
-        [`/${feedId}/lastPostMetadata.json`, expectedLastPostMetadata],
-      ]);
+      expect((storage.storeItem as Stub).calls).to.deep.equal([[storageKey, expectedLastPostMetadata]]);
       expect(result).to.deep.equal(expectedLastPostMetadata);
     });
 
