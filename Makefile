@@ -176,33 +176,31 @@ watch-app:
 			-e '"message":"Sending report"' \
 			-e '"message":"(Created new account|Authenticated user)"' \
 		|
-	while read -r _skip_timestamp _skip_namespace _skip_app json;
-		do
-			(
-				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
-				echo "From: watch-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
-				echo
-				jq . <<<"$$json"
-			) |
-			if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
-		done \
-		& disown
+	while read -r _skip_timestamp _skip_namespace _skip_app json; do
+		(
+			echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
+			echo "From: watch-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo
+			jq . <<<"$$json"
+		) |
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
+	done \
+	& disown
 
 # cron @reboot
 watch-smtp-out:
-	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log \
-		| grep --line-buffered -P '(warning|error|fatal|panic|reject):' \
-		| while read -r _1 _2 _3 timestamp level message;
-		do
-			(
-				echo "Subject: RES smtp-out $$level"
-				echo "From: watch-smtp-out@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
-				echo
-				echo "$$message"
-			) \
-			| ssmtp gurdiga@gmail.com; \
-		done \
-		& disown
+	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
+	grep --line-buffered -P '(warning|error|fatal|panic|reject):' |
+	while read -r _1 _2 _3 timestamp level message; do
+		(
+			echo "Subject: RES smtp-out $$level"
+			echo "From: watch-smtp-out@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo
+			echo "$$message"
+		) |
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
+	done \
+	& disown
 
 # cron 59 23 * * *
 unsubscribe-report:
