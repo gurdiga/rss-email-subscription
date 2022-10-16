@@ -26,7 +26,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return inputProcessingResult;
   }
 
-  const { logWarning, logError } = makeCustomLoggers({ reqId, feedId, module: subscription.name });
+  const { logWarning, logError, logInfo } = makeCustomLoggers({ reqId, feedId, module: subscription.name });
   const { emailAddress, feedSettings } = inputProcessingResult;
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
 
@@ -77,6 +77,8 @@ export const subscription: AppRequestHandler = async function subscription(
     logError('Can’t send confirmation request email', { reason: sendingResult.reason });
     return makeAppError('Error sending confirmation request email');
   }
+
+  logInfo('New unconfirmed subscriber');
 
   return makeSuccess('Thank you for subscribing. Please check your email to confirm. 🤓');
 };

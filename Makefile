@@ -174,6 +174,7 @@ watch-app:
 	grep --line-buffered -E \
 			-e '"severity":"(error|warning)"' \
 			-e '"message":"Sending report"' \
+			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(Created new account|Authenticated user)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace _skip_app json; do

@@ -54,7 +54,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
     return makeAppError('Database write error: registering confirmation failed');
   }
 
-  logInfo('Confirmed email', { feedId, email: registeredEmail.emailAddress.value });
+  logInfo('Subscriber confirmed email', { feedId, email: registeredEmail.emailAddress.value });
 
   return makeSuccess('Emai confirmed. Welcome aboard! 😎');
 };
