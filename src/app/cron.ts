@@ -48,7 +48,9 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
     process.exit(1);
   }
 
-  feedDirs = feedDirs.filter((x) => x !== 'accounts'); // TODO: Remove after moving feed directories to /feeds
+  const nonFeedDirs = ['confirmation-secrets', 'accounts', 'sessions']; // TODO: Remove after moving feed directories to /feeds
+
+  feedDirs = feedDirs.filter((x) => !nonFeedDirs.includes(x));
 
   if (feedDirs.length === 0) {
     logError(`No feedDirs in dataDirRoot`, { dataDirRoot });
