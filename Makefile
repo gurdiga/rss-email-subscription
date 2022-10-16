@@ -350,3 +350,11 @@ reset-account-index:
 
 	find $$DATA_DIR_ROOT/accounts -mindepth 1 -type d | xargs rm -rfv
 	echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
+
+sent-count:
+	@quiet=true
+	gzcat -f .tmp/logs/feedsubscription/app.log* |
+	grep '"Sending report"' |
+	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
+	jq -s 'map(.data.report.sent) | add' |
+	numfmt --grouping
