@@ -170,17 +170,21 @@ snyk:
 
 # cron @reboot
 watch-app:
-	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log \
-		| grep --line-buffered -P '("severity":"(error|warning|info)"|"message":"(Sending report|Created new account|Authenticated user)")' \
-		| while read -r _skip_timestamp _skip_namespace _skip_app json;
+	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log |
+	grep --line-buffered -E \
+			-e '"severity":"(error|warning)"' \
+			-e '"message":"Sending report"' \
+			-e '"message":"(Created new account|Authenticated user)"' \
+		|
+	while read -r _skip_timestamp _skip_namespace _skip_app json;
 		do
 			(
 				echo "Subject: RES App $$(jq -r .severity <<<"$$json")"
 				echo "From: watch-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 				echo
 				jq . <<<"$$json"
-			) \
-			| ssmtp gurdiga@gmail.com;
+			) |
+			if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
 		done \
 		& disown
 
