@@ -78,7 +78,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return makeAppError('Error sending confirmation request email');
   }
 
-  logInfo('New unconfirmed subscriber');
+  logInfo('New unconfirmed subscriber', { email: emailAddress.value });
 
   return makeSuccess('Thank you for subscribing. Please check your email to confirm. 🤓');
 };
