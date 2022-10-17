@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import path from 'path';
 import os from 'os';
-import { listFiles, mkdirp, writeFile } from './io';
+import { listFiles, mkdirp, writeFile } from './io-isolation';
 
 describe(mkdirp.name, () => {
   const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-mkdirp-'));

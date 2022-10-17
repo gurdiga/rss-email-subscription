@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { InputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
 import { makeSpy, makeStub } from '../shared/test-utils';
-import { createElement, insertAdjacentElement, querySelector } from './dom';
+import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 import {
   fillUiElements,
   parseConfirmationLinkUrlParams,

@@ -1,6 +1,14 @@
 import { dirname, join } from 'node:path';
-import { deleteFile, DeleteFileFn, fileExists, FileExistsFn, listFiles, listDirectories, ListFilesFn } from './io';
-import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io';
+import {
+  deleteFile,
+  DeleteFileFn,
+  fileExists,
+  FileExistsFn,
+  listFiles,
+  listDirectories,
+  ListFilesFn,
+} from './io-isolation';
+import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io-isolation';
 import { attempt, isErr, makeErr, Result } from './lang';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'

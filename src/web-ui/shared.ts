@@ -1,6 +1,6 @@
 import { ApiResponse, InputError, isAppError, isInputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
-import { createElement, insertAdjacentElement, querySelector } from './dom';
+import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
 export interface ConfirmationLinkUrlParams {
   id: string;
