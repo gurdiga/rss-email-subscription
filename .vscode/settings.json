@@ -3,9 +3,6 @@
   "editor.tabSize": 2,
   "typescript.tsdk": "node_modules/typescript/lib",
   "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "files.associations": {
-    "*.njk": "njk"
-  },
   "[plaintext]": {
     "editor.wordWrap": "wordWrapColumn",
     "editor.wordWrapColumn": 72
@@ -31,5 +28,10 @@
   },
   "search.exclude": {
     "dist/**": true
+  },
+  "files.exclude": {
+    ".tmp/": true,
+    "dist/": true,
+    "src/api/web-ui-scripts/**": true
   }
 }
