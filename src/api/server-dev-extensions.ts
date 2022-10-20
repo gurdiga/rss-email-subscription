@@ -7,7 +7,9 @@ export function devExtesions(): RequestHandler[] {
   if (process.env['NODE_ENV'] === 'development') {
     return [removeCSP, express.static(process.env['DOCUMENT_ROOT']!)];
   } else {
-    return [];
+    const noop: RequestHandler = (_req, _res, next) => next();
+
+    return [noop];
   }
 }
 
