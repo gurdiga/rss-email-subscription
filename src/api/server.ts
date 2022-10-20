@@ -41,6 +41,7 @@ async function main() {
   server.use('/', ...devExtesions());
 
   const shutdownHandle = server.listen(port, () => {
+    logInfo(`Starting API server in ${process.env['NODE_ENV']} environment`);
     logInfo(`Listening on http://0.0.0.0:${port}`);
   });
 
