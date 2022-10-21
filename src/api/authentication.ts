@@ -8,15 +8,16 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { AppRequestHandler } from './request-handler';
+import { storeSessionValue, setSessionConfig } from './session';
 
 export const authentication: AppRequestHandler = async function authentication(
   _reqId,
   reqBody,
   _reqParams,
-  _reqSession,
+  reqSession,
   app
 ) {
-  const { email, password } = reqBody;
+  const { email, password } = reqBody as Input;
   const processInputResult = processInput({ email, password });
 
   if (isErr(processInputResult)) {
@@ -29,7 +30,12 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(checkCredentialsResult.reason, checkCredentialsResult.field);
   }
 
-  return makeSuccess('Welcome back!');
+  const accountId = checkCredentialsResult as AccountId;
+
+  storeSessionValue(reqSession, 'accountId', accountId);
+  setSessionConfig(reqSession);
+
+  return makeSuccess('Welcome back!', { sessionId: reqSession.id });
 };
 
 interface Input {
@@ -68,7 +74,7 @@ function processInput(input: Input): Result<ProcessedInput> {
   };
 }
 
-function checkCredentials({ storage, settings }: App, input: ProcessedInput): Result<void> {
+function checkCredentials({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: input.email.value,
     module: `${authentication.name}:${checkCredentials.name}`,
@@ -85,7 +91,7 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
     return makeErr(`Can’t search account`, 'email');
   }
 
-  const accountId = findAccountResult as AccountId;
+  const accountId = findAccountResult;
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
@@ -102,4 +108,6 @@ function checkCredentials({ storage, settings }: App, input: ProcessedInput): Re
   }
 
   logInfo('User logged in');
+
+  return accountId;
 }

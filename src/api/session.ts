@@ -17,3 +17,14 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
     saveUninitialized: true,
   });
 }
+
+type SessionValue = string | number | boolean;
+
+export function storeSessionValue(reqSession: ReqSession, name: string, value: SessionValue): void {
+  (reqSession as any)[name] = value;
+}
+
+export function setSessionConfig(reqSession: ReqSession): void {
+  reqSession.cookie.maxAge = 2 * 24 * 3600 * 1000;
+  reqSession.cookie.sameSite = 'strict';
+}
