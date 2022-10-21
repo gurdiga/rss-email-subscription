@@ -6,7 +6,9 @@ export type Spy<F extends Function = Function> = F & {
 };
 
 export function makeSpy<F extends Function>(): Spy<F> {
-  const spy: any = (...args: any[]) => spy.calls.push(args);
+  const spy: any = (...args: any[]) => {
+    spy.calls.push(args);
+  };
 
   spy.calls = [];
 

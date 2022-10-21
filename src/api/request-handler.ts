@@ -3,12 +3,13 @@ import { basename } from 'node:path';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
+import { ReqSession } from './session';
 
 export type AppRequestHandler = (
   reqId: number,
   reqBody: Request['body'],
   reqParams: Request['params'],
-  reqSession: Express.Request['session'],
+  reqSession: ReqSession,
   app: App
 ) => Promise<ApiResponse>;
 
