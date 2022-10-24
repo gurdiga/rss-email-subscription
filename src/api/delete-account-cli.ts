@@ -2,12 +2,12 @@
 
 import { rmSync } from 'node:fs';
 import { basename } from 'node:path';
-import { makeEmailAddress } from '../app/email-sending/emails';
-import { removeEmailFromIndex, findAccountIdByEmail } from '../domain/account-index';
+import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { removeEmailFromIndex, findAccountIdByEmail, isAccountNotFound } from '../domain/account-index';
 import { requireEnv } from '../shared/env';
-import { attempt, isErr } from '../shared/lang';
+import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { getFirstCliArg } from '../shared/process-utils';
+import { getFirstCliArg, isRunDirectly } from '../shared/process-utils';
 import { makeStorage } from '../shared/storage';
 
 interface Env {
@@ -16,13 +16,6 @@ interface Env {
 
 function main(): void {
   const { logError } = makeCustomLoggers({ module: basename(__filename) });
-  const env = requireEnv<Env>(['DATA_DIR_ROOT']);
-
-  if (isErr(env)) {
-    logError(`Invalid environment variables: ${env.reason}`);
-    process.exit(1);
-  }
-
   const firstCliArg = getFirstCliArg(process);
 
   if (!firstCliArg) {
@@ -37,20 +30,44 @@ function main(): void {
     process.exit(1);
   }
 
-  const storage = makeStorage(env.DATA_DIR_ROOT);
-  const accountId = findAccountIdByEmail(storage, email);
+  const deleteAccountResult = deleteAccount(email);
 
-  removeEmailFromIndex(storage, email);
-
-  const rmDataResult = attempt(() => {
-    rmSync(`${env.DATA_DIR_ROOT}/accounts/${accountId}/account.json`);
-    rmSync(`${env.DATA_DIR_ROOT}/accounts/${accountId}`, { recursive: true });
-  });
-
-  if (isErr(rmDataResult)) {
-    logError(`Failed to delete account data: ${rmDataResult.reason}`);
+  if (isErr(deleteAccountResult)) {
+    logError(`Couldn’t deleteAccount: ${deleteAccountResult.reason}`);
     process.exit(1);
   }
 }
 
-main();
+export function deleteAccount(email: EmailAddress): Result<void> {
+  const env = requireEnv<Env>(['DATA_DIR_ROOT']);
+
+  if (isErr(env)) {
+    return makeErr(`Invalid environment variables: ${env.reason}`);
+  }
+
+  const storage = makeStorage(env.DATA_DIR_ROOT);
+  const findResult = findAccountIdByEmail(storage, email);
+
+  if (isErr(findResult)) {
+    return makeErr(`Couldn’t findAccountIdByEmail: ${findResult.reason}`);
+  }
+
+  if (isAccountNotFound(findResult)) {
+    return makeErr(`Accound not found my email ${email.value}`);
+  }
+
+  removeEmailFromIndex(storage, email);
+
+  const rmDataResult = attempt(() => {
+    rmSync(`${env.DATA_DIR_ROOT}/accounts/${findResult}/account.json`);
+    rmSync(`${env.DATA_DIR_ROOT}/accounts/${findResult}`, { recursive: true });
+  });
+
+  if (isErr(rmDataResult)) {
+    return makeErr(`Failed to delete account data: ${rmDataResult.reason}`);
+  }
+}
+
+if (isRunDirectly(module)) {
+  main();
+}
