@@ -163,7 +163,7 @@ start-dev: web-ui-systemjs web-ui-watch
 	node_modules/.bin/nodemon dist/api/server.js
 
 api-test:
-	node_modules/.bin/ts-mocha -R dot api-test.spec.ts
+	node_modules/.bin/ts-mocha api-test.spec.ts
 
 snyk:
 	snyk test
