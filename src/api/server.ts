@@ -28,6 +28,7 @@ async function main() {
   server.use('/api-version.txt', express.static(`${__dirname}/api-version.txt`));
   server.use(helmet());
   server.use(cors());
+  server.get('/cors-test', (_req, res) => res.send('CORS test'));
   server.use(express.urlencoded({ extended: true }));
   server.use(makeExpressSession(app));
   server.post('/subscription', makeRequestHandler(subscription, app));
