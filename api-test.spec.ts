@@ -21,7 +21,7 @@ describe('API', () => {
       const registrationresponse = await registrationDo(userPlan, userEmail, userPassword);
       const [account, accountId] = getAccountByEmail(userEmail);
 
-      expect(registrationresponse.kind).to.equal('Success', 'Registration failed');
+      expect(registrationresponse.kind).to.equal('Success', 'registration');
       expect(account.plan).to.equal(userPlan, 'registration plan');
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
@@ -29,13 +29,13 @@ describe('API', () => {
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
       const registrationConfirmationResponse = await registrationConfirmationDo(userEmail);
-      expect(registrationConfirmationResponse.kind).to.equal('Success', 'Registration confirmation failed');
+      expect(registrationConfirmationResponse.kind).to.equal('Success', 'registration confirmation');
 
       const [accountAfterConfirmation] = getAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
       const authenticationResponse = (await authenticationDo(userEmail, userPassword)) as Success;
-      expect(authenticationResponse.kind).to.equal('Success', 'Authentication failed');
+      expect(authenticationResponse.kind).to.equal('Success', 'authentication');
 
       const sessionId = authenticationResponse.logData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
