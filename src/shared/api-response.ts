@@ -1,16 +1,18 @@
 export type ApiResponse = Success | InputError | AppError;
 
+type LogData = Record<string, string>;
+
 export interface Success {
   kind: 'Success';
   message: string;
-  logData?: Object;
+  logData?: LogData;
 }
 
 export function isSuccess(x: any): x is Success {
   return x.kind === 'Success';
 }
 
-export function makeSuccess(message: string, logData?: Object): Success {
+export function makeSuccess(message: string, logData?: LogData): Success {
   return {
     kind: 'Success',
     message,

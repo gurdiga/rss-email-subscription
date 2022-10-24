@@ -89,10 +89,6 @@ function registration_verify {
 function registration_confirmation_do {
 	local account_email=${1:?}
 
-	local account_file && account_file=$(find_account_files_by_email "${account_email}")
-
-	assert_line_count "$account_file" 1 'account files'
-
 	local app_hashing_salt && app_hashing_salt=$(jq -r .hashingSalt "$DATA_DIR_ROOT/settings.json")
 	local secret && secret=$(echo -n "${account_email}${app_hashing_salt}" | sha256sum | cut -f1 -d ' ')
 
