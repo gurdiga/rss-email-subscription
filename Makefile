@@ -40,10 +40,10 @@ c: check
 cw:
 	node_modules/.bin/tsc -p tsconfig.json --watch
 
-pre-commit: check test lint format-check
+pre-commit: lint check test format-check
 pc: pre-commit
 
-lint: lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
+lint: lint-prevent-mocha-only lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
 l: lint
 
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
@@ -64,6 +64,9 @@ lint-shell-scripts:
 	| xargs shellcheck
 
 lsh: lint-shell-scripts
+
+lint-prevent-mocha-only:
+	@git status --porcelain | grep -E '.spec.ts$$' | cut -c4- | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
