@@ -1,4 +1,5 @@
 import { confirmAccount as markAccountAsConfirmed } from '../domain/account';
+import { AccountId } from '../domain/account-index';
 import {
   deleteRegistrationConfirmationSecret,
   getAccountIdForRegistrationConfirmationSecret,
@@ -10,6 +11,7 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
+import { initSession } from './session';
 
 interface Input {
   secret: unknown;
@@ -19,7 +21,7 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   _reqId,
   reqBody,
   _reqParams,
-  _reqSession,
+  reqSession,
   { storage }
 ) {
   const processInputResult = processInput({ secret: reqBody['secret'] });
@@ -34,7 +36,11 @@ export const registrationConfirmation: AppRequestHandler = async function regist
     return makeAppError(confirmAccountBySecretResult.reason);
   }
 
-  return makeSuccess('Account registration confirmed.');
+  const accountId = confirmAccountBySecretResult as AccountId;
+
+  initSession(reqSession, accountId);
+
+  return makeSuccess('Account registration confirmed.', { sessionId: reqSession.id });
 };
 
 interface ProcessedInput {
@@ -55,7 +61,7 @@ function processInput(input: Input): Result<ProcessedInput> {
   return { secret };
 }
 
-function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<void> {
+function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<AccountId> {
   const module = `${registrationConfirmation.name}:${confirmAccountBySecret.name}`;
   const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
 
@@ -85,4 +91,6 @@ function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirm
   }
 
   logInfo('User confirmed registration');
+
+  return accountId;
 }

@@ -21,7 +21,7 @@ describe('API', () => {
       const registrationresponse = await registrationDo(userPlan, userEmail, userPassword);
       const [account, accountId] = getAccountByEmail(userEmail);
 
-      expect(registrationresponse.kind).to.equal('Success', 'registration');
+      expect((registrationresponse as Success).kind).to.equal('Success', 'registration');
       expect(account.plan).to.equal(userPlan, 'registration plan');
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
@@ -31,13 +31,19 @@ describe('API', () => {
       const registrationConfirmationResponse = await registrationConfirmationDo(userEmail);
       expect(registrationConfirmationResponse.kind).to.equal('Success', 'registration confirmation');
 
+      let sessionId = (registrationConfirmationResponse as Success).logData!['sessionId'];
+      expect(sessionId, 'registration confirmation response sessionId').to.exist;
+
+      const sessionDataAfterConfirmation = getSessionData(sessionId!);
+      expect(sessionDataAfterConfirmation.accountId).to.equal(accountId, 'registration confirmation session accountId');
+
       const [accountAfterConfirmation] = getAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
-      const authenticationResponse = (await authenticationDo(userEmail, userPassword)) as Success;
+      const authenticationResponse = await authenticationDo(userEmail, userPassword);
       expect(authenticationResponse.kind).to.equal('Success', 'authentication');
 
-      const sessionId = authenticationResponse.logData!['sessionId'];
+      sessionId = (authenticationResponse as Success).logData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
 
       const sessionData = getSessionData(sessionId!);
@@ -129,50 +135,54 @@ describe('API', () => {
 
   describe('http session test', () => {
     it('works', async () => {
-      const response = await get('/session-test');
-      expect(response.kind).to.equal('Success');
+      const { responseBody, responseHeaders } = await get('/session-test', 'json');
+      expect(responseBody.kind).to.equal('Success');
 
-      const sessionId = (response as Success).logData!['sessionId']!;
+      const sessionId = (responseBody as Success).logData!['sessionId'];
       expect(sessionId).to.exist;
 
-      const sessionData = getSessionData(sessionId);
+      const sessionData = getSessionData(sessionId!);
       expect(sessionData['works']).to.equal(true);
+
+      const cookie = responseHeaders.get('set-cookie')!;
+      const { responseBody: subsequentRequestResponse } = await get('/session-test', 'json', new Headers({ cookie }));
+
+      const subsequentRequestSession = (subsequentRequestResponse as Success).logData!['sessionId'];
+      expect(subsequentRequestSession).to.equal(sessionId);
     });
   });
 
   describe('web-ui-scripts', () => {
     it('are served', async () => {
-      const response = await get('/web-ui-scripts/web-ui/unsubscription-confirmation.js', 'text');
+      const { responseBody } = await get('/web-ui-scripts/web-ui/unsubscription-confirmation.js', 'text');
       const expectedFileSize = 3217;
 
-      expect(response).to.exist;
-      expect(response.length).to.equal(expectedFileSize);
+      expect(responseBody.length).to.equal(expectedFileSize);
     });
   });
 
   describe('CORP policy', () => {
     it('allows embedding JS', async () => {
-      const [_, headers] = await get('/web-ui-scripts/web-ui/subscription-form.js', 'text', true);
+      const { responseHeaders } = await get('/web-ui-scripts/web-ui/subscription-form.js', 'text');
 
-      expect(headers.get('cross-origin-resource-policy')).to.equal('cross-origin');
+      expect(responseHeaders.get('cross-origin-resource-policy')).to.equal('cross-origin');
     });
   });
 
   describe('CORS policy', () => {
     it('is widely open', async () => {
-      const [response, headers] = await get('/cors-test', 'text', true);
+      const { responseHeaders } = await get('/cors-test', 'text');
 
-      expect(response).to.equal('CORS test');
-      expect(headers.get('access-control-allow-origin')).to.equal('*');
+      expect(responseHeaders.get('access-control-allow-origin')).to.equal('*');
     });
   });
 
   describe('API code Git revisions', () => {
     it('is available', async () => {
-      const response = await get('/api-version.txt', 'text');
+      const { responseBody } = await get('/api-version.txt', 'text');
       const gitRevisionMask = /[a-f0-9]{40}\n/m;
 
-      expect(response).to.match(gitRevisionMask);
+      expect(responseBody).to.match(gitRevisionMask);
     });
   });
 });
@@ -188,24 +198,34 @@ async function post(path: string, data: Record<string, string>): Promise<ApiResp
   }).then((response) => response.json());
 }
 
-async function get(path: string, type: 'text'): Promise<string>;
-async function get(path: string, type: 'text', includeHeaders: boolean): Promise<[string, Headers]>;
-async function get(path: string, type: 'json', includeHeaders: boolean): Promise<[string, Headers]>;
-async function get(path: string, type: 'json'): Promise<ApiResponse>;
-async function get(path: string): Promise<ApiResponse>;
+interface GetApiResponse {
+  responseHeaders: Headers;
+}
+
+interface TextApiResponse extends GetApiResponse {
+  responseBody: string;
+}
+
+interface JsonApiResponse extends GetApiResponse {
+  responseBody: ApiResponse;
+}
+
+async function get(path: string, type: 'text'): Promise<TextApiResponse>;
+async function get(path: string, type: 'text', headers: Headers): Promise<TextApiResponse>;
+async function get(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse>;
+async function get(path: string, type: 'json'): Promise<JsonApiResponse>;
+async function get(path: string): Promise<JsonApiResponse>;
 async function get(
   path: string,
   type: 'json' | 'text' = 'json',
-  includeHeaders: boolean = false
-): Promise<ApiResponse | string | [string, Headers]> {
-  const response = await fetch(`${baseUrl}${path}`);
-  const responseBody = await response[type]();
+  headers?: Headers
+): Promise<JsonApiResponse | TextApiResponse> {
+  const response = await fetch(`${baseUrl}${path}`, { headers });
 
-  if (includeHeaders) {
-    return [responseBody, response.headers];
-  } else {
-    return responseBody;
-  }
+  return {
+    responseBody: await response[type](),
+    responseHeaders: response.headers,
+  };
 }
 
 function getAccountByEmail(email: string): [AccountData, number] {

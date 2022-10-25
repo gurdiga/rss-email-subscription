@@ -1,3 +1,4 @@
+import { AccountId } from '../domain/account-index';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -24,7 +25,12 @@ export function storeSessionValue(reqSession: ReqSession, name: string, value: S
   (reqSession as any)[name] = value;
 }
 
-export function setSessionConfig(reqSession: ReqSession): void {
+function setSessionConfig(reqSession: ReqSession): void {
   reqSession.cookie.maxAge = 2 * 24 * 3600 * 1000;
   reqSession.cookie.sameSite = 'strict';
+}
+
+export function initSession(reqSession: ReqSession, accountId: AccountId): void {
+  storeSessionValue(reqSession, 'accountId', accountId);
+  setSessionConfig(reqSession);
 }

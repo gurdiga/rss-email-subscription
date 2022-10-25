@@ -8,7 +8,7 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { AppRequestHandler } from './request-handler';
-import { storeSessionValue, setSessionConfig } from './session';
+import { initSession } from './session';
 
 export const authentication: AppRequestHandler = async function authentication(
   _reqId,
@@ -32,8 +32,7 @@ export const authentication: AppRequestHandler = async function authentication(
 
   const accountId = checkCredentialsResult as AccountId;
 
-  storeSessionValue(reqSession, 'accountId', accountId);
-  setSessionConfig(reqSession);
+  initSession(reqSession, accountId);
 
   return makeSuccess('Welcome back!', { sessionId: reqSession.id });
 };
