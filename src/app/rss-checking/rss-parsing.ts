@@ -1,6 +1,6 @@
 import Parser, { Item } from 'rss-parser';
 import { sortBy, SortDirection } from '../../shared/array-utils';
-import { isErr, makeErr, Result } from '../../shared/lang';
+import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { RssResponse } from './rss-response';
@@ -63,8 +63,8 @@ export interface ValidRssItem {
   value: RssItem;
 }
 
-function isValidRssItem(value: any): value is ValidRssItem {
-  return value.kind === 'ValidRssItem';
+function isValidRssItem(value: unknown): value is ValidRssItem {
+  return hasKind(value, 'ValidRssItem');
 }
 
 export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
@@ -119,6 +119,6 @@ export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | 
   };
 }
 
-function isInvalidRssItem(value: any): value is InvalidRssItem {
-  return value.kind === 'InvalidRssItem';
+function isInvalidRssItem(value: unknown): value is InvalidRssItem {
+  return hasKind(value, 'InvalidRssItem');
 }

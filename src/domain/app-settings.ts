@@ -50,7 +50,7 @@ export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
   };
 }
 
-function makeHashingSalt(value: any): Result<string> {
+function makeHashingSalt(value: unknown): Result<string> {
   if (!value) {
     return makeErr('Hashing salt is missing in app settings.');
   }
@@ -66,7 +66,7 @@ function makeHashingSalt(value: any): Result<string> {
   return value;
 }
 
-function makeDisplayName(value: any): Result<string> {
+function makeDisplayName(value: unknown): Result<string> {
   if (!value) {
     return makeErr('Display name is missing in app settings.');
   }

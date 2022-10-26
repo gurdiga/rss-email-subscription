@@ -1,6 +1,6 @@
 import { makeErr, Result } from './lang';
 
-export function makeUrl(value: any, baseURL?: string | URL): Result<URL> {
+export function makeUrl(value: string, baseURL?: string | URL): Result<URL> {
   try {
     return new URL(value, baseURL);
   } catch (error) {

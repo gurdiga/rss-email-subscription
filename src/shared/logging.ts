@@ -30,7 +30,7 @@ function maskSensibleAttributes(key: string, value: string): string {
   return value;
 }
 
-function maybeTruncate(value: any): string {
+function maybeTruncate<V = unknown>(value: V): string | V {
   if (typeof value === 'string' && value.length > maxStringValue) {
     const truncationNote = `[...truncated ${value.length - maxStringValue} characters]`;
 

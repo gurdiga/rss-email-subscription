@@ -147,6 +147,6 @@ export function makeStorage(dataDirRoot: string) {
 
 const dateRegExp = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
 
-function jsonParseFilter(_k: string, v: any) {
+function jsonParseFilter(_k: string, v: unknown) {
   return typeof v === 'string' && dateRegExp.test(v) ? new Date(v) : v;
 }

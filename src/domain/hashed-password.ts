@@ -7,7 +7,7 @@ export interface HashedPassword {
 
 export const hashedPasswordLength = 64;
 
-export function makeHashedPassword(hashedPassword: any): Result<HashedPassword> {
+export function makeHashedPassword(hashedPassword: unknown): Result<HashedPassword> {
   if (typeof hashedPassword !== 'string') {
     return makeErr(`Invalid hashed password: expected string got ${getTypeName(hashedPassword)}`);
   }

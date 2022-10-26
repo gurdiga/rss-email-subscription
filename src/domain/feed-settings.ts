@@ -1,5 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
+import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeUrl } from '../shared/url';
 
@@ -17,8 +18,8 @@ export interface FeedNotFound {
   kind: 'FeedNotFound';
 }
 
-export function isFeedNotFound(value: any): value is FeedNotFound {
-  return value && value.kind === 'FeedNotFound';
+export function isFeedNotFound(value: unknown): value is FeedNotFound {
+  return hasKind(value, 'FeedNotFound');
 }
 
 export const feedRootStorageKey = '/feeds';

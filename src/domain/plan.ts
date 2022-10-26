@@ -2,8 +2,8 @@ import { makeErr, Result } from '../shared/lang';
 
 export type PlanId = 'minimal' | 'standard' | 'sde';
 
-export function isPlanId(planId: any): planId is PlanId {
-  return ['minimal', 'standard', 'sde'].includes(planId);
+export function isPlanId(planId: unknown): planId is PlanId {
+  return typeof planId === 'string' && ['minimal', 'standard', 'sde'].includes(planId);
 }
 
 export function makePlanId(planId: string): Result<PlanId> {

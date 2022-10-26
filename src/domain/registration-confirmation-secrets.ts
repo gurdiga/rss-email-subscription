@@ -9,7 +9,7 @@ export interface RegistrationConfirmationSecret {
 
 const registrationConfirmationSecretLength = 64;
 
-export function validateRegistrationConfirmationSecret(input: any): Result<RegistrationConfirmationSecret> {
+export function validateRegistrationConfirmationSecret(input: unknown): Result<RegistrationConfirmationSecret> {
   if (!input) {
     return makeErr('Empty input');
   }

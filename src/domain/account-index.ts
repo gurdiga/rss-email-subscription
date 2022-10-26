@@ -1,5 +1,5 @@
 import { EmailAddress } from '../app/email-sending/emails';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { hasKind, isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 
 export interface AccountIndex {
@@ -45,8 +45,8 @@ export interface AccountNotFound {
   kind: 'AccountNotFound';
 }
 
-export function isAccountNotFound(value: any): value is AccountNotFound {
-  return value && value.kind === 'AccountNotFound';
+export function isAccountNotFound(value: unknown): value is AccountNotFound {
+  return hasKind(value, 'AccountNotFound');
 }
 
 export function findAccountIdByEmail(storage: AppStorage, email: EmailAddress): Result<AccountId | AccountNotFound> {

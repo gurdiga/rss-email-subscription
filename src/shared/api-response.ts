@@ -1,3 +1,5 @@
+import { hasKind } from './lang';
+
 export type ApiResponse = Success | InputError | AppError;
 
 type LogData = Record<string, string>;
@@ -8,8 +10,8 @@ export interface Success {
   logData?: LogData;
 }
 
-export function isSuccess(x: any): x is Success {
-  return x.kind === 'Success';
+export function isSuccess(x: unknown): x is Success {
+  return hasKind(x, 'Success');
 }
 
 export function makeSuccess(message: string, logData?: LogData): Success {
@@ -39,8 +41,8 @@ export function makeInputError(message: string, field?: InputError['field']): In
   return inputError;
 }
 
-export function isInputError(x: any): x is InputError {
-  return x.kind === 'InputError';
+export function isInputError(x: unknown): x is InputError {
+  return hasKind(x, 'InputError');
 }
 
 export interface AppError {
@@ -55,6 +57,6 @@ export function makeAppError(message: string): AppError {
   };
 }
 
-export function isAppError(x: any): x is AppError {
-  return x.kind === 'AppError';
+export function isAppError(x: unknown): x is AppError {
+  return hasKind(x, 'AppError');
 }

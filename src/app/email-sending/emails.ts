@@ -6,13 +6,14 @@ import {
   Err,
   getErrorMessage,
   getTypeName,
+  hasKind,
   isErr,
   isNonEmptyString,
+  isObject,
   makeErr,
   makeTypeMismatchErr,
   Result,
 } from '../../shared/lang';
-import { isObject } from '../../shared/object-utils';
 import { AppStorage } from '../../shared/storage';
 
 export interface EmailList {
@@ -42,7 +43,7 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
 
 export const maxEmailLength = 100;
 
-export function makeEmailAddress(input: any): Result<EmailAddress> {
+export function makeEmailAddress(input: unknown): Result<EmailAddress> {
   if (!input) {
     return makeErr('Email is empty');
   }
@@ -92,8 +93,8 @@ export function makeEmailAddress(input: any): Result<EmailAddress> {
   };
 }
 
-export function isEmailAddress(value: any): value is EmailAddress {
-  return value.kind === 'EmailAddress';
+export function isEmailAddress(value: unknown): value is EmailAddress {
+  return hasKind(value, 'EmailAddress');
 }
 
 export function parseEmails(emailList: string): Result<EmailList> {
@@ -125,7 +126,7 @@ export function makeEmailInformation(emailAddress: EmailAddress, isConfirmed: bo
   };
 }
 
-function isEmailInformation(x: any): x is EmailInformation {
+function isEmailInformation(x: unknown): x is EmailInformation {
   return isObject(x) && 'emailAddress' in x;
 }
 
@@ -168,8 +169,8 @@ export function makeEmailHashFn(hashingSalt: string): EmailHashFn {
   return (e: EmailAddress) => hash(e.value, hashingSalt);
 }
 
-function isHashedEmail(value: any): value is HashedEmail {
-  return value.kind === 'HashedEmail';
+function isHashedEmail(value: unknown): value is HashedEmail {
+  return hasKind(value, 'HashedEmail');
 }
 
 function getStorageKey(feedId: string): string {

@@ -1,6 +1,6 @@
 import { getFeedInboxStorageKey, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
 import { sortBy } from '../../shared/array-utils';
-import { isErr, makeErr, Result } from '../../shared/lang';
+import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
@@ -17,18 +17,18 @@ export interface ValidStoredRssItem {
   fileName: string;
 }
 
-function isValidStoredRssItem(value: any): value is ValidStoredRssItem {
-  return value.kind === 'ValidStoredRssItem';
+function isValidStoredRssItem(value: unknown): value is ValidStoredRssItem {
+  return hasKind(value, 'ValidStoredRssItem');
 }
 
 interface InvalidStoredRssItem {
   kind: 'InvalidStoredRssItem';
   reason: string;
-  json: any;
+  json: unknown;
 }
 
-function isInvalidStoredRssItem(value: any): value is InvalidStoredRssItem {
-  return value.kind === 'InvalidStoredRssItem';
+function isInvalidStoredRssItem(value: unknown): value is InvalidStoredRssItem {
+  return hasKind(value, 'InvalidStoredRssItem');
 }
 
 export function readStoredRssItems(feedId: string, storage: AppStorage): Result<RssReadingResult> {
@@ -56,10 +56,10 @@ export function readStoredRssItems(feedId: string, storage: AppStorage): Result<
   };
 }
 
-export function makeStoredRssItem(fileName: string, json: any): ValidStoredRssItem | InvalidStoredRssItem {
+export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredRssItem | InvalidStoredRssItem {
   const invalid = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
 
-  let { title, content, author, pubDate, link, guid } = json;
+  let { title, content, author, pubDate, link, guid } = json as any;
 
   if (!title || typeof title !== 'string') {
     return invalid('The "title" property is not a present string');

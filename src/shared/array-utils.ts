@@ -3,7 +3,7 @@ export function filterUniq<T>(x: T, i: number, xx: T[]): boolean {
 }
 
 export function filterUniqBy<T>(mapFn: (value: T) => any) {
-  const keys: any[] = [];
+  const keys: unknown[] = [];
 
   return (x: T): boolean => {
     try {
@@ -35,6 +35,6 @@ export function sortBy<T>(mapFn: (value: T) => ComparableType, direction: SortDi
   };
 }
 
-export function isEmpty(array: any[]): boolean {
+export function isEmpty(array: unknown[]): boolean {
   return array.length === 0;
 }

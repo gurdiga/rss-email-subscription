@@ -12,7 +12,7 @@ describe(readStoredRssItems.name, () => {
 
   interface MockStorageItem {
     key: string;
-    value: any;
+    value: unknown;
   }
 
   const files: MockStorageItem[] = [

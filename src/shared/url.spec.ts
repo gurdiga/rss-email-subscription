@@ -18,8 +18,5 @@ describe(makeUrl.name, () => {
 
   it('returns an Err value from an invalid URL string', () => {
     expect(makeUrl('non-url-string')).to.deep.equal(makeErr(`Invalid URL string: non-url-string`));
-    expect(makeUrl(null)).to.deep.equal(makeErr(`Invalid URL string: null`));
-    expect(makeUrl(undefined)).to.deep.equal(makeErr(`Invalid URL string: undefined`));
-    expect(makeUrl(42)).to.deep.equal(makeErr(`Invalid URL string: 42`));
   });
 });
