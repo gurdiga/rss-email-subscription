@@ -1,4 +1,3 @@
-import { DOMAIN_NAME } from '../../domain/feed-settings';
 import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
@@ -53,8 +52,13 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
   };
 }
 
-export function makeUnsubscribeUrl(feedId: string, hashedEmail: HashedEmail, displayName: string): URL {
-  const url = new URL(`https://${DOMAIN_NAME}/unsubscribe.html`);
+export function makeUnsubscribeUrl(
+  feedId: string,
+  hashedEmail: HashedEmail,
+  displayName: string,
+  domainName: string
+): URL {
+  const url = new URL(`https://${domainName}/unsubscribe.html`);
 
   url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
   url.searchParams.set('displayName', displayName || feedId);

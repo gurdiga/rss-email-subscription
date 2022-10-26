@@ -13,7 +13,7 @@ function main() {
 
   logInfo('Starting cron');
 
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     logError(`Invalid environment`, { reason: env.reason });
@@ -22,13 +22,13 @@ function main() {
 
   const dataDirRoot = env.DATA_DIR_ROOT;
   const storage = makeStorage(dataDirRoot);
-  let cronJobs = scheduleFeedChecks(dataDirRoot, storage);
+  let cronJobs = scheduleFeedChecks(env, storage);
 
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will reload.');
 
     cronJobs.forEach((j) => j.stop());
-    cronJobs = scheduleFeedChecks(dataDirRoot, storage);
+    cronJobs = scheduleFeedChecks(env, storage);
   });
 
   process.on('SIGTERM', () => {
@@ -39,7 +39,7 @@ function main() {
   const errorReportingCheck = scheduleErrorReportingCheck();
 }
 
-function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[] {
+function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
   let feedDirs = storage.listSubdirectories(feedRootStorageKey);
 
@@ -49,14 +49,14 @@ function scheduleFeedChecks(dataDirRoot: string, storage: AppStorage): CronJob[]
   }
 
   if (feedDirs.length === 0) {
-    logError(`No feedDirs in dataDirRoot`, { dataDirRoot });
+    logError(`No feedDirs in dataDirRoot`, { dataDirRoot: env.DATA_DIR_ROOT });
     process.exit(1);
   }
 
   const cronJobs: CronJob[] = [];
 
   for (const feedId of feedDirs) {
-    const feedSettings = getFeedSettings(feedId, storage);
+    const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
 
     if (isErr(feedSettings)) {
       logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });

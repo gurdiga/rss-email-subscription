@@ -7,12 +7,13 @@ import { AppSettings } from './src/domain/app-settings';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
+import { die } from './src/shared/test-utils';
 
 const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
 const baseUrl = 'https://localhost.feedsubscription.com';
 
 describe('API', () => {
-  describe('registration-confirmation-authentication flow', () => {
+  describe('registration-confirmation-authentication-deauthentication flow', () => {
     const userPlan = 'standard';
     const userEmail = 'api-test-blogger@feedsubscription.com';
     const userPassword = 'A-long-S3cre7-password';
@@ -207,10 +208,6 @@ describe('API', () => {
     });
   });
 });
-
-function die(errorMessage: string) {
-  throw new Error(errorMessage);
-}
 
 interface ApiResponseTuple {
   responseHeaders: Headers;

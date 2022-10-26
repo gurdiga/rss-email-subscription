@@ -17,7 +17,7 @@ export async function sendEmails(
 ): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     logError(`Invalid environment variables`, { reason: env.reason });
@@ -82,7 +82,7 @@ export async function sendEmails(
         toEmail: hashedEmail.emailAddress.value,
       });
 
-      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feedSettings.displayName);
+      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feedSettings.displayName, env.DOMAIN_NAME);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
       const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feedSettings.replyTo, emailContent, env);

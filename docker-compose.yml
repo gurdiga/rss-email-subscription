@@ -11,6 +11,7 @@ x-logging: &logging
 
 x-app-env: &app-env
   TZ: UTC
+  DOMAIN_NAME: ${DOMAIN_NAME?}
   DATA_DIR_ROOT: /data
   NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
   SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}

@@ -16,7 +16,7 @@ import { AppEnv } from '../../api/init-app';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     logError(`Invalid environment`, { reason: env.reason });
@@ -33,7 +33,7 @@ async function main(): Promise<number | undefined> {
 
   const storage = makeStorage(dataDirRoot);
   const inputFilePath = path.join(dataDirRoot, feedId, 'emails.csv');
-  const feedSettings = getFeedSettings(feedId, storage);
+  const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
 
   if (isErr(feedSettings)) {
     logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });

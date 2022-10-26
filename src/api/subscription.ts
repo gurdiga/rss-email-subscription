@@ -4,7 +4,7 @@ import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { DOMAIN_NAME, FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
+import { FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
@@ -20,20 +20,21 @@ export const subscription: AppRequestHandler = async function subscription(
   { storage }
 ) {
   const { feedId, email } = reqBody;
-  const inputProcessingResult = processInput({ reqId, feedId, email }, storage);
-
-  if (inputProcessingResult.kind !== 'ProcessedInput') {
-    return inputProcessingResult;
-  }
-
   const { logWarning, logError, logInfo } = makeCustomLoggers({ reqId, feedId, module: subscription.name });
-  const { emailAddress, feedSettings } = inputProcessingResult;
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     logError(`Invalid environment`, { reason: env.reason });
     return makeAppError('Environment error');
   }
+
+  const inputProcessingResult = processInput({ reqId, feedId, email }, storage, env.DOMAIN_NAME);
+
+  if (inputProcessingResult.kind !== 'ProcessedInput') {
+    return inputProcessingResult;
+  }
+
+  const { emailAddress, feedSettings } = inputProcessingResult;
 
   const storedEmails = loadStoredEmails(feedId, storage);
 
@@ -69,7 +70,7 @@ export const subscription: AppRequestHandler = async function subscription(
 
   const from = makeFullEmailAddress(displayName, fromAddress);
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-  const confirmationLink = makeEmailConfirmationUrl(hashedEmail, feedId, displayName);
+  const confirmationLink = makeEmailConfirmationUrl(hashedEmail, feedId, displayName, env.DOMAIN_NAME);
   const emailContent = makeSubscriptionConfirmationEmailContent(displayName, confirmationLink, fromAddress);
   const sendingResult = await sendEmail(from, emailAddress, replyTo, emailContent, env);
 
@@ -95,7 +96,11 @@ interface ProcessedInput {
   feedSettings: FeedSettings;
 }
 
-function processInput({ reqId, email, feedId }: Input, storage: AppStorage): ProcessedInput | InputError | AppError {
+function processInput(
+  { reqId, email, feedId }: Input,
+  storage: AppStorage,
+  domainName: string
+): ProcessedInput | InputError | AppError {
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
 
@@ -104,7 +109,7 @@ function processInput({ reqId, email, feedId }: Input, storage: AppStorage): Pro
     return makeInputError('Invalid email');
   }
 
-  const feedSettings = getFeedSettings(feedId, storage);
+  const feedSettings = getFeedSettings(feedId, storage, domainName);
 
   if (feedSettings.kind === 'FeedNotFound') {
     logWarning('Feed not found', { feedId });
@@ -158,8 +163,8 @@ export function makeSubscriptionConfirmationEmailContent(
   };
 }
 
-function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams): URL {
-  const url = new URL(`https://${DOMAIN_NAME}/subscription-confirmation.html`);
+function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams, domainName: string): URL {
+  const url = new URL(`https://${domainName}/subscription-confirmation.html`);
   let name: keyof typeof params;
 
   for (name in params) {
@@ -169,12 +174,17 @@ function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams)
   return url;
 }
 
-export function makeEmailConfirmationUrl(hashedEmail: HashedEmail, feedId: string, feedDisplayName: string): URL {
+export function makeEmailConfirmationUrl(
+  hashedEmail: HashedEmail,
+  feedId: string,
+  feedDisplayName: string,
+  domainName: string
+): URL {
   const params: ConfirmationLinkUrlParams = {
     id: `${feedId}-${hashedEmail.saltedHash}`,
     displayName: feedDisplayName || feedId,
     email: hashedEmail.emailAddress.value,
   };
 
-  return makeUrlFromConfirmationLinkUrlParams(params);
+  return makeUrlFromConfirmationLinkUrlParams(params, domainName);
 }

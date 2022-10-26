@@ -59,3 +59,7 @@ export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K
     ...methodStubs,
   };
 }
+
+export function die(errorMessage: string): never {
+  throw new Error(errorMessage);
+}

@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail } from '../app/email-sending/emails';
-import { DOMAIN_NAME } from '../domain/feed-settings';
 import { encodeSearchParamValue } from '../shared/test-utils';
 import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
 
 describe('subscription', () => {
+  const domainName = 'test.feedsubscription.com';
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
   const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
 
@@ -29,10 +29,10 @@ describe('subscription', () => {
       const feedId = 'justaddlightandstir';
       const feedDisplayName = 'Just Add Light and Stir';
 
-      const result = makeEmailConfirmationUrl(hashedEmail, feedId, feedDisplayName).toString();
+      const result = makeEmailConfirmationUrl(hashedEmail, feedId, feedDisplayName, domainName).toString();
 
       expect(result).to.equal(
-        `https://${DOMAIN_NAME}/subscription-confirmation.html` +
+        `https://${domainName}/subscription-confirmation.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${encodeSearchParamValue(feedDisplayName)}` +
           `&email=${encodeSearchParamValue(emailAddress.value)}`

@@ -7,6 +7,7 @@ import { makeStorageStub, Stub } from '../shared/test-utils';
 describe(getFeedSettings.name, () => {
   const feedId = 'jalas';
   const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
+  const domainName = 'test.feedsubscription.com';
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -18,7 +19,7 @@ describe(getFeedSettings.name, () => {
 
   it('returns a FeedSettings value from feed.json', () => {
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeedSettings(feedId, storage);
+    const result = getFeedSettings(feedId, storage, domainName);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
 
@@ -27,7 +28,7 @@ describe(getFeedSettings.name, () => {
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: makeEmailAddress(`${feedId}@feedsubscription.com`) as EmailAddress,
+      fromAddress: makeEmailAddress(`${feedId}@test.feedsubscription.com`) as EmailAddress,
       replyTo: makeEmailAddress(data.replyTo) as EmailAddress,
       cronPattern: data.cronPattern,
     };
@@ -38,7 +39,7 @@ describe(getFeedSettings.name, () => {
   it('defaults cronPattern to every hour', () => {
     const dataWithoutCronPattern = { ...data, cronPattern: undefined };
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => dataWithoutCronPattern });
-    const result = getFeedSettings(feedId, storage) as FeedSettings;
+    const result = getFeedSettings(feedId, storage, domainName) as FeedSettings;
 
     expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
@@ -51,9 +52,9 @@ describe(getFeedSettings.name, () => {
       fromAddress: 'some@test.com',
     };
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeedSettings(feedId, storage) as FeedSettings;
+    const result = getFeedSettings(feedId, storage, domainName) as FeedSettings;
 
-    expect(result.replyTo.value).to.equal('feedback@feedsubscription.com');
+    expect(result.replyTo.value).to.equal('feedback@test.feedsubscription.com');
   });
 
   it('defaults displayName to feedId', () => {
@@ -63,14 +64,14 @@ describe(getFeedSettings.name, () => {
       fromAddress: 'some@test.com',
     };
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeedSettings(feedId, storage) as FeedSettings;
+    const result = getFeedSettings(feedId, storage, domainName) as FeedSettings;
 
     expect(result.displayName).to.equal(feedId);
   });
 
   it('returns an FeedNotFound when value not found', () => {
     const storage = makeStorageStub({ loadItem: () => undefined, hasItem: () => false });
-    const result = getFeedSettings(feedId, storage);
+    const result = getFeedSettings(feedId, storage, domainName);
 
     expect(result).to.deep.equal({ kind: 'FeedNotFound' });
   });
@@ -79,7 +80,7 @@ describe(getFeedSettings.name, () => {
     const resultForJson = (data: Object): ReturnType<typeof getFeedSettings> => {
       const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
 
-      return getFeedSettings(feedId, storage);
+      return getFeedSettings(feedId, storage, domainName);
     };
 
     expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(makeErr(`Invalid feed URL in ${storageKey}: not-a-url`));

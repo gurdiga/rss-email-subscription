@@ -1,5 +1,4 @@
 import { requireEnv } from '../../shared/env';
-import { DOMAIN_NAME } from '../../domain/feed-settings';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
@@ -17,8 +16,8 @@ async function main(): Promise<number> {
   console.log(`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
 
   const to = 'gurdiga@gmail.com';
-  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${DOMAIN_NAME}`) as EmailAddress);
-  const replyTo = `slow-test-reply-to@${DOMAIN_NAME}`;
+  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${env.DOMAIN_NAME}`) as EmailAddress);
+  const replyTo = `slow-test-reply-to@${env.DOMAIN_NAME}`;
 
   await sentItemEmail(from, to, replyTo, env);
   await sentEmailVerificationEmail(from, to, replyTo, env);
@@ -86,7 +85,7 @@ async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, re
 }
 
 function getEnv(): Result<EmailDeliveryEnv> {
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     return makeErr(`Invalid environment variables: ${env.reason}`);

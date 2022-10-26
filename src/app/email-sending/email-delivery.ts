@@ -1,11 +1,11 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
-import { DOMAIN_NAME } from '../../domain/feed-settings';
 import { FullEmailAddress } from './emails';
 
 export interface EmailDeliveryEnv {
   SMTP_CONNECTION_STRING: string;
+  DOMAIN_NAME: string;
 }
 
 export type DeliverEmailFn = (emailDeliveryRequest: EmailDeliveryRequest) => Promise<DeliveryInfo>;
@@ -41,7 +41,7 @@ export async function deliverEmail({
     subject,
     html: htmlBody,
     envelope: {
-      from: makeReturnPath(to),
+      from: makeReturnPath(to, env.DOMAIN_NAME),
       to,
     },
   });
@@ -70,8 +70,8 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
   };
 }
 
-export function makeReturnPath(to: string, timestamp = Date.now().toString()): string {
+export function makeReturnPath(to: string, domainName: string, uid = Date.now()): string {
   const toAddress = to.replace(/@/, '=');
 
-  return `bounced-${timestamp}-${toAddress}@${DOMAIN_NAME}`;
+  return `bounced-${uid}-${toAddress}@${domainName}`;
 }

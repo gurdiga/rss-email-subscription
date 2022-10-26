@@ -9,7 +9,7 @@ import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
-const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
+const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
 if (isErr(env)) {
   logError(`Invalid environment`, { reason: env.reason });
@@ -33,7 +33,7 @@ if (!feedId) {
   process.exit(1);
 }
 
-const feedSettings = getFeedSettings(feedId, storage);
+const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
 
 if (isErr(feedSettings)) {
   logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });

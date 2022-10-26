@@ -3,8 +3,6 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeUrl } from '../shared/url';
 
-export const DOMAIN_NAME = 'feedsubscription.com';
-
 export interface FeedSettings {
   kind: 'FeedSettings';
   displayName: string;
@@ -29,7 +27,11 @@ export function getFeedStorageKey(feedId: string) {
   return `${feedRootStorageKey}/${feedId}`;
 }
 
-export function getFeedSettings(feedId: string, storage: AppStorage): Result<FeedSettings | FeedNotFound> {
+export function getFeedSettings(
+  feedId: string,
+  storage: AppStorage,
+  domainName: string
+): Result<FeedSettings | FeedNotFound> {
   const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
 
   if (!storage.hasItem(storageKey)) {
@@ -58,13 +60,13 @@ export function getFeedSettings(feedId: string, storage: AppStorage): Result<Fee
     );
   }
 
-  const fromAddress = makeEmailAddress(`${feedId}@${DOMAIN_NAME}`);
+  const fromAddress = makeEmailAddress(`${feedId}@${domainName}`);
 
   if (isErr(fromAddress)) {
     return makeErr(`Invalid "fromAddress" in ${storageKey}: ${fromAddress.reason}`);
   }
 
-  const defaultReplyTo = `feedback@${DOMAIN_NAME}`;
+  const defaultReplyTo = `feedback@${domainName}`;
   const replyTo = makeEmailAddress(data.replyTo || defaultReplyTo);
 
   if (isErr(replyTo)) {

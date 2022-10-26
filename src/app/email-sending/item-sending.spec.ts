@@ -7,6 +7,7 @@ import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFull
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
 
 describe('item-sending', () => {
+  const domainName = 'test.feedsubscription.com';
   const feedId = 'uniqid';
   const from = makeFullEmailAddress('John DOE', makeEmailAddress('from@email.com') as EmailAddress);
   const to = makeEmailAddress('to@email.com') as EmailAddress;
@@ -28,6 +29,7 @@ describe('item-sending', () => {
 
   const env: EmailDeliveryEnv = {
     SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
+    DOMAIN_NAME: domainName,
   };
 
   describe(sendEmail.name, () => {
@@ -89,10 +91,10 @@ describe('item-sending', () => {
     };
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {
-      const result = makeUnsubscribeUrl(feedId, hashedEmail, displayName);
+      const result = makeUnsubscribeUrl(feedId, hashedEmail, displayName, domainName);
 
       expect(result.toString()).to.equal(
-        `https://feedsubscription.com/unsubscribe.html` +
+        `https://test.feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${encodeSearchParamValue(displayName)}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
@@ -100,10 +102,10 @@ describe('item-sending', () => {
     });
 
     it('uses feedId when displayName is empty', () => {
-      const result = makeUnsubscribeUrl(feedId, hashedEmail, '');
+      const result = makeUnsubscribeUrl(feedId, hashedEmail, '', domainName);
 
       expect(result.toString()).to.equal(
-        `https://feedsubscription.com/unsubscribe.html` +
+        `https://test.feedsubscription.com/unsubscribe.html` +
           `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${feedId}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`

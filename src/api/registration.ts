@@ -14,7 +14,6 @@ import { AppSettings } from '../domain/app-settings';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
-import { DOMAIN_NAME } from '../domain/feed-settings';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
 import {
   RegistrationConfirmationSecret,
@@ -82,7 +81,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   const module = `${registration.name}:${sendConfirmationEmail.name}`;
   const { logError, logInfo } = makeCustomLoggers({ email: recipient.value, module });
 
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING']);
+  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
     logError(`Invalid environment`, { reason: env.reason });
@@ -91,7 +90,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
 
   const from = settings.fullEmailAddress;
   const replyTo = settings.fullEmailAddress.emailAddress;
-  const confirmationLink = makeRegistrationConfirmationLink(recipient, settings.hashingSalt);
+  const confirmationLink = makeRegistrationConfirmationLink(recipient, settings.hashingSalt, env.DOMAIN_NAME);
   const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
   const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
@@ -103,8 +102,8 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   logInfo('Sent registration confirmation email');
 }
 
-export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string): URL {
-  const url = new URL(`https://${DOMAIN_NAME}/registration-confirmation.html`);
+export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
+  const url = new URL(`https://${domainName}/registration-confirmation.html`);
   const secret = makeConfirmationSecret(to, appHashingSalt);
 
   url.searchParams.set('secret', secret.value);
