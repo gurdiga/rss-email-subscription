@@ -26,16 +26,18 @@ export function makeRequestHandler(handler: AppRequestHandler, app: App): Reques
 
     logInfo(action, { reqId, action, reqBody, reqParams, referer });
 
+    const start = new Date();
     const result = await handler(reqId, reqBody, reqParams, reqSession, app);
+    const duration = new Date().getTime() - start.getTime();
 
     if (isSuccess(result)) {
-      logInfo(`${action} succeded`, result.logData);
+      logInfo(`${action} succeded`, { ...result.logData, duration });
       res.status(200).send(result);
     } else if (isInputError(result)) {
-      logWarning(`${action} input error`, { message: result.message });
+      logWarning(`${action} input error`, { message: result.message, duration });
       res.status(400).send(result);
     } else if (isAppError(result)) {
-      logError(`${action} failed`, { message: result.message });
+      logError(`${action} failed`, { message: result.message, duration });
       res.status(500).send(result);
     }
   };
