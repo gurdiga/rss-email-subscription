@@ -18,17 +18,17 @@ describe('API', () => {
     const userPassword = 'A-long-S3cre7-password';
 
     it('flows', async () => {
-      const registrationresponse = await registrationDo(userPlan, userEmail, userPassword);
+      const { responseBody: registrationResponse } = await registrationDo(userPlan, userEmail, userPassword);
       const [account, accountId] = getAccountByEmail(userEmail);
 
-      expect((registrationresponse as Success).kind).to.equal('Success', 'registration');
+      expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
       expect(account.plan).to.equal(userPlan, 'registration plan');
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
-      const registrationConfirmationResponse = await registrationConfirmationDo(userEmail);
+      const { responseBody: registrationConfirmationResponse } = await registrationConfirmationDo(userEmail);
       expect(registrationConfirmationResponse.kind).to.equal('Success', 'registration confirmation');
 
       let sessionId = (registrationConfirmationResponse as Success).logData!['sessionId'];
@@ -40,18 +40,31 @@ describe('API', () => {
       const [accountAfterConfirmation] = getAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
-      const authenticationResponse = await authenticationDo(userEmail, userPassword);
+      const { responseBody: authenticationResponse, responseHeaders } = await authenticationDo(userEmail, userPassword);
       expect(authenticationResponse.kind).to.equal('Success', 'authentication');
 
       sessionId = (authenticationResponse as Success).logData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
 
       const sessionData = getSessionData(sessionId!);
+      const sessionCookie = sessionData.cookie!;
 
       expect(sessionData.accountId).to.equal(accountId, 'authentication session accountId');
-      expect(sessionData.cookie!.originalMaxAge).to.equal(172800000, 'authentication cookie maxAge');
-      expect(sessionData.cookie!.sameSite).to.equal('strict', 'authentication cookie sameSite');
-      expect(sessionData.cookie!.httpOnly).to.equal(true, 'authentication cookie httpOnly');
+      expect(sessionCookie.originalMaxAge).to.equal(172800000, 'authentication cookie maxAge');
+      expect(sessionCookie.sameSite).to.equal('strict', 'authentication cookie sameSite');
+      expect(sessionCookie.httpOnly).to.equal(true, 'authentication cookie httpOnly');
+
+      expect(new Date(sessionCookie.expires)).is.greaterThan(
+        new Date(sessionDataAfterConfirmation.cookie!.expires),
+        'authentication session is rolling'
+      );
+
+      const { responseBody: deauthenticationResponse } = await deauthenticationDo(responseHeaders);
+      expect(deauthenticationResponse.kind).to.equal('Success', 'deauthentication');
+
+      const sessionDataAfterDeauthentication = getSessionData(sessionId!);
+      expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
+        .exist;
     }).timeout(5000);
 
     after(() => {
@@ -72,6 +85,14 @@ describe('API', () => {
     async function authenticationDo(email: string, password: string) {
       return post('/authentication', { email, password });
     }
+
+    async function deauthenticationDo(responseHeaders: Headers) {
+      const cookie = responseHeaders.get('set-cookie')!;
+      const headers = new Headers({ cookie });
+      const data = {};
+
+      return post('/deauthentication', data, headers);
+    }
   });
 
   describe('subscription-confirmation-unsubscription flow', () => {
@@ -80,10 +101,10 @@ describe('API', () => {
     const subscriberEmail = 'api-test@feedsubscription.com';
 
     it('flows', async () => {
-      const subscriptionResult = await subscriptionDo(feedId, subscriberEmail);
+      const { responseBody: subscriptionResult } = await subscriptionDo(feedId, subscriberEmail);
       expect(subscriptionResult.kind).to.equal('Success', 'subscription result');
 
-      const repeatedSubscriptionResult = await subscriptionDo(feedId, subscriberEmail);
+      const { responseBody: repeatedSubscriptionResult } = await subscriptionDo(feedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
         { kind: 'InputError', message: 'Email is already subscribed' },
         'repeated subscription result'
@@ -93,18 +114,18 @@ describe('API', () => {
       expect(emails, 'email recorded with feed').to.include.keys(`${emailHash}`);
       expect(emails[emailHash].isConfirmed).to.be.false;
 
-      const subscriptionConfirmationResult = await subscriptionConfirmationDo(feedId, emailHash);
+      const { responseBody: subscriptionConfirmationResult } = await subscriptionConfirmationDo(feedId, emailHash);
       expect(subscriptionConfirmationResult.kind).to.equal('Success');
 
       const emailAfterConfirmation = getFeedSubscriberEmails(feedId);
       expect(emailAfterConfirmation[emailHash].isConfirmed).to.be.true;
 
-      const unsubscriptionResult = await unsubscriptionDo(feedId, emailHash);
+      const { responseBody: unsubscriptionResult } = await unsubscriptionDo(feedId, emailHash);
 
       expect(unsubscriptionResult.kind).to.equal('Success', 'unsubscription result');
       expect(getFeedSubscriberEmails(feedId), 'email removed from feed').not.to.include.keys(`${emailHash}`);
 
-      const repeatedUnsubscriptionResult = await unsubscriptionDo(feedId, emailHash);
+      const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionDo(feedId, emailHash);
 
       expect(repeatedUnsubscriptionResult).to.deep.equal(
         { kind: 'Success', message: 'Solidly unsubscribed.' },
@@ -191,23 +212,35 @@ function die(errorMessage: string) {
   throw new Error(errorMessage);
 }
 
-async function post(path: string, data: Record<string, string>): Promise<ApiResponse> {
-  return await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    body: new URLSearchParams(data),
-  }).then((response) => response.json());
-}
-
-interface GetApiResponse {
+interface ApiResponseTuple {
   responseHeaders: Headers;
 }
 
-interface TextApiResponse extends GetApiResponse {
+interface TextApiResponse extends ApiResponseTuple {
   responseBody: string;
 }
 
-interface JsonApiResponse extends GetApiResponse {
+interface JsonApiResponse extends ApiResponseTuple {
   responseBody: ApiResponse;
+}
+
+async function post(
+  path: string,
+  data: Record<string, string> = {},
+  headers: Headers = new Headers()
+): Promise<JsonApiResponse> {
+  const response = await fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    body: new URLSearchParams(data),
+    headers,
+  });
+
+  return {
+    responseBody: response.headers.get('content-type')?.includes('application/json')
+      ? await response.json()
+      : await response.text(),
+    responseHeaders: response.headers,
+  };
 }
 
 async function get(path: string, type: 'text'): Promise<TextApiResponse>;

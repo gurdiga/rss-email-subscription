@@ -16,13 +16,18 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
     secret: settings.hashingSalt,
     resave: false,
     saveUninitialized: true,
+    rolling: true,
   });
 }
 
 type SessionValue = string | number | boolean;
 
 export function storeSessionValue(reqSession: ReqSession, name: string, value: SessionValue): void {
-  (reqSession as any)[name] = value;
+  reqSession[name] = value;
+}
+
+export function deleteSessionValue(reqSession: ReqSession, name: string): void {
+  delete reqSession[name];
 }
 
 function setSessionConfig(reqSession: ReqSession): void {
@@ -33,4 +38,8 @@ function setSessionConfig(reqSession: ReqSession): void {
 export function initSession(reqSession: ReqSession, accountId: AccountId): void {
   storeSessionValue(reqSession, 'accountId', accountId);
   setSessionConfig(reqSession);
+}
+
+export function deinitSession(reqSession: ReqSession): void {
+  deleteSessionValue(reqSession, 'accountId');
 }
