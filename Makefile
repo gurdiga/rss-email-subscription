@@ -361,3 +361,13 @@ sent-count:
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add' |
 	numfmt --grouping
+
+# cron @monthly
+prune-docker-images:
+	@docker image prune --force |
+	cat <( \
+		echo "Subject: RES prune-docker-images"; \
+		echo "From: prune-docker-images@feedsubscription.com"; \
+		echo; \
+	) - \
+	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
