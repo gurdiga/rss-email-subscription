@@ -32,6 +32,7 @@ async function main() {
   server.get('/cors-test', (_req, res) => res.send('CORS test'));
   server.use(express.urlencoded({ extended: true }));
   server.use(makeExpressSession(app));
+  server.get('/session-test', makeRequestHandler(sessionTest, app));
   server.post('/subscription', makeRequestHandler(subscription, app));
   server.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
   server.post('/unsubscription', makeRequestHandler(unsubscription, app));
@@ -39,7 +40,6 @@ async function main() {
   server.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
   server.post('/authentication', makeRequestHandler(authentication, app));
   server.post('/deauthentication', makeRequestHandler(deauthentication, app));
-  server.get('/session-test', makeRequestHandler(sessionTest, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));
