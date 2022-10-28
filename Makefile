@@ -43,7 +43,7 @@ cw:
 pre-commit: lint check test format-check
 pc: pre-commit
 
-lint: lint-prevent-mocha-only lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
+lint: lint-mocha-only lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
 l: lint
 
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
@@ -65,8 +65,13 @@ lint-shell-scripts:
 
 lsh: lint-shell-scripts
 
-lint-prevent-mocha-only:
-	@git diff-index --cached --name-only HEAD | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
+lint-mocha-only:
+	echo $$SHELL
+	function staged_files {
+		git diff-index --cached --name-only HEAD
+	}
+
+	staged_files | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
