@@ -66,7 +66,7 @@ lint-shell-scripts:
 lsh: lint-shell-scripts
 
 lint-prevent-mocha-only:
-	@git status --porcelain | grep -E '.spec.ts$$' | cut -c4- | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
+	@git diff-index --cached --name-only HEAD | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
