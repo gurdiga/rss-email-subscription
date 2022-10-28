@@ -4,6 +4,7 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData } from './src/domain/account';
 import { AppSettings } from './src/domain/app-settings';
+import { FeedSettings } from './src/domain/feed-settings';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -13,10 +14,11 @@ const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is 
 const baseUrl = 'https://localhost.feedsubscription.com';
 
 describe('API', () => {
+  const userEmail = 'api-test-blogger@feedsubscription.com';
+  const userPassword = 'A-long-S3cre7-password';
+
   describe('registration-confirmation-authentication-deauthentication flow', () => {
     const userPlan = 'standard';
-    const userEmail = 'api-test-blogger@feedsubscription.com';
-    const userPassword = 'A-long-S3cre7-password';
 
     it('flows', async () => {
       const { responseBody: registrationResponse } = await registrationDo(userPlan, userEmail, userPassword);
@@ -81,10 +83,6 @@ describe('API', () => {
       const secret = hash(email, appSettings.hashingSalt);
 
       return post('/registration-confirmation', { secret });
-    }
-
-    async function authenticationDo(email: string, password: string) {
-      return post('/authentication', { email, password });
     }
 
     async function deauthenticationDo(responseHeaders: Headers) {
@@ -207,6 +205,27 @@ describe('API', () => {
       expect(responseBody).to.match(gitRevisionMask);
     });
   });
+
+  describe('/feeds', () => {
+    it('returns authenticated user’s feeds', async () => {
+      const feeds = await getUserFeeds(userEmail, userPassword);
+
+      expect(feeds.length).to.equal(1);
+      // TODO
+    });
+
+    it('responds with 403 if not authenticated');
+
+    async function getUserFeeds(email: string, password: string) {
+      const { responseHeaders } = await authenticationDo(email, password);
+      const cookie = responseHeaders.get('set-cookie')!;
+      const authenticationHeaders = new Headers({ cookie });
+      const { responseBody } = await get('/feeds', 'json', authenticationHeaders);
+      const { data } = responseBody as Success<FeedSettings[]>;
+
+      return data!;
+    }
+  });
 });
 
 interface ApiResponseTuple {
@@ -256,6 +275,10 @@ async function get(
     responseBody: await response[type](),
     responseHeaders: response.headers,
   };
+}
+
+async function authenticationDo(email: string, password: string) {
+  return post('/authentication', { email, password });
 }
 
 function getAccountByEmail(email: string): [AccountData, number] {

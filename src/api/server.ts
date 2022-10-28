@@ -13,6 +13,7 @@ import { registrationConfirmation } from './registration-confirmation';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import { deauthentication } from './deauthentication';
+import { feeds } from './feeds';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -40,6 +41,7 @@ async function main() {
   server.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
   server.post('/authentication', makeRequestHandler(authentication, app));
   server.post('/deauthentication', makeRequestHandler(deauthentication, app));
+  server.get('/feeds', makeRequestHandler(feeds, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));
