@@ -32,6 +32,7 @@ export function makeRequestHandler(handler: AppRequestHandler, app: App): Reques
 
     if (isSuccess(result)) {
       logInfo(`${action} succeded`, { ...result.logData, duration });
+      delete result.logData;
       res.status(200).send(result);
     } else if (isInputError(result)) {
       logWarning(`${action} input error`, { message: result.message, duration });
