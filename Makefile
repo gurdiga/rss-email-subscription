@@ -378,3 +378,8 @@ prune-docker-images:
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
+git-pre-commit-hook:
+	echo "#!/bin/sh" > .git/hooks/pre-commit
+	echo "" >> .git/hooks/pre-commit
+	echo "bash -i -c 'make pre-commit'" >> .git/hooks/pre-commit
