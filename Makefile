@@ -66,7 +66,6 @@ lint-shell-scripts:
 lsh: lint-shell-scripts
 
 lint-mocha-only:
-	echo $$SHELL
 	function staged_files {
 		git diff-index --cached --name-only HEAD
 	}
