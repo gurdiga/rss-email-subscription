@@ -11,5 +11,8 @@ export const sessionTest: AppRequestHandler = async function sessionTest(
 ) {
   storeSessionValue(reqSession, 'works', true);
 
-  return makeSuccess('This is an endpoint to test the HTTP session mechanism', { sessionId: reqSession.id });
+  const logData = {};
+  const responseData = { sessionId: reqSession.id };
+
+  return makeSuccess('This is an endpoint to test the HTTP session mechanism', logData, responseData);
 };

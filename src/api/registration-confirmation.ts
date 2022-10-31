@@ -40,7 +40,10 @@ export const registrationConfirmation: AppRequestHandler = async function regist
 
   initSession(reqSession, accountId);
 
-  return makeSuccess('Account registration confirmed.', { sessionId: reqSession.id });
+  const logData = {};
+  const responseData = { sessionId: reqSession.id };
+
+  return makeSuccess('Account registration confirmed.', logData, responseData);
 };
 
 interface ProcessedInput {

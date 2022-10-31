@@ -34,7 +34,7 @@ describe('API', () => {
       const { responseBody: registrationConfirmationResponse } = await registrationConfirmationDo(userEmail);
       expect(registrationConfirmationResponse.kind).to.equal('Success', 'registration confirmation');
 
-      let sessionId = (registrationConfirmationResponse as Success).logData!['sessionId'];
+      let sessionId = (registrationConfirmationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
 
       const sessionDataAfterConfirmation = getSessionData(sessionId!);
@@ -46,7 +46,7 @@ describe('API', () => {
       const { responseBody: authenticationResponse, responseHeaders } = await authenticationDo(userEmail, userPassword);
       expect(authenticationResponse.kind).to.equal('Success', 'authentication');
 
-      sessionId = (authenticationResponse as Success).logData!['sessionId'];
+      sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
 
       const sessionData = getSessionData(sessionId!);
@@ -151,14 +151,14 @@ describe('API', () => {
     function getFeedSubscriberEmails(feedId: string) {
       return loadJSON(`${dataDirRoot}/feeds/${feedId}/emails.json`);
     }
-  });
+  }).timeout(5000);
 
   describe('http session test', () => {
     it('works', async () => {
       const { responseBody, responseHeaders } = await get('/session-test', 'json');
       expect(responseBody.kind).to.equal('Success');
 
-      const sessionId = (responseBody as Success).logData!['sessionId'];
+      const sessionId = (responseBody as Success).responseData!['sessionId'];
       expect(sessionId).to.exist;
 
       const sessionData = getSessionData(sessionId!);
@@ -167,7 +167,7 @@ describe('API', () => {
       const cookie = responseHeaders.get('set-cookie')!;
       const { responseBody: subsequentRequestResponse } = await get('/session-test', 'json', new Headers({ cookie }));
 
-      const subsequentRequestSession = (subsequentRequestResponse as Success).logData!['sessionId'];
+      const subsequentRequestSession = (subsequentRequestResponse as Success).responseData!['sessionId'];
       expect(subsequentRequestSession).to.equal(sessionId);
     });
   });
@@ -221,7 +221,7 @@ describe('API', () => {
       const cookie = responseHeaders.get('set-cookie')!;
       const authenticationHeaders = new Headers({ cookie });
       const { responseBody } = await get('/feeds', 'json', authenticationHeaders);
-      const { data } = responseBody as Success<FeedSettings[]>;
+      const { responseData: data } = responseBody as Success<FeedSettings[]>;
 
       return data!;
     }

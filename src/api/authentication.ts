@@ -34,7 +34,10 @@ export const authentication: AppRequestHandler = async function authentication(
 
   initSession(reqSession, accountId);
 
-  return makeSuccess('Welcome back!', { sessionId: reqSession.id });
+  const logData = {};
+  const responseData = { sessionId: reqSession.id };
+
+  return makeSuccess('Welcome back!', logData, responseData);
 };
 
 interface Input {

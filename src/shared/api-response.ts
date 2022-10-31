@@ -8,19 +8,19 @@ export interface Success<D extends any = any> {
   kind: 'Success';
   message: string;
   logData?: LogData;
-  data?: D;
+  responseData?: D;
 }
 
 export function isSuccess(x: unknown): x is Success {
   return hasKind(x, 'Success');
 }
 
-export function makeSuccess<D extends any = any>(message: string, logData?: LogData, data?: D): Success<D> {
+export function makeSuccess<D extends any = any>(message: string, logData?: LogData, responseData?: D): Success<D> {
   return {
     kind: 'Success',
     message,
     logData,
-    data,
+    responseData,
   };
 }
 
