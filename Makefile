@@ -363,6 +363,7 @@ reset-account-index:
 
 sent-count:
 	@quiet=true
+	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
 	gzcat -f .tmp/logs/feedsubscription/app.log* |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
