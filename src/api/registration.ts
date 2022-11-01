@@ -28,8 +28,7 @@ export const registration: AppRequestHandler = async function registration(
   _reqSession,
   app
 ) {
-  const { plan, email, password } = reqBody;
-  const processInputResult = processInput(app.storage, { plan, email, password });
+  const processInputResult = processInput(app.storage, reqBody);
 
   if (isErr(processInputResult)) {
     return makeInputError(processInputResult.reason, processInputResult.field);
@@ -41,15 +40,15 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(initAccountResult.reason);
   }
 
-  const bloggerEmail = processInputResult.email;
-  const sendConfirmationEmailResult = await sendConfirmationEmail(bloggerEmail, app.settings);
+  const { email } = processInputResult;
+  const sendConfirmationEmailResult = await sendConfirmationEmail(email, app.settings);
 
   if (isErr(sendConfirmationEmailResult)) {
     return makeAppError(sendConfirmationEmailResult.reason);
   }
 
   const accountId = initAccountResult;
-  const storeConfirmationSecretResult = storeConfirmationSecret(app, bloggerEmail, accountId);
+  const storeConfirmationSecretResult = storeConfirmationSecret(app, email, accountId);
 
   if (isErr(storeConfirmationSecretResult)) {
     return makeAppError(storeConfirmationSecretResult.reason);
