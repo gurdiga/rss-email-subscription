@@ -13,7 +13,7 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  console.log(`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
+  console.info(`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
 
   const to = 'gurdiga@gmail.com';
   const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${env.DOMAIN_NAME}`) as EmailAddress);
@@ -22,7 +22,7 @@ async function main(): Promise<number> {
   await sentItemEmail(from, to, replyTo, env);
   await sentEmailVerificationEmail(from, to, replyTo, env);
 
-  console.log('OK\n');
+  console.info('OK\n');
 
   return 0;
 }
@@ -57,7 +57,7 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
 
   await deliverEmail(emailDeliveryRequest);
 
-  console.log(`Item email sent to ${to}: "${subject}".`);
+  console.info(`Item email sent to ${to}: "${subject}".`);
 }
 
 async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
@@ -81,7 +81,7 @@ async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, re
 
   await deliverEmail(emailDeliveryRequest);
 
-  console.log(`Email confirmation email sent to ${to}: "${subject}".`);
+  console.info(`Email confirmation email sent to ${to}: "${subject}".`);
 }
 
 function getEnv(): Result<EmailDeliveryEnv> {

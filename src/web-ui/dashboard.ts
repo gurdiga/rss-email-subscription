@@ -1,5 +1,5 @@
 function main() {
-  console.log('Hello dashboard');
+  console.info('Hello dashboard');
 }
 
 main();
