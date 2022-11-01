@@ -1,4 +1,4 @@
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { EmailAddress, EmailHashFn, makeEmailAddress } from '../app/email-sending/emails';
 import { parseDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
@@ -65,12 +65,8 @@ export function loadAccount(
   };
 }
 
-export function storeAccount(
-  storage: AppStorage,
-  accountIn: AccountId,
-  account: Account,
-  storageKey = getAccountStorageKey(accountIn)
-): Result<void> {
+export function storeAccount(storage: AppStorage, accountId: AccountId, account: Account): Result<void> {
+  const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
     plan: account.plan,
     email: account.email.value,
@@ -86,8 +82,10 @@ export function storeAccount(
   }
 }
 
-function getAccountStorageKey(accountIn: AccountId): StorageKey {
-  return `/accounts/${accountIn}/account.json`;
+const accountsStorageKey = '/accounts';
+
+function getAccountStorageKey(accountId: AccountId): StorageKey {
+  return `${accountsStorageKey}/${accountId}/account.json`;
 }
 
 export function confirmAccount(
@@ -107,5 +105,19 @@ export function confirmAccount(
 
   if (isErr(storeAccountResult)) {
     return makeErr(`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
+  }
+}
+
+export function indexAccountByEmailHash(
+  storage: AppStorage,
+  account: Account,
+  accountId: AccountId,
+  emailHashFn: EmailHashFn
+): Result<void> {
+  const indexEntryStorageKey = `${accountsStorageKey}/email-hash-to-id/${emailHashFn(account.email)}.json`;
+  const storeIndexEntryResult = storage.storeItem(indexEntryStorageKey, accountId);
+
+  if (isErr(storeIndexEntryResult)) {
+    return makeErr(`Couldn’t store index entry: ${storeIndexEntryResult.reason}`);
   }
 }

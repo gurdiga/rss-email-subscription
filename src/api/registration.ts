@@ -1,5 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Account, storeAccount } from '../domain/account';
+import { Account, indexAccountByEmailHash, storeAccount } from '../domain/account';
 import { AccountId, addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -209,6 +209,14 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   if (isErr(storeAccountResult)) {
     logError(`Couldn’t storeAccountResult`, { reason: storeAccountResult.reason });
     return makeErr('Couldn’t store account data');
+  }
+
+  const emailHashFn = (emailAddress: EmailAddress) => hash(emailAddress.value, settings.hashingSalt);
+  const indexResult = indexAccountByEmailHash(storage, account, accountId, emailHashFn);
+
+  if (isErr(indexResult)) {
+    logError('Couldn’t indexAccountByEmailHash', { accountId, email: input.email.value, reason: indexResult.reason });
+    return makeErr('Couldn’t index account');
   }
 
   const addEmailToIndexResult = addEmailToIndex(storage, accountId, input.email);
