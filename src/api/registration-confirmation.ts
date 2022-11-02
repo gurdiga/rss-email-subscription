@@ -50,7 +50,7 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${registrationConfirmation.name}:${processInput.name}`;
+  const module = `${registrationConfirmation.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module, secret: input.secret });
 
   const secret = validateRegistrationConfirmationSecret(input.secret);
@@ -64,7 +64,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 }
 
 function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<AccountId> {
-  const module = `${registrationConfirmation.name}:${confirmAccountBySecret.name}`;
+  const module = `${registrationConfirmation.name}-${confirmAccountBySecret.name}`;
   const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
 
   const accountId = getAccountIdForRegistrationConfirmationSecret(storage, secret);

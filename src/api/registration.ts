@@ -60,7 +60,7 @@ export function storeConfirmationSecret(
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const module = `${registration.name}:${storeConfirmationSecret.name}`;
+  const module = `${registration.name}-${storeConfirmationSecret.name}`;
   const { logError, logInfo } = makeCustomLoggers({ accountId, module });
 
   const confirmationSecret = makeConfirmationSecret(emailAddress, settings.hashingSalt);
@@ -75,7 +75,7 @@ export function storeConfirmationSecret(
 }
 
 async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
-  const module = `${registration.name}:${sendConfirmationEmail.name}`;
+  const module = `${registration.name}-${sendConfirmationEmail.name}`;
   const { logError, logInfo } = makeCustomLoggers({ email: recipient.value, module });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
@@ -146,7 +146,7 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${registration.name}:${processInput.name}`;
+  const module = `${registration.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
   const plan = makePlanId(input.plan);
@@ -179,7 +179,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
-  const module = `${registration.name}:${initAccount.name}`;
+  const module = `${registration.name}-${initAccount.name}`;
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
 
   const hashedPassword = hash(input.password.value, settings.hashingSalt);

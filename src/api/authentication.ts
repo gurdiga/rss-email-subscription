@@ -51,7 +51,7 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${authentication.name}:${processInput.name}`;
+  const module = `${authentication.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module });
 
   const email = makeEmailAddress(input.email);
