@@ -96,7 +96,7 @@ export function displayApiResponse(apiResponse: ApiResponse, messageElement: Ele
 export function displayCommunicationError(error: unknown, messageElement: Element): void {
   logError(error as Error);
 
-  messageElement.textContent = 'Can’t connect to the server. Please try again in a few moments.';
+  messageElement.textContent = 'Failed to connect to the server. Please try again in a few moments.';
   messageElement.className = 'alert alert-danger';
   messageElement.setAttribute('role', 'alert');
 }

@@ -26,7 +26,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { feedId, reason: storedEmails.reason });
+    logError(`Failed to ${loadStoredEmails.name}`, { feedId, reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -50,7 +50,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
   const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
-    logError('Can’t store emails on confirm', { reason: storeResult.reason });
+    logError(`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
     return makeAppError('Database write error: registering confirmation failed');
   }
 

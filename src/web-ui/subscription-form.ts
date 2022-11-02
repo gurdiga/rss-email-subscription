@@ -226,7 +226,7 @@
       let { message } = error;
 
       if (message === 'Failed to fetch') {
-        message = 'Can’t connect to the server. Please try again in a few moments.';
+        message = 'Failed to connect to the server. Please try again in a few moments.';
       }
 
       displayMessage(`Error: ${message} 😢`);

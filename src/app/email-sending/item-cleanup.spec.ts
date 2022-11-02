@@ -32,9 +32,9 @@ describe(deleteItem.name, () => {
   });
 
   it('returns an Err value when can’t delete', () => {
-    const storage = makeStorageStub({ removeItem: () => makeErr('Can’t delete!!') });
+    const storage = makeStorageStub({ removeItem: () => makeErr('Failed to delete!!') });
     const result = deleteItem(feedId, storage, storedRssItem);
 
-    expect(result).to.deep.equal(makeErr(`Can’t delete stored RSS item: Can’t delete!!`));
+    expect(result).to.deep.equal(makeErr(`Failed to delete stored RSS item: Failed to delete!!`));
   });
 });

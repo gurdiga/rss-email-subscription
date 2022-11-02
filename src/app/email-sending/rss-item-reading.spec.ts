@@ -116,7 +116,7 @@ describe(readStoredRssItems.name, () => {
     const storage = makeStorageStub({ listItems: () => error });
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(
-      makeErr(`Can’t list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
+      makeErr(`Failed to list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
     );
   });
 

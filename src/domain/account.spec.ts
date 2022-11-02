@@ -37,7 +37,7 @@ describe(loadAccount.name, () => {
     const storage = makeStorageStub({ loadItem: () => makeErr('Bad sector!') });
     const result = loadAccount(storage, accountId);
 
-    expect(result).to.deep.equal(makeErr('Can’t storage.loadItem: Bad sector!'));
+    expect(result).to.deep.equal(makeErr('Failed to load account data: Bad sector!'));
   });
 
   it('returns an Err value when stored email is invalid', () => {

@@ -28,7 +28,7 @@ export function initApp(): App {
   const settings = loadAppSettings(storage);
 
   if (isErr(settings)) {
-    logError(`Can’t load app settings`, { reason: settings.reason });
+    logError(`Failed to ${loadAppSettings.name}`, { reason: settings.reason });
     process.exit(1);
   }
 

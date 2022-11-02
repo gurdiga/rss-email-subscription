@@ -44,7 +44,7 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
   let feedDirs = storage.listSubdirectories(feedRootStorageKey);
 
   if (isErr(feedDirs)) {
-    logError(`Can’t list feed subdirectories`, { reason: feedDirs.reason });
+    logError(`Failed to list feed subdirectories`, { reason: feedDirs.reason });
     process.exit(1);
   }
 

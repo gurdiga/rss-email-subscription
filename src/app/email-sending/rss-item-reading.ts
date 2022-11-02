@@ -36,7 +36,7 @@ export function readStoredRssItems(feedId: string, storage: AppStorage): Result<
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
-    return makeErr(`Can’t list files in ${storageKey}: ${fileNamesResult.reason}`);
+    return makeErr(`Failed to list files in ${storageKey}: ${fileNamesResult.reason}`);
   }
 
   const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');

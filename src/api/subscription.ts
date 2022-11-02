@@ -39,7 +39,7 @@ export const subscription: AppRequestHandler = async function subscription(
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { reason: storedEmails.reason });
+    logError(`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -62,7 +62,7 @@ export const subscription: AppRequestHandler = async function subscription(
   const result = storeEmails(newEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
-    logError('Can’t store emails', { reason: result.reason });
+    logError(`Failed to ${storeEmails.name}`, { reason: result.reason });
     return makeAppError('Database write error');
   }
 
@@ -75,7 +75,7 @@ export const subscription: AppRequestHandler = async function subscription(
   const sendingResult = await sendEmail(from, emailAddress, replyTo, emailContent, env);
 
   if (isErr(sendingResult)) {
-    logError('Can’t send confirmation request email', { reason: sendingResult.reason });
+    logError('Failed to send confirmation request email', { reason: sendingResult.reason });
     return makeAppError('Error sending confirmation request email');
   }
 
@@ -117,8 +117,8 @@ function processInput(
   }
 
   if (isErr(feedSettings)) {
-    logError('Can’t read feed settings', { reason: feedSettings.reason });
-    return makeAppError('Can’t read feed settings');
+    logError(`Failed to ${getFeedSettings.name}`, { reason: feedSettings.reason });
+    return makeAppError('Failed to read feed settings');
   }
 
   return {

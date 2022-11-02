@@ -1,12 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import {
-  Account,
-  indexAccountByEmailHash,
-  accountExists,
-  storeAccount,
-  AccountId,
-  getAccountIdByEmail,
-} from '../domain/account';
+import { Account, accountExists, storeAccount, AccountId, getAccountIdByEmail } from '../domain/account';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -74,7 +67,7 @@ export function storeConfirmationSecret(
   const result = storeRegistrationConfirmationSecret(storage, confirmationSecret, accountId);
 
   if (isErr(result)) {
-    logError(`Can’t ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
+    logError(`Failed to ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
     return makeErr('Couldn’t store confirmation secret');
   }
 
@@ -99,7 +92,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
   if (isErr(sendEmailResult)) {
-    logError(`Can’t ${sendEmail.name}`, { reason: sendEmailResult.reason });
+    logError(`Failed to ${sendEmail.name}`, { reason: sendEmailResult.reason });
     return makeAppError('Couldn’t send registration confirmation email');
   }
 
@@ -208,14 +201,6 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   if (isErr(storeAccountResult)) {
     logError(`Couldn’t storeAccountResult`, { reason: storeAccountResult.reason });
     return makeErr('Couldn’t store account data');
-  }
-
-  const emailHashFn = (emailAddress: EmailAddress) => hash(emailAddress.value, settings.hashingSalt);
-  const indexResult = indexAccountByEmailHash(storage, account, accountId, emailHashFn);
-
-  if (isErr(indexResult)) {
-    logError('Couldn’t indexAccountByEmailHash', { accountId, email: input.email.value, reason: indexResult.reason });
-    return makeErr('Couldn’t index account');
   }
 
   logInfo('User registered', account);

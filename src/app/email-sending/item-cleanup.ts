@@ -7,6 +7,6 @@ export function deleteItem(feedId: string, storage: AppStorage, storedRssItem: V
   const removeItemResult = storage.removeItem(storageKey);
 
   if (isErr(removeItemResult)) {
-    return makeErr(`Can’t delete stored RSS item: ${removeItemResult.reason}`);
+    return makeErr(`Failed to delete stored RSS item: ${removeItemResult.reason}`);
   }
 }

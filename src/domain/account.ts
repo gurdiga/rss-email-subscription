@@ -1,4 +1,4 @@
-import { EmailAddress, EmailHashFn, makeEmailAddress } from '../app/email-sending/emails';
+import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { hash } from '../shared/crypto';
 
 import { parseDate } from '../shared/date-utils';
@@ -33,7 +33,7 @@ export function loadAccount(
   const loadItemResult = storage.loadItem(storageKey);
 
   if (isErr(loadItemResult)) {
-    return makeErr(`Can’t storage.loadItem: ${loadItemResult.reason}`);
+    return makeErr(`Failed to load account data: ${loadItemResult.reason}`);
   }
 
   const email = makeEmailAddress(loadItemResult.email);
@@ -117,27 +117,12 @@ export function confirmAccount(
 
 export const emailHashToIdIndexStorageKey = `${accountsStorageKey}/email-hash-to-id`;
 
-// TODO: remove
-export function indexAccountByEmailHash(
-  storage: AppStorage,
-  account: Account,
-  accountId: AccountId,
-  emailHashFn: EmailHashFn
-): Result<void> {
-  const indexEntryStorageKey = `${emailHashToIdIndexStorageKey}/${emailHashFn(account.email)}.json`;
-  const storeIndexEntryResult = storage.storeItem(indexEntryStorageKey, accountId);
-
-  if (isErr(storeIndexEntryResult)) {
-    return makeErr(`Couldn’t store index entry: ${storeIndexEntryResult.reason}`);
-  }
-}
-
 export function accountExists(storage: AppStorage, accountId: AccountId): Result<boolean> {
   const storageKey = getAccountStorageKey(accountId);
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
-    return makeErr(`Can’t check storage.hasItem: ${hasItemResult.reason}`);
+    return makeErr(`Failed to check account exists: ${hasItemResult.reason}`);
   }
 
   return hasItemResult;

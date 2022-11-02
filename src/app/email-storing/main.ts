@@ -72,7 +72,7 @@ async function main(): Promise<number | undefined> {
   const result = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
-    logError('Can’t store emails', { reason: result.reason });
+    logError(`Failed to ${storeEmails.name}`, { reason: result.reason });
     return 1;
   }
 

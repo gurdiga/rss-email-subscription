@@ -18,7 +18,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   const parseResult = parseSubscriptionId(id);
 
   if (isErr(parseResult)) {
-    logWarning('Can’t parse subscription ID', { id, reason: parseResult.reason });
+    logWarning(`Failed to ${parseSubscriptionId.name}`, { id, reason: parseResult.reason });
     return makeInputError('Invalid unsubscription link');
   }
 
@@ -26,7 +26,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError('Can’t load stored emails', { reason: storedEmails.reason });
+    logError(`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -49,7 +49,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
-    logError('Can’t store emails on unsubscribe', { reason: storeResult.reason });
+    logError(`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
     return makeAppError('Database write error: registering unsubscription failed');
   }
 

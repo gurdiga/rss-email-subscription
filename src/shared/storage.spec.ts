@@ -43,7 +43,7 @@ describe(makeStorage.name, () => {
       const result = storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
       expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'tries to create the necessary directory structure');
-      expect(result).to.deep.equal(makeErr('Can’t create storage directory structure: No space left on device!!'));
+      expect(result).to.deep.equal(makeErr('Failed to create storage directory structure: No space left on device!!'));
     });
 
     it('returns an Err value when can’t write file', () => {
@@ -78,14 +78,14 @@ describe(makeStorage.name, () => {
       const readFileFn = makeThrowingStub<ReadFileFn>(error);
       const result = loadItem(key, readFileFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t read file: Permission denied!!'));
+      expect(result).to.deep.equal(makeErr('Failed to read file: Permission denied!!'));
     });
 
     it('returns an Err value when can’t parse JSON contents', () => {
       const readFileFn = makeStub<ReadFileFn>(() => 'non-json-string');
       const result = loadItem(key, readFileFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t parse JSON: Unexpected token o in JSON at position 1'));
+      expect(result).to.deep.equal(makeErr('Failed to parse JSON: Unexpected token o in JSON at position 1'));
     });
   });
 
@@ -106,7 +106,7 @@ describe(makeStorage.name, () => {
       let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Nope!!'));
       let result = hasItem(key, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t check file: Nope!!'));
+      expect(result).to.deep.equal(makeErr('Failed to check file: Nope!!'));
     });
   });
 
@@ -136,13 +136,13 @@ describe(makeStorage.name, () => {
       let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom on exists!!'));
       let result = removeItem(key, deleteFileFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t check file exists: Boom on exists!!'));
+      expect(result).to.deep.equal(makeErr('Failed to check file exists: Boom on exists!!'));
 
       fileExistsFn = makeStub<FileExistsFn>(() => true);
       deleteFileFn = makeThrowingStub<DeleteFileFn>(new Error('Boom on delete!!'));
       result = removeItem(key, deleteFileFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t delete file: Boom on delete!!'));
+      expect(result).to.deep.equal(makeErr('Failed to delete file: Boom on delete!!'));
     });
   });
 
@@ -161,7 +161,7 @@ describe(makeStorage.name, () => {
       const fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom!?'));
       const result = listItems('/key', listFilesFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t check directory exists: Boom!?'));
+      expect(result).to.deep.equal(makeErr('Failed to check directory exists: Boom!?'));
     });
 
     it('returns an Err value when fail to list files', () => {
@@ -169,7 +169,7 @@ describe(makeStorage.name, () => {
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
       const result = listItems('/key', listFilesFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t list files: Boom on list files!?'));
+      expect(result).to.deep.equal(makeErr('Failed to list files: Boom on list files!?'));
     });
   });
 
@@ -188,7 +188,7 @@ describe(makeStorage.name, () => {
       const fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom!?'));
       const result = listSubdirectories('/key', listDirectoriesFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t check directory exists: Boom!?'));
+      expect(result).to.deep.equal(makeErr('Failed to check directory exists: Boom!?'));
     });
 
     it('returns an Err value when fail to list files', () => {
@@ -196,7 +196,7 @@ describe(makeStorage.name, () => {
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
       const result = listItems('/key', listDirectoriesFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Can’t list files: Boom on list files!?'));
+      expect(result).to.deep.equal(makeErr('Failed to list files: Boom on list files!?'));
     });
   });
 });
