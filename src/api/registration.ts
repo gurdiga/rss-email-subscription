@@ -109,7 +109,8 @@ export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSal
 }
 
 function makeConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): RegistrationConfirmationSecret {
-  const emailAddressHash = hash(emailAddress.value, appHashingSalt);
+  // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
+  const emailAddressHash = hash(emailAddress.value, `confirmation-secret-${appHashingSalt}`);
 
   return makeRegistrationConfirmationSecret(emailAddressHash);
 }

@@ -80,7 +80,7 @@ describe('API', () => {
 
     async function registrationConfirmationDo(email: string) {
       const appSettings = loadJSON(`./${dataDirRoot}/settings.json`) as AppSettings;
-      const secret = hash(email, appSettings.hashingSalt);
+      const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
       return post('/registration-confirmation', { secret });
     }

@@ -92,6 +92,7 @@ function getAccountStorageKey(accountId: AccountId): StorageKey {
 }
 
 export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): string {
+  // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
   return hash(email.value, hashingSalt);
 }
 
