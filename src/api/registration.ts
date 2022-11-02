@@ -1,6 +1,12 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Account, indexAccountByEmailHash, storeAccount } from '../domain/account';
-import { AccountId, addEmailToIndex, findAccountIdByEmail } from '../domain/account-index';
+import {
+  Account,
+  indexAccountByEmailHash,
+  accountExists,
+  storeAccount,
+  AccountId,
+  getAccountIdByEmail,
+} from '../domain/account';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -8,7 +14,6 @@ import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { AppRequestHandler } from './request-handler';
-import { AppStorage } from '../shared/storage';
 import { makePlanId, PlanId } from '../domain/plan';
 import { AppSettings } from '../domain/app-settings';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
@@ -28,7 +33,7 @@ export const registration: AppRequestHandler = async function registration(
   _reqSession,
   app
 ) {
-  const processInputResult = processInput(app.storage, reqBody);
+  const processInputResult = processInput(reqBody);
 
   if (isErr(processInputResult)) {
     return makeInputError(processInputResult.reason, processInputResult.field);
@@ -146,7 +151,7 @@ interface ProcessedInput {
   password: NewPassword;
 }
 
-function processInput(storage: AppStorage, input: Input): Result<ProcessedInput> {
+function processInput(input: Input): Result<ProcessedInput> {
   const module = `${registration.name}:${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
@@ -162,18 +167,6 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
   if (isErr(email)) {
     logWarning('Invalid email', { reason: email.reason });
     return { ...email, field: 'email' };
-  }
-
-  const accountId = findAccountIdByEmail(storage, email);
-
-  if (isErr(accountId)) {
-    logWarning('Can’t verify email taken', { reason: accountId.reason });
-    return makeErr('Can’t verify email taken', 'email');
-  }
-
-  if (typeof accountId === 'number') {
-    logWarning('Email already taken');
-    return makeErr('Email already taken', 'email');
   }
 
   const password = makeNewPassword(input.password);
@@ -193,9 +186,8 @@ function processInput(storage: AppStorage, input: Input): Result<ProcessedInput>
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
   const module = `${registration.name}:${initAccount.name}`;
-  const { logInfo, logError } = makeCustomLoggers({ module });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
 
-  const accountId = new Date().getTime();
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
   const account: Account = {
     plan: input.plan,
@@ -203,6 +195,13 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     creationTimestamp: new Date(),
   };
+
+  const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
+
+  if (accountExists(storage, accountId)) {
+    logWarning('Account already exists');
+    return makeErr('Email already taken', 'email');
+  }
 
   const storeAccountResult = storeAccount(storage, accountId, account);
 
@@ -217,13 +216,6 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   if (isErr(indexResult)) {
     logError('Couldn’t indexAccountByEmailHash', { accountId, email: input.email.value, reason: indexResult.reason });
     return makeErr('Couldn’t index account');
-  }
-
-  const addEmailToIndexResult = addEmailToIndex(storage, accountId, input.email);
-
-  if (isErr(addEmailToIndexResult)) {
-    logError('Couldn’t addEmailToIndex', { accountId, email: input.email.value, reason: addEmailToIndexResult.reason });
-    return makeErr('Couldn’t create account');
   }
 
   logInfo('User registered', account);

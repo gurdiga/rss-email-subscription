@@ -2,8 +2,8 @@ import { expect } from 'chai';
 import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
-import { AccountData } from './src/domain/account';
-import { AppSettings } from './src/domain/app-settings';
+import { AccountData, AccountId, accountsStorageKey, getAccountIdByEmail } from './src/domain/account';
+import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { FeedSettings } from './src/domain/feed-settings';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
@@ -281,20 +281,12 @@ async function authenticationDo(email: string, password: string) {
   return post('/authentication', { email, password });
 }
 
-function getAccountByEmail(email: string): [AccountData, number] {
-  const accountsRootDir = `${dataDirRoot}/accounts`;
-  const index = loadJSON(`./${accountsRootDir}/index.json`);
-  const userIds = Object.entries(index)
-    .filter(([k, _v]) => k !== 'version')
-    .map(([_k, v]) => v);
+function getAccountByEmail(email: string): [AccountData, AccountId] {
+  const accountsRootDir = `${dataDirRoot}/${accountsStorageKey}`;
+  const hashingSalt = loadJSON(`${dataDirRoot}/${appSettingsStorageKey}`)['hashingSalt'];
+  const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
 
-  const accounts = userIds
-    .map((userId) => [loadJSON(`./${accountsRootDir}/${userId}/account.json`), userId] as [AccountData, number])
-    .filter(([account]) => account.email === email);
-
-  console.assert(accounts.length === 1, `Expected a single account file but found ${accounts.length}`);
-
-  return accounts[0]!;
+  return [loadJSON(`./${accountsRootDir}/${accountId}/account.json`), accountId] as [AccountData, AccountId];
 }
 
 function getSessionData(sessionId: string) {

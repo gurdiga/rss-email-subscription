@@ -1,6 +1,6 @@
 import { getTypeName, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
-import { AccountId } from './account-index';
+import { AccountId } from './account';
 
 export interface RegistrationConfirmationSecret {
   kind: 'RegistrationConfirmationSecret';

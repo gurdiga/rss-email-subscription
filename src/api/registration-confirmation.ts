@@ -1,5 +1,4 @@
-import { confirmAccount as markAccountAsConfirmed } from '../domain/account';
-import { AccountId } from '../domain/account-index';
+import { AccountId, confirmAccount } from '../domain/account';
 import {
   deleteRegistrationConfirmationSecret,
   getAccountIdForRegistrationConfirmationSecret,
@@ -36,7 +35,7 @@ export const registrationConfirmation: AppRequestHandler = async function regist
     return makeAppError(confirmAccountBySecretResult.reason);
   }
 
-  const accountId = confirmAccountBySecretResult as AccountId;
+  const accountId = confirmAccountBySecretResult;
 
   initSession(reqSession, accountId);
 
@@ -75,10 +74,10 @@ function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirm
     return makeErr('Invalid registration confirmation link');
   }
 
-  const markAccountAsConfirmedResult = markAccountAsConfirmed(storage, accountId);
+  const confirmAccountResult = confirmAccount(storage, accountId);
 
-  if (isErr(markAccountAsConfirmedResult)) {
-    logWarning(`Failed to ${markAccountAsConfirmed.name}`, { accountId, reason: markAccountAsConfirmedResult.reason });
+  if (isErr(confirmAccountResult)) {
+    logWarning(`Failed to ${confirmAccount.name}`, { accountId, reason: confirmAccountResult.reason });
     return makeErr('Failed to confirm account');
   }
 
@@ -90,7 +89,7 @@ function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirm
       secret: secret.value,
     });
 
-    // NOTE: This is still a success for the user, so will not makeErr here.
+    // NOTE: This is still a success from user’s perspective, so will not makeErr here.
   }
 
   logInfo('User confirmed registration');

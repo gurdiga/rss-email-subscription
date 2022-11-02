@@ -1,6 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { loadAccount } from '../domain/account';
-import { AccountId, findAccountIdByEmail, isAccountNotFound } from '../domain/account-index';
+import { AccountId, getAccountIdByEmail, loadAccount } from '../domain/account';
 import { makePassword, Password } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -76,29 +75,17 @@ function processInput(input: Input): Result<ProcessedInput> {
   };
 }
 
-function checkCredentials({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
+function checkCredentials({ settings, storage }: App, input: ProcessedInput): Result<AccountId> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: input.email.value,
     module: `${authentication.name}:${checkCredentials.name}`,
   });
-  const findAccountResult = findAccountIdByEmail(storage, input.email);
-
-  if (isAccountNotFound(findAccountResult)) {
-    logWarning(`Can’t find account by email`);
-    return makeErr(`Can’t find account`, 'email');
-  }
-
-  if (isErr(findAccountResult)) {
-    logWarning(`Can’t search account by email`, { reason: findAccountResult.reason });
-    return makeErr(`Can’t search account`, 'email');
-  }
-
-  const accountId = findAccountResult;
+  const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
-    logError(`Can’t find account by email`, { reason: account.reason });
-    return makeErr(`Can’t load account`, 'email');
+    logError(`Failed to ${loadAccount.name}`, { reason: account.reason });
+    return makeErr(`Failed to load account`, 'email');
   }
 
   const inputHashedPassword = hash(input.password.value, settings.hashingSalt);

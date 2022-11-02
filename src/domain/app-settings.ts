@@ -15,9 +15,10 @@ export interface SettingsJson {
 }
 
 const hashingSaltLength = 16;
+export const appSettingsStorageKey = '/settings.json';
 
 export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
-  const loadItemResult = storage.loadItem('/settings.json') as SettingsJson;
+  const loadItemResult = storage.loadItem(appSettingsStorageKey) as SettingsJson;
 
   if (isErr(loadItemResult)) {
     return makeErr(`Could not read app settings: ${loadItemResult.reason}.`);

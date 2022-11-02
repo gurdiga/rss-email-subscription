@@ -1,12 +1,14 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { makeErr } from '../shared/lang';
+import { AppStorage } from '../shared/storage';
 import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
-import { Account, AccountData, confirmAccount, loadAccount, storeAccount } from './account';
+import { Account, AccountData, AccountId, confirmAccount, loadAccount, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
+const accountId: AccountId = 'some-email-hash';
 
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
@@ -18,7 +20,7 @@ describe(loadAccount.name, () => {
       creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
-    const result = loadAccount(storage, 123, storageKey);
+    const result = loadAccount(storage, accountId, storageKey);
 
     const expectedResult: Account = {
       email: makeEmailAddress(accountData.email) as EmailAddress,
@@ -32,10 +34,10 @@ describe(loadAccount.name, () => {
   });
 
   it('returns an Err value when storage fails', () => {
-    const storage = makeStorageStub({ loadItem: () => makeErr('Bad disc sector!') });
-    const result = loadAccount(storage, 123);
+    const storage = makeStorageStub({ loadItem: () => makeErr('Bad sector!') });
+    const result = loadAccount(storage, accountId);
 
-    expect(result).to.deep.equal(makeErr('Can’t load account data: Bad disc sector!'));
+    expect(result).to.deep.equal(makeErr('Can’t storage.loadItem: Bad sector!'));
   });
 
   it('returns an Err value when stored email is invalid', () => {
@@ -46,10 +48,10 @@ describe(loadAccount.name, () => {
       creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
-    const result = loadAccount(storage, 123);
+    const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr('Invalid email while loading account 123: Email is syntactically incorrect: "not-an-email-really"')
+      makeErr(`Invalid stored data for account ${accountId}: Email is syntactically incorrect: "not-an-email-really"`)
     );
   });
 
@@ -61,9 +63,9 @@ describe(loadAccount.name, () => {
       creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
-    const result = loadAccount(storage, 123);
+    const result = loadAccount(storage, accountId);
 
-    expect(result).to.deep.equal(makeErr('Invalid plan ID while loading account 123: Unknown plan ID: magic'));
+    expect(result).to.deep.equal(makeErr(`Invalid stored data for account ${accountId}: Unknown plan ID: magic`));
   });
 
   it('returns an Err value when stored hashed password is invalid', () => {
@@ -74,18 +76,16 @@ describe(loadAccount.name, () => {
       creationTimestamp,
     };
     const storage = makeStorageStub({ loadItem: () => accountData });
-    const result = loadAccount(storage, 123);
+    const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr('Invalid hashed password while loading account 123: Invalid hashed password length: 8')
+      makeErr(`Invalid stored data for account ${accountId}: Invalid hashed password length: 8`)
     );
   });
 });
 
 describe(storeAccount.name, () => {
   it('stores the given account', () => {
-    const accountId = 42;
-
     const account: Account = {
       plan: 'sde',
       email: makeEmailAddress('test@test.com') as EmailAddress,
@@ -118,17 +118,20 @@ describe(storeAccount.name, () => {
 
 describe(confirmAccount.name, () => {
   it('sets confirmationTimestamp on the given account', () => {
-    const accountId = 42;
     const accountData: AccountData = {
       plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
     };
+
+    const loadItem = makeStub(() => accountData);
+    const storeItem = makeSpy<AppStorage['storeItem']>();
     const storage = makeStorageStub({
-      loadItem: makeStub(() => accountData),
-      storeItem: makeSpy(),
+      loadItem: loadItem,
+      storeItem: storeItem,
     });
+
     const confirmationTimestamp = new Date('2022-10-07');
 
     const result = confirmAccount(storage, accountId, () => confirmationTimestamp);
@@ -141,8 +144,8 @@ describe(confirmAccount.name, () => {
       creationTimestamp,
     };
 
-    expect((storage.loadItem as Stub).calls).to.deep.equal([['/accounts/42/account.json']]);
-    expect((storage.storeItem as Stub).calls).to.deep.equal([['/accounts/42/account.json', expectedStoredData]]);
+    expect(loadItem.calls).to.deep.equal([[`/accounts/${accountId}/account.json`]]);
+    expect(storeItem.calls).to.deep.equal([[`/accounts/${accountId}/account.json`, expectedStoredData]]);
     expect(result).to.be.undefined;
   });
 });

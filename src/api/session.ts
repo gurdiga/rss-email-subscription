@@ -1,4 +1,4 @@
-import { AccountId } from '../domain/account-index';
+import { AccountId } from '../domain/account';
 import { App } from './init-app';
 
 const session = require('express-session');

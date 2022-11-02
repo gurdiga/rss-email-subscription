@@ -1,6 +1,8 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
+import { AppStorage } from '../shared/storage';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../shared/test-utils';
+import { AccountId } from './account';
 import {
   validateRegistrationConfirmationSecret,
   RegistrationConfirmationSecret,
@@ -33,16 +35,17 @@ describe('Registration confirmation secrets', () => {
   });
 
   const secret = makeRegistrationConfirmationSecret('secret-email-hash-id');
-  const accountId = 42;
+  const accountId: AccountId = 'some-email-hash';
   const storageErr = makeErr('Boom!');
 
   describe(storeRegistrationConfirmationSecret.name, () => {
     it('stores the given confirmation secret', () => {
-      const storage = makeStorageStub({ storeItem: makeSpy() });
+      const storeItem = makeSpy<AppStorage['storeItem']>();
+      const storage = makeStorageStub({ storeItem });
 
       storeRegistrationConfirmationSecret(storage, secret, accountId);
 
-      expect((storage.storeItem as Spy).calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json', 42]]);
+      expect(storeItem.calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json', accountId]]);
     });
 
     it('returns an Err value when storage fails', () => {
