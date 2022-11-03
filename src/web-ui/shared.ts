@@ -79,6 +79,8 @@ export function displayMainError(message: string) {
 
   errorMessageElement.textContent = message;
   errorMessageElement.className = 'alert alert-danger';
+
+  logError(message);
 }
 
 export interface ApiResponseUiElements {
@@ -106,8 +108,7 @@ export function logError(error: Error | string): void {
     error = new Error(error);
   }
 
-  // TODO: Record somewhere remotely? nginx? Rollbar?
-  console.error('Unhandled error', error);
+  Promise.reject(error); // Defined in website: https://github.com/gurdiga/feedsubscription.com/commit/06e3447
 }
 
 export function assertHeader(headerName: string, expectedHeaderValue: string) {
