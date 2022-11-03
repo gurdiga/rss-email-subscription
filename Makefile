@@ -199,6 +199,28 @@ watch-app:
 	& disown
 
 # cron @reboot
+watch-website:
+	@function url_decode {
+		sed 's@+@ @g;s@%@\\x@g' |
+		xargs -0 printf "%b"
+	}
+
+	tail -n0 --follow=name --retry .tmp/logs/{docker-desktop,feedsubscription}/website.log |
+	grep --line-buffered -F \
+			-e 'GET /error?stack=' \
+		|
+	while read -r _1 _2 _3 _4 _5 _6 _7 _8 _9 url _rest; do
+		(
+			echo "Subject: RES website error-log"
+			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo ""
+			echo "$$url" | url_decode
+		) |
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
+	done \
+	& disown
+
+# cron @reboot
 watch-smtp-out:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	grep --line-buffered -P '(warning|error|fatal|panic|reject):' |
