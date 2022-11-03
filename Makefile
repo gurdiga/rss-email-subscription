@@ -205,7 +205,7 @@ watch-website:
 		xargs -0 printf "%b"
 	}
 
-	tail -n0 --follow=name --retry .tmp/logs/{docker-desktop,feedsubscription}/website.log |
+	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/website.log |
 	grep --line-buffered -F \
 			-e 'GET /error?stack=' \
 		|
