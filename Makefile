@@ -34,7 +34,8 @@ edit:
 e: edit
 
 check:
-	node_modules/.bin/tsc -p tsconfig.json
+	node_modules/.bin/tsc --project tsconfig.json
+	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
 
 c: check
 cw:
