@@ -67,11 +67,13 @@ lint-shell-scripts:
 lsh: lint-shell-scripts
 
 lint-mocha-only:
-	@function staged_files {
-		git diff-index --cached --name-only HEAD
+	@function changed_files {
+		# List staged files if any, or changed if not
+		git diff-index --cached --name-only HEAD | ifne -n \
+		git diff-index --name-only HEAD
 	}
 
-	staged_files | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
+	changed_files | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
