@@ -233,74 +233,74 @@ describe('API', () => {
       return data!;
     }
   });
+
+  async function authenticationDo(email: string, password: string) {
+    return post('/authentication', { email, password });
+  }
+
+  function getAccountByEmail(email: string): [AccountData, AccountId] {
+    const accountsRootDir = `${dataDirRoot}/${accountsStorageKey}`;
+    const hashingSalt = loadJSON(`${dataDirRoot}/${appSettingsStorageKey}`)['hashingSalt'];
+    const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
+
+    return [loadJSON(`./${accountsRootDir}/${accountId}/account.json`), accountId] as [AccountData, AccountId];
+  }
+
+  function getSessionData(sessionId: string) {
+    return loadJSON(`./${dataDirRoot}/sessions/${sessionId}.json`);
+  }
+
+  interface ApiResponseTuple {
+    responseHeaders: Headers;
+  }
+
+  interface TextApiResponse extends ApiResponseTuple {
+    responseBody: string;
+  }
+
+  interface JsonApiResponse extends ApiResponseTuple {
+    responseBody: ApiResponse;
+  }
+
+  async function post(
+    path: string,
+    data: Record<string, string> = {},
+    headers: Headers = new Headers()
+  ): Promise<JsonApiResponse> {
+    const response = await fetch(`${baseUrl}${path}`, {
+      method: 'POST',
+      body: new URLSearchParams(data),
+      headers,
+    });
+
+    return {
+      responseBody: response.headers.get('content-type')?.includes('application/json')
+        ? await response.json()
+        : await response.text(),
+      responseHeaders: response.headers,
+    };
+  }
+
+  async function get(path: string, type: 'text'): Promise<TextApiResponse>;
+  async function get(path: string, type: 'text', headers: Headers): Promise<TextApiResponse>;
+  async function get(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse>;
+  async function get(path: string, type: 'json'): Promise<JsonApiResponse>;
+  async function get(path: string): Promise<JsonApiResponse>;
+  async function get(
+    path: string,
+    type: 'json' | 'text' = 'json',
+    headers?: Headers
+  ): Promise<JsonApiResponse | TextApiResponse> {
+    const response = await fetch(`${baseUrl}${path}`, { headers });
+
+    return {
+      responseBody: await response[type](),
+      responseHeaders: response.headers,
+    };
+  }
+
+  function loadJSON(filePath: string) {
+    const jsonString = readFile(filePath);
+    return JSON.parse(jsonString);
+  }
 });
-
-interface ApiResponseTuple {
-  responseHeaders: Headers;
-}
-
-interface TextApiResponse extends ApiResponseTuple {
-  responseBody: string;
-}
-
-interface JsonApiResponse extends ApiResponseTuple {
-  responseBody: ApiResponse;
-}
-
-async function post(
-  path: string,
-  data: Record<string, string> = {},
-  headers: Headers = new Headers()
-): Promise<JsonApiResponse> {
-  const response = await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    body: new URLSearchParams(data),
-    headers,
-  });
-
-  return {
-    responseBody: response.headers.get('content-type')?.includes('application/json')
-      ? await response.json()
-      : await response.text(),
-    responseHeaders: response.headers,
-  };
-}
-
-async function get(path: string, type: 'text'): Promise<TextApiResponse>;
-async function get(path: string, type: 'text', headers: Headers): Promise<TextApiResponse>;
-async function get(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse>;
-async function get(path: string, type: 'json'): Promise<JsonApiResponse>;
-async function get(path: string): Promise<JsonApiResponse>;
-async function get(
-  path: string,
-  type: 'json' | 'text' = 'json',
-  headers?: Headers
-): Promise<JsonApiResponse | TextApiResponse> {
-  const response = await fetch(`${baseUrl}${path}`, { headers });
-
-  return {
-    responseBody: await response[type](),
-    responseHeaders: response.headers,
-  };
-}
-
-async function authenticationDo(email: string, password: string) {
-  return post('/authentication', { email, password });
-}
-
-function getAccountByEmail(email: string): [AccountData, AccountId] {
-  const accountsRootDir = `${dataDirRoot}/${accountsStorageKey}`;
-  const hashingSalt = loadJSON(`${dataDirRoot}/${appSettingsStorageKey}`)['hashingSalt'];
-  const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
-
-  return [loadJSON(`./${accountsRootDir}/${accountId}/account.json`), accountId] as [AccountData, AccountId];
-}
-
-function getSessionData(sessionId: string) {
-  return loadJSON(`./${dataDirRoot}/sessions/${sessionId}.json`);
-}
-
-function loadJSON(filePath: string) {
-  const jsonString = readFile(filePath);
-  return JSON.parse(jsonString);
-}
