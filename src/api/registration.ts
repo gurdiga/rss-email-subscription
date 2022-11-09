@@ -2,7 +2,7 @@ import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { Account, accountExists, storeAccount, AccountId, getAccountIdByEmail } from '../domain/account';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { hasKind, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
@@ -29,13 +29,17 @@ export const registration: AppRequestHandler = async function registration(
   const processInputResult = processInput(reqBody);
 
   if (isErr(processInputResult)) {
-    return makeInputError(processInputResult.reason, processInputResult.field);
+    return makeInputError<keyof Input>(processInputResult.reason, processInputResult.field);
   }
 
   const initAccountResult = initAccount(app, processInputResult);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);
+  }
+
+  if (isAccountAlreadyExists(initAccountResult)) {
+    return makeInputError<keyof Input>('Email already taken', 'email');
   }
 
   const { email } = processInputResult;
@@ -145,7 +149,7 @@ interface ProcessedInput {
   password: NewPassword;
 }
 
-function processInput(input: Input): Result<ProcessedInput> {
+function processInput(input: Input): Result<ProcessedInput, keyof Input> {
   const module = `${registration.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
@@ -167,7 +171,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 
   if (isErr(password)) {
     logWarning('Invalid new password', { input: input.password, reason: password.reason });
-    return makeErr(`Invalid password: ${password.reason}`, 'password');
+    return makeErr<keyof Input>(`Invalid password: ${password.reason}`, 'password');
   }
 
   return {
@@ -178,7 +182,15 @@ function processInput(input: Input): Result<ProcessedInput> {
   };
 }
 
-function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId> {
+interface AccountAlreadyExists {
+  kind: 'AccountAlreadyExists';
+}
+
+export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
+  return hasKind(x, 'AccountAlreadyExists');
+}
+
+function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId | AccountAlreadyExists> {
   const module = `${registration.name}-${initAccount.name}`;
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
 
@@ -193,8 +205,8 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
 
   if (accountExists(storage, accountId)) {
-    logWarning('Account already exists');
-    return makeErr('Email already taken', 'email');
+    logWarning('Account already exists', { email: input.email.value });
+    return { kind: 'AccountAlreadyExists' };
   }
 
   const storeAccountResult = storeAccount(storage, accountId, account);

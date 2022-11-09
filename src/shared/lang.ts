@@ -1,17 +1,17 @@
-export type Result<T> = T | Err;
+export type Result<T, FIELD extends string = string> = T | Err<FIELD>;
 
-export interface Err {
+export interface Err<FIELD extends string = string> {
   kind: 'Err';
   reason: string;
-  field?: string;
+  field?: FIELD;
 }
 
 export function isErr(value: unknown): value is Err {
   return hasKind(value, 'Err');
 }
 
-export function makeErr(reason: string | unknown, field?: Err['field']): Err {
-  const err: Err = {
+export function makeErr<FIELD extends NonNullable<Err['field']>>(reason: string | unknown, field?: FIELD): Err<FIELD> {
+  const err: Err<FIELD> = {
     kind: 'Err',
     reason: typeof reason === 'string' ? reason : getErrorMessage(reason),
   };

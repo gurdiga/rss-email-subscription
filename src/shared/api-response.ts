@@ -24,13 +24,13 @@ export function makeSuccess<D extends any = any>(message: string, logData?: LogD
   };
 }
 
-export interface InputError {
+export interface InputError<FIELD extends string = string> {
   kind: 'InputError';
   message: string;
-  field?: string;
+  field?: FIELD;
 }
 
-export function makeInputError(message: string, field?: InputError['field']): InputError {
+export function makeInputError<FIELD extends string>(message: string, field?: FIELD): InputError {
   const inputError: InputError = {
     kind: 'InputError',
     message,

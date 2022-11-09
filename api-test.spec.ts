@@ -31,6 +31,13 @@ describe('API', () => {
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
+      const { responseBody: repeatedRegistration } = await registrationDo(userPlan, userEmail, userPassword);
+      expect(repeatedRegistration).to.deep.equal({
+        field: 'email',
+        kind: 'InputError',
+        message: 'Email already taken',
+      });
+
       const { responseBody: registrationConfirmationResponse } = await registrationConfirmationDo(userEmail);
       expect(registrationConfirmationResponse.kind).to.equal('Success', 'registration confirmation');
 
