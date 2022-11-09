@@ -76,20 +76,20 @@ smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
 app:
-	docker build \
+	docker buildx build \
 		--progress=plain \
-		-f docker-services/app/Dockerfile \
 		--tag app \
+		-f docker-services/app/Dockerfile \
 		.
 
 logger:
-	docker build \
+	docker buildx build \
 		--progress=plain \
 		--tag logger \
 		docker-services/logger
 
 smtp-out:
-	docker build \
+	docker buildx build \
 		--progress=plain \
 		--tag smtp-out \
 		docker-services/smtp-out
