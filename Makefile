@@ -367,7 +367,7 @@ format-check:
 
 clean: stop
 	docker image rm --force app
-	rm -rf website/html/
+	rm -rf website/html/ src/api/web-ui-scripts/ dist/
 
 init-data-dir:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
