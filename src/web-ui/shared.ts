@@ -1,4 +1,4 @@
-import { ApiResponse, InputError, isAppError, isInputError } from '../shared/api-response';
+import { ApiResponse, AppError, InputError, isAppError, isInputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -99,6 +99,12 @@ export function displayCommunicationError(error: unknown, messageElement: Elemen
   logError(error as Error);
 
   messageElement.textContent = 'Failed to connect to the server. Please try again in a few moments.';
+  messageElement.className = 'alert alert-danger';
+  messageElement.setAttribute('role', 'alert');
+}
+
+export function displayAppError(error: AppError, messageElement: Element): void {
+  messageElement.textContent = error.message;
   messageElement.className = 'alert alert-danger';
   messageElement.setAttribute('role', 'alert');
 }

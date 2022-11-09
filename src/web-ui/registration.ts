@@ -1,7 +1,7 @@
 import { isPlanId, makePlanId } from '../domain/plan';
-import { isInputError, isSuccess } from '../shared/api-response';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { displayMainError, displayCommunicationError, unhideElement } from './shared';
+import { displayMainError, displayCommunicationError, unhideElement, displayAppError } from './shared';
 import { preventDoubleClick, ApiResponseUiElements, requireUiElements } from './shared';
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
@@ -12,6 +12,7 @@ function main() {
     password: '#password',
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
+    appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
   });
 
@@ -40,6 +41,11 @@ function main() {
         return;
       }
 
+      if (isAppError(response)) {
+        displayAppError(response, uiElements.appErrorMessage);
+        return;
+      }
+
       if (isInputError(response)) {
         displayValidationError(response, uiElements);
         return;
@@ -53,6 +59,7 @@ function main() {
 }
 
 export interface RegistrationUiElements extends FormUiElements, ApiResponseUiElements {
+  appErrorMessage: HTMLElement;
   confirmationMessage: HTMLElement;
 }
 
