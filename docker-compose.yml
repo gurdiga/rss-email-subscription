@@ -95,7 +95,7 @@ services:
   website:
     container_name: website
     hostname: website
-    image: nginx:alpine
+    image: nginx:1.23.2-alpine
     restart: always
     ports: ['80:80', '443:443']
     volumes:
