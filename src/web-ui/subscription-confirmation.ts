@@ -7,7 +7,7 @@ function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
 
   if (isErr(queryParams)) {
-    displayMainError('Invalid subscribe confirmation link');
+    displayMainError('Invalid subscription confirmation link');
     return;
   }
 
