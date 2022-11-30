@@ -217,10 +217,11 @@ watch-website:
 			echo "Subject: RES website error-log"
 			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo ""
-			echo "$$client_ip - $$(whois 212.56.195.182 | grep 'descr:' | head -2)"
 			echo "$$referer"
 			echo "$$timestamp"
 			echo "$$url" | url_decode
+			echo "$$client_ip"
+			echo "$$(whois 212.56.195.182 | grep 'descr:' | head -2)"
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
 	done \
