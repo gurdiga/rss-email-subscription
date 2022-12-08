@@ -14,7 +14,7 @@ interface FetchResponse {
 
 export type FetchFn = (url: URL) => Promise<FetchResponse>;
 
-export const fetch = async (url: URL): Promise<FetchResponse> => {
+export const fetch: FetchFn = async (url: URL): Promise<FetchResponse> => {
   return new Promise((resolve, reject) => {
     let responseBody = '';
 
