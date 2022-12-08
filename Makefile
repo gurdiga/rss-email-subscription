@@ -112,7 +112,7 @@ start-api: website app
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api > /dev/null &
 	sleep 1
-	docker-compose --project-name res logs --follow --timestamps &
+	docker-compose --project-name res logs --follow --since 10s --timestamps &
 	wait
 
 start-website: website start-api
