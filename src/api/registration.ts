@@ -170,7 +170,7 @@ function processInput(input: Input): Result<ProcessedInput, keyof Input> {
   const password = makeNewPassword(input.password);
 
   if (isErr(password)) {
-    logWarning('Invalid new password', { input: input.password, reason: password.reason });
+    logWarning('Invalid new password', { password: input.password, reason: password.reason });
     return makeErr<keyof Input>(`Invalid password: ${password.reason}`, 'password');
   }
 
