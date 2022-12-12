@@ -12,7 +12,7 @@ import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDir
 import { attempt, isErr, makeErr, Result } from './lang';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
-type StorageValue = any; // Will get JSONified and stored in the file. TODO: Maybe constrain the type
+type StorageValue = any; // Will get JSONified and stored in the file.
 
 export type AppStorage = ReturnType<typeof makeStorage>;
 
