@@ -258,9 +258,9 @@ describe(loadStoredEmails.name, () => {
 
   it('can parse extended email information', () => {
     const extendedIndex: EmailIndex = {
-      hash1: { emailAddress: 'email1@test.com' },
-      hash2: { emailAddress: 'email2@test.com' },
-      hash3: { emailAddress: 'email3@test.com' },
+      hash1: { emailAddress: 'email1@test.com', isConfirmed: false },
+      hash2: { emailAddress: 'email2@test.com', isConfirmed: false },
+      hash3: { emailAddress: 'email3@test.com', isConfirmed: false },
       hash4: 'email4@test.com',
     };
 

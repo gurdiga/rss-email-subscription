@@ -116,7 +116,7 @@ export type EmailIndex = Record<EmailHash, EmailAddress['value'] | EmailInformat
 
 interface EmailInformation {
   emailAddress: EmailAddress['value'];
-  isConfirmed?: boolean; // TODO: Make this non-optional after migrating all feeds to EmailInformation.
+  isConfirmed: boolean;
 }
 
 export function makeEmailInformation(emailAddress: EmailAddress, isConfirmed: boolean): EmailInformation {
