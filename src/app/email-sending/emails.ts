@@ -186,7 +186,7 @@ export function loadStoredEmails(feedId: string, storage: AppStorage): Result<St
   }
 
   if (!hasItemResult) {
-    return { kind: 'FeedNotFound' };
+    return { kind: 'FeedNotFound', feedId };
   }
 
   const index = storage.loadItem(storageKey);
@@ -214,6 +214,7 @@ export function loadStoredEmails(feedId: string, storage: AppStorage): Result<St
   };
 }
 
+// TODO: Delete if no more simple index entries.
 function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeTypeMismatchErr(email, `email string`);
