@@ -1,6 +1,6 @@
 import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
-import { getFeedSettings } from '../domain/feed-settings';
+import { getFeed } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
@@ -33,7 +33,7 @@ if (!feedId) {
   process.exit(1);
 }
 
-const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
+const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
 
 if (isErr(feedSettings)) {
   logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });

@@ -4,7 +4,7 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData, AccountId, accountsStorageKey, getAccountIdByEmail } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { FeedSettings } from './src/domain/feed-settings';
+import { Feed } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -228,7 +228,7 @@ describe('API', () => {
       const cookie = responseHeaders.get('set-cookie')!;
       const authenticationHeaders = new Headers({ cookie });
       const { responseBody } = await get('/feeds', 'json', authenticationHeaders);
-      const { responseData: data } = responseBody as Success<FeedSettings[]>;
+      const { responseData: data } = responseBody as Success<Feed[]>;
 
       return data!;
     }

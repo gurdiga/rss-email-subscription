@@ -2,7 +2,7 @@ import { HashFn, hash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
-import { getFeedStorageKey } from '../../domain/feed-settings';
+import { getFeedStorageKey } from '../../domain/feed';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 
 export function recordNewRssItems(

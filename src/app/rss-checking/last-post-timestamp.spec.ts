@@ -3,7 +3,7 @@ import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeSpy, makeStorageStub, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
-import { getFeedStorageKey } from '../../domain/feed-settings';
+import { getFeedStorageKey } from '../../domain/feed';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();

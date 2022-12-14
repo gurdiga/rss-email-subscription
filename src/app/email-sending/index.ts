@@ -7,14 +7,10 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { FeedSettings, isFeedNotFound } from '../../domain/feed-settings';
+import { Feed, isFeedNotFound } from '../../domain/feed';
 import { AppStorage } from '../../shared/storage';
 
-export async function sendEmails(
-  feedId: string,
-  feedSettings: FeedSettings,
-  storage: AppStorage
-): Promise<number | undefined> {
+export async function sendEmails(feedId: string, feedSettings: Feed, storage: AppStorage): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);

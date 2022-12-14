@@ -1,5 +1,5 @@
 import { isEmpty } from '../../shared/array-utils';
-import { FeedSettings } from '../../domain/feed-settings';
+import { Feed } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { AppStorage } from '../../shared/storage';
@@ -9,11 +9,7 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function checkRss(
-  feedId: string,
-  feedSettings: FeedSettings,
-  storage: AppStorage
-): Promise<number | undefined> {
+export async function checkRss(feedId: string, feedSettings: Feed, storage: AppStorage): Promise<number | undefined> {
   const feedDisplayName = feedSettings.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });
   const { url } = feedSettings;

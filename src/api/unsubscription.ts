@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppRequestHandler } from './request-handler';
-import { isFeedNotFound } from '../domain/feed-settings';
+import { isFeedNotFound } from '../domain/feed';
 
 export const unsubscription: AppRequestHandler = async function unsubscription(
   reqId,

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'path';
-import { getFeedStorageKey } from '../../domain/feed-settings';
+import { getFeedStorageKey } from '../../domain/feed';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';

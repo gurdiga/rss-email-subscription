@@ -6,7 +6,7 @@ import {
   StoredEmails,
   storeEmails,
 } from '../email-sending/emails';
-import { getFeedSettings } from '../../domain/feed-settings';
+import { getFeed } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
@@ -33,7 +33,7 @@ async function main(): Promise<number | undefined> {
 
   const storage = makeStorage(dataDirRoot);
   const inputFilePath = path.join(dataDirRoot, feedId, 'emails.csv');
-  const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
+  const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
 
   if (isErr(feedSettings)) {
     logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });

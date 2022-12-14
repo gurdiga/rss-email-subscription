@@ -4,8 +4,8 @@ import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeUrl } from '../shared/url';
 
-export interface FeedSettings {
-  kind: 'FeedSettings';
+export interface Feed {
+  kind: 'Feed';
   displayName: string;
   url: URL;
   hashingSalt: string;
@@ -28,11 +28,7 @@ export function getFeedStorageKey(feedId: string) {
   return `${feedRootStorageKey}/${feedId}`;
 }
 
-export function getFeedSettings(
-  feedId: string,
-  storage: AppStorage,
-  domainName: string
-): Result<FeedSettings | FeedNotFound> {
+export function getFeed(feedId: string, storage: AppStorage, domainName: string): Result<Feed | FeedNotFound> {
   const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
 
   if (!storage.hasItem(storageKey)) {
@@ -75,7 +71,7 @@ export function getFeedSettings(
   }
 
   return {
-    kind: 'FeedSettings',
+    kind: 'Feed',
     displayName,
     url,
     hashingSalt,

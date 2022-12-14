@@ -4,7 +4,7 @@ import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { FeedSettings, getFeedSettings, isFeedNotFound } from '../domain/feed-settings';
+import { Feed, getFeed, isFeedNotFound } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
@@ -93,7 +93,7 @@ interface Input {
 interface ProcessedInput {
   kind: 'ProcessedInput';
   emailAddress: EmailAddress;
-  feedSettings: FeedSettings;
+  feedSettings: Feed;
 }
 
 function processInput(
@@ -109,7 +109,7 @@ function processInput(
     return makeInputError('Invalid email');
   }
 
-  const feedSettings = getFeedSettings(feedId, storage, domainName);
+  const feedSettings = getFeed(feedId, storage, domainName);
 
   if (feedSettings.kind === 'FeedNotFound') {
     logWarning('Feed not found', { feedId });
@@ -117,7 +117,7 @@ function processInput(
   }
 
   if (isErr(feedSettings)) {
-    logError(`Failed to ${getFeedSettings.name}`, { reason: feedSettings.reason });
+    logError(`Failed to ${getFeed.name}`, { reason: feedSettings.reason });
     return makeAppError('Failed to read feed settings');
   }
 

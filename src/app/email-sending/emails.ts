@@ -1,4 +1,4 @@
-import { FeedNotFound, getFeedStorageKey } from '../../domain/feed-settings';
+import { FeedNotFound, getFeedStorageKey } from '../../domain/feed';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io-isolation';

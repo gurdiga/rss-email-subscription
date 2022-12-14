@@ -1,6 +1,6 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { AccountId } from '../domain/account';
-import { FeedSettings } from '../domain/feed-settings';
+import { Feed } from '../domain/feed';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, Result } from '../shared/lang';
 import { AppRequestHandler } from './request-handler';
@@ -29,12 +29,12 @@ export const feeds: AppRequestHandler = async function feeds(_reqId, _reqBody, _
   return makeSuccess('Feeds!', logData, data);
 };
 
-function getFeedsByAccountId(_TODO_accountId: AccountId): FeedSettings[] {
+function getFeedsByAccountId(_TODO_accountId: AccountId): Feed[] {
   // TODO: Get the real feeds
 
   return [
     {
-      kind: 'FeedSettings',
+      kind: 'Feed',
       displayName: 'Test Feed',
       hashingSalt: 'Random-16-bytes.',
       url: new URL('https://test.com'),

@@ -2,7 +2,7 @@ import { CronJob } from 'cron';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
-import { feedRootStorageKey, getFeedSettings } from '../domain/feed-settings';
+import { feedRootStorageKey, getFeed } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../shared/storage';
 import { requireEnv } from '../shared/env';
@@ -56,7 +56,7 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
   const cronJobs: CronJob[] = [];
 
   for (const feedId of feedDirs) {
-    const feedSettings = getFeedSettings(feedId, storage, env.DOMAIN_NAME);
+    const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
 
     if (isErr(feedSettings)) {
       logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
