@@ -7,7 +7,9 @@ default: pre-commit
 
 # make start-testblog first
 testblog-local-test:
-	# +++ Maybe rm -v .tmp/development-docker-data/testblog/lastPostMetadata.json
+	@require=$${DATA_DIR_ROOT:?envar is missing}
+
+	# +++ Maybe rm -v $$DATA_DIR_ROOT/feeds/testblog/lastPostMetadata.json
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
 
@@ -15,7 +17,9 @@ email-sending:
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
 
 rss-checking:
-	rm -v .tmp/development-docker-data/{gurdiga,testblog,blogger}/lastPostMetadata.json
+	@require=$${DATA_DIR_ROOT:?envar is missing}
+	rm -v $$DATA_DIR_ROOT/feeds/{gurdiga,testblog,blogger}/lastPostMetadata.json
+
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking gurdiga
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking blogger
