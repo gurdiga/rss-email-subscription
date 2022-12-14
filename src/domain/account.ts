@@ -7,7 +7,7 @@ import { AppStorage, StorageKey } from '../shared/storage';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
-export type AccountId = string;
+export type AccountId = string; // TODO: make this a kinded type
 
 export interface Account {
   plan: PlanId;
