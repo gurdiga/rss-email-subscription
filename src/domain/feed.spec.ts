@@ -73,7 +73,7 @@ describe(getFeed.name, () => {
     const storage = makeStorageStub({ loadItem: () => undefined, hasItem: () => false });
     const result = getFeed(feedId, storage, domainName);
 
-    expect(result).to.deep.equal({ kind: 'FeedNotFound' });
+    expect(result).to.deep.equal({ kind: 'FeedNotFound', feedId });
   });
 
   it('returns an Err value when the data is invalid', () => {

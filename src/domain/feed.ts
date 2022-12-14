@@ -16,6 +16,7 @@ export interface Feed {
 
 export interface FeedNotFound {
   kind: 'FeedNotFound';
+  feedId: string;
 }
 
 export function isFeedNotFound(value: unknown): value is FeedNotFound {
@@ -32,7 +33,7 @@ export function getFeed(feedId: string, storage: AppStorage, domainName: string)
   const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
 
   if (!storage.hasItem(storageKey)) {
-    return { kind: 'FeedNotFound' };
+    return { kind: 'FeedNotFound', feedId };
   }
 
   const data = storage.loadItem(storageKey);
