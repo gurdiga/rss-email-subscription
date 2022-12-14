@@ -20,13 +20,22 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
   });
 }
 
-type SessionValue = string | number | boolean;
+export interface SessionFields {
+  accountId: unknown | AccountId;
+  works: boolean;
+}
 
-export function storeSessionValue(reqSession: ReqSession, name: string, value: SessionValue): void {
+export type SessionFieldName = keyof SessionFields;
+
+export function storeSessionValue(
+  reqSession: ReqSession,
+  name: SessionFieldName,
+  value: SessionFields[typeof name]
+): void {
   reqSession[name] = value;
 }
 
-export function deleteSessionValue(reqSession: ReqSession, name: string): void {
+export function deleteSessionValue(reqSession: ReqSession, name: SessionFieldName): void {
   delete reqSession[name];
 }
 
