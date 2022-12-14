@@ -14,6 +14,10 @@ export interface Feed {
   cronPattern: string;
 }
 
+export function isFeed(value: unknown): value is Feed {
+  return hasKind(value, 'Feed');
+}
+
 export interface FeedNotFound {
   kind: 'FeedNotFound';
   feedId: string;
