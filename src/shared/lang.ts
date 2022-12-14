@@ -75,6 +75,22 @@ export function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
+export function isString(value: unknown): value is string {
+  return typeof value === 'string';
+}
+
 export function hasKind(x: unknown, kind: string): boolean {
   return isObject(x) && (x as any).kind === kind;
+}
+
+export function readStringArray(stringArray: unknown): Result<string[]> {
+  if (!stringArray) {
+    return [];
+  }
+
+  if (Array.isArray(stringArray) && stringArray.every(isString)) {
+    return [...stringArray];
+  }
+
+  return makeErr('Not an array of strings');
 }

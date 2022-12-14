@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName, makeErr } from './lang';
+import { getErrorMessage, getTypeName, makeErr, readStringArray } from './lang';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -77,5 +77,20 @@ describe(makeErr.name, () => {
       kind: 'Err',
       reason: error.message,
     });
+  });
+});
+
+describe(readStringArray.name, () => {
+  it('returns an empty array when input is falsy', () => {
+    expect(readStringArray(null)).to.deep.equal([]);
+    expect(readStringArray(undefined)).to.deep.equal([]);
+  });
+
+  it('returns a copy of input if it’s an array of strings', () => {
+    expect(readStringArray(['one', 'two', 'three'])).to.deep.equal(['one', 'two', 'three']);
+  });
+
+  it('returns an Err value when input is not an array of strings', () => {
+    expect(readStringArray([42])).to.deep.equal(makeErr('Not an array of strings'));
   });
 });
