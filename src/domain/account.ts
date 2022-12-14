@@ -91,7 +91,7 @@ function getAccountStorageKey(accountId: AccountId): StorageKey {
   return `${accountsStorageKey}/${accountId}/account.json`;
 }
 
-export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): string {
+export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): AccountId {
   // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
   return hash(email.value, hashingSalt);
 }
@@ -115,8 +115,6 @@ export function confirmAccount(
     return makeErr(`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
   }
 }
-
-export const emailHashToIdIndexStorageKey = `${accountsStorageKey}/email-hash-to-id`;
 
 export function accountExists(storage: AppStorage, accountId: AccountId): Result<boolean> {
   const storageKey = getAccountStorageKey(accountId);
