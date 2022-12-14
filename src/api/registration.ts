@@ -200,6 +200,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
     email: input.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     creationTimestamp: new Date(),
+    feedIds: [],
   };
 
   const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);

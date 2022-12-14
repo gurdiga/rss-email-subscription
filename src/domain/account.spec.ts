@@ -27,6 +27,7 @@ describe(loadAccount.name, () => {
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       plan: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
+      feedIds: [],
     };
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
@@ -91,6 +92,7 @@ describe(storeAccount.name, () => {
       email: makeEmailAddress('test@test.com') as EmailAddress,
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       creationTimestamp,
+      feedIds: [],
     };
     const storage = makeStorageStub({
       loadItem: makeStub(() => getAccountData(account)),

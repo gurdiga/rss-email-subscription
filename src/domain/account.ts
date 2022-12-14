@@ -2,7 +2,7 @@ import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { hash } from '../shared/crypto';
 
 import { parseDate } from '../shared/date-utils';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, readStringArray, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
@@ -15,6 +15,7 @@ export interface Account {
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
+  feedIds: string[];
 }
 
 export interface AccountData {
@@ -23,6 +24,7 @@ export interface AccountData {
   hashedPassword: string;
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
+  feedIds?: string[];
 }
 
 export function loadAccount(
@@ -60,11 +62,18 @@ export function loadAccount(
     return makeErr(`Invalid stored data for account ${accountId}: ${creationTimestamp.reason}`);
   }
 
+  const feedIds = readStringArray(loadItemResult.feedIds);
+
+  if (isErr(feedIds)) {
+    return makeErr(`Invalid stored feedIds for account ${accountId}: ${feedIds.reason}`);
+  }
+
   return {
     plan,
     email,
     hashedPassword,
     creationTimestamp,
+    feedIds,
   };
 }
 
