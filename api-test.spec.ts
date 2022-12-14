@@ -214,7 +214,7 @@ describe('API', () => {
   });
 
   describe('/feeds', () => {
-    it('returns authenticated user’s feeds', async () => {
+    it.skip('returns authenticated user’s feeds', async () => {
       const feeds = await getUserFeeds(userEmail, userPassword);
 
       expect(feeds.length).to.equal(1);
