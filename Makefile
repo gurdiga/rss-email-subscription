@@ -388,11 +388,6 @@ init-data-dir:
 	mkdir $$DATA_DIR_ROOT/accounts
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
-init-account-index:
-	@require=$${DATA_DIR_ROOT:?envar is missing}
-
-	echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
-
 reset-account-index:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
 
@@ -402,7 +397,6 @@ reset-account-index:
 	fi
 
 	find $$DATA_DIR_ROOT/accounts -mindepth 1 -type d | xargs rm -rfv
-	echo '{"version":"1"}' > $$DATA_DIR_ROOT/accounts/index.json
 
 sent-count:
 	@quiet=true
