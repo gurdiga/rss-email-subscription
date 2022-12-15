@@ -56,26 +56,26 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
   const cronJobs: CronJob[] = [];
 
   for (const feedId of feedDirs) {
-    const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
+    const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
-    if (isErr(feedSettings)) {
-      logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
+    if (isErr(feed)) {
+      logError(`Invalid feed settings`, { feedId, reason: feed.reason });
       continue;
     }
 
-    if (feedSettings.kind === 'FeedNotFound') {
+    if (feed.kind === 'FeedNotFound') {
       logError('feed.json not found?!', { feedId });
       continue;
     }
 
-    const { cronPattern } = feedSettings;
+    const { cronPattern } = feed;
 
-    logInfo(`Scheduling feed check`, { feedId, feedSettings });
+    logInfo(`Scheduling feed check`, { feedId, feed });
 
     cronJobs.push(
       new CronJob(cronPattern, async () => {
-        await checkRss(feedId, feedSettings, storage);
-        await sendEmails(feedId, feedSettings, storage);
+        await checkRss(feedId, feed, storage);
+        await sendEmails(feedId, feed, storage);
       })
     );
   }

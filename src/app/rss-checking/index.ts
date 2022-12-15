@@ -9,10 +9,10 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function checkRss(feedId: string, feedSettings: Feed, storage: AppStorage): Promise<number | undefined> {
-  const feedDisplayName = feedSettings.displayName;
+export async function checkRss(feedId: string, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+  const feedDisplayName = feed.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });
-  const { url } = feedSettings;
+  const { url } = feed;
   const rssResponse = await fetchRss(url);
 
   if (isErr(rssResponse)) {

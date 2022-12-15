@@ -34,7 +34,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return inputProcessingResult;
   }
 
-  const { emailAddress, feedSettings } = inputProcessingResult;
+  const { emailAddress, feed } = inputProcessingResult;
 
   const storedEmails = loadStoredEmails(feedId, storage);
 
@@ -57,7 +57,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return makeInputError('Email is already subscribed');
   }
 
-  const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
+  const emailHashFn = makeEmailHashFn(feed.hashingSalt);
   const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   const result = storeEmails(newEmails.validEmails, feedId, storage);
 
@@ -66,7 +66,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return makeAppError('Database write error');
   }
 
-  const { displayName, fromAddress, replyTo } = feedSettings;
+  const { displayName, fromAddress, replyTo } = feed;
 
   const from = makeFullEmailAddress(displayName, fromAddress);
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
@@ -93,7 +93,7 @@ interface Input {
 interface ProcessedInput {
   kind: 'ProcessedInput';
   emailAddress: EmailAddress;
-  feedSettings: Feed;
+  feed: Feed;
 }
 
 function processInput(
@@ -109,22 +109,22 @@ function processInput(
     return makeInputError('Invalid email');
   }
 
-  const feedSettings = getFeed(feedId, storage, domainName);
+  const feed = getFeed(feedId, storage, domainName);
 
-  if (feedSettings.kind === 'FeedNotFound') {
+  if (feed.kind === 'FeedNotFound') {
     logWarning('Feed not found', { feedId });
     return makeInputError('Feed not found');
   }
 
-  if (isErr(feedSettings)) {
-    logError(`Failed to ${getFeed.name}`, { reason: feedSettings.reason });
+  if (isErr(feed)) {
+    logError(`Failed to ${getFeed.name}`, { reason: feed.reason });
     return makeAppError('Failed to read feed settings');
   }
 
   return {
     kind: 'ProcessedInput',
     emailAddress,
-    feedSettings,
+    feed,
   };
 }
 

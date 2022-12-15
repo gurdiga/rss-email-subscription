@@ -10,7 +10,7 @@ import { EmailDeliveryEnv } from './email-delivery';
 import { Feed, isFeedNotFound } from '../../domain/feed';
 import { AppStorage } from '../../shared/storage';
 
-export async function sendEmails(feedId: string, feedSettings: Feed, storage: AppStorage): Promise<number | undefined> {
+export async function sendEmails(feedId: string, feed: Feed, storage: AppStorage): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
@@ -38,7 +38,7 @@ export async function sendEmails(feedId: string, feedSettings: Feed, storage: Ap
     return;
   }
 
-  const { fromAddress } = feedSettings;
+  const { fromAddress } = feed;
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
@@ -78,10 +78,10 @@ export async function sendEmails(feedId: string, feedSettings: Feed, storage: Ap
         toEmail: hashedEmail.emailAddress.value,
       });
 
-      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feedSettings.displayName, env.DOMAIN_NAME);
+      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feed.displayName, env.DOMAIN_NAME);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
-      const from = makeFullEmailAddress(feedSettings.displayName, fromAddress);
-      const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feedSettings.replyTo, emailContent, env);
+      const from = makeFullEmailAddress(feed.displayName, fromAddress);
+      const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feed.replyTo, emailContent, env);
 
       if (isErr(sendingResult)) {
         report.failed++;

@@ -33,19 +33,19 @@ if (!feedId) {
   process.exit(1);
 }
 
-const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
+const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
-if (isErr(feedSettings)) {
-  logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
+if (isErr(feed)) {
+  logError(`Invalid feed settings`, { feedId, reason: feed.reason });
   process.exit(1);
 }
 
-if (feedSettings.kind === 'FeedNotFound') {
+if (feed.kind === 'FeedNotFound') {
   logError('Feed not found', { feedId });
   process.exit(1);
 }
 
-main(feedId, feedSettings, storage).then((exitCode) => process.exit(exitCode));
+main(feedId, feed, storage).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {
   logError(`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);

@@ -33,14 +33,14 @@ async function main(): Promise<number | undefined> {
 
   const storage = makeStorage(dataDirRoot);
   const inputFilePath = path.join(dataDirRoot, feedId, 'emails.csv');
-  const feedSettings = getFeed(feedId, storage, env.DOMAIN_NAME);
+  const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
-  if (isErr(feedSettings)) {
-    logError(`Invalid feed settings`, { feedId, reason: feedSettings.reason });
+  if (isErr(feed)) {
+    logError(`Invalid feed settings`, { feedId, reason: feed.reason });
     return 1;
   }
 
-  if (feedSettings.kind === 'FeedNotFound') {
+  if (feed.kind === 'FeedNotFound') {
     logError('Feed not found', { feedId });
     return 1;
   }
@@ -63,7 +63,7 @@ async function main(): Promise<number | undefined> {
     validEmails: [],
     invalidEmails: [],
   };
-  const emailHashFn = makeEmailHashFn(feedSettings.hashingSalt);
+  const emailHashFn = makeEmailHashFn(feed.hashingSalt);
 
   for (const emailAddress of validEmails) {
     storedEmails = addEmail(storedEmails, emailAddress, emailHashFn);
