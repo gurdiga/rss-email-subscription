@@ -16,10 +16,9 @@ const baseUrl = 'https://localhost.feedsubscription.com';
 describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
+  const userPlan = 'standard';
 
   describe('registration-confirmation-authentication-deauthentication flow', () => {
-    const userPlan = 'standard';
-
     it('flows', async () => {
       const { responseBody: registrationResponse } = await registrationDo(userPlan, userEmail, userPassword);
       const [account, accountId] = getAccountByEmail(userEmail);
@@ -80,17 +79,6 @@ describe('API', () => {
     after(() => {
       deleteAccount(makeEmailAddress(userEmail) as EmailAddress);
     });
-
-    async function registrationDo(plan: string, email: string, password: string) {
-      return post('/registration', { plan, email, password });
-    }
-
-    async function registrationConfirmationDo(email: string) {
-      const appSettings = loadJSON(`./${dataDirRoot}/settings.json`) as AppSettings;
-      const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
-
-      return post('/registration-confirmation', { secret });
-    }
 
     async function deauthenticationDo(responseHeaders: Headers) {
       const cookie = responseHeaders.get('set-cookie')!;
@@ -214,28 +202,56 @@ describe('API', () => {
   });
 
   describe('/feeds', () => {
-    it.skip('returns authenticated user’s feeds', async () => {
-      const feeds = await getUserFeeds(userEmail, userPassword);
+    context('when not authenticated', () => {
+      it('responds with 403 if not authenticated', async () => {
+        const { responseBody } = await getUserFeeds(userEmail, userPassword);
 
-      expect(feeds.length).to.equal(1);
-      // TODO
+        expect(responseBody.message).to.equal('Not authenticated');
+      });
     });
 
-    it('responds with 403 if not authenticated');
+    context('when authenticated', () => {
+      before(async () => {
+        await registrationDo(userPlan, userEmail, userPassword);
+        await registrationConfirmationDo(userEmail);
+      });
+
+      it('returns authenticated user’s feeds', async () => {
+        const responseBody = (await getUserFeeds(userEmail, userPassword)).responseBody as Success<Feed[]>;
+        const feeds = responseBody.responseData!;
+
+        expect(responseBody.kind).to.equal('Success');
+        expect(feeds.length).to.equal(0);
+        // TODO
+      });
+
+      after(() => {
+        deleteAccount(makeEmailAddress(userEmail) as EmailAddress);
+      });
+    });
 
     async function getUserFeeds(email: string, password: string) {
       const { responseHeaders } = await authenticationDo(email, password);
       const cookie = responseHeaders.get('set-cookie')!;
       const authenticationHeaders = new Headers({ cookie });
-      const { responseBody } = await get('/feeds', 'json', authenticationHeaders);
-      const { responseData: data } = responseBody as Success<Feed[]>;
 
-      return data!;
+      return await get<Feed[]>('/feeds', 'json', authenticationHeaders);
     }
   });
 
   async function authenticationDo(email: string, password: string) {
     return post('/authentication', { email, password });
+  }
+
+  async function registrationDo(plan: string, email: string, password: string) {
+    return post('/registration', { plan, email, password });
+  }
+
+  async function registrationConfirmationDo(email: string) {
+    const appSettings = loadJSON(`./${dataDirRoot}/settings.json`) as AppSettings;
+    const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
+
+    return post('/registration-confirmation', { secret });
   }
 
   function getAccountByEmail(email: string): [AccountData, AccountId] {
@@ -258,8 +274,8 @@ describe('API', () => {
     responseBody: string;
   }
 
-  interface JsonApiResponse extends ApiResponseTuple {
-    responseBody: ApiResponse;
+  interface JsonApiResponse<D extends any = any> extends ApiResponseTuple {
+    responseBody: ApiResponse<D>;
   }
 
   async function post(
@@ -283,14 +299,14 @@ describe('API', () => {
 
   async function get(path: string, type: 'text'): Promise<TextApiResponse>;
   async function get(path: string, type: 'text', headers: Headers): Promise<TextApiResponse>;
-  async function get(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse>;
-  async function get(path: string, type: 'json'): Promise<JsonApiResponse>;
-  async function get(path: string): Promise<JsonApiResponse>;
-  async function get(
+  async function get<D extends any = any>(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse<D>>;
+  async function get<D extends any = any>(path: string, type: 'json'): Promise<JsonApiResponse<D>>;
+  async function get<D extends any = any>(path: string): Promise<JsonApiResponse<D>>;
+  async function get<D extends any = any>(
     path: string,
     type: 'json' | 'text' = 'json',
     headers?: Headers
-  ): Promise<JsonApiResponse | TextApiResponse> {
+  ): Promise<JsonApiResponse<D> | TextApiResponse> {
     const response = await fetch(`${baseUrl}${path}`, { headers });
 
     return {
