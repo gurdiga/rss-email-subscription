@@ -9,7 +9,7 @@ default: pre-commit
 testblog-local-test:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
 
-	# +++ Maybe rm -v $$DATA_DIR_ROOT/feeds/testblog/lastPostMetadata.json
+	rm -v $$DATA_DIR_ROOT/feeds/testblog/lastPostMetadata.json
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
 
