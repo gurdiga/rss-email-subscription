@@ -101,6 +101,7 @@ smtp-out:
 		--tag smtp-out \
 		docker-services/smtp-out
 
+# cron @reboot
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
