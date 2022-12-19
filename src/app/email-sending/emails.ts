@@ -173,12 +173,12 @@ function isHashedEmail(value: unknown): value is HashedEmail {
   return hasKind(value, 'HashedEmail');
 }
 
-function getStorageKey(feedId: string): string {
+export function getEmailsStorageKey(feedId: string): string {
   return `${getFeedStorageKey(feedId)}/emails.json`;
 }
 
 export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
-  const storageKey = getStorageKey(feedId);
+  const storageKey = getEmailsStorageKey(feedId);
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
@@ -264,7 +264,7 @@ export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage
     emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
   });
 
-  const storageKey = getStorageKey(feedId);
+  const storageKey = getEmailsStorageKey(feedId);
   const storeItemResult = storage.storeItem(storageKey, emailIndex);
 
   if (isErr(storeItemResult)) {
