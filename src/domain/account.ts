@@ -96,7 +96,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
 
 export const accountsStorageKey = '/accounts';
 
-function getAccountStorageKey(accountId: AccountId): StorageKey {
+export function getAccountStorageKey(accountId: AccountId): StorageKey {
   return `${accountsStorageKey}/${accountId}/account.json`;
 }
 
