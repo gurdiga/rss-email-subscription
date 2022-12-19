@@ -42,6 +42,8 @@ export function makeStorage(dataDirRoot: string) {
     }
   }
 
+  // TODO: Avoid returning `any` by adding a ParseValueFn argument, like this:
+  // type ParseValueFn<R> = (rawjson: unknown) => R;
   function loadItem(key: StorageKey, readFileFn: ReadFileFn = readFile): Result<StorageValue> {
     const filePath = join(dataDirRoot, key);
     const readFileResult = attempt(() => readFileFn(filePath));
