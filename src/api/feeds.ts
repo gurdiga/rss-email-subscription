@@ -17,7 +17,7 @@ interface ProcessedInput {
   accountId: AccountId;
 }
 
-export const feeds: AppRequestHandler = async function feeds(_reqId, _reqBody, _reqParams, reqSession, app) {
+export const listFeeds: AppRequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
   const { accountId } = reqSession as Input;
   const processInputResult = processInput({ accountId });
 
@@ -36,7 +36,7 @@ export const feeds: AppRequestHandler = async function feeds(_reqId, _reqBody, _
 };
 
 function getFeedsByAccountId(accountId: AccountId, storage: AppStorage, domainName: string): Result<Feed[]> {
-  const module = `${feeds.name}-${getFeedsByAccountId.name}`;
+  const module = `${listFeeds.name}-${getFeedsByAccountId.name}`;
   const { logError, logWarning } = makeCustomLoggers({ module });
   const account = loadAccount(storage, accountId);
 
@@ -64,7 +64,7 @@ function getFeedsByAccountId(accountId: AccountId, storage: AppStorage, domainNa
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${feeds.name}-${processInput.name}`;
+  const module = `${listFeeds.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module });
 
   if (!input.accountId) {
