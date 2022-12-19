@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
-import { AccountData, AccountId, accountsStorageKey, getAccountIdByEmail } from './src/domain/account';
+import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { Feed } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
@@ -11,7 +11,7 @@ import { readFile } from './src/shared/io-isolation';
 import { die } from './src/shared/test-utils';
 
 const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
-const baseUrl = 'https://localhost.feedsubscription.com';
+const apiBaseUrl = 'https://localhost.feedsubscription.com/api';
 
 describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
@@ -194,7 +194,7 @@ describe('API', () => {
 
   describe('API code Git revisions', () => {
     it('is available', async () => {
-      const { responseBody } = await get('/api-version.txt', 'text');
+      const { responseBody } = await get('/version.txt', 'text');
       const gitRevisionMask = /[a-f0-9]{40}\n/m;
 
       expect(responseBody).to.match(gitRevisionMask);
@@ -255,11 +255,10 @@ describe('API', () => {
   }
 
   function getAccountByEmail(email: string): [AccountData, AccountId] {
-    const accountsRootDir = `${dataDirRoot}/${accountsStorageKey}`;
     const hashingSalt = loadJSON(`${dataDirRoot}/${appSettingsStorageKey}`)['hashingSalt'];
     const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
 
-    return [loadJSON(`./${accountsRootDir}/${accountId}/account.json`), accountId] as [AccountData, AccountId];
+    return [loadJSON(`./${dataDirRoot}/${getAccountStorageKey(accountId)}`), accountId] as [AccountData, AccountId];
   }
 
   function getSessionData(sessionId: string) {
@@ -283,7 +282,7 @@ describe('API', () => {
     data: Record<string, string> = {},
     headers: Headers = new Headers()
   ): Promise<JsonApiResponse> {
-    const response = await fetch(`${baseUrl}${path}`, {
+    const response = await fetch(`${apiBaseUrl}${path}`, {
       method: 'POST',
       body: new URLSearchParams(data),
       headers,
@@ -307,7 +306,7 @@ describe('API', () => {
     type: 'json' | 'text' = 'json',
     headers?: Headers
   ): Promise<JsonApiResponse<D> | TextApiResponse> {
-    const response = await fetch(`${baseUrl}${path}`, { headers });
+    const response = await fetch(`${apiBaseUrl}${path}`, { headers });
 
     return {
       responseBody: await response[type](),

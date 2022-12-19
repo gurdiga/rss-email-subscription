@@ -201,13 +201,15 @@
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
-    const url = `${origin}/subscription`;
+    const url = `${origin}/api/subscription`;
     const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,
     });
 
-    const handleApiResponse = async (response: Response): Promise<void> => {
+    return fetch(url, { method: 'POST', body: formData }).then(handleApiResponse).catch(handleError);
+
+    async function handleApiResponse(response: Response): Promise<void> {
       try {
         const { message, kind } = await response.json();
 
@@ -220,9 +222,9 @@
         console.error(error);
         displayMessage(`Error: invalid response from the server! Please try again.`);
       }
-    };
+    }
 
-    const handleError = (error: Error) => {
+    function handleError(error: Error): void {
       let { message } = error;
 
       if (message === 'Failed to fetch') {
@@ -230,9 +232,7 @@
       }
 
       displayMessage(`Error: ${message} 😢`);
-    };
-
-    return fetch(url, { method: 'POST', body: formData }).then(handleApiResponse).catch(handleError);
+    }
   }
 
   main();

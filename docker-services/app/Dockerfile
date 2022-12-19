@@ -10,7 +10,7 @@ RUN npm ci
 
 COPY tsconfig.json ./
 COPY src/ ./src/
-COPY .git/refs/heads/main ./dist/api/api-version.txt
+COPY .git/refs/heads/main ./dist/api/version.txt
 
 RUN ./node_modules/.bin/tsc -p tsconfig.json
 RUN ./node_modules/.bin/tsc -p src/web-ui/tsconfig.json

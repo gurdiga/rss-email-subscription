@@ -137,7 +137,10 @@ export function assertFound(response: Response) {
   }
 }
 
-export function sendApiRequest(url: string, data: Record<string, string>): Promise<ApiResponse> {
+export function sendApiRequest(relativePath: string, data: Record<string, string>): Promise<ApiResponse> {
+  const basePath = '/api';
+  const url = `${basePath}${relativePath}`;
+
   return fetch(url, {
     method: 'POST',
     body: new URLSearchParams(data),
