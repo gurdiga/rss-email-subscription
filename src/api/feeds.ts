@@ -6,16 +6,7 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
-import { checkSession, isAuthenticatedSession, SessionFields } from './session';
-
-interface Input extends Pick<SessionFields, 'accountId'> {
-  accountId: unknown;
-}
-
-interface ProcessedInput {
-  kind: 'ProcessedInput';
-  accountId: AccountId;
-}
+import { checkSession, isAuthenticatedSession } from './session';
 
 export const createFeed: AppRequestHandler = async function createFeed(
   _reqId,
@@ -28,23 +19,26 @@ export const createFeed: AppRequestHandler = async function createFeed(
 };
 
 export const listFeeds: AppRequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
-  const { accountId } = reqSession as Input;
-  const processInputResult = processInput({ accountId });
+  const { logWarning } = makeCustomLoggers({ module: listFeeds.name });
+  const session = checkSession(reqSession);
 
-  if (isErr(processInputResult)) {
-    return makeInputError(processInputResult.reason, processInputResult.field);
+  if (!isAuthenticatedSession(session)) {
+    logWarning(`Not authenticated`);
+    return makeInputError('Not authenticated');
   }
 
-  const logData = { accountId: processInputResult.accountId };
-  const data = getFeedsByAccountId(processInputResult.accountId, app.storage, app.env.DOMAIN_NAME);
+  const data = getFeedsByAccountId(session.accountId, app.storage, app.env.DOMAIN_NAME);
 
   if (isErr(data)) {
     return makeAppError(data.reason);
   }
 
+  const logData = { accountId: session.accountId };
+
   return makeSuccess('Feeds!', logData, data);
 };
 
+// TODO: Move to domain/feeds?
 function getFeedsByAccountId(accountId: AccountId, storage: AppStorage, domainName: string): Result<Feed[]> {
   const module = `${listFeeds.name}-${getFeedsByAccountId.name}`;
   const { logError, logWarning } = makeCustomLoggers({ module });
@@ -71,21 +65,4 @@ function getFeedsByAccountId(accountId: AccountId, storage: AppStorage, domainNa
   }
 
   return validFeeds;
-}
-
-function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${listFeeds.name}-${processInput.name}`;
-  const { logWarning } = makeCustomLoggers({ module });
-  const session = checkSession(input);
-
-  if (isAuthenticatedSession(session)) {
-    logWarning(`Not authenticated`);
-    return {
-      kind: 'ProcessedInput',
-      accountId: session.accountId,
-    };
-  } else {
-    logWarning(`Non-string accountId on session!?: ${input.accountId}`);
-    return makeErr('Not authenticated');
-  }
 }
