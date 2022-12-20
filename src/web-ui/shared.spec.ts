@@ -6,7 +6,7 @@ import { createElement, insertAdjacentElement, querySelector } from './dom-isola
 import {
   fillUiElements,
   parseConfirmationLinkUrlParams,
-  logError,
+  reportError,
   requireUiElements,
   UiElementFillSpec,
   displayValidationError,
@@ -36,7 +36,7 @@ describe(parseConfirmationLinkUrlParams.name, () => {
   });
 
   it('returns a descriptive Err value when any param is missing, and logs the specific missing field', () => {
-    const logFn = makeSpy<typeof logError>();
+    const logFn = makeSpy<typeof reportError>();
     const result = parseConfirmationLinkUrlParams('', logFn);
 
     expect(result).to.deep.equal(makeErr('Invalid confirmation link'));

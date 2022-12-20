@@ -1,13 +1,13 @@
 import { isSuccess } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
-import { hideElement, logError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
 
   if (isErr(secret)) {
-    logError(`Invalid registration confirmation link: ${secret.reason}`);
+    reportError(`Invalid registration confirmation link: ${secret.reason}`);
     displayMainError('Invalid registration confirmation link');
     return;
   }

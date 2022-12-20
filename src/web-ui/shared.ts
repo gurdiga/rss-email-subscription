@@ -10,7 +10,7 @@ export interface ConfirmationLinkUrlParams {
 
 export function parseConfirmationLinkUrlParams(
   locationSearch: string,
-  logErrorFn: typeof logError = logError
+  logErrorFn: typeof reportError = reportError
 ): Result<ConfirmationLinkUrlParams> {
   const queryParams = new URLSearchParams(locationSearch);
   const params: ConfirmationLinkUrlParams = {
@@ -73,14 +73,14 @@ export function displayMainError(message: string) {
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
-    logError(`Element is missing: ${errorMessageSelector}`);
+    reportError(`Element is missing: ${errorMessageSelector}`);
     return;
   }
 
   errorMessageElement.textContent = message;
   errorMessageElement.className = 'alert alert-danger';
 
-  logError(message);
+  reportError(message);
 }
 
 export interface ApiResponseUiElements {
@@ -96,7 +96,7 @@ export function displayApiResponse(apiResponse: ApiResponse, messageElement: Ele
 }
 
 export function displayCommunicationError(error: unknown, messageElement: Element): void {
-  logError(error as Error);
+  reportError(error as Error);
 
   messageElement.textContent = 'Failed to connect to the server. Please try again in a few moments.';
   messageElement.className = 'alert alert-danger';
@@ -109,12 +109,16 @@ export function displayAppError(error: AppError, messageElement: Element): void 
   messageElement.setAttribute('role', 'alert');
 }
 
-export function logError(error: Error | string): void {
+export function reportError(error: Error | string): void {
   if (typeof error === 'string') {
     error = new Error(error);
   }
 
-  Promise.reject(error); // Defined in website: https://github.com/gurdiga/feedsubscription.com/commit/06e3447
+  // This will be handled by the global error handler defined here:
+  // https://github.com/gurdiga/feedsubscription.com/commit/06e3447
+  // It is thrown as a Promise rejection so that it doesn’t break the
+  // execution flow.
+  Promise.reject(error);
 }
 
 export function assertHeader(headerName: string, expectedHeaderValue: string) {
@@ -172,7 +176,7 @@ export function displayValidationError<FF>(
   const field = response.field as keyof FF;
 
   if (!field) {
-    logError('No "field" prop in InputError from API.');
+    reportError('No "field" prop in InputError from API.');
     return;
   }
 
