@@ -17,6 +17,16 @@ interface ProcessedInput {
   accountId: AccountId;
 }
 
+export const createFeed: AppRequestHandler = async function createFeed(
+  _reqId,
+  _reqBody,
+  _reqParams,
+  _reqSession,
+  _app
+) {
+  return makeAppError('Not there yet');
+};
+
 export const listFeeds: AppRequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
   const { accountId } = reqSession as Input;
   const processInputResult = processInput({ accountId });
@@ -69,6 +79,7 @@ function processInput(input: Input): Result<ProcessedInput> {
   const session = checkSession(input);
 
   if (isAuthenticatedSession(session)) {
+    logWarning(`Not authenticated`);
     return {
       kind: 'ProcessedInput',
       accountId: session.accountId,
