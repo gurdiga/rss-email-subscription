@@ -2,11 +2,11 @@ import { AccountId, loadAccount } from '../domain/account';
 import { Feed, getFeed, isFeed, isFeedNotFound } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
-import { isErr, isString, makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
 import { AppRequestHandler } from './request-handler';
-import { SessionFields } from './session';
+import { checkSession, isAuthenticatedSession, SessionFields } from './session';
 
 interface Input extends Pick<SessionFields, 'accountId'> {
   accountId: unknown;
@@ -66,19 +66,15 @@ function getFeedsByAccountId(accountId: AccountId, storage: AppStorage, domainNa
 function processInput(input: Input): Result<ProcessedInput> {
   const module = `${listFeeds.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module });
+  const session = checkSession(input);
 
-  if (!input.accountId) {
-    logWarning('Empty session accountId');
-    return makeErr('Not authenticated');
-  }
-
-  if (!isString(input.accountId)) {
+  if (isAuthenticatedSession(session)) {
+    return {
+      kind: 'ProcessedInput',
+      accountId: session.accountId,
+    };
+  } else {
     logWarning(`Non-string accountId on session!?: ${input.accountId}`);
     return makeErr('Not authenticated');
   }
-
-  return {
-    kind: 'ProcessedInput',
-    accountId: input.accountId,
-  };
 }

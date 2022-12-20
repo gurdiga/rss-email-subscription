@@ -1,4 +1,5 @@
 import { AccountId } from '../domain/account';
+import { hasKind, isString } from '../shared/lang';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -51,4 +52,29 @@ export function initSession(reqSession: ReqSession, accountId: AccountId): void 
 
 export function deinitSession(reqSession: ReqSession): void {
   deleteSessionValue(reqSession, 'accountId');
+}
+
+export interface AuthenticatedSession extends Pick<SessionFields, 'accountId'> {
+  kind: 'AuthenticatedSession';
+  accountId: AccountId;
+}
+
+export function isAuthenticatedSession(x: any): x is AuthenticatedSession {
+  return hasKind(x, 'AuthenticatedSession');
+}
+export interface UnauthenticatedSession {
+  kind: 'UnauthenticatedSession';
+}
+
+export function checkSession(reqSession: ReqSession): AuthenticatedSession | UnauthenticatedSession {
+  const { accountId } = reqSession;
+
+  if (isString(accountId) && accountId.trim().length > 0) {
+    return {
+      kind: 'AuthenticatedSession',
+      accountId,
+    };
+  }
+
+  return { kind: 'UnauthenticatedSession' };
 }
