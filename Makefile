@@ -191,7 +191,7 @@ watch-app:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log |
 	grep --line-buffered -E \
 			-e '"severity":"(error|warning)"' \
-			-e '"message":"Starting (cron|API server)"' \
+			-e '"message":"Starting (cron|API server)' \
 			-e '"message":"Sending report"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"Unsubscribed"' \
