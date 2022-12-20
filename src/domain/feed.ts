@@ -3,6 +3,7 @@ import { isErr, makeErr, Result } from '../shared/lang';
 import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeUrl } from '../shared/url';
+import { AccountId, loadAccount } from './account';
 
 export interface Feed {
   kind: 'Feed';
@@ -84,4 +85,31 @@ export function getFeed(feedId: string, storage: AppStorage, domainName: string)
     replyTo,
     cronPattern,
   };
+}
+
+export interface FeedsByAccountId {
+  validFeeds: Feed[];
+  missingFeeds: FeedNotFound[];
+  errs: string[];
+}
+
+export function getFeedsByAccountId(
+  accountId: AccountId,
+  storage: AppStorage,
+  domainName: string,
+  loadAccountFn = loadAccount,
+  getFeedFn = getFeed
+): Result<FeedsByAccountId> {
+  const account = loadAccountFn(storage, accountId);
+
+  if (isErr(account)) {
+    return makeErr(`Failed to ${loadAccount.name}: ${account.reason}`);
+  }
+
+  const loadedFeeds = account.feedIds.map((feedId) => getFeedFn(feedId, storage, domainName));
+  const validFeeds = loadedFeeds.filter(isFeed);
+  const missingFeeds = loadedFeeds.filter(isFeedNotFound);
+  const errs = loadedFeeds.filter(isErr).map((x) => x.reason);
+
+  return { validFeeds, errs, missingFeeds };
 }
