@@ -6,14 +6,18 @@ import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
-export const createFeed: AppRequestHandler = async function createFeed(
-  _reqId,
-  _reqBody,
-  _reqParams,
-  _reqSession,
-  _app
-) {
-  return makeAppError('Not there yet');
+export const createFeed: AppRequestHandler = async function createFeed(_reqId, _reqBody, _reqParams, reqSession, _app) {
+  const { logWarning } = makeCustomLoggers({ module: listFeeds.name });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning(`Not authenticated`);
+    return makeInputError('Not authenticated');
+  }
+
+  // TODO
+
+  return makeAppError('TODO');
 };
 
 export const listFeeds: AppRequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
