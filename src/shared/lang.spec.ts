@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName, makeErr, readStringArray } from './lang';
+import { getErrorMessage, getTypeName, isObject, makeErr, readStringArray } from './lang';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -92,5 +92,24 @@ describe(readStringArray.name, () => {
 
   it('returns an Err value when input is not an array of strings', () => {
     expect(readStringArray([42])).to.deep.equal(makeErr('Not an array of strings'));
+  });
+});
+
+describe(isObject.name, () => {
+  it('returns false for primitive values', () => {
+    expect(isObject('string')).to.be.false;
+    expect(isObject(true)).to.be.false;
+    expect(isObject(42)).to.be.false;
+    expect(isObject(42n)).to.be.false;
+    expect(isObject(null)).to.be.false;
+    expect(isObject(Symbol('symbol'))).to.be.false;
+  });
+
+  it('returns true for reasonable objects', () => {
+    expect(isObject({})).to.be.true;
+    expect(isObject(new Object())).to.be.true;
+    expect(isObject(new Date())).to.be.true;
+    expect(isObject(new Map())).to.be.true;
+    expect(isObject(new String('String instance'))).to.be.true;
   });
 });

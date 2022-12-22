@@ -70,7 +70,7 @@ export function attempt<F extends AnyFunction>(f: F): Result<ReturnType<F>> {
   }
 }
 
-export function isObject(value: unknown): value is object {
+export function isObject(value: unknown): value is Object {
   // As per https://nodejs.org/api/util.html#utilisobjectobject
   return value !== null && typeof value === 'object';
 }
