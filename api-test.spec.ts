@@ -4,7 +4,7 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { Feed } from './src/domain/feed';
+import { Feed, FeedParseInput } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -216,6 +216,23 @@ describe('API', () => {
         await registrationConfirmationDo(userEmail);
       });
 
+      describe('POST to create', () => {
+        it('creates a feed for the autenticated user', () => {
+          // TODO
+        });
+
+        it('returns a proper InputError', async () => {
+          const invalidFeedProps = {};
+          const responseBody = (await createFeed(userEmail, userPassword, invalidFeedProps)).responseBody;
+
+          expect(responseBody).to.deep.equal({
+            kind: 'InputError',
+            field: 'displayName',
+            message: 'Invalid feed displayName',
+          });
+        });
+      });
+
       it.skip('returns authenticated user’s feeds', async () => {
         const responseBody = (await getUserFeeds(userEmail, userPassword)).responseBody as Success<Feed[]>;
         const feeds = responseBody.responseData!;
@@ -229,6 +246,15 @@ describe('API', () => {
         deleteAccount(makeEmailAddress(userEmail) as EmailAddress);
       });
     });
+
+    async function createFeed(email: string, password: string, feedProps: FeedParseInput) {
+      const { responseHeaders } = await authenticationDo(email, password);
+      const cookie = responseHeaders.get('set-cookie')!;
+      const authenticationHeaders = new Headers({ cookie });
+      const data = feedProps as Record<string, string>;
+
+      return await post('/feeds', data, authenticationHeaders);
+    }
 
     async function getUserFeeds(email: string, password: string) {
       const { responseHeaders } = await authenticationDo(email, password);

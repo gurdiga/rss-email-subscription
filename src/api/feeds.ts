@@ -1,4 +1,4 @@
-import { getFeedsByAccountId } from '../domain/feed';
+import { getFeedsByAccountId, parseFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
@@ -6,13 +6,20 @@ import { makeCustomLoggers } from '../shared/logging';
 import { AppRequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
-export const createFeed: AppRequestHandler = async function createFeed(_reqId, _reqBody, _reqParams, reqSession, _app) {
+export const createFeed: AppRequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
   const { logWarning } = makeCustomLoggers({ module: listFeeds.name });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
     logWarning(`Not authenticated`);
     return makeInputError('Not authenticated');
+  }
+
+  const feed = parseFeed(reqBody, app.env.DOMAIN_NAME);
+
+  if (isErr(feed)) {
+    logWarning(`Invalid feed`, feed);
+    return makeInputError(feed.reason, feed.field);
   }
 
   // TODO
