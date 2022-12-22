@@ -4,7 +4,7 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { Feed, FeedParseInput } from './src/domain/feed';
+import { Feed, MakeFeedInput } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -247,7 +247,7 @@ describe('API', () => {
       });
     });
 
-    async function createFeed(email: string, password: string, feedProps: FeedParseInput) {
+    async function createFeed(email: string, password: string, feedProps: MakeFeedInput) {
       const { responseHeaders } = await authenticationDo(email, password);
       const cookie = responseHeaders.get('set-cookie')!;
       const authenticationHeaders = new Headers({ cookie });

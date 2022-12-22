@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Feed, FeedNotFound, FeedParseInput, FeedsByAccountId } from './feed';
-import { getFeed, getFeedsByAccountId, getFeedStorageKey, parseFeed } from './feed';
+import { Feed, FeedNotFound, MakeFeedInput, FeedsByAccountId } from './feed';
+import { getFeed, getFeedsByAccountId, getFeedStorageKey, makeFeed } from './feed';
 import { Err, makeErr } from '../shared/lang';
 import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
 import { Account } from './account';
@@ -134,7 +134,7 @@ describe(getFeedsByAccountId.name, () => {
   });
 });
 
-describe(parseFeed.name, () => {
+describe(makeFeed.name, () => {
   const getRandomStringFn = () => 'fake-random-string';
 
   it('returns a Feed when valid props', () => {
@@ -146,7 +146,7 @@ describe(parseFeed.name, () => {
       schedule: '@hourly',
     };
 
-    expect(parseFeed(input, domainName, getRandomStringFn)).to.deep.equal(<Feed>{
+    expect(makeFeed(input, domainName, getRandomStringFn)).to.deep.equal(<Feed>{
       kind: 'Feed',
       displayName: 'Test Feed Name',
       url: new URL(input.url),
@@ -158,12 +158,12 @@ describe(parseFeed.name, () => {
   });
 
   it('returns an Err value if any field is not appropriate', () => {
-    type FieldName = keyof FeedParseInput | 'input';
+    type FieldName = keyof MakeFeedInput | 'input';
 
-    const expectedErrForInput: [FeedParseInput, Err, FieldName][] = [
-      [null as any as FeedParseInput, makeErr('Invalid input'), 'input'],
-      [undefined as any as FeedParseInput, makeErr('Invalid input'), 'input'],
-      [42 as any as FeedParseInput, makeErr('Invalid input'), 'input'],
+    const expectedErrForInput: [MakeFeedInput, Err, FieldName][] = [
+      [null as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
+      [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
+      [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
       [{}, makeErr('Invalid feed displayName', 'displayName'), 'displayName'],
       [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed URL', 'url'), 'url'],
       [
@@ -205,7 +205,7 @@ describe(parseFeed.name, () => {
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(parseFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, `invalid ${fieldName}`);
+      expect(makeFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, `invalid ${fieldName}`);
     }
   });
 });

@@ -1,4 +1,4 @@
-import { getFeedsByAccountId, parseFeed } from '../domain/feed';
+import { getFeedsByAccountId, makeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
@@ -15,7 +15,7 @@ export const createFeed: AppRequestHandler = async function createFeed(_reqId, r
     return makeInputError('Not authenticated');
   }
 
-  const feed = parseFeed(reqBody, app.env.DOMAIN_NAME);
+  const feed = makeFeed(reqBody, app.env.DOMAIN_NAME);
 
   if (isErr(feed)) {
     logWarning(`Invalid feed`, feed);

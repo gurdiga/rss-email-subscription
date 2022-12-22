@@ -116,7 +116,7 @@ export function getFeedsByAccountId(
   return { validFeeds, errs, missingFeeds };
 }
 
-export interface FeedParseInput {
+export interface MakeFeedInput {
   displayName?: string | any;
   url?: string | any;
   emailName?: string | any;
@@ -124,11 +124,7 @@ export interface FeedParseInput {
   schedule?: string | any;
 }
 
-export function parseFeed(
-  input: FeedParseInput,
-  domainName: string,
-  getRandomStringFn = getRandomString
-): Result<Feed> {
+export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStringFn = getRandomString): Result<Feed> {
   if (!isObject(input)) {
     return makeErr('Invalid input');
   }
