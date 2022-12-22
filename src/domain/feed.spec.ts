@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Feed, FeedNotFound, FeedsByAccountId, getFeed, getFeedsByAccountId, getFeedStorageKey } from './feed';
-import { makeErr } from '../shared/lang';
+import { Feed, FeedNotFound, FeedParseInput, FeedsByAccountId } from './feed';
+import { getFeed, getFeedsByAccountId, getFeedStorageKey, parseFeed } from './feed';
+import { Err, makeErr } from '../shared/lang';
 import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
 import { Account } from './account';
 
@@ -130,5 +131,81 @@ describe(getFeedsByAccountId.name, () => {
     const result = getFeedsByAccountId(accountId, storage, domainName, loadAccountFn);
 
     expect(result).to.deep.equal(makeErr('Failed to loadAccount: Account broken!'));
+  });
+});
+
+describe(parseFeed.name, () => {
+  const getRandomStringFn = () => 'fake-random-string';
+
+  it('returns a Feed when valid props', () => {
+    const input = {
+      displayName: 'Test Feed Name',
+      url: 'https://test.com/rss.xml',
+      emailName: 'test-feed',
+      replyTo: 'feed-replyTo@test.com',
+      schedule: '@hourly',
+    };
+
+    expect(parseFeed(input, domainName, getRandomStringFn)).to.deep.equal(<Feed>{
+      kind: 'Feed',
+      displayName: 'Test Feed Name',
+      url: new URL(input.url),
+      hashingSalt: 'fake-random-string',
+      fromAddress: makeEmailAddress('test-feed@test.feedsubscription.com'),
+      replyTo: makeEmailAddress('feed-replyTo@test.com') as EmailAddress,
+      cronPattern: '0 * * * *',
+    });
+  });
+
+  it('returns an Err value if any field is not appropriate', () => {
+    type FieldName = keyof FeedParseInput | 'input';
+
+    const expectedErrForInput: [FeedParseInput, Err, FieldName][] = [
+      [null as any as FeedParseInput, makeErr('Invalid input'), 'input'],
+      [undefined as any as FeedParseInput, makeErr('Invalid input'), 'input'],
+      [42 as any as FeedParseInput, makeErr('Invalid input'), 'input'],
+      [{}, makeErr('Invalid feed displayName', 'displayName'), 'displayName'],
+      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed URL', 'url'), 'url'],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+        },
+        makeErr('Invalid email name', 'emailName'),
+        'emailName',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          emailName: ' \t\r\n', // white-space
+        },
+        makeErr('Invalid email name', 'emailName'),
+        'emailName',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          emailName: 'valid-emailName',
+        },
+        makeErr('Invalid Reply To email', 'replyTo'),
+        'replyTo',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          emailName: 'valid-emailName',
+          replyTo: 'valid-replyTo-email@test.com',
+        },
+        makeErr('Invalid schedule', 'schedule'),
+        'schedule',
+      ],
+    ];
+
+    for (const [input, err, fieldName] of expectedErrForInput) {
+      expect(parseFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, `invalid ${fieldName}`);
+    }
   });
 });

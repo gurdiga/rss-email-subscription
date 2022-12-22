@@ -1,9 +1,11 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { getRandomString } from '../shared/crypto';
+import { isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeUrl } from '../shared/url';
 import { AccountId, loadAccount } from './account';
+import { cronPatternBySchedule } from './cron-pattern';
 
 export interface Feed {
   kind: 'Feed';
@@ -112,4 +114,88 @@ export function getFeedsByAccountId(
   const errs = loadedFeeds.filter(isErr).map((x) => x.reason);
 
   return { validFeeds, errs, missingFeeds };
+}
+
+export interface FeedParseInput {
+  displayName?: string | any;
+  url?: string | any;
+  emailName?: string | any;
+  replyTo?: string | any;
+  schedule?: string | any;
+}
+
+export function parseFeed(
+  input: FeedParseInput,
+  domainName: string,
+  getRandomStringFn = getRandomString
+): Result<Feed> {
+  if (!isObject(input)) {
+    return makeErr('Invalid input');
+  }
+
+  const displayName = makeFeedDisplayName(input.displayName);
+
+  if (isErr(displayName)) {
+    return displayName;
+  }
+
+  const url = makeUrl(input.url);
+
+  if (isErr(url)) {
+    return makeErr('Invalid feed URL', 'url');
+  }
+
+  const fromAddress = makeFeedFromAddress(input.emailName, domainName);
+
+  if (isErr(fromAddress)) {
+    return fromAddress;
+  }
+
+  const replyTo = makeEmailAddress(input.replyTo);
+
+  if (isErr(replyTo)) {
+    return makeErr('Invalid Reply To email', 'replyTo');
+  }
+
+  const cronPattern = cronPatternBySchedule[input.schedule];
+
+  if (!cronPattern) {
+    return makeErr('Invalid schedule', 'schedule');
+  }
+
+  const hashingSalt = getRandomStringFn();
+
+  return {
+    kind: 'Feed',
+    displayName,
+    url,
+    hashingSalt,
+    fromAddress,
+    replyTo,
+    cronPattern,
+  };
+}
+
+function makeFeedDisplayName(input: any): Result<string> {
+  if (!isString(input) || input.trim().length < 5) {
+    return makeErr('Invalid feed displayName', 'displayName');
+  }
+
+  return input.trim();
+}
+
+function makeFeedFromAddress(input: string | any, domainName: string): Result<EmailAddress> {
+  const err = makeErr('Invalid email name', 'emailName');
+
+  if (!isString(input)) {
+    return err;
+  }
+
+  const fromAddress = makeEmailAddress(`${input}@${domainName}`);
+
+  if (isErr(fromAddress)) {
+    return err;
+  }
+
+  return fromAddress;
 }
