@@ -4,7 +4,8 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { Feed, MakeFeedInput } from './src/domain/feed';
+import { cronPatternBySchedule } from './src/domain/cron-pattern';
+import { Feed, FeedId, getFeedJsonStorageKey, makeFeedId, MakeFeedInput } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -216,12 +217,46 @@ describe('API', () => {
         await registrationConfirmationDo(userEmail);
       });
 
-      describe('POST to create', () => {
-        it('creates a feed for the autenticated user', () => {
-          // TODO
+      describe('CRUD happy flow', () => {
+        it('flows', async () => {
+          // TODO:
+          // - create
+          // - list
+          // - update
+          // - delete
+          const feedProps: MakeFeedInput = {
+            displayName: 'API Test Feed Name',
+            url: 'https://api-test.com/rss.xml',
+            feedId: 'api-test-feed',
+            replyTo: 'feed-replyto@api-test.com',
+            schedule: '@hourly',
+          };
+          const { responseBody } = await createFeed(userEmail, userPassword, feedProps);
+          const storedFeed = getStoredFeedByEmailName(makeFeedId(feedProps.feedId) as FeedId);
+
+          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Feed created' });
+
+          expect(storedFeed.displayName).to.equal(feedProps.displayName);
+          expect(storedFeed.url).to.equal(feedProps.url);
+          expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
+          expect(storedFeed.cronPattern).to.equal(cronPatternBySchedule[feedProps.schedule!]);
+          expect(storedFeed.replyTo).to.equal(feedProps.replyTo);
+
+          const { responseData: feeds } = (await getUserFeeds(userEmail, userPassword)).responseBody as Success<Feed[]>;
+
+          // TODO: Make this fail
+          expect(feeds).to.deep.equal([]);
         });
 
-        it('returns a proper InputError', async () => {
+        function getStoredFeedByEmailName(feedId: FeedId) {
+          return loadJSON(`./${dataDirRoot}${getFeedJsonStorageKey(feedId)}`);
+        }
+      });
+
+      describe('failure paths', () => {
+        // TODO
+
+        it('POST returns a proper InputError', async () => {
           const invalidFeedProps = {};
           const responseBody = (await createFeed(userEmail, userPassword, invalidFeedProps)).responseBody;
 
@@ -231,15 +266,6 @@ describe('API', () => {
             message: 'Invalid feed display name',
           });
         });
-      });
-
-      it.skip('returns authenticated user’s feeds', async () => {
-        const responseBody = (await getUserFeeds(userEmail, userPassword)).responseBody as Success<Feed[]>;
-        const feeds = responseBody.responseData!;
-        const expectedFeedCount = 42; // TODO: Properly setup feeds before this request
-
-        expect(responseBody.kind).to.equal('Success');
-        expect(feeds.length).to.equal(expectedFeedCount);
       });
 
       after(() => {
