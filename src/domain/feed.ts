@@ -9,6 +9,7 @@ import { cronPatternBySchedule } from './cron-pattern';
 
 export interface Feed {
   kind: 'Feed';
+  id: FeedId;
   displayName: string;
   url: URL;
   hashingSalt: string;
@@ -17,13 +18,16 @@ export interface Feed {
   cronPattern: string;
 }
 
-export function isFeed(value: unknown): value is Feed {
-  return hasKind(value, 'Feed');
+export interface FeedStoredData {
+  displayName: string;
+  url: string;
+  hashingSalt: string;
+  cronPattern: string;
 }
 
 export interface FeedNotFound {
   kind: 'FeedNotFound';
-  feedId: string;
+  feedId: FeedId;
 }
 
 export function isFeedNotFound(value: unknown): value is FeedNotFound {
@@ -32,19 +36,39 @@ export function isFeedNotFound(value: unknown): value is FeedNotFound {
 
 export const feedRootStorageKey = '/feeds';
 
-export function getFeedStorageKey(feedId: string) {
-  return `${feedRootStorageKey}/${feedId}`;
+export function getFeedStorageKey(feedId: FeedId) {
+  return `${feedRootStorageKey}/${feedId.value}`;
 }
 
-export function getFeed(feedId: string, storage: AppStorage, domainName: string): Result<Feed | FeedNotFound> {
-  const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
+export function getFeedJsonStorageKey(feedId: FeedId) {
+  return `${getFeedStorageKey(feedId)}/feed.json`;
+}
+
+export function storeFeed(feed: Feed, storage: AppStorage): Result<void> {
+  const storageKey = getFeedJsonStorageKey(feed.id);
+  const data: FeedStoredData = {
+    displayName: feed.displayName,
+    url: feed.url.toString(),
+    hashingSalt: feed.hashingSalt,
+    cronPattern: feed.cronPattern,
+  };
+
+  const result = storage.storeItem(storageKey, data);
+
+  if (isErr(result)) {
+    return makeErr(`Failed to store feed data: ${result.reason}`);
+  }
+}
+
+export function getFeed(feedId: FeedId, storage: AppStorage, domainName: string): Result<Feed | FeedNotFound> {
+  const storageKey = getFeedJsonStorageKey(feedId);
 
   if (!storage.hasItem(storageKey)) {
     return { kind: 'FeedNotFound', feedId };
   }
 
   const data = storage.loadItem(storageKey);
-  const displayName = data.displayName || feedId;
+  const displayName = data.displayName || feedId.value;
   const url = makeUrl(data.url);
 
   if (isErr(url)) {
@@ -65,7 +89,7 @@ export function getFeed(feedId: string, storage: AppStorage, domainName: string)
     );
   }
 
-  const fromAddress = makeEmailAddress(`${feedId}@${domainName}`);
+  const fromAddress = makeEmailAddress(`${feedId.value}@${domainName}`);
 
   if (isErr(fromAddress)) {
     return makeErr(`Invalid "fromAddress" in ${storageKey}: ${fromAddress.reason}`);
@@ -80,6 +104,7 @@ export function getFeed(feedId: string, storage: AppStorage, domainName: string)
 
   return {
     kind: 'Feed',
+    id: feedId,
     displayName,
     url,
     hashingSalt,
@@ -117,11 +142,11 @@ export function getFeedsByAccountId(
 }
 
 export interface MakeFeedInput {
-  displayName?: string | any;
-  url?: string | any;
-  emailName?: string | any;
-  replyTo?: string | any;
-  schedule?: string | any;
+  displayName?: string;
+  url?: string;
+  feedId?: string;
+  replyTo?: string;
+  schedule?: string;
 }
 
 export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStringFn = getRandomString): Result<Feed> {
@@ -135,13 +160,23 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
     return displayName;
   }
 
+  const id = makeFeedId(input.feedId);
+
+  if (isErr(id)) {
+    return makeErr('Invalid feed ID', 'feedId');
+  }
+
+  if (!isString(input.url)) {
+    return makeErr('Non-string feed URL', 'url');
+  }
+
   const url = makeUrl(input.url);
 
   if (isErr(url)) {
     return makeErr('Invalid feed URL', 'url');
   }
 
-  const fromAddress = makeFeedFromAddress(input.emailName, domainName);
+  const fromAddress = makeFeedFromAddress(input.feedId, domainName);
 
   if (isErr(fromAddress)) {
     return fromAddress;
@@ -151,6 +186,10 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
 
   if (isErr(replyTo)) {
     return makeErr('Invalid Reply To email', 'replyTo');
+  }
+
+  if (!input.schedule) {
+    return makeErr('Missing schedule', 'schedule');
   }
 
   const cronPattern = cronPatternBySchedule[input.schedule];
@@ -163,6 +202,7 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
 
   return {
     kind: 'Feed',
+    id,
     displayName,
     url,
     hashingSalt,
@@ -181,7 +221,12 @@ function makeFeedDisplayName(input: any): Result<string> {
 }
 
 function makeFeedFromAddress(input: string | any, domainName: string): Result<EmailAddress> {
-  const err = makeErr('Invalid email name', 'emailName');
+  const err = makeErr('Invalid email name', 'feedId');
+
+  // TODO: Add more validation:
+  // - min/max lenght
+  // - trim spaces
+  // TODO: return feedId?
 
   if (!isString(input)) {
     return err;
@@ -194,4 +239,38 @@ function makeFeedFromAddress(input: string | any, domainName: string): Result<Em
   }
 
   return fromAddress;
+}
+
+export interface FeedId {
+  kind: 'FeedId';
+  value: string;
+}
+
+export function isFeedId(value: unknown): value is FeedId {
+  return hasKind(value, 'FeedId');
+}
+
+export function makeFeedId(input: any): Result<FeedId> {
+  if (!isString(input)) {
+    return makeErr('Is not a string');
+  }
+
+  const value = input.trim();
+
+  if (value.length === 0) {
+    return makeErr('Is empty');
+  }
+
+  if (value.length < 3) {
+    return makeErr('Is too short');
+  }
+
+  return {
+    kind: 'FeedId',
+    value: value,
+  };
+}
+
+export function isFeed(value: unknown): value is Feed {
+  return hasKind(value, 'Feed');
 }

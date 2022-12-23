@@ -1,16 +1,17 @@
 import { expect } from 'chai';
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Feed, FeedNotFound, MakeFeedInput, FeedsByAccountId } from './feed';
-import { getFeed, getFeedsByAccountId, getFeedStorageKey, makeFeed } from './feed';
-import { Err, makeErr } from '../shared/lang';
+import { Feed, FeedNotFound, MakeFeedInput, FeedsByAccountId, storeFeed, getFeedJsonStorageKey } from './feed';
+import { makeFeedId, FeedId, getFeed, getFeedsByAccountId, makeFeed } from './feed';
+import { Err, isErr, makeErr } from '../shared/lang';
 import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
 import { Account } from './account';
 
 const domainName = 'test.feedsubscription.com';
+const feedId = makeFeedId('test-feed-id') as FeedId;
+const getRandomStringFn = () => 'fake-random-string';
 
 describe(getFeed.name, () => {
-  const feedId = 'jalas';
-  const storageKey = `${getFeedStorageKey(feedId)}/feed.json`;
+  const storageKey = `${getFeedJsonStorageKey(feedId)}`;
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -28,10 +29,11 @@ describe(getFeed.name, () => {
 
     const expectedResult: Feed = {
       kind: 'Feed',
+      id: feedId,
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: makeEmailAddress(`${feedId}@test.feedsubscription.com`) as EmailAddress,
+      fromAddress: makeEmailAddress(`${feedId.value}@test.feedsubscription.com`) as EmailAddress,
       replyTo: makeEmailAddress(data.replyTo) as EmailAddress,
       cronPattern: data.cronPattern,
     };
@@ -69,14 +71,14 @@ describe(getFeed.name, () => {
     const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
     const result = getFeed(feedId, storage, domainName) as Feed;
 
-    expect(result.displayName).to.equal(feedId);
+    expect(result.displayName).to.equal(<string>feedId.value);
   });
 
   it('returns an FeedNotFound when value not found', () => {
     const storage = makeStorageStub({ loadItem: () => undefined, hasItem: () => false });
     const result = getFeed(feedId, storage, domainName);
 
-    expect(result).to.deep.equal({ kind: 'FeedNotFound', feedId });
+    expect(result).to.deep.equal(<FeedNotFound>{ kind: 'FeedNotFound', feedId });
   });
 
   it('returns an Err value when the data is invalid', () => {
@@ -104,6 +106,7 @@ describe(getFeedsByAccountId.name, () => {
     const feeds: Record<string, ReturnType<typeof getFeed>> = {
       validFeed: <Feed>{
         kind: 'Feed',
+        id: makeFeedId('valid-feedId'),
         displayName: 'Test Feed Display Name',
         url: new URL('https://test-url.com'),
         hashingSalt: 'Random-16-bytes.',
@@ -111,14 +114,14 @@ describe(getFeedsByAccountId.name, () => {
         replyTo: makeEmailAddress('feed-replyTo@test.com') as EmailAddress,
         cronPattern: '1 1 1 1 1',
       },
-      missingFeed1: <FeedNotFound>{ kind: 'FeedNotFound', feedId: 'missing-feed-1' },
-      missingFeed2: <FeedNotFound>{ kind: 'FeedNotFound', feedId: 'missing-feed-2' },
+      missingFeed1: <FeedNotFound>{ kind: 'FeedNotFound', feedId: makeFeedId('missing-feed-1') },
+      missingFeed2: <FeedNotFound>{ kind: 'FeedNotFound', feedId: makeFeedId('missing-feed-2') },
       invalidFeed1: makeErr('somehow feed data 1'),
       invalidFeed2: makeErr('somehow feed data 2'),
     };
 
-    const getFeedFn = makeStub<typeof getFeed>((feedId) => feeds[feedId]!);
-    const loadAccountFn = () => ({ feedIds: Object.keys(feeds) } as any as Account);
+    const getFeedFn = makeStub<typeof getFeed>((feedId) => feeds[feedId.value]!);
+    const loadAccountFn = () => ({ feedIds: Object.keys(feeds).map(makeFeedId) } as any as Account);
     const result = getFeedsByAccountId(accountId, storage, domainName, loadAccountFn, getFeedFn) as FeedsByAccountId;
 
     expect(result.validFeeds).to.deep.equal([feeds['validFeed']]);
@@ -135,21 +138,20 @@ describe(getFeedsByAccountId.name, () => {
 });
 
 describe(makeFeed.name, () => {
-  const getRandomStringFn = () => 'fake-random-string';
-
   it('returns a Feed when valid props', () => {
-    const input = {
+    const input: MakeFeedInput = {
       displayName: 'Test Feed Name',
       url: 'https://test.com/rss.xml',
-      emailName: 'test-feed',
+      feedId: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
       schedule: '@hourly',
     };
 
     expect(makeFeed(input, domainName, getRandomStringFn)).to.deep.equal(<Feed>{
       kind: 'Feed',
+      id: makeFeedId(input.feedId),
       displayName: 'Test Feed Name',
-      url: new URL(input.url),
+      url: new URL(input.url!),
       hashingSalt: 'fake-random-string',
       fromAddress: makeEmailAddress('test-feed@test.feedsubscription.com'),
       replyTo: makeEmailAddress('feed-replyTo@test.com') as EmailAddress,
@@ -158,36 +160,44 @@ describe(makeFeed.name, () => {
   });
 
   it('returns an Err value if any field is not appropriate', () => {
-    type FieldName = keyof MakeFeedInput | 'input';
+    type FieldName = string;
 
     const expectedErrForInput: [MakeFeedInput, Err, FieldName][] = [
-      [null as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
-      [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
-      [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
+      [null as any as MakeFeedInput, makeErr('Invalid input'), 'input1'],
+      [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input2'],
+      [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input3'],
       [{}, makeErr('Invalid feed display name', 'displayName'), 'displayName'],
-      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed URL', 'url'), 'url'],
+      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID', 'feedId'), 'feedId1'],
       [
         {
           displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
+          feedId: ' \t\r\n', // white-space
         },
-        makeErr('Invalid email name', 'emailName'),
-        'emailName',
+        makeErr('Invalid feed ID', 'feedId'),
+        'feedId2',
+      ],
+      [
+        {
+          displayName: 'test-valid-displayName',
+          feedId: 'valid-feedId',
+        },
+        makeErr('Non-string feed URL', 'url'),
+        'url1',
+      ],
+      [
+        {
+          displayName: 'test-valid-displayName',
+          feedId: 'valid-feedId',
+          url: 'not-an-url',
+        },
+        makeErr('Invalid feed URL', 'url'),
+        'url2',
       ],
       [
         {
           displayName: 'test-value',
           url: 'https://test.com/rss.xml',
-          emailName: ' \t\r\n', // white-space
-        },
-        makeErr('Invalid email name', 'emailName'),
-        'emailName',
-      ],
-      [
-        {
-          displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
-          emailName: 'valid-emailName',
+          feedId: 'valid-feedId',
         },
         makeErr('Invalid Reply To email', 'replyTo'),
         'replyTo',
@@ -196,16 +206,85 @@ describe(makeFeed.name, () => {
         {
           displayName: 'test-value',
           url: 'https://test.com/rss.xml',
-          emailName: 'valid-emailName',
+          feedId: 'valid-feedId',
           replyTo: 'valid-replyTo-email@test.com',
         },
+        makeErr('Missing schedule', 'schedule'),
+        'schedule1',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          feedId: 'valid-feedId',
+          replyTo: 'valid-replyTo-email@test.com',
+          schedule: 'daily',
+        },
         makeErr('Invalid schedule', 'schedule'),
-        'schedule',
+        'schedule2',
       ],
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
       expect(makeFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, `invalid ${fieldName}`);
     }
+  });
+});
+
+describe(storeFeed.name, () => {
+  let feed: Feed;
+
+  beforeEach(() => {
+    feed = makeFeed(
+      {
+        displayName: 'Test Feed Name',
+        url: 'https://test.com/rss.xml',
+        feedId: feedId.value,
+        replyTo: 'feed-replyTo@test.com',
+        schedule: '@hourly',
+      },
+      domainName,
+      getRandomStringFn
+    ) as Feed;
+  });
+
+  it('stores the feed data', () => {
+    const storage = makeStorageStub({ storeItem: () => void 0 });
+    const result = storeFeed(feed, storage);
+
+    expect(isErr(result)).be.false;
+    expect((storage.storeItem as Stub).calls).to.deep.equal([
+      [
+        '/feeds/test-feed-id/feed.json',
+        {
+          cronPattern: '0 * * * *',
+          displayName: 'Test Feed Name',
+          hashingSalt: 'fake-random-string',
+          url: 'https://test.com/rss.xml',
+        },
+      ],
+    ]);
+  });
+
+  it('returns an Err value when storage fails', () => {
+    const storage = makeStorageStub({ storeItem: () => makeErr('Something broke!') });
+    const result = storeFeed(feed, storage);
+
+    expect(result).be.deep.equal(makeErr('Failed to store feed data: Something broke!'));
+  });
+});
+
+describe(makeFeedId.name, () => {
+  it('returns a FeedId value when OK', () => {
+    expect(makeFeedId('abcd')).to.deep.equal(<FeedId>{ kind: 'FeedId', value: 'abcd' });
+  });
+
+  it('returns an Err value when not OK', () => {
+    expect(makeFeedId(null)).to.deep.equal(makeErr('Is not a string'));
+    expect(makeFeedId(undefined)).to.deep.equal(makeErr('Is not a string'));
+    expect(makeFeedId(42)).to.deep.equal(makeErr('Is not a string'));
+    expect(makeFeedId('')).to.deep.equal(makeErr('Is empty'));
+    expect(makeFeedId('  ')).to.deep.equal(makeErr('Is empty'));
+    expect(makeFeedId('ab')).to.deep.equal(makeErr('Is too short'));
   });
 });
