@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { isFeedNotFound } from '../domain/feed';
+import { isFeedNotFound, makeFeedId } from '../domain/feed';
 
 export const subscriptionConfirmation: RequestHandler = async function subscriptionConfirmation(
   reqId,
@@ -22,7 +22,14 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
     return makeInputError('Invalid confirmation link');
   }
 
-  const { feedId, emailHash } = parseResult;
+  const { emailHash } = parseResult;
+  const feedId = makeFeedId(parseResult.feedId);
+
+  if (isErr(feedId)) {
+    logWarning('Invalid feed ID', { feedId, reason: feedId.reason });
+    return makeInputError('Invalid confirmation link');
+  }
+
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {

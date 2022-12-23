@@ -4,6 +4,7 @@ import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
+import { FeedId } from '../../domain/feed';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -31,7 +32,7 @@ function isInvalidStoredRssItem(value: unknown): value is InvalidStoredRssItem {
   return hasKind(value, 'InvalidStoredRssItem');
 }
 
-export function readStoredRssItems(feedId: string, storage: AppStorage): Result<RssReadingResult> {
+export function readStoredRssItems(feedId: FeedId, storage: AppStorage): Result<RssReadingResult> {
   const storageKey = getFeedInboxStorageKey(feedId);
   const fileNamesResult = storage.listItems(storageKey);
 
@@ -94,6 +95,6 @@ export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredR
   return { kind: 'ValidStoredRssItem', item, fileName };
 }
 
-export function getStoredRssItemStorageKey(feedId: string, fileName: string): string {
+export function getStoredRssItemStorageKey(feedId: FeedId, fileName: string): string {
   return `${getFeedInboxStorageKey(feedId)}/${fileName}`;
 }

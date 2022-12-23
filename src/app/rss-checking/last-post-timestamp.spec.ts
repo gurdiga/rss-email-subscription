@@ -3,12 +3,12 @@ import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeSpy, makeStorageStub, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
-import { getFeedStorageKey } from '../../domain/feed';
+import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
-  const feedId = 'testblog';
+  const feedId = makeFeedId('testblog') as FeedId;
   const storageKey = `${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
 
   describe(getLastPostMetadata.name, () => {

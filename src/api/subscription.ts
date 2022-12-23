@@ -4,7 +4,7 @@ import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { Feed, getFeed, isFeedNotFound } from '../domain/feed';
+import { Feed, FeedId, getFeed, isFeedNotFound, makeFeedId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
@@ -96,17 +96,21 @@ interface ProcessedInput {
   feed: Feed;
 }
 
-function processInput(
-  { reqId, email, feedId }: Input,
-  storage: AppStorage,
-  domainName: string
-): ProcessedInput | InputError | AppError {
+function processInput(input: Input, storage: AppStorage, domainName: string): ProcessedInput | InputError | AppError {
+  const { reqId, email } = input;
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
 
   if (isErr(emailAddress)) {
     logWarning('Invalid subscriber email', { email });
     return makeInputError('Invalid email');
+  }
+
+  const feedId = makeFeedId(input.feedId);
+
+  if (isErr(feedId)) {
+    logWarning('Invalid feedId', { reason: feedId.reason });
+    return makeInputError('Invalid feed ID');
   }
 
   const feed = getFeed(feedId, storage, domainName);
@@ -176,13 +180,13 @@ function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams,
 
 export function makeEmailConfirmationUrl(
   hashedEmail: HashedEmail,
-  feedId: string,
+  feedId: FeedId,
   feedDisplayName: string,
   domainName: string
 ): URL {
   const params: ConfirmationLinkUrlParams = {
-    id: `${feedId}-${hashedEmail.saltedHash}`,
-    displayName: feedDisplayName || feedId,
+    id: `${feedId.value}-${hashedEmail.saltedHash}`,
+    displayName: feedDisplayName || feedId.value,
     email: hashedEmail.emailAddress.value,
   };
 

@@ -4,9 +4,10 @@ import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-ite
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
+import { FeedId, makeFeedId } from '../../domain/feed';
 
 describe(recordNewRssItems.name, () => {
-  const feedId = 'testblog';
+  const feedId = makeFeedId('testblog') as FeedId;
 
   const rssItems: RssItem[] = [
     {

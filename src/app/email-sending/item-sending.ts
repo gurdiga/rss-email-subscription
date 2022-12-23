@@ -2,6 +2,7 @@ import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
+import { FeedId } from '../../domain/feed';
 
 export async function sendEmail(
   from: FullEmailAddress,
@@ -53,15 +54,15 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
 }
 
 export function makeUnsubscribeUrl(
-  feedId: string,
+  feedId: FeedId,
   hashedEmail: HashedEmail,
   displayName: string,
   domainName: string
 ): URL {
   const url = new URL(`https://${domainName}/unsubscribe.html`);
 
-  url.searchParams.set('id', `${feedId}-${hashedEmail.saltedHash}`);
-  url.searchParams.set('displayName', displayName || feedId);
+  url.searchParams.set('id', `${feedId.value}-${hashedEmail.saltedHash}`);
+  url.searchParams.set('displayName', displayName || feedId.value);
   url.searchParams.set('email', hashedEmail.emailAddress.value);
 
   return url;

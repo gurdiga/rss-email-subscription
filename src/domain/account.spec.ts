@@ -52,7 +52,10 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr(`Invalid stored data for account ${accountId}: Email is syntactically incorrect: "not-an-email-really"`)
+      makeErr(
+        `Invalid stored data for account ${accountId}: Email is syntactically incorrect: "not-an-email-really"`,
+        'email'
+      )
     );
   });
 
@@ -66,7 +69,9 @@ describe(loadAccount.name, () => {
     const storage = makeStorageStub({ loadItem: () => accountData });
     const result = loadAccount(storage, accountId);
 
-    expect(result).to.deep.equal(makeErr(`Invalid stored data for account ${accountId}: Unknown plan ID: magic`));
+    expect(result).to.deep.equal(
+      makeErr(`Invalid stored data for account ${accountId}: Unknown plan ID: magic`, 'plan')
+    );
   });
 
   it('returns an Err value when stored hashed password is invalid', () => {
@@ -80,7 +85,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr(`Invalid stored data for account ${accountId}: Invalid hashed password length: 8`)
+      makeErr(`Invalid stored data for account ${accountId}: Invalid hashed password length: 8`, 'hashedPassword')
     );
   });
 });

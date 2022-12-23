@@ -4,6 +4,7 @@ import { hash } from '../shared/crypto';
 import { parseDate } from '../shared/date-utils';
 import { isErr, makeErr, readStringArray, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
+import { FeedId, isFeedId, makeFeedId } from './feed';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
@@ -15,7 +16,7 @@ export interface Account {
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
-  feedIds: string[];
+  feedIds: FeedId[];
 }
 
 export interface AccountData {
@@ -41,31 +42,39 @@ export function loadAccount(
   const email = makeEmailAddress(loadItemResult.email);
 
   if (isErr(email)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${email.reason}`);
+    return makeErr(`Invalid stored data for account ${accountId}: ${email.reason}`, 'email');
   }
 
   const plan = makePlanId(loadItemResult.plan);
 
   if (isErr(plan)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${plan.reason}`);
+    return makeErr(`Invalid stored data for account ${accountId}: ${plan.reason}`, 'plan');
   }
 
   const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
 
   if (isErr(hashedPassword)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${hashedPassword.reason}`);
+    return makeErr(`Invalid stored data for account ${accountId}: ${hashedPassword.reason}`, 'hashedPassword');
   }
 
   const creationTimestamp = parseDate(loadItemResult.creationTimestamp);
 
   if (isErr(creationTimestamp)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${creationTimestamp.reason}`);
+    return makeErr(`Invalid stored data for account ${accountId}: ${creationTimestamp.reason}`, 'creationTimestamp');
   }
 
-  const feedIds = readStringArray(loadItemResult.feedIds);
+  const strings = readStringArray(loadItemResult.feedIds);
 
-  if (isErr(feedIds)) {
-    return makeErr(`Invalid stored feedIds for account ${accountId}: ${feedIds.reason}`);
+  if (isErr(strings)) {
+    return makeErr(`Non-string stored feedIds for account ${accountId}: ${strings.reason}`, 'feedIds');
+  }
+
+  const results = strings.map(makeFeedId);
+  const feedIds = results.filter(isFeedId);
+  const errs = results.filter(isErr).map((x) => x.reason);
+
+  if (errs.length > 0) {
+    return makeErr(`Some of the stored feedIds (${strings}) for account ${accountId} are invalid: ${errs}`, 'feedIds');
   }
 
   return {

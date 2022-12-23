@@ -1,4 +1,4 @@
-import { FeedNotFound, getFeedStorageKey } from '../../domain/feed';
+import { FeedId, FeedNotFound, getFeedStorageKey } from '../../domain/feed';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io-isolation';
@@ -173,11 +173,11 @@ function isHashedEmail(value: unknown): value is HashedEmail {
   return hasKind(value, 'HashedEmail');
 }
 
-export function getEmailsStorageKey(feedId: string): string {
+export function getEmailsStorageKey(feedId: FeedId): string {
   return `${getFeedStorageKey(feedId)}/emails.json`;
 }
 
-export function loadStoredEmails(feedId: string, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
+export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
   const storageKey = getEmailsStorageKey(feedId);
   const hasItemResult = storage.hasItem(storageKey);
 
@@ -198,7 +198,7 @@ export function loadStoredEmails(feedId: string, storage: AppStorage): Result<St
   const indexTypeName = getTypeName(index);
 
   if (indexTypeName !== 'object') {
-    return makeErr(`Invalid email list format: ${indexTypeName} at ${storageKey} for feedId ${feedId}`);
+    return makeErr(`Invalid email list format: ${indexTypeName} at ${storageKey} for feedId ${feedId.value}`);
   }
 
   const results = Object.entries(index).map(([key, value]) =>
@@ -257,7 +257,7 @@ function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown)
   }
 }
 
-export function storeEmails(hashedEmails: HashedEmail[], feedId: string, storage: AppStorage): Err | void {
+export function storeEmails(hashedEmails: HashedEmail[], feedId: FeedId, storage: AppStorage): Err | void {
   const emailIndex: EmailIndex = {};
 
   hashedEmails.forEach((e) => {

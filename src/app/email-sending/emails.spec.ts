@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getFeedStorageKey } from '../../domain/feed';
+import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 import { ReadFileFn } from '../../shared/io-isolation';
 import { Err, isErr, makeErr } from '../../shared/lang';
 import { makeStorageStub, makeStub, makeThrowingStub, Stub } from '../../shared/test-utils';
@@ -232,7 +232,7 @@ describe(readEmailListFromCsvFile.name, () => {
 });
 
 describe(loadStoredEmails.name, () => {
-  const feedId = 'path';
+  const feedId = makeFeedId('path') as FeedId;
   const storageKey = `${getFeedStorageKey(feedId)}/emails.json`;
 
   const index: EmailIndex = {

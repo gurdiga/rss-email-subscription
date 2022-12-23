@@ -1,5 +1,5 @@
 import { isEmpty } from '../../shared/array-utils';
-import { Feed } from '../../domain/feed';
+import { Feed, FeedId } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { AppStorage } from '../../shared/storage';
@@ -9,9 +9,13 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-export async function checkRss(feedId: string, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
   const feedDisplayName = feed.displayName;
-  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'rss-checking', feedId, feedDisplayName });
+  const { logError, logInfo, logWarning } = makeCustomLoggers({
+    module: 'rss-checking',
+    feedId: feedId.value,
+    feedDisplayName,
+  });
   const { url } = feed;
   const rssResponse = await fetchRss(url);
 
@@ -48,7 +52,7 @@ export async function checkRss(feedId: string, feed: Feed, storage: AppStorage):
   const newItems = selectNewItems(validItems, lastPostMetadata);
 
   if (newItems.length === 0) {
-    logInfo(`No new items`, { feedId });
+    logInfo(`No new items`, { feedId: feedId.value });
     return;
   }
 

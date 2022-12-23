@@ -5,10 +5,11 @@ import { encodeSearchParamValue, makeThrowingStub } from '../../shared/test-util
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
+import { FeedId, makeFeedId } from '../../domain/feed';
 
 describe('item-sending', () => {
   const domainName = 'test.feedsubscription.com';
-  const feedId = 'uniqid';
+  const feedId = makeFeedId('uniqid') as FeedId;
   const from = makeFullEmailAddress('John DOE', makeEmailAddress('from@email.com') as EmailAddress);
   const to = makeEmailAddress('to@email.com') as EmailAddress;
   const replyTo = makeEmailAddress('replyTo@email.com') as EmailAddress;
@@ -95,7 +96,7 @@ describe('item-sending', () => {
 
       expect(result.toString()).to.equal(
         `https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
+          `?id=${encodeSearchParamValue(feedId.value + '-' + hashedEmail.saltedHash)}` +
           `&displayName=${encodeSearchParamValue(displayName)}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
@@ -106,8 +107,8 @@ describe('item-sending', () => {
 
       expect(result.toString()).to.equal(
         `https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(feedId + '-' + hashedEmail.saltedHash)}` +
-          `&displayName=${feedId}` +
+          `?id=${encodeSearchParamValue(feedId.value + '-' + hashedEmail.saltedHash)}` +
+          `&displayName=${feedId.value}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });

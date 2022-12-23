@@ -1,6 +1,6 @@
 import { checkRss } from './rss-checking';
 import { sendEmails } from './email-sending';
-import { getFeed } from '../domain/feed';
+import { getFeed, makeFeedId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
@@ -25,23 +25,30 @@ if (!['rss-checking', 'email-sending'].includes(command)) {
 }
 
 const main = command === 'rss-checking' ? checkRss : sendEmails;
-const feedId = getSecondCliArg(process);
+const secondArg = getSecondCliArg(process);
 
-if (!feedId) {
-  logError(`Second argument required: feedId`);
+if (!secondArg) {
+  logError(`Second argument is required: feed ID`);
   displayUsage();
+  process.exit(1);
+}
+
+const feedId = makeFeedId(secondArg);
+
+if (isErr(feedId)) {
+  logError(`Invalid feed ID`, { feedId: secondArg, reason: feedId.reason });
   process.exit(1);
 }
 
 const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
 if (isErr(feed)) {
-  logError(`Invalid feed settings`, { feedId, reason: feed.reason });
+  logError(`Invalid feed settings`, { feedId: feedId.value, reason: feed.reason });
   process.exit(1);
 }
 
 if (feed.kind === 'FeedNotFound') {
-  logError('Feed not found', { feedId });
+  logError('Feed not found', { feedId: feedId.value });
   process.exit(1);
 }
 

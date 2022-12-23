@@ -1,11 +1,12 @@
 import { expect } from 'chai';
+import { FeedId, makeFeedId } from '../../domain/feed';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { getStoredRssItemStorageKey, ValidStoredRssItem } from './rss-item-reading';
 
 describe(deleteItem.name, () => {
-  const feedId = 'testblog';
+  const feedId = makeFeedId('testblog') as FeedId;
 
   const storedRssItem: ValidStoredRssItem = {
     kind: 'ValidStoredRssItem',

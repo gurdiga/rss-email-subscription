@@ -1,10 +1,10 @@
-import { getFeedStorageKey } from '../../domain/feed';
+import { FeedId, getFeedStorageKey } from '../../domain/feed';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
 
-export function getLastPostMetadata(feedId: string, storage: AppStorage): Result<LastPostMetadata | undefined> {
+export function getLastPostMetadata(feedId: FeedId, storage: AppStorage): Result<LastPostMetadata | undefined> {
   const storageKey = getStorageKey(feedId);
 
   if (!storage.hasItem(storageKey)) {
@@ -33,7 +33,7 @@ export interface LastPostMetadata {
 }
 
 export function recordLastPostMetadata(
-  feedId: string,
+  feedId: FeedId,
   storage: AppStorage,
   items: RssItem[]
 ): Result<LastPostMetadata | undefined> {
@@ -57,6 +57,6 @@ export function recordLastPostMetadata(
   return metadata;
 }
 
-function getStorageKey(feedId: string) {
+function getStorageKey(feedId: FeedId) {
   return `${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
 }

@@ -2,11 +2,11 @@ import { HashFn, hash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
-import { getFeedStorageKey } from '../../domain/feed';
+import { FeedId, getFeedStorageKey } from '../../domain/feed';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 
 export function recordNewRssItems(
-  feedId: string,
+  feedId: FeedId,
   storage: AppStorage,
   rssItems: RssItem[],
   nameFileFn = itemFileName
@@ -38,6 +38,6 @@ export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
   return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
 }
 
-export function getFeedInboxStorageKey(feedId: string): string {
+export function getFeedInboxStorageKey(feedId: FeedId): string {
   return `${getFeedStorageKey(feedId)}/inbox`;
 }

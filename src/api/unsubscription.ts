@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { isFeedNotFound } from '../domain/feed';
+import { isFeedNotFound, makeFeedId } from '../domain/feed';
 
 export const unsubscription: RequestHandler = async function unsubscription(
   reqId,
@@ -22,7 +22,14 @@ export const unsubscription: RequestHandler = async function unsubscription(
     return makeInputError('Invalid unsubscription link');
   }
 
-  const { feedId, emailHash } = parseResult;
+  const { emailHash } = parseResult;
+  const feedId = makeFeedId(parseResult.feedId);
+
+  if (isErr(feedId)) {
+    logError(`Invalid feedId: ${parseResult.feedId}`, { reason: feedId.reason });
+    return makeAppError('Database read error');
+  }
+
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
