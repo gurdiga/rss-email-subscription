@@ -164,7 +164,7 @@ describe(makeFeed.name, () => {
       [null as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
       [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
       [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input'],
-      [{}, makeErr('Invalid feed displayName', 'displayName'), 'displayName'],
+      [{}, makeErr('Invalid feed display name', 'displayName'), 'displayName'],
       [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed URL', 'url'), 'url'],
       [
         {

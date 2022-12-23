@@ -174,7 +174,7 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
 
 function makeFeedDisplayName(input: any): Result<string> {
   if (!isString(input) || input.trim().length < 5) {
-    return makeErr('Invalid feed displayName', 'displayName');
+    return makeErr('Invalid feed display name', 'displayName');
   }
 
   return input.trim();
