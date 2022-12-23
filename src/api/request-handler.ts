@@ -1,5 +1,4 @@
 import { RequestHandler, Request } from 'express';
-import { basename } from 'node:path';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
@@ -15,8 +14,8 @@ export type AppRequestHandler = (
 
 export function makeRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
   return async (req, res) => {
-    const reqId = +new Date();
-    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: basename(__filename) });
+    const reqId = new Date().getTime();
+    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: makeRequestHandler.name });
 
     const reqBody = (req.body || {}) as unknown;
     const reqParams = req.params || {};
