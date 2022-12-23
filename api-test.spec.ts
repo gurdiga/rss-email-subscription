@@ -228,7 +228,7 @@ describe('API', () => {
           expect(responseBody).to.deep.equal({
             kind: 'InputError',
             field: 'displayName',
-            message: 'Invalid feed displayName',
+            message: 'Invalid feed display name',
           });
         });
       });

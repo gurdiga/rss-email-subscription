@@ -18,7 +18,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   const feed = makeFeed(reqBody, app.env.DOMAIN_NAME);
 
   if (isErr(feed)) {
-    logWarning(`Invalid feed`, feed);
+    logWarning(`${makeFeed.name} failed`, feed);
     return makeInputError(feed.reason, feed.field);
   }
 
@@ -54,7 +54,7 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
   }
 
   const data = result.validFeeds;
-  const logData = { accountId: session.accountId };
+  const logData = {};
 
   return makeSuccess('Feeds!', logData, data);
 };
