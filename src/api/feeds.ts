@@ -3,10 +3,10 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
-export const createFeed: AppRequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
+export const createFeed: RequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
   const { logWarning } = makeCustomLoggers({ module: listFeeds.name });
   const session = checkSession(reqSession);
 
@@ -27,7 +27,7 @@ export const createFeed: AppRequestHandler = async function createFeed(_reqId, r
   return makeAppError('TODO');
 };
 
-export const listFeeds: AppRequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
+export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
   const session = checkSession(reqSession);
 

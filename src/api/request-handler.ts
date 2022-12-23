@@ -1,10 +1,10 @@
-import { RequestHandler, Request } from 'express';
+import { RequestHandler as ExpressRequestHandler, Request } from 'express';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
-export type AppRequestHandler = (
+export type RequestHandler = (
   reqId: number,
   reqBody: Request['body'],
   reqParams: Request['params'],
@@ -12,7 +12,7 @@ export type AppRequestHandler = (
   app: App
 ) => Promise<ApiResponse>;
 
-export function makeRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
+export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRequestHandler {
   return async (req, res) => {
     const reqId = new Date().getTime();
     const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: makeRequestHandler.name });

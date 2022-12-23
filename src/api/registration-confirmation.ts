@@ -9,14 +9,14 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage } from '../shared/storage';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { initSession } from './session';
 
 interface Input {
   secret: unknown;
 }
 
-export const registrationConfirmation: AppRequestHandler = async function registrationConfirmation(
+export const registrationConfirmation: RequestHandler = async function registrationConfirmation(
   _reqId,
   reqBody,
   _reqParams,

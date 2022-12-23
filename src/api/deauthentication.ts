@@ -1,8 +1,8 @@
 import { makeSuccess } from '../shared/api-response';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { deinitSession } from './session';
 
-export const deauthentication: AppRequestHandler = async function deauthentication(
+export const deauthentication: RequestHandler = async function deauthentication(
   _reqId,
   _reqBody,
   _reqParams,

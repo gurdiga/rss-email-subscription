@@ -6,10 +6,10 @@ import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { initSession } from './session';
 
-export const authentication: AppRequestHandler = async function authentication(
+export const authentication: RequestHandler = async function authentication(
   _reqId,
   reqBody,
   _reqParams,

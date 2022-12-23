@@ -3,10 +3,10 @@ import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { isFeedNotFound } from '../domain/feed';
 
-export const subscriptionConfirmation: AppRequestHandler = async function subscriptionConfirmation(
+export const subscriptionConfirmation: RequestHandler = async function subscriptionConfirmation(
   reqId,
   reqBody,
   _reqParams,

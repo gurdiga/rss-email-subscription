@@ -6,7 +6,7 @@ import { hasKind, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
-import { AppRequestHandler } from './request-handler';
+import { RequestHandler } from './request-handler';
 import { makePlanId, PlanId } from '../domain/plan';
 import { AppSettings } from '../domain/app-settings';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
@@ -19,13 +19,7 @@ import {
   makeRegistrationConfirmationSecret,
 } from '../domain/registration-confirmation-secrets';
 
-export const registration: AppRequestHandler = async function registration(
-  _reqId,
-  reqBody,
-  _reqParams,
-  _reqSession,
-  app
-) {
+export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
   const processInputResult = processInput(reqBody);
 
   if (isErr(processInputResult)) {
