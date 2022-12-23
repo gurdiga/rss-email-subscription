@@ -261,6 +261,7 @@ describe(storeFeed.name, () => {
           displayName: 'Test Feed Name',
           hashingSalt: 'fake-random-string',
           url: 'https://test.com/rss.xml',
+          replyTo: feed.replyTo.value,
         },
       ],
     ]);

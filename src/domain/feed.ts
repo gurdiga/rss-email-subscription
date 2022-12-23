@@ -23,6 +23,7 @@ export interface FeedStoredData {
   url: string;
   hashingSalt: string;
   cronPattern: string;
+  replyTo: string;
 }
 
 export interface FeedNotFound {
@@ -51,6 +52,7 @@ export function storeFeed(feed: Feed, storage: AppStorage): Result<void> {
     url: feed.url.toString(),
     hashingSalt: feed.hashingSalt,
     cronPattern: feed.cronPattern,
+    replyTo: feed.replyTo.value,
   };
 
   const result = storage.storeItem(storageKey, data);
