@@ -19,8 +19,12 @@ export const subscription: RequestHandler = async function subscription(
   _reqSession,
   { storage }
 ) {
-  const { feedId, email } = reqBody;
-  const { logWarning, logError, logInfo } = makeCustomLoggers({ reqId, feedId, module: subscription.name });
+  const { email } = reqBody;
+  const { logWarning, logError, logInfo } = makeCustomLoggers({
+    reqId,
+    feedId: reqBody.feedId,
+    module: subscription.name,
+  });
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
@@ -28,14 +32,13 @@ export const subscription: RequestHandler = async function subscription(
     return makeAppError('Environment error');
   }
 
-  const inputProcessingResult = processInput({ reqId, feedId, email }, storage, env.DOMAIN_NAME);
+  const inputProcessingResult = processInput({ reqId, feedId: reqBody.feedId, email }, storage, env.DOMAIN_NAME);
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
   }
 
-  const { emailAddress, feed } = inputProcessingResult;
-
+  const { emailAddress, feed, feedId } = inputProcessingResult;
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
@@ -94,6 +97,7 @@ interface ProcessedInput {
   kind: 'ProcessedInput';
   emailAddress: EmailAddress;
   feed: Feed;
+  feedId: FeedId;
 }
 
 function processInput(input: Input, storage: AppStorage, domainName: string): ProcessedInput | InputError | AppError {
@@ -115,7 +119,7 @@ function processInput(input: Input, storage: AppStorage, domainName: string): Pr
 
   const feed = getFeed(feedId, storage, domainName);
 
-  if (feed.kind === 'FeedNotFound') {
+  if (isFeedNotFound(feed)) {
     logWarning('Feed not found', { feedId });
     return makeInputError('Feed not found');
   }
@@ -129,6 +133,7 @@ function processInput(input: Input, storage: AppStorage, domainName: string): Pr
     kind: 'ProcessedInput',
     emailAddress,
     feed,
+    feedId,
   };
 }
 
