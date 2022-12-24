@@ -1,5 +1,5 @@
-import { checkRss } from './rss-checking';
-import { sendEmails } from './email-sending';
+import { checkRss } from './rss-checking/index';
+import { sendEmails } from './email-sending/index';
 import { getFeed, makeFeedId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';

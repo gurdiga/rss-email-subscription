@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'fs';
-import path from 'path';
-import os from 'os';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 import { listFiles, mkdirp, writeFile } from './io-isolation';
 
 describe(mkdirp.name, () => {

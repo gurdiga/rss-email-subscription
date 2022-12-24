@@ -1,4 +1,4 @@
-import path from 'path';
+import path from 'node:path';
 
 export function getFirstCliArg(process: NodeJS.Process): string | undefined {
   return process.argv[2];

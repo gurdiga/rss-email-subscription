@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';

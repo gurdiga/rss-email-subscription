@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { basename } from 'path';
+import { basename } from 'node:path';
 import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
