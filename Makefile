@@ -385,3 +385,15 @@ git-pre-commit-hook:
 	echo "#!/bin/sh" > .git/hooks/pre-commit
 	echo "" >> .git/hooks/pre-commit
 	echo "bash -i -c 'make pre-commit'" >> .git/hooks/pre-commit
+
+deno-notes:
+	# Sat Dec 24 16:36:11 EET 2022
+	# Gave Deno a quick shot
+	# 1. fix imports:
+	#     ls -1 src/**/*.ts | xargs sed -i -E -e "s/(import .* '\.[^']+).*/\1.ts';/" -e "s/(import .* ')([^.]+[^']+).*/\1npm:\2/" -e "s/(^} from '\.[^']+).*/\1.ts';/" -e "s|npm:node:|https://deno.land/std@0.170.0/node/|; s/(.+deno.land.+)';/\1.ts';/"
+	#
+	# 2. try running and fix everthing else:
+	#     deno run -A --config tsconfig.json src/app/cron.ts # -- worked with a few fixes
+	#     deno run -A --config tsconfig.json src/api/server.ts # -- failed because session-file-store
+	#
+	# Easy fixes: process.env, process.exit, process.argv, process.on
