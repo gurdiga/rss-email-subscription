@@ -205,16 +205,21 @@ describe('API', () => {
   describe('/feeds', () => {
     context('when not authenticated', () => {
       it('responds with 403 if not authenticated', async () => {
-        const { responseBody } = await getUserFeeds(userEmail, userPassword);
+        const { responseBody } = await getUserFeeds(new Headers());
 
         expect(responseBody.message).to.equal('Not authenticated');
       });
     });
 
     context('when authenticated', () => {
+      let authenticationHeaders: Headers;
+
       before(async () => {
         await registrationDo(userPlan, userEmail, userPassword);
-        await registrationConfirmationDo(userEmail);
+        const { responseHeaders } = await registrationConfirmationDo(userEmail);
+        const cookie = responseHeaders.get('set-cookie')!;
+
+        authenticationHeaders = new Headers({ cookie });
       });
 
       describe('CRUD happy flow', () => {
@@ -231,7 +236,7 @@ describe('API', () => {
             replyTo: 'feed-replyto@api-test.com',
             schedule: '@hourly',
           };
-          const { responseBody } = await createFeed(userEmail, userPassword, feedProps);
+          const { responseBody } = await createFeed(feedProps, authenticationHeaders);
           const storedFeed = getStoredFeedByEmailName(makeFeedId(feedProps.feedId) as FeedId);
 
           expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Feed created' });
@@ -242,10 +247,10 @@ describe('API', () => {
           expect(storedFeed.cronPattern).to.equal(cronPatternBySchedule[feedProps.schedule!]);
           expect(storedFeed.replyTo).to.equal(feedProps.replyTo);
 
-          const { responseData: feeds } = (await getUserFeeds(userEmail, userPassword)).responseBody as Success<Feed[]>;
+          const { responseData: feeds } = (await getUserFeeds(authenticationHeaders)).responseBody as Success<Feed[]>;
 
-          // TODO: Make this fail
-          expect(feeds).to.deep.equal([]);
+          // TODO: This should fail
+          expect(feeds).to.deep.equal([{}]);
         });
 
         function getStoredFeedByEmailName(feedId: FeedId) {
@@ -258,7 +263,7 @@ describe('API', () => {
 
         it('POST returns a proper InputError', async () => {
           const invalidFeedProps = {};
-          const responseBody = (await createFeed(userEmail, userPassword, invalidFeedProps)).responseBody;
+          const responseBody = (await createFeed(invalidFeedProps, authenticationHeaders)).responseBody;
 
           expect(responseBody).to.deep.equal({
             kind: 'InputError',
@@ -273,20 +278,13 @@ describe('API', () => {
       });
     });
 
-    async function createFeed(email: string, password: string, feedProps: MakeFeedInput) {
-      const { responseHeaders } = await authenticationDo(email, password);
-      const cookie = responseHeaders.get('set-cookie')!;
-      const authenticationHeaders = new Headers({ cookie });
+    async function createFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
       const data = feedProps as Record<string, string>;
 
       return await post('/feeds', data, authenticationHeaders);
     }
 
-    async function getUserFeeds(email: string, password: string) {
-      const { responseHeaders } = await authenticationDo(email, password);
-      const cookie = responseHeaders.get('set-cookie')!;
-      const authenticationHeaders = new Headers({ cookie });
-
+    async function getUserFeeds(authenticationHeaders: Headers) {
       return await get<Feed[]>('/feeds', 'json', authenticationHeaders);
     }
   });

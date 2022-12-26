@@ -215,6 +215,7 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
 }
 
 function makeFeedDisplayName(input: any): Result<string> {
+  // TODO: Limit max length. 50?
   if (!isString(input) || input.trim().length < 5) {
     return makeErr('Invalid feed display name', 'displayName');
   }
