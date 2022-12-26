@@ -2,6 +2,7 @@
 .ONESHELL:
 
 SHELL = bash
+TIME=gtime -f '%e'
 
 default: pre-commit
 
@@ -27,6 +28,10 @@ rss-checking:
 test:
 	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
 
+test-quiet:
+	@printf "Test..."
+	$(TIME) $(MAKE) test > /dev/null
+
 t: test
 
 tw:
@@ -37,19 +42,27 @@ edit:
 
 e: edit
 
-check:
+compile:
 	node_modules/.bin/tsc --project tsconfig.json
 	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
 
-c: check
+compile-quiet:
+	@printf "Compile..."
+	$(TIME) $(MAKE) compile > /dev/null
+
+c: compile
 cw:
 	node_modules/.bin/tsc -p tsconfig.json --watch
 
-pre-commit: lint check test format-check
+pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
 
 lint: lint-mocha-only lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
 l: lint
+
+lint-quiet:
+	@printf "Lint..."
+	$(TIME) $(MAKE) lint > /dev/null
 
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
 # sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
@@ -60,7 +73,9 @@ lint-docker-compose:
 	docker-compose --file docker-compose.yml config
 
 lint-dockerfile:
-	find . -name Dockerfile | tee /dev/stderr | xargs hadolint
+	find . -name Dockerfile |
+	# tee /dev/stderr | # DEBUG
+	xargs hadolint
 
 lint-shell-scripts:
 	@find . \
@@ -339,6 +354,10 @@ npm-update:
 
 format-check:
 	prettier --check 'src/**/*.ts'
+
+format-check-quiet:
+	@printf "Format check..."
+	$(TIME) $(MAKE) format-check > /dev/null
 
 clean: stop
 	docker image rm --force app
