@@ -14,9 +14,28 @@ import { attempt, isErr, makeErr, Result } from './lang';
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file.
 
-export type AppStorage = ReturnType<typeof makeStorage>;
+export interface AppStorage {
+  storeItem: (
+    key: StorageKey,
+    value: StorageValue,
+    mkdirpFn?: MkdirpFn,
+    writeFileFn?: WriteFileFn,
+    fileExistsFn?: FileExistsFn
+  ) => Result<void>;
 
-export function makeStorage(dataDirRoot: string) {
+  loadItem: (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
+  hasItem: (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
+  removeItem: (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<void>;
+  listItems: (key: StorageKey, listFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
+
+  listSubdirectories: (
+    key: StorageKey,
+    listDirectoriesFn?: ListDirectoriesFn,
+    fileExistsFn?: FileExistsFn
+  ) => Result<StorageKey[]>;
+}
+
+export function makeStorage(dataDirRoot: string): AppStorage {
   function storeItem(
     key: StorageKey,
     value: StorageValue,
@@ -61,7 +80,7 @@ export function makeStorage(dataDirRoot: string) {
     return jsonParseResult;
   }
 
-  function hasItem(key: StorageKey, fileExistsFn: FileExistsFn = fileExists) {
+  function hasItem(key: StorageKey, fileExistsFn: FileExistsFn = fileExists): Result<boolean> {
     const filePath = join(dataDirRoot, key);
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
