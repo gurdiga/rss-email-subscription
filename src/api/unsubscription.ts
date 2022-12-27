@@ -5,6 +5,7 @@ import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
 import { isFeedNotFound, makeFeedId } from '../domain/feed';
+import { si } from '../shared/string-utils';
 
 export const unsubscription: RequestHandler = async function unsubscription(
   reqId,
@@ -18,7 +19,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
   const parseResult = parseSubscriptionId(id);
 
   if (isErr(parseResult)) {
-    logWarning(`Failed to ${parseSubscriptionId.name}`, { id, reason: parseResult.reason });
+    logWarning(si`Failed to ${parseSubscriptionId.name}`, { id, reason: parseResult.reason });
     return makeInputError('Invalid unsubscription link');
   }
 
@@ -26,14 +27,14 @@ export const unsubscription: RequestHandler = async function unsubscription(
   const feedId = makeFeedId(parseResult.feedId);
 
   if (isErr(feedId)) {
-    logError(`Invalid feedId: ${parseResult.feedId}`, { reason: feedId.reason });
+    logError(si`Invalid feedId: ${parseResult.feedId}`, { reason: feedId.reason });
     return makeAppError('Database read error');
   }
 
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError(`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -56,7 +57,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
   const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
-    logError(`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
+    logError(si`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
     return makeAppError('Database write error: registering unsubscription failed');
   }
 

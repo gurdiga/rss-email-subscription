@@ -1,4 +1,5 @@
 import { makeErr, Result } from '../shared/lang';
+import { si } from '../shared/string-utils';
 
 export type PlanId = 'minimal' | 'standard' | 'sde';
 
@@ -16,7 +17,7 @@ export function makePlanId(planId: string): Result<PlanId> {
   planId = planId.trim();
 
   if (!validPlanIds.includes(planId as any)) {
-    return makeErr(`Unknown plan ID: ${planId}`);
+    return makeErr(si`Unknown plan ID: ${planId}`);
   }
 
   return planId as PlanId;

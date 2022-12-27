@@ -1,19 +1,12 @@
 import { expect } from 'chai';
 import { InputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { makeSpy, makeStub } from '../shared/test-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
-import {
-  fillUiElements,
-  parseConfirmationLinkUrlParams,
-  reportError,
-  requireUiElements,
-  UiElementFillSpec,
-  displayValidationError,
-  getOrCreateValidationMessage,
-  clearValidationErrors,
-  getClassNames,
-} from './shared';
+import { fillUiElements, parseConfirmationLinkUrlParams, reportError, requireUiElements } from './shared';
+import { UiElementFillSpec, displayValidationError, getOrCreateValidationMessage } from './shared';
+import { clearValidationErrors, getClassNames } from './shared';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
   it('returns a ConfirmationLinkUrlParams value from location.search', () => {
@@ -22,10 +15,9 @@ describe(parseConfirmationLinkUrlParams.name, () => {
     const emailAddress = 'test@test.com';
 
     const locationSearch = [
-      /** prettier: please keep these stacked */
-      `id=${subscriptionId}`,
-      `displayName=${feedDisplayName}`,
-      `email=${emailAddress}`,
+      si`id=${subscriptionId}`,
+      si`displayName=${feedDisplayName}`,
+      si`email=${emailAddress}`,
     ].join('&');
 
     expect(parseConfirmationLinkUrlParams(locationSearch)).to.deep.equal({
@@ -47,7 +39,7 @@ describe(parseConfirmationLinkUrlParams.name, () => {
 describe(requireUiElements.name, () => {
   it('returns the DOM elements found by selector', () => {
     const querySelectorFn = makeStub<typeof querySelector>(
-      (selector: string) => `element-${selector}` as any as Element
+      (selector: string) => si`element-${selector}` as any as Element
     );
     const uiElementSelectors = {
       a: '.some-class',
@@ -74,7 +66,7 @@ describe(requireUiElements.name, () => {
       if (selector === failingSelector) {
         return null;
       } else {
-        return `element-${selector}` as any as Element;
+        return si`element-${selector}` as any as Element;
       }
     });
 
@@ -85,7 +77,7 @@ describe(requireUiElements.name, () => {
 
     const uiElements = requireUiElements(uiElementSelectors, failingQuerySelectorFn);
 
-    expect(uiElements).to.deep.equal(makeErr(`Element not found by selector: "${failingSelector}"`));
+    expect(uiElements).to.deep.equal(makeErr(si`Element not found by selector: "${failingSelector}"`));
 
     expect(failingQuerySelectorFn.calls).to.deep.equal([
       // Prettier, please keep this stacked
@@ -124,11 +116,11 @@ describe(fillUiElements.name, () => {
     let result: Result<void>;
 
     result = fillUiElements([spanFillSpec]);
-    expect(result).to.deep.equal(makeErr(`Prop "${badPropName}" does not exist on SPAN`));
+    expect(result).to.deep.equal(makeErr(si`Prop "${badPropName}" does not exist on SPAN`));
 
     spanFillSpec.element = null as any as HTMLSpanElement;
     result = fillUiElements([spanFillSpec]);
-    expect(result).to.deep.equal(makeErr(`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
+    expect(result).to.deep.equal(makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
   });
 });
 

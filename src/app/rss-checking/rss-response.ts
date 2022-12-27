@@ -1,4 +1,5 @@
 import { makeErr, Result } from '../../shared/lang';
+import { si } from '../../shared/string-utils';
 import { fetch, FetchFn } from './fetch';
 
 export interface RssResponse {
@@ -22,7 +23,7 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
         baseURL: url,
       };
     } else {
-      return makeErr(`Invalid response content-type: ${contentType}`);
+      return makeErr(si`Invalid response content-type: ${contentType}`);
     }
   } catch (e) {
     return makeErr((e as Error).message);

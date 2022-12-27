@@ -1,12 +1,13 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { parseSubscriptionId } from './subscription-id';
 
 describe(parseSubscriptionId.name, () => {
   it('parses a feedId-emailHash tuple', () => {
     const emailHash = '6968c45bb2091e472b299923b254f5a2780941ab2d6b1f6e0d27ee356ee30e44';
     const feedId = 'seths';
-    const id = `${feedId}-${emailHash}`;
+    const id = si`${feedId}-${emailHash}`;
 
     expect(parseSubscriptionId(id)).to.deep.equal({
       feedId,
@@ -17,7 +18,7 @@ describe(parseSubscriptionId.name, () => {
   it('properly handles dashed in feedId', () => {
     const emailHash = '6968c45bb2091e472b299923b254f5a2780941ab2d6b1f6e0d27ee356ee30e44';
     const feedId = 'css-tricks';
-    const id = `${feedId}-${emailHash}`;
+    const id = si`${feedId}-${emailHash}`;
 
     expect(parseSubscriptionId(id)).to.deep.equal({
       feedId,

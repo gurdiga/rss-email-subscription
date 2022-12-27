@@ -1,6 +1,7 @@
 import nodemailer, { Transporter } from 'nodemailer';
 import Mail from 'nodemailer/lib/mailer';
 import SMTPTransport from 'nodemailer/lib/smtp-transport';
+import { si } from '../../shared/string-utils';
 import { FullEmailAddress } from './emails';
 
 export interface EmailDeliveryEnv {
@@ -70,8 +71,8 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
   };
 }
 
-export function makeReturnPath(to: string, domainName: string, uid = Date.now()): string {
+export function makeReturnPath(to: string, domainName: string, uid = Date.now().toString()): string {
   const toAddress = to.replace(/@/, '=');
 
-  return `bounced-${uid}-${toAddress}@${domainName}`;
+  return si`bounced-${uid}-${toAddress}@${domainName}`;
 }

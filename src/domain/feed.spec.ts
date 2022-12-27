@@ -5,13 +5,14 @@ import { makeFeedId, FeedId, getFeed, getFeedsByAccountId, makeFeed } from './fe
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
 import { Account } from './account';
+import { si } from '../shared/string-utils';
 
 const domainName = 'test.feedsubscription.com';
 const feedId = makeFeedId('test-feed-id') as FeedId;
 const getRandomStringFn = () => 'fake-random-string';
 
 describe(getFeed.name, () => {
-  const storageKey = `${getFeedJsonStorageKey(feedId)}`;
+  const storageKey = getFeedJsonStorageKey(feedId);
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -90,10 +91,10 @@ describe(getFeed.name, () => {
 
     expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(makeErr(`Invalid feed URL in ${storageKey}: not-a-url`));
     expect(resultForJson({ url: 'https://a.com', hashingSalt: 42 })).to.deep.equal(
-      makeErr(`Invalid hashing salt in ${storageKey}: 42`)
+      makeErr(si`Invalid hashing salt in ${storageKey}: 42`)
     );
     expect(resultForJson({ url: 'https://a.com', hashingSalt: 'seeeeedd' })).to.deep.equal(
-      makeErr(`Hashing salt is too short in ${storageKey}: at least 16 non-space characters required`)
+      makeErr(si`Hashing salt is too short in ${storageKey}: at least 16 non-space characters required`)
     );
   });
 });
@@ -226,7 +227,7 @@ describe(makeFeed.name, () => {
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(makeFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, `invalid ${fieldName}`);
+      expect(makeFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, si`invalid ${fieldName}`);
     }
   });
 });

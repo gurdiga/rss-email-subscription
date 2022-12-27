@@ -7,6 +7,7 @@ import { accountsStorageKey, getAccountIdByEmail } from '../domain/account';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, isRunDirectly } from '../shared/process-utils';
+import { si } from '../shared/string-utils';
 import { initApp } from './init-app';
 
 function main(): void {
@@ -21,14 +22,14 @@ function main(): void {
   const email = makeEmailAddress(firstCliArg);
 
   if (isErr(email)) {
-    logError(`Invalid account email: ${email.reason}`);
+    logError(si`Invalid account email: ${email.reason}`);
     process.exit(1);
   }
 
   const deleteAccountResult = deleteAccount(email);
 
   if (isErr(deleteAccountResult)) {
-    logError(`Failed to ${deleteAccount.name}: ${deleteAccountResult.reason}`);
+    logError(si`Failed to ${deleteAccount.name}: ${deleteAccountResult.reason}`);
     process.exit(1);
   }
 }
@@ -38,12 +39,11 @@ export function deleteAccount(email: EmailAddress): Result<void> {
   const accountId = getAccountIdByEmail(email, settings.hashingSalt);
 
   const rmDataResult = attempt(() => {
-    rmSync(`${env.DATA_DIR_ROOT}/${accountsStorageKey}/${accountId}/account.json`);
-    rmSync(`${env.DATA_DIR_ROOT}/${accountsStorageKey}/${accountId}`, { recursive: true });
+    rmSync(si`${env.DATA_DIR_ROOT}/${accountsStorageKey}/${accountId}`, { recursive: true });
   });
 
   if (isErr(rmDataResult)) {
-    return makeErr(`Failed to delete account data: ${rmDataResult.reason}`);
+    return makeErr(si`Failed to delete account data: ${rmDataResult.reason}`);
   }
 }
 

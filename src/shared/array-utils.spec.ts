@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { filterUniq, filterUniqBy, sortBy, SortDirection } from './array-utils';
+import { si } from './string-utils';
 
 describe(filterUniq.name, () => {
   it('filters out duplicates compared by reference', () => {
@@ -27,7 +28,7 @@ describe(filterUniqBy.name, () => {
         if (/\d{4}-\d{2}-\d{2}/.test(s)) {
           return new Date(s).getMonth();
         } else {
-          throw new Error(`Invald date: ${s}`);
+          throw new Error(si`Invald date: ${s}`);
         }
       })
     );

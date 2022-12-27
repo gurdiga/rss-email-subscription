@@ -1,9 +1,10 @@
 import Parser, { Item } from 'rss-parser';
 import { sortBy, SortDirection } from '../../shared/array-utils';
-import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
+import { getErrorMessage, hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { RssResponse } from './rss-response';
+import { si } from '../../shared/string-utils';
 
 export interface RssParsingResult {
   kind: 'RssParsingResult';
@@ -38,10 +39,10 @@ export async function parseRssItems(
         invalidItems,
       };
     } catch (error) {
-      return makeErr(`buildRssItemFn threw: ${error}`);
+      return makeErr(si`buildRssItemFn threw: ${getErrorMessage(error)}`);
     }
   } catch (error) {
-    return makeErr(`Invalid XML: ${rssResponse.xml}`);
+    return makeErr(si`Invalid XML: ${rssResponse.xml}`);
   }
 }
 

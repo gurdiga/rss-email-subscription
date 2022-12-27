@@ -1,4 +1,5 @@
 import { stdOutPrinter, StdOutPrinterFn } from './io-isolation';
+import { si } from './string-utils';
 
 export type Severity = 'info' | 'warning' | 'error';
 
@@ -32,7 +33,7 @@ function maskSensibleAttributes(key: string, value: string): string {
 
 function maybeTruncate<V = unknown>(value: V): string | V {
   if (typeof value === 'string' && value.length > maxStringValue) {
-    const truncationNote = `[...truncated ${value.length - maxStringValue} characters]`;
+    const truncationNote = si`[...truncated ${value.length - maxStringValue} characters]`;
 
     return value.substring(0, maxStringValue) + truncationNote;
   } else {

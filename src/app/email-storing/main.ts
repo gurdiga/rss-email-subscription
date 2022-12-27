@@ -13,6 +13,7 @@ import { getFirstCliArg } from '../../shared/process-utils';
 import { makeStorage } from '../../shared/storage';
 import { requireEnv } from '../../shared/env';
 import { AppEnv } from '../../api/init-app';
+import { si } from '../../shared/string-utils';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
@@ -79,7 +80,7 @@ async function main(): Promise<number | undefined> {
   const result = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
-    logError(`Failed to ${storeEmails.name}`, { reason: result.reason });
+    logError(si`Failed to ${storeEmails.name}`, { reason: result.reason });
     return 1;
   }
 

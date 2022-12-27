@@ -3,6 +3,8 @@ import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 export function getLastPostMetadata(feedId: FeedId, storage: AppStorage): Result<LastPostMetadata | undefined> {
   const storageKey = getStorageKey(feedId);
@@ -15,7 +17,7 @@ export function getLastPostMetadata(feedId: FeedId, storage: AppStorage): Result
   const pubDate = new Date(data.pubDate);
 
   if (pubDate.toString() === 'Invalid Date') {
-    return makeErr(`Invalid timestamp in ${storageKey}`);
+    return makeErr(si`Invalid timestamp in ${storageKey}`);
   }
 
   const defaultGuid = '';
@@ -51,12 +53,12 @@ export function recordLastPostMetadata(
   const storeItemResult = storage.storeItem(storageKey, metadata);
 
   if (isErr(storeItemResult)) {
-    return makeErr(`Cant record last post timestamp: ${storeItemResult.reason}`);
+    return makeErr(si`Cant record last post timestamp: ${storeItemResult.reason}`);
   }
 
   return metadata;
 }
 
 function getStorageKey(feedId: FeedId) {
-  return `${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
+  return makePath(getFeedStorageKey(feedId), 'lastPostMetadata.json');
 }

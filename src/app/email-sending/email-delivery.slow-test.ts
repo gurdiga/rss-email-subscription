@@ -5,6 +5,7 @@ import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress 
 import { makeEmailContent } from './item-sending';
 import { RssItem } from '../../domain/rss-item';
 import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
+import { si } from '../../shared/string-utils';
 
 async function main(): Promise<number> {
   const env = getEnv();
@@ -13,11 +14,11 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  console.info(`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
+  console.info(si`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
 
   const to = 'gurdiga@gmail.com';
-  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(`slow-test@${env.DOMAIN_NAME}`) as EmailAddress);
-  const replyTo = `slow-test-reply-to@${env.DOMAIN_NAME}`;
+  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(si`slow-test@${env.DOMAIN_NAME}`) as EmailAddress);
+  const replyTo = si`slow-test-reply-to@${env.DOMAIN_NAME}`;
 
   await sentItemEmail(from, to, replyTo, env);
   await sentEmailVerificationEmail(from, to, replyTo, env);
@@ -30,15 +31,15 @@ async function main(): Promise<number> {
 async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
   const item: RssItem = {
     author: 'Me',
-    title: `testing item-sending from ${new Date().toJSON()}`,
+    title: si`testing item-sending from ${new Date().toJSON()}`,
     content: '<p>This is the post content.</p>',
-    guid: `${Date.now()}`,
+    guid: Date.now().toString(),
     link: new URL('https://example.com/post.html'),
     pubDate: new Date(),
   };
   const emailMessage = makeEmailContent(item, new URL('https://example.com'), from.emailAddress);
   const subject = emailMessage.subject;
-  const htmlBody = `
+  const htmlBody = si`
       <p>This emai is sent from this unit test:</p>
 
       <code>${__filename}</code>
@@ -57,7 +58,7 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
 
   await deliverEmail(emailDeliveryRequest);
 
-  console.info(`Item email sent to ${to}: "${subject}".`);
+  console.info(si`Item email sent to ${to}: "${subject}".`);
 }
 
 async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
@@ -81,14 +82,14 @@ async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, re
 
   await deliverEmail(emailDeliveryRequest);
 
-  console.info(`Email confirmation email sent to ${to}: "${subject}".`);
+  console.info(si`Email confirmation email sent to ${to}: "${subject}".`);
 }
 
 function getEnv(): Result<EmailDeliveryEnv> {
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    return makeErr(`Invalid environment variables: ${env.reason}`);
+    return makeErr(si`Invalid environment variables: ${env.reason}`);
   }
 
   return env;

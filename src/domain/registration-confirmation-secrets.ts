@@ -1,5 +1,7 @@
 import { getTypeName, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
+import { si } from '../shared/string-utils';
+import { makePath } from '../shared/path-utils';
 import { AccountId } from './account';
 
 export interface RegistrationConfirmationSecret {
@@ -15,11 +17,11 @@ export function validateRegistrationConfirmationSecret(input: unknown): Result<R
   }
 
   if (typeof input !== 'string') {
-    return makeErr(`Input of invalid type: ${getTypeName(input)}`);
+    return makeErr(si`Input of invalid type: ${getTypeName(input)}`);
   }
 
   if (input.length !== registrationConfirmationSecretLength) {
-    return makeErr(`Input of invalid length; expected ${registrationConfirmationSecretLength}`);
+    return makeErr(si`Input of invalid length; expected ${registrationConfirmationSecretLength}`);
   }
 
   return makeRegistrationConfirmationSecret(input);
@@ -61,5 +63,5 @@ export function getAccountIdForRegistrationConfirmationSecret(
 }
 
 function getStorageKey(secret: RegistrationConfirmationSecret): StorageKey {
-  return `/confirmation-secrets/${secret.value}.json`;
+  return makePath('/confirmation-secrets', si`${secret.value}.json`);
 }

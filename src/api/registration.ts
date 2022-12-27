@@ -18,6 +18,7 @@ import {
   storeRegistrationConfirmationSecret,
   makeRegistrationConfirmationSecret,
 } from '../domain/registration-confirmation-secrets';
+import { si } from '../shared/string-utils';
 
 export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
   const processInputResult = processInput(reqBody);
@@ -58,14 +59,14 @@ export function storeConfirmationSecret(
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const module = `${registration.name}-${storeConfirmationSecret.name}`;
+  const module = si`${registration.name}-${storeConfirmationSecret.name}`;
   const { logError, logInfo } = makeCustomLoggers({ accountId, module });
 
   const confirmationSecret = makeConfirmationSecret(emailAddress, settings.hashingSalt);
   const result = storeRegistrationConfirmationSecret(storage, confirmationSecret, accountId);
 
   if (isErr(result)) {
-    logError(`Failed to ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
+    logError(si`Failed to ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
     return makeErr('Couldn’t store confirmation secret');
   }
 
@@ -73,7 +74,7 @@ export function storeConfirmationSecret(
 }
 
 async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
-  const module = `${registration.name}-${sendConfirmationEmail.name}`;
+  const module = si`${registration.name}-${sendConfirmationEmail.name}`;
   const { logError, logInfo } = makeCustomLoggers({ email: recipient.value, module });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
@@ -90,7 +91,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
   if (isErr(sendEmailResult)) {
-    logError(`Failed to ${sendEmail.name}`, { reason: sendEmailResult.reason });
+    logError(si`Failed to ${sendEmail.name}`, { reason: sendEmailResult.reason });
     return makeAppError('Couldn’t send registration confirmation email');
   }
 
@@ -98,7 +99,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
 }
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
-  const url = new URL(`https://${domainName}/registration-confirmation.html`);
+  const url = new URL(si`https://${domainName}/registration-confirmation.html`);
   const secret = makeConfirmationSecret(to, appHashingSalt);
 
   url.searchParams.set('secret', secret.value);
@@ -108,7 +109,7 @@ export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSal
 
 function makeConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): RegistrationConfirmationSecret {
   // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
-  const emailAddressHash = hash(emailAddress.value, `confirmation-secret-${appHashingSalt}`);
+  const emailAddressHash = hash(emailAddress.value, si`confirmation-secret-${appHashingSalt}`);
 
   return makeRegistrationConfirmationSecret(emailAddressHash);
 }
@@ -116,12 +117,12 @@ function makeConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: stri
 export function makeRegistrationConfirmationEmailContent(confirmationLink: URL): EmailContent {
   return {
     subject: 'Please confirm FeedSubscription registration',
-    htmlBody: `
+    htmlBody: si`
       <p>Hi there,</p>
 
       <p>Please confirm FeedSubscription registration by clicking the link below:</p>
 
-      <p><a href="${confirmationLink}">Yes, I confirm registration</a>.</p>
+      <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
 
       <p>If you did not register, please ignore this message.</p>
 
@@ -144,7 +145,7 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput, keyof Input> {
-  const module = `${registration.name}-${processInput.name}`;
+  const module = si`${registration.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
   const plan = makePlanId(input.plan);
@@ -165,7 +166,7 @@ function processInput(input: Input): Result<ProcessedInput, keyof Input> {
 
   if (isErr(password)) {
     logWarning('Invalid new password', { password: input.password, reason: password.reason });
-    return makeErr<keyof Input>(`Invalid password: ${password.reason}`, 'password');
+    return makeErr<keyof Input>(si`Invalid password: ${password.reason}`, 'password');
   }
 
   return {
@@ -185,7 +186,7 @@ export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
 }
 
 function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId | AccountAlreadyExists> {
-  const module = `${registration.name}-${initAccount.name}`;
+  const module = si`${registration.name}-${initAccount.name}`;
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
 
   const hashedPassword = hash(input.password.value, settings.hashingSalt);

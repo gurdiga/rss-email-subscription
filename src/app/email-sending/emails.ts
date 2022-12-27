@@ -15,6 +15,8 @@ import {
   Result,
 } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -52,7 +54,7 @@ export function makeEmailAddress(input: unknown): Result<EmailAddress> {
     return makeErr('Email must be a string');
   }
 
-  const emailString = `${input}`;
+  const emailString = input;
   const email = emailString.trim().toLocaleLowerCase();
 
   if (!email) {
@@ -63,7 +65,7 @@ export function makeEmailAddress(input: unknown): Result<EmailAddress> {
     return makeErr('Email too long');
   }
 
-  const err = makeErr(`Email is syntactically incorrect: "${emailString}"`);
+  const err = makeErr(si`Email is syntactically incorrect: "${emailString}"`);
 
   const keyCharacters = ['.', '@'];
   const containsKeyCharacters = keyCharacters.every((c) => email.includes(c));
@@ -136,7 +138,7 @@ export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileF
 
     return parseEmails(fileContent);
   } catch (error) {
-    return makeErr(`Could not read email list from file ${filePath}: ${getErrorMessage(error)}`);
+    return makeErr(si`Could not read email list from file ${filePath}: ${getErrorMessage(error)}`);
   }
 }
 
@@ -174,7 +176,7 @@ function isHashedEmail(value: unknown): value is HashedEmail {
 }
 
 export function getEmailsStorageKey(feedId: FeedId): string {
-  return `${getFeedStorageKey(feedId)}/emails.json`;
+  return makePath(getFeedStorageKey(feedId), 'emails.json');
 }
 
 export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
@@ -182,7 +184,7 @@ export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<St
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
-    return makeErr(`Could not check feed exists at ${storageKey}: ${hasItemResult.reason}`);
+    return makeErr(si`Could not check feed exists at ${storageKey}: ${hasItemResult.reason}`);
   }
 
   if (!hasItemResult) {
@@ -192,13 +194,13 @@ export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<St
   const index = storage.loadItem(storageKey);
 
   if (isErr(index)) {
-    return makeErr(`Could not read email list at ${storageKey}: ${index.reason}`);
+    return makeErr(si`Could not read email list at ${storageKey}: ${index.reason}`);
   }
 
   const indexTypeName = getTypeName(index);
 
   if (indexTypeName !== 'object') {
-    return makeErr(`Invalid email list format: ${indexTypeName} at ${storageKey} for feedId ${feedId.value}`);
+    return makeErr(si`Invalid email list format: ${indexTypeName} at ${storageKey} for feedId ${feedId.value}`);
   }
 
   const results = Object.entries(index).map(([key, value]) =>
@@ -268,7 +270,7 @@ export function storeEmails(hashedEmails: HashedEmail[], feedId: FeedId, storage
   const storeItemResult = storage.storeItem(storageKey, emailIndex);
 
   if (isErr(storeItemResult)) {
-    return makeErr(`Could not store emails: ${storeItemResult.reason}`);
+    return makeErr(si`Could not store emails: ${storeItemResult.reason}`);
   }
 }
 

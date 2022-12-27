@@ -1,6 +1,7 @@
 import { FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
+import { si } from '../shared/string-utils';
 
 export interface AppSettings {
   kind: 'AppSettings';
@@ -21,7 +22,7 @@ export function loadAppSettings(storage: AppStorage): Result<AppSettings> {
   const loadItemResult = storage.loadItem(appSettingsStorageKey) as SettingsJson;
 
   if (isErr(loadItemResult)) {
-    return makeErr(`Could not read app settings: ${loadItemResult.reason}.`);
+    return makeErr(si`Could not read app settings: ${loadItemResult.reason}.`);
   }
 
   const hashingSalt = makeHashingSalt(loadItemResult.hashingSalt);

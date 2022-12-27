@@ -10,6 +10,7 @@ import {
 } from './io-isolation';
 import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io-isolation';
 import { attempt, isErr, makeErr, Result } from './lang';
+import { si } from './string-utils';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 type StorageValue = any; // Will get JSONified and stored in the file.
@@ -50,14 +51,14 @@ export function makeStorage(dataDirRoot: string): AppStorage {
       const mkdirpResult = attempt(() => mkdirpFn(dirPath));
 
       if (isErr(mkdirpResult)) {
-        return makeErr(`Failed to create storage directory structure: ${mkdirpResult.reason}`);
+        return makeErr(si`Failed to create storage directory structure: ${mkdirpResult.reason}`);
       }
     }
 
     const writeFileResult = attempt(() => writeFileFn(filePath, JSON.stringify(value)));
 
     if (isErr(writeFileResult)) {
-      return makeErr(`Couldn’t write file: ${writeFileResult.reason}`);
+      return makeErr(si`Couldn’t write file: ${writeFileResult.reason}`);
     }
   }
 
@@ -68,13 +69,13 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const readFileResult = attempt(() => readFileFn(filePath));
 
     if (isErr(readFileResult)) {
-      return makeErr(`Failed to read file: ${readFileResult.reason}`);
+      return makeErr(si`Failed to read file: ${readFileResult.reason}`);
     }
 
     const jsonParseResult = attempt(() => JSON.parse(readFileResult, jsonParseFilter));
 
     if (isErr(jsonParseResult)) {
-      return makeErr(`Failed to parse JSON: ${jsonParseResult.reason}`);
+      return makeErr(si`Failed to parse JSON: ${jsonParseResult.reason}`);
     }
 
     return jsonParseResult;
@@ -85,7 +86,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
     if (isErr(fileExistsResult)) {
-      return makeErr(`Failed to check file: ${fileExistsResult.reason}`);
+      return makeErr(si`Failed to check file: ${fileExistsResult.reason}`);
     }
 
     return fileExistsResult;
@@ -100,7 +101,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
     if (isErr(fileExistsResult)) {
-      return makeErr(`Failed to check file exists: ${fileExistsResult.reason}`);
+      return makeErr(si`Failed to check file exists: ${fileExistsResult.reason}`);
     }
 
     if (fileExistsResult === false) {
@@ -110,7 +111,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const deleteFileResult = attempt(() => deleteFileFn(filePath));
 
     if (isErr(deleteFileResult)) {
-      return makeErr(`Failed to delete file: ${deleteFileResult.reason}`);
+      return makeErr(si`Failed to delete file: ${deleteFileResult.reason}`);
     }
   }
 
@@ -123,13 +124,13 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
     if (isErr(fileExistsResult)) {
-      return makeErr(`Failed to check directory exists: ${fileExistsResult.reason}`);
+      return makeErr(si`Failed to check directory exists: ${fileExistsResult.reason}`);
     }
 
     const listFilesResult = attempt(() => listFilesFn(filePath));
 
     if (isErr(listFilesResult)) {
-      return makeErr(`Failed to list files: ${listFilesResult.reason}`);
+      return makeErr(si`Failed to list files: ${listFilesResult.reason}`);
     }
 
     return listFilesResult;
@@ -144,13 +145,13 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const fileExistsResult = attempt(() => fileExistsFn(filePath));
 
     if (isErr(fileExistsResult)) {
-      return makeErr(`Failed to check directory exists: ${fileExistsResult.reason}`);
+      return makeErr(si`Failed to check directory exists: ${fileExistsResult.reason}`);
     }
 
     const listDirectoriesResult = attempt(() => listDirectoriesFn(filePath));
 
     if (isErr(listDirectoriesResult)) {
-      return makeErr(`Failed to list directories: ${listDirectoriesResult.reason}`);
+      return makeErr(si`Failed to list directories: ${listDirectoriesResult.reason}`);
     }
 
     return listDirectoriesResult;

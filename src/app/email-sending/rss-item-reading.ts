@@ -5,6 +5,8 @@ import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../shared/storage';
 import { FeedId } from '../../domain/feed';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -37,14 +39,14 @@ export function readStoredRssItems(feedId: FeedId, storage: AppStorage): Result<
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
-    return makeErr(`Failed to list files in ${storageKey}: ${fileNamesResult.reason}`);
+    return makeErr(si`Failed to list files in ${storageKey}: ${fileNamesResult.reason}`);
   }
 
-  const fileNameFormat = new RegExp(`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
+  const fileNameFormat = new RegExp(si`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const rssItems = fileNamesResult
     .filter((fileName) => fileNameFormat.test(fileName))
     // ASSUMPTION: storage.loadItem() never fails here
-    .map((fileName) => [fileName, storage.loadItem(`${storageKey}/${fileName}`)])
+    .map((fileName) => [fileName, storage.loadItem(makePath(storageKey, fileName))])
     .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 
   const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
@@ -96,5 +98,5 @@ export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredR
 }
 
 export function getStoredRssItemStorageKey(feedId: FeedId, fileName: string): string {
-  return `${getFeedInboxStorageKey(feedId)}/${fileName}`;
+  return makePath(getFeedInboxStorageKey(feedId), fileName);
 }

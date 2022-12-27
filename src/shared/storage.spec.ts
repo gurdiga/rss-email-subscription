@@ -1,22 +1,16 @@
 import { expect } from 'chai';
-import {
-  DeleteFileFn,
-  FileExistsFn,
-  ListDirectoriesFn,
-  ListFilesFn,
-  MkdirpFn,
-  ReadFileFn,
-  WriteFileFn,
-} from './io-isolation';
+import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn } from './io-isolation';
+import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from './lang';
 import { makeStorage } from './storage';
+import { makePath } from './path-utils';
 import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
   const { loadItem, storeItem, hasItem, removeItem, listItems, listSubdirectories } = makeStorage(dataDirRoot);
   const key = '/path/destination.json';
-  const expectedFilePath = `${dataDirRoot}${key}`;
+  const expectedFilePath = makePath(dataDirRoot, key);
 
   describe(storeItem.name, () => {
     const value = { number: 1, string: 'string', date: new Date() };

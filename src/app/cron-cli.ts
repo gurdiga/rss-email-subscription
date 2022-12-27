@@ -7,6 +7,7 @@ import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/proc
 import { makeStorage } from '../shared/storage';
 import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
+import { si } from '../shared/string-utils';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
 const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
@@ -55,5 +56,5 @@ if (feed.kind === 'FeedNotFound') {
 main(feedId, feed, storage).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {
-  logError(`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);
+  logError(si`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);
 }

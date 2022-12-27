@@ -5,6 +5,7 @@ import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 import { FeedId, makeFeedId } from '../../domain/feed';
+import { si } from '../../shared/string-utils';
 
 describe(recordNewRssItems.name, () => {
   const feedId = makeFeedId('testblog') as FeedId;
@@ -38,7 +39,7 @@ describe(recordNewRssItems.name, () => {
 
   it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
     const storage = makeStorageStub({ storeItem: makeSpy() });
-    const nameFile = makeStub<typeof itemFileName>((item) => item.pubDate.toJSON() + '.json');
+    const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
     const result = recordNewRssItems(feedId, storage, rssItems, nameFile);
 
     expect((storage.storeItem as Spy).calls).to.deep.equal([
@@ -55,7 +56,7 @@ describe(recordNewRssItems.name, () => {
     const result = recordNewRssItems(feedId, storage, rssItems);
 
     expect(result).to.deep.equal(
-      makeErr(`Cant write RSS item file to inbox: ${err.reason}, item: ${JSON.stringify(rssItems[0])}`)
+      makeErr(si`Cant write RSS item file to inbox: ${err.reason}, item: ${JSON.stringify(rssItems[0])}`)
     );
   });
 
@@ -71,7 +72,7 @@ describe(recordNewRssItems.name, () => {
       };
       const hashFn = makeStub((_s: string) => '-42');
 
-      expect(itemFileName(item, hashFn)).to.equal(`${RSS_ITEM_FILE_PREFIX}-42.json`);
+      expect(itemFileName(item, hashFn)).to.equal(si`${RSS_ITEM_FILE_PREFIX}-42.json`);
     });
   });
 });

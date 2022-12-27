@@ -1,3 +1,5 @@
+import { si } from './string-utils';
+
 export type Result<T, FIELD extends string = string> = T | Err<FIELD>;
 
 export interface Err<FIELD extends string = string> {
@@ -27,7 +29,7 @@ export function makeTypeMismatchErr(value: unknown, expectedType: string): Err {
   const actualType = getTypeName(value);
   const jsonValue = JSON.stringify(value);
 
-  return makeErr(`Expected ${expectedType} but got ${actualType}: "${jsonValue}"`);
+  return makeErr(si`Expected ${expectedType} but got ${actualType}: "${jsonValue}"`);
 }
 
 export function isNonEmptyString(value: string): boolean {
@@ -54,7 +56,7 @@ export function getErrorMessage(error: unknown): string {
     return error.toString();
   }
 
-  return `[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
+  return si`[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
 }
 
 type AnyFunction = (...args: unknown[]) => any;

@@ -1,5 +1,6 @@
 import { ApiResponse, AppError, InputError, isAppError, isInputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
 export interface ConfirmationLinkUrlParams {
@@ -23,7 +24,7 @@ export function parseConfirmationLinkUrlParams(
 
   for (paramName in params) {
     if (!params[paramName]) {
-      logErrorFn(`Missing parameter: ${paramName}`);
+      logErrorFn(si`Missing parameter: ${paramName}`);
       return makeErr(`Invalid confirmation link`);
     }
   }
@@ -39,7 +40,7 @@ export function requireUiElements<T>(selectors: Record<keyof T, string>, querySe
     const element = querySelectorFn(selector);
 
     if (!element) {
-      return makeErr(`Element not found by selector: "${selector}"`);
+      return makeErr(si`Element not found by selector: "${selector}"`);
     }
 
     uiElements[name] = element as any;
@@ -57,11 +58,11 @@ export interface UiElementFillSpec<T extends HTMLElement = any> {
 export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   for (const spec of specs) {
     if (!spec.element) {
-      return makeErr(`UiElementFillSpec element is missing in ${JSON.stringify(spec)}`);
+      return makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spec)}`);
     }
 
     if (!(spec.propName in spec.element)) {
-      return makeErr(`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
+      return makeErr(si`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
     }
 
     spec.element[spec.propName] = spec.value;
@@ -73,7 +74,7 @@ export function displayMainError(message: string) {
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
-    reportError(`Element is missing: ${errorMessageSelector}`);
+    reportError(si`Element is missing: ${errorMessageSelector}`);
     return;
   }
 
@@ -123,12 +124,12 @@ export function reportError(error: Error | string): void {
 
 export function assertHeader(headerName: string, expectedHeaderValue: string) {
   return (response: Response) => {
-    const contentType = response.headers.get(headerName);
+    const contentType = response.headers.get(headerName)!;
 
     if (contentType === expectedHeaderValue) {
       return response;
     } else {
-      throw new TypeError(`Unexpected response type: ${contentType}`);
+      throw new TypeError(si`Unexpected response type: ${contentType}`);
     }
   };
 }
@@ -143,7 +144,7 @@ export function assertFound(response: Response) {
 
 export function sendApiRequest(relativePath: string, data: Record<string, string>): Promise<ApiResponse> {
   const basePath = '/api';
-  const url = `${basePath}${relativePath}`;
+  const url = si`${basePath}${relativePath}`;
 
   return fetch(url, {
     method: 'POST',

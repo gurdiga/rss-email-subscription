@@ -5,6 +5,7 @@ import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
+import { si } from '../shared/string-utils';
 import { App } from './init-app';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';
@@ -51,7 +52,7 @@ interface ProcessedInput {
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
-  const module = `${authentication.name}-${processInput.name}`;
+  const module = si`${authentication.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module });
 
   const email = makeEmailAddress(input.email);
@@ -78,13 +79,13 @@ function processInput(input: Input): Result<ProcessedInput> {
 function checkCredentials({ settings, storage }: App, input: ProcessedInput): Result<AccountId> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: input.email.value,
-    module: `${authentication.name}:${checkCredentials.name}`,
+    module: si`${authentication.name}:${checkCredentials.name}`,
   });
   const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
-    logError(`Failed to ${loadAccount.name}`, { reason: account.reason });
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
     return makeErr(`Failed to load account`, 'email');
   }
 

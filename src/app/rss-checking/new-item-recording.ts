@@ -4,6 +4,8 @@ import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../shared/storage';
 import { FeedId, getFeedStorageKey } from '../../domain/feed';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 export function recordNewRssItems(
   feedId: FeedId,
@@ -20,7 +22,7 @@ export function recordNewRssItems(
     const storeItemResult = storage.storeItem(storageKey, item);
 
     if (isErr(storeItemResult)) {
-      return makeErr(`Cant write RSS item file to inbox: ${storeItemResult.reason}, item: ${JSON.stringify(item)}`);
+      return makeErr(si`Cant write RSS item file to inbox: ${storeItemResult.reason}, item: ${JSON.stringify(item)}`);
     }
 
     writtenItemCount++;
@@ -33,11 +35,12 @@ export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
   const hashingSalt = 'item-name-salt';
-  const hash = hashFn(item.title + item.content + item.pubDate.toJSON(), hashingSalt);
+  const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
+  const hash = hashFn(input, hashingSalt);
 
-  return `${RSS_ITEM_FILE_PREFIX}${hash}.json`;
+  return si`${RSS_ITEM_FILE_PREFIX}${hash}.json`;
 }
 
 export function getFeedInboxStorageKey(feedId: FeedId): string {
-  return `${getFeedStorageKey(feedId)}/inbox`;
+  return makePath(getFeedStorageKey(feedId), 'inbox');
 }

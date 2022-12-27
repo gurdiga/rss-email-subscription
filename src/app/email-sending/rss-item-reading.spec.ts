@@ -4,6 +4,8 @@ import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 import { makeStorageStub, Stub } from '../../shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
@@ -64,7 +66,7 @@ describe(readStoredRssItems.name, () => {
     };
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
-    expect((storage.listItems as Stub).calls).to.deep.equal([[`${getFeedStorageKey(feedId)}/inbox`]]);
+    expect((storage.listItems as Stub).calls).to.deep.equal([[makePath(getFeedStorageKey(feedId), 'inbox')]]);
   });
 
   it('also returns the files with invalid data', () => {
@@ -116,7 +118,7 @@ describe(readStoredRssItems.name, () => {
     const storage = makeStorageStub({ listItems: () => error });
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(
-      makeErr(`Failed to list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
+      makeErr(si`Failed to list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
     );
   });
 

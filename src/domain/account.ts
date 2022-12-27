@@ -4,6 +4,8 @@ import { hash } from '../shared/crypto';
 import { parseDate } from '../shared/date-utils';
 import { isErr, makeErr, readStringArray, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
+import { si } from '../shared/string-utils';
+import { makePath } from '../shared/path-utils';
 import { FeedId, isFeedId, makeFeedId } from './feed';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
@@ -36,37 +38,37 @@ export function loadAccount(
   const loadItemResult = storage.loadItem(storageKey);
 
   if (isErr(loadItemResult)) {
-    return makeErr(`Failed to load account data: ${loadItemResult.reason}`);
+    return makeErr(si`Failed to load account data: ${loadItemResult.reason}`);
   }
 
   const email = makeEmailAddress(loadItemResult.email);
 
   if (isErr(email)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${email.reason}`, 'email');
+    return makeErr(si`Invalid stored data for account ${accountId}: ${email.reason}`, 'email');
   }
 
   const plan = makePlanId(loadItemResult.plan);
 
   if (isErr(plan)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${plan.reason}`, 'plan');
+    return makeErr(si`Invalid stored data for account ${accountId}: ${plan.reason}`, 'plan');
   }
 
   const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
 
   if (isErr(hashedPassword)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${hashedPassword.reason}`, 'hashedPassword');
+    return makeErr(si`Invalid stored data for account ${accountId}: ${hashedPassword.reason}`, 'hashedPassword');
   }
 
   const creationTimestamp = parseDate(loadItemResult.creationTimestamp);
 
   if (isErr(creationTimestamp)) {
-    return makeErr(`Invalid stored data for account ${accountId}: ${creationTimestamp.reason}`, 'creationTimestamp');
+    return makeErr(si`Invalid stored data for account ${accountId}: ${creationTimestamp.reason}`, 'creationTimestamp');
   }
 
   const strings = readStringArray(loadItemResult.feedIds);
 
   if (isErr(strings)) {
-    return makeErr(`Non-string stored feedIds for account ${accountId}: ${strings.reason}`, 'feedIds');
+    return makeErr(si`Non-string stored feedIds for account ${accountId}: ${strings.reason}`, 'feedIds');
   }
 
   const results = strings.map(makeFeedId);
@@ -74,7 +76,10 @@ export function loadAccount(
   const errs = results.filter(isErr).map((x) => x.reason);
 
   if (errs.length > 0) {
-    return makeErr(`Some of the stored feedIds (${strings}) for account ${accountId} are invalid: ${errs}`, 'feedIds');
+    return makeErr(
+      si`Some of the stored feedIds (${strings.join()}) for account ${accountId} are invalid: ${errs.join()}`,
+      'feedIds'
+    );
   }
 
   return {
@@ -99,14 +104,15 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   const storeItemResult = storage.storeItem(storageKey, data);
 
   if (isErr(storeItemResult)) {
-    return makeErr(`Couldn’t storeAccount: ${storeItemResult.reason}`);
+    return makeErr(si`Couldn’t storeAccount: ${storeItemResult.reason}`);
   }
 }
 
 export const accountsStorageKey = '/accounts';
 
+// TODO: Add unit test
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
-  return `${accountsStorageKey}/${accountId}/account.json`;
+  return makePath(accountsStorageKey, accountId, 'account.json');
 }
 
 export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): AccountId {
@@ -130,7 +136,7 @@ export function confirmAccount(
   const storeAccountResult = storeAccount(storage, accountId, account);
 
   if (isErr(storeAccountResult)) {
-    return makeErr(`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
+    return makeErr(si`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
   }
 }
 
@@ -139,7 +145,7 @@ export function accountExists(storage: AppStorage, accountId: AccountId): Result
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
-    return makeErr(`Failed to check account exists: ${hasItemResult.reason}`);
+    return makeErr(si`Failed to check account exists: ${hasItemResult.reason}`);
   }
 
   return hasItemResult;

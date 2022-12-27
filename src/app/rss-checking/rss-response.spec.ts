@@ -1,5 +1,6 @@
 import { expect } from 'chai';
 import { Err, makeErr } from '../../shared/lang';
+import { si } from '../../shared/string-utils';
 import { makeMyHeaders } from './fetch';
 import { fetchRss, RssResponse } from './rss-response';
 
@@ -47,8 +48,9 @@ describe(fetchRss.name, () => {
       const mockHeaders = makeMyHeaders({ 'content-type': 'text/html; charset=utf-8' });
       const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText });
       const response = await fetchRss(mockUrl, mockFetchFn);
+      const contentType = mockHeaders.get('content-type')!;
 
-      expect(response).to.deep.equal(makeErr(`Invalid response content-type: ${mockHeaders.get('content-type')}`));
+      expect(response).to.deep.equal(makeErr(si`Invalid response content-type: ${contentType}`));
     });
 
     it('disregards header casing', async () => {

@@ -14,6 +14,8 @@ import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import { deauthentication } from './deauthentication';
 import { createFeed, listFeeds } from './feeds';
+import { si } from '../shared/string-utils';
+import { makePath } from '../shared/path-utils';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -25,9 +27,9 @@ async function main() {
   server.use(
     '/web-ui-scripts',
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
-    express.static(`${__dirname}/web-ui-scripts`)
+    express.static(makePath(__dirname, 'web-ui-scripts'))
   );
-  server.use('/version.txt', express.static(`${__dirname}/version.txt`));
+  server.use('/version.txt', express.static(makePath(__dirname, 'version.txt')));
   server.use(helmet());
   server.use(cors());
   server.get('/cors-test', (_req, res) => res.send('CORS test'));
@@ -49,8 +51,8 @@ async function main() {
   }
 
   const shutdownHandle = server.listen(port, () => {
-    logInfo(`Starting API server in ${process.env['NODE_ENV']} environment`);
-    logInfo(`Listening on http://0.0.0.0:${port}`);
+    logInfo(si`Starting API server in ${process.env['NODE_ENV']!} environment`);
+    logInfo(si`Listening on http://0.0.0.0:${port.toString()}`);
   });
 
   process.on('SIGTERM', () => {

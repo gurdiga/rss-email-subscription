@@ -3,21 +3,16 @@ import { readFileSync } from 'node:fs';
 import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
-import {
-  buildRssItem,
-  parseRssItems,
-  RssParsingResult,
-  ParsedRssItem,
-  BuildRssItemFn,
-  ValidRssItem,
-  maxValidItems,
-} from './rss-parsing';
+import { buildRssItem, parseRssItems, RssParsingResult, ParsedRssItem, BuildRssItemFn } from './rss-parsing';
+import { ValidRssItem } from './rss-parsing';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
   it('returns a RssParsingResult containing the items', async () => {
-    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
+    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.xml'), 'utf-8');
     const expectedValidItems: RssItem[] = [
       {
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
@@ -59,7 +54,7 @@ describe(parseRssItems.name, () => {
   });
 
   it('can extract <content:encoded>', async () => {
-    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.seth.xml`, 'utf-8');
+    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.seth.xml'), 'utf-8');
     const expectedValidItems: RssItem[] = [
       {
         title: 'Instead',
@@ -93,8 +88,8 @@ describe(parseRssItems.name, () => {
     } as RssParsingResult);
   });
 
-  it(`only returns ${maxValidItems} most recent valid items`, async () => {
-    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.max.xml`, 'utf-8');
+  it(`only returns maxValidItems most recent valid items`, async () => {
+    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.max.xml'), 'utf-8');
 
     const result = (await parseRssItems({
       kind: 'RssResponse',
@@ -172,7 +167,7 @@ describe(parseRssItems.name, () => {
 
   it('defaults guid to "link" when no id/guid', async () => {
     const link = new URL('/2021/06/12/serial-post-sat-jun-12-19-04-59-eest-2021.html', baseURL);
-    const xml = `
+    const xml = si`
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
         <title type="html">Your awesome title</title>
@@ -218,11 +213,11 @@ describe(parseRssItems.name, () => {
       baseURL,
     })) as Err;
 
-    expect(result).to.deep.equal(makeErr(`Invalid XML: ${xml}`));
+    expect(result).to.deep.equal(makeErr(si`Invalid XML: ${xml}`));
   });
 
   it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
-    const xml = readFileSync(`${__dirname}/rss-parsing.spec.fixture.xml`, 'utf-8');
+    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.xml'), 'utf-8');
     const buildRssItemFn = makeThrowingStub<BuildRssItemFn>(new Error('Something broke!'));
 
     const result = (await parseRssItems(
@@ -234,7 +229,7 @@ describe(parseRssItems.name, () => {
       buildRssItemFn
     )) as Err;
 
-    expect(result).to.deep.equal(makeErr(`buildRssItemFn threw: Error: Something broke!`));
+    expect(result).to.deep.equal(makeErr(`buildRssItemFn threw: Something broke!`));
   });
 
   describe(buildRssItem.name, () => {

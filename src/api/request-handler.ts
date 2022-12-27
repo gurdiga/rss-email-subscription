@@ -1,6 +1,7 @@
 import { RequestHandler as ExpressRequestHandler, Request } from 'express';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { makeCustomLoggers } from '../shared/logging';
+import { si } from '../shared/string-utils';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
@@ -30,14 +31,14 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
     const durationMs = new Date().getTime() - start.getTime();
 
     if (isSuccess(result)) {
-      logInfo(`${action} succeded`, { ...result.logData, durationMs });
+      logInfo(si`${action} succeded`, { ...result.logData, durationMs });
       delete result.logData;
       res.status(200).send(result);
     } else if (isInputError(result)) {
-      logWarning(`${action} input error`, { message: result.message, durationMs });
+      logWarning(si`${action} input error`, { message: result.message, durationMs });
       res.status(400).send(result);
     } else if (isAppError(result)) {
-      logError(`${action} failed`, { message: result.message, durationMs });
+      logError(si`${action} failed`, { message: result.message, durationMs });
       res.status(500).send(result);
     }
   };

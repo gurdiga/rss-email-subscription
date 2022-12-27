@@ -3,6 +3,8 @@ import { getRandomString } from '../shared/crypto';
 import { isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
+import { si } from '../shared/string-utils';
+import { makePath } from '../shared/path-utils';
 import { makeUrl } from '../shared/url';
 import { AccountId, loadAccount } from './account';
 import { cronPatternBySchedule } from './cron-pattern';
@@ -38,11 +40,11 @@ export function isFeedNotFound(value: unknown): value is FeedNotFound {
 export const feedRootStorageKey = '/feeds';
 
 export function getFeedStorageKey(feedId: FeedId) {
-  return `${feedRootStorageKey}/${feedId.value}`;
+  return makePath(feedRootStorageKey, feedId.value);
 }
 
 export function getFeedJsonStorageKey(feedId: FeedId) {
-  return `${getFeedStorageKey(feedId)}/feed.json`;
+  return makePath(getFeedStorageKey(feedId), 'feed.json');
 }
 
 export function storeFeed(feed: Feed, storage: AppStorage): Result<void> {
@@ -58,7 +60,7 @@ export function storeFeed(feed: Feed, storage: AppStorage): Result<void> {
   const result = storage.storeItem(storageKey, data);
 
   if (isErr(result)) {
-    return makeErr(`Failed to store feed data: ${result.reason}`);
+    return makeErr(si`Failed to store feed data: ${result.reason}`);
   }
 }
 
@@ -74,7 +76,7 @@ export function getFeed(feedId: FeedId, storage: AppStorage, domainName: string)
   const url = makeUrl(data.url);
 
   if (isErr(url)) {
-    return makeErr(`Invalid feed URL in ${storageKey}: ${data.url}`);
+    return makeErr(si`Invalid feed URL in ${storageKey}: ${data.url}`);
   }
 
   const defaultCrontPattern = '0 * * * *';
@@ -82,26 +84,26 @@ export function getFeed(feedId: FeedId, storage: AppStorage, domainName: string)
   const saltMinLength = 16;
 
   if (typeof hashingSalt !== 'string') {
-    return makeErr(`Invalid hashing salt in ${storageKey}: ${hashingSalt}`);
+    return makeErr(si`Invalid hashing salt in ${storageKey}: ${hashingSalt}`);
   }
 
   if (hashingSalt.trim().length < saltMinLength) {
     return makeErr(
-      `Hashing salt is too short in ${storageKey}: at least ${saltMinLength} non-space characters required`
+      si`Hashing salt is too short in ${storageKey}: at least ${saltMinLength} non-space characters required`
     );
   }
 
-  const fromAddress = makeEmailAddress(`${feedId.value}@${domainName}`);
+  const fromAddress = makeEmailAddress(si`${feedId.value}@${domainName}`);
 
   if (isErr(fromAddress)) {
-    return makeErr(`Invalid "fromAddress" in ${storageKey}: ${fromAddress.reason}`);
+    return makeErr(si`Invalid "fromAddress" in ${storageKey}: ${fromAddress.reason}`);
   }
 
-  const defaultReplyTo = `feedback@${domainName}`;
+  const defaultReplyTo = si`feedback@${domainName}`;
   const replyTo = makeEmailAddress(data.replyTo || defaultReplyTo);
 
   if (isErr(replyTo)) {
-    return makeErr(`Invalid "replyTo" address in ${storageKey}: ${replyTo.reason}`);
+    return makeErr(si`Invalid "replyTo" address in ${storageKey}: ${replyTo.reason}`);
   }
 
   return {
@@ -132,7 +134,7 @@ export function getFeedsByAccountId(
   const account = loadAccountFn(storage, accountId);
 
   if (isErr(account)) {
-    return makeErr(`Failed to ${loadAccount.name}: ${account.reason}`);
+    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
   }
 
   const loadedFeeds = account.feedIds.map((feedId) => getFeedFn(feedId, storage, domainName));
@@ -235,7 +237,7 @@ function makeFeedFromAddress(input: string | any, domainName: string): Result<Em
     return err;
   }
 
-  const fromAddress = makeEmailAddress(`${input}@${domainName}`);
+  const fromAddress = makeEmailAddress(si`${input}@${domainName}`);
 
   if (isErr(fromAddress)) {
     return err;

@@ -35,7 +35,7 @@
 
       const { origin } = new URL(script.src);
 
-      setupFormSending(feedId, submitButton, fieldTextbox, messageContent, origin);
+      setupFormSending(feedId, submitButton, fieldTextbox, messageContent, new URL(origin));
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
       uiContainer.append(formArea, messageArea);
@@ -65,7 +65,7 @@
     submitButton: HTMLButtonElement,
     fieldTextbox: HTMLInputElement,
     messageContent: HTMLElement,
-    origin: string
+    origin: URL
   ) {
     const submitForm = () => {
       const data = {
@@ -195,13 +195,13 @@
     emailAddressText: string;
   }
 
-  function submitEmailToApi(
-    origin: string,
+  async function submitEmailToApi(
+    origin: URL,
     data: DataToSubmit,
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
-    const url = `${origin}/api/subscription`;
+    const url = new URL(`/api/subscription`, origin);
     const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,

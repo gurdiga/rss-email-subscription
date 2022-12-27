@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import os from 'node:os';
 import { listFiles, mkdirp, writeFile } from './io-isolation';
+import { makePath } from './path-utils';
 
 describe(mkdirp.name, () => {
-  const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-mkdirp-'));
+  const tmpWorkDir = mkdtempSync(makePath(os.tmpdir(), 'res-test-mkdirp-'));
 
   it('creates nested directories', () => {
-    const dir = `${tmpWorkDir}/one/two/three`;
+    const dir = makePath(tmpWorkDir, 'one/two/three');
 
     mkdirp(dir);
 
@@ -17,10 +17,10 @@ describe(mkdirp.name, () => {
 });
 
 describe(writeFile.name, () => {
-  const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-writeFile-'));
+  const tmpWorkDir = mkdtempSync(makePath(os.tmpdir(), 'res-test-writeFile-'));
 
   it('writes the given content to the givent file path', () => {
-    const filePath = `${tmpWorkDir}/some-file.txt`;
+    const filePath = makePath(tmpWorkDir, 'some-file.txt');
     const fileContent = 'This is the file contents!';
 
     writeFile(filePath, fileContent);
@@ -31,16 +31,16 @@ describe(writeFile.name, () => {
 });
 
 describe(listFiles.name, () => {
-  const tmpWorkDir = mkdtempSync(path.join(os.tmpdir(), 'res-test-listFiles-'));
+  const tmpWorkDir = mkdtempSync(makePath(os.tmpdir(), 'res-test-listFiles-'));
 
   it('returns the names of files in the given directory, ignoring subdirectories', () => {
     const fileNames = ['file1.txt', 'file2.txt', 'file3.txt'];
 
     fileNames.forEach((fileName) => {
-      writeFileSync(`${tmpWorkDir}/${fileName}`, 'content');
+      writeFileSync(makePath(tmpWorkDir, fileName), 'content');
     });
 
-    mkdirSync(`${tmpWorkDir}/subdir`);
+    mkdirSync(makePath(tmpWorkDir, 'subdir'));
 
     expect(listFiles(tmpWorkDir)).to.deep.equal(fileNames);
   });

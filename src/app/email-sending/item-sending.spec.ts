@@ -6,6 +6,7 @@ import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery
 import { EmailAddress, FullEmailAddress, HashedEmail, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
 import { FeedId, makeFeedId } from '../../domain/feed';
+import { si } from '../../shared/string-utils';
 
 describe('item-sending', () => {
   const domainName = 'test.feedsubscription.com';
@@ -64,7 +65,7 @@ describe('item-sending', () => {
       const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(error);
       const result = await sendEmail(from, to, replyTo, messageContent, env, deliverEmailFn);
 
-      expect(result).to.deep.equal(makeErr(`Could not deliver email to ${to.value}: ${error.message}`));
+      expect(result).to.deep.equal(makeErr(si`Could not deliver email to ${to.value}: ${error.message}`));
     });
   });
 
@@ -93,10 +94,11 @@ describe('item-sending', () => {
 
     it('returns a link containing the feed unique ID and the email salted hash', () => {
       const result = makeUnsubscribeUrl(feedId, hashedEmail, displayName, domainName);
+      const id = si`${feedId.value}-${hashedEmail.saltedHash}`;
 
       expect(result.toString()).to.equal(
-        `https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(feedId.value + '-' + hashedEmail.saltedHash)}` +
+        si`https://test.feedsubscription.com/unsubscribe.html` +
+          `?id=${encodeSearchParamValue(id)}` +
           `&displayName=${encodeSearchParamValue(displayName)}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
@@ -104,10 +106,11 @@ describe('item-sending', () => {
 
     it('uses feedId when displayName is empty', () => {
       const result = makeUnsubscribeUrl(feedId, hashedEmail, '', domainName);
+      const id = si`${feedId.value}-${hashedEmail.saltedHash}`;
 
       expect(result.toString()).to.equal(
-        `https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(feedId.value + '-' + hashedEmail.saltedHash)}` +
+        si`https://test.feedsubscription.com/unsubscribe.html` +
+          `?id=${encodeSearchParamValue(id)}` +
           `&displayName=${feedId.value}` +
           `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );

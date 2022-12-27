@@ -11,6 +11,7 @@ import { ConfirmationLinkUrlParams } from '../web-ui/shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../shared/storage';
 import { RequestHandler } from './request-handler';
+import { si } from '../shared/string-utils';
 
 export const subscription: RequestHandler = async function subscription(
   reqId,
@@ -42,7 +43,7 @@ export const subscription: RequestHandler = async function subscription(
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError(`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -65,7 +66,7 @@ export const subscription: RequestHandler = async function subscription(
   const result = storeEmails(newEmails.validEmails, feedId, storage);
 
   if (isErr(result)) {
-    logError(`Failed to ${storeEmails.name}`, { reason: result.reason });
+    logError(si`Failed to ${storeEmails.name}`, { reason: result.reason });
     return makeAppError('Database write error');
   }
 
@@ -125,7 +126,7 @@ function processInput(input: Input, storage: AppStorage, domainName: string): Pr
   }
 
   if (isErr(feed)) {
-    logError(`Failed to ${getFeed.name}`, { reason: feed.reason });
+    logError(si`Failed to ${getFeed.name}`, { reason: feed.reason });
     return makeAppError('Failed to read feed settings');
   }
 
@@ -150,12 +151,12 @@ export function makeSubscriptionConfirmationEmailContent(
   listEmailAddress: EmailAddress
 ): EmailContent {
   const subject = 'Please confirm feed subscription';
-  const htmlBody = `
+  const htmlBody = si`
     <p>Hi there,</p>
 
     <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
 
-    <p><a href="${confirmationLinkUrl}">Yes, subscribe me</a></p>
+    <p><a href="${confirmationLinkUrl.toString()}">Yes, subscribe me</a></p>
 
     <p style="max-width: 35em">
       If you asked to be subscribed, add the list email to your contacts
@@ -173,7 +174,7 @@ export function makeSubscriptionConfirmationEmailContent(
 }
 
 function makeUrlFromConfirmationLinkUrlParams(params: ConfirmationLinkUrlParams, domainName: string): URL {
-  const url = new URL(`https://${domainName}/subscription-confirmation.html`);
+  const url = new URL(si`https://${domainName}/subscription-confirmation.html`);
   let name: keyof typeof params;
 
   for (name in params) {
@@ -190,7 +191,7 @@ export function makeEmailConfirmationUrl(
   domainName: string
 ): URL {
   const params: ConfirmationLinkUrlParams = {
-    id: `${feedId.value}-${hashedEmail.saltedHash}`,
+    id: si`${feedId.value}-${hashedEmail.saltedHash}`,
     displayName: feedDisplayName || feedId.value,
     email: hashedEmail.emailAddress.value,
   };

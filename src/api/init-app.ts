@@ -3,6 +3,7 @@ import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { AppStorage, makeStorage } from '../shared/storage';
+import { si } from '../shared/string-utils';
 
 export interface App {
   storage: AppStorage;
@@ -28,7 +29,7 @@ export function initApp(): App {
   const settings = loadAppSettings(storage);
 
   if (isErr(settings)) {
-    logError(`Failed to ${loadAppSettings.name}`, { reason: settings.reason });
+    logError(si`Failed to ${loadAppSettings.name}`, { reason: settings.reason });
     process.exit(1);
   }
 

@@ -2,6 +2,8 @@ import { expect } from 'chai';
 import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 import { ReadFileFn } from '../../shared/io-isolation';
 import { Err, isErr, makeErr } from '../../shared/lang';
+import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 import { makeStorageStub, makeStub, makeThrowingStub, Stub } from '../../shared/test-utils';
 import {
   EmailAddress,
@@ -101,7 +103,7 @@ describe(parseEmails.name, () => {
 
 describe(addEmail.name, () => {
   const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
-  const emailHashFn: EmailHashFn = (e) => `#${e.value}#`;
+  const emailHashFn: EmailHashFn = (e) => si`#${e.value}#`;
 
   it('adds an email address to a StoredEmails', () => {
     const storedEmails: StoredEmails = {
@@ -165,8 +167,8 @@ describe(makeEmailAddress.name, () => {
     } as EmailAddress);
   });
 
-  it(`returns an Err value when the email is longer than ${maxEmailLength}`, () => {
-    const tooLongAnEmail = `${'a'.repeat(maxEmailLength)}@toolong.com`;
+  it(`returns an Err value when the email is longer than maxEmailLength`, () => {
+    const tooLongAnEmail = si`${'a'.repeat(maxEmailLength)}@toolong.com`;
 
     expect(makeEmailAddress(tooLongAnEmail)).to.deep.equal(makeErr('Email too long'));
   });
@@ -227,13 +229,13 @@ describe(readEmailListFromCsvFile.name, () => {
     const readFile = makeThrowingStub<ReadFileFn>(error);
     const result = readEmailListFromCsvFile(filePath, readFile);
 
-    expect(result).to.deep.equal(makeErr(`Could not read email list from file ${filePath}: ${error.message}`));
+    expect(result).to.deep.equal(makeErr(si`Could not read email list from file ${filePath}: ${error.message}`));
   });
 });
 
 describe(loadStoredEmails.name, () => {
   const feedId = makeFeedId('path') as FeedId;
-  const storageKey = `${getFeedStorageKey(feedId)}/emails.json`;
+  const storageKey = makePath(getFeedStorageKey(feedId), 'emails.json');
 
   const index: EmailIndex = {
     hash1: 'email1@test.com',
@@ -319,8 +321,8 @@ describe(loadStoredEmails.name, () => {
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
-        new RegExp(`Invalid email list format: .+ at ${storageKey}`),
-        `storedValue: ${storedValue}`
+        new RegExp(si`Invalid email list format: .+ at ${storageKey}`),
+        si`storedValue: ${storedValue}`
       );
     }
   });
@@ -330,7 +332,7 @@ describe(loadStoredEmails.name, () => {
     const storage = makeStorageStub({ loadItem: () => err, hasItem: () => true });
 
     expect(loadStoredEmails(feedId, storage)).to.deep.equal(
-      makeErr(`Could not read email list at ${storageKey}: ${err.reason}`)
+      makeErr(si`Could not read email list at ${storageKey}: ${err.reason}`)
     );
   });
 });

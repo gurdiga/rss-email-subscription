@@ -9,7 +9,8 @@ import { Feed, FeedId, getFeedJsonStorageKey, getFeedStorageKey, makeFeedId, Mak
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
-import { path, si } from './src/shared/string-utils';
+import { si } from './src/shared/string-utils';
+import { makePath } from './src/shared/path-utils';
 import { die } from './src/shared/test-utils';
 
 const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
@@ -146,7 +147,7 @@ describe('API', () => {
     }
 
     function getFeedSubscriberEmails(feedId: FeedId) {
-      return loadJSON(path(getFeedStorageKey(feedId), 'emails.json'));
+      return loadJSON(makePath(getFeedStorageKey(feedId), 'emails.json'));
     }
   }).timeout(5000);
 
@@ -255,7 +256,7 @@ describe('API', () => {
         });
 
         function getStoredFeedByEmailName(feedId: FeedId) {
-          return loadJSON(path(dataDirRoot, getFeedJsonStorageKey(feedId)));
+          return loadJSON(makePath(getFeedJsonStorageKey(feedId)));
         }
       });
 
@@ -299,21 +300,21 @@ describe('API', () => {
   }
 
   async function registrationConfirmationDo(email: string) {
-    const appSettings = loadJSON(path(dataDirRoot, 'settings.json')) as AppSettings;
+    const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
     const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
     return post('/registration-confirmation', { secret });
   }
 
   function getAccountByEmail(email: string): [AccountData, AccountId] {
-    const hashingSalt = loadJSON(path(dataDirRoot, appSettingsStorageKey))['hashingSalt'];
+    const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
     const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
 
-    return [loadJSON(path(dataDirRoot, getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
+    return [loadJSON(makePath(getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
 
   function getSessionData(sessionId: string) {
-    return loadJSON(path(dataDirRoot, 'sessions', si`${sessionId}.json`));
+    return loadJSON(makePath('sessions', si`${sessionId}.json`));
   }
 
   interface ApiResponseTuple {
@@ -333,7 +334,7 @@ describe('API', () => {
     data: Record<string, string> = {},
     headers: Headers = new Headers()
   ): Promise<JsonApiResponse> {
-    const response = await fetch(path(apiBaseUrl, relativePath), {
+    const response = await fetch(makePath(apiBaseUrl, relativePath), {
       method: 'POST',
       body: new URLSearchParams(data),
       headers,
@@ -357,7 +358,7 @@ describe('API', () => {
     type: 'json' | 'text' = 'json',
     headers?: Headers
   ): Promise<JsonApiResponse<D> | TextApiResponse> {
-    const response = await fetch(path(apiBaseUrl, relativePath), { headers });
+    const response = await fetch(makePath(apiBaseUrl, relativePath), { headers });
 
     return {
       responseBody: await response[type](),
@@ -366,7 +367,7 @@ describe('API', () => {
   }
 
   function loadJSON(filePath: string) {
-    const jsonString = readFile(filePath);
+    const jsonString = readFile(makePath(dataDirRoot, filePath));
     return JSON.parse(jsonString);
   }
 });

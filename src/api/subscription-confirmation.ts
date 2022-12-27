@@ -5,6 +5,7 @@ import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
 import { isFeedNotFound, makeFeedId } from '../domain/feed';
+import { si } from '../shared/string-utils';
 
 export const subscriptionConfirmation: RequestHandler = async function subscriptionConfirmation(
   reqId,
@@ -33,7 +34,7 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError(`Failed to ${loadStoredEmails.name}`, { feedId, reason: storedEmails.reason });
+    logError(si`Failed to ${loadStoredEmails.name}`, { feedId, reason: storedEmails.reason });
     return makeAppError('Database read error');
   }
 
@@ -57,7 +58,7 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
   const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
 
   if (isErr(storeResult)) {
-    logError(`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
+    logError(si`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
     return makeAppError('Database write error: registering confirmation failed');
   }
 

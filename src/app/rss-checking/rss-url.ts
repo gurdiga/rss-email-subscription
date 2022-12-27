@@ -1,4 +1,5 @@
 import { makeErr, Result } from '../../shared/lang';
+import { si } from '../../shared/string-utils';
 
 export function makeUrl(urlString?: string): Result<URL> {
   if (!urlString) {
@@ -11,7 +12,7 @@ export function makeUrl(urlString?: string): Result<URL> {
     if (url.protocol === 'https:') {
       return url;
     } else {
-      return makeErr(`Invalid protocol: "${url.protocol}"`);
+      return makeErr(si`Invalid protocol: "${url.protocol}"`);
     }
   } catch (error) {
     /**
@@ -30,6 +31,6 @@ export function makeUrl(urlString?: string): Result<URL> {
     const errorCode = error && (error as any).code; // `TypeError` interface type does not include the `code`?!
     const errorDetail = errorCode || '[NO ERROR CODE]';
 
-    return makeErr(`${errorDetail}: ${urlString}`);
+    return makeErr(si`${errorDetail}: ${urlString}`);
   }
 }

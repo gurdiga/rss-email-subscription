@@ -3,6 +3,7 @@ import { makeAppError, makeInputError, makeSuccess } from '../shared/api-respons
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
+import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
@@ -18,7 +19,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   const feed = makeFeed(reqBody, app.env.DOMAIN_NAME);
 
   if (isErr(feed)) {
-    logWarning(`${makeFeed.name} failed`, feed);
+    logWarning(si`Failed to ${makeFeed.name}`, feed);
     return makeInputError(feed.reason, feed.field);
   }
 
@@ -27,7 +28,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   const storeFeedResult = storeFeed(feed, app.storage);
 
   if (isErr(storeFeedResult)) {
-    logError(`${storeFeed.name} failed`, { reason: storeFeedResult.reason });
+    logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
     return makeAppError(`Failed to create feed`);
   }
 
@@ -48,18 +49,18 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
   const result = getFeedsByAccountId(session.accountId, app.storage, app.env.DOMAIN_NAME);
 
   if (isErr(result)) {
-    logError(`Failed to ${getFeedsByAccountId.name}`, { reason: result.reason });
+    logError(si`Failed to ${getFeedsByAccountId.name}`, { reason: result.reason });
     return makeAppError(`Failed to load feed list`);
   }
 
   if (!isEmpty(result.errs)) {
-    logError(`Errors while loading feeds for account ${session.accountId}`, { errs: result.errs });
+    logError(si`Errors while loading feeds for account ${session.accountId}`, { errs: result.errs });
   }
 
   if (!isEmpty(result.missingFeeds)) {
     const missingFeedIds = result.missingFeeds.map((x) => x.feedId);
 
-    logWarning(`Missing feeds for account ${session.accountId}`, { missingFeedIds });
+    logWarning(si`Missing feeds for account ${session.accountId}`, { missingFeedIds });
   }
 
   const data = result.validFeeds;

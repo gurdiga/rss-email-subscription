@@ -1,5 +1,6 @@
 import { isSuccess } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
@@ -7,7 +8,7 @@ async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
 
   if (isErr(secret)) {
-    reportError(`Invalid registration confirmation link: ${secret.reason}`);
+    reportError(si`Invalid registration confirmation link: ${secret.reason}`);
     displayMainError('Invalid registration confirmation link');
     return;
   }
@@ -47,7 +48,7 @@ function validateSecretFromQueryStringParam(locationSearch: string): Result<stri
   const secret = params.get(paramName);
 
   if (!secret) {
-    return makeErr(`Missing or empty param \`${paramName}\` in "${locationSearch}"`);
+    return makeErr(si`Missing or empty param \`${paramName}\` in "${locationSearch}"`);
   }
 
   return secret;

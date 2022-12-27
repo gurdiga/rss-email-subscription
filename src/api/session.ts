@@ -1,5 +1,6 @@
 import { AccountId } from '../domain/account';
 import { hasKind, isString } from '../shared/lang';
+import { makePath } from '../shared/path-utils';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -9,7 +10,7 @@ export type ReqSession = ReturnType<typeof session>;
 
 export function makeExpressSession({ env, settings }: App): ReqSession {
   const store = new FileStore({
-    path: `${env.DATA_DIR_ROOT}/sessions`,
+    path: makePath(env.DATA_DIR_ROOT, 'sessions'),
   });
 
   return session({
