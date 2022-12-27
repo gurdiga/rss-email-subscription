@@ -5,10 +5,11 @@ import { EmailAddress, makeEmailAddress } from './src/app/email-sending/emails';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { cronPatternBySchedule } from './src/domain/cron-pattern';
-import { Feed, FeedId, getFeedJsonStorageKey, makeFeedId, MakeFeedInput } from './src/domain/feed';
+import { Feed, FeedId, getFeedJsonStorageKey, getFeedStorageKey, makeFeedId, MakeFeedInput } from './src/domain/feed';
 import { ApiResponse, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
+import { path, si } from './src/shared/string-utils';
 import { die } from './src/shared/test-utils';
 
 const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
@@ -91,8 +92,8 @@ describe('API', () => {
   });
 
   describe('subscription-confirmation-unsubscription flow', () => {
-    const emailHash = 'b617571ab1974d3614e5f6c48449e08dc0129aa0f28f16a9d5e3cb9ee1f7c29b'; // echo -n "${SUBSCRIBER_EMAIL}${FEED_HASHING_SALT}" | sha256sum
-    const feedId = 'gurdiga';
+    const emailHash = 'b617571ab1974d3614e5f6c48449e08dc0129aa0f28f16a9d5e3cb9ee1f7c29b'; // echo -n "$SUBSCRIBER_EMAIL$FEED_HASHING_SALT" | sha256sum
+    const feedId = makeFeedId('gurdiga') as FeedId;
     const subscriberEmail = 'api-test@feedsubscription.com';
 
     it('flows', async () => {
@@ -106,7 +107,7 @@ describe('API', () => {
       );
 
       const emails = getFeedSubscriberEmails(feedId);
-      expect(emails, 'email recorded with feed').to.include.keys(`${emailHash}`);
+      expect(emails, 'email recorded with feed').to.include.keys(emailHash);
       expect(emails[emailHash].isConfirmed).to.be.false;
 
       const { responseBody: subscriptionConfirmationResult } = await subscriptionConfirmationDo(feedId, emailHash);
@@ -118,7 +119,7 @@ describe('API', () => {
       const { responseBody: unsubscriptionResult } = await unsubscriptionDo(feedId, emailHash);
 
       expect(unsubscriptionResult.kind).to.equal('Success', 'unsubscription result');
-      expect(getFeedSubscriberEmails(feedId), 'email removed from feed').not.to.include.keys(`${emailHash}`);
+      expect(getFeedSubscriberEmails(feedId), 'email removed from feed').not.to.include.keys(emailHash);
 
       const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionDo(feedId, emailHash);
 
@@ -132,20 +133,20 @@ describe('API', () => {
       await unsubscriptionDo(feedId, emailHash);
     });
 
-    async function subscriptionDo(feedId: string, email: string) {
-      return post('/subscription', { feedId, email });
+    async function subscriptionDo(feedId: FeedId, email: string) {
+      return post('/subscription', { feedId: feedId.value, email });
     }
 
-    async function subscriptionConfirmationDo(feedId: string, emailHash: string) {
-      return post('/subscription-confirmation', { id: `${feedId}-${emailHash}` });
+    async function subscriptionConfirmationDo(feedId: FeedId, emailHash: string) {
+      return post('/subscription-confirmation', { id: si`${feedId.value}-${emailHash}` });
     }
 
-    async function unsubscriptionDo(feedId: string, emailHash: string) {
-      return post('/unsubscription', { id: `${feedId}-${emailHash}` });
+    async function unsubscriptionDo(feedId: FeedId, emailHash: string) {
+      return post('/unsubscription', { id: si`${feedId.value}-${emailHash}` });
     }
 
-    function getFeedSubscriberEmails(feedId: string) {
-      return loadJSON(`${dataDirRoot}/feeds/${feedId}/emails.json`);
+    function getFeedSubscriberEmails(feedId: FeedId) {
+      return loadJSON(path(getFeedStorageKey(feedId), 'emails.json'));
     }
   }).timeout(5000);
 
@@ -254,7 +255,7 @@ describe('API', () => {
         });
 
         function getStoredFeedByEmailName(feedId: FeedId) {
-          return loadJSON(`./${dataDirRoot}${getFeedJsonStorageKey(feedId)}`);
+          return loadJSON(path(dataDirRoot, getFeedJsonStorageKey(feedId)));
         }
       });
 
@@ -298,21 +299,21 @@ describe('API', () => {
   }
 
   async function registrationConfirmationDo(email: string) {
-    const appSettings = loadJSON(`./${dataDirRoot}/settings.json`) as AppSettings;
+    const appSettings = loadJSON(path(dataDirRoot, 'settings.json')) as AppSettings;
     const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
     return post('/registration-confirmation', { secret });
   }
 
   function getAccountByEmail(email: string): [AccountData, AccountId] {
-    const hashingSalt = loadJSON(`${dataDirRoot}/${appSettingsStorageKey}`)['hashingSalt'];
+    const hashingSalt = loadJSON(path(dataDirRoot, appSettingsStorageKey))['hashingSalt'];
     const accountId = getAccountIdByEmail(makeEmailAddress(email) as EmailAddress, hashingSalt);
 
-    return [loadJSON(`./${dataDirRoot}/${getAccountStorageKey(accountId)}`), accountId] as [AccountData, AccountId];
+    return [loadJSON(path(dataDirRoot, getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
 
   function getSessionData(sessionId: string) {
-    return loadJSON(`./${dataDirRoot}/sessions/${sessionId}.json`);
+    return loadJSON(path(dataDirRoot, 'sessions', si`${sessionId}.json`));
   }
 
   interface ApiResponseTuple {
@@ -328,11 +329,11 @@ describe('API', () => {
   }
 
   async function post(
-    path: string,
+    relativePath: string,
     data: Record<string, string> = {},
     headers: Headers = new Headers()
   ): Promise<JsonApiResponse> {
-    const response = await fetch(`${apiBaseUrl}${path}`, {
+    const response = await fetch(path(apiBaseUrl, relativePath), {
       method: 'POST',
       body: new URLSearchParams(data),
       headers,
@@ -352,11 +353,11 @@ describe('API', () => {
   async function get<D extends any = any>(path: string, type: 'json'): Promise<JsonApiResponse<D>>;
   async function get<D extends any = any>(path: string): Promise<JsonApiResponse<D>>;
   async function get<D extends any = any>(
-    path: string,
+    relativePath: string,
     type: 'json' | 'text' = 'json',
     headers?: Headers
   ): Promise<JsonApiResponse<D> | TextApiResponse> {
-    const response = await fetch(`${apiBaseUrl}${path}`, { headers });
+    const response = await fetch(path(apiBaseUrl, relativePath), { headers });
 
     return {
       responseBody: await response[type](),
