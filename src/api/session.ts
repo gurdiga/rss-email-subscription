@@ -47,7 +47,7 @@ function setSessionConfig(reqSession: ReqSession): void {
 }
 
 export function initSession(reqSession: ReqSession, accountId: AccountId): void {
-  storeSessionValue(reqSession, 'accountId', accountId);
+  storeSessionValue(reqSession, 'accountId', accountId.value);
   setSessionConfig(reqSession);
 }
 

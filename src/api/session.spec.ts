@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { AccountId, makeAccountId } from '../domain/account';
-import { AuthenticatedSession, checkSession, SessionFields, UnauthenticatedSession } from './session';
+import { AuthenticatedSession, checkSession, deinitSession, initSession, SessionFields } from './session';
+import { UnauthenticatedSession } from './session';
 
 describe(checkSession.name, () => {
   it('returns an AuthenticatedSession value when session.accountId is a non-empty string', () => {
@@ -29,5 +30,27 @@ describe(checkSession.name, () => {
     expect(checkSession({ accountId: null })).to.deep.equal(expectedResult);
     expect(checkSession({ accountId: 42 })).to.deep.equal(expectedResult);
     expect(checkSession({ accountId: {} })).to.deep.equal(expectedResult);
+  });
+});
+
+describe(initSession.name, () => {
+  it('inits cookie and stores accountId hash string on session', () => {
+    const accountId = makeAccountId('test'.repeat(16)) as AccountId;
+    const session = { cookie: {} } as any;
+
+    initSession(session, accountId);
+
+    expect(session.accountId).to.equal(accountId.value);
+    expect(session.cookie).to.deep.equal({ maxAge: 172800000, sameSite: 'strict' });
+  });
+});
+
+describe(deinitSession.name, () => {
+  it('removes accountId from session', () => {
+    const session = { accountId: 'test'.repeat(16) };
+
+    deinitSession(session);
+
+    expect(session.accountId).to.not.exist;
   });
 });
