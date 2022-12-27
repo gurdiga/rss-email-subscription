@@ -64,7 +64,7 @@ lint-quiet:
 	@printf "Lint..."
 	$(TIME) $(MAKE) lint > /dev/null
 
-# docker cp website:/etc/nginx/nginx.conf website/nginx/ # + comment out irrelevant pieces
+# docker cp website:/etc/nginx/nginx.conf website/nginx/ # plus, comment out irrelevant pieces
 # sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
 lint-nginx-config:
 	nginx -q -t -c `pwd`/website/nginx/nginx.conf
