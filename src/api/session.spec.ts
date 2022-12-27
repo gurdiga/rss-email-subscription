@@ -1,17 +1,17 @@
 import { expect } from 'chai';
-import { makeAccountId } from '../domain/account';
+import { AccountId, makeAccountId } from '../domain/account';
 import { AuthenticatedSession, checkSession, SessionFields, UnauthenticatedSession } from './session';
 
 describe(checkSession.name, () => {
   it('returns an AuthenticatedSession value when session.accountId is a non-empty string', () => {
     const session: Pick<SessionFields, 'accountId'> = {
-      accountId: '42',
+      accountId: 'x'.repeat(64),
     };
 
     const result = checkSession(session);
     const expectedResult: AuthenticatedSession = {
       kind: 'AuthenticatedSession',
-      accountId: makeAccountId(session.accountId as string),
+      accountId: makeAccountId(session.accountId as string) as AccountId,
     };
 
     expect(result).to.deep.equal(expectedResult);
@@ -22,6 +22,7 @@ describe(checkSession.name, () => {
       kind: 'UnauthenticatedSession',
     };
 
+    expect(checkSession(null)).to.deep.equal(expectedResult);
     expect(checkSession({})).to.deep.equal(expectedResult);
     expect(checkSession({ accountId: '' })).to.deep.equal(expectedResult);
     expect(checkSession({ accountId: '  ' })).to.deep.equal(expectedResult);

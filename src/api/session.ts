@@ -1,5 +1,5 @@
 import { AccountId, makeAccountId } from '../domain/account';
-import { hasKind, isString } from '../shared/lang';
+import { hasKind, isErr, isObject } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { App } from './init-app';
 
@@ -67,15 +67,23 @@ export interface UnauthenticatedSession {
   kind: 'UnauthenticatedSession';
 }
 
-export function checkSession(reqSession: ReqSession): AuthenticatedSession | UnauthenticatedSession {
-  const { accountId } = reqSession;
-
-  if (isString(accountId) && accountId.trim().length > 0) {
-    return {
-      kind: 'AuthenticatedSession',
-      accountId: makeAccountId(accountId),
-    };
+export function checkSession(reqSession: unknown): AuthenticatedSession | UnauthenticatedSession {
+  if (!isObject(reqSession)) {
+    return { kind: 'UnauthenticatedSession' };
   }
 
-  return { kind: 'UnauthenticatedSession' };
+  if (!('accountId' in reqSession) || typeof reqSession.accountId !== 'string') {
+    return { kind: 'UnauthenticatedSession' };
+  }
+
+  const accountId = makeAccountId(reqSession.accountId);
+
+  if (isErr(accountId)) {
+    return { kind: 'UnauthenticatedSession' };
+  }
+
+  return {
+    kind: 'AuthenticatedSession',
+    accountId,
+  };
 }
