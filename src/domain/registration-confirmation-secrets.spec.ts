@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { makeSpy, makeStorageStub, makeStub, Spy } from '../shared/test-utils';
-import { AccountId } from './account';
+import { makeAccountId } from './account';
 import {
   validateRegistrationConfirmationSecret,
   RegistrationConfirmationSecret,
@@ -35,7 +35,7 @@ describe('Registration confirmation secrets', () => {
   });
 
   const secret = makeRegistrationConfirmationSecret('secret-email-hash-id');
-  const accountId: AccountId = 'some-email-hash';
+  const accountId = makeAccountId('some-email-hash');
   const storageErr = makeErr('Boom!');
 
   describe(storeRegistrationConfirmationSecret.name, () => {

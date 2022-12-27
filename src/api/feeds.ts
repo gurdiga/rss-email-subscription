@@ -54,13 +54,13 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
   }
 
   if (!isEmpty(result.errs)) {
-    logError(si`Errors while loading feeds for account ${session.accountId}`, { errs: result.errs });
+    logError(si`Errors while loading feeds for account ${session.accountId.value}`, { errs: result.errs });
   }
 
   if (!isEmpty(result.missingFeeds)) {
     const missingFeedIds = result.missingFeeds.map((x) => x.feedId);
 
-    logWarning(si`Missing feeds for account ${session.accountId}`, { missingFeedIds });
+    logWarning(si`Missing feeds for account ${session.accountId.value}`, { missingFeedIds });
   }
 
   const data = result.validFeeds;

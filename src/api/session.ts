@@ -1,4 +1,4 @@
-import { AccountId } from '../domain/account';
+import { AccountId, makeAccountId } from '../domain/account';
 import { hasKind, isString } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { App } from './init-app';
@@ -73,7 +73,7 @@ export function checkSession(reqSession: ReqSession): AuthenticatedSession | Una
   if (isString(accountId) && accountId.trim().length > 0) {
     return {
       kind: 'AuthenticatedSession',
-      accountId,
+      accountId: makeAccountId(accountId),
     };
   }
 

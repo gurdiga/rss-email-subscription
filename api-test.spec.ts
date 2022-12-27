@@ -47,7 +47,10 @@ describe('API', () => {
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
 
       const sessionDataAfterConfirmation = getSessionData(sessionId!);
-      expect(sessionDataAfterConfirmation.accountId).to.equal(accountId, 'registration confirmation session accountId');
+      expect(sessionDataAfterConfirmation.accountId).to.equal(
+        accountId.value,
+        'registration confirmation session accountId'
+      );
 
       const [accountAfterConfirmation] = getAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
@@ -61,7 +64,7 @@ describe('API', () => {
       const sessionData = getSessionData(sessionId!);
       const sessionCookie = sessionData.cookie!;
 
-      expect(sessionData.accountId).to.equal(accountId, 'authentication session accountId');
+      expect(sessionData.accountId).to.equal(accountId.value, 'authentication session accountId');
       expect(sessionCookie.originalMaxAge).to.equal(172800000, 'authentication cookie maxAge');
       expect(sessionCookie.sameSite).to.equal('strict', 'authentication cookie sameSite');
       expect(sessionCookie.httpOnly).to.equal(true, 'authentication cookie httpOnly');

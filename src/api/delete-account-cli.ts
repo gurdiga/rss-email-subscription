@@ -6,6 +6,7 @@ import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { accountsStorageKey, getAccountIdByEmail } from '../domain/account';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
+import { makePath } from '../shared/path-utils';
 import { getFirstCliArg, isRunDirectly } from '../shared/process-utils';
 import { si } from '../shared/string-utils';
 import { initApp } from './init-app';
@@ -37,9 +38,10 @@ function main(): void {
 export function deleteAccount(email: EmailAddress): Result<void> {
   const { env, settings } = initApp();
   const accountId = getAccountIdByEmail(email, settings.hashingSalt);
+  const accountDirPath = makePath(env.DATA_DIR_ROOT, accountsStorageKey, accountId.value);
 
   const rmDataResult = attempt(() => {
-    rmSync(si`${env.DATA_DIR_ROOT}/${accountsStorageKey}/${accountId}`, { recursive: true });
+    rmSync(accountDirPath, { recursive: true });
   });
 
   if (isErr(rmDataResult)) {

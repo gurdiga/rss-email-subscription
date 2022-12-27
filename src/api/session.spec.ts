@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { makeAccountId } from '../domain/account';
 import { AuthenticatedSession, checkSession, SessionFields, UnauthenticatedSession } from './session';
 
 describe(checkSession.name, () => {
@@ -10,7 +11,7 @@ describe(checkSession.name, () => {
     const result = checkSession(session);
     const expectedResult: AuthenticatedSession = {
       kind: 'AuthenticatedSession',
-      accountId: session.accountId as string,
+      accountId: makeAccountId(session.accountId as string),
     };
 
     expect(result).to.deep.equal(expectedResult);

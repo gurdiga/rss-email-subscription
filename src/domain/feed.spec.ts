@@ -4,7 +4,7 @@ import { Feed, FeedNotFound, MakeFeedInput, FeedsByAccountId, storeFeed, getFeed
 import { makeFeedId, FeedId, getFeed, getFeedsByAccountId, makeFeed } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
-import { Account } from './account';
+import { Account, makeAccountId } from './account';
 import { si } from '../shared/string-utils';
 
 const domainName = 'test.feedsubscription.com';
@@ -100,7 +100,7 @@ describe(getFeed.name, () => {
 });
 
 describe(getFeedsByAccountId.name, () => {
-  const accountId = 'test-account-id';
+  const accountId = makeAccountId('test-account-id');
   const storage = makeStorageStub({});
 
   it('returns feed data for account', () => {

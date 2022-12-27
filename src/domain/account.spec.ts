@@ -4,20 +4,13 @@ import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
-import {
-  Account,
-  AccountData,
-  AccountId,
-  confirmAccount,
-  getAccountStorageKey,
-  loadAccount,
-  storeAccount,
-} from './account';
+import { Account, AccountData, confirmAccount, getAccountStorageKey } from './account';
+import { loadAccount, makeAccountId, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
-const accountId: AccountId = 'some-email-hash';
+const accountId = makeAccountId('some-email-hash');
 
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
@@ -62,7 +55,7 @@ describe(loadAccount.name, () => {
 
     expect(result).to.deep.equal(
       makeErr(
-        si`Invalid stored data for account ${accountId}: Email is syntactically incorrect: "not-an-email-really"`,
+        si`Invalid stored data for account ${accountId.value}: Email is syntactically incorrect: "not-an-email-really"`,
         'email'
       )
     );
@@ -79,7 +72,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr(si`Invalid stored data for account ${accountId}: Unknown plan ID: magic`, 'plan')
+      makeErr(si`Invalid stored data for account ${accountId.value}: Unknown plan ID: magic`, 'plan')
     );
   });
 
@@ -94,7 +87,10 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr(si`Invalid stored data for account ${accountId}: Invalid hashed password length: 8`, 'hashedPassword')
+      makeErr(
+        si`Invalid stored data for account ${accountId.value}: Invalid hashed password length: 8`,
+        'hashedPassword'
+      )
     );
   });
 });
