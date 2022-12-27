@@ -1,8 +1,10 @@
 import crypto from 'node:crypto';
 
-export type HashFn = (input: string, salt?: string) => string;
+export type HashFn = (input: string, salt: string) => string;
 
-export const hash: HashFn = function hash(input: string, salt: string = ''): string {
+export const hashLength = 64; // 256/8 bytes * 2 hex-chars per byte
+
+export const hash: HashFn = function hash(input: string, salt: string): string {
   return crypto
     .createHash('sha256')
     .update(input + salt, 'utf8')

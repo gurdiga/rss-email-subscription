@@ -1,8 +1,8 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { hash } from '../shared/crypto';
+import { hash, hashLength } from '../shared/crypto';
 
 import { parseDate } from '../shared/date-utils';
-import { hasKind, isErr, makeErr, readStringArray, Result } from '../shared/lang';
+import { hasKind, isErr, isString, makeErr, readStringArray, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
@@ -15,7 +15,15 @@ export interface AccountId {
   value: string;
 }
 
-export function makeAccountId(value: string): AccountId {
+export function makeAccountId(value: string): Result<AccountId> {
+  if (!isString(value)) {
+    return makeErr('Not a string');
+  }
+
+  if (value.length !== hashLength) {
+    return makeErr('AccountId is expected to be a 64-character hex hash');
+  }
+
   return {
     kind: 'AccountId',
     value,
@@ -127,14 +135,14 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
 
 export const accountsStorageKey = '/accounts';
 
-// TODO: Add unit test
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
   return makePath(accountsStorageKey, accountId.value, 'account.json');
 }
 
 export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): AccountId {
   // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
-  return makeAccountId(hash(email.value, hashingSalt));
+  // ASSUMPTION: SHA256 is 64-character long.
+  return makeAccountId(hash(email.value, hashingSalt)) as AccountId;
 }
 
 export function confirmAccount(

@@ -4,13 +4,13 @@ import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
-import { Account, AccountData, confirmAccount, getAccountStorageKey } from './account';
+import { Account, AccountData, AccountId, confirmAccount, getAccountIdByEmail, getAccountStorageKey } from './account';
 import { loadAccount, makeAccountId, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
-const accountId = makeAccountId('some-email-hash');
+const accountId = makeAccountId('x'.repeat(64)) as AccountId;
 
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
@@ -159,5 +159,44 @@ describe(confirmAccount.name, () => {
     expect(loadItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
     expect(storeItem.calls).to.deep.equal([[getAccountStorageKey(accountId), expectedStoredData]]);
     expect(result).to.be.undefined;
+  });
+});
+
+describe(makeAccountId.name, () => {
+  it('returns an AccountId value when all good', () => {
+    const input = 'x'.repeat(64);
+    const expectedResult: AccountId = {
+      kind: 'AccountId',
+      value: 'x'.repeat(64),
+    };
+
+    expect(makeAccountId(input)).to.deep.equal(expectedResult);
+  });
+
+  it('returns an Err value when not so good', () => {
+    expect(makeAccountId('1')).to.deep.equal(makeErr('AccountId is expected to be a 64-character hex hash'));
+  });
+});
+
+describe(getAccountIdByEmail.name, () => {
+  it('returns a 64-character hex hash of the given email', () => {
+    const email = makeEmailAddress('test@test.com') as EmailAddress;
+    const result = getAccountIdByEmail(email, 'test-secret-salt');
+
+    expect(result).to.deep.equal({
+      kind: 'AccountId',
+      value: '1a3f1d35ee5d00cc82044803851b76380a96f4a228b952c9dc71de68cbb716dd',
+    });
+  });
+});
+
+describe(getAccountStorageKey.name, () => {
+  it('returns path of account.json for the given AccountId', () => {
+    const accountIdHash = 'x'.repeat(64);
+    const accountId = makeAccountId(accountIdHash) as AccountId;
+
+    const expectedPath = si`/accounts/${accountIdHash}/account.json`;
+
+    expect(getAccountStorageKey(accountId)).to.equal(expectedPath);
   });
 });
