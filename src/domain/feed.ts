@@ -79,7 +79,7 @@ export function getFeed(feedId: FeedId, storage: AppStorage, domainName: string)
     return makeErr(si`Invalid feed URL in ${storageKey}: ${data.url}`);
   }
 
-  const defaultCrontPattern = '0 * * * *';
+  const defaultCrontPattern = cronPatternBySchedule['@hourly'];
   const { hashingSalt, cronPattern = defaultCrontPattern } = data;
   const saltMinLength = 16;
 
