@@ -51,7 +51,7 @@ describe(makeStorage.name, () => {
         [expectedFilePath, JSON.stringify(value)],
         'stores data in the given file'
       );
-      expect(result).to.deep.equal(makeErr(`Couldn’t write file: Disk is full!!`));
+      expect(result).to.deep.equal(makeErr('Couldn’t write file: Disk is full!!'));
     });
   });
 
