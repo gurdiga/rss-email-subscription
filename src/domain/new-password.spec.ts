@@ -34,7 +34,7 @@ describe(makeNewPassword.name, () => {
     expect(makeNewPassword('test  ')).to.deep.equal(makeErr('Has trailing spaces'));
   });
 
-  it(`accepts passwords containing spaces inside`, () => {
+  it('accepts passwords containing spaces inside', () => {
     const passwordWithSpacesInside = si`${longEnoughPassword} some spaces inside`;
 
     expect(makeNewPassword(passwordWithSpacesInside)).to.deep.equal({

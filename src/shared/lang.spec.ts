@@ -55,7 +55,7 @@ describe(getErrorMessage.name, () => {
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/String
       const error = { toString: null };
 
-      expect(getErrorMessage(error)).to.equal(`[UNEXPECTED ERROR OBJECT: [object Object]]`);
+      expect(getErrorMessage(error)).to.equal('[UNEXPECTED ERROR OBJECT: [object Object]]');
     });
   });
 });

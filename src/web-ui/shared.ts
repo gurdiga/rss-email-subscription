@@ -25,7 +25,7 @@ export function parseConfirmationLinkUrlParams(
   for (paramName in params) {
     if (!params[paramName]) {
       logErrorFn(si`Missing parameter: ${paramName}`);
-      return makeErr(`Invalid confirmation link`);
+      return makeErr('Invalid confirmation link');
     }
   }
 
@@ -136,7 +136,7 @@ export function assertHeader(headerName: string, expectedHeaderValue: string) {
 
 export function assertFound(response: Response) {
   if (response.status === 404) {
-    throw new TypeError(`Invalid API endpoint`);
+    throw new TypeError('Invalid API endpoint');
   } else {
     return response;
   }

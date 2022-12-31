@@ -28,7 +28,7 @@ export function makeUrl(urlString?: string): Result<URL> {
     }
     */
 
-    const errorCode = error && (error as any).code; // `TypeError` interface type does not include the `code`?!
+    const errorCode = error && (error as any).code; // TypeError interface type does not include 'code'?!
     const errorDetail = errorCode || '[NO ERROR CODE]';
 
     return makeErr(si`${errorDetail}: ${urlString}`);

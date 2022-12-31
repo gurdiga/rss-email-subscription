@@ -183,7 +183,7 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
   const fromAddress = makeFeedFromAddress(input.feedId, domainName);
 
   if (isErr(fromAddress)) {
-    return fromAddress;
+    return makeErr(si`Invalid feed fromAddress: ${fromAddress.reason}`, 'fromAddress');
   }
 
   const replyTo = makeEmailAddress(input.replyTo);

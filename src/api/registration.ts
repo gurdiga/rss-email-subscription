@@ -80,7 +80,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    logError(`Invalid environment`, { reason: env.reason });
+    logError('Invalid environment', { reason: env.reason });
     return makeAppError('Environment error');
   }
 
@@ -132,7 +132,7 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
 }
 
 interface Input {
-  plan: string; // Maybe switch to `unknown` type and see what comes out
+  plan: string; // Maybe switch to 'unknown' type and see what comes out
   email: string;
   password: string;
 }
@@ -208,7 +208,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   const storeAccountResult = storeAccount(storage, accountId, account);
 
   if (isErr(storeAccountResult)) {
-    logError(`Couldn’t storeAccountResult`, { reason: storeAccountResult.reason });
+    logError('Couldn’t storeAccountResult', { reason: storeAccountResult.reason });
     return makeErr('Couldn’t store account data');
   }
 

@@ -27,9 +27,9 @@ describe(parseSubscriptionId.name, () => {
   });
 
   it('returns an Err value when can’t ID doesn’t match the format', () => {
-    const id = `missisipi`;
+    const id = 'missisipi';
 
-    expect(parseSubscriptionId(id)).to.deep.equal(makeErr(`Invalid subscription ID`));
+    expect(parseSubscriptionId(id)).to.deep.equal(makeErr('Invalid subscription ID'));
   });
 
   it('returns an Err value when unsubscription ID is not a string', () => {

@@ -21,7 +21,7 @@ export function initApp(): App {
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    logError(`Invalid environment`, { reason: env.reason });
+    logError('Invalid environment', { reason: env.reason });
     process.exit(1);
   }
 

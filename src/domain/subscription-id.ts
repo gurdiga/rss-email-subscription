@@ -14,7 +14,7 @@ export function parseSubscriptionId(id: unknown): Result<SubscriptionId> {
   const match = /^(?<feedId>.+)-(?<emailHash>[^-]+)$/.exec(id);
 
   if (!match || !match.groups) {
-    return makeErr(`Invalid subscription ID`);
+    return makeErr('Invalid subscription ID');
   }
 
   const { feedId, emailHash } = match.groups as { feedId: string; emailHash: string };

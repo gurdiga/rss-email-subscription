@@ -12,7 +12,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning(`Not authenticated`);
+    logWarning('Not authenticated', { reason: session.reason });
     return makeInputError('Not authenticated');
   }
 
@@ -29,7 +29,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
 
   if (isErr(storeFeedResult)) {
     logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
-    return makeAppError(`Failed to create feed`);
+    return makeAppError('Failed to create feed');
   }
 
   // TODO
@@ -42,15 +42,15 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning(`Not authenticated`);
+    logWarning('Not authenticated');
     return makeInputError('Not authenticated');
   }
 
   const result = getFeedsByAccountId(session.accountId, app.storage, app.env.DOMAIN_NAME);
 
   if (isErr(result)) {
-    logError(si`Failed to ${getFeedsByAccountId.name}`, { reason: result.reason });
-    return makeAppError(`Failed to load feed list`);
+    return makeAppError('Failed to load feed list');
+  }
   }
 
   if (!isEmpty(result.errs)) {

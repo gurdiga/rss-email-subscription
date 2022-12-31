@@ -13,7 +13,7 @@ const { logError } = makeCustomLoggers({ module: 'cron-cli' });
 const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
 if (isErr(env)) {
-  logError(`Invalid environment`, { reason: env.reason });
+  logError('Invalid environment', { reason: env.reason });
   process.exit(1);
 }
 
@@ -29,7 +29,7 @@ const main = command === 'rss-checking' ? checkRss : sendEmails;
 const secondArg = getSecondCliArg(process);
 
 if (!secondArg) {
-  logError(`Second argument is required: feed ID`);
+  logError('Second argument is required: feed ID');
   displayUsage();
   process.exit(1);
 }
@@ -37,14 +37,14 @@ if (!secondArg) {
 const feedId = makeFeedId(secondArg);
 
 if (isErr(feedId)) {
-  logError(`Invalid feed ID`, { feedId: secondArg, reason: feedId.reason });
+  logError('Invalid feed ID', { feedId: secondArg, reason: feedId.reason });
   process.exit(1);
 }
 
 const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
 if (isErr(feed)) {
-  logError(`Invalid feed settings`, { feedId: feedId.value, reason: feed.reason });
+  logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });
   process.exit(1);
 }
 

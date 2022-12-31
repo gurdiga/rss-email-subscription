@@ -20,7 +20,7 @@ async function main(): Promise<number | undefined> {
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    logError(`Invalid environment`, { reason: env.reason });
+    logError('Invalid environment', { reason: env.reason });
     process.exit(1);
   }
 
@@ -28,7 +28,7 @@ async function main(): Promise<number | undefined> {
   const firstArg = getFirstCliArg(process);
 
   if (!firstArg) {
-    logError(`First argument is required: feedId`);
+    logError('First argument is required: feedId');
     process.exit(1);
   }
 
@@ -44,7 +44,7 @@ async function main(): Promise<number | undefined> {
   const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
 
   if (isErr(feed)) {
-    logError(`Invalid feed settings`, { feedId: feedId.value, reason: feed.reason });
+    logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });
     return 1;
   }
 
@@ -63,7 +63,7 @@ async function main(): Promise<number | undefined> {
   const { validEmails, invalidEmails } = emailReadingResult;
 
   if (invalidEmails.length > 0) {
-    logError(`Found invalid emails`, { invalidEmails });
+    logError('Found invalid emails', { invalidEmails });
     return 1;
   }
 

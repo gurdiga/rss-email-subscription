@@ -133,7 +133,7 @@ describe(readStoredRssItems.name, () => {
   }
 
   describe(makeStoredRssItem.name, () => {
-    const fileName = `rss-item-checksum.json`;
+    const fileName = 'rss-item-checksum.json';
     const data = {
       title: 'Welcome to Jekyll!',
       content:

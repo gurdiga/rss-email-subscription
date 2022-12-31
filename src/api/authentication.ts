@@ -86,15 +86,15 @@ function checkCredentials({ settings, storage }: App, input: ProcessedInput): Re
 
   if (isErr(account)) {
     logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
-    return makeErr(`Failed to load account`, 'email');
+    return makeErr('Failed to load account', 'email');
   }
 
   const inputHashedPassword = hash(input.password.value, settings.hashingSalt);
   const storedHashedPassword = account.hashedPassword.value;
 
   if (inputHashedPassword !== storedHashedPassword) {
-    logWarning(`Icorrect password`, { inputHashedPassword, storedHashedPassword });
-    return makeErr(`Password doesn’t match… 🤔`, 'password');
+    logWarning('Icorrect password', { inputHashedPassword, storedHashedPassword });
+    return makeErr('Password doesn’t match… 🤔', 'password');
   }
 
   logInfo('User logged in');

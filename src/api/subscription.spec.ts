@@ -36,9 +36,9 @@ describe('subscription', () => {
 
       expect(result).to.equal(
         si`https://${domainName}/subscription-confirmation.html` +
-          `?id=${encodeSearchParamValue(id)}` +
-          `&displayName=${encodeSearchParamValue(feedDisplayName)}` +
-          `&email=${encodeSearchParamValue(emailAddress.value)}`
+          si`?id=${encodeSearchParamValue(id)}` +
+          si`&displayName=${encodeSearchParamValue(feedDisplayName)}` +
+          si`&email=${encodeSearchParamValue(emailAddress.value)}`
       );
     });
   });

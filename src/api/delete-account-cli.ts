@@ -16,7 +16,7 @@ function main(): void {
   const firstCliArg = getFirstCliArg(process);
 
   if (!firstCliArg) {
-    logError(`First argument is required: account email`);
+    logError('First argument is required: account email');
     process.exit(1);
   }
 

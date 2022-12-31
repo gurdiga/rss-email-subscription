@@ -48,7 +48,7 @@ function validateSecretFromQueryStringParam(locationSearch: string): Result<stri
   const secret = params.get(paramName);
 
   if (!secret) {
-    return makeErr(si`Missing or empty param \`${paramName}\` in "${locationSearch}"`);
+    return makeErr(si`Missing or empty param "${paramName}" in "${locationSearch}"`);
   }
 
   return secret;

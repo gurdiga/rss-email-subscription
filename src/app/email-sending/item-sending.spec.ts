@@ -98,9 +98,9 @@ describe('item-sending', () => {
 
       expect(result.toString()).to.equal(
         si`https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(id)}` +
-          `&displayName=${encodeSearchParamValue(displayName)}` +
-          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
+          si`?id=${encodeSearchParamValue(id)}` +
+          si`&displayName=${encodeSearchParamValue(displayName)}` +
+          si`&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });
 
@@ -110,9 +110,9 @@ describe('item-sending', () => {
 
       expect(result.toString()).to.equal(
         si`https://test.feedsubscription.com/unsubscribe.html` +
-          `?id=${encodeSearchParamValue(id)}` +
-          `&displayName=${feedId.value}` +
-          `&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
+          si`?id=${encodeSearchParamValue(id)}` +
+          si`&displayName=${feedId.value}` +
+          si`&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
       );
     });
   });

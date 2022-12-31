@@ -57,11 +57,11 @@ cw:
 pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
 
-lint: lint-mocha-only lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
+lint: lint-mocha-only lint-require-strict-interpolation lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
 l: lint
 
 lint-quiet:
-	@printf "Lint..."
+	@printf "Lint... "
 	$(TIME) $(MAKE) lint > /dev/null
 
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # plus, comment out irrelevant pieces
@@ -93,6 +93,12 @@ lint-mocha-only:
 	}
 
 	changed_files | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
+
+lint-require-strict-interpolation:
+	find src -name '*.ts' |
+	grep -v src/web-ui/subscription-form.ts | # exceptions
+	xargs	grep --line-number --color=always -P '(?<!si)`[^;), ]' |
+	tee /dev/stderr | ifne false
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
@@ -196,7 +202,7 @@ start-dev: web-ui-systemjs web-ui-watch
 	node_modules/.bin/nodemon dist/api/server.js
 
 api-test:
-	node_modules/.bin/ts-mocha -R dot api-test.spec.ts
+	node_modules/.bin/ts-mocha --bail -R dot api-test.spec.ts
 
 snyk:
 	snyk test

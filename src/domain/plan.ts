@@ -11,7 +11,7 @@ export function makePlanId(planId: string): Result<PlanId> {
   const validPlanIds: PlanId[] = ['minimal', 'standard', 'sde'];
 
   if (!planId) {
-    return makeErr(`Invalid plan ID: missing value`);
+    return makeErr('Invalid plan ID: missing value');
   }
 
   planId = planId.trim();

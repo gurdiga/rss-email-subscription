@@ -219,11 +219,11 @@ export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<St
 // TODO: Delete if no more simple index entries.
 function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
-    return makeTypeMismatchErr(email, `email string`);
+    return makeTypeMismatchErr(email, 'email string');
   }
 
   if (typeof saltedHash !== 'string' || !isNonEmptyString(saltedHash)) {
-    return makeTypeMismatchErr(saltedHash, `non-empty hash string`);
+    return makeTypeMismatchErr(saltedHash, 'non-empty hash string');
   }
 
   const emailAddressMakingResult = makeEmailAddress(email);
@@ -255,7 +255,7 @@ function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown)
 
     return result;
   } else {
-    return makeTypeMismatchErr(emailInformation, `EmailInformation object`);
+    return makeTypeMismatchErr(emailInformation, 'EmailInformation object');
   }
 }
 

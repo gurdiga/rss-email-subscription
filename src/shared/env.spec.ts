@@ -20,6 +20,6 @@ describe(requireEnv.name, () => {
   it('returns Err when any of the envars are missing', () => {
     const resultForEnvars = (env: NodeJS.Process['env']) => requireEnv(['HOME', 'UID'], env);
 
-    expect(resultForEnvars({ HOME: '/path' })).to.deep.equal(makeErr(`Environment variable UID is not set`));
+    expect(resultForEnvars({ HOME: '/path' })).to.deep.equal(makeErr('Environment variable UID is not set'));
   });
 });

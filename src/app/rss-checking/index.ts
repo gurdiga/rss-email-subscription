@@ -20,46 +20,46 @@ export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage):
   const rssResponse = await fetchRss(url);
 
   if (isErr(rssResponse)) {
-    logError(`Failed fetching RSS`, { url, reason: rssResponse.reason });
+    logError('Failed fetching RSS', { url, reason: rssResponse.reason });
     return 1;
   }
 
   const rssParsingResult = await parseRssItems(rssResponse);
 
   if (isErr(rssParsingResult)) {
-    logError(`Failed parsing RSS items`, { reason: rssParsingResult.reason });
+    logError('Failed parsing RSS items', { reason: rssParsingResult.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = rssParsingResult;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Found invalid items`, { count: invalidItems.length, invalidItems });
+    logWarning('Found invalid items', { count: invalidItems.length, invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logError(`No valid items`, { url });
+    logError('No valid items', { url });
     return 1;
   }
 
   let lastPostMetadata = getLastPostMetadata(feedId, storage);
 
   if (isErr(lastPostMetadata)) {
-    logError(`Failed reading last post metadata`, { reason: lastPostMetadata.reason });
+    logError('Failed reading last post metadata', { reason: lastPostMetadata.reason });
     return 1;
   }
 
   const newItems = selectNewItems(validItems, lastPostMetadata);
 
   if (newItems.length === 0) {
-    logInfo(`No new items`, { feedId: feedId.value });
+    logInfo('No new items', { feedId: feed.id.value });
     return;
   }
 
   const recordingResult = recordNewRssItems(feedId, storage, newItems);
 
   if (isErr(recordingResult)) {
-    logError(`Failed recording new items`, { reason: recordingResult.reason });
+    logError('Failed recording new items', { reason: recordingResult.reason });
     return 1;
   }
 
@@ -70,17 +70,17 @@ export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage):
     writtenItems: recordingResult,
   };
 
-  logInfo(`Feed checking report`, { report });
+  logInfo('Feed checking report', { report });
 
   const result = recordLastPostMetadata(feedId, storage, newItems);
 
   if (isErr(result)) {
-    logError(`Failed recording last post metadata`, { reason: result.reason });
+    logError('Failed recording last post metadata', { reason: result.reason });
     return 1;
   }
 
   if (result) {
-    logInfo(`Recorded last post metadata`, { recordedLastPostMetadata: result });
+    logInfo('Recorded last post metadata', { recordedLastPostMetadata: result });
   }
 
   return 0;

@@ -16,25 +16,25 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    logError(`Invalid environment variables`, { reason: env.reason });
+    logError('Invalid environment variables', { reason: env.reason });
     return 1;
   }
 
   const storedRssItems = readStoredRssItems(feedId, storage);
 
   if (isErr(storedRssItems)) {
-    logError(`Failed to read RSS items`, { reason: storedRssItems.reason });
+    logError('Failed to read RSS items', { reason: storedRssItems.reason });
     return 1;
   }
 
   const { validItems, invalidItems } = storedRssItems;
 
   if (!isEmpty(invalidItems)) {
-    logWarning(`Invalid RSS items`, { invalidItems });
+    logWarning('Invalid RSS items', { invalidItems });
   }
 
   if (isEmpty(validItems)) {
-    logInfo(`Nothing to send`);
+    logInfo('Nothing to send');
     return;
   }
 
@@ -42,24 +42,24 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
   const storedEmails = loadStoredEmails(feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError(`Could not read emails`, { reason: storedEmails.reason });
+    logError('Could not read emails', { reason: storedEmails.reason });
     return 1;
   }
 
   if (isFeedNotFound(storedEmails)) {
-    logError(`Feed not found`);
+    logError('Feed not found');
     return 1;
   }
 
   const { validEmails, invalidEmails } = storedEmails;
 
   if (isEmpty(validEmails)) {
-    logError(`No valid emails`);
+    logError('No valid emails');
     return 1;
   }
 
   if (invalidEmails.length > 0) {
-    logWarning(`Invalid emails`, { invalidEmails });
+    logWarning('Invalid emails', { invalidEmails });
   }
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
@@ -69,11 +69,11 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
     failed: 0,
   };
 
-  logInfo(`Sending new items`, { itemCount: validItems.length, emailCount: confirmedEmails.length });
+  logInfo('Sending new items', { itemCount: validItems.length, emailCount: confirmedEmails.length });
 
   for (const storedItem of validItems) {
     for (const hashedEmail of confirmedEmails) {
-      logInfo(`Sending item`, {
+      logInfo('Sending item', {
         itemTitle: storedItem.item.title,
         toEmail: hashedEmail.emailAddress.value,
       });

@@ -36,6 +36,6 @@ describe(deleteItem.name, () => {
     const storage = makeStorageStub({ removeItem: () => makeErr('Failed to delete!!') });
     const result = deleteItem(feedId, storage, storedRssItem);
 
-    expect(result).to.deep.equal(makeErr(`Failed to delete stored RSS item: Failed to delete!!`));
+    expect(result).to.deep.equal(makeErr('Failed to delete stored RSS item: Failed to delete!!'));
   });
 });
