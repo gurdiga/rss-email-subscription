@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { RssItem } from '../../domain/rss-item';
 import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 import { makeErr } from '../../shared/lang';
-import { makeSpy, makeStorageStub, makeStub, Spy } from '../../shared/test-utils';
+import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Spy } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 import { FeedId, makeFeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
@@ -38,7 +38,7 @@ describe(recordNewRssItems.name, () => {
   ];
 
   it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
-    const storage = makeStorageStub({ storeItem: makeSpy() });
+    const storage = makeTestStorage({ storeItem: makeSpy() });
     const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
     const result = recordNewRssItems(feedId, storage, rssItems, nameFile);
 
@@ -52,7 +52,7 @@ describe(recordNewRssItems.name, () => {
 
   it('reports the error when can’t write file', () => {
     const err = makeErr('No write access');
-    const storage = makeStorageStub({ storeItem: () => err });
+    const storage = makeTestStorage({ storeItem: () => err });
     const result = recordNewRssItems(feedId, storage, rssItems);
 
     expect(result).to.deep.equal(

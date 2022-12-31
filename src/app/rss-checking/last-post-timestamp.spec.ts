@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { makeSpy, makeStorageStub, Spy, Stub } from '../../shared/test-utils';
+import { makeSpy, makeTestStorage, makeTestAccountId, makeTestFeedId, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
@@ -18,7 +18,7 @@ describe('Last post timestamp', () => {
         pubDate: aTimestamp,
         guid: aGuid,
       };
-      const storage = makeStorageStub({
+      const storage = makeTestStorage({
         loadItem: () => lastPostMetadata,
         hasItem: () => true,
       });
@@ -34,7 +34,7 @@ describe('Last post timestamp', () => {
     });
 
     it('returns undefined value when lastPostMetadata.json does not exist', () => {
-      const storage = makeStorageStub({ hasItem: () => false });
+      const storage = makeTestStorage({ hasItem: () => false });
       const result = getLastPostMetadata(feedId, storage);
 
       expect(result).to.be.undefined;
@@ -42,7 +42,7 @@ describe('Last post timestamp', () => {
 
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
       const storedValue = { pubDate: new Date('not a date') };
-      const storage = makeStorageStub({ loadItem: () => storedValue, hasItem: () => true as const });
+      const storage = makeTestStorage({ loadItem: () => storedValue, hasItem: () => true as const });
       const result = getLastPostMetadata(feedId, storage);
 
       expect(result).to.deep.equal(makeErr(si`Invalid timestamp in ${storageKey}`));
@@ -53,7 +53,7 @@ describe('Last post timestamp', () => {
         pubDate: aTimestamp,
         guid: undefined as any as string,
       };
-      const storage = makeStorageStub({ loadItem: () => lastPostMetadata, hasItem: () => true as const });
+      const storage = makeTestStorage({ loadItem: () => lastPostMetadata, hasItem: () => true as const });
       const result = getLastPostMetadata(feedId, storage);
 
       const expectedResult: LastPostMetadata = {
@@ -100,7 +100,7 @@ describe('Last post timestamp', () => {
     };
 
     it('writes pubDate of the last item to lastPostMetadata.json', () => {
-      const storage = makeStorageStub({ storeItem: makeSpy() });
+      const storage = makeTestStorage({ storeItem: makeSpy() });
       const initialRssItems = [...mockRssItems];
       const result = recordLastPostMetadata(feedId, storage, mockRssItems);
 
@@ -111,14 +111,14 @@ describe('Last post timestamp', () => {
 
     it('reports the error when can’t write file', () => {
       const mockError = 'No write access';
-      const storage = makeStorageStub({ storeItem: () => makeErr(mockError) });
+      const storage = makeTestStorage({ storeItem: () => makeErr(mockError) });
       const result = recordLastPostMetadata(feedId, storage, mockRssItems);
 
       expect(result).to.deep.equal(makeErr(si`Cant record last post timestamp: ${mockError}`));
     });
 
     it('does nothing when there are no items', () => {
-      const storage = makeStorageStub({ storeItem: makeSpy() });
+      const storage = makeTestStorage({ storeItem: makeSpy() });
       const newRssItems: RssItem[] = [];
 
       recordLastPostMetadata(feedId, storage, newRssItems);

@@ -47,7 +47,10 @@ interface AppStorageStub extends AppStorage {
   listSubdirectories: Stub<AppStorage['listSubdirectories']> | AppStorage['listSubdirectories'];
 }
 
-export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K, AppStorageStub[K]>): AppStorageStub {
+export function makeTestStorage<K extends keyof AppStorage>(
+  stubBodies: Record<K, AppStorageStub[K]>,
+  dataDirRoot = '/test-data'
+): AppStorageStub {
   let methodStubs: any = {};
 
   for (const methodName in stubBodies) {
@@ -55,7 +58,7 @@ export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K
   }
 
   return {
-    ...makeStorage('/test-data'),
+    ...makeStorage(dataDirRoot),
     ...methodStubs,
   };
 }

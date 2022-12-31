@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { FeedId, makeFeedId } from '../../domain/feed';
 import { makeErr } from '../../shared/lang';
-import { makeSpy, makeStorageStub, Stub } from '../../shared/test-utils';
+import { makeSpy, makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { getStoredRssItemStorageKey, ValidStoredRssItem } from './rss-item-reading';
 
@@ -23,7 +23,7 @@ describe(deleteItem.name, () => {
   };
 
   it('removes the corresponding item from storage', () => {
-    const storage = makeStorageStub({ removeItem: makeSpy() });
+    const storage = makeTestStorage({ removeItem: makeSpy() });
 
     deleteItem(feedId, storage, storedRssItem);
 
@@ -33,8 +33,8 @@ describe(deleteItem.name, () => {
   });
 
   it('returns an Err value when can’t delete', () => {
-    const storage = makeStorageStub({ removeItem: () => makeErr('Failed to delete!!') });
-    const result = deleteItem(feedId, storage, storedRssItem);
+    const storage = makeTestStorage({ removeItem: () => makeErr('Failed to delete!!') });
+    const result = deleteItem(accountId, feedId, storage, storedRssItem);
 
     expect(result).to.deep.equal(makeErr('Failed to delete stored RSS item: Failed to delete!!'));
   });

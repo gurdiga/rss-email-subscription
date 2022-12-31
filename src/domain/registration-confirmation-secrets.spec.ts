@@ -1,8 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
-import { makeSpy, makeStorageStub, makeStub, Spy } from '../shared/test-utils';
-import { AccountId, makeAccountId } from './account';
+import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy } from '../shared/test-utils';
 import {
   validateRegistrationConfirmationSecret,
   RegistrationConfirmationSecret,
@@ -41,7 +40,7 @@ describe('Registration confirmation secrets', () => {
   describe(storeRegistrationConfirmationSecret.name, () => {
     it('stores the given confirmation secret', () => {
       const storeItem = makeSpy<AppStorage['storeItem']>();
-      const storage = makeStorageStub({ storeItem });
+      const storage = makeTestStorage({ storeItem });
 
       storeRegistrationConfirmationSecret(storage, secret, accountId);
 
@@ -49,7 +48,7 @@ describe('Registration confirmation secrets', () => {
     });
 
     it('returns an Err value when storage fails', () => {
-      const storage = makeStorageStub({ storeItem: () => storageErr });
+      const storage = makeTestStorage({ storeItem: () => storageErr });
       const result = storeRegistrationConfirmationSecret(storage, secret, accountId);
 
       expect(result).to.deep.equal(storageErr);
@@ -58,7 +57,7 @@ describe('Registration confirmation secrets', () => {
 
   describe(deleteRegistrationConfirmationSecret.name, () => {
     it('deletes the corresponding storage item', () => {
-      const storage = makeStorageStub({ removeItem: makeSpy() });
+      const storage = makeTestStorage({ removeItem: makeSpy() });
 
       deleteRegistrationConfirmationSecret(storage, secret);
 
@@ -66,7 +65,7 @@ describe('Registration confirmation secrets', () => {
     });
 
     it('returns an Err value when storage fails', () => {
-      const storage = makeStorageStub({ removeItem: () => storageErr });
+      const storage = makeTestStorage({ removeItem: () => storageErr });
       const result = deleteRegistrationConfirmationSecret(storage, secret);
 
       expect(result).to.deep.equal(storageErr);
@@ -75,7 +74,7 @@ describe('Registration confirmation secrets', () => {
 
   describe(getAccountIdForRegistrationConfirmationSecret.name, () => {
     it('returns the content of the contents of the appropriate storage item', () => {
-      const storage = makeStorageStub({ loadItem: makeStub(() => accountId) });
+      const storage = makeTestStorage({ loadItem: makeStub(() => accountId) });
       const result = getAccountIdForRegistrationConfirmationSecret(storage, secret);
 
       expect((storage.loadItem as Spy).calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json']]);
@@ -83,7 +82,7 @@ describe('Registration confirmation secrets', () => {
     });
 
     it('returns an Err value when storage fails', () => {
-      const storage = makeStorageStub({ loadItem: () => storageErr });
+      const storage = makeTestStorage({ loadItem: () => storageErr });
       const result = getAccountIdForRegistrationConfirmationSecret(storage, secret);
 
       expect(result).to.deep.equal(storageErr);

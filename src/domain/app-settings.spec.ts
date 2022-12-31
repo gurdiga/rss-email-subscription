@@ -11,7 +11,7 @@ describe(loadAppSettings.name, () => {
       emailAddress: 'welcome@feedsubscription.com',
     };
 
-    const storage = makeStorageStub({ loadItem: () => jsonData });
+    const storage = makeTestStorage({ loadItem: () => jsonData });
 
     const expectedResult: AppSettings = {
       kind: 'AppSettings',
@@ -28,7 +28,7 @@ describe(loadAppSettings.name, () => {
 
   it('returns an Err value if hashingSalt is no good', () => {
     const result = (data: Result<any>): ReturnType<typeof loadAppSettings> => {
-      const storage = makeStorageStub({ loadItem: () => data });
+      const storage = makeTestStorage({ loadItem: () => data });
 
       return loadAppSettings(storage);
     };
@@ -48,7 +48,7 @@ describe(loadAppSettings.name, () => {
     };
 
     const result = (dataAugmentation: Result<any>): ReturnType<typeof loadAppSettings> => {
-      const storage = makeStorageStub({ loadItem: () => ({ ...validJsonData, ...dataAugmentation }) });
+      const storage = makeTestStorage({ loadItem: () => ({ ...validJsonData, ...dataAugmentation }) });
 
       return loadAppSettings(storage);
     };

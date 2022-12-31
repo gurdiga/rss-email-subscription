@@ -55,7 +55,7 @@ describe(readStoredRssItems.name, () => {
   ];
 
   it('returns the list of items in inbox ordered by pubDate', () => {
-    const storage = makeStorageStub({
+    const storage = makeTestStorage({
       listItems: () => files.map((f) => f.key),
       loadItem: makeLoadItemFnStub(files),
     });
@@ -75,7 +75,7 @@ describe(readStoredRssItems.name, () => {
       value: '{"invalid-data": true}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
-    const storage = makeStorageStub({
+    const storage = makeTestStorage({
       listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     });
@@ -100,7 +100,7 @@ describe(readStoredRssItems.name, () => {
       value: '{"some": "json-data"}',
     };
     const filesWithInvalidItems = [...files, invalidFile];
-    const storage = makeStorageStub({
+    const storage = makeTestStorage({
       listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     });
@@ -115,7 +115,7 @@ describe(readStoredRssItems.name, () => {
 
   it('returns an Err value when can’t list items', () => {
     const error = makeErr('Not there?!');
-    const storage = makeStorageStub({ listItems: () => error });
+    const storage = makeTestStorage({ listItems: () => error });
 
     expect(readStoredRssItems(feedId, storage)).to.deep.equal(
       makeErr(si`Failed to list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
