@@ -9,8 +9,8 @@ import { si } from '../../shared/string-utils';
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
-  const feedId = makeFeedId('testblog') as FeedId;
-  const storageKey = si`${getFeedStorageKey(feedId)}/lastPostMetadata.json`;
+  const feedId = makeTestFeedId();
+  const accountId = makeTestAccountId();
 
   describe(getLastPostMetadata.name, () => {
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {

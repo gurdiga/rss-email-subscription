@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
+import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
 import { makeTestEmailAddress } from '../shared/test-utils';
 import { Account, AccountData, AccountId, confirmAccount, getAccountIdByEmail, getAccountStorageKey } from './account';
 import { loadAccount, makeAccountId, storeAccount } from './account';
@@ -9,7 +10,7 @@ import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hash
 import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
-const accountId = makeAccountId('x'.repeat(64)) as AccountId;
+const accountId = makeTestAccountId();
 
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
@@ -20,7 +21,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
     };
-    const storage = makeStorageStub({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData });
     const result = loadAccount(storage, accountId, storageKey);
 
     const expectedResult: Account = {
@@ -28,7 +29,6 @@ describe(loadAccount.name, () => {
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       plan: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
-      feedIds: [],
     };
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
@@ -36,7 +36,7 @@ describe(loadAccount.name, () => {
   });
 
   it('returns an Err value when storage fails', () => {
-    const storage = makeStorageStub({ loadItem: () => makeErr('Bad sector!') });
+    const storage = makeTestStorage({ loadItem: () => makeErr('Bad sector!') });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(makeErr('Failed to load account data: Bad sector!'));
@@ -49,7 +49,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
     };
-    const storage = makeStorageStub({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
@@ -67,7 +67,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
     };
-    const storage = makeStorageStub({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
@@ -82,7 +82,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'la-la-la',
       creationTimestamp,
     };
-    const storage = makeStorageStub({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
@@ -101,9 +101,8 @@ describe(storeAccount.name, () => {
       email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       creationTimestamp,
-      feedIds: [],
     };
-    const storage = makeStorageStub({
+    const storage = makeTestStorage({
       loadItem: makeStub(() => getAccountData(account)),
       storeItem: makeSpy(),
     });
@@ -138,7 +137,7 @@ describe(confirmAccount.name, () => {
 
     const loadItem = makeStub(() => accountData);
     const storeItem = makeSpy<AppStorage['storeItem']>();
-    const storage = makeStorageStub({
+    const storage = makeTestStorage({
       loadItem: loadItem,
       storeItem: storeItem,
     });
@@ -173,7 +172,7 @@ describe(makeAccountId.name, () => {
   });
 
   it('returns an Err value when not so good', () => {
-    expect(makeAccountId('1')).to.deep.equal(makeErr('AccountId is expected to be a 64-character hex hash'));
+    expect(makeAccountId('1')).to.deep.equal(makeErr('Expected to be a 64-character hex hash: string "1"'));
   });
 });
 
@@ -191,10 +190,8 @@ describe(getAccountIdByEmail.name, () => {
 
 describe(getAccountStorageKey.name, () => {
   it('returns path of account.json for the given AccountId', () => {
-    const accountIdHash = 'x'.repeat(64);
-    const accountId = makeAccountId(accountIdHash) as AccountId;
-
-    const expectedPath = si`/accounts/${accountIdHash}/account.json`;
+    const accountId = makeTestAccountId();
+    const expectedPath = si`/accounts/${accountId.value}/account.json`;
 
     expect(getAccountStorageKey(accountId)).to.equal(expectedPath);
   });

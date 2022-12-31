@@ -34,7 +34,7 @@ describe('Registration confirmation secrets', () => {
   });
 
   const secret = makeRegistrationConfirmationSecret('secret-email-hash-id');
-  const accountId = makeAccountId('test'.repeat(16)) as AccountId;
+  const accountId = makeTestAccountId();
   const storageErr = makeErr('Boom!');
 
   describe(storeRegistrationConfirmationSecret.name, () => {

@@ -1,12 +1,12 @@
 import { expect } from 'chai';
-import { FeedId, makeFeedId } from '../../domain/feed';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';
 import { deleteItem } from './item-cleanup';
 import { getStoredRssItemStorageKey, ValidStoredRssItem } from './rss-item-reading';
 
 describe(deleteItem.name, () => {
-  const feedId = makeFeedId('testblog') as FeedId;
+  const accountId = makeTestAccountId();
+  const feedId = makeTestFeedId();
 
   const storedRssItem: ValidStoredRssItem = {
     kind: 'ValidStoredRssItem',
@@ -25,10 +25,10 @@ describe(deleteItem.name, () => {
   it('removes the corresponding item from storage', () => {
     const storage = makeTestStorage({ removeItem: makeSpy() });
 
-    deleteItem(feedId, storage, storedRssItem);
+    deleteItem(accountId, feedId, storage, storedRssItem);
 
     expect((storage.removeItem as Stub).calls).to.deep.equal([
-      [getStoredRssItemStorageKey(feedId, storedRssItem.fileName)],
+      [getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName)],
     ]);
   });
 

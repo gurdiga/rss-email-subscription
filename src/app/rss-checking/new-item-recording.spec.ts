@@ -4,11 +4,11 @@ import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-ite
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Spy } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
-import { FeedId, makeFeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
 
 describe(recordNewRssItems.name, () => {
-  const feedId = makeFeedId('testblog') as FeedId;
+  const accountId = makeTestAccountId();
+  const feedId = makeTestFeedId();
 
   const rssItems: RssItem[] = [
     {

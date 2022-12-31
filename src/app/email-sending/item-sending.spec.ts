@@ -2,15 +2,15 @@ import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { encodeSearchParamValue, makeTestEmailAddress, makeTestFeedId } from '../../shared/test-utils';
+import { makeThrowingStub } from '../../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { FullEmailAddress, HashedEmail, makeFullEmailAddress } from './emails';
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
-import { FeedId, makeFeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
 
 describe('item-sending', () => {
   const domainName = 'test.feedsubscription.com';
-  const feedId = makeFeedId('uniqid') as FeedId;
+  const feedId = makeTestFeedId();
   const from = makeFullEmailAddress('John DOE', makeTestEmailAddress('from@email.com'));
   const to = makeTestEmailAddress('to@email.com');
   const replyTo = makeTestEmailAddress('replyTo@email.com');

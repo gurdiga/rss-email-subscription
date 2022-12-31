@@ -1,4 +1,6 @@
-import { AppStorage, makeStorage } from './storage';
+import { AccountId, isAccountId, makeAccountId } from '../domain/account';
+import { FeedId, isFeedId, makeFeedId } from '../domain/feed';
+import { EmailAddress, isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -65,6 +67,22 @@ export function makeTestStorage<K extends keyof AppStorage>(
 
 export function die(errorMessage: string): never {
   throw new Error(errorMessage);
+}
+
+export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
+  const feedId = makeFeedId(idString);
+
+  assert(isFeedId(feedId), 'makeTestFeedId is expected to return a valid FeedId');
+
+  return feedId;
+}
+
+export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): AccountId {
+  const accountId = makeAccountId(idString);
+
+  assert(isAccountId(accountId), 'makeTestAccountId is expected to return a valid AccountId');
+
+  return accountId;
 }
 
 export function makeTestEmailAddress(emailString: string): EmailAddress {

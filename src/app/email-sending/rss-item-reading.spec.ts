@@ -1,16 +1,17 @@
 import { expect } from 'chai';
 import { basename } from 'node:path';
-import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
+import { getFeedStorageKey } from '../../domain/feed';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
-import { makeStorageStub, Stub } from '../../shared/test-utils';
+import { makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
 
 describe(readStoredRssItems.name, () => {
-  const feedId = makeFeedId('testblog') as FeedId;
+  const accountId = makeTestAccountId();
+  const feedId = makeTestFeedId();
 
   interface MockStorageItem {
     key: string;
