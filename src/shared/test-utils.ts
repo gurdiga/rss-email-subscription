@@ -63,3 +63,11 @@ export function makeStorageStub<K extends keyof AppStorage>(stubBodies: Record<K
 export function die(errorMessage: string): never {
   throw new Error(errorMessage);
 }
+
+export function makeTestEmailAddress(emailString: string): EmailAddress {
+  const emailAddress = makeEmailAddress(emailString);
+
+  assert(isEmailAddress(emailAddress), 'makeTestEmailAddress is expected to return a valid EmailAddress');
+
+  return emailAddress;
+}

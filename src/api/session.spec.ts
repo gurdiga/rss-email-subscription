@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { AccountId, makeAccountId } from '../domain/account';
+import { makeTestAccountId } from '../shared/test-utils';
 import { AuthenticatedSession, checkSession, deinitSession, initSession, SessionFields } from './session';
 import { UnauthenticatedSession } from './session';
 
@@ -12,7 +12,7 @@ describe(checkSession.name, () => {
     const result = checkSession(session);
     const expectedResult: AuthenticatedSession = {
       kind: 'AuthenticatedSession',
-      accountId: makeAccountId(session.accountId as string) as AccountId,
+      accountId: makeTestAccountId(session.accountId as string),
     };
 
     expect(result).to.deep.equal(expectedResult);
@@ -35,7 +35,7 @@ describe(checkSession.name, () => {
 
 describe(initSession.name, () => {
   it('inits cookie and stores accountId hash string on session', () => {
-    const accountId = makeAccountId('test'.repeat(16)) as AccountId;
+    const accountId = makeTestAccountId();
     const session = { cookie: {} } as any;
 
     initSession(session, accountId);

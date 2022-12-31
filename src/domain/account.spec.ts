@@ -1,9 +1,8 @@
 import { expect } from 'chai';
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
-import { makeSpy, makeStorageStub, makeStub, Spy, Stub } from '../shared/test-utils';
+import { makeTestEmailAddress } from '../shared/test-utils';
 import { Account, AccountData, AccountId, confirmAccount, getAccountIdByEmail, getAccountStorageKey } from './account';
 import { loadAccount, makeAccountId, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
@@ -25,7 +24,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId, storageKey);
 
     const expectedResult: Account = {
-      email: makeEmailAddress(accountData.email) as EmailAddress,
+      email: makeTestEmailAddress(accountData.email),
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       plan: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
@@ -99,7 +98,7 @@ describe(storeAccount.name, () => {
   it('stores the given account', () => {
     const account: Account = {
       plan: 'sde',
-      email: makeEmailAddress('test@test.com') as EmailAddress,
+      email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       creationTimestamp,
       feedIds: [],
@@ -180,7 +179,7 @@ describe(makeAccountId.name, () => {
 
 describe(getAccountIdByEmail.name, () => {
   it('returns a 64-character hex hash of the given email', () => {
-    const email = makeEmailAddress('test@test.com') as EmailAddress;
+    const email = makeTestEmailAddress('test@test.com');
     const result = getAccountIdByEmail(email, 'test-secret-salt');
 
     expect(result).to.deep.equal({

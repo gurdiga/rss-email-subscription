@@ -1,20 +1,19 @@
 import { expect } from 'chai';
-import { EmailAddress, EmailHashFn, makeEmailAddress, makeHashedEmail } from '../app/email-sending/emails';
-import { FeedId, makeFeedId } from '../domain/feed';
+import { EmailHashFn, makeHashedEmail } from '../app/email-sending/emails';
 import { si } from '../shared/string-utils';
-import { encodeSearchParamValue } from '../shared/test-utils';
+import { encodeSearchParamValue, makeTestEmailAddress, makeTestFeedId } from '../shared/test-utils';
 import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
 
 describe('subscription', () => {
   const domainName = 'test.feedsubscription.com';
-  const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
+  const emailAddress = makeTestEmailAddress('a@test.com');
   const emailHashFn: EmailHashFn = (e) => si`#${e.value}#`;
 
   describe(makeSubscriptionConfirmationEmailContent.name, () => {
     it('prepares the confirmation email contents', () => {
       const feedDisplayName = 'Just Add Light and Stir';
       const confirmationUrl = new URL('https://test.com/confirm');
-      const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
+      const listEmailAddress = makeTestEmailAddress('list-address@test.com');
 
       const emailContent = makeSubscriptionConfirmationEmailContent(feedDisplayName, confirmationUrl, listEmailAddress);
 
@@ -28,7 +27,7 @@ describe('subscription', () => {
   describe(makeEmailConfirmationUrl.name, () => {
     it('returns the email confirmation URL', () => {
       const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
-      const feedId = makeFeedId('justaddlightandstir') as FeedId;
+      const feedId = makeTestFeedId();
       const feedDisplayName = 'Just Add Light and Stir';
 
       const result = makeEmailConfirmationUrl(hashedEmail, feedId, feedDisplayName, domainName).toString();

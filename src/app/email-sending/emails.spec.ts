@@ -1,24 +1,14 @@
 import { expect } from 'chai';
-import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
+import { getFeedStorageKey } from '../../domain/feed';
 import { ReadFileFn } from '../../shared/io-isolation';
 import { Err, isErr, makeErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
-import { makeStorageStub, makeStub, makeThrowingStub, Stub } from '../../shared/test-utils';
-import {
-  EmailAddress,
-  EmailList,
-  parseEmails,
-  makeEmailAddress,
-  readEmailListFromCsvFile,
-  EmailIndex,
-  StoredEmails,
-  loadStoredEmails,
-  maxEmailLength,
-  addEmail,
-  EmailHashFn,
-  HashedEmail,
-} from './emails';
+import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId } from '../../shared/test-utils';
+import { makeTestEmailAddress } from '../../shared/test-utils';
+import { makeThrowingStub, Stub } from '../../shared/test-utils';
+import { EmailAddress, EmailList, parseEmails, makeEmailAddress, readEmailListFromCsvFile, EmailIndex } from './emails';
+import { StoredEmails, loadStoredEmails, maxEmailLength, addEmail, EmailHashFn, HashedEmail } from './emails';
 
 describe(parseEmails.name, () => {
   it('parses the emails from a one-per-line string', async () => {
@@ -35,9 +25,9 @@ describe(parseEmails.name, () => {
       kind: 'EmailList',
       validEmails: [
         // prettier: keep these stacked
-        email('test1@test.com'),
-        email('test2@test.com'),
-        email('test3@test.com'),
+        makeTestEmailAddress('test1@test.com'),
+        makeTestEmailAddress('test2@test.com'),
+        makeTestEmailAddress('test3@test.com'),
       ],
       invalidEmails: [],
     };
@@ -64,8 +54,8 @@ describe(parseEmails.name, () => {
       kind: 'EmailList',
       validEmails: [
         // prettier: keep these stacked
-        email('a@test.com'),
-        email('b@test.com'),
+        makeTestEmailAddress('a@test.com'),
+        makeTestEmailAddress('b@test.com'),
       ],
       invalidEmails: [],
     };
@@ -87,8 +77,8 @@ describe(parseEmails.name, () => {
       kind: 'EmailList',
       validEmails: [
         // prettier: keep these stacked
-        email('a@test.com'),
-        email('b@test.com'),
+        makeTestEmailAddress('a@test.com'),
+        makeTestEmailAddress('b@test.com'),
       ],
       invalidEmails: [
         // prettier: keep these stacked
@@ -102,7 +92,7 @@ describe(parseEmails.name, () => {
 });
 
 describe(addEmail.name, () => {
-  const emailAddress = makeEmailAddress('a@test.com') as EmailAddress;
+  const emailAddress = makeTestEmailAddress('a@test.com');
   const emailHashFn: EmailHashFn = (e) => si`#${e.value}#`;
 
   it('adds an email address to a StoredEmails', () => {
@@ -167,7 +157,7 @@ describe(makeEmailAddress.name, () => {
     } as EmailAddress);
   });
 
-  it(`returns an Err value when the email is longer than maxEmailLength`, () => {
+  it('returns an Err value when the email is longer than maxEmailLength', () => {
     const tooLongAnEmail = si`${'a'.repeat(maxEmailLength)}@toolong.com`;
 
     expect(makeEmailAddress(tooLongAnEmail)).to.deep.equal(makeErr('Email too long'));
@@ -212,9 +202,9 @@ describe(readEmailListFromCsvFile.name, () => {
       kind: 'EmailList',
       validEmails: [
         // prettier: keep these stacked
-        email('a@test.com'),
-        email('b@test.com'),
-        email('c@test.com'),
+        makeTestEmailAddress('a@test.com'),
+        makeTestEmailAddress('b@test.com'),
+        makeTestEmailAddress('c@test.com'),
       ],
       invalidEmails: [],
     };
@@ -234,8 +224,9 @@ describe(readEmailListFromCsvFile.name, () => {
 });
 
 describe(loadStoredEmails.name, () => {
-  const feedId = makeFeedId('path') as FeedId;
-  const storageKey = makePath(getFeedStorageKey(feedId), 'emails.json');
+  const accountId = makeTestAccountId();
+  const feedId = makeTestFeedId();
+  const storageKey = makePath(getFeedStorageKey(accountId, feedId), 'emails.json');
 
   const index: EmailIndex = {
     hash1: 'email1@test.com',
@@ -244,15 +235,30 @@ describe(loadStoredEmails.name, () => {
   };
 
   it('returns a list of stored emails with their hashes', () => {
-    const storage = makeStorageStub({ loadItem: () => index, hasItem: () => true });
-    const result = loadStoredEmails(feedId, storage);
+    const storage = makeTestStorage({ loadItem: () => index, hasItem: () => true });
+    const result = loadStoredEmails(accountId, feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: true },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: true },
-        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3', isConfirmed: true },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email1@test.com'),
+          saltedHash: 'hash1',
+          isConfirmed: true,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email2@test.com'),
+          saltedHash: 'hash2',
+          isConfirmed: true,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email3@test.com'),
+          saltedHash: 'hash3',
+          isConfirmed: true,
+        },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -266,16 +272,36 @@ describe(loadStoredEmails.name, () => {
       hash4: 'email4@test.com',
     };
 
-    const storage = makeStorageStub({ loadItem: () => extendedIndex, hasItem: () => true });
-    const result = loadStoredEmails(feedId, storage);
+    const storage = makeTestStorage({ loadItem: () => extendedIndex, hasItem: () => true });
+    const result = loadStoredEmails(accountId, feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: false },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: false },
-        { kind: 'HashedEmail', emailAddress: email('email3@test.com'), saltedHash: 'hash3', isConfirmed: false },
-        { kind: 'HashedEmail', emailAddress: email('email4@test.com'), saltedHash: 'hash4', isConfirmed: true },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email1@test.com'),
+          saltedHash: 'hash1',
+          isConfirmed: false,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email2@test.com'),
+          saltedHash: 'hash2',
+          isConfirmed: false,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email3@test.com'),
+          saltedHash: 'hash3',
+          isConfirmed: false,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email4@test.com'),
+          saltedHash: 'hash4',
+          isConfirmed: true,
+        },
       ],
       invalidEmails: [],
     } as StoredEmails);
@@ -293,13 +319,23 @@ describe(loadStoredEmails.name, () => {
       hash7: {},
     };
 
-    const storage = makeStorageStub({ loadItem: () => index, hasItem: () => true });
-    const result = loadStoredEmails(feedId, storage);
+    const storage = makeTestStorage({ loadItem: () => index, hasItem: () => true });
+    const result = loadStoredEmails(accountId, feedId, storage);
 
     expect(result).to.deep.equal({
       validEmails: [
-        { kind: 'HashedEmail', emailAddress: email('email1@test.com'), saltedHash: 'hash1', isConfirmed: true },
-        { kind: 'HashedEmail', emailAddress: email('email2@test.com'), saltedHash: 'hash2', isConfirmed: true },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email1@test.com'),
+          saltedHash: 'hash1',
+          isConfirmed: true,
+        },
+        {
+          kind: 'HashedEmail',
+          emailAddress: makeTestEmailAddress('email2@test.com'),
+          saltedHash: 'hash2',
+          isConfirmed: true,
+        },
       ],
       invalidEmails: [
         'Email is syntactically incorrect: "not-an-email"', // prettier: keep these stacked please
@@ -316,8 +352,8 @@ describe(loadStoredEmails.name, () => {
     const invalidJsonStrings = ['null', '[]', '"string"', '42', 'true'];
 
     for (const storedValue of invalidJsonStrings) {
-      const storage = makeStorageStub({ loadItem: () => storedValue, hasItem: () => true });
-      const result = loadStoredEmails(feedId, storage) as Err;
+      const storage = makeTestStorage({ loadItem: () => storedValue, hasItem: () => true });
+      const result = loadStoredEmails(accountId, feedId, storage) as Err;
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
@@ -329,14 +365,10 @@ describe(loadStoredEmails.name, () => {
 
   it('returns an Err value when can’t load storage value', () => {
     const err = makeErr('File access denied?!');
-    const storage = makeStorageStub({ loadItem: () => err, hasItem: () => true });
+    const storage = makeTestStorage({ loadItem: () => err, hasItem: () => true });
 
-    expect(loadStoredEmails(feedId, storage)).to.deep.equal(
+    expect(loadStoredEmails(accountId, feedId, storage)).to.deep.equal(
       makeErr(si`Could not read email list at ${storageKey}: ${err.reason}`)
     );
   });
 });
-
-function email(s: string) {
-  return makeEmailAddress(s) as EmailAddress;
-}

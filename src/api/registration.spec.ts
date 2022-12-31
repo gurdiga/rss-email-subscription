@@ -1,14 +1,14 @@
 import { expect } from 'chai';
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { hash } from '../shared/crypto';
 import { si } from '../shared/string-utils';
+import { makeTestEmailAddress } from '../shared/test-utils';
 import { makeRegistrationConfirmationEmailContent, makeRegistrationConfirmationLink } from './registration';
 
 describe(makeRegistrationConfirmationLink.name, () => {
   const domainName = 'test.feedsubscription.com';
 
   it('builds an URL with the blogger email’s hash in the "secret" query string param', () => {
-    const email = makeEmailAddress('blogger@test.com') as EmailAddress;
+    const email = makeTestEmailAddress('blogger@test.com');
     const appHashingSalt = 'app-hashing-salt';
     const expectedSecret = hash(email.value, si`confirmation-secret-${appHashingSalt}`);
 

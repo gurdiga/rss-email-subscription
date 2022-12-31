@@ -1,8 +1,7 @@
 import { expect } from 'chai';
 import { AppSettings, loadAppSettings, SettingsJson } from './app-settings';
 import { makeErr, Result } from '../shared/lang';
-import { makeStorageStub } from '../shared/test-utils';
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { makeTestEmailAddress, makeTestStorage } from '../shared/test-utils';
 
 describe(loadAppSettings.name, () => {
   it('returns a AppSettings value containing the data from /settings.json', () => {
@@ -20,7 +19,7 @@ describe(loadAppSettings.name, () => {
       fullEmailAddress: {
         kind: 'FullEmailAddress',
         displayName: jsonData.displayName,
-        emailAddress: makeEmailAddress(jsonData.emailAddress) as EmailAddress,
+        emailAddress: makeTestEmailAddress(jsonData.emailAddress),
       },
     };
 

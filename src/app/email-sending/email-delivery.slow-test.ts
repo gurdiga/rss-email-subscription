@@ -1,11 +1,12 @@
 import { requireEnv } from '../../shared/env';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
-import { EmailAddress, FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from './emails';
+import { FullEmailAddress, makeFullEmailAddress } from './emails';
 import { makeEmailContent } from './item-sending';
 import { RssItem } from '../../domain/rss-item';
 import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
 import { si } from '../../shared/string-utils';
+import { makeTestEmailAddress } from '../../shared/test-utils';
 
 async function main(): Promise<number> {
   const env = getEnv();
@@ -17,7 +18,7 @@ async function main(): Promise<number> {
   console.info(si`SMTP_CONNECTION_STRING: ${env.SMTP_CONNECTION_STRING.substring(0, 18)}\n`);
 
   const to = 'gurdiga@gmail.com';
-  const from = makeFullEmailAddress('Slow Test', makeEmailAddress(si`slow-test@${env.DOMAIN_NAME}`) as EmailAddress);
+  const from = makeFullEmailAddress('Slow Test', makeTestEmailAddress(si`slow-test@${env.DOMAIN_NAME}`));
   const replyTo = si`slow-test-reply-to@${env.DOMAIN_NAME}`;
 
   await sentItemEmail(from, to, replyTo, env);
@@ -64,7 +65,7 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
 async function sentEmailVerificationEmail(from: FullEmailAddress, to: string, replyTo: string, env: EmailDeliveryEnv) {
   const feedDisplayName = 'Test Feed Name';
   const confirmationLinkUrl = new URL('https://test.com/confirmation-url');
-  const listEmailAddress = makeEmailAddress('list-address@test.com') as EmailAddress;
+  const listEmailAddress = makeTestEmailAddress('list-address@test.com');
 
   const { subject, htmlBody } = makeSubscriptionConfirmationEmailContent(
     feedDisplayName,
