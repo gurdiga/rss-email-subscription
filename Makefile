@@ -29,7 +29,7 @@ test:
 	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
 
 test-quiet:
-	@printf "Test..."
+	@printf "Test... "
 	$(TIME) $(MAKE) test > /dev/null
 
 t: test
@@ -47,7 +47,7 @@ compile:
 	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
 
 compile-quiet:
-	@printf "Compile..."
+	@printf "Compile... "
 	$(TIME) $(MAKE) compile > /dev/null
 
 c: compile
@@ -362,7 +362,7 @@ format-check:
 	prettier --check 'src/**/*.ts'
 
 format-check-quiet:
-	@printf "Format check..."
+	@printf "Format check... "
 	$(TIME) $(MAKE) format-check > /dev/null
 
 clean: stop
