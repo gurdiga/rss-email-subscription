@@ -72,7 +72,7 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       continue;
     }
 
-    if (feedsByAccountId.errs) {
+    if (feedsByAccountId.errs.length > 0) {
       logError(si`Errors on ${loadFeedsByAccountId.name}: ${feedsByAccountId.errs.join()}`, { dirName });
     }
 
