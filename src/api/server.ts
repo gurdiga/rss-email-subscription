@@ -16,6 +16,7 @@ import { deauthentication } from './deauthentication';
 import { createFeed, listFeeds } from './feeds';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
+import { getErrorMessage } from '../shared/lang';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -60,7 +61,7 @@ async function main() {
 
     shutdownHandle.close((error?: Error) => {
       if (error) {
-        logWarning(`Failed to shutdown HTTP server: ${error}`);
+        logWarning(si`Failed to shutdown HTTP server: ${getErrorMessage(error)}`);
       }
     });
   });

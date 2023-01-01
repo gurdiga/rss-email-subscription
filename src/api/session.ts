@@ -1,6 +1,7 @@
 import { AccountId, makeAccountId } from '../domain/account';
 import { hasKind, isErr, isObject } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
+import { si } from '../shared/string-utils';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -65,21 +66,22 @@ export function isAuthenticatedSession(x: any): x is AuthenticatedSession {
 }
 export interface UnauthenticatedSession {
   kind: 'UnauthenticatedSession';
+  reason: string;
 }
 
 export function checkSession(reqSession: unknown): AuthenticatedSession | UnauthenticatedSession {
   if (!isObject(reqSession)) {
-    return { kind: 'UnauthenticatedSession' };
+    return { kind: 'UnauthenticatedSession', reason: 'reqSession is not an Object' };
   }
 
   if (!('accountId' in reqSession) || typeof reqSession.accountId !== 'string') {
-    return { kind: 'UnauthenticatedSession' };
+    return { kind: 'UnauthenticatedSession', reason: si`Non-string accountId` };
   }
 
   const accountId = makeAccountId(reqSession.accountId);
 
   if (isErr(accountId)) {
-    return { kind: 'UnauthenticatedSession' };
+    return { kind: 'UnauthenticatedSession', reason: accountId.reason };
   }
 
   return {

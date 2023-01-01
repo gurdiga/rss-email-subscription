@@ -3,9 +3,15 @@ import { getStoredRssItemStorageKey, ValidStoredRssItem } from './rss-item-readi
 import { AppStorage } from '../../shared/storage';
 import { FeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
+import { AccountId } from '../../domain/account';
 
-export function deleteItem(feedId: FeedId, storage: AppStorage, storedRssItem: ValidStoredRssItem): Result<void> {
-  const storageKey = getStoredRssItemStorageKey(feedId, storedRssItem.fileName);
+export function deleteItem(
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage,
+  storedRssItem: ValidStoredRssItem
+): Result<void> {
+  const storageKey = getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName);
   const removeItemResult = storage.removeItem(storageKey);
 
   if (isErr(removeItemResult)) {

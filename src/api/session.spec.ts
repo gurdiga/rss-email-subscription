@@ -19,17 +19,15 @@ describe(checkSession.name, () => {
   });
 
   it('returns an UnauthenticatedSession when session.accountId is NOT a non-empty string', () => {
-    const expectedResult: UnauthenticatedSession = {
-      kind: 'UnauthenticatedSession',
-    };
+    const reason = (reason: string) => <UnauthenticatedSession>{ kind: 'UnauthenticatedSession', reason };
 
-    expect(checkSession(null)).to.deep.equal(expectedResult);
-    expect(checkSession({})).to.deep.equal(expectedResult);
-    expect(checkSession({ accountId: '' })).to.deep.equal(expectedResult);
-    expect(checkSession({ accountId: '  ' })).to.deep.equal(expectedResult);
-    expect(checkSession({ accountId: null })).to.deep.equal(expectedResult);
-    expect(checkSession({ accountId: 42 })).to.deep.equal(expectedResult);
-    expect(checkSession({ accountId: {} })).to.deep.equal(expectedResult);
+    expect(checkSession(null)).to.include(reason('reqSession is not an Object'));
+    expect(checkSession({})).to.include(reason('Non-string accountId'));
+    expect(checkSession({ accountId: '' })).to.include(reason('Expected to be a 64-character hex hash: string ""'));
+    expect(checkSession({ accountId: '  ' })).to.include(reason('Expected to be a 64-character hex hash: string "  "'));
+    expect(checkSession({ accountId: null })).to.include(reason('Non-string accountId'));
+    expect(checkSession({ accountId: 42 })).to.include(reason('Non-string accountId'));
+    expect(checkSession({ accountId: {} })).to.include(reason('Non-string accountId'));
   });
 });
 

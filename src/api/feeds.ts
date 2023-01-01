@@ -1,4 +1,4 @@
-import { getFeedsByAccountId, makeFeed, storeFeed } from '../domain/feed';
+import { loadFeedsByAccountId, makeFeed, storeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
@@ -23,16 +23,15 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
     return makeInputError(feed.reason, feed.field);
   }
 
-  // TODO: Check it doesn’t exist already?
+  const accountId = session.accountId;
 
-  const storeFeedResult = storeFeed(feed, app.storage);
+  // TODO: Check if already exists?
+  const storeFeedResult = storeFeed(accountId, feed, app.storage);
 
   if (isErr(storeFeedResult)) {
     logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
     return makeAppError('Failed to create feed');
   }
-
-  // TODO
 
   return makeSuccess('Feed created');
 };
@@ -46,21 +45,26 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
     return makeInputError('Not authenticated');
   }
 
-  const result = getFeedsByAccountId(session.accountId, app.storage, app.env.DOMAIN_NAME);
+  const { accountId } = session;
+  const result = loadFeedsByAccountId(accountId, app.storage, app.env.DOMAIN_NAME);
 
   if (isErr(result)) {
+    logError(si`Failed to ${loadFeedsByAccountId.name}`, { reason: result.reason });
     return makeAppError('Failed to load feed list');
   }
+
+  if (!isEmpty(result.feedIdErrs)) {
+    logError(si`Failed to load feed IDs for account ${accountId.value}`, { feedIdErrs: result.feedIdErrs });
   }
 
   if (!isEmpty(result.errs)) {
-    logError(si`Errors while loading feeds for account ${session.accountId.value}`, { errs: result.errs });
+    logError(si`Failed to load feeds for account ${accountId.value}`, { errs: result.errs });
   }
 
-  if (!isEmpty(result.missingFeeds)) {
-    const missingFeedIds = result.missingFeeds.map((x) => x.feedId);
-
-    logWarning(si`Missing feeds for account ${session.accountId.value}`, { missingFeedIds });
+  if (!isEmpty(result.feedNotFoundIds)) {
+    logError(si`Missing feeds for account ${accountId.value}`, {
+      feedNotFoundIds: result.feedNotFoundIds,
+    });
   }
 
   const data = result.validFeeds;

@@ -66,8 +66,10 @@ describe(readStoredRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
-    expect((storage.listItems as Stub).calls).to.deep.equal([[makePath(getFeedStorageKey(feedId), 'inbox')]]);
+    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
+    expect((storage.listItems as Stub).calls).to.deep.equal([
+      [makePath(getFeedStorageKey(accountId, feedId), 'inbox')],
+    ]);
   });
 
   it('also returns the files with invalid data', () => {
@@ -92,7 +94,7 @@ describe(readStoredRssItems.name, () => {
       ],
     };
 
-    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResul);
+    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
   });
 
   it('ignores files that do not match expected naming convention', () => {
@@ -111,15 +113,15 @@ describe(readStoredRssItems.name, () => {
       invalidItems: [],
     };
 
-    expect(readStoredRssItems(feedId, storage)).to.deep.equal(expectedResult);
+    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when can’t list items', () => {
     const error = makeErr('Not there?!');
     const storage = makeTestStorage({ listItems: () => error });
 
-    expect(readStoredRssItems(feedId, storage)).to.deep.equal(
-      makeErr(si`Failed to list files in ${getFeedStorageKey(feedId)}/inbox: ${error.reason}`)
+    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(
+      makeErr(si`Failed to list files in ${getFeedStorageKey(accountId, feedId)}/inbox: ${error.reason}`)
     );
   });
 

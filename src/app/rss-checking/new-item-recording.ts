@@ -6,8 +6,10 @@ import { FeedId, getFeedStorageKey } from '../../domain/feed';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
+import { AccountId } from '../../domain/account';
 
 export function recordNewRssItems(
+  accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage,
   rssItems: RssItem[],
@@ -17,7 +19,7 @@ export function recordNewRssItems(
 
   for (const item of rssItems) {
     const fileName = nameFileFn(item);
-    const storageKey = getStoredRssItemStorageKey(feedId, fileName);
+    const storageKey = getStoredRssItemStorageKey(accountId, feedId, fileName);
 
     const storeItemResult = storage.storeItem(storageKey, item);
 
@@ -41,6 +43,6 @@ export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
   return si`${RSS_ITEM_FILE_PREFIX}${hash}.json`;
 }
 
-export function getFeedInboxStorageKey(feedId: FeedId): string {
-  return makePath(getFeedStorageKey(feedId), 'inbox');
+export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
+  return makePath(getFeedStorageKey(accountId, feedId), 'inbox');
 }

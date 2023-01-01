@@ -1,5 +1,10 @@
+import { rmSync } from 'node:fs';
+import assert from 'node:assert';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { AccountId, isAccountId, makeAccountId } from '../domain/account';
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed';
+import { AppStorage, makeStorage, StorageKey, StorageValue } from './storage';
 import { EmailAddress, isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
@@ -36,8 +41,8 @@ export function makeThrowingStub<F extends Function>(error: Error): Spy<F> {
 }
 
 /** URL-encodes string */
-export function encodeSearchParamValue(string: string): string | undefined {
-  return new URLSearchParams({ string }).toString().split('=')[1];
+export function encodeSearchParamValue(string: string): string {
+  return new URLSearchParams({ string }).toString().split('=')[1]!;
 }
 
 interface AppStorageStub extends AppStorage {
@@ -63,6 +68,22 @@ export function makeTestStorage<K extends keyof AppStorage>(
     ...makeStorage(dataDirRoot),
     ...methodStubs,
   };
+}
+
+const testStorageSnapshotPath = join(tmpdir(), 'res-test-storage-snapshot');
+
+export function purgeTestStorageFromSnapshot(): void {
+  rmSync(testStorageSnapshotPath, { recursive: true, force: true });
+}
+
+export function makeTestStorageFromSnapshot(storageSnaphot: Record<StorageKey, StorageValue>): AppStorageStub {
+  const storage = makeStorage(testStorageSnapshotPath);
+
+  for (const [key, value] of Object.entries(storageSnaphot)) {
+    storage.storeItem(key, value);
+  }
+
+  return storage;
 }
 
 export function die(errorMessage: string): never {

@@ -40,12 +40,12 @@ describe(recordNewRssItems.name, () => {
   it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
     const storage = makeTestStorage({ storeItem: makeSpy() });
     const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
-    const result = recordNewRssItems(feedId, storage, rssItems, nameFile);
+    const result = recordNewRssItems(accountId, feedId, storage, rssItems, nameFile);
 
     expect((storage.storeItem as Spy).calls).to.deep.equal([
-      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[0]!)), rssItems[0]],
-      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[1]!)), rssItems[1]],
-      [getStoredRssItemStorageKey(feedId, nameFile(rssItems[2]!)), rssItems[2]],
+      [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[0]!)), rssItems[0]],
+      [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[1]!)), rssItems[1]],
+      [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[2]!)), rssItems[2]],
     ]);
     expect(result).to.equal(rssItems.length);
   });
@@ -53,7 +53,7 @@ describe(recordNewRssItems.name, () => {
   it('reports the error when can’t write file', () => {
     const err = makeErr('No write access');
     const storage = makeTestStorage({ storeItem: () => err });
-    const result = recordNewRssItems(feedId, storage, rssItems);
+    const result = recordNewRssItems(accountId, feedId, storage, rssItems);
 
     expect(result).to.deep.equal(
       makeErr(si`Cant write RSS item file to inbox: ${err.reason}, item: ${JSON.stringify(rssItems[0])}`)

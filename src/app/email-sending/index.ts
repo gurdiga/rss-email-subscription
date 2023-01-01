@@ -7,11 +7,12 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { Feed, FeedId, isFeedNotFound } from '../../domain/feed';
+import { Feed, isFeedNotFound } from '../../domain/feed';
 import { AppStorage } from '../../shared/storage';
+import { AccountId } from '../../domain/account';
 
-export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
-  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId: feedId.value });
+export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId: feed.id.value });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
@@ -20,7 +21,7 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
     return 1;
   }
 
-  const storedRssItems = readStoredRssItems(feedId, storage);
+  const storedRssItems = readStoredRssItems(accountId, feed.id, storage);
 
   if (isErr(storedRssItems)) {
     logError('Failed to read RSS items', { reason: storedRssItems.reason });
@@ -39,7 +40,7 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
   }
 
   const { fromAddress } = feed;
-  const storedEmails = loadStoredEmails(feedId, storage);
+  const storedEmails = loadStoredEmails(accountId, feed.id, storage);
 
   if (isErr(storedEmails)) {
     logError('Could not read emails', { reason: storedEmails.reason });
@@ -78,7 +79,7 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
         toEmail: hashedEmail.emailAddress.value,
       });
 
-      const unsubscribeUrl = makeUnsubscribeUrl(feedId, hashedEmail, feed.displayName, env.DOMAIN_NAME);
+      const unsubscribeUrl = makeUnsubscribeUrl(feed.id, hashedEmail, feed.displayName, env.DOMAIN_NAME);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
       const from = makeFullEmailAddress(feed.displayName, fromAddress);
       const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feed.replyTo, emailContent, env);
@@ -92,7 +93,7 @@ export async function sendEmails(feedId: FeedId, feed: Feed, storage: AppStorage
       }
     }
 
-    const deletionResult = deleteItem(feedId, storage, storedItem);
+    const deletionResult = deleteItem(accountId, feed.id, storage, storedItem);
 
     if (isErr(deletionResult)) {
       logError(deletionResult.reason);

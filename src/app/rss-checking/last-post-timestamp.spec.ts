@@ -3,14 +3,16 @@ import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeSpy, makeTestStorage, makeTestAccountId, makeTestFeedId, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
-import { FeedId, getFeedStorageKey, makeFeedId } from '../../domain/feed';
+import { getFeedStorageKey } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
+import { makePath } from '../../shared/path-utils';
 
 describe('Last post timestamp', () => {
   const aTimestamp = new Date();
   const aGuid = 'some-GUID-string';
   const feedId = makeTestFeedId();
   const accountId = makeTestAccountId();
+  const storageKey = makePath(getFeedStorageKey(accountId, feedId), 'lastPostMetadata.json');
 
   describe(getLastPostMetadata.name, () => {
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {
@@ -22,7 +24,7 @@ describe('Last post timestamp', () => {
         loadItem: () => lastPostMetadata,
         hasItem: () => true,
       });
-      const result = getLastPostMetadata(feedId, storage);
+      const result = getLastPostMetadata(accountId, feedId, storage);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,
@@ -35,7 +37,7 @@ describe('Last post timestamp', () => {
 
     it('returns undefined value when lastPostMetadata.json does not exist', () => {
       const storage = makeTestStorage({ hasItem: () => false });
-      const result = getLastPostMetadata(feedId, storage);
+      const result = getLastPostMetadata(accountId, feedId, storage);
 
       expect(result).to.be.undefined;
     });
@@ -43,7 +45,7 @@ describe('Last post timestamp', () => {
     it('returns an Err value when the timestamp in lastPostMetadata.json is not a valid date', () => {
       const storedValue = { pubDate: new Date('not a date') };
       const storage = makeTestStorage({ loadItem: () => storedValue, hasItem: () => true as const });
-      const result = getLastPostMetadata(feedId, storage);
+      const result = getLastPostMetadata(accountId, feedId, storage);
 
       expect(result).to.deep.equal(makeErr(si`Invalid timestamp in ${storageKey}`));
     });
@@ -54,7 +56,7 @@ describe('Last post timestamp', () => {
         guid: undefined as any as string,
       };
       const storage = makeTestStorage({ loadItem: () => lastPostMetadata, hasItem: () => true as const });
-      const result = getLastPostMetadata(feedId, storage);
+      const result = getLastPostMetadata(accountId, feedId, storage);
 
       const expectedResult: LastPostMetadata = {
         pubDate: aTimestamp,
@@ -102,7 +104,7 @@ describe('Last post timestamp', () => {
     it('writes pubDate of the last item to lastPostMetadata.json', () => {
       const storage = makeTestStorage({ storeItem: makeSpy() });
       const initialRssItems = [...mockRssItems];
-      const result = recordLastPostMetadata(feedId, storage, mockRssItems);
+      const result = recordLastPostMetadata(accountId, feedId, storage, mockRssItems);
 
       expect(mockRssItems).to.deep.equal(initialRssItems, 'Does not alter the input array');
       expect((storage.storeItem as Stub).calls).to.deep.equal([[storageKey, expectedLastPostMetadata]]);
@@ -112,7 +114,7 @@ describe('Last post timestamp', () => {
     it('reports the error when can’t write file', () => {
       const mockError = 'No write access';
       const storage = makeTestStorage({ storeItem: () => makeErr(mockError) });
-      const result = recordLastPostMetadata(feedId, storage, mockRssItems);
+      const result = recordLastPostMetadata(accountId, feedId, storage, mockRssItems);
 
       expect(result).to.deep.equal(makeErr(si`Cant record last post timestamp: ${mockError}`));
     });
@@ -121,7 +123,7 @@ describe('Last post timestamp', () => {
       const storage = makeTestStorage({ storeItem: makeSpy() });
       const newRssItems: RssItem[] = [];
 
-      recordLastPostMetadata(feedId, storage, newRssItems);
+      recordLastPostMetadata(accountId, feedId, storage, newRssItems);
 
       expect((storage.storeItem as Spy).calls).to.be.empty;
     });

@@ -1,12 +1,7 @@
 import path from 'node:path';
-import {
-  addEmail,
-  makeEmailHashFn,
-  readEmailListFromCsvFile,
-  StoredEmails,
-  storeEmails,
-} from '../email-sending/emails';
-import { getFeed, makeFeedId } from '../../domain/feed';
+import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
+import { storeEmails } from '../email-sending/emails';
+import { findAccountId, getFeed, isFeedNotFound, makeFeedId } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
@@ -14,6 +9,7 @@ import { makeStorage } from '../../shared/storage';
 import { requireEnv } from '../../shared/env';
 import { AppEnv } from '../../api/init-app';
 import { si } from '../../shared/string-utils';
+import { isAccountNotFound } from '../../domain/account';
 
 async function main(): Promise<number | undefined> {
   const { logError, logInfo } = makeCustomLoggers({ module: 'email-storing' });
@@ -35,20 +31,32 @@ async function main(): Promise<number | undefined> {
   const feedId = makeFeedId(firstArg);
 
   if (isErr(feedId)) {
-    logError(`Invalid feedId`);
+    logError('Invalid feedId');
     process.exit(1);
   }
 
   const storage = makeStorage(dataDirRoot);
   const inputFilePath = path.join(dataDirRoot, feedId.value, 'emails.csv');
-  const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
+  const accountId = findAccountId(feedId, storage);
+
+  if (isErr(accountId)) {
+    logError(si`Failed to find feed account`, { reason: accountId.reason });
+    process.exit(1);
+  }
+
+  if (isAccountNotFound(accountId)) {
+    logError('Feed account not found');
+    process.exit(1);
+  }
+
+  const feed = getFeed(accountId, feedId, storage, env.DOMAIN_NAME);
 
   if (isErr(feed)) {
     logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });
     return 1;
   }
 
-  if (feed.kind === 'FeedNotFound') {
+  if (isFeedNotFound(feed)) {
     logError('Feed not found', { feedId: feedId.value });
     return 1;
   }
@@ -77,7 +85,7 @@ async function main(): Promise<number | undefined> {
     storedEmails = addEmail(storedEmails, emailAddress, emailHashFn);
   }
 
-  const result = storeEmails(storedEmails.validEmails, feedId, storage);
+  const result = storeEmails(storedEmails.validEmails, accountId, feedId, storage);
 
   if (isErr(result)) {
     logError(si`Failed to ${storeEmails.name}`, { reason: result.reason });

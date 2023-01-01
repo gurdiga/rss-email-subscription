@@ -1,12 +1,10 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { hash, hashLength } from '../shared/crypto';
-
 import { parseDate } from '../shared/date-utils';
-import { hasKind, isErr, isString, makeErr, readStringArray, Result } from '../shared/lang';
+import { getTypeName, hasKind, isErr, isString, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
-import { FeedId, isFeedId, makeFeedId } from './feed';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
 
@@ -21,7 +19,7 @@ export function makeAccountId(value: string): Result<AccountId> {
   }
 
   if (value.length !== hashLength) {
-    return makeErr('AccountId is expected to be a 64-character hex hash');
+    return makeErr(si`Expected to be a 64-character hex hash: ${getTypeName(value)} "${value}"`);
   }
 
   return {
@@ -40,7 +38,6 @@ export interface Account {
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
-  feedIds: FeedId[];
 }
 
 export interface AccountData {
@@ -90,29 +87,11 @@ export function loadAccount(
     );
   }
 
-  const strings = readStringArray(loadItemResult.feedIds);
-
-  if (isErr(strings)) {
-    return makeErr(si`Non-string stored feedIds for account ${accountId.value}: ${strings.reason}`, 'feedIds');
-  }
-
-  const results = strings.map(makeFeedId);
-  const feedIds = results.filter(isFeedId);
-  const errs = results.filter(isErr).map((x) => x.reason);
-
-  if (errs.length > 0) {
-    return makeErr(
-      si`Some of the stored feedIds (${strings.join()}) for account ${accountId.value} are invalid: ${errs.join()}`,
-      'feedIds'
-    );
-  }
-
   return {
     plan,
     email,
     hashedPassword,
     creationTimestamp,
-    feedIds,
   };
 }
 
@@ -174,4 +153,16 @@ export function accountExists(storage: AppStorage, accountId: AccountId): Result
   }
 
   return hasItemResult;
+}
+
+export interface AccountNotFound {
+  kind: 'AccountNotFound';
+}
+
+export function makeAccountNotFound(): AccountNotFound {
+  return { kind: 'AccountNotFound' };
+}
+
+export function isAccountNotFound(value: unknown): value is AccountNotFound {
+  return hasKind(value, 'AccountNotFound');
 }

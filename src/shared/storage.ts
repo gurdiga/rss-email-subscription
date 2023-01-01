@@ -1,19 +1,12 @@
 import { dirname, join } from 'node:path';
-import {
-  deleteFile,
-  DeleteFileFn,
-  fileExists,
-  FileExistsFn,
-  listFiles,
-  listDirectories,
-  ListFilesFn,
-} from './io-isolation';
+import { deleteFile, DeleteFileFn, fileExists, FileExistsFn, listFiles, listDirectories } from './io-isolation';
+import { ListFilesFn } from './io-isolation';
 import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io-isolation';
 import { attempt, isErr, makeErr, Result } from './lang';
 import { si } from './string-utils';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
-type StorageValue = any; // Will get JSONified and stored in the file.
+export type StorageValue = any; // Will get JSONified and stored in the file.
 
 export interface AppStorage {
   storeItem: (

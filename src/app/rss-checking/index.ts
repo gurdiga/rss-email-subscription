@@ -1,5 +1,5 @@
 import { isEmpty } from '../../shared/array-utils';
-import { Feed, FeedId } from '../../domain/feed';
+import { Feed } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { AppStorage } from '../../shared/storage';
@@ -8,12 +8,13 @@ import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timesta
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
+import { AccountId } from '../../domain/account';
 
-export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+export async function checkRss(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
   const feedDisplayName = feed.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'rss-checking',
-    feedId: feedId.value,
+    feedId: feed.id.value,
     feedDisplayName,
   });
   const { url } = feed;
@@ -42,7 +43,7 @@ export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage):
     return 1;
   }
 
-  let lastPostMetadata = getLastPostMetadata(feedId, storage);
+  let lastPostMetadata = getLastPostMetadata(accountId, feed.id, storage);
 
   if (isErr(lastPostMetadata)) {
     logError('Failed reading last post metadata', { reason: lastPostMetadata.reason });
@@ -56,7 +57,7 @@ export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage):
     return;
   }
 
-  const recordingResult = recordNewRssItems(feedId, storage, newItems);
+  const recordingResult = recordNewRssItems(accountId, feed.id, storage, newItems);
 
   if (isErr(recordingResult)) {
     logError('Failed recording new items', { reason: recordingResult.reason });
@@ -72,7 +73,7 @@ export async function checkRss(feedId: FeedId, feed: Feed, storage: AppStorage):
 
   logInfo('Feed checking report', { report });
 
-  const result = recordLastPostMetadata(feedId, storage, newItems);
+  const result = recordLastPostMetadata(accountId, feed.id, storage, newItems);
 
   if (isErr(result)) {
     logError('Failed recording last post metadata', { reason: result.reason });

@@ -5,9 +5,14 @@ import { isErr, makeErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
+import { AccountId } from '../../domain/account';
 
-export function getLastPostMetadata(feedId: FeedId, storage: AppStorage): Result<LastPostMetadata | undefined> {
-  const storageKey = getStorageKey(feedId);
+export function getLastPostMetadata(
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage
+): Result<LastPostMetadata | undefined> {
+  const storageKey = getStorageKey(accountId, feedId);
 
   if (!storage.hasItem(storageKey)) {
     return;
@@ -35,6 +40,7 @@ export interface LastPostMetadata {
 }
 
 export function recordLastPostMetadata(
+  accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage,
   items: RssItem[]
@@ -49,7 +55,7 @@ export function recordLastPostMetadata(
     guid: lastItem.guid,
   };
 
-  const storageKey = getStorageKey(feedId);
+  const storageKey = getStorageKey(accountId, feedId);
   const storeItemResult = storage.storeItem(storageKey, metadata);
 
   if (isErr(storeItemResult)) {
@@ -59,6 +65,6 @@ export function recordLastPostMetadata(
   return metadata;
 }
 
-function getStorageKey(feedId: FeedId) {
-  return makePath(getFeedStorageKey(feedId), 'lastPostMetadata.json');
+function getStorageKey(accountId: AccountId, feedId: FeedId) {
+  return makePath(getFeedStorageKey(accountId, feedId), 'lastPostMetadata.json');
 }

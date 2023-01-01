@@ -1,18 +1,21 @@
 import { expect } from 'chai';
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Feed, FeedNotFound, MakeFeedInput, FeedsByAccountId, storeFeed, getFeedJsonStorageKey } from './feed';
-import { makeFeedId, FeedId, getFeed, getFeedsByAccountId, makeFeed } from './feed';
+import { Feed, MakeFeedInput, FeedsByAccountId, storeFeed, getFeedJsonStorageKey, makeFeedNotFound } from './feed';
+import { FeedStoredData } from './feed';
+import { findAccountId, makeFeedId, FeedId, getFeed, loadFeedsByAccountId, makeFeed } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
-import { makeStorageStub, makeStub, Stub } from '../shared/test-utils';
-import { Account, AccountId, makeAccountId } from './account';
+import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub } from '../shared/test-utils';
+import { makeTestEmailAddress } from '../shared/test-utils';
+import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
 import { si } from '../shared/string-utils';
 
 const domainName = 'test.feedsubscription.com';
-const feedId = makeFeedId('test-feed-id') as FeedId;
+const accountId = makeTestAccountId();
+const feedId = makeTestFeedId();
 const getRandomStringFn = () => 'fake-random-string';
 
 describe(getFeed.name, () => {
-  const storageKey = getFeedJsonStorageKey(feedId);
+  const storageKey = getFeedJsonStorageKey(accountId, feedId);
 
   const data = {
     displayName: 'Just Add Light and Stir',
@@ -23,8 +26,8 @@ describe(getFeed.name, () => {
   };
 
   it('returns a FeedSettings value from feed.json', () => {
-    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeed(feedId, storage, domainName);
+    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
+    const result = getFeed(accountId, feedId, storage, domainName);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
 
@@ -34,8 +37,8 @@ describe(getFeed.name, () => {
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: makeEmailAddress(`${feedId.value}@test.feedsubscription.com`) as EmailAddress,
-      replyTo: makeEmailAddress(data.replyTo) as EmailAddress,
+      fromAddress: makeTestEmailAddress(si`${feedId.value}@test.feedsubscription.com`),
+      replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: data.cronPattern,
     };
 
@@ -44,8 +47,8 @@ describe(getFeed.name, () => {
 
   it('defaults cronPattern to every hour', () => {
     const dataWithoutCronPattern = { ...data, cronPattern: undefined };
-    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => dataWithoutCronPattern });
-    const result = getFeed(feedId, storage, domainName) as Feed;
+    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => dataWithoutCronPattern });
+    const result = getFeed(accountId, feedId, storage, domainName) as Feed;
 
     expect(result.cronPattern).to.deep.equal('0 * * * *');
   });
@@ -57,8 +60,8 @@ describe(getFeed.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
-    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeed(feedId, storage, domainName) as Feed;
+    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
+    const result = getFeed(accountId, feedId, storage, domainName) as Feed;
 
     expect(result.replyTo.value).to.equal('feedback@test.feedsubscription.com');
   });
@@ -69,27 +72,29 @@ describe(getFeed.name, () => {
       hashingSalt: 'more-than-sixteen-non-space-characters',
       fromAddress: 'some@test.com',
     };
-    const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
-    const result = getFeed(feedId, storage, domainName) as Feed;
+    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
+    const result = getFeed(accountId, feedId, storage, domainName) as Feed;
 
     expect(result.displayName).to.equal(<string>feedId.value);
   });
 
   it('returns an FeedNotFound when value not found', () => {
-    const storage = makeStorageStub({ loadItem: () => undefined, hasItem: () => false });
-    const result = getFeed(feedId, storage, domainName);
+    const storage = makeTestStorage({ loadItem: () => undefined, hasItem: () => false });
+    const result = getFeed(accountId, feedId, storage, domainName);
 
-    expect(result).to.deep.equal(<FeedNotFound>{ kind: 'FeedNotFound', feedId });
+    expect(result).to.deep.equal(makeFeedNotFound(feedId));
   });
 
   it('returns an Err value when the data is invalid', () => {
     const resultForJson = (data: Object): ReturnType<typeof getFeed> => {
-      const storage = makeStorageStub({ hasItem: () => true, loadItem: () => data });
+      const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
 
-      return getFeed(feedId, storage, domainName);
+      return getFeed(accountId, feedId, storage, domainName);
     };
 
-    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(makeErr(`Invalid feed URL in ${storageKey}: not-a-url`));
+    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(
+      makeErr(si`Invalid feed URL in ${storageKey}: not-a-url`)
+    );
     expect(resultForJson({ url: 'https://a.com', hashingSalt: 42 })).to.deep.equal(
       makeErr(si`Invalid hashing salt in ${storageKey}: 42`)
     );
@@ -99,10 +104,7 @@ describe(getFeed.name, () => {
   });
 });
 
-describe(getFeedsByAccountId.name, () => {
-  const accountId = makeAccountId('test'.repeat(16)) as AccountId;
-  const storage = makeStorageStub({});
-
+describe(loadFeedsByAccountId.name, () => {
   it('returns feed data for account', () => {
     const feeds: Record<string, ReturnType<typeof getFeed>> = {
       validFeed: <Feed>{
@@ -111,30 +113,45 @@ describe(getFeedsByAccountId.name, () => {
         displayName: 'Test Feed Display Name',
         url: new URL('https://test-url.com'),
         hashingSalt: 'Random-16-bytes.',
-        fromAddress: makeEmailAddress('feed-fromAddress@test.com') as EmailAddress,
-        replyTo: makeEmailAddress('feed-replyTo@test.com') as EmailAddress,
+        fromAddress: makeTestEmailAddress('feed-fromAddress@test.com'),
+        replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
         cronPattern: '1 1 1 1 1',
       },
-      missingFeed1: <FeedNotFound>{ kind: 'FeedNotFound', feedId: makeFeedId('missing-feed-1') },
-      missingFeed2: <FeedNotFound>{ kind: 'FeedNotFound', feedId: makeFeedId('missing-feed-2') },
+      missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
+      missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
       invalidFeed1: makeErr('somehow feed data 1'),
       invalidFeed2: makeErr('somehow feed data 2'),
     };
+    const badFeedIds = ['a', 42 as any];
+    const storage = makeTestStorage({ listSubdirectories: () => Object.keys(feeds).concat(badFeedIds) });
 
-    const getFeedFn = makeStub<typeof getFeed>((feedId) => feeds[feedId.value]!);
-    const loadAccountFn = () => ({ feedIds: Object.keys(feeds).map(makeFeedId) } as any as Account);
-    const result = getFeedsByAccountId(accountId, storage, domainName, loadAccountFn, getFeedFn) as FeedsByAccountId;
+    const getFeedFn = makeStub<typeof getFeed>((_accountId, feedId) => feeds[feedId.value]!);
+    const result = loadFeedsByAccountId(accountId, storage, domainName, getFeedFn) as FeedsByAccountId;
 
     expect(result.validFeeds).to.deep.equal([feeds['validFeed']]);
-    expect(result.missingFeeds).to.deep.equal([feeds['missingFeed1'], feeds['missingFeed2']]);
-    expect(result.errs).to.deep.equal(['somehow feed data 1', 'somehow feed data 2']);
+    expect(result.feedNotFoundIds).to.deep.equal([
+      // prettier: keep these stacked
+      'missing-feed-1',
+      'missing-feed-2',
+    ]);
+    expect(result.errs).to.deep.equal([
+      // prettier: keep these stacked
+      'somehow feed data 1',
+      'somehow feed data 2',
+    ]);
+    expect(result.feedIdErrs).to.deep.equal([
+      // prettier: keep these stacked
+      makeErr('Is too short', 'a'),
+      makeErr('Is not a string', 42 as any),
+    ]);
   });
 
-  it('returns loadAccount err when it fails', () => {
-    const loadAccountFn = () => makeErr('Account broken!');
-    const result = getFeedsByAccountId(accountId, storage, domainName, loadAccountFn);
+  it('returns err from listSubdirectories when it fails', () => {
+    const listSubdirectoriesFn = () => makeErr('Storage broken!');
+    const storage = makeTestStorage({ listSubdirectories: listSubdirectoriesFn });
+    const result = loadFeedsByAccountId(accountId, storage, domainName, getFeed);
 
-    expect(result).to.deep.equal(makeErr('Failed to loadAccount: Account broken!'));
+    expect(result).to.deep.equal(makeErr('Failed to list feeds: Storage broken!'));
   });
 });
 
@@ -154,8 +171,8 @@ describe(makeFeed.name, () => {
       displayName: 'Test Feed Name',
       url: new URL(input.url!),
       hashingSalt: 'fake-random-string',
-      fromAddress: makeEmailAddress('test-feed@test.feedsubscription.com'),
-      replyTo: makeEmailAddress('feed-replyTo@test.com') as EmailAddress,
+      fromAddress: makeTestEmailAddress('test-feed@test.feedsubscription.com'),
+      replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern: '0 * * * *',
     });
   });
@@ -250,13 +267,13 @@ describe(storeFeed.name, () => {
   });
 
   it('stores the feed data', () => {
-    const storage = makeStorageStub({ storeItem: () => void 0 });
-    const result = storeFeed(feed, storage);
+    const storage = makeTestStorage({ storeItem: () => void 0 });
+    const result = storeFeed(accountId, feed, storage);
 
     expect(isErr(result)).be.false;
     expect((storage.storeItem as Stub).calls).to.deep.equal([
       [
-        '/feeds/test-feed-id/feed.json',
+        si`/accounts/${accountId.value}/feeds/test-feed-id/feed.json`,
         {
           cronPattern: '0 * * * *',
           displayName: 'Test Feed Name',
@@ -269,8 +286,8 @@ describe(storeFeed.name, () => {
   });
 
   it('returns an Err value when storage fails', () => {
-    const storage = makeStorageStub({ storeItem: () => makeErr('Something broke!') });
-    const result = storeFeed(feed, storage);
+    const storage = makeTestStorage({ storeItem: () => makeErr('Something broke!') });
+    const result = storeFeed(accountId, feed, storage);
 
     expect(result).be.deep.equal(makeErr('Failed to store feed data: Something broke!'));
   });
@@ -284,9 +301,33 @@ describe(makeFeedId.name, () => {
   it('returns an Err value when not OK', () => {
     expect(makeFeedId(null)).to.deep.equal(makeErr('Is not a string'));
     expect(makeFeedId(undefined)).to.deep.equal(makeErr('Is not a string'));
-    expect(makeFeedId(42)).to.deep.equal(makeErr('Is not a string'));
-    expect(makeFeedId('')).to.deep.equal(makeErr('Is empty'));
+    expect(makeFeedId(42)).to.deep.equal(makeErr('Is not a string', 42 as any));
+    expect(makeFeedId('')).to.deep.equal(makeErr('Is empty', ''));
     expect(makeFeedId('  ')).to.deep.equal(makeErr('Is empty'));
-    expect(makeFeedId('ab')).to.deep.equal(makeErr('Is too short'));
+    expect(makeFeedId('ab')).to.deep.equal(makeErr('Is too short', 'ab'));
+  });
+});
+
+describe(findAccountId.name, () => {
+  it('finds first account that has a feed with given Id', () => {
+    const storage = makeTestStorageFromSnapshot({
+      [getFeedJsonStorageKey(accountId, feedId)]: <FeedStoredData>{},
+    });
+    const result = findAccountId(feedId, storage);
+
+    expect(result).to.deep.equal(accountId);
+  });
+
+  it('returns an AccountNotFound value when the case', () => {
+    const storage = makeTestStorageFromSnapshot({
+      [getAccountStorageKey(accountId)]: <AccountData>{},
+    });
+    const result = findAccountId(feedId, storage);
+
+    expect(result).to.deep.equal(makeAccountNotFound());
+  });
+
+  afterEach(() => {
+    purgeTestStorageFromSnapshot();
   });
 });

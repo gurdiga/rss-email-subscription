@@ -2,11 +2,13 @@ import { CronJob } from 'cron';
 import { checkRss } from '../app/rss-checking';
 import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
-import { feedRootStorageKey, getFeed, makeFeedId } from '../domain/feed';
+import { loadFeedsByAccountId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../shared/storage';
 import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
+import { accountsStorageKey, makeAccountId } from '../domain/account';
+import { si } from '../shared/string-utils';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -41,50 +43,49 @@ function main() {
 
 function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
   const { logError, logInfo } = makeCustomLoggers({ module: 'cron' });
-  let feedDirs = storage.listSubdirectories(feedRootStorageKey);
+  let accountDirs = storage.listSubdirectories(accountsStorageKey);
 
-  if (isErr(feedDirs)) {
-    logError(`Failed to list feed subdirectories`, { reason: feedDirs.reason });
+  if (isErr(accountDirs)) {
+    logError('Failed to list account subdirectories', { reason: accountDirs.reason });
     process.exit(1);
   }
 
-  if (feedDirs.length === 0) {
-    logError(`No feedDirs in dataDirRoot`, { dataDirRoot: env.DATA_DIR_ROOT });
+  if (accountDirs.length === 0) {
+    logError('No accountDirs in dataDirRoot', { dataDirRoot: env.DATA_DIR_ROOT });
     process.exit(1);
   }
 
   const cronJobs: CronJob[] = [];
 
-  for (const dirName of feedDirs) {
-    const feedId = makeFeedId(dirName);
+  for (const dirName of accountDirs) {
+    const accountId = makeAccountId(dirName);
 
-    if (isErr(feedId)) {
-      logError(`Invalid feed ID`, { dirName, reason: feedId.reason });
+    if (isErr(accountId)) {
+      logError('Invalid accountId', { dirName, reason: accountId.reason });
       continue;
     }
 
-    const feed = getFeed(feedId, storage, env.DOMAIN_NAME);
+    const feedsByAccountId = loadFeedsByAccountId(accountId, storage, env.DOMAIN_NAME);
 
-    if (isErr(feed)) {
-      logError(`Invalid feed settings`, { feedId, reason: feed.reason });
+    if (isErr(feedsByAccountId)) {
+      logError(si`Failed to ${loadFeedsByAccountId.name}`, { dirName, reason: feedsByAccountId.reason });
       continue;
     }
 
-    if (feed.kind === 'FeedNotFound') {
-      logError('feed.json not found?!', { feedId });
-      continue;
+    if (feedsByAccountId.errs) {
+      logError(si`Errors on ${loadFeedsByAccountId.name}: ${feedsByAccountId.errs.join()}`, { dirName });
     }
 
-    const { cronPattern } = feed;
+    for (const feed of feedsByAccountId.validFeeds) {
+      logInfo('Scheduling feed check', { feed });
 
-    logInfo(`Scheduling feed check`, { feedId, feed });
-
-    cronJobs.push(
-      new CronJob(cronPattern, async () => {
-        await checkRss(feedId, feed, storage);
-        await sendEmails(feedId, feed, storage);
-      })
-    );
+      cronJobs.push(
+        new CronJob(feed.cronPattern, async () => {
+          await checkRss(accountId, feed, storage);
+          await sendEmails(accountId, feed, storage);
+        })
+      );
+    }
   }
 
   cronJobs.forEach((j) => j.start());

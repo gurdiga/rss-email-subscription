@@ -4,8 +4,9 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { isFeedNotFound, makeFeedId } from '../domain/feed';
+import { findAccountId, isFeedNotFound, makeFeedId } from '../domain/feed';
 import { si } from '../shared/string-utils';
+import { isAccountNotFound } from '../domain/account';
 
 export const unsubscription: RequestHandler = async function unsubscription(
   reqId,
@@ -31,7 +32,19 @@ export const unsubscription: RequestHandler = async function unsubscription(
     return makeAppError('Database read error');
   }
 
-  const storedEmails = loadStoredEmails(feedId, storage);
+  const accountId = findAccountId(feedId, storage);
+
+  if (isErr(accountId)) {
+    logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });
+    return makeAppError('Feed not found');
+  }
+
+  if (isAccountNotFound(accountId)) {
+    logError('Feed account not found', { feedId: feedId.value });
+    return makeInputError('Feed not found');
+  }
+
+  const storedEmails = loadStoredEmails(accountId, feedId, storage);
 
   if (isErr(storedEmails)) {
     logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
@@ -54,7 +67,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
 
   storedEmails.validEmails = validEmails.filter((x) => x.saltedHash !== emailHash);
 
-  const storeResult = storeEmails(storedEmails.validEmails, feedId, storage);
+  const storeResult = storeEmails(storedEmails.validEmails, accountId, feedId, storage);
 
   if (isErr(storeResult)) {
     logError(si`Failed to ${storeEmails.name}`, { reason: storeResult.reason });

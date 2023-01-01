@@ -7,6 +7,7 @@ import { AppStorage } from '../../shared/storage';
 import { FeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
+import { AccountId } from '../../domain/account';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -34,8 +35,12 @@ function isInvalidStoredRssItem(value: unknown): value is InvalidStoredRssItem {
   return hasKind(value, 'InvalidStoredRssItem');
 }
 
-export function readStoredRssItems(feedId: FeedId, storage: AppStorage): Result<RssReadingResult> {
-  const storageKey = getFeedInboxStorageKey(feedId);
+export function readStoredRssItems(
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage
+): Result<RssReadingResult> {
+  const storageKey = getFeedInboxStorageKey(accountId, feedId);
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
@@ -97,6 +102,6 @@ export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredR
   return { kind: 'ValidStoredRssItem', item, fileName };
 }
 
-export function getStoredRssItemStorageKey(feedId: FeedId, fileName: string): string {
-  return makePath(getFeedInboxStorageKey(feedId), fileName);
+export function getStoredRssItemStorageKey(accountId: AccountId, feedId: FeedId, fileName: string): string {
+  return makePath(getFeedInboxStorageKey(accountId, feedId), fileName);
 }

@@ -1,22 +1,13 @@
-import { FeedId, FeedNotFound, getFeedStorageKey } from '../../domain/feed';
+import { FeedId, getFeedStorageKey } from '../../domain/feed';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io-isolation';
-import {
-  Err,
-  getErrorMessage,
-  getTypeName,
-  hasKind,
-  isErr,
-  isNonEmptyString,
-  isObject,
-  makeErr,
-  makeTypeMismatchErr,
-  Result,
-} from '../../shared/lang';
+import { Err, getErrorMessage, getTypeName, hasKind, isErr, isNonEmptyString, isObject } from '../../shared/lang';
+import { makeErr, makeTypeMismatchErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../shared/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
+import { AccountId } from '../../domain/account';
 
 export interface EmailList {
   kind: 'EmailList';
@@ -175,12 +166,12 @@ function isHashedEmail(value: unknown): value is HashedEmail {
   return hasKind(value, 'HashedEmail');
 }
 
-export function getEmailsStorageKey(feedId: FeedId): string {
-  return makePath(getFeedStorageKey(feedId), 'emails.json');
+export function getEmailsStorageKey(accountId: AccountId, feedId: FeedId): string {
+  return makePath(getFeedStorageKey(accountId, feedId), 'emails.json');
 }
 
-export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<StoredEmails | FeedNotFound> {
-  const storageKey = getEmailsStorageKey(feedId);
+export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<StoredEmails> {
+  const storageKey = getEmailsStorageKey(accountId, feedId);
   const hasItemResult = storage.hasItem(storageKey);
 
   if (isErr(hasItemResult)) {
@@ -188,7 +179,10 @@ export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<St
   }
 
   if (!hasItemResult) {
-    return { kind: 'FeedNotFound', feedId };
+    return {
+      validEmails: [],
+      invalidEmails: [],
+    };
   }
 
   const index = storage.loadItem(storageKey);
@@ -216,7 +210,6 @@ export function loadStoredEmails(feedId: FeedId, storage: AppStorage): Result<St
   };
 }
 
-// TODO: Delete if no more simple index entries.
 function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {
   if (typeof email !== 'string' || !isNonEmptyString(email)) {
     return makeTypeMismatchErr(email, 'email string');
@@ -246,27 +239,30 @@ function parseExtendedIndexEntry(saltedHash: unknown, emailInformation: unknown)
 
     if (isErr(result)) {
       return result;
-    } else {
-      return {
-        ...result,
-        isConfirmed: !!emailInformation.isConfirmed,
-      };
     }
 
-    return result;
+    return {
+      ...result,
+      isConfirmed: !!emailInformation.isConfirmed,
+    };
   } else {
     return makeTypeMismatchErr(emailInformation, 'EmailInformation object');
   }
 }
 
-export function storeEmails(hashedEmails: HashedEmail[], feedId: FeedId, storage: AppStorage): Err | void {
+export function storeEmails(
+  hashedEmails: HashedEmail[],
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage
+): Err | void {
   const emailIndex: EmailIndex = {};
 
   hashedEmails.forEach((e) => {
     emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
   });
 
-  const storageKey = getEmailsStorageKey(feedId);
+  const storageKey = getEmailsStorageKey(accountId, feedId);
   const storeItemResult = storage.storeItem(storageKey, emailIndex);
 
   if (isErr(storeItemResult)) {

@@ -4,7 +4,7 @@ import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { Feed, FeedId, getFeed, isFeedNotFound, makeFeedId } from '../domain/feed';
+import { Feed, FeedId, findAccountId, getFeed, isFeedNotFound, makeFeedId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
@@ -12,6 +12,7 @@ import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from 
 import { AppStorage } from '../shared/storage';
 import { RequestHandler } from './request-handler';
 import { si } from '../shared/string-utils';
+import { isAccountNotFound } from '../domain/account';
 
 export const subscription: RequestHandler = async function subscription(
   reqId,
@@ -29,7 +30,7 @@ export const subscription: RequestHandler = async function subscription(
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
 
   if (isErr(env)) {
-    logError(`Invalid environment`, { reason: env.reason });
+    logError('Invalid environment', { reason: env.reason });
     return makeAppError('Environment error');
   }
 
@@ -40,30 +41,37 @@ export const subscription: RequestHandler = async function subscription(
   }
 
   const { emailAddress, feed, feedId } = inputProcessingResult;
-  const storedEmails = loadStoredEmails(feedId, storage);
+  const accountId = findAccountId(feedId, storage);
 
-  if (isErr(storedEmails)) {
-    logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
-    return makeAppError('Database read error');
+  if (isErr(accountId)) {
+    logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });
+    return makeAppError('Feed not found');
   }
 
-  if (isFeedNotFound(storedEmails)) {
-    logError('Feed not found', { feedId });
+  if (isAccountNotFound(accountId)) {
+    logError('Feed account not found', { feedId: feedId.value });
     return makeInputError('Feed not found');
   }
 
-  if (storedEmails.invalidEmails.length > 0) {
-    logWarning('Found invalid emails stored', { invalidEmails: storedEmails.invalidEmails });
+  const loadEmailsResult = loadStoredEmails(accountId, feedId, storage);
+
+  if (isErr(loadEmailsResult)) {
+    logError(si`Failed to ${loadStoredEmails.name}`, { reason: loadEmailsResult.reason });
+    return makeAppError('Database read error');
   }
 
-  if (doesEmailAlreadyExist(emailAddress, storedEmails)) {
+  if (loadEmailsResult.invalidEmails.length > 0) {
+    logWarning('Found invalid emails stored', { invalidEmails: loadEmailsResult.invalidEmails });
+  }
+
+  if (doesEmailAlreadyExist(emailAddress, loadEmailsResult)) {
     logWarning('Already registered', { email: emailAddress.value });
     return makeInputError('Email is already subscribed');
   }
 
   const emailHashFn = makeEmailHashFn(feed.hashingSalt);
-  const newEmails = addEmail(storedEmails, emailAddress, emailHashFn);
-  const result = storeEmails(newEmails.validEmails, feedId, storage);
+  const newEmails = addEmail(loadEmailsResult, emailAddress, emailHashFn);
+  const result = storeEmails(newEmails.validEmails, accountId, feedId, storage);
 
   if (isErr(result)) {
     logError(si`Failed to ${storeEmails.name}`, { reason: result.reason });
@@ -118,7 +126,19 @@ function processInput(input: Input, storage: AppStorage, domainName: string): Pr
     return makeInputError('Invalid feed ID');
   }
 
-  const feed = getFeed(feedId, storage, domainName);
+  const accountId = findAccountId(feedId, storage);
+
+  if (isErr(accountId)) {
+    logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });
+    return makeAppError('Feed not found');
+  }
+
+  if (isAccountNotFound(accountId)) {
+    logError('Feed account not found', { feedId: feedId.value });
+    return makeInputError('Feed not found');
+  }
+
+  const feed = getFeed(accountId, feedId, storage, domainName);
 
   if (isFeedNotFound(feed)) {
     logWarning('Feed not found', { feedId });
