@@ -28,7 +28,7 @@
     "chai": "^4.3.7",
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.19",
-    "prettier": "^2.8.0",
+    "prettier": "^2.8.1",
     "systemjs": "^6.12.6",
     "ts-mocha": "^10.0.0",
     "ts-node": "^10.9.1",
