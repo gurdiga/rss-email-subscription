@@ -16,15 +16,15 @@ export type RequestHandler = (
 export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRequestHandler {
   return async (req, res) => {
     const reqId = new Date().getTime();
-    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: makeRequestHandler.name });
-
     const reqBody = (req.body || {}) as unknown;
     const reqParams = req.params || {};
     const reqSession = req.session || {};
     const action = handler.name;
     const referer = req.get('Referer');
 
-    logInfo(action, { reqId, action, reqBody, reqParams, referer });
+    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: 'api', referer });
+
+    logInfo(action, { reqId, action, reqBody, reqParams });
 
     const start = new Date();
     const result = await handler(reqId, reqBody, reqParams, reqSession, app);
