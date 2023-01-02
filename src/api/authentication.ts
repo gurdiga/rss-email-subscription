@@ -86,7 +86,7 @@ function checkCredentials({ settings, storage }: App, input: ProcessedInput): Re
 
   if (isErr(account)) {
     logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
-    return makeErr('Failed to load account', 'email');
+    return makeErr('Could not find your account', 'email');
   }
 
   const inputHashedPassword = hash(input.password.value, settings.hashingSalt);
