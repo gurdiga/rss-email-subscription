@@ -52,7 +52,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
   }
 
   if (isFeedNotFound(storedEmails)) {
-    logError('Feed not found', { feedId });
+    logError('Feed not found', { feedId: feedId.value });
     return makeInputError('Feed not found');
   }
 
@@ -74,7 +74,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
     return makeAppError('Database write error: registering unsubscription failed');
   }
 
-  logInfo('Unsubscribed', { feedId, email: existingEmail.emailAddress.value });
+  logInfo('Unsubscribed', { feedId: feedId.value, email: existingEmail.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
