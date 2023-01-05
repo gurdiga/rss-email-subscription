@@ -199,7 +199,6 @@ describe('API', () => {
           expect(loadedFeed.displayName).to.deep.equal(testFeedProps.displayName);
           expect(loadedFeed.url).to.deep.equal(testFeedProps.url);
           expect(loadedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
-          expect(loadedFeed.fromAddress).to.deep.equal(makeTestEmailAddress(si`${testFeedId.value}@${domainName}`));
           expect(loadedFeed.replyTo).to.deep.equal(makeTestEmailAddress(testFeedProps.replyTo!));
           expect(loadedFeed.cronPattern).to.equal(cronPatternBySchedule[testFeedProps.schedule!]);
         });

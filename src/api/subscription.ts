@@ -78,7 +78,18 @@ export const subscription: RequestHandler = async function subscription(
     return makeAppError('Database write error');
   }
 
-  const { displayName, fromAddress, replyTo } = feed;
+  const fromAddress = makeEmailAddress(si`${feed.id.value}@${env.DOMAIN_NAME}`);
+
+  if (isErr(fromAddress)) {
+    logError(si`Failed to ${makeEmailAddress.name}`, {
+      feedId: feed.id.value,
+      domainName: env.DOMAIN_NAME,
+      reason: fromAddress.reason,
+    });
+    return makeAppError('Application error');
+  }
+
+  const { displayName, replyTo } = feed;
 
   const from = makeFullEmailAddress(displayName, fromAddress);
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);

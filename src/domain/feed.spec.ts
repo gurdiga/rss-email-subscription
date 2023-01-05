@@ -37,7 +37,6 @@ describe(getFeed.name, () => {
       displayName: data.displayName,
       url: new URL(data.url),
       hashingSalt: data.hashingSalt,
-      fromAddress: makeTestEmailAddress(si`${feedId.value}@test.feedsubscription.com`),
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: data.cronPattern,
     };
@@ -165,13 +164,12 @@ describe(makeFeed.name, () => {
       schedule: '@hourly',
     };
 
-    expect(makeFeed(input, domainName, getRandomStringFn)).to.deep.equal(<Feed>{
+    expect(makeFeed(input, getRandomStringFn)).to.deep.equal(<Feed>{
       kind: 'Feed',
       id: makeFeedId(input.feedId),
       displayName: 'Test Feed Name',
       url: new URL(input.url!),
       hashingSalt: 'fake-random-string',
-      fromAddress: makeTestEmailAddress('test-feed@test.feedsubscription.com'),
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern: '0 * * * *',
     });
@@ -244,7 +242,7 @@ describe(makeFeed.name, () => {
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(makeFeed(input as any, domainName, getRandomStringFn)).to.deep.equal(err, si`invalid ${fieldName}`);
+      expect(makeFeed(input as any, getRandomStringFn)).to.deep.equal(err, si`invalid ${fieldName}`);
     }
   });
 });
@@ -261,7 +259,6 @@ describe(storeFeed.name, () => {
         replyTo: 'feed-replyTo@test.com',
         schedule: '@hourly',
       },
-      domainName,
       getRandomStringFn
     ) as Feed;
   });

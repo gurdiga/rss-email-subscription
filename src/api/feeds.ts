@@ -16,7 +16,7 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
     return makeInputError('Not authenticated');
   }
 
-  const feed = makeFeed(reqBody, app.env.DOMAIN_NAME);
+  const feed = makeFeed(reqBody);
 
   if (isErr(feed)) {
     logWarning(si`Failed to ${makeFeed.name}`, feed);

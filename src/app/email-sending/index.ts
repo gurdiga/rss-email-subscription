@@ -1,6 +1,6 @@
 import { isEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
-import { loadStoredEmails, makeFullEmailAddress } from './emails';
+import { loadStoredEmails, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
 import { makeCustomLoggers } from '../../shared/logging';
@@ -10,6 +10,7 @@ import { EmailDeliveryEnv } from './email-delivery';
 import { Feed, isFeedNotFound } from '../../domain/feed';
 import { AppStorage } from '../../shared/storage';
 import { AccountId } from '../../domain/account';
+import { si } from '../../shared/string-utils';
 
 export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId: feed.id.value });
@@ -39,7 +40,13 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
     return;
   }
 
-  const { fromAddress } = feed;
+  const fromAddress = makeEmailAddress(si`${feed.id.value}@${env.DOMAIN_NAME}`);
+
+  if (isErr(fromAddress)) {
+    logError('Failed to build fromAddress', { reason: fromAddress.reason });
+    return;
+  }
+
   const storedEmails = loadStoredEmails(accountId, feed.id, storage);
 
   if (isErr(storedEmails)) {

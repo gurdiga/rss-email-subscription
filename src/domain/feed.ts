@@ -16,7 +16,6 @@ export interface Feed {
   displayName: string;
   url: URL;
   hashingSalt: string;
-  fromAddress: EmailAddress;
   replyTo: EmailAddress;
   cronPattern: string;
 }
@@ -108,7 +107,9 @@ export function getFeed(
   const fromAddress = makeEmailAddress(si`${feedId.value}@${domainName}`);
 
   if (isErr(fromAddress)) {
-    return makeErr(si`Invalid "fromAddress" in ${storageKey}: ${fromAddress.reason}`);
+    return makeErr(
+      si`Failed to ${makeEmailAddress.name} from feedId "${feedId.value}" and domain name "${domainName}"`
+    );
   }
 
   const defaultReplyTo = si`feedback@${domainName}`;
@@ -124,7 +125,6 @@ export function getFeed(
     displayName,
     url,
     hashingSalt,
-    fromAddress,
     replyTo,
     cronPattern,
   };
@@ -169,7 +169,7 @@ export interface MakeFeedInput {
   schedule?: string;
 }
 
-export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStringFn = getRandomString): Result<Feed> {
+export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomString): Result<Feed> {
   if (!isObject(input)) {
     return makeErr('Invalid input');
   }
@@ -196,12 +196,6 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
     return makeErr('Invalid feed URL', 'url');
   }
 
-  const fromAddress = makeEmailAddress(si`${id.value}@${domainName}`);
-
-  if (isErr(fromAddress)) {
-    return makeErr(si`Invalid feed fromAddress: ${fromAddress.reason}`, 'fromAddress');
-  }
-
   const replyTo = makeEmailAddress(input.replyTo);
 
   if (isErr(replyTo)) {
@@ -226,7 +220,6 @@ export function makeFeed(input: MakeFeedInput, domainName: string, getRandomStri
     displayName,
     url,
     hashingSalt,
-    fromAddress,
     replyTo,
     cronPattern,
   };
