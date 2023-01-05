@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
 import { storeEmails } from '../email-sending/emails';
-import { findAccountId, getFeed, isFeedNotFound, makeFeedId } from '../../domain/feed';
+import { findAccountId, loadFeed, isFeedNotFound, makeFeedId } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
@@ -49,7 +49,7 @@ async function main(): Promise<number | undefined> {
     process.exit(1);
   }
 
-  const feed = getFeed(accountId, feedId, storage, env.DOMAIN_NAME);
+  const feed = loadFeed(accountId, feedId, storage, env.DOMAIN_NAME);
 
   if (isErr(feed)) {
     logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });

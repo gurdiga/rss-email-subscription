@@ -1,6 +1,6 @@
 import { checkRss } from './rss-checking/index';
 import { sendEmails } from './email-sending/index';
-import { findAccountId, getFeed, makeFeedId } from '../domain/feed';
+import { findAccountId, loadFeed, makeFeedId } from '../domain/feed';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
@@ -54,7 +54,7 @@ if (isAccountNotFound(accountId)) {
   process.exit(1);
 }
 
-const feed = getFeed(accountId, feedId, storage, env.DOMAIN_NAME);
+const feed = loadFeed(accountId, feedId, storage, env.DOMAIN_NAME);
 
 if (isErr(feed)) {
   logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });

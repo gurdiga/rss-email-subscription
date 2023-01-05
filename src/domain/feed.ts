@@ -70,7 +70,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
   }
 }
 
-export function getFeed(
+export function loadFeed(
   accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage,
@@ -141,7 +141,7 @@ export function loadFeedsByAccountId(
   accountId: AccountId,
   storage: AppStorage,
   domainName: string,
-  getFeedFn = getFeed
+  getFeedFn = loadFeed
 ): Result<FeedsByAccountId> {
   const feedIdStrings = storage.listSubdirectories(getFeedRootStorageKey(accountId));
 
