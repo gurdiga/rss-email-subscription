@@ -34,7 +34,7 @@ function main() {
   });
 
   process.on('SIGTERM', () => {
-    logInfo('Received SIGTERM. Will stop all the cron jobs and exit.');
+    logWarning('Received SIGTERM. Will stop all the cron jobs and exit.');
     [...cronJobs, errorReportingCheck].forEach((j) => j.stop());
   });
 
