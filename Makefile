@@ -415,6 +415,18 @@ git-pre-commit-hook:
 	echo "" >> .git/hooks/pre-commit
 	echo "bash -i -c 'make pre-commit'" >> .git/hooks/pre-commit
 
+# cron @daily
+list-sessions:
+	@require=$${DATA_DIR_ROOT:?envar is missing}
+
+	ls -l $$DATA_DIR_ROOT/sessions |
+	cat <( \
+		echo "Subject: RES list-sessions"; \
+		echo "From: list-sessions@feedsubscription.com"; \
+		echo; \
+	) - \
+	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 deno-notes:
 	# Sat Dec 24 16:36:11 EET 2022
 	# Gave Deno a quick shot
