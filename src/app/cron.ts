@@ -65,7 +65,7 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       continue;
     }
 
-    const feedsByAccountId = loadFeedsByAccountId(accountId, storage, env.DOMAIN_NAME);
+    const feedsByAccountId = loadFeedsByAccountId(accountId, storage);
 
     if (isErr(feedsByAccountId)) {
       logError(si`Failed to ${loadFeedsByAccountId.name}`, { dirName, reason: feedsByAccountId.reason });
@@ -80,7 +80,7 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       logInfo('Scheduling feed check', { feed });
 
       cronJobs.push(
-        new CronJob(feed.cronPattern, async () => {
+        new CronJob(feed.cronPattern.value, async () => {
           await checkRss(accountId, feed, storage);
           await sendEmails(accountId, feed, storage);
         })

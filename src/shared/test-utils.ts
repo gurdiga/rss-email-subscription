@@ -113,3 +113,7 @@ export function makeTestEmailAddress(emailString: string): EmailAddress {
 
   return emailAddress;
 }
+
+export function clone(data: any): any {
+  return JSON.parse(JSON.stringify(data));
+}

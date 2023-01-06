@@ -46,7 +46,7 @@ export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBo
   }
 
   const { accountId } = session;
-  const result = loadFeedsByAccountId(accountId, app.storage, app.env.DOMAIN_NAME);
+  const result = loadFeedsByAccountId(accountId, app.storage);
 
   if (isErr(result)) {
     logError(si`Failed to ${loadFeedsByAccountId.name}`, { reason: result.reason });

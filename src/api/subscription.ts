@@ -34,7 +34,7 @@ export const subscription: RequestHandler = async function subscription(
     return makeAppError('Environment error');
   }
 
-  const inputProcessingResult = processInput({ reqId, feedId: reqBody.feedId, email }, storage, env.DOMAIN_NAME);
+  const inputProcessingResult = processInput({ reqId, feedId: reqBody.feedId, email }, storage);
 
   if (inputProcessingResult.kind !== 'ProcessedInput') {
     return inputProcessingResult;
@@ -120,7 +120,7 @@ interface ProcessedInput {
   feedId: FeedId;
 }
 
-function processInput(input: Input, storage: AppStorage, domainName: string): ProcessedInput | InputError | AppError {
+function processInput(input: Input, storage: AppStorage): ProcessedInput | InputError | AppError {
   const { reqId, email } = input;
   const { logWarning, logError } = makeCustomLoggers({ reqId, module: processInput.name });
   const emailAddress = makeEmailAddress(email);
@@ -149,7 +149,7 @@ function processInput(input: Input, storage: AppStorage, domainName: string): Pr
     return makeInputError('Feed not found');
   }
 
-  const feed = loadFeed(accountId, feedId, storage, domainName);
+  const feed = loadFeed(accountId, feedId, storage);
 
   if (isFeedNotFound(feed)) {
     logWarning('Feed not found', { feedId });

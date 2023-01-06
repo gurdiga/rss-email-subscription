@@ -3,13 +3,13 @@ import { Feed, MakeFeedInput, FeedsByAccountId, storeFeed, getFeedJsonStorageKey
 import { FeedStoredData } from './feed';
 import { findAccountId, makeFeedId, FeedId, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
-import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub } from '../shared/test-utils';
+import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, clone } from '../shared/test-utils';
 import { makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
 import { si } from '../shared/string-utils';
+import { makeUnixCronPattern, UnixCronPattern } from './cron-pattern';
 
-const domainName = 'test.feedsubscription.com';
 const accountId = makeTestAccountId();
 const feedId = makeTestFeedId();
 const getRandomStringFn = () => 'fake-random-string';
@@ -25,9 +25,9 @@ describe(loadFeed.name, () => {
     cronPattern: '5 * * * *',
   };
 
-  it('returns a FeedSettings value from feed.json', () => {
+  it('returns a Feed value from feed.json', () => {
     const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
-    const result = loadFeed(accountId, feedId, storage, domainName);
+    const result = loadFeed(accountId, feedId, storage, getRandomStringFn);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
 
@@ -36,69 +36,41 @@ describe(loadFeed.name, () => {
       id: feedId,
       displayName: data.displayName,
       url: new URL(data.url),
-      hashingSalt: data.hashingSalt,
+      hashingSalt: 'fake-random-string',
       replyTo: makeTestEmailAddress(data.replyTo),
-      cronPattern: data.cronPattern,
+      cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
     };
 
-    expect(result).to.deep.equal(expectedResult);
-  });
-
-  it('defaults cronPattern to every hour', () => {
-    const dataWithoutCronPattern = { ...data, cronPattern: undefined };
-    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => dataWithoutCronPattern });
-    const result = loadFeed(accountId, feedId, storage, domainName) as Feed;
-
-    expect(result.cronPattern).to.deep.equal('0 * * * *');
-  });
-
-  it('defaults replyTo to feedback@feedsubscription.com', () => {
-    const data = {
-      displayName: 'Just Add Light and Stir',
-      url: 'https://example.com/feed.xml',
-      hashingSalt: 'more-than-sixteen-non-space-characters',
-      fromAddress: 'some@test.com',
-    };
-    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
-    const result = loadFeed(accountId, feedId, storage, domainName) as Feed;
-
-    expect(result.replyTo.value).to.equal('feedback@test.feedsubscription.com');
+    expect(result).to.deep.include(expectedResult);
   });
 
   it('defaults displayName to feedId', () => {
-    const data = {
-      url: 'https://example.com/feed.xml',
-      hashingSalt: 'more-than-sixteen-non-space-characters',
-      fromAddress: 'some@test.com',
-    };
-    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
-    const result = loadFeed(accountId, feedId, storage, domainName) as Feed;
+    const incompleteData = clone(data);
 
-    expect(result.displayName).to.equal(<string>feedId.value);
+    delete incompleteData.displayName;
+
+    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => incompleteData });
+    const result = loadFeed(accountId, feedId, storage) as Feed;
+
+    expect(result).to.include(<Feed>{ kind: 'Feed', displayName: feedId.value }, si`result: ${JSON.stringify(result)}`);
   });
 
   it('returns an FeedNotFound when value not found', () => {
     const storage = makeTestStorage({ loadItem: () => undefined, hasItem: () => false });
-    const result = loadFeed(accountId, feedId, storage, domainName);
+    const result = loadFeed(accountId, feedId, storage);
 
     expect(result).to.deep.equal(makeFeedNotFound(feedId));
   });
 
-  it('returns an Err value when the data is invalid', () => {
+  it('returns an Err value when cronPattern is invalid', () => {
     const resultForJson = (data: Object): ReturnType<typeof loadFeed> => {
       const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
 
-      return loadFeed(accountId, feedId, storage, domainName);
+      return loadFeed(accountId, feedId, storage);
     };
 
-    expect(resultForJson({ url: 'not-a-url' })).to.deep.equal(
-      makeErr(si`Invalid feed URL in ${storageKey}: not-a-url`)
-    );
-    expect(resultForJson({ url: 'https://a.com', hashingSalt: 42 })).to.deep.equal(
-      makeErr(si`Invalid hashing salt in ${storageKey}: 42`)
-    );
-    expect(resultForJson({ url: 'https://a.com', hashingSalt: 'seeeeedd' })).to.deep.equal(
-      makeErr(si`Hashing salt is too short in ${storageKey}: at least 16 non-space characters required`)
+    expect(resultForJson({ cronPattern: 'not-a-cron-pattern' })).to.deep.equal(
+      makeErr('Invalid feed cronPattern: "not-a-cron-pattern"', 'cronPattern')
     );
   });
 });
@@ -114,7 +86,7 @@ describe(loadFeedsByAccountId.name, () => {
         hashingSalt: 'Random-16-bytes.',
         fromAddress: makeTestEmailAddress('feed-fromAddress@test.com'),
         replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
-        cronPattern: '1 1 1 1 1',
+        cronPattern: makeUnixCronPattern('1 1 1 1 1'),
       },
       missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
       missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
@@ -125,7 +97,7 @@ describe(loadFeedsByAccountId.name, () => {
     const storage = makeTestStorage({ listSubdirectories: () => Object.keys(feeds).concat(badFeedIds) });
 
     const getFeedFn = makeStub<typeof loadFeed>((_accountId, feedId) => feeds[feedId.value]!);
-    const result = loadFeedsByAccountId(accountId, storage, domainName, getFeedFn) as FeedsByAccountId;
+    const result = loadFeedsByAccountId(accountId, storage, getFeedFn) as FeedsByAccountId;
 
     expect(result.validFeeds).to.deep.equal([feeds['validFeed']]);
     expect(result.feedNotFoundIds).to.deep.equal([
@@ -148,7 +120,7 @@ describe(loadFeedsByAccountId.name, () => {
   it('returns err from listSubdirectories when it fails', () => {
     const listSubdirectoriesFn = () => makeErr('Storage broken!');
     const storage = makeTestStorage({ listSubdirectories: listSubdirectoriesFn });
-    const result = loadFeedsByAccountId(accountId, storage, domainName, loadFeed);
+    const result = loadFeedsByAccountId(accountId, storage, loadFeed);
 
     expect(result).to.deep.equal(makeErr('Failed to list feeds: Storage broken!'));
   });
@@ -161,7 +133,7 @@ describe(makeFeed.name, () => {
       url: 'https://test.com/rss.xml',
       feedId: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
-      schedule: '@hourly',
+      cronPattern: '@hourly',
     };
 
     expect(makeFeed(input, getRandomStringFn)).to.deep.equal(<Feed>{
@@ -171,7 +143,7 @@ describe(makeFeed.name, () => {
       url: new URL(input.url!),
       hashingSalt: 'fake-random-string',
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
-      cronPattern: '0 * * * *',
+      cronPattern: makeUnixCronPattern('0 * * * *'),
     });
   });
 
@@ -183,21 +155,21 @@ describe(makeFeed.name, () => {
       [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input2'],
       [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input3'],
       [{}, makeErr('Invalid feed display name', 'displayName'), 'displayName'],
-      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID', 'feedId'), 'feedId1'],
+      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID', 'id'), 'id1'],
       [
         {
           displayName: 'test-value',
           feedId: ' \t\r\n', // white-space
         },
-        makeErr('Invalid feed ID', 'feedId'),
-        'feedId2',
+        makeErr('Invalid feed ID', 'id'),
+        'id2',
       ],
       [
         {
           displayName: 'test-valid-displayName',
           feedId: 'valid-feedId',
         },
-        makeErr('Non-string feed URL', 'url'),
+        makeErr('Non-string feed URL: ""', 'url'),
         'url1',
       ],
       [
@@ -206,7 +178,7 @@ describe(makeFeed.name, () => {
           feedId: 'valid-feedId',
           url: 'not-an-url',
         },
-        makeErr('Invalid feed URL', 'url'),
+        makeErr('Invalid feed URL: "not-an-url"', 'url'),
         'url2',
       ],
       [
@@ -215,7 +187,7 @@ describe(makeFeed.name, () => {
           url: 'https://test.com/rss.xml',
           feedId: 'valid-feedId',
         },
-        makeErr('Invalid Reply To email', 'replyTo'),
+        makeErr('Invalid Reply To email: ""', 'replyTo'),
         'replyTo',
       ],
       [
@@ -224,20 +196,10 @@ describe(makeFeed.name, () => {
           url: 'https://test.com/rss.xml',
           feedId: 'valid-feedId',
           replyTo: 'valid-replyTo-email@test.com',
+          cronPattern: 'daily',
         },
-        makeErr('Missing schedule', 'schedule'),
-        'schedule1',
-      ],
-      [
-        {
-          displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
-          feedId: 'valid-feedId',
-          replyTo: 'valid-replyTo-email@test.com',
-          schedule: 'daily',
-        },
-        makeErr('Invalid schedule', 'schedule'),
-        'schedule2',
+        makeErr('Invalid cronPattern: "daily"', 'cronPattern'),
+        'cronPattern',
       ],
     ];
 
@@ -257,7 +219,7 @@ describe(storeFeed.name, () => {
         url: 'https://test.com/rss.xml',
         feedId: feedId.value,
         replyTo: 'feed-replyTo@test.com',
-        schedule: '@hourly',
+        cronPattern: '@hourly',
       },
       getRandomStringFn
     ) as Feed;

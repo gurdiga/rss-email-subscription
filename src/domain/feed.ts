@@ -8,7 +8,7 @@ import { makePath } from '../shared/path-utils';
 import { makeUrl } from '../shared/url';
 import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from './account';
 import { makeAccountNotFound } from './account';
-import { cronPatternBySchedule } from './cron-pattern';
+import { makeUnixCronPattern, UnixCronPattern } from './cron-pattern';
 
 export interface Feed {
   kind: 'Feed';
@@ -17,7 +17,7 @@ export interface Feed {
   url: URL;
   hashingSalt: string;
   replyTo: EmailAddress;
-  cronPattern: string;
+  cronPattern: UnixCronPattern;
 }
 
 export interface FeedStoredData {
@@ -59,7 +59,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     displayName: feed.displayName,
     url: feed.url.toString(),
     hashingSalt: feed.hashingSalt,
-    cronPattern: feed.cronPattern,
+    cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
   };
 
@@ -74,7 +74,7 @@ export function loadFeed(
   accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage,
-  domainName: string
+  getRandomStringFn = getRandomString
 ): Result<Feed | FeedNotFound> {
   const storageKey = getFeedJsonStorageKey(accountId, feedId);
 
@@ -83,51 +83,21 @@ export function loadFeed(
   }
 
   const data = storage.loadItem(storageKey);
-  const displayName = data.displayName || feedId.value;
-  const url = makeUrl(data.url);
+  const cronPattern = makeUnixCronPattern(data.cronPattern);
 
-  if (isErr(url)) {
-    return makeErr(si`Invalid feed URL in ${storageKey}: ${data.url}`);
+  if (isErr(cronPattern)) {
+    return makeErr(si`Invalid feed cronPattern: "${data.cronPattern}"`, 'cronPattern');
   }
 
-  const defaultCrontPattern = cronPatternBySchedule['@hourly'];
-  const { hashingSalt, cronPattern = defaultCrontPattern } = data;
-  const saltMinLength = 16;
-
-  if (typeof hashingSalt !== 'string') {
-    return makeErr(si`Invalid hashing salt in ${storageKey}: ${hashingSalt}`);
-  }
-
-  if (hashingSalt.trim().length < saltMinLength) {
-    return makeErr(
-      si`Hashing salt is too short in ${storageKey}: at least ${saltMinLength} non-space characters required`
-    );
-  }
-
-  const fromAddress = makeEmailAddress(si`${feedId.value}@${domainName}`);
-
-  if (isErr(fromAddress)) {
-    return makeErr(
-      si`Failed to ${makeEmailAddress.name} from feedId "${feedId.value}" and domain name "${domainName}"`
-    );
-  }
-
-  const defaultReplyTo = si`feedback@${domainName}`;
-  const replyTo = makeEmailAddress(data.replyTo || defaultReplyTo);
-
-  if (isErr(replyTo)) {
-    return makeErr(si`Invalid "replyTo" address in ${storageKey}: ${replyTo.reason}`);
-  }
-
-  return {
-    kind: 'Feed',
-    id: feedId,
-    displayName,
-    url,
-    hashingSalt,
-    replyTo,
-    cronPattern,
+  const makeFeedInput: MakeFeedInput = {
+    displayName: data.displayName || feedId.value,
+    url: data.url,
+    feedId: feedId.value,
+    replyTo: data.replyTo,
+    cronPattern: cronPattern.value,
   };
+
+  return makeFeed(makeFeedInput, getRandomStringFn);
 }
 
 export interface FeedsByAccountId {
@@ -140,7 +110,6 @@ export interface FeedsByAccountId {
 export function loadFeedsByAccountId(
   accountId: AccountId,
   storage: AppStorage,
-  domainName: string,
   getFeedFn = loadFeed
 ): Result<FeedsByAccountId> {
   const feedIdStrings = storage.listSubdirectories(getFeedRootStorageKey(accountId));
@@ -153,7 +122,7 @@ export function loadFeedsByAccountId(
   const feedIds = feedIdResults.filter(isFeedId);
   const feedIdErrs = feedIdResults.filter(isErr);
 
-  const feeds = feedIds.map((feedId) => getFeedFn(accountId, feedId, storage, domainName));
+  const feeds = feedIds.map((feedId) => getFeedFn(accountId, feedId, storage));
   const errs = feeds.filter(isErr).map((x) => x.reason);
   const feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
   const validFeeds = feeds.filter(isFeed);
@@ -166,7 +135,7 @@ export interface MakeFeedInput {
   url?: string;
   feedId?: string;
   replyTo?: string;
-  schedule?: string;
+  cronPattern?: string;
 }
 
 export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomString): Result<Feed> {
@@ -183,36 +152,37 @@ export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomStri
   const id = makeFeedId(input.feedId);
 
   if (isErr(id)) {
-    return makeErr('Invalid feed ID', 'feedId');
+    return makeErr('Invalid feed ID', 'id');
   }
 
   if (!isString(input.url)) {
-    return makeErr('Non-string feed URL', 'url');
+    return makeErr(si`Non-string feed URL: "${input.url!}"`, 'url');
   }
 
   const url = makeUrl(input.url);
 
   if (isErr(url)) {
-    return makeErr('Invalid feed URL', 'url');
+    return makeErr(si`Invalid feed URL: "${input.url}"`, 'url');
   }
 
   const replyTo = makeEmailAddress(input.replyTo);
 
   if (isErr(replyTo)) {
-    return makeErr('Invalid Reply To email', 'replyTo');
+    return makeErr(si`Invalid Reply To email: "${input.replyTo!}"`, 'replyTo');
   }
 
-  if (!input.schedule) {
-    return makeErr('Missing schedule', 'schedule');
+  const cronPattern = makeUnixCronPattern(input.cronPattern);
+
+  if (isErr(cronPattern)) {
+    return makeErr(si`Invalid cronPattern: "${input.cronPattern!}"`, 'cronPattern');
   }
 
-  const cronPattern = cronPatternBySchedule[input.schedule];
-
-  if (!cronPattern) {
-    return makeErr('Invalid schedule', 'schedule');
-  }
-
+  const hashingSaltMinLength = 16;
   const hashingSalt = getRandomStringFn();
+
+  if (hashingSalt.trim().length < hashingSaltMinLength) {
+    return makeErr(si`Hashing salt is too short: at least ${hashingSaltMinLength} non-space characters required`);
+  }
 
   return {
     kind: 'Feed',

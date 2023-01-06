@@ -54,7 +54,7 @@ if (isAccountNotFound(accountId)) {
   process.exit(1);
 }
 
-const feed = loadFeed(accountId, feedId, storage, env.DOMAIN_NAME);
+const feed = loadFeed(accountId, feedId, storage);
 
 if (isErr(feed)) {
   logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });

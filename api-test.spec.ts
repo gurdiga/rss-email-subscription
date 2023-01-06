@@ -3,15 +3,15 @@ import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey, isAccountId } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { cronPatternBySchedule } from './src/domain/cron-pattern';
-import { Feed, FeedId, findAccountId, getFeedJsonStorageKey, getFeedStorageKey } from './src/domain/feed';
-import { MakeFeedInput } from './src/domain/feed';
+import { Feed, FeedId, FeedStoredData, findAccountId, getFeedJsonStorageKey } from './src/domain/feed';
+import { getFeedStorageKey, MakeFeedInput } from './src/domain/feed';
 import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
 import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
 import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';
+import { makeUnixCronPattern, UnixCronPattern } from './src/domain/cron-pattern';
 
 describe('API', () => {
   let step = 0; // NOTE: test are expected to run in source order
@@ -23,13 +23,14 @@ describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
   const userPlan = 'standard';
+  const cronPattern = makeUnixCronPattern('@hourly') as UnixCronPattern;
 
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
     url: 'https://api-test.com/rss.xml',
     feedId: 'api-test-feed',
     replyTo: 'feed-replyto@api-test.com',
-    schedule: '@hourly',
+    cronPattern: cronPattern.value,
   };
 
   const testFeedId = makeTestFeedId(testFeedProps.feedId);
@@ -187,7 +188,7 @@ describe('API', () => {
           expect(storedFeed.displayName).to.equal(testFeedProps.displayName);
           expect(storedFeed.url).to.equal(testFeedProps.url);
           expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
-          expect(storedFeed.cronPattern).to.equal(cronPatternBySchedule[testFeedProps.schedule!]);
+          expect(storedFeed.cronPattern).to.equal(cronPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
 
           const { responseData: feeds } = (await getUserFeeds(authenticationHeaders)).responseBody as Success<Feed[]>;
@@ -200,13 +201,13 @@ describe('API', () => {
           expect(loadedFeed.url).to.deep.equal(testFeedProps.url);
           expect(loadedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
           expect(loadedFeed.replyTo).to.deep.equal(makeTestEmailAddress(testFeedProps.replyTo!));
-          expect(loadedFeed.cronPattern).to.equal(cronPatternBySchedule[testFeedProps.schedule!]);
+          expect(loadedFeed.cronPattern).to.deep.equal(cronPattern);
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
           const [_, accountId] = getAccountByEmail(email);
 
-          return loadJSON(getFeedJsonStorageKey(accountId, feedId));
+          return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
         }
       });
 
