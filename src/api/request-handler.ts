@@ -31,7 +31,7 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
     const durationMs = new Date().getTime() - start.getTime();
 
     if (isSuccess(result)) {
-      logInfo(si`${action} succeded`, { ...result.logData, durationMs });
+      logInfo(si`${action} succeeded`, { ...result.logData, durationMs });
       delete result.logData;
       res.status(200).send(result);
     } else if (isInputError(result)) {
