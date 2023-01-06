@@ -264,16 +264,16 @@ watch-smtp-out:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	grep --line-buffered -E \
 			-e '(warning|error|fatal|panic|reject):' \
-			-e 'POSTFIX STARTING UP' \
-			-e 'INFO (stopped|spawned): ' \
+			-e ' POSTFIX STARTING UP ' \
+			-e ' INFO (stopped|spawned): ' \
 			-e ' (WARN|CRIT|ERR) ' \
 		|
-	while read -r _1 _2 _3 timestamp level message; do
+	while read -r timestamp rest; do
 		(
-			echo "Subject: RES smtp-out $$level"
+			echo "Subject: RES smtp-out $$timestamp"
 			echo "From: watch-smtp-out@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo
-			echo "$$message"
+			echo "$$rest"
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
 	done \
