@@ -13,7 +13,7 @@ import { si } from '../shared/string-utils';
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
 
-  logInfo('Starting cron');
+  logInfo(si`Starting cron in ${process.env['NODE_ENV']!} environment`);
 
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
 
