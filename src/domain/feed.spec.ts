@@ -154,14 +154,14 @@ describe(makeFeed.name, () => {
       [null as any as MakeFeedInput, makeErr('Invalid input'), 'input1'],
       [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input2'],
       [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input3'],
-      [{}, makeErr('Invalid feed display name', 'displayName'), 'displayName'],
-      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID', 'id'), 'id1'],
+      [{}, makeErr('Invalid feed display name: "undefined"', 'displayName'), 'displayName'],
+      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID: "undefined"', 'id'), 'id1'],
       [
         {
           displayName: 'test-value',
           feedId: ' \t\r\n', // white-space
         },
-        makeErr('Invalid feed ID', 'id'),
+        makeErr('Invalid feed ID: " \t\r\n"', 'id'),
         'id2',
       ],
       [

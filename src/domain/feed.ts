@@ -152,7 +152,7 @@ export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomStri
   const id = makeFeedId(input.feedId);
 
   if (isErr(id)) {
-    return makeErr('Invalid feed ID', 'id');
+    return makeErr(si`Invalid feed ID: "${String(input.feedId)}"`, 'id');
   }
 
   if (!isString(input.url)) {
@@ -197,7 +197,7 @@ export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomStri
 
 function makeFeedDisplayName(input: unknown): Result<string> {
   if (!isString(input) || input.trim().length < 5 || input.trim().length > 50) {
-    return makeErr('Invalid feed display name', 'displayName');
+    return makeErr(si`Invalid feed display name: "${String(input)}"`, 'displayName');
   }
 
   return input.trim();
