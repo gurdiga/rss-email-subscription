@@ -262,7 +262,12 @@ watch-website:
 # cron @reboot
 watch-smtp-out:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
-	grep --line-buffered -P '(warning|error|fatal|panic|reject):' |
+	grep --line-buffered -E \
+			-e '(warning|error|fatal|panic|reject):' \
+			-e 'POSTFIX STARTING UP' \
+			-e 'INFO (stopped|spawned): ' \
+			-e ' (WARN|CRIT|ERR) ' \
+		|
 	while read -r _1 _2 _3 timestamp level message; do
 		(
 			echo "Subject: RES smtp-out $$level"
