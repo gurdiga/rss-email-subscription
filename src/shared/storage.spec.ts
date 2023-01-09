@@ -85,12 +85,12 @@ describe(makeStorage.name, () => {
 
   describe(hasItem.name, () => {
     it('tells if the corresponding file exists', () => {
-      let fileExistsFn = makeStub<FileExistsFn>(() => true);
+      let fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath === makePath(dataDirRoot, key));
       let result = hasItem(key, fileExistsFn);
 
       expect(result).to.be.true;
 
-      fileExistsFn = makeStub<FileExistsFn>(() => false);
+      fileExistsFn = makeStub<FileExistsFn>((filePath) => !(filePath === makePath(dataDirRoot, key)));
       result = hasItem(key, fileExistsFn);
 
       expect(result).to.be.false;
