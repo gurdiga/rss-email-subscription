@@ -422,7 +422,8 @@ git-pre-commit-hook:
 
 # cron @daily
 list-sessions:
-	@require=$${DATA_DIR_ROOT:?envar is missing}
+	@source .env
+	require=$${DATA_DIR_ROOT:?envar is missing}
 
 	ls -l $$DATA_DIR_ROOT/sessions |
 	cat <( \
