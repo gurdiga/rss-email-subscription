@@ -195,13 +195,15 @@ describe('API', () => {
           const loadedFeed = feeds![0]!;
 
           expect(feeds).to.have.lengthOf(1);
-          expect(loadedFeed.kind).to.equal('Feed');
-          expect(loadedFeed.id).to.deep.equal(testFeedId);
-          expect(loadedFeed.displayName).to.deep.equal(testFeedProps.displayName);
-          expect(loadedFeed.url).to.deep.equal(testFeedProps.url);
+          expect(loadedFeed).to.deep.include({
+            kind: 'Feed',
+            id: testFeedId,
+            displayName: testFeedProps.displayName,
+            url: testFeedProps.url,
+            replyTo: makeTestEmailAddress(testFeedProps.replyTo!),
+            cronPattern,
+          });
           expect(loadedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
-          expect(loadedFeed.replyTo).to.deep.equal(makeTestEmailAddress(testFeedProps.replyTo!));
-          expect(loadedFeed.cronPattern).to.deep.equal(cronPattern);
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
