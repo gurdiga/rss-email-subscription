@@ -1,5 +1,13 @@
 import { expect } from 'chai';
-import { Feed, MakeFeedInput, FeedsByAccountId, storeFeed, getFeedJsonStorageKey, makeFeedNotFound } from './feed';
+import {
+  Feed,
+  MakeFeedInput,
+  FeedsByAccountId,
+  storeFeed,
+  getFeedJsonStorageKey,
+  makeFeedNotFound,
+  feedExists,
+} from './feed';
 import { FeedStoredData } from './feed';
 import { findAccountId, makeFeedId, FeedId, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
@@ -288,5 +296,37 @@ describe(findAccountId.name, () => {
 
   afterEach(() => {
     purgeTestStorageFromSnapshot();
+  });
+});
+
+describe(feedExists.name, () => {
+  const accountIdStrings = [makeTestAccountId().value];
+
+  it('tells if feed by ID exists', () => {
+    let storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => true });
+    let result = feedExists(feedId, storage);
+
+    expect(result).to.deep.equal(true);
+
+    storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => false });
+    result = feedExists(feedId, storage);
+
+    expect(result).to.deep.equal(false);
+  });
+
+  it('returns false when storage.hasItem fails', () => {
+    const err = makeErr('Storage error!');
+    const storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => err });
+    const result = feedExists(feedId, storage);
+
+    expect(result).to.be.false;
+  });
+
+  it('returns the storage err when storage.listSubdirectories fails', () => {
+    const err = makeErr('Storage error!');
+    const storage = makeTestStorage({ listSubdirectories: () => err, hasItem: () => true });
+    const result = feedExists(feedId, storage);
+
+    expect(result).to.deep.equal(makeErr('Failed to list accoundIds: Storage error!'));
   });
 });

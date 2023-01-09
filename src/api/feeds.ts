@@ -1,4 +1,4 @@
-import { loadFeedsByAccountId, makeFeed, storeFeed } from '../domain/feed';
+import { feedExists, loadFeedsByAccountId, makeFeed, storeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
@@ -19,13 +19,23 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   const feed = makeFeed(reqBody);
 
   if (isErr(feed)) {
-    logWarning(si`Failed to ${makeFeed.name}`, feed);
+    logError(si`Failed to ${makeFeed.name}`, feed);
     return makeInputError(feed.reason, feed.field);
   }
 
   const accountId = session.accountId;
+  const feedExistsResult = feedExists(feed.id, app.storage);
 
-  // TODO: Check if already exists?
+  if (isErr(feedExistsResult)) {
+    logError(si`Failed to check if ${feedExists.name}`, { reason: feedExistsResult.reason });
+    return makeAppError('Application error!');
+  }
+
+  if (feedExistsResult === true) {
+    logWarning(si`Feed ID taken: ${feed.id.value}`);
+    return makeInputError('Feed ID taken');
+  }
+
   const storeFeedResult = storeFeed(accountId, feed, app.storage);
 
   if (isErr(storeFeedResult)) {

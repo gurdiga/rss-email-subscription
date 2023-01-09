@@ -53,6 +53,29 @@ export function getFeedJsonStorageKey(accountId: AccountId, feedId: FeedId) {
   return makePath(getFeedStorageKey(accountId, feedId), 'feed.json');
 }
 
+export function feedExists(feedId: FeedId, storage: AppStorage): Result<boolean> {
+  const accountIdStrings = storage.listSubdirectories(accountsStorageKey);
+
+  if (isErr(accountIdStrings)) {
+    return makeErr(si`Failed to list accoundIds: ${accountIdStrings.reason}`);
+  }
+
+  const accountIdString = accountIdStrings.find((x) => {
+    const accountId = makeAccountId(x);
+
+    if (isErr(accountId)) {
+      return false;
+    }
+
+    const key = getFeedJsonStorageKey(accountId, feedId);
+    const hasItemResult = storage.hasItem(key);
+
+    return hasItemResult === true;
+  });
+
+  return !!accountIdString;
+}
+
 export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage): Result<void> {
   const storageKey = getFeedJsonStorageKey(accountId, feed.id);
   const data: FeedStoredData = {

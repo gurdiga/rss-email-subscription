@@ -204,6 +204,9 @@ describe('API', () => {
             cronPattern,
           });
           expect(loadedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
+
+          const { responseBody: repeadedRequestResponseBody } = await createFeed(testFeedProps, authenticationHeaders);
+          expect(repeadedRequestResponseBody).to.deep.equal(makeInputError('Feed ID taken'));
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
