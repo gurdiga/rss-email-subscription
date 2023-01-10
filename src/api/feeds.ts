@@ -1,18 +1,62 @@
-import { feedExists, loadFeedsByAccountId, makeFeed, storeFeed } from '../domain/feed';
+import { getAccountIdList } from '../domain/account';
+import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed';
+import { makeFeed, storeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { isEmpty } from '../shared/array-utils';
+import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
-export const updateFeed: RequestHandler = async function updateFeed(_reqId, _reqBody, reqParams, _reqSession, _app) {
-  return makeAppError(si`Not implemented, but here are the route params ${JSON.stringify(reqParams)}`);
+export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBody, _reqParams, reqSession, app) {
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: updateFeed.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.reason });
+    return makeInputError('Not authenticated');
+  }
+
+  const newFeed = makeFeed(reqBody);
+
+  if (isErr(newFeed)) {
+    logError(si`Failed to ${makeFeed.name}`, newFeed);
+    return makeInputError(newFeed.reason, newFeed.field);
+  }
+
+  const { accountId } = session;
+  const loadFeedResult = loadFeed(accountId, newFeed.id, app.storage);
+
+  if (isErr(loadFeedResult)) {
+    logError(si`Failed to ${loadFeed.name}`, { reason: loadFeedResult.reason });
+    return makeAppError('Application error!');
+  }
+
+  if (isFeedNotFound(loadFeedResult)) {
+    logError(si`Feed not found for update`, { feedId: newFeed.id.value, accountId: accountId.value });
+    return makeAppError('Application error!');
+  }
+
+  const existingdFeed = loadFeedResult;
+  const alterExistingFeedResult = alterExistingFeed(accountId, existingdFeed, newFeed, app.storage);
+
+  if (isErr(alterExistingFeedResult)) {
+    logError(si`Failed to ${alterExistingFeed.name}`, {
+      reason: alterExistingFeedResult.reason,
+      existingdFeed,
+      newFeed,
+    });
+    return makeAppError('Application error!');
+  }
+
+  logInfo('Feed updated', { accountId: accountId.value, newFeed });
+
+  return makeSuccess('Feed updated');
 };
 
-export const createFeed: RequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
+export const createFeed: RequestHandler = async function createFeed(reqId, reqBody, _reqParams, reqSession, app) {
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: createFeed.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -27,19 +71,34 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
     return makeInputError(feed.reason, feed.field);
   }
 
-  const accountId = session.accountId;
-  const feedExistsResult = feedExists(feed.id, app.storage);
+  const accountList = getAccountIdList(app.storage);
+
+  if (isErr(accountList)) {
+    logError(si`Failed to ${getAccountIdList.name}`, { reason: accountList.reason });
+    return makeAppError('Application error!');
+  }
+
+  const { accountIds, errs } = accountList;
+
+  if (isNotEmpty(errs)) {
+    logWarning(si`Some account subdirectory names are invalid account IDs`, {
+      errs: errs.map((x) => x.reason),
+    });
+  }
+
+  const feedExistsResult = feedExists(feed.id, accountIds, app.storage);
 
   if (isErr(feedExistsResult)) {
     logError(si`Failed to check if ${feedExists.name}`, { reason: feedExistsResult.reason });
     return makeAppError('Application error!');
   }
 
-  if (feedExistsResult === true) {
+  if (feedExistsResult.does) {
     logWarning(si`Feed ID taken: ${feed.id.value}`);
     return makeInputError('Feed ID taken');
   }
 
+  const { accountId } = session;
   const storeFeedResult = storeFeed(accountId, feed, app.storage);
 
   if (isErr(storeFeedResult)) {
@@ -52,8 +111,8 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
   return makeSuccess('Feed created');
 };
 
-export const listFeeds: RequestHandler = async function listFeeds(_reqId, _reqBody, _reqParams, reqSession, app) {
-  const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
+export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
+  const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {

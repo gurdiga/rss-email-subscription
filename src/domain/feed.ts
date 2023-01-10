@@ -53,27 +53,56 @@ export function getFeedJsonStorageKey(accountId: AccountId, feedId: FeedId) {
   return makePath(getFeedStorageKey(accountId, feedId), 'feed.json');
 }
 
-export function feedExists(feedId: FeedId, storage: AppStorage): Result<boolean> {
-  const accountIdStrings = storage.listSubdirectories(accountsStorageKey);
+export interface FeedExistsResult {
+  does: boolean;
+  errs: Err[];
+}
 
-  if (isErr(accountIdStrings)) {
-    return makeErr(si`Failed to list accoundIds: ${accountIdStrings.reason}`);
-  }
+export function feedExists(
+  feedId: FeedId,
+  accountIds: AccountId[],
+  storage: AppStorage,
+  accountHasFeedFn = accountHasFeed
+): Result<FeedExistsResult> {
+  const result: FeedExistsResult = {
+    does: false,
+    errs: [],
+  };
 
-  const accountIdString = accountIdStrings.find((x) => {
-    const accountId = makeAccountId(x);
+  for (const accountId of accountIds) {
+    const accountHasFeedResult = accountHasFeedFn(accountId, feedId, storage); // TODO: Handle th Err
 
-    if (isErr(accountId)) {
-      return false;
+    if (isErr(accountHasFeedResult)) {
+      result.errs.push(accountHasFeedResult);
     }
 
-    const key = getFeedJsonStorageKey(accountId, feedId);
-    const hasItemResult = storage.hasItem(key);
+    if (accountHasFeedResult === true) {
+      result.does = true;
+      break;
+    }
+  }
 
-    return hasItemResult === true;
-  });
+  return result;
+}
 
-  return !!accountIdString;
+export function accountHasFeed(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<boolean> {
+  const key = getFeedJsonStorageKey(accountId, feedId);
+
+  return storage.hasItem(key);
+}
+
+export function alterExistingFeed(
+  accountId: AccountId,
+  existingFeed: Feed,
+  newFeed: Feed,
+  storage: AppStorage
+): Result<void> {
+  existingFeed.displayName = newFeed.displayName;
+  existingFeed.cronPattern = newFeed.cronPattern;
+  existingFeed.replyTo = newFeed.replyTo;
+  existingFeed.url = newFeed.url;
+
+  storeFeed(accountId, existingFeed, storage);
 }
 
 export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage): Result<void> {
@@ -133,7 +162,7 @@ export interface FeedsByAccountId {
 export function loadFeedsByAccountId(
   accountId: AccountId,
   storage: AppStorage,
-  getFeedFn = loadFeed
+  loadFeedFn = loadFeed
 ): Result<FeedsByAccountId> {
   const feedIdStrings = storage.listSubdirectories(getFeedRootStorageKey(accountId));
 
@@ -145,7 +174,7 @@ export function loadFeedsByAccountId(
   const feedIds = feedIdResults.filter(isFeedId);
   const feedIdErrs = feedIdResults.filter(isErr);
 
-  const feeds = feedIds.map((feedId) => getFeedFn(accountId, feedId, storage));
+  const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
   const errs = feeds.filter(isErr).map((x) => x.reason);
   const feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
   const validFeeds = feeds.filter(isFeed);
@@ -161,7 +190,7 @@ export interface MakeFeedInput {
   cronPattern?: string;
 }
 
-export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomString): Result<Feed> {
+export function makeFeed(input: MakeFeedInput, makeHasingSaltFn = getRandomString): Result<Feed> {
   if (!isObject(input)) {
     return makeErr('Invalid input');
   }
@@ -201,7 +230,7 @@ export function makeFeed(input: MakeFeedInput, getRandomStringFn = getRandomStri
   }
 
   const hashingSaltMinLength = 16;
-  const hashingSalt = getRandomStringFn();
+  const hashingSalt = makeHasingSaltFn();
 
   if (hashingSalt.trim().length < hashingSaltMinLength) {
     return makeErr(si`Hashing salt is too short: at least ${hashingSaltMinLength} non-space characters required`);

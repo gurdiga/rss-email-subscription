@@ -1,18 +1,10 @@
 import { expect } from 'chai';
-import {
-  Feed,
-  MakeFeedInput,
-  FeedsByAccountId,
-  storeFeed,
-  getFeedJsonStorageKey,
-  makeFeedNotFound,
-  feedExists,
-} from './feed';
-import { FeedStoredData } from './feed';
-import { findAccountId, makeFeedId, FeedId, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
+import { alterExistingFeed, Feed, feedExists, FeedExistsResult, FeedId, FeedsByAccountId } from './feed';
+import { FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
+import { makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, clone } from '../shared/test-utils';
-import { makeTestEmailAddress } from '../shared/test-utils';
+import { makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
 import { si } from '../shared/string-utils';
@@ -300,33 +292,54 @@ describe(findAccountId.name, () => {
 });
 
 describe(feedExists.name, () => {
-  const accountIdStrings = [makeTestAccountId().value];
+  const accountIds = [makeTestAccountId()];
+  const storage = makeTestStorage();
 
   it('tells if feed by ID exists', () => {
-    let storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => true });
-    let result = feedExists(feedId, storage);
+    let accountHasFeedFn = () => true;
+    let result = feedExists(feedId, accountIds, storage, accountHasFeedFn);
 
-    expect(result).to.deep.equal(true);
+    expect(result).to.deep.equal(<FeedExistsResult>{ does: true, errs: [] });
 
-    storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => false });
-    result = feedExists(feedId, storage);
+    accountHasFeedFn = () => false;
+    result = feedExists(feedId, accountIds, storage, accountHasFeedFn);
 
-    expect(result).to.deep.equal(false);
+    expect(result).to.deep.equal(<FeedExistsResult>{ does: false, errs: [] });
   });
 
-  it('returns false when storage.hasItem fails', () => {
+  it('returns false when accountHasFeed fails', () => {
     const err = makeErr('Storage error!');
-    const storage = makeTestStorage({ listSubdirectories: () => accountIdStrings, hasItem: () => err });
-    const result = feedExists(feedId, storage);
+    const accountHasFeedFn = () => err;
+    const result = feedExists(feedId, accountIds, storage, accountHasFeedFn);
 
-    expect(result).to.be.false;
+    expect(result).to.deep.equal({
+      does: false,
+      errs: [err],
+    });
   });
+});
 
-  it('returns the storage err when storage.listSubdirectories fails', () => {
-    const err = makeErr('Storage error!');
-    const storage = makeTestStorage({ listSubdirectories: () => err, hasItem: () => true });
-    const result = feedExists(feedId, storage);
+describe(alterExistingFeed.name, () => {
+  it('stores properties from new feed EXCEPT hashingSalt', () => {
+    const accountId = makeTestAccountId();
+    const existingFeed = makeTestFeed('existing-feed');
+    const existingHashingSalt = existingFeed.hashingSalt;
+    const newFeed = makeTestFeed('new-feed');
+    const storage = makeTestStorage({ storeItem: () => {} });
 
-    expect(result).to.deep.equal(makeErr('Failed to list accoundIds: Storage error!'));
+    const result = alterExistingFeed(accountId, existingFeed, newFeed, storage);
+    expect(isErr(result)).to.be.false;
+
+    const storedFeed = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+
+    expect(storedFeed.displayName).to.equal(newFeed.displayName);
+    expect(storedFeed.cronPattern).to.equal(newFeed.cronPattern.value);
+    expect(storedFeed.replyTo).to.equal(newFeed.replyTo.value);
+    expect(storedFeed.url).to.equal(newFeed.url.toString());
+
+    expect(storedFeed.hashingSalt).to.equal(
+      existingHashingSalt,
+      'hashing salt should NOT change because unsubscribe URLs depend on it'
+    );
   });
 });

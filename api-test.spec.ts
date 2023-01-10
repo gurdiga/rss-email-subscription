@@ -175,9 +175,6 @@ describe('API', () => {
 
       describe('CRUD happy flow', () => {
         it('flows', async () => {
-          // TODO:
-          // - update
-          // - delete
           const { responseBody } = await createFeed(testFeedProps, authenticationHeaders);
           const storedFeed = getStoredFeed(userEmail, testFeedId);
 
@@ -207,18 +204,19 @@ describe('API', () => {
           expect(repeadedRequestResponseBody).to.deep.equal(makeInputError('Feed ID taken'));
 
           const displayNameUpdated = 'API Test Feed Name *Updated*';
+          const initialSaltedHash = storedFeed.hashingSalt;
           const { responseBody: updateResponseBody } = await updateFeed(
             { ...testFeedProps, displayName: displayNameUpdated },
             authenticationHeaders
           );
           expect(updateResponseBody).to.deep.equal({ kind: 'Success', message: 'Feed updated' });
 
-          const storedFeedUpdated = getStoredFeed(userEmail, testFeedId);
-          expect(storedFeedUpdated.displayName).to.equal(displayNameUpdated);
-          expect(storedFeedUpdated.hashingSalt).to.equal(
-            storedFeed.hashingSalt,
-            'Feed hashingSalt should not change on update'
-          );
+          const updatedFeed = getStoredFeed(userEmail, testFeedId);
+          expect(updatedFeed.displayName).to.equal(displayNameUpdated);
+          expect(updatedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
+
+          // TODO:
+          // - delete
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
