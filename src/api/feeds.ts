@@ -7,6 +7,10 @@ import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
+export const updateFeed: RequestHandler = async function updateFeed(_reqId, _reqBody, reqParams, _reqSession, _app) {
+  return makeAppError(si`Not implemented, but here are the route params ${JSON.stringify(reqParams)}`);
+};
+
 export const createFeed: RequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
   const session = checkSession(reqSession);

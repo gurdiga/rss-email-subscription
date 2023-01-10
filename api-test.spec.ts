@@ -176,8 +176,6 @@ describe('API', () => {
       describe('CRUD happy flow', () => {
         it('flows', async () => {
           // TODO:
-          // - create
-          // - list
           // - update
           // - delete
           const { responseBody } = await createFeed(testFeedProps, authenticationHeaders);
@@ -207,6 +205,20 @@ describe('API', () => {
 
           const { responseBody: repeadedRequestResponseBody } = await createFeed(testFeedProps, authenticationHeaders);
           expect(repeadedRequestResponseBody).to.deep.equal(makeInputError('Feed ID taken'));
+
+          const displayNameUpdated = 'API Test Feed Name *Updated*';
+          const { responseBody: updateResponseBody } = await updateFeed(
+            { ...testFeedProps, displayName: displayNameUpdated },
+            authenticationHeaders
+          );
+          expect(updateResponseBody).to.deep.equal({ kind: 'Success', message: 'Feed updated' });
+
+          const storedFeedUpdated = getStoredFeed(userEmail, testFeedId);
+          expect(storedFeedUpdated.displayName).to.equal(displayNameUpdated);
+          expect(storedFeedUpdated.hashingSalt).to.equal(
+            storedFeed.hashingSalt,
+            'Feed hashingSalt should not change on update'
+          );
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
@@ -327,6 +339,13 @@ describe('API', () => {
     return await post('/feeds', data, authenticationHeaders);
   }
 
+  async function updateFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
+    const data = feedProps as Record<string, string>;
+    const relativePath = makePath('/feeds', feedProps.feedId!);
+
+    return await put(relativePath, data, authenticationHeaders);
+  }
+
   async function authenticationDo(email: string, password: string) {
     return post('/authentication', { email, password });
   }
@@ -374,10 +393,11 @@ describe('API', () => {
   async function post(
     relativePath: string,
     data: Record<string, string> = {},
-    headers: Headers = new Headers()
+    headers: Headers = new Headers(),
+    method: 'POST' | 'PUT' = 'POST'
   ): Promise<JsonApiResponse> {
     const response = await fetch(makePath(apiBaseUrl, relativePath), {
-      method: 'POST',
+      method,
       body: new URLSearchParams(data),
       headers,
     });
@@ -388,6 +408,10 @@ describe('API', () => {
         : await response.text(),
       responseHeaders: response.headers,
     };
+  }
+
+  async function put(relativePath: string, data: Record<string, string> = {}, headers: Headers = new Headers()) {
+    return post(relativePath, data, headers, 'PUT');
   }
 
   async function get(path: string, type: 'text'): Promise<TextApiResponse>;
