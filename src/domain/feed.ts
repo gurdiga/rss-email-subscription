@@ -129,22 +129,22 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     return makeFeedNotFound(feedId);
   }
 
-  const data = storage.loadItem(storageKey) as FeedStoredData;
-  const cronPattern = makeUnixCronPattern(data.cronPattern);
+  const loadedData = storage.loadItem(storageKey) as FeedStoredData;
+  const cronPattern = makeUnixCronPattern(loadedData.cronPattern);
 
   if (isErr(cronPattern)) {
-    return makeErr(si`Invalid feed cronPattern: "${data.cronPattern}"`, 'cronPattern');
+    return makeErr(si`Invalid feed cronPattern: "${loadedData.cronPattern}"`, 'cronPattern');
   }
 
   const makeFeedInput: MakeFeedInput = {
-    displayName: data.displayName || feedId.value,
-    url: data.url,
+    displayName: loadedData.displayName || feedId.value,
+    url: loadedData.url,
     feedId: feedId.value,
-    replyTo: data.replyTo,
+    replyTo: loadedData.replyTo,
     cronPattern: cronPattern.value,
   };
 
-  const useExistingHashingSalt = () => data.hashingSalt;
+  const useExistingHashingSalt = () => loadedData.hashingSalt;
 
   return makeFeed(makeFeedInput, useExistingHashingSalt);
 }
