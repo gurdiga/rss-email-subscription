@@ -46,7 +46,7 @@ async function main() {
   server.post('/deauthentication', makeRequestHandler(deauthentication, app));
   server.get('/feeds', makeRequestHandler(listFeeds, app));
   server.post('/feeds', makeRequestHandler(createFeed, app));
-  server.put('/feeds/:feedId', makeRequestHandler(updateFeed, app));
+  server.put('/feeds', makeRequestHandler(updateFeed, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));

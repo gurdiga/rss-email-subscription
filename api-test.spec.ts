@@ -341,9 +341,8 @@ describe('API', () => {
 
   async function updateFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
     const data = feedProps as Record<string, string>;
-    const relativePath = makePath('/feeds', feedProps.feedId!);
 
-    return await put(relativePath, data, authenticationHeaders);
+    return await put('/feeds', data, authenticationHeaders);
   }
 
   async function authenticationDo(email: string, password: string) {
