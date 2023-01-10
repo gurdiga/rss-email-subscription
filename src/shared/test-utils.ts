@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { FeedId, isFeedId, makeFeedId } from '../domain/feed';
+import { Feed, FeedId, isFeed, isFeedId, makeFeed, makeFeedId, MakeFeedInput } from '../domain/feed';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from './storage';
 import { EmailAddress, isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 
@@ -55,7 +55,7 @@ interface AppStorageStub extends AppStorage {
 }
 
 export function makeTestStorage<K extends keyof AppStorage>(
-  stubBodies: Record<K, AppStorageStub[K]>,
+  stubBodies: Record<K, AppStorageStub[K]> = {} as any,
   dataDirRoot = '/test-data'
 ): AppStorageStub {
   let methodStubs: any = {};
@@ -96,6 +96,20 @@ export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
   assert(isFeedId(feedId), 'makeTestFeedId is expected to return a valid FeedId');
 
   return feedId;
+}
+
+export function makeTestFeed(idString = 'test-feed-id'): Feed {
+  const feed = makeFeed(<MakeFeedInput>{
+    displayName: 'Test Feed Name',
+    url: 'https://test.com/rss.xml',
+    feedId: idString,
+    replyTo: 'feed-replyTo@test.com',
+    cronPattern: '@hourly',
+  });
+
+  assert(isFeed(feed), 'makeTestFeedId is expected to return a valid FeedId');
+
+  return feed;
 }
 
 export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): AccountId {
