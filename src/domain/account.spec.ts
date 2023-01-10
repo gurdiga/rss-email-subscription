@@ -1,10 +1,12 @@
 import { expect } from 'chai';
-import { makeErr } from '../shared/lang';
+import { hashLength } from '../shared/crypto';
+import { Err, makeErr } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
 import { makeTestEmailAddress } from '../shared/test-utils';
-import { Account, AccountData, AccountId, confirmAccount, getAccountIdByEmail, getAccountStorageKey } from './account';
+import { Account, AccountData, AccountId, AccountIdList, confirmAccount, getAccountIdByEmail } from './account';
+import { getAccountIdList, getAccountStorageKey } from './account';
 import { loadAccount, makeAccountId, storeAccount } from './account';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { makePlanId, PlanId } from './plan';
@@ -194,5 +196,22 @@ describe(getAccountStorageKey.name, () => {
     const expectedPath = si`/accounts/${accountId.value}/account.json`;
 
     expect(getAccountStorageKey(accountId)).to.equal(expectedPath);
+  });
+});
+
+describe(getAccountIdList.name, () => {
+  it('returns a list of the stored AccountIds and any eventual errors', () => {
+    const accountIds = Array.from('abc')
+      .map((letter) => letter.repeat(hashLength))
+      .map(makeAccountId) as AccountId[];
+    const validAccountIdStrings = accountIds.map((x) => x.value);
+
+    const invalidAccountIdStrings = ['42', 'bad-account-id'];
+    const errs = invalidAccountIdStrings.map(makeAccountId) as Err[];
+
+    const subdirectoryNames = [...validAccountIdStrings, ...invalidAccountIdStrings];
+    const storage = makeTestStorage({ listSubdirectories: () => subdirectoryNames });
+
+    expect(getAccountIdList(storage)).to.deep.equal(<AccountIdList>{ accountIds, errs });
   });
 });

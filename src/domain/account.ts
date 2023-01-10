@@ -1,7 +1,7 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { hash, hashLength } from '../shared/crypto';
 import { parseDate } from '../shared/date-utils';
-import { getTypeName, hasKind, isErr, isString, makeErr, Result } from '../shared/lang';
+import { Err, getTypeName, hasKind, isErr, isString, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
@@ -15,7 +15,7 @@ export interface AccountId {
 
 export function makeAccountId(value: string): Result<AccountId> {
   if (!isString(value)) {
-    return makeErr('Not a string');
+    return makeErr(si`Not a string: ${getTypeName(value)} "${value}"`);
   }
 
   if (value.length !== hashLength) {
@@ -165,4 +165,23 @@ export function makeAccountNotFound(): AccountNotFound {
 
 export function isAccountNotFound(value: unknown): value is AccountNotFound {
   return hasKind(value, 'AccountNotFound');
+}
+
+export interface AccountIdList {
+  accountIds: AccountId[];
+  errs: Err[];
+}
+
+export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
+  const accountIdStrings = storage.listSubdirectories(accountsStorageKey);
+
+  if (isErr(accountIdStrings)) {
+    return makeErr(si`Failed to list accoundIds: ${accountIdStrings.reason}`);
+  }
+
+  const results = accountIdStrings.map(makeAccountId);
+  const accountIds = results.filter(isAccountId);
+  const errs = results.filter(isErr);
+
+  return { accountIds, errs };
 }
