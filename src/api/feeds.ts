@@ -12,7 +12,7 @@ export const updateFeed: RequestHandler = async function updateFeed(_reqId, _req
 };
 
 export const createFeed: RequestHandler = async function createFeed(_reqId, reqBody, _reqParams, reqSession, app) {
-  const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: listFeeds.name });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -46,6 +46,8 @@ export const createFeed: RequestHandler = async function createFeed(_reqId, reqB
     logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
     return makeAppError('Failed to create feed');
   }
+
+  logInfo('Feed created', { accountId: accountId.value, feed });
 
   return makeSuccess('Feed created');
 };
