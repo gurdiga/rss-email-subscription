@@ -38,3 +38,7 @@ export function sortBy<T>(mapFn: (value: T) => ComparableType, direction: SortDi
 export function isEmpty(array: unknown[]): boolean {
   return array.length === 0;
 }
+
+export function isNotEmpty(array: unknown[]): boolean {
+  return array.length > 0;
+}
