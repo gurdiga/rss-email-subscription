@@ -122,19 +122,14 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
   }
 }
 
-export function loadFeed(
-  accountId: AccountId,
-  feedId: FeedId,
-  storage: AppStorage,
-  getRandomStringFn = getRandomString
-): Result<Feed | FeedNotFound> {
+export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<Feed | FeedNotFound> {
   const storageKey = getFeedJsonStorageKey(accountId, feedId);
 
   if (!storage.hasItem(storageKey)) {
     return makeFeedNotFound(feedId);
   }
 
-  const data = storage.loadItem(storageKey);
+  const data = storage.loadItem(storageKey) as FeedStoredData;
   const cronPattern = makeUnixCronPattern(data.cronPattern);
 
   if (isErr(cronPattern)) {
@@ -149,7 +144,9 @@ export function loadFeed(
     cronPattern: cronPattern.value,
   };
 
-  return makeFeed(makeFeedInput, getRandomStringFn);
+  const useExistingHashingSalt = () => data.hashingSalt;
+
+  return makeFeed(makeFeedInput, useExistingHashingSalt);
 }
 
 export interface FeedsByAccountId {

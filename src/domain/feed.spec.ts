@@ -27,7 +27,7 @@ describe(loadFeed.name, () => {
 
   it('returns a Feed value from feed.json', () => {
     const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
-    const result = loadFeed(accountId, feedId, storage, getRandomStringFn);
+    const result = loadFeed(accountId, feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
 
@@ -36,7 +36,7 @@ describe(loadFeed.name, () => {
       id: feedId,
       displayName: data.displayName,
       url: new URL(data.url),
-      hashingSalt: 'fake-random-string',
+      hashingSalt: data.hashingSalt,
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
     };
