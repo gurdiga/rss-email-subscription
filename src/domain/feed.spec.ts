@@ -3,7 +3,7 @@ import { alterExistingFeed, Feed, feedExists, FeedExistsResult, FeedId, FeedsByA
 import { FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
 import { makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed, FeedHashingSalt, makeFeedHashingSalt } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
-import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, clone } from '../shared/test-utils';
+import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
@@ -45,7 +45,7 @@ describe(loadFeed.name, () => {
   });
 
   it('defaults displayName to feedId', () => {
-    const incompleteData = clone(data);
+    const incompleteData = deepClone(data);
 
     delete incompleteData.displayName;
 
