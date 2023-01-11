@@ -207,7 +207,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   const storeAccountResult = storeAccount(storage, accountId, account);
 
   if (isErr(storeAccountResult)) {
-    logError('Couldn’t storeAccountResult', { reason: storeAccountResult.reason });
+    logError(si`Couldn’t ${storeAccount.name}`, { reason: storeAccountResult.reason });
     return makeErr('Couldn’t store account data');
   }
 

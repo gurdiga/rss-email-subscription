@@ -108,7 +108,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   const storeItemResult = storage.storeItem(storageKey, data);
 
   if (isErr(storeItemResult)) {
-    return makeErr(si`Couldn’t storeAccount: ${storeItemResult.reason}`);
+    return makeErr(si`Couldn’t ${storeAccount.name}: ${storeItemResult.reason}`);
   }
 }
 
@@ -140,7 +140,7 @@ export function confirmAccount(
   const storeAccountResult = storeAccount(storage, accountId, account);
 
   if (isErr(storeAccountResult)) {
-    return makeErr(si`Couldn’t confirmAccount: ${storeAccountResult.reason}`);
+    return makeErr(si`Couldn’t ${storeAccount.name}: ${storeAccountResult.reason}`);
   }
 }
 
