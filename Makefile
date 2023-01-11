@@ -244,18 +244,18 @@ watch-website:
 	grep --line-buffered -F \
 			-e 'GET /error?stack=' \
 		|
-	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referer user_agent; do
+	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referer rest; do
 		(
 			echo "Subject: RES website error-log"
 			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo ""
 			echo "$$referer"
 			echo "$$timestamp"
-			echo "$$url" | url_decode
-			echo "User-Agent: $$user_agent"
+			echo "$$url" | url_decode | sed 's/^/    /'
+			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
 			echo "Whois:"
-			echo "$$(whois $$client_ip | grep -iE '^(Address|StateProv|PostalCode|Country):' | head -10 | sed 's/^/    /')"
+			whois $$client_ip | grep -iE '^(Address|StateProv|PostalCode|Country):' | sort -u | head -10 | sed 's/^/    /'
 			echo "https://whois.com/whois/$$client_ip"
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
