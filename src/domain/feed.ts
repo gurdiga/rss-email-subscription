@@ -101,7 +101,7 @@ export function alterExistingFeed(
   existingFeed.replyTo = newFeed.replyTo;
   existingFeed.url = newFeed.url;
 
-  storeFeed(accountId, existingFeed, storage);
+  return storeFeed(accountId, existingFeed, storage);
 }
 
 export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage): Result<void> {

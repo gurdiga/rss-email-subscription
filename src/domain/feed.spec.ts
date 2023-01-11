@@ -325,11 +325,11 @@ describe(feedExists.name, () => {
 });
 
 describe(alterExistingFeed.name, () => {
+  const existingFeed = makeTestFeed('existing-feed');
+  const newFeed = makeTestFeed('new-feed');
+
   it('stores properties from new feed EXCEPT hashingSalt', () => {
-    const accountId = makeTestAccountId();
-    const existingFeed = makeTestFeed('existing-feed');
     const existingHashingSalt = existingFeed.hashingSalt;
-    const newFeed = makeTestFeed('new-feed');
     const storage = makeTestStorage({ storeItem: () => {} });
 
     const result = alterExistingFeed(accountId, existingFeed, newFeed, storage);
@@ -348,7 +348,14 @@ describe(alterExistingFeed.name, () => {
     );
   });
 
-  it('returns the Err from storage if any');
+  it('returns the Err from storage if any', () => {
+    const err = makeErr('Storage broke!');
+    const storage = makeTestStorage({ storeItem: () => err });
+
+    const result = alterExistingFeed(accountId, existingFeed, newFeed, storage);
+
+    expect(result).to.deep.equal(makeErr('Failed to store feed data: Storage broke!'));
+  });
 });
 
 describe(makeFeedHashingSalt.name, () => {
