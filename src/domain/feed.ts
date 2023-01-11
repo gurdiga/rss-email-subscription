@@ -155,7 +155,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
 export interface FeedsByAccountId {
   validFeeds: Feed[];
   feedNotFoundIds: string[];
-  errs: string[];
+  errs: Err[];
   feedIdErrs: Err[];
 }
 
@@ -193,7 +193,7 @@ export function loadFeedsByAccountId(
   const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
 
   result.validFeeds = feeds.filter(isFeed);
-  result.errs = feeds.filter(isErr).map((x) => x.reason);
+  result.errs = feeds.filter(isErr);
   result.feedIdErrs = feedIdResults.filter(isErr);
   result.feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
 

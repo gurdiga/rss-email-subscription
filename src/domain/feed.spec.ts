@@ -113,8 +113,8 @@ describe(loadFeedsByAccountId.name, () => {
     ]);
     expect(result.errs).to.deep.equal([
       // prettier: keep these stacked
-      'somehow feed data 1',
-      'somehow feed data 2',
+      makeErr('somehow feed data 1'),
+      makeErr('somehow feed data 2'),
     ]);
     expect(result.feedIdErrs).to.deep.equal([
       // prettier: keep these stacked

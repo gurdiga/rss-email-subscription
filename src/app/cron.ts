@@ -74,7 +74,10 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
     }
 
     if (isNotEmpty(feedsByAccountId.errs)) {
-      logError(si`Errors on ${loadFeedsByAccountId.name}: ${feedsByAccountId.errs.join()}`, { dirName });
+      logError(si`Errors on ${loadFeedsByAccountId.name}`, {
+        dirName,
+        errs: feedsByAccountId.errs.map((x) => x.reason),
+      });
     }
 
     if (isEmpty(feedsByAccountId.validFeeds)) {

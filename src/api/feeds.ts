@@ -148,7 +148,7 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
   }
 
   if (isNotEmpty(result.errs)) {
-    logError(si`Failed to load feeds for account ${accountId.value}`, { errs: result.errs });
+    logError(si`Failed to load feeds for account ${accountId.value}`, { errs: result.errs.map((x) => x.reason) });
   }
 
   if (isNotEmpty(result.feedNotFoundIds)) {
