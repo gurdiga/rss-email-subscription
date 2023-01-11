@@ -1,4 +1,4 @@
-import { isEmpty } from '../../shared/array-utils';
+import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { Feed } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
@@ -34,7 +34,7 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
 
   const { validItems, invalidItems } = rssParsingResult;
 
-  if (!isEmpty(invalidItems)) {
+  if (isNotEmpty(invalidItems)) {
     logWarning('Found invalid items', { count: invalidItems.length, invalidItems });
   }
 

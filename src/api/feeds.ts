@@ -1,15 +1,8 @@
 import { getAccountIdList } from '../domain/account';
-import {
-  alterExistingFeed,
-  feedExists,
-  isFeedNotFound,
-  loadFeed,
-  loadFeedsByAccountId,
-  makeFeedHashingSalt,
-} from '../domain/feed';
-import { makeFeed, storeFeed } from '../domain/feed';
+import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed';
+import { makeFeedHashingSalt, makeFeed, storeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { isEmpty, isNotEmpty } from '../shared/array-utils';
+import { isNotEmpty } from '../shared/array-utils';
 import { getRandomString } from '../shared/crypto';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -150,15 +143,15 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
     return makeAppError('Failed to load feed list');
   }
 
-  if (!isEmpty(result.feedIdErrs)) {
+  if (isNotEmpty(result.feedIdErrs)) {
     logError(si`Failed to load feed IDs for account ${accountId.value}`, { feedIdErrs: result.feedIdErrs });
   }
 
-  if (!isEmpty(result.errs)) {
+  if (isNotEmpty(result.errs)) {
     logError(si`Failed to load feeds for account ${accountId.value}`, { errs: result.errs });
   }
 
-  if (!isEmpty(result.feedNotFoundIds)) {
+  if (isNotEmpty(result.feedNotFoundIds)) {
     logError(si`Missing feeds for account ${accountId.value}`, {
       feedNotFoundIds: result.feedNotFoundIds,
     });

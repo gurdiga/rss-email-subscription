@@ -1,4 +1,4 @@
-import { isEmpty } from '../../shared/array-utils';
+import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
 import { loadStoredEmails, makeEmailAddress, makeFullEmailAddress } from './emails';
 import { readStoredRssItems } from './rss-item-reading';
@@ -31,7 +31,7 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const { validItems, invalidItems } = storedRssItems;
 
-  if (!isEmpty(invalidItems)) {
+  if (isNotEmpty(invalidItems)) {
     logWarning('Invalid RSS items', { invalidItems });
   }
 
