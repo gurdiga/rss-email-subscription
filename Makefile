@@ -436,6 +436,11 @@ list-sessions:
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+# cron @daily
+wathc-containers:
+	docker stats --all --no-stream |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 deno-notes:
 	# Sat Dec 24 16:36:11 EET 2022
 	# Gave Deno a quick shot
