@@ -9,6 +9,7 @@ import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
 import { accountsStorageKey, makeAccountId } from '../domain/account';
 import { si } from '../shared/string-utils';
+import { isEmpty, isNotEmpty } from '../shared/array-utils';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -72,8 +73,12 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       continue;
     }
 
-    if (feedsByAccountId.errs.length > 0) {
+    if (isNotEmpty(feedsByAccountId.errs)) {
       logError(si`Errors on ${loadFeedsByAccountId.name}: ${feedsByAccountId.errs.join()}`, { dirName });
+    }
+
+    if (isEmpty(feedsByAccountId.validFeeds)) {
+      logInfo('No feeds for account', { dirName });
     }
 
     for (const feed of feedsByAccountId.validFeeds) {

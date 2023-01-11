@@ -164,7 +164,25 @@ export function loadFeedsByAccountId(
   storage: AppStorage,
   loadFeedFn = loadFeed
 ): Result<FeedsByAccountId> {
-  const feedIdStrings = storage.listSubdirectories(getFeedRootStorageKey(accountId));
+  const result: FeedsByAccountId = {
+    validFeeds: [],
+    errs: [],
+    feedIdErrs: [],
+    feedNotFoundIds: [],
+  };
+
+  const feedRootStorageKey = getFeedRootStorageKey(accountId);
+  const hasAnyFeeds = storage.hasItem(getFeedRootStorageKey(accountId));
+
+  if (isErr(hasAnyFeeds)) {
+    return makeErr(si`Failed to check for feeds: ${hasAnyFeeds.reason}`);
+  }
+
+  if (hasAnyFeeds === false) {
+    return result;
+  }
+
+  const feedIdStrings = storage.listSubdirectories(feedRootStorageKey);
 
   if (isErr(feedIdStrings)) {
     return makeErr(si`Failed to list feeds: ${feedIdStrings.reason}`);
@@ -172,14 +190,14 @@ export function loadFeedsByAccountId(
 
   const feedIdResults = feedIdStrings.map((x) => makeFeedId(x));
   const feedIds = feedIdResults.filter(isFeedId);
-  const feedIdErrs = feedIdResults.filter(isErr);
-
   const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
-  const errs = feeds.filter(isErr).map((x) => x.reason);
-  const feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
-  const validFeeds = feeds.filter(isFeed);
 
-  return <FeedsByAccountId>{ validFeeds, errs, feedIdErrs, feedNotFoundIds };
+  result.validFeeds = feeds.filter(isFeed);
+  result.errs = feeds.filter(isErr).map((x) => x.reason);
+  result.feedIdErrs = feedIdResults.filter(isErr);
+  result.feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
+
+  return result;
 }
 
 export interface MakeFeedInput {

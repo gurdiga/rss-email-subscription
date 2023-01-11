@@ -79,7 +79,7 @@ describe(loadFeed.name, () => {
 });
 
 describe(loadFeedsByAccountId.name, () => {
-  it('returns feed data for account', () => {
+  it('returns a FeedsByAccountId value for account', () => {
     const feeds: Record<string, ReturnType<typeof loadFeed>> = {
       validFeed: <Feed>{
         kind: 'Feed',
@@ -97,7 +97,10 @@ describe(loadFeedsByAccountId.name, () => {
       invalidFeed2: makeErr('somehow feed data 2'),
     };
     const badFeedIds = ['a', 42 as any];
-    const storage = makeTestStorage({ listSubdirectories: () => Object.keys(feeds).concat(badFeedIds) });
+    const storage = makeTestStorage({
+      hasItem: () => true,
+      listSubdirectories: () => Object.keys(feeds).concat(badFeedIds),
+    });
 
     const getFeedFn = makeStub<typeof loadFeed>((_accountId, feedId) => feeds[feedId.value]!);
     const result = loadFeedsByAccountId(accountId, storage, getFeedFn) as FeedsByAccountId;
@@ -120,10 +123,29 @@ describe(loadFeedsByAccountId.name, () => {
     ]);
   });
 
-  it('returns err from listSubdirectories when it fails', () => {
-    const listSubdirectoriesFn = () => makeErr('Storage broken!');
-    const storage = makeTestStorage({ listSubdirectories: listSubdirectoriesFn });
+  it('returns an empty FeedsByAccountId value when the feeds subdirectory doesn’t exist', () => {
+    const hasItemFn = () => false;
+    const storage = makeTestStorage({ hasItem: hasItemFn });
     const result = loadFeedsByAccountId(accountId, storage, loadFeed);
+
+    expect(result).to.deep.equal(<FeedsByAccountId>{
+      validFeeds: [],
+      errs: [],
+      feedIdErrs: [],
+      feedNotFoundIds: [],
+    });
+  });
+
+  it('returns err from storage is any', () => {
+    const hasItemFn = () => makeErr('Storage broken!');
+    let storage = makeTestStorage({ hasItem: hasItemFn });
+    let result = loadFeedsByAccountId(accountId, storage, loadFeed);
+
+    expect(result).to.deep.equal(makeErr('Failed to check for feeds: Storage broken!'));
+
+    const listSubdirectoriesFn = () => makeErr('Storage broken!');
+    storage = makeTestStorage({ hasItem: () => true, listSubdirectories: listSubdirectoriesFn });
+    result = loadFeedsByAccountId(accountId, storage, loadFeed);
 
     expect(result).to.deep.equal(makeErr('Failed to list feeds: Storage broken!'));
   });
