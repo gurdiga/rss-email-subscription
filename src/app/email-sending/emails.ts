@@ -171,6 +171,11 @@ export function getEmailsStorageKey(accountId: AccountId, feedId: FeedId): strin
 }
 
 export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<StoredEmails> {
+  const result: StoredEmails = {
+    validEmails: [],
+    invalidEmails: [],
+  };
+
   const storageKey = getEmailsStorageKey(accountId, feedId);
   const hasItemResult = storage.hasItem(storageKey);
 
@@ -179,10 +184,7 @@ export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: 
   }
 
   if (!hasItemResult) {
-    return {
-      validEmails: [],
-      invalidEmails: [],
-    };
+    return result;
   }
 
   const index = storage.loadItem(storageKey);
@@ -201,13 +203,10 @@ export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: 
     typeof value === 'string' ? parseSimpleIndexEntry(key, value) : parseExtendedIndexEntry(key, value)
   );
 
-  const validEmails = results.filter(isHashedEmail);
-  const invalidEmails = results.filter(isErr).map((error) => error.reason);
+  result.validEmails = results.filter(isHashedEmail);
+  result.invalidEmails = results.filter(isErr).map((error) => error.reason);
 
-  return {
-    validEmails,
-    invalidEmails,
-  };
+  return result;
 }
 
 function parseSimpleIndexEntry(saltedHash: unknown, email: unknown): Result<HashedEmail> {

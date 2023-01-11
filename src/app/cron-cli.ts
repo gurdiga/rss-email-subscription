@@ -57,7 +57,7 @@ if (isAccountNotFound(accountId)) {
 const feed = loadFeed(accountId, feedId, storage);
 
 if (isErr(feed)) {
-  logError('Invalid feed settings', { feedId: feedId.value, reason: feed.reason });
+  logError(si`Faield to ${loadFeed.name}`, { feedId: feedId.value, reason: feed.reason });
   process.exit(1);
 }
 
