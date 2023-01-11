@@ -20,11 +20,15 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
     const reqParams = req.params || {};
     const reqSession = req.session || {};
     const action = handler.name;
-    const referer = req.get('Referer');
 
-    const { logInfo, logError, logWarning } = makeCustomLoggers({ reqId, module: 'api', referer });
+    const { logInfo, logError, logWarning } = makeCustomLoggers({
+      reqId,
+      module: 'api',
+      referer: req.get('Referer'),
+      userAgent: req.get('User-Agent'),
+    });
 
-    logInfo(action, { reqId, action, reqBody, reqParams });
+    logInfo(action, { reqId, reqBody, reqParams });
 
     const start = new Date();
     const result = await handler(reqId, reqBody, reqParams, reqSession, app);
