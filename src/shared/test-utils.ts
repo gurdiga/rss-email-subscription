@@ -3,7 +3,18 @@ import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { Feed, FeedId, isFeed, isFeedId, makeFeed, makeFeedId, MakeFeedInput } from '../domain/feed';
+import {
+  Feed,
+  FeedHashingSalt,
+  FeedId,
+  isFeed,
+  isFeedHashingSalt,
+  isFeedId,
+  makeFeed,
+  makeFeedHashingSalt,
+  makeFeedId,
+  MakeFeedInput,
+} from '../domain/feed';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from './storage';
 import { EmailAddress, isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 
@@ -99,13 +110,16 @@ export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
 }
 
 export function makeTestFeed(idString = 'test-feed-id'): Feed {
-  const feed = makeFeed(<MakeFeedInput>{
+  const input: MakeFeedInput = {
     displayName: 'Test Feed Name',
     url: 'https://test.com/rss.xml',
     feedId: idString,
     replyTo: 'feed-replyTo@test.com',
     cronPattern: '@hourly',
-  });
+  };
+
+  const hasingSalt = makeTestFeedHashingSalt();
+  const feed = makeFeed(input, hasingSalt);
 
   assert(isFeed(feed), 'makeTestFeedId is expected to return a valid FeedId');
 
@@ -130,4 +144,12 @@ export function makeTestEmailAddress(emailString: string): EmailAddress {
 
 export function clone(data: any): any {
   return JSON.parse(JSON.stringify(data));
+}
+
+export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): FeedHashingSalt {
+  const result = makeFeedHashingSalt(input);
+
+  assert(isFeedHashingSalt(result), 'makeTestFeedHashingSalt is expected to return a valid FeedHashingSalt');
+
+  return result;
 }

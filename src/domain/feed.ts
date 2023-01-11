@@ -1,6 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { getRandomString } from '../shared/crypto';
-import { Err, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
+import { Err, getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
@@ -15,7 +14,7 @@ export interface Feed {
   id: FeedId;
   displayName: string;
   url: URL;
-  hashingSalt: string;
+  hashingSalt: FeedHashingSalt;
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
 }
@@ -34,7 +33,7 @@ export interface FeedNotFound {
 }
 
 export function makeFeedNotFound(feedId: FeedId): FeedNotFound {
-  return { kind: 'FeedNotFound', feedId };
+  return <FeedNotFound>{ kind: 'FeedNotFound', feedId };
 }
 
 export function isFeedNotFound(value: unknown): value is FeedNotFound {
@@ -110,7 +109,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
   const data: FeedStoredData = {
     displayName: feed.displayName,
     url: feed.url.toString(),
-    hashingSalt: feed.hashingSalt,
+    hashingSalt: feed.hashingSalt.value,
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
   };
@@ -130,6 +129,12 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
   }
 
   const loadedData = storage.loadItem(storageKey) as FeedStoredData;
+  const hashingSalt = makeFeedHashingSalt(loadedData.hashingSalt);
+
+  if (isErr(hashingSalt)) {
+    return makeErr(si`Invalid feed hashingSalt: "${loadedData.hashingSalt}"`, 'hashingSalt');
+  }
+
   const cronPattern = makeUnixCronPattern(loadedData.cronPattern);
 
   if (isErr(cronPattern)) {
@@ -144,9 +149,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     cronPattern: cronPattern.value,
   };
 
-  const useExistingHashingSalt = () => loadedData.hashingSalt;
-
-  return makeFeed(makeFeedInput, useExistingHashingSalt);
+  return makeFeed(makeFeedInput, hashingSalt);
 }
 
 export interface FeedsByAccountId {
@@ -176,7 +179,7 @@ export function loadFeedsByAccountId(
   const feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
   const validFeeds = feeds.filter(isFeed);
 
-  return { validFeeds, errs, feedIdErrs, feedNotFoundIds };
+  return <FeedsByAccountId>{ validFeeds, errs, feedIdErrs, feedNotFoundIds };
 }
 
 export interface MakeFeedInput {
@@ -187,7 +190,7 @@ export interface MakeFeedInput {
   cronPattern?: string;
 }
 
-export function makeFeed(input: MakeFeedInput, makeHasingSaltFn = getRandomString): Result<Feed> {
+export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Result<Feed> {
   if (!isObject(input)) {
     return makeErr('Invalid input');
   }
@@ -226,14 +229,7 @@ export function makeFeed(input: MakeFeedInput, makeHasingSaltFn = getRandomStrin
     return makeErr(si`Invalid cronPattern: "${input.cronPattern!}"`, 'cronPattern');
   }
 
-  const hashingSaltMinLength = 16;
-  const hashingSalt = makeHasingSaltFn();
-
-  if (hashingSalt.trim().length < hashingSaltMinLength) {
-    return makeErr(si`Hashing salt is too short: at least ${hashingSaltMinLength} non-space characters required`);
-  }
-
-  return {
+  return <Feed>{
     kind: 'Feed',
     id,
     displayName,
@@ -276,7 +272,7 @@ export function makeFeedId(input: any): Result<FeedId> {
     return makeErr('Is too short', value);
   }
 
-  return {
+  return <FeedId>{
     kind: 'FeedId',
     value: value,
   };
@@ -313,4 +309,30 @@ export function findAccountId(feedId: FeedId, storage: AppStorage): Result<Accou
   }
 
   return makeAccountNotFound();
+}
+
+export interface FeedHashingSalt {
+  kind: 'FeedHashingSalt';
+  value: string;
+}
+
+const feedHashingSaltLength = 16;
+
+export function makeFeedHashingSalt(input: unknown): Result<FeedHashingSalt> {
+  if (!isString(input)) {
+    return makeErr(si`Must be a string: ${getTypeName(input)} ${JSON.stringify(input)}`);
+  }
+
+  if (input.length !== feedHashingSaltLength) {
+    return makeErr(si`Must have the length of ${feedHashingSaltLength}`);
+  }
+
+  return <FeedHashingSalt>{
+    kind: 'FeedHashingSalt',
+    value: input,
+  };
+}
+
+export function isFeedHashingSalt(value: unknown): value is FeedHashingSalt {
+  return hasKind(value, 'FeedHashingSalt');
 }

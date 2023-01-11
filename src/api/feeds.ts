@@ -1,8 +1,16 @@
 import { getAccountIdList } from '../domain/account';
-import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed';
+import {
+  alterExistingFeed,
+  feedExists,
+  isFeedNotFound,
+  loadFeed,
+  loadFeedsByAccountId,
+  makeFeedHashingSalt,
+} from '../domain/feed';
 import { makeFeed, storeFeed } from '../domain/feed';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
+import { getRandomString } from '../shared/crypto';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -18,7 +26,14 @@ export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBo
     return makeInputError('Not authenticated');
   }
 
-  const newFeed = makeFeed(reqBody);
+  const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
+
+  if (isErr(feedHashingSalt)) {
+    logError(si`Failed to ${makeFeedHashingSalt.name}`, feedHashingSalt);
+    return makeAppError('Application error!');
+  }
+
+  const newFeed = makeFeed(reqBody, feedHashingSalt);
 
   if (isErr(newFeed)) {
     logError(si`Failed to ${makeFeed.name}`, newFeed);
@@ -64,7 +79,14 @@ export const createFeed: RequestHandler = async function createFeed(reqId, reqBo
     return makeInputError('Not authenticated');
   }
 
-  const feed = makeFeed(reqBody);
+  const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
+
+  if (isErr(feedHashingSalt)) {
+    logError(si`Failed to ${makeFeedHashingSalt.name}`, feedHashingSalt);
+    return makeAppError('Application error!');
+  }
+
+  const feed = makeFeed(reqBody, feedHashingSalt);
 
   if (isErr(feed)) {
     logError(si`Failed to ${makeFeed.name}`, feed);

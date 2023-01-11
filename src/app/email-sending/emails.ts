@@ -1,4 +1,4 @@
-import { FeedId, getFeedStorageKey } from '../../domain/feed';
+import { FeedHashingSalt, FeedId, getFeedStorageKey } from '../../domain/feed';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../shared/io-isolation';
@@ -158,8 +158,8 @@ export function makeHashedEmail(
   };
 }
 
-export function makeEmailHashFn(hashingSalt: string): EmailHashFn {
-  return (e: EmailAddress) => hash(e.value, hashingSalt);
+export function makeEmailHashFn(hashingSalt: FeedHashingSalt): EmailHashFn {
+  return (e: EmailAddress) => hash(e.value, hashingSalt.value);
 }
 
 function isHashedEmail(value: unknown): value is HashedEmail {

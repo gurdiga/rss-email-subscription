@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { alterExistingFeed, Feed, feedExists, FeedExistsResult, FeedId, FeedsByAccountId } from './feed';
 import { FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
-import { makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed } from './feed';
+import { makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed, FeedHashingSalt, makeFeedHashingSalt } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, clone } from '../shared/test-utils';
-import { makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
+import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
 import { si } from '../shared/string-utils';
@@ -12,15 +12,15 @@ import { makeUnixCronPattern, UnixCronPattern } from './cron-pattern';
 
 const accountId = makeTestAccountId();
 const feedId = makeTestFeedId();
-const getRandomStringFn = () => 'fake-random-string';
 
 describe(loadFeed.name, () => {
   const storageKey = getFeedJsonStorageKey(accountId, feedId);
+  const hashingSalt = makeTestFeedHashingSalt();
 
   const data = {
     displayName: 'Just Add Light and Stir',
     url: 'https://example.com/feed.xml',
-    hashingSalt: 'more-than-sixteen-non-space-characters',
+    hashingSalt: hashingSalt.value,
     replyTo: 'sandra@test.com',
     cronPattern: '5 * * * *',
   };
@@ -36,7 +36,7 @@ describe(loadFeed.name, () => {
       id: feedId,
       displayName: data.displayName,
       url: new URL(data.url),
-      hashingSalt: data.hashingSalt,
+      hashingSalt: makeTestFeedHashingSalt(data.hashingSalt),
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
     };
@@ -62,14 +62,17 @@ describe(loadFeed.name, () => {
     expect(result).to.deep.equal(makeFeedNotFound(feedId));
   });
 
-  it('returns an Err value when cronPattern is invalid', () => {
-    const resultForJson = (data: Object): ReturnType<typeof loadFeed> => {
+  it('returns an Err value when cronPattern or hashingSalt is invalid', () => {
+    const resultForData = (data: Partial<FeedStoredData>): ReturnType<typeof loadFeed> => {
       const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
-
       return loadFeed(accountId, feedId, storage);
     };
 
-    expect(resultForJson({ cronPattern: 'not-a-cron-pattern' })).to.deep.equal(
+    expect(resultForData({ hashingSalt: 'invalid-hashingSalt' })).to.deep.equal(
+      makeErr('Invalid feed hashingSalt: "invalid-hashingSalt"', 'hashingSalt')
+    );
+
+    expect(resultForData({ hashingSalt: hashingSalt.value, cronPattern: 'not-a-cron-pattern' })).to.deep.equal(
       makeErr('Invalid feed cronPattern: "not-a-cron-pattern"', 'cronPattern')
     );
   });
@@ -83,7 +86,7 @@ describe(loadFeedsByAccountId.name, () => {
         id: makeFeedId('valid-feedId'),
         displayName: 'Test Feed Display Name',
         url: new URL('https://test-url.com'),
-        hashingSalt: 'Random-16-bytes.',
+        hashingSalt: makeTestFeedHashingSalt(),
         fromAddress: makeTestEmailAddress('feed-fromAddress@test.com'),
         replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
         cronPattern: makeUnixCronPattern('1 1 1 1 1'),
@@ -135,13 +138,14 @@ describe(makeFeed.name, () => {
       replyTo: 'feed-replyTo@test.com',
       cronPattern: '@hourly',
     };
+    const hashingSalt = makeTestFeedHashingSalt();
 
-    expect(makeFeed(input, getRandomStringFn)).to.deep.equal(<Feed>{
+    expect(makeFeed(input, hashingSalt)).to.deep.equal(<Feed>{
       kind: 'Feed',
       id: makeFeedId(input.feedId),
       displayName: 'Test Feed Name',
       url: new URL(input.url!),
-      hashingSalt: 'fake-random-string',
+      hashingSalt: hashingSalt,
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern: makeUnixCronPattern('0 * * * *'),
     });
@@ -150,6 +154,7 @@ describe(makeFeed.name, () => {
   it('returns an Err value if any field is not appropriate', () => {
     type FieldName = string;
 
+    const hashingSalt = makeTestFeedHashingSalt();
     const expectedErrForInput: [MakeFeedInput, Err, FieldName][] = [
       [null as any as MakeFeedInput, makeErr('Invalid input'), 'input1'],
       [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input2'],
@@ -204,7 +209,7 @@ describe(makeFeed.name, () => {
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(makeFeed(input as any, getRandomStringFn)).to.deep.equal(err, si`invalid ${fieldName}`);
+      expect(makeFeed(input as any, hashingSalt)).to.deep.equal(err, si`invalid ${fieldName}`);
     }
   });
 });
@@ -221,7 +226,7 @@ describe(storeFeed.name, () => {
         replyTo: 'feed-replyTo@test.com',
         cronPattern: '@hourly',
       },
-      getRandomStringFn
+      makeTestFeedHashingSalt()
     ) as Feed;
   });
 
@@ -236,7 +241,7 @@ describe(storeFeed.name, () => {
         {
           cronPattern: '0 * * * *',
           displayName: 'Test Feed Name',
-          hashingSalt: 'fake-random-string',
+          hashingSalt: feed.hashingSalt.value,
           url: 'https://test.com/rss.xml',
           replyTo: feed.replyTo.value,
         },
@@ -337,9 +342,28 @@ describe(alterExistingFeed.name, () => {
     expect(storedFeed.replyTo).to.equal(newFeed.replyTo.value);
     expect(storedFeed.url).to.equal(newFeed.url.toString());
 
-    expect(storedFeed.hashingSalt).to.equal(
-      existingHashingSalt,
+    expect(storedFeed.hashingSalt).to.deep.equal(
+      existingHashingSalt.value,
       'hashing salt should NOT change because unsubscribe URLs depend on it'
     );
+  });
+
+  it('returns the Err from storage if any');
+});
+
+describe(makeFeedHashingSalt.name, () => {
+  it('returns a HashingSalt value when input valid', () => {
+    const input = 'random-16-bytes.';
+
+    expect(makeFeedHashingSalt(input)).to.deep.equal(<FeedHashingSalt>{
+      kind: 'FeedHashingSalt',
+      value: input,
+    });
+  });
+
+  it('returns an Err value when input invalid', () => {
+    const input = 'too-short';
+
+    expect(makeFeedHashingSalt(input)).to.deep.equal(makeErr('Must have the length of 16'));
   });
 });
