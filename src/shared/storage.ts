@@ -68,7 +68,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     const jsonParseResult = attempt(() => JSON.parse(readFileResult, jsonParseFilter));
 
     if (isErr(jsonParseResult)) {
-      return makeErr(si`Failed to parse JSON: ${jsonParseResult.reason}`);
+      return makeErr(si`Failed to parse JSON at ${key}: ${jsonParseResult.reason}`);
     }
 
     return jsonParseResult;

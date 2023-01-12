@@ -5,6 +5,7 @@ import { makeErr } from './lang';
 import { makeStorage } from './storage';
 import { makePath } from './path-utils';
 import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
+import { si } from './string-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
@@ -79,7 +80,9 @@ describe(makeStorage.name, () => {
       const readFileFn = makeStub<ReadFileFn>(() => 'non-json-string');
       const result = loadItem(key, readFileFn);
 
-      expect(result).to.deep.equal(makeErr('Failed to parse JSON: Unexpected token o in JSON at position 1'));
+      expect(result).to.deep.equal(
+        makeErr(si`Failed to parse JSON at ${key}: Unexpected token o in JSON at position 1`)
+      );
     });
   });
 
