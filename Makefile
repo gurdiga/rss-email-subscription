@@ -439,6 +439,11 @@ list-sessions:
 # cron @daily
 wathc-containers:
 	@docker stats --all --no-stream |
+	cat <( \
+		echo "Subject: RES wathc-containers"; \
+		echo "From: wathc-containers@feedsubscription.com"; \
+		echo; \
+	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 deno-notes:
