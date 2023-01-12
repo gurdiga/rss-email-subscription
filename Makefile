@@ -438,7 +438,7 @@ list-sessions:
 
 # cron @daily
 wathc-containers:
-	docker stats --all --no-stream |
+	@docker stats --all --no-stream |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 deno-notes:
