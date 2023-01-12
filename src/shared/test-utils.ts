@@ -99,13 +99,15 @@ export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
   return feedId;
 }
 
-export function makeTestFeed(idString = 'test-feed-id'): Feed {
+export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
   const input: MakeFeedInput = {
     displayName: 'Test Feed Name',
     url: 'https://test.com/rss.xml',
-    feedId: idString,
+    feedId: 'test-feed-id',
     replyTo: 'feed-replyTo@test.com',
     cronPattern: '@hourly',
+    isDeleted: false,
+    ...props,
   };
 
   const hasingSalt = makeTestFeedHashingSalt();

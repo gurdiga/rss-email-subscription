@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import { alterExistingFeed, Feed, feedExists, FeedExistsResult, FeedId, FeedsByAccountId } from './feed';
-import { FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeed } from './feed';
-import { makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed, FeedHashingSalt, makeFeedHashingSalt } from './feed';
+import { markFeedAsDeleted, FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed } from './feed';
+import { loadFeedsByAccountId, makeFeed, makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed } from './feed';
+import { FeedHashingSalt, makeFeedHashingSalt } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
@@ -39,6 +40,7 @@ describe(loadFeed.name, () => {
       hashingSalt: makeTestFeedHashingSalt(data.hashingSalt),
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
+      isDeleted: false,
     };
 
     expect(result).to.deep.include(expectedResult);
@@ -76,6 +78,16 @@ describe(loadFeed.name, () => {
       makeErr('Invalid feed cronPattern: "not-a-cron-pattern"', 'cronPattern')
     );
   });
+
+  it('returns the Err from storage if any', () => {
+    const storage = makeTestStorage({
+      hasItem: () => true,
+      loadItem: () => makeErr('Storage failed!'),
+    });
+    const result = loadFeed(accountId, feedId, storage);
+
+    expect(result).to.deep.equal(makeErr('Failed to loadItem: Storage failed!'));
+  });
 });
 
 describe(loadFeedsByAccountId.name, () => {
@@ -90,6 +102,7 @@ describe(loadFeedsByAccountId.name, () => {
         fromAddress: makeTestEmailAddress('feed-fromAddress@test.com'),
         replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
         cronPattern: makeUnixCronPattern('1 1 1 1 1'),
+        isDeleted: false,
       },
       missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
       missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
@@ -159,6 +172,7 @@ describe(makeFeed.name, () => {
       feedId: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
       cronPattern: '@hourly',
+      isDeleted: true,
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
@@ -170,6 +184,7 @@ describe(makeFeed.name, () => {
       hashingSalt: hashingSalt,
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern: makeUnixCronPattern('0 * * * *'),
+      isDeleted: true,
     });
   });
 
@@ -266,6 +281,7 @@ describe(storeFeed.name, () => {
           hashingSalt: feed.hashingSalt.value,
           url: 'https://test.com/rss.xml',
           replyTo: feed.replyTo.value,
+          isDeleted: false,
         },
       ],
     ]);
@@ -346,9 +362,37 @@ describe(feedExists.name, () => {
   });
 });
 
+describe(markFeedAsDeleted.name, () => {
+  const feed = makeTestFeed({ isDeleted: false });
+
+  it('sets feed’s isDeleted to true', () => {
+    const loadFeed = makeStub(() => feed);
+    const storage = makeTestStorage({ storeItem: () => {} });
+
+    const result = markFeedAsDeleted(accountId, feed.id, storage, loadFeed);
+    expect(result).to.be.undefined;
+
+    const storedData = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    expect(storedData.isDeleted).to.be.true;
+  });
+
+  it('returns the errs from {load,store}Feed if any', () => {
+    const storage = makeTestStorage({});
+
+    const erringLoadFeedFn = makeStub(() => makeErr('Storage reading failed!'));
+    const result1 = markFeedAsDeleted(accountId, feed.id, storage, erringLoadFeedFn) as Err;
+    expect(result1.reason).to.match(/Failed to loadFeed: Storage reading failed!/);
+
+    const loadFeedFn = makeStub(() => feed);
+    const erringStoreFeedFn = makeStub(() => makeErr('Storage writing failed!'));
+    const result = markFeedAsDeleted(accountId, feed.id, storage, loadFeedFn, erringStoreFeedFn) as Err;
+    expect(result.reason).to.match(/Failed to storeFeed: Storage writing failed!/);
+  });
+});
+
 describe(alterExistingFeed.name, () => {
-  const existingFeed = makeTestFeed('existing-feed');
-  const newFeed = makeTestFeed('new-feed');
+  const existingFeed = makeTestFeed({ feedId: 'existing-feed' });
+  const newFeed = makeTestFeed({ feedId: 'new-feed' });
 
   it('stores properties from new feed EXCEPT hashingSalt', () => {
     const existingHashingSalt = existingFeed.hashingSalt;

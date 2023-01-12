@@ -17,6 +17,7 @@ export interface Feed {
   hashingSalt: FeedHashingSalt;
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
+  isDeleted: boolean;
 }
 
 export interface FeedStoredData {
@@ -25,6 +26,7 @@ export interface FeedStoredData {
   hashingSalt: string;
   cronPattern: string;
   replyTo: string;
+  isDeleted?: boolean;
 }
 
 export interface FeedNotFound {
@@ -90,6 +92,32 @@ export function accountHasFeed(accountId: AccountId, feedId: FeedId, storage: Ap
   return storage.hasItem(key);
 }
 
+export function markFeedAsDeleted(
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage,
+  loadFeedFn = loadFeed,
+  storeFeedFn = storeFeed
+): Result<FeedNotFound | void> {
+  const feed = loadFeedFn(accountId, feedId, storage);
+
+  if (isErr(feed)) {
+    return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    return feed;
+  }
+
+  feed.isDeleted = true;
+
+  const result = storeFeedFn(accountId, feed, storage);
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to ${storeFeed.name}: ${result.reason}`);
+  }
+}
+
 export function alterExistingFeed(
   accountId: AccountId,
   existingFeed: Feed,
@@ -112,6 +140,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     hashingSalt: feed.hashingSalt.value,
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
+    isDeleted: feed.isDeleted,
   };
 
   const result = storage.storeItem(storageKey, data);
@@ -128,7 +157,12 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     return makeFeedNotFound(feedId);
   }
 
-  const loadedData = storage.loadItem(storageKey) as FeedStoredData;
+  const loadedData = storage.loadItem(storageKey) as Err | FeedStoredData;
+
+  if (isErr(loadedData)) {
+    return makeErr(si`Failed to loadItem: ${loadedData.reason}`);
+  }
+
   const hashingSalt = makeFeedHashingSalt(loadedData.hashingSalt);
 
   if (isErr(hashingSalt)) {
@@ -147,6 +181,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     feedId: feedId.value,
     replyTo: loadedData.replyTo,
     cronPattern: cronPattern.value,
+    isDeleted: !!loadedData.isDeleted,
   };
 
   return makeFeed(makeFeedInput, hashingSalt);
@@ -192,7 +227,7 @@ export function loadFeedsByAccountId(
   const feedIds = feedIdResults.filter(isFeedId);
   const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
 
-  result.validFeeds = feeds.filter(isFeed);
+  result.validFeeds = feeds.filter(isFeed).filter((x) => !x.isDeleted);
   result.errs = feeds.filter(isErr);
   result.feedIdErrs = feedIdResults.filter(isErr);
   result.feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
@@ -206,6 +241,7 @@ export interface MakeFeedInput {
   feedId?: string;
   replyTo?: string;
   cronPattern?: string;
+  isDeleted?: boolean;
 }
 
 export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Result<Feed> {
@@ -247,6 +283,8 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
     return makeErr(si`Invalid cronPattern: "${input.cronPattern!}"`, 'cronPattern');
   }
 
+  const isDeleted = Boolean(input.isDeleted);
+
   return <Feed>{
     kind: 'Feed',
     id,
@@ -255,6 +293,7 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
     hashingSalt,
     replyTo,
     cronPattern,
+    isDeleted,
   };
 }
 
