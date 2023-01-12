@@ -1,6 +1,6 @@
 import { hasKind } from './lang';
 
-export type ApiResponse<D extends any = any> = Success<D> | InputError | AppError;
+export type ApiResponse<D extends any = any> = Success<D> | NotAuthenticatedError | InputError | AppError;
 
 type LogData = Record<string, string>;
 
@@ -61,4 +61,20 @@ export function makeAppError(message: string): AppError {
 
 export function isAppError(x: unknown): x is AppError {
   return hasKind(x, 'AppError');
+}
+
+export interface NotAuthenticatedError {
+  kind: 'NotAuthenticatedError';
+  message: 'Not authenticated';
+}
+
+export function makeNotAuthenticatedError(): NotAuthenticatedError {
+  return {
+    kind: 'NotAuthenticatedError',
+    message: 'Not authenticated',
+  };
+}
+
+export function isNotAuthenticatedError(x: unknown): x is NotAuthenticatedError {
+  return hasKind(x, 'NotAuthenticatedError');
 }

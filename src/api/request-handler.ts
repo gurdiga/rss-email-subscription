@@ -1,5 +1,6 @@
 import { RequestHandler as ExpressRequestHandler, Request } from 'express';
-import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { ApiResponse } from '../shared/api-response';
+import { exhaustivenessCheck } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -34,16 +35,30 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
     const result = await handler(reqId, reqBody, reqParams, reqSession, app);
     const durationMs = new Date().getTime() - start.getTime();
 
-    if (isSuccess(result)) {
-      logInfo(si`${action} succeeded`, { ...result.logData, durationMs });
-      delete result.logData;
-      res.status(200).send(result);
-    } else if (isInputError(result)) {
-      logWarning(si`${action} input error`, { message: result.message, durationMs });
-      res.status(400).send(result);
-    } else if (isAppError(result)) {
-      logError(si`${action} failed`, { message: result.message, durationMs });
-      res.status(500).send(result);
+    switch (result.kind) {
+      case 'Success': {
+        logInfo(si`${action} succeeded`, { ...result.logData, durationMs });
+        delete result.logData;
+        res.status(200).send(result);
+        break;
+      }
+      case 'NotAuthenticatedError': {
+        logWarning(si`${action} not authenticated`, { durationMs });
+        res.status(401).send(result);
+        break;
+      }
+      case 'InputError': {
+        logWarning(si`${action} input error`, { message: result.message, durationMs });
+        res.status(400).send(result);
+        break;
+      }
+      case 'AppError': {
+        logError(si`${action} failed`, { message: result.message, durationMs });
+        res.status(500).send(result);
+        break;
+      }
+      default:
+        exhaustivenessCheck(result);
     }
   };
 }

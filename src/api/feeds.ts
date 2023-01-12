@@ -1,7 +1,7 @@
 import { getAccountIdList } from '../domain/account';
 import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed';
-import { makeFeedHashingSalt, makeFeed, storeFeed } from '../domain/feed';
-import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { makeFeedId, markFeedAsDeleted, makeFeedHashingSalt, makeFeed, storeFeed } from '../domain/feed';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isNotEmpty } from '../shared/array-utils';
 import { getRandomString } from '../shared/crypto';
 import { isErr } from '../shared/lang';
@@ -10,13 +10,47 @@ import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
+export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const feedId = makeFeedId(reqParams['feedId']);
+
+  if (isErr(feedId)) {
+    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
+    return makeInputError(si`Invalid feedId: ${feedId.reason}`);
+  }
+
+  const { accountId } = session;
+  const result = markFeedAsDeleted(accountId, feedId, app.storage);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${markFeedAsDeleted.name}`, { reason: result.reason, accountId: accountId.value });
+    return makeAppError('Failed to delete feed');
+  }
+
+  if (isFeedNotFound(result)) {
+    logWarning('Feed to delete not found', { feedId: result.feedId, accountId: accountId.value });
+    return makeInputError('Feed not found');
+  }
+
+  logInfo('Feed deleted', { feedId: feedId.value });
+
+  return makeSuccess('Feed deleted');
+};
+
 export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: updateFeed.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
     logWarning('Not authenticated', { reason: session.reason });
-    return makeInputError('Not authenticated');
+    return makeNotAuthenticatedError();
   }
 
   const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
@@ -69,7 +103,7 @@ export const createFeed: RequestHandler = async function createFeed(reqId, reqBo
 
   if (!isAuthenticatedSession(session)) {
     logWarning('Not authenticated', { reason: session.reason });
-    return makeInputError('Not authenticated');
+    return makeNotAuthenticatedError();
   }
 
   const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));

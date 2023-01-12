@@ -13,7 +13,7 @@ import { registrationConfirmation } from './registration-confirmation';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import { deauthentication } from './deauthentication';
-import { createFeed, listFeeds, updateFeed } from './feeds';
+import { createFeed, deleteFeed, listFeeds, updateFeed } from './feeds';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { getErrorMessage } from '../shared/lang';
@@ -47,6 +47,7 @@ async function main() {
   server.get('/feeds', makeRequestHandler(listFeeds, app));
   server.post('/feeds', makeRequestHandler(createFeed, app));
   server.put('/feeds', makeRequestHandler(updateFeed, app));
+  server.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
     server.use('/', express.static(process.env['DOCUMENT_ROOT']));

@@ -185,6 +185,7 @@ describe('API', () => {
           expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
           expect(storedFeed.cronPattern).to.equal(cronPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
+          expect(storedFeed.isDeleted).to.equal(false);
 
           const { responseData: feeds } = (await getUserFeeds(authenticationHeaders)).responseBody as Success<Feed[]>;
           const loadedFeed = feeds![0]!;
@@ -214,9 +215,17 @@ describe('API', () => {
           const updatedFeed = getStoredFeed(userEmail, testFeedId);
           expect(updatedFeed.displayName).to.equal(displayNameUpdated);
           expect(updatedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
+          expect(updatedFeed.isDeleted).be.false;
 
-          // TODO:
-          // - delete
+          const { responseBody: deleteResponse } = await deleteFeed(testFeedId, authenticationHeaders);
+          expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
+
+          const deletedFeed = getStoredFeed(userEmail, testFeedId);
+          expect(deletedFeed.isDeleted).be.true;
+
+          const { responseData: feedsAfterDeletion } = (await getUserFeeds(authenticationHeaders))
+            .responseBody as Success<Feed[]>;
+          expect(feedsAfterDeletion).to.deep.equal([]);
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
@@ -343,6 +352,12 @@ describe('API', () => {
     return await put('/feeds', data, authenticationHeaders);
   }
 
+  async function deleteFeed(feedId: FeedId, authenticationHeaders: Headers) {
+    const path = makePath('/feeds', feedId.value);
+
+    return await delete_(path, authenticationHeaders);
+  }
+
   async function authenticationDo(email: string, password: string) {
     return post('/authentication', { email, password });
   }
@@ -403,6 +418,15 @@ describe('API', () => {
       responseBody: response.headers.get('content-type')?.includes('application/json')
         ? await response.json()
         : await response.text(),
+      responseHeaders: response.headers,
+    };
+  }
+
+  async function delete_(relativePath: string, headers: Headers = new Headers()): Promise<TextApiResponse> {
+    const response = await fetch(makePath(apiBaseUrl, relativePath), { method: 'DELETE', headers });
+
+    return {
+      responseBody: await response.json(),
       responseHeaders: response.headers,
     };
   }

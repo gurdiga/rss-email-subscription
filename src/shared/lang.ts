@@ -96,3 +96,7 @@ export function readStringArray(stringArray: unknown): Result<string[]> {
 
   return makeErr('Not an array of strings');
 }
+
+export function exhaustivenessCheck(_x: never): never {
+  throw new Error('Exhaustiveness check failed');
+}
