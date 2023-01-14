@@ -225,7 +225,7 @@ watch-app:
 			message=$$(jq -r .message <<<"$$json")
 
 			echo "Subject: RES $$container_name $$severity: $$message"
-			echo "From: watch-app@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo "From: RES <watch-app@feedsubscription.com>";
 			echo
 			jq . <<<"$$json"
 		) |
@@ -431,7 +431,7 @@ list-sessions:
 	ls -l $$DATA_DIR_ROOT/sessions |
 	cat <( \
 		echo "Subject: RES list-sessions"; \
-		echo "From: list-sessions@feedsubscription.com"; \
+		echo "From: RES <list-sessions@feedsubscription.com>"; \
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -441,7 +441,7 @@ wathc-containers:
 	@docker stats --all --no-stream |
 	cat <( \
 		echo "Subject: RES wathc-containers"; \
-		echo "From: wathc-containers@feedsubscription.com"; \
+		echo "From: RES <wathc-containers@feedsubscription.com>"; \
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
