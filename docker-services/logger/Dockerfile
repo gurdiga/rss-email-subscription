@@ -1,12 +1,12 @@
-FROM alpine:3.16.3
+FROM alpine:3.17.1
 
 VOLUME "/var/log/syslog-ng"
 EXPOSE 514/udp 601/tcp 6514/tcp
 
 RUN apk add --no-cache \
-  syslog-ng=3.36.1-r0 \
-  logrotate=3.19.0-r3 \
-  tini=0.19.0-r0
+  syslog-ng=3.38.1-r0 \
+  logrotate=3.20.1-r3 \
+  tini=0.19.0-r1
 
 COPY syslog-ng.conf /etc/syslog-ng/syslog-ng.conf
 COPY logrotate.conf /etc/logrotate.d/feedsubscription.conf
