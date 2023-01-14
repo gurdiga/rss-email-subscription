@@ -1,3 +1,3 @@
-FROM boky/postfix:v3.4.0-alpine
+FROM boky/postfix:v3.5.1-alpine
 
 COPY etc/postfix/virtual /etc/postfix/virtual
