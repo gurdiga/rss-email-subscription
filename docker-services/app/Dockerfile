@@ -1,5 +1,5 @@
 ### --- build
-FROM node:16.18.1-alpine3.16 as build
+FROM node:16.19.0-alpine3.17 as build
 
 RUN apk -U upgrade
 
