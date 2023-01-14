@@ -274,7 +274,7 @@ watch-smtp-out:
 	while read -r timestamp rest; do
 		(
 			echo "Subject: RES smtp-out $$timestamp"
-			echo "From: watch-smtp-out@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo "From: RES <watch-smtp-out@feedsubscription.com>";
 			echo
 			echo "$$rest"
 		) |
@@ -413,7 +413,7 @@ prune-docker-images:
 	@docker image prune --force |
 	cat <( \
 		echo "Subject: RES prune-docker-images"; \
-		echo "From: prune-docker-images@feedsubscription.com"; \
+		echo "From: RES <prune-docker-images@feedsubscription.com>"; \
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
