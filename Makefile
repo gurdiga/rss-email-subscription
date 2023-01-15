@@ -166,7 +166,7 @@ reload-website:
 	@docker kill --signal=SIGHUP website | \
 	cat <( \
 		echo "Subject: RES reload-website"; \
-		echo "From: reload-website@feedsubscription.com"; \
+		echo "From: RES <reload-website@feedsubscription.com>"; \
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
