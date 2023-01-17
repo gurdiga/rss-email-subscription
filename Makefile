@@ -446,6 +446,16 @@ wathc-containers:
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+# cron 59 23 * * *
+404-report:
+	@grep -P "^`date +%F`.+\" 403 " .tmp/logs/feedsubscription/website.log |
+	cat <( \
+		echo "Subject: RES 404-report"; \
+		echo "From: RES <404-report@feedsubscription.com>"; \
+		echo; \
+	) - |
+	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+
 deno-notes:
 	# Sat Dec 24 16:36:11 EET 2022
 	# Gave Deno a quick shot
