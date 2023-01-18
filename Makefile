@@ -286,7 +286,7 @@ watch-smtp-out:
 delivery-report:
 	@function send_report() {
 		(
-			echo "Subject: RES Delivery report"
+			echo "Subject: RES delivery report"
 			echo "From: RES <delivery-report@feedsubscription.com>"
 			echo ""
 			cat
