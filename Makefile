@@ -449,7 +449,7 @@ wathc-containers:
 # cron 59 23 * * *
 404-report:
 	@grep -P "^`date +%F`.+\" 404 " .tmp/logs/feedsubscription/website.log |
-	sed -E -e 's/^\S+ \S+ \S+//' |
+	sed -E -e 's/^\S+ \S+ \S+ //' |
 	cat <( \
 		echo "Subject: RES 404-report"; \
 		echo "From: RES <404-report@feedsubscription.com>"; \
