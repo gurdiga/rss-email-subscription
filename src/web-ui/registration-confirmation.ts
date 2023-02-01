@@ -3,6 +3,7 @@ import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import { Pages } from '../shared/pages';
 
 async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
@@ -37,7 +38,7 @@ async function main() {
 
   if (isSuccess(response)) {
     hideElement(uiElements.progressIndicator);
-    navigateTo('/dashboard.html', 2000);
+    navigateTo(Pages.userStartPage, 2000);
     return;
   }
 }
