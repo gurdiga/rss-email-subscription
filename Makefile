@@ -126,10 +126,6 @@ smtp-out:
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
-start-delivery:
-	docker-compose --project-name res up --remove-orphans --detach \
-		-- smtp-out app
-
 start-app: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
@@ -143,12 +139,11 @@ start-api: website app
 
 start-website: website start-api
 
-o: open
-open:
-	open http://localhost:3000/
-
 start-testblog:
-	cd ~/tmp/testblog && make start
+	@#quiet
+	echo 'Run this:'
+	echo '  cd ~/tmp/testblog'
+	echo '  make start'
 
 stop:
 	docker-compose --project-name res down
