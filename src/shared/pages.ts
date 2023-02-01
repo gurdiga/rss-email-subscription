@@ -1,4 +1,4 @@
 export enum Pages {
-  userStartPage = '/feeds.html',
+  userStartPage = '/user/feeds.html',
   registrationConfirmationPage = '/user/registration-confirmation.html',
 }
