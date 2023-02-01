@@ -196,10 +196,10 @@ web-ui-systemjs:
 		./src/web-ui/systemjs-resolve-patch.js
 
 web-ui-watch:
-	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json &
+	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json --outDir $$DOCUMENT_ROOT/web-ui-scripts/ &
 
 start-dev: web-ui-systemjs web-ui-watch
-	node_modules/.bin/nodemon dist/api/server.js
+	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:
 	node_modules/.bin/ts-mocha --bail -R dot api-test.spec.ts
