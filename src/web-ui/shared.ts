@@ -153,11 +153,11 @@ export enum HttpMethod {
   POST = 'POST',
 }
 
-export function sendApiRequest(
+export function sendApiRequest<R extends any = any>(
   relativePath: string,
   method: HttpMethod = HttpMethod.GET,
   data: Record<string, string> = {}
-): Promise<ApiResponse> {
+): Promise<ApiResponse<R>> {
   const basePath = '/api';
   const urlEnncodedData = new URLSearchParams(data);
 
@@ -169,7 +169,7 @@ export function sendApiRequest(
   return fetch(url, { method, body })
     .then(assertFound)
     .then(assertHeader('content-type', 'application/json; charset=utf-8'))
-    .then(async (r) => (await r.json()) as ApiResponse);
+    .then(async (r) => (await r.json()) as ApiResponse<R>);
 }
 
 export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<void>): void {

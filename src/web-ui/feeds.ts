@@ -1,3 +1,4 @@
+import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { AppStatusUiElements, displayMainError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
 
@@ -18,21 +19,40 @@ async function main() {
 
   const feedList = await loadFeedList();
 
-  console.info('Hello feeds!!', { uiElements, feedList });
+  if (isErr(feedList)) {
+    displayMainError(feedList.reason);
+    return;
+  }
+
+  console.info('Hello feeds!', { uiElements, feedList });
 }
 
 // TODO: Move to ../shared ?
-interface UiFeedList {
+interface UiFeed {
   name: string;
   feedId: string; // ...or FeedId?
 }
 
-async function loadFeedList(): Promise<Result<UiFeedList>> {
-  const response = await attempt(() => sendApiRequest('/feeds', HttpMethod.GET));
+async function loadFeedList<L = UiFeed[]>(): Promise<Result<L>> {
+  const response = await attempt(() => sendApiRequest<L>('/feeds', HttpMethod.GET));
 
-  console.log('loadFeedList', { response });
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed list');
+  }
 
-  return makeErr('Not implemented');
+  if (isNotAuthenticatedError(response)) {
+    return makeErr('Not authenticated');
+  }
+
+  if (isAppError(response)) {
+    return makeErr('Application error when loading the feed list');
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed list');
+  }
+
+  return response.responseData!;
 }
 
 export interface FeedListUiElements extends AppStatusUiElements {
