@@ -1,5 +1,7 @@
+ARG NODE_VERSION=16.19.0-alpine3.17
+
 ### --- build
-FROM node:16.19.0-alpine3.17 as build
+FROM node:${NODE_VERSION} as build
 
 RUN apk -U upgrade
 
@@ -19,7 +21,7 @@ RUN cp --target-directory=dist/api/web-ui-scripts \
   ./src/web-ui/systemjs-resolve-patch.js
 
 ### --- run
-FROM node:16.17.1-alpine3.16
+FROM node:${NODE_VERSION}
 
 VOLUME /data
 WORKDIR /code
