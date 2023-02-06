@@ -59,16 +59,17 @@ describe('API', () => {
 
     describe('web-ui-scripts', () => {
       it('are served', async () => {
-        const { responseBody } = await get('/web-ui-scripts/web-ui/unsubscription-confirmation.js', 'text');
-        const expectedFileSize = 3217;
+        const sampleScript = '/web-ui-scripts/web-ui/unsubscription-confirmation.js';
+        const { responseBody } = await get(sampleScript, 'text');
 
-        expect(responseBody.length).to.equal(expectedFileSize);
+        expect(responseBody).to.equal(readFile(`dist/api/${sampleScript}`));
       });
     });
 
     describe('CORP policy', () => {
       it('allows embedding JS', async () => {
-        const { responseHeaders } = await get('/web-ui-scripts/web-ui/subscription-form.js', 'text');
+        const subscriptionFormEmbedScript = '/web-ui-scripts/web-ui/subscription-form.js';
+        const { responseHeaders } = await get(subscriptionFormEmbedScript, 'text');
 
         expect(responseHeaders.get('cross-origin-resource-policy')).to.equal('cross-origin');
       });
