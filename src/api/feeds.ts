@@ -166,7 +166,7 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
 
   if (!isAuthenticatedSession(session)) {
     logWarning('Not authenticated');
-    return makeInputError('Not authenticated');
+    return makeNotAuthenticatedError();
   }
 
   const { accountId } = session;
