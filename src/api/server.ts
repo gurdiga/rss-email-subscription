@@ -6,7 +6,7 @@ import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
 import { registration } from './registration';
 import { makeRequestHandler } from './request-handler';
-import { devOnly_RemoveCSPForSafari, initApp } from './init-app';
+import { initApp } from './init-app';
 import { makeCustomLoggers } from '../shared/logging';
 import { authentication } from './authentication';
 import { registrationConfirmation } from './registration-confirmation';
@@ -50,7 +50,7 @@ async function main() {
   server.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));
 
   if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
-    server.use('/', devOnly_RemoveCSPForSafari, express.static(process.env['DOCUMENT_ROOT']));
+    server.use('/', express.static(process.env['DOCUMENT_ROOT']));
   }
 
   const shutdownHandle = server.listen(port, () => {

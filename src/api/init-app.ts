@@ -1,4 +1,3 @@
-import { RequestHandler } from 'express';
 import { AppSettings, loadAppSettings } from '../domain/app-settings';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
@@ -36,13 +35,3 @@ export function initApp(): App {
 
   return { storage, settings, env };
 }
-
-export const devOnly_RemoveCSPForSafari: RequestHandler = (req, res, next) => {
-  if (req.headers['user-agent']?.includes('Safari/')) {
-    // In Safari, the CSP header overrides the <meta> CSP, and messes things up:
-    // Failed to load resource: An SSL error has occurred and a secure connection to the server cannot be made.
-    res.removeHeader('Content-Security-Policy');
-  }
-
-  next();
-};
