@@ -1,5 +1,6 @@
 import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { AppStatusUiElements, displayMainError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
 
 async function main() {
@@ -23,6 +24,10 @@ async function main() {
     displayMainError(feedList.reason);
     return;
   }
+
+  uiElements.spinner.remove();
+  uiElements.feedListPreamble.textContent =
+    feedList.length > 0 ? si`You’ve got ${feedList.length} feeds! 😎` : 'No feeds yet?! 🤔';
 
   console.info('Hello feeds!', { uiElements, feedList });
 }
