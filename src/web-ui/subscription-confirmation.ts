@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { displayMainError, fillUiElements, displayApiResponse } from './shared';
+import { displayMainError, fillUiElements, displayApiResponse, HttpMethod } from './shared';
 import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
 import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
 
@@ -48,7 +48,7 @@ function main() {
 
   uiElements.confirmButton.addEventListener('click', async () => {
     try {
-      const response = await sendApiRequest('/subscription-confirmation', { id: queryParams.id });
+      const response = await sendApiRequest('/subscription-confirmation', HttpMethod.POST, { id: queryParams.id });
 
       displayApiResponse(response, uiElements.apiResponseMessage);
     } catch (error) {

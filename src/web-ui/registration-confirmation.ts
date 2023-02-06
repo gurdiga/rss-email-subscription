@@ -3,6 +3,7 @@ import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import { HttpMethod } from './shared';
 import { Pages } from '../shared/pages';
 
 async function main() {
@@ -26,7 +27,7 @@ async function main() {
 
   unhideElement(uiElements.progressIndicator);
 
-  const response = await attempt(() => sendApiRequest('/registration-confirmation', { secret }));
+  const response = await attempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, { secret }));
 
   if (isErr(response)) {
     displayCommunicationError(response, uiElements.apiResponseMessage);

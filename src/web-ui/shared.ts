@@ -84,8 +84,14 @@ export function displayMainError(message: string) {
   reportError(message);
 }
 
+export type AppStatusUiElements = ApiResponseUiElements & AppErrorUiElements;
+
 export interface ApiResponseUiElements {
   apiResponseMessage: HTMLElement;
+}
+
+export interface AppErrorUiElements {
+  appErrorMessage: HTMLElement;
 }
 
 export function displayApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
@@ -142,14 +148,21 @@ export function assertFound(response: Response) {
   }
 }
 
-export function sendApiRequest(relativePath: string, data: Record<string, string>): Promise<ApiResponse> {
+export enum HttpMethod {
+  GET = 'GET',
+  POST = 'POST',
+}
+
+export function sendApiRequest(
+  relativePath: string,
+  method: HttpMethod = HttpMethod.GET,
+  data: Record<string, string> = {}
+): Promise<ApiResponse> {
   const basePath = '/api';
   const url = si`${basePath}${relativePath}`;
+  const body = new URLSearchParams(data);
 
-  return fetch(url, {
-    method: 'POST',
-    body: new URLSearchParams(data),
-  })
+  return fetch(url, { method, body })
     .then(assertFound)
     .then(assertHeader('content-type', 'application/json; charset=utf-8'))
     .then(async (r) => (await r.json()) as ApiResponse);

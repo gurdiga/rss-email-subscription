@@ -1,6 +1,6 @@
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { navigateTo, sendApiRequest } from './shared';
+import { HttpMethod, navigateTo, sendApiRequest } from './shared';
 import { clearValidationErrors, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
 import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
 import { Pages } from '../shared/pages';
@@ -35,7 +35,7 @@ function main() {
 
     preventDoubleClick(uiElements.submitButton, async () => {
       const response = await attempt(() =>
-        sendApiRequest('/authentication', {
+        sendApiRequest('/authentication', HttpMethod.POST, {
           email: uiElements.email.value,
           password: uiElements.password.value,
         })
