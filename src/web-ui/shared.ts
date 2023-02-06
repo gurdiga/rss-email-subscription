@@ -159,8 +159,12 @@ export function sendApiRequest(
   data: Record<string, string> = {}
 ): Promise<ApiResponse> {
   const basePath = '/api';
-  const url = si`${basePath}${relativePath}`;
-  const body = new URLSearchParams(data);
+  const urlEnncodedData = new URLSearchParams(data);
+
+  const [url, body] =
+    method === HttpMethod.POST
+      ? [si`${basePath}${relativePath}`, urlEnncodedData]
+      : [si`${basePath}${relativePath}?${urlEnncodedData.toString()}`, null];
 
   return fetch(url, { method, body })
     .then(assertFound)
