@@ -23,34 +23,38 @@ async function main() {
 
   const port = 3000;
   const server = express();
+  const router = express.Router();
   const app = initApp();
 
-  server.use(
+  router.use(
     '/web-ui-scripts',
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
     express.static(makePath(__dirname, 'web-ui-scripts'))
   );
-  server.use('/version.txt', express.static(makePath(__dirname, 'version.txt')));
-  server.use(helmet());
-  server.use(cors());
-  server.get('/cors-test', (_req, res) => res.send('CORS test'));
-  server.use(express.urlencoded({ extended: true }));
-  server.use(makeExpressSession(app));
-  server.get('/session-test', makeRequestHandler(sessionTest, app));
-  server.post('/subscription', makeRequestHandler(subscription, app));
-  server.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
-  server.post('/unsubscription', makeRequestHandler(unsubscription, app));
-  server.post('/registration', makeRequestHandler(registration, app));
-  server.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
-  server.post('/authentication', makeRequestHandler(authentication, app));
-  server.post('/deauthentication', makeRequestHandler(deauthentication, app));
-  server.get('/feeds', makeRequestHandler(listFeeds, app));
-  server.post('/feeds', makeRequestHandler(createFeed, app));
-  server.put('/feeds', makeRequestHandler(updateFeed, app));
-  server.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));
+  router.use('/version.txt', express.static(makePath(__dirname, 'version.txt')));
+  router.use(helmet());
+  router.use(cors());
+  router.get('/cors-test', (_req, res) => res.send('CORS test'));
+  router.use(express.urlencoded({ extended: true }));
+  router.use(makeExpressSession(app));
+  router.get('/session-test', makeRequestHandler(sessionTest, app));
+  router.post('/subscription', makeRequestHandler(subscription, app));
+  router.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
+  router.post('/unsubscription', makeRequestHandler(unsubscription, app));
+  router.post('/registration', makeRequestHandler(registration, app));
+  router.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
+  router.post('/authentication', makeRequestHandler(authentication, app));
+  router.post('/deauthentication', makeRequestHandler(deauthentication, app));
+  router.get('/feeds', makeRequestHandler(listFeeds, app));
+  router.post('/feeds', makeRequestHandler(createFeed, app));
+  router.put('/feeds', makeRequestHandler(updateFeed, app));
+  router.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));
 
-  if (process.env['NODE_ENV'] === 'development' && process.env['DOCUMENT_ROOT']) {
-    server.use('/', express.static(process.env['DOCUMENT_ROOT']));
+  if (process.env['NODE_ENV'] === 'development') {
+    server.use('/api', router);
+    server.use('/', express.static(process.env['DOCUMENT_ROOT']!));
+  } else {
+    server.use(router);
   }
 
   const shutdownHandle = server.listen(port, () => {
