@@ -13,7 +13,8 @@ import { readFile } from './src/shared/io-isolation';
 import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
 import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';
-import { makeUnixCronPattern, UnixCronPattern } from './src/domain/cron-pattern';
+import { UnixCronPattern } from './src/domain/cron-pattern';
+import { makeUnixCronPattern } from './src/domain/cron-pattern-making';
 
 describe('API', () => {
   let step = 0; // NOTE: test are expected to run in source order

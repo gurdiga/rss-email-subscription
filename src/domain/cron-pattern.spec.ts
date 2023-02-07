@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
-import { UnixCronPattern, makeUnixCronPattern } from './cron-pattern';
+import { UnixCronPattern } from './cron-pattern';
+import { makeUnixCronPattern } from './cron-pattern-making';
 
 describe(makeUnixCronPattern.name, () => {
   it('returns a CronPattern value when the syntax is recognized', () => {

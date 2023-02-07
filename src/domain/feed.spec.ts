@@ -11,7 +11,8 @@ import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from './account';
 import { si } from '../shared/string-utils';
-import { makeUnixCronPattern, UnixCronPattern } from './cron-pattern';
+import { UnixCronPattern } from './cron-pattern';
+import { makeUnixCronPattern } from './cron-pattern-making';
 
 const accountId = makeTestAccountId();
 const feedId = makeTestFeedId();

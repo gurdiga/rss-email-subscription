@@ -2,7 +2,8 @@ import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { getTypeName, isErr, isObject, isString, makeErr, Result, hasKind } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeUrl } from '../shared/url';
-import { makeUnixCronPattern, UnixCronPattern } from './cron-pattern';
+import { UnixCronPattern } from './cron-pattern';
+import { makeUnixCronPattern } from './cron-pattern-making';
 
 export interface Feed {
   kind: 'Feed';

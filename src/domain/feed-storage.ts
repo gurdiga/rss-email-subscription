@@ -4,7 +4,7 @@ import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from './account';
 import { makeAccountNotFound } from './account';
-import { makeUnixCronPattern } from './cron-pattern';
+import { makeUnixCronPattern } from './cron-pattern-making';
 import { FeedId, Feed, makeFeedHashingSalt, MakeFeedInput, makeFeed, makeFeedId, isFeedId, isFeed } from './feed-blob';
 
 export interface FeedStoredData {
