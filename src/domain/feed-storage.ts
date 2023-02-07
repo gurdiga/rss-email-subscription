@@ -58,7 +58,7 @@ export function feedExists(
   };
 
   for (const accountId of accountIds) {
-    const accountHasFeedResult = accountHasFeedFn(accountId, feedId, storage); // TODO: Handle th Err
+    const accountHasFeedResult = accountHasFeedFn(accountId, feedId, storage);
 
     if (isErr(accountHasFeedResult)) {
       result.errs.push(accountHasFeedResult);

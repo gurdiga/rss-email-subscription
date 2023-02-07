@@ -164,7 +164,7 @@ describe('API', () => {
     }
   });
 
-  describe('/feeds', () => {
+  describe('/api/feeds', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
 
     context('when authenticated', () => {
