@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import { Feed, FeedId } from './feed-blob';
+import { Feed, FeedId } from './feed';
 import { alterExistingFeed, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
 import { markFeedAsDeleted, FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, loadFeed } from './feed-storage';
-import { makeFeed, makeFeedId, MakeFeedInput } from './feed-blob';
+import { makeFeedId } from './feed';
+import { makeFeed, MakeFeedInput } from './feed-making';
 import { loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
-import { FeedHashingSalt, makeFeedHashingSalt } from './feed-blob';
+import { FeedHashingSalt, makeFeedHashingSalt } from './feed';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';

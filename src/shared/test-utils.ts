@@ -3,8 +3,10 @@ import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { Feed, FeedHashingSalt, FeedId, isFeed, isFeedHashingSalt, isFeedId, makeFeed } from '../domain/feed-blob';
-import { makeFeedHashingSalt, makeFeedId, MakeFeedInput } from '../domain/feed-blob';
+import { Feed, FeedHashingSalt, FeedId, isFeed, isFeedHashingSalt, isFeedId } from '../domain/feed';
+import { makeFeed } from '../domain/feed-making';
+import { makeFeedHashingSalt, makeFeedId } from '../domain/feed';
+import { MakeFeedInput } from '../domain/feed-making';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from './storage';
 import { EmailAddress, isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 

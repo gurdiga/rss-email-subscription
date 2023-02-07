@@ -5,7 +5,8 @@ import { makePath } from '../shared/path-utils';
 import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from './account';
 import { makeAccountNotFound } from './account';
 import { makeUnixCronPattern } from './cron-pattern-making';
-import { FeedId, Feed, makeFeedHashingSalt, MakeFeedInput, makeFeed, makeFeedId, isFeedId, isFeed } from './feed-blob';
+import { FeedId, Feed, makeFeedHashingSalt, makeFeedId, isFeedId, isFeed } from './feed';
+import { MakeFeedInput, makeFeed } from './feed-making';
 
 export interface FeedStoredData {
   displayName: string;
