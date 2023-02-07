@@ -27,9 +27,11 @@ async function main() {
 
   uiElements.spinner.remove();
   uiElements.feedListPreamble.textContent =
-    feedList.length > 0 ? si`You’ve got ${feedList.length} feeds! 😎` : 'No feeds yet?! 🤔';
+    feedList.length > 0
+      ? si`You have ${feedList.length} feed${feedList.length === 1 ? '' : 's'} registered at the moment.`
+      : 'You don’t have any feeds yet. Go ahead and add one!';
 
-  console.info('Hello feeds!', { uiElements, feedList });
+  console.info('Hello feeds!', { uiElements, feedList }); // TODO: Remove this
 }
 
 // TODO: Move to ../shared ?
