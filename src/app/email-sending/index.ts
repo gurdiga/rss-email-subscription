@@ -8,7 +8,7 @@ import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
 import { Feed } from '../../domain/feed';
-import { isFeedNotFound } from '../../domain/feed-storage';
+import { isFeedNotFound } from '../../storage/feed-storage';
 import { AppStorage } from '../../shared/storage';
 import { AccountId } from '../../domain/account';
 import { si } from '../../shared/string-utils';

@@ -6,7 +6,7 @@ import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
 import { Feed, FeedId, makeFeedId } from '../domain/feed';
-import { findFeedAccountId, loadFeed, isFeedNotFound } from '../domain/feed-storage';
+import { findFeedAccountId, loadFeed, isFeedNotFound } from '../storage/feed-storage';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';

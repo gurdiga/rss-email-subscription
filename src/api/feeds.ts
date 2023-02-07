@@ -1,8 +1,8 @@
 import { getAccountIdList } from '../domain/account';
-import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed-storage';
+import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../storage/feed-storage';
 import { makeFeedId, makeFeedHashingSalt } from '../domain/feed';
 import { makeFeed } from '../domain/feed-making';
-import { markFeedAsDeleted, storeFeed } from '../domain/feed-storage';
+import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isNotEmpty } from '../shared/array-utils';
 import { getRandomString } from '../shared/crypto';

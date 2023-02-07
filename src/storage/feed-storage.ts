@@ -2,11 +2,11 @@ import { Err, isErr, makeErr, Result, hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
-import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from './account';
-import { makeAccountNotFound } from './account';
-import { makeUnixCronPattern } from './cron-pattern-making';
-import { FeedId, Feed, makeFeedHashingSalt, makeFeedId, isFeedId, isFeed } from './feed';
-import { MakeFeedInput, makeFeed } from './feed-making';
+import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from '../domain/account';
+import { makeAccountNotFound } from '../domain/account';
+import { makeUnixCronPattern } from '../domain/cron-pattern-making';
+import { FeedId, Feed, makeFeedHashingSalt, makeFeedId, isFeedId, isFeed } from '../domain/feed';
+import { MakeFeedInput, makeFeed } from '../domain/feed-making';
 
 export interface FeedStoredData {
   displayName: string;
