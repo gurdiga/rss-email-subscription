@@ -4,7 +4,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { findAccountId, makeFeedId } from '../domain/feed';
+import { findAccountId, makeFeedId } from '../domain/feed-blob';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 

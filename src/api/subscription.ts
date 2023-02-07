@@ -4,7 +4,7 @@ import { EmailAddress, makeHashedEmail, HashedEmail, makeFullEmailAddress } from
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';
-import { Feed, FeedId, findAccountId, loadFeed, isFeedNotFound, makeFeedId } from '../domain/feed';
+import { Feed, FeedId, findAccountId, loadFeed, isFeedNotFound, makeFeedId } from '../domain/feed-blob';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';

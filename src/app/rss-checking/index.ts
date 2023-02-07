@@ -1,5 +1,5 @@
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
-import { Feed } from '../../domain/feed';
+import { Feed } from '../../domain/feed-blob';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { AppStorage } from '../../shared/storage';

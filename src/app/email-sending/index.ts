@@ -7,7 +7,7 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { deleteItem } from './item-cleanup';
 import { requireEnv } from '../../shared/env';
 import { EmailDeliveryEnv } from './email-delivery';
-import { Feed, isFeedNotFound } from '../../domain/feed';
+import { Feed, isFeedNotFound } from '../../domain/feed-blob';
 import { AppStorage } from '../../shared/storage';
 import { AccountId } from '../../domain/account';
 import { si } from '../../shared/string-utils';

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getFeedStorageKey } from '../../domain/feed';
+import { getFeedStorageKey } from '../../domain/feed-blob';
 import { ReadFileFn } from '../../shared/io-isolation';
 import { Err, isErr, makeErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
