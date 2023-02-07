@@ -1,6 +1,5 @@
 import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
-import { Err, getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
-import { hasKind } from '../shared/lang';
+import { Err, getTypeName, isErr, isObject, isString, makeErr, Result, hasKind } from '../shared/lang';
 import { AppStorage } from '../shared/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
