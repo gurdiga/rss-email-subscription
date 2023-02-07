@@ -72,6 +72,19 @@ export function attempt<F extends AnyFunction>(f: F): Result<ReturnType<F>> {
   }
 }
 
+/**
+ * This is me trying to shoehorn the try/catch construct into railway programming.
+ */
+type AnyAsyncFunction = (...args: unknown[]) => Promise<any>;
+
+export async function asyncAttempt<F extends AnyAsyncFunction>(f: F): Promise<Result<ReturnType<F>>> {
+  try {
+    return await f();
+  } catch (error) {
+    return makeErr(error);
+  }
+}
+
 export function isObject(value: unknown): value is Object {
   // As per https://nodejs.org/api/util.html#utilisobjectobject
   return value !== null && typeof value === 'object';
