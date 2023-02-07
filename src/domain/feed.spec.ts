@@ -1,7 +1,9 @@
 import { expect } from 'chai';
-import { alterExistingFeed, Feed, feedExists, FeedExistsResult, FeedId, FeedsByAccountId } from './feed-blob';
-import { markFeedAsDeleted, FeedStoredData, findAccountId, getFeedJsonStorageKey, loadFeed } from './feed-blob';
-import { loadFeedsByAccountId, makeFeed, makeFeedId, MakeFeedInput, makeFeedNotFound, storeFeed } from './feed-blob';
+import { Feed, FeedId } from './feed-blob';
+import { alterExistingFeed, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
+import { markFeedAsDeleted, FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, loadFeed } from './feed-storage';
+import { makeFeed, makeFeedId, MakeFeedInput } from './feed-blob';
+import { loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { FeedHashingSalt, makeFeedHashingSalt } from './feed-blob';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
@@ -310,12 +312,12 @@ describe(makeFeedId.name, () => {
   });
 });
 
-describe(findAccountId.name, () => {
+describe(findFeedAccountId.name, () => {
   it('finds first account that has a feed with given Id', () => {
     const storage = makeTestStorageFromSnapshot({
       [getFeedJsonStorageKey(accountId, feedId)]: <FeedStoredData>{},
     });
-    const result = findAccountId(feedId, storage);
+    const result = findFeedAccountId(feedId, storage);
 
     expect(result).to.deep.equal(accountId);
   });
@@ -324,7 +326,7 @@ describe(findAccountId.name, () => {
     const storage = makeTestStorageFromSnapshot({
       [getAccountStorageKey(accountId)]: <AccountData>{},
     });
-    const result = findAccountId(feedId, storage);
+    const result = findFeedAccountId(feedId, storage);
 
     expect(result).to.deep.equal(makeAccountNotFound());
   });

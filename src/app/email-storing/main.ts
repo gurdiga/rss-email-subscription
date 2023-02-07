@@ -1,7 +1,8 @@
 import path from 'node:path';
 import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
 import { storeEmails } from '../email-sending/emails';
-import { findAccountId, loadFeed, isFeedNotFound, makeFeedId } from '../../domain/feed-blob';
+import { makeFeedId } from '../../domain/feed-blob';
+import { findFeedAccountId, loadFeed, isFeedNotFound } from '../../domain/feed-storage';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
@@ -37,7 +38,7 @@ async function main(): Promise<number | undefined> {
 
   const storage = makeStorage(dataDirRoot);
   const inputFilePath = path.join(dataDirRoot, feedId.value, 'emails.csv');
-  const accountId = findAccountId(feedId, storage);
+  const accountId = findFeedAccountId(feedId, storage);
 
   if (isErr(accountId)) {
     logError(si`Failed to find feed account`, { reason: accountId.reason });

@@ -1,4 +1,5 @@
-import { FeedId, getFeedStorageKey } from '../../domain/feed-blob';
+import { FeedId } from '../../domain/feed-blob';
+import { getFeedStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';

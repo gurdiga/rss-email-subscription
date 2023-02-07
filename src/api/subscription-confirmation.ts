@@ -4,7 +4,8 @@ import { makeCustomLoggers } from '../shared/logging';
 import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { findAccountId, isFeedNotFound, makeFeedId } from '../domain/feed-blob';
+import { makeFeedId } from '../domain/feed-blob';
+import { findFeedAccountId, isFeedNotFound } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 
@@ -32,7 +33,7 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
     return makeInputError('Invalid confirmation link');
   }
 
-  const accountId = findAccountId(feedId, storage);
+  const accountId = findFeedAccountId(feedId, storage);
 
   if (isErr(accountId)) {
     logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });

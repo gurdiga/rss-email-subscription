@@ -1,6 +1,7 @@
 import { checkRss } from './rss-checking/index';
 import { sendEmails } from './email-sending/index';
-import { findAccountId, loadFeed, makeFeedId } from '../domain/feed-blob';
+import { makeFeedId } from '../domain/feed-blob';
+import { findFeedAccountId, loadFeed } from '../domain/feed-storage';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
@@ -42,7 +43,7 @@ if (isErr(feedId)) {
   process.exit(1);
 }
 
-const accountId = findAccountId(feedId, storage);
+const accountId = findFeedAccountId(feedId, storage);
 
 if (isErr(accountId)) {
   logError('Failed to find feed account', { reason: accountId.reason });

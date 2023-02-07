@@ -3,7 +3,7 @@ import { makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeSpy, makeTestStorage, makeTestAccountId, makeTestFeedId, Spy, Stub } from '../../shared/test-utils';
 import { getLastPostMetadata, LastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
-import { getFeedStorageKey } from '../../domain/feed-blob';
+import { getFeedStorageKey } from '../../domain/feed-storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 

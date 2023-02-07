@@ -1,6 +1,7 @@
 import { getAccountIdList } from '../domain/account';
-import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed-blob';
-import { makeFeedId, markFeedAsDeleted, makeFeedHashingSalt, makeFeed, storeFeed } from '../domain/feed-blob';
+import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../domain/feed-storage';
+import { makeFeedId, makeFeedHashingSalt, makeFeed } from '../domain/feed-blob';
+import { markFeedAsDeleted, storeFeed } from '../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isNotEmpty } from '../shared/array-utils';
 import { getRandomString } from '../shared/crypto';

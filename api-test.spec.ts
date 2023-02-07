@@ -3,8 +3,10 @@ import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey, isAccountId } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { Feed, FeedId, FeedStoredData, findAccountId, getFeedJsonStorageKey } from './src/domain/feed-blob';
-import { getFeedStorageKey, MakeFeedInput } from './src/domain/feed-blob';
+import { Feed, FeedId } from './src/domain/feed-blob';
+import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/domain/feed-storage';
+import { MakeFeedInput } from './src/domain/feed-blob';
+import { getFeedStorageKey } from './src/domain/feed-storage';
 import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/shared/io-isolation';
@@ -283,7 +285,7 @@ describe('API', () => {
         'repeated subscription result'
       );
 
-      const accountId = findAccountId(testFeedId, storage) as AccountId;
+      const accountId = findFeedAccountId(testFeedId, storage) as AccountId;
       expect(isAccountId(accountId), 'feed account not found').to.be.true;
 
       const emails = getFeedSubscriberEmails(accountId, testFeedId);
