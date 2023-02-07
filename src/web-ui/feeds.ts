@@ -31,32 +31,61 @@ async function main() {
 }
 
 function displayFeedList(feedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
-  if (feedList.length === 0) {
-    uiElements.feedListPreamble.textContent = 'You don’t have any feeds yet. Go ahead and add one!';
-    uiElements.feedListPreamble.removeAttribute('hidden');
-    return;
-  }
+  const feedListData = buildFeedListData(feedList);
 
-  const pluralSuffix = feedList.length === 1 ? '' : 's';
-  const message = si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`;
-  const feedListItems = feedList.map(makeFeedListItem);
-
-  uiElements.feedListPreamble.textContent = message;
+  uiElements.feedListPreamble.textContent = feedListData.preambleMessage;
   uiElements.feedListPreamble.removeAttribute('hidden');
 
-  uiElements.feedList.append(...feedListItems);
-  uiElements.feedList.removeAttribute('hidden');
+  if (feedListData.shouldDisplayFeedList) {
+    const htmlListItems = feedListData.linkData.map(makeHtmlListItem);
+
+    uiElements.feedList.append(...htmlListItems);
+    uiElements.feedList.removeAttribute('hidden');
+  }
 }
 
-function makeFeedListItem(item: UiFeedListItem): HTMLLIElement {
-  const li = document.createElement('li');
-  const a = document.createElement('a');
+export interface FeedListData {
+  preambleMessage: string;
+  linkData: FeedLinkData[];
+  shouldDisplayFeedList: boolean;
+}
 
+interface FeedLinkData {
+  text: string;
+  href: string;
+}
+
+export function buildFeedListData(feedList: UiFeedListItem[]): FeedListData {
+  const pluralSuffix = feedList.length === 1 ? '' : 's';
+  const preambleMessage =
+    feedList.length === 0
+      ? 'You don’t have any feeds yet. Go ahead and add one!'
+      : si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`;
+
+  const linkData = feedList.map(makeLinkData);
+  const shouldDisplayFeedList = feedList.length > 0;
+
+  return {
+    preambleMessage,
+    linkData,
+    shouldDisplayFeedList,
+  };
+}
+
+function makeLinkData(item: UiFeedListItem): FeedLinkData {
+  const text = item.displayName;
   const hrefParams = new URLSearchParams({ id: item.feedId.value }).toString();
   const href = si`${PagePaths.feedManage}?${hrefParams}`;
 
-  a.textContent = item.displayName;
-  a.href = href;
+  return { text, href };
+}
+
+function makeHtmlListItem(data: FeedLinkData): HTMLLIElement {
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+
+  a.textContent = data.text;
+  a.href = data.href;
 
   li.append(a);
 
