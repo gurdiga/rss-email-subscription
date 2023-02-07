@@ -9,16 +9,12 @@ import { AppStorage } from '../../shared/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';
+import { EmailAddress } from '../../domain/email-address';
 
 export interface EmailList {
   kind: 'EmailList';
   validEmails: EmailAddress[];
   invalidEmails: string[];
-}
-
-export interface EmailAddress {
-  kind: 'EmailAddress';
-  value: string;
 }
 
 export interface FullEmailAddress {

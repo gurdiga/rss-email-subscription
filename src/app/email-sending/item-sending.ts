@@ -1,7 +1,8 @@
 import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
-import { EmailAddress, FullEmailAddress, HashedEmail } from './emails';
+import { FullEmailAddress, HashedEmail } from './emails';
+import { EmailAddress } from '../../domain/email-address';
 import { FeedId } from '../../domain/feed';
 import { si } from '../../shared/string-utils';
 

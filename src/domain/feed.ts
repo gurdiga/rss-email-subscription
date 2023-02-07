@@ -1,4 +1,4 @@
-import { EmailAddress } from '../app/email-sending/emails';
+import { EmailAddress } from './email-address';
 import { getTypeName, isString, makeErr, Result, hasKind } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';

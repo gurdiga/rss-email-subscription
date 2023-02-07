@@ -2,7 +2,8 @@
 
 import { rmSync } from 'node:fs';
 import { basename } from 'node:path';
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from '../app/email-sending/emails';
+import { EmailAddress } from '../domain/email-address';
 import { accountsStorageKey, getAccountIdByEmail } from '../domain/account';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';

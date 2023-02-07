@@ -1,4 +1,5 @@
-import { EmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from '../app/email-sending/emails';
+import { EmailAddress } from '../domain/email-address';
 import { AccountId, getAccountIdByEmail, loadAccount } from '../domain/account';
 import { makePassword, Password } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';

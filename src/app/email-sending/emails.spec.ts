@@ -7,7 +7,8 @@ import { makePath } from '../../shared/path-utils';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId } from '../../shared/test-utils';
 import { makeTestEmailAddress } from '../../shared/test-utils';
 import { makeThrowingStub, Stub } from '../../shared/test-utils';
-import { EmailAddress, EmailList, parseEmails, makeEmailAddress, readEmailListFromCsvFile, EmailIndex } from './emails';
+import { EmailList, parseEmails, makeEmailAddress, readEmailListFromCsvFile, EmailIndex } from './emails';
+import { EmailAddress } from '../../domain/email-address';
 import { StoredEmails, loadStoredEmails, maxEmailLength, addEmail, EmailHashFn, HashedEmail } from './emails';
 
 describe(parseEmails.name, () => {
