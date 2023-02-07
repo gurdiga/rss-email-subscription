@@ -1,5 +1,6 @@
 import { UiFeedListItem } from '../domain/feed';
 import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
+import { isEmpty } from '../shared/array-utils';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
@@ -37,7 +38,7 @@ function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiEle
   feedListPreamble.textContent = feedListData.preambleMessage;
   feedListPreamble.removeAttribute('hidden');
 
-  if (feedListData.shouldDisplayFeedList) {
+  if (feedListData.linkData) {
     const htmlListItems = feedListData.linkData.map(makeHtmlListItem);
 
     feedList.append(...htmlListItems);
@@ -47,8 +48,7 @@ function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiEle
 
 export interface FeedListData {
   preambleMessage: string;
-  linkData: FeedLinkData[];
-  shouldDisplayFeedList: boolean;
+  linkData?: FeedLinkData[];
 }
 
 interface FeedLinkData {
@@ -58,19 +58,13 @@ interface FeedLinkData {
 
 export function buildFeedListData(feedList: UiFeedListItem[]): FeedListData {
   const pluralSuffix = feedList.length === 1 ? '' : 's';
-  const preambleMessage =
-    feedList.length === 0
-      ? 'You don’t have any feeds yet. Go ahead and add one!'
-      : si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`;
 
-  const linkData = feedList.map(makeLinkData);
-  const shouldDisplayFeedList = feedList.length > 0;
-
-  return {
-    preambleMessage,
-    linkData,
-    shouldDisplayFeedList,
-  };
+  return isEmpty(feedList)
+    ? { preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!' }
+    : {
+        preambleMessage: si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`,
+        linkData: feedList.map(makeLinkData),
+      };
 }
 
 function makeLinkData(item: UiFeedListItem): FeedLinkData {
