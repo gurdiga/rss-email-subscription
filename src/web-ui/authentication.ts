@@ -3,7 +3,7 @@ import { attempt, isErr } from '../shared/lang';
 import { HttpMethod, navigateTo, sendApiRequest } from './shared';
 import { clearValidationErrors, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
 import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
-import { Pages } from '../shared/pages';
+import { PagePaths } from '../shared/page-paths';
 
 export interface AuthenticationUiElements extends FormUiElements, ApiResponseUiElements {}
 
@@ -54,7 +54,7 @@ function main() {
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       if (isSuccess(response)) {
-        navigateTo(Pages.userStartPage, 1000);
+        navigateTo(PagePaths.userStart, 1000);
       }
     });
   });

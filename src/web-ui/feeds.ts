@@ -1,6 +1,7 @@
 import { UiFeedListItem } from '../domain/feed';
 import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
 import { AppStatusUiElements, displayMainError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
 
@@ -8,7 +9,7 @@ async function main() {
   const uiElements = requireUiElements<FeedListUiElements>({
     spinner: '#spinner',
     feedListPreamble: '#feed-list-preamble',
-    feedList: '#feed-list',
+    feedList: 'ol#feed-list',
     addNewFeedButton: '#add-new-feed-button',
     apiResponseMessage: '#api-response-message',
     appErrorMessage: '#app-error-message',
@@ -27,12 +28,39 @@ async function main() {
   }
 
   uiElements.spinner.remove();
-  uiElements.feedListPreamble.textContent =
-    feedList.length > 0
-      ? si`You have ${feedList.length} feed${feedList.length === 1 ? '' : 's'} registered at the moment.`
-      : 'You don’t have any feeds yet. Go ahead and add one!';
+  displayFeedList(feedList, uiElements);
+}
 
-  console.info('Hello feeds!', { uiElements, feedList }); // TODO: Remove this
+function displayFeedList(feedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
+  if (feedList.length === 0) {
+    uiElements.feedListPreamble.textContent = 'You don’t have any feeds yet. Go ahead and add one!';
+    return;
+  }
+
+  const pluralSuffix = feedList.length === 1 ? '' : 's';
+  const message = si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`;
+  const feedListItems = feedList.map(makeFeedListItem);
+
+  uiElements.feedListPreamble.textContent = message;
+  uiElements.feedListPreamble.removeAttribute('hidden');
+
+  uiElements.feedList.append(...feedListItems);
+  uiElements.feedList.removeAttribute('hidden');
+}
+
+function makeFeedListItem(item: UiFeedListItem): HTMLLIElement {
+  const li = document.createElement('li');
+  const a = document.createElement('a');
+
+  const hrefParams = new URLSearchParams({ id: item.feedId.value }).toString();
+  const href = si`${PagePaths.feedManage}?${hrefParams}`;
+
+  a.textContent = item.displayName;
+  a.href = href;
+
+  li.append(a);
+
+  return li;
 }
 
 async function loadFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
@@ -60,7 +88,7 @@ async function loadFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
 export interface FeedListUiElements extends AppStatusUiElements {
   spinner: HTMLElement;
   feedListPreamble: HTMLElement;
-  feedList: HTMLElement;
+  feedList: HTMLOListElement;
   addNewFeedButton: HTMLElement;
 }
 
