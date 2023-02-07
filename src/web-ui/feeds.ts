@@ -6,11 +6,10 @@ import { si } from '../shared/string-utils';
 import { AppStatusUiElements, displayMainError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
 
 async function main() {
-  const uiElements = requireUiElements<FeedListUiElements>({
+  const uiElements = requireUiElements<UiElements>({
     spinner: '#spinner',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
-    addNewFeedButton: '#add-new-feed-button',
     apiResponseMessage: '#api-response-message',
     appErrorMessage: '#app-error-message',
   });
@@ -34,6 +33,7 @@ async function main() {
 function displayFeedList(feedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
   if (feedList.length === 0) {
     uiElements.feedListPreamble.textContent = 'You don’t have any feeds yet. Go ahead and add one!';
+    uiElements.feedListPreamble.removeAttribute('hidden');
     return;
   }
 
@@ -85,11 +85,13 @@ async function loadFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-export interface FeedListUiElements extends AppStatusUiElements {
+interface UiElements extends AppStatusUiElements, FeedListUiElements {
   spinner: HTMLElement;
+}
+
+interface FeedListUiElements {
   feedListPreamble: HTMLElement;
   feedList: HTMLOListElement;
-  addNewFeedButton: HTMLElement;
 }
 
 globalThis.window && main();
