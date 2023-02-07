@@ -19,28 +19,29 @@ async function main() {
     return;
   }
 
-  const feedList = await loadFeedList();
+  const uiFeedList = await loadUiFeedList();
 
-  if (isErr(feedList)) {
-    displayMainError(feedList.reason);
+  if (isErr(uiFeedList)) {
+    displayMainError(uiFeedList.reason);
     return;
   }
 
   uiElements.spinner.remove();
-  displayFeedList(feedList, uiElements);
+  displayFeedList(uiFeedList, uiElements);
 }
 
-function displayFeedList(feedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
-  const feedListData = buildFeedListData(feedList);
+function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
+  const { feedListPreamble, feedList } = uiElements;
+  const feedListData = buildFeedListData(uiFeedList);
 
-  uiElements.feedListPreamble.textContent = feedListData.preambleMessage;
-  uiElements.feedListPreamble.removeAttribute('hidden');
+  feedListPreamble.textContent = feedListData.preambleMessage;
+  feedListPreamble.removeAttribute('hidden');
 
   if (feedListData.shouldDisplayFeedList) {
     const htmlListItems = feedListData.linkData.map(makeHtmlListItem);
 
-    uiElements.feedList.append(...htmlListItems);
-    uiElements.feedList.removeAttribute('hidden');
+    feedList.append(...htmlListItems);
+    feedList.removeAttribute('hidden');
   }
 }
 
@@ -92,7 +93,7 @@ function makeHtmlListItem(data: FeedLinkData): HTMLLIElement {
   return li;
 }
 
-async function loadFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
+async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   const response = await attempt(() => sendApiRequest<L>('/feeds', HttpMethod.GET));
 
   if (isErr(response)) {
