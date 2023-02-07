@@ -131,6 +131,7 @@ start-app: app
 		-- app
 
 start-api: website app
+	export NODE_ENV="production"
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api > /dev/null &
 	sleep 1
