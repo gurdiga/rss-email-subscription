@@ -73,3 +73,15 @@ export function makeFeedHashingSalt(input: unknown): Result<FeedHashingSalt> {
 export function isFeedHashingSalt(value: unknown): value is FeedHashingSalt {
   return hasKind(value, 'FeedHashingSalt');
 }
+
+export interface UiFeedListItem {
+  displayName: string;
+  feedId: FeedId;
+}
+
+export function makeUiFeedListItem(feed: Feed): UiFeedListItem {
+  return {
+    displayName: feed.displayName,
+    feedId: feed.id,
+  };
+}

@@ -1,3 +1,4 @@
+import { UiFeedListItem } from '../domain/feed';
 import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -34,13 +35,7 @@ async function main() {
   console.info('Hello feeds!', { uiElements, feedList }); // TODO: Remove this
 }
 
-// TODO: Move to ../shared ?
-interface UiFeed {
-  name: string;
-  feedId: string; // ...or FeedId?
-}
-
-async function loadFeedList<L = UiFeed[]>(): Promise<Result<L>> {
+async function loadFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   const response = await attempt(() => sendApiRequest<L>('/feeds', HttpMethod.GET));
 
   if (isErr(response)) {

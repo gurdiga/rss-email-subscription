@@ -1,6 +1,6 @@
 import { getAccountIdList } from '../domain/account';
 import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeFeedId, makeFeedHashingSalt } from '../domain/feed';
+import { makeFeedId, makeFeedHashingSalt, makeUiFeedListItem } from '../domain/feed';
 import { makeFeed } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
@@ -197,7 +197,7 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
     });
   }
 
-  const data = result.validFeeds;
+  const data = result.validFeeds.map(makeUiFeedListItem);
   const logData = {};
 
   return makeSuccess('Feeds!', logData, data);
