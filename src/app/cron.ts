@@ -84,7 +84,9 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       logInfo('No feeds for account', { dirName });
     }
 
-    for (const feed of feedsByAccountId.validFeeds) {
+    const activeFeeds = feedsByAccountId.validFeeds.filter((x) => x.isActive);
+
+    for (const feed of activeFeeds) {
       logInfo('Scheduling feed check', { feed });
 
       cronJobs.push(
