@@ -1,5 +1,13 @@
-import { ApiResponse, AppError, InputError, isAppError, isInputError } from '../shared/api-response';
+import {
+  ApiResponse,
+  AppError,
+  AuthenticatedApiResponse,
+  InputError,
+  isAppError,
+  isInputError,
+} from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
+import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -128,7 +136,7 @@ export function reportError(error: Error | string): void {
   Promise.reject(error);
 }
 
-export function assertHeader(headerName: string, expectedHeaderValue: string) {
+function assertHeader(headerName: string, expectedHeaderValue: string) {
   return (response: Response) => {
     const contentType = response.headers.get(headerName)!;
 
@@ -140,9 +148,21 @@ export function assertHeader(headerName: string, expectedHeaderValue: string) {
   };
 }
 
+function assertAuthorized(response: Response) {
+  if (response.status === 401) {
+    setTimeout(() => {
+      window.location.href = PagePaths.userAuthentication;
+    }, 2000);
+
+    return response;
+  } else {
+    return response;
+  }
+}
+
 export function assertFound(response: Response) {
   if (response.status === 404) {
-    throw new TypeError('Invalid API endpoint');
+    throw new TypeError('API endpoint not found (404)');
   } else {
     return response;
   }
@@ -157,7 +177,7 @@ export function sendApiRequest<R extends any = any>(
   relativePath: string,
   method: HttpMethod = HttpMethod.GET,
   data: Record<string, string> = {}
-): Promise<ApiResponse<R>> {
+): Promise<AuthenticatedApiResponse<R>> {
   const basePath = '/api';
   const urlEnncodedData = new URLSearchParams(data);
 
@@ -169,7 +189,8 @@ export function sendApiRequest<R extends any = any>(
   return fetch(url, { method, body })
     .then(assertFound)
     .then(assertHeader('content-type', 'application/json; charset=utf-8'))
-    .then(async (r) => (await r.json()) as ApiResponse<R>);
+    .then(assertAuthorized)
+    .then(async (r) => (await r.json()) as AuthenticatedApiResponse<R>);
 }
 
 export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<void>): void {

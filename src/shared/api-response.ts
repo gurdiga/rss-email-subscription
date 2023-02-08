@@ -1,6 +1,7 @@
 import { hasKind } from './lang';
 
-export type ApiResponse<D extends any = any> = Success<D> | NotAuthenticatedError | InputError | AppError;
+export type ApiResponse<D extends any = any> = AuthenticatedApiResponse<D> | NotAuthenticatedError;
+export type AuthenticatedApiResponse<D extends any = any> = Success<D> | InputError | AppError;
 
 type LogData = Record<string, string>;
 

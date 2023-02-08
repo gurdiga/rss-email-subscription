@@ -1,5 +1,5 @@
 import { UiFeedListItem } from '../domain/feed';
-import { isAppError, isInputError, isNotAuthenticatedError } from '../shared/api-response';
+import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePaths } from '../shared/page-paths';
@@ -93,10 +93,6 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
 
   if (isErr(response)) {
     return makeErr('Failed to load the feed list');
-  }
-
-  if (isNotAuthenticatedError(response)) {
-    return makeErr('Not authenticated');
   }
 
   if (isAppError(response)) {
