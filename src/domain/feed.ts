@@ -85,3 +85,25 @@ export function makeUiFeedListItem(feed: Feed): UiFeedListItem {
     feedId: feed.id,
   };
 }
+
+export interface UiFeed {
+  displayName: string;
+  url: string;
+  email: string;
+  replyTo: string;
+  checkSchedule: string;
+  subscriberCount: number;
+  active: boolean;
+}
+
+export function makeUiFeed(feed: Feed, domain: string): UiFeed {
+  return {
+    displayName: feed.displayName,
+    url: feed.url.toString(),
+    email: si`${feed.id.value}@${domain}`,
+    replyTo: feed.replyTo.value,
+    checkSchedule: feed.cronPattern.value,
+    subscriberCount: 0,
+    active: true,
+  };
+}
