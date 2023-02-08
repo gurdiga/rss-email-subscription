@@ -40,6 +40,27 @@ export function parseConfirmationLinkUrlParams(
   return params;
 }
 
+export function requireQueryStringParams<RequiredParams>(
+  paramDictionary: Record<keyof RequiredParams, string>,
+  locationSearch = window.location.search
+) {
+  const params = {} as RequiredParams;
+  const urlSearchParams = new URLSearchParams(locationSearch);
+
+  for (const name in paramDictionary) {
+    const paramName = paramDictionary[name];
+    const element = urlSearchParams.get(paramName);
+
+    if (!element) {
+      return makeErr(si`Query paramn not found by name: "${paramName}"`);
+    }
+
+    params[name] = element as any;
+  }
+
+  return params;
+}
+
 export function requireUiElements<T>(selectors: Record<keyof T, string>, querySelectorFn = querySelector): Result<T> {
   const uiElements = {} as T;
 

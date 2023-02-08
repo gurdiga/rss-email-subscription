@@ -6,7 +6,7 @@ import { makeSpy, makeStub } from '../shared/test-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 import { fillUiElements, parseConfirmationLinkUrlParams, reportError, requireUiElements } from './shared';
 import { UiElementFillSpec, displayValidationError, getOrCreateValidationMessage } from './shared';
-import { clearValidationErrors, getClassNames } from './shared';
+import { requireQueryStringParams, clearValidationErrors, getClassNames } from './shared';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
   it('returns a ConfirmationLinkUrlParams value from location.search', () => {
@@ -33,6 +33,30 @@ describe(parseConfirmationLinkUrlParams.name, () => {
 
     expect(result).to.deep.equal(makeErr('Invalid confirmation link'));
     expect(logFn.calls).to.deep.equal([['Missing parameter: id']]);
+  });
+});
+
+describe(requireQueryStringParams.name, () => {
+  type RequiredParams = {
+    one: string;
+    two: string;
+  };
+
+  it('returns a dictionary with the required params from the query string', () => {
+    const queryString = '?one=1&two=with%20spaces';
+    const result = requireQueryStringParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
+
+    expect(result).to.deep.equal({
+      one: '1',
+      two: 'with spaces',
+    });
+  });
+
+  it('returns an Err if any of the params are missing', () => {
+    const queryString = '';
+    const result = requireQueryStringParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
+
+    expect(result).to.deep.equal(makeErr('Query paramn not found by name: "one"'));
   });
 });
 
