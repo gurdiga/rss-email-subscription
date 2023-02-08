@@ -21,7 +21,7 @@ describe('API', () => {
 
   const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
   const domainName = 'localhost.feedsubscription.com';
-  const apiBaseUrl = `https://${domainName}/api`;
+  const apiOrigin = `https://${domainName}`;
 
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
@@ -43,7 +43,7 @@ describe('API', () => {
 
     describe('http session test', () => {
       it('works', async () => {
-        const { responseBody, responseHeaders } = await get('/session-test', 'json');
+        const { responseBody, responseHeaders } = await get('/api/session-test', 'json');
         expect(responseBody.kind).to.equal('Success');
 
         const sessionId = (responseBody as Success).responseData!['sessionId'];
@@ -53,7 +53,11 @@ describe('API', () => {
         expect(sessionData['works']).to.equal(true);
 
         const cookie = responseHeaders.get('set-cookie')!;
-        const { responseBody: subsequentRequestResponse } = await get('/session-test', 'json', new Headers({ cookie }));
+        const { responseBody: subsequentRequestResponse } = await get(
+          '/api/session-test',
+          'json',
+          new Headers({ cookie })
+        );
 
         const subsequentRequestSession = (subsequentRequestResponse as Success).responseData!['sessionId'];
         expect(subsequentRequestSession).to.equal(sessionId);
@@ -65,7 +69,7 @@ describe('API', () => {
         const sampleScript = '/web-ui-scripts/web-ui/unsubscription-confirmation.js';
         const { responseBody } = await get(sampleScript, 'text');
 
-        expect(responseBody).to.equal(readFile(`dist/api/${sampleScript}`));
+        expect(responseBody).to.equal(readFile(`website/html/${sampleScript}`));
       });
     });
 
@@ -80,7 +84,7 @@ describe('API', () => {
 
     describe('CORS policy', () => {
       it('is widely open', async () => {
-        const { responseHeaders } = await get('/cors-test', 'text');
+        const { responseHeaders } = await get('/api/cors-test', 'text');
 
         expect(responseHeaders.get('access-control-allow-origin')).to.equal('*');
       });
@@ -88,7 +92,7 @@ describe('API', () => {
 
     describe('API code Git revisions', () => {
       it('is available', async () => {
-        const { responseBody } = await get('/version.txt', 'text');
+        const { responseBody } = await get('/api/version.txt', 'text');
         const gitRevisionMask = /[a-f0-9]{40}\n/m;
 
         expect(responseBody).to.match(gitRevisionMask);
@@ -160,7 +164,7 @@ describe('API', () => {
       const headers = new Headers({ cookie });
       const data = {};
 
-      return post('/deauthentication', data, headers);
+      return post('/api/deauthentication', data, headers);
     }
   });
 
@@ -259,7 +263,7 @@ describe('API', () => {
     });
 
     async function getUserFeeds(authenticationHeaders: Headers) {
-      return await get<Feed[]>('/feeds', 'json', authenticationHeaders);
+      return await get<Feed[]>('/api/feeds', 'json', authenticationHeaders);
     }
   });
 
@@ -319,15 +323,15 @@ describe('API', () => {
     });
 
     async function subscriptionDo(feedId: FeedId, email: string) {
-      return post('/subscription', { feedId: feedId.value, email });
+      return post('/api/subscription', { feedId: feedId.value, email });
     }
 
     async function subscriptionConfirmationDo(feedId: FeedId, emailHash: string) {
-      return post('/subscription-confirmation', { id: si`${feedId.value}-${emailHash}` });
+      return post('/api/subscription-confirmation', { id: si`${feedId.value}-${emailHash}` });
     }
 
     async function unsubscriptionDo(feedId: FeedId, emailHash: string) {
-      return post('/unsubscription', { id: si`${feedId.value}-${emailHash}` });
+      return post('/api/unsubscription', { id: si`${feedId.value}-${emailHash}` });
     }
 
     function getFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
@@ -342,23 +346,23 @@ describe('API', () => {
   async function createFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
     const data = feedProps as Record<string, string>;
 
-    return await post('/feeds', data, authenticationHeaders);
+    return await post('/api/feeds', data, authenticationHeaders);
   }
 
   async function updateFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
     const data = feedProps as Record<string, string>;
 
-    return await put('/feeds', data, authenticationHeaders);
+    return await put('/api/feeds', data, authenticationHeaders);
   }
 
   async function deleteFeed(feedId: FeedId, authenticationHeaders: Headers) {
-    const path = makePath('/feeds', feedId.value);
+    const path = makePath('/api/feeds', feedId.value);
 
     return await delete_(path, authenticationHeaders);
   }
 
   async function authenticationDo(email: string, password: string) {
-    return post('/authentication', { email, password });
+    return post('/api/authentication', { email, password });
   }
 
   function getAuthenticationHeaders(responseHeaders: Headers): Headers {
@@ -368,14 +372,14 @@ describe('API', () => {
   }
 
   async function registrationDo(plan: string, email: string, password: string) {
-    return post('/registration', { plan, email, password });
+    return post('/api/registration', { plan, email, password });
   }
 
   async function registrationConfirmationDo(email: string) {
     const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
     const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
-    return post('/registration-confirmation', { secret });
+    return post('/api/registration-confirmation', { secret });
   }
 
   function getAccountByEmail(email: string): [AccountData, AccountId] {
@@ -407,7 +411,7 @@ describe('API', () => {
     headers: Headers = new Headers(),
     method: 'POST' | 'PUT' = 'POST'
   ): Promise<JsonApiResponse> {
-    const response = await fetch(makePath(apiBaseUrl, relativePath), {
+    const response = await fetch(makePath(apiOrigin, relativePath), {
       method,
       body: new URLSearchParams(data),
       headers,
@@ -422,7 +426,7 @@ describe('API', () => {
   }
 
   async function delete_(relativePath: string, headers: Headers = new Headers()): Promise<TextApiResponse> {
-    const response = await fetch(makePath(apiBaseUrl, relativePath), { method: 'DELETE', headers });
+    const response = await fetch(makePath(apiOrigin, relativePath), { method: 'DELETE', headers });
 
     return {
       responseBody: await response.json(),
@@ -444,7 +448,7 @@ describe('API', () => {
     type: 'json' | 'text' = 'json',
     headers?: Headers
   ): Promise<JsonApiResponse<D> | TextApiResponse> {
-    const response = await fetch(makePath(apiBaseUrl, relativePath), { headers });
+    const response = await fetch(makePath(apiOrigin, relativePath), { headers });
 
     return {
       responseBody: await response[type](),
