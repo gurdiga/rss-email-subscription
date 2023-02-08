@@ -96,14 +96,14 @@ export interface UiFeed {
   isActive: boolean;
 }
 
-export function makeUiFeed(feed: Feed, domain: string): UiFeed {
+export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number): UiFeed {
   return {
     displayName: feed.displayName,
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domain}`,
     replyTo: feed.replyTo.value,
     checkSchedule: feed.cronPattern.value, // TODO: How to reasonably display this to the user?
-    subscriberCount: 0, // TODO: ???
-    isActive: true, // TODO: Add to Feed
+    subscriberCount,
+    isActive: true, // TODO: Add to Feed, and use it here.
   };
 }

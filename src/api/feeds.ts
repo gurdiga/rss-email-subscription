@@ -11,6 +11,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
+import { loadStoredEmails } from '../app/email-sending/emails';
 
 export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -232,7 +233,15 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
     return makeAppError(si`Failed to load feed`);
   }
 
-  const data = makeUiFeed(feed, app.env.DOMAIN_NAME);
+  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+
+  if (isErr(storedEmails)) {
+    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    return makeAppError(si`Failed to load subscriber list`);
+  }
+
+  const subscriberCount = storedEmails.validEmails.length;
+  const data = makeUiFeed(feed, app.env.DOMAIN_NAME, subscriberCount);
   const logData = {};
 
   return makeSuccess('Feed', logData, data);
