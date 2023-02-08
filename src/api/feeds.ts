@@ -202,3 +202,13 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
 
   return makeSuccess('Feeds!', logData, data);
 };
+
+export const loadFeedById: RequestHandler = async function loadFeedById(
+  _reqId,
+  _reqBody,
+  _reqParams,
+  _reqSession,
+  _app
+) {
+  return makeAppError('Not implemented');
+};
