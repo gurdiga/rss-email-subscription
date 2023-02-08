@@ -12,6 +12,7 @@ export interface Feed {
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
   isDeleted: boolean;
+  isActive: boolean;
 }
 
 export interface FeedId {
@@ -102,6 +103,6 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
     email: si`${feed.id.value}@${domain}`,
     replyTo: feed.replyTo.value,
     subscriberCount,
-    isActive: true, // TODO: Add to Feed, and use it here.
+    isActive: feed.isActive,
   };
 }

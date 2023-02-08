@@ -27,6 +27,7 @@ describe(loadFeed.name, () => {
     hashingSalt: hashingSalt.value,
     replyTo: 'sandra@test.com',
     cronPattern: '5 * * * *',
+    isActive: true,
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -44,6 +45,7 @@ describe(loadFeed.name, () => {
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
       isDeleted: false,
+      isActive: true,
     };
 
     expect(result).to.deep.include(expectedResult);
@@ -105,6 +107,7 @@ describe(loadFeedsByAccountId.name, () => {
         replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
         cronPattern: makeUnixCronPattern('1 1 1 1 1'),
         isDeleted: false,
+        isActive: false,
       },
       missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
       missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
@@ -174,6 +177,7 @@ describe(makeFeed.name, () => {
       replyTo: 'feed-replyTo@test.com',
       cronPattern: '@hourly',
       isDeleted: true,
+      isActive: true,
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
@@ -186,6 +190,7 @@ describe(makeFeed.name, () => {
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern: makeUnixCronPattern('0 * * * *'),
       isDeleted: true,
+      isActive: true,
     });
   });
 

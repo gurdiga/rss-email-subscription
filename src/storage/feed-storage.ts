@@ -15,6 +15,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   isDeleted?: boolean;
+  isActive?: boolean;
 }
 
 export interface FeedNotFound {
@@ -169,6 +170,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     replyTo: loadedData.replyTo,
     cronPattern: cronPattern.value,
     isDeleted: !!loadedData.isDeleted,
+    isActive: !!loadedData.isActive,
   };
 
   return makeFeed(makeFeedInput, hashingSalt);

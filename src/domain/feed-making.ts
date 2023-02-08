@@ -12,6 +12,7 @@ export interface MakeFeedInput {
   replyTo?: string;
   cronPattern?: string;
   isDeleted?: boolean;
+  isActive?: boolean;
 }
 
 export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Result<Feed> {
@@ -54,6 +55,7 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
   }
 
   const isDeleted = Boolean(input.isDeleted);
+  const isActive = Boolean(input.isActive);
 
   return <Feed>{
     kind: 'Feed',
@@ -64,6 +66,7 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
     replyTo,
     cronPattern,
     isDeleted,
+    isActive,
   };
 }
 
