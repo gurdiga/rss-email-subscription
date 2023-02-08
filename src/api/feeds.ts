@@ -1,6 +1,6 @@
 import { getAccountIdList } from '../domain/account';
 import { alterExistingFeed, feedExists, isFeedNotFound, loadFeed, loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeFeedId, makeFeedHashingSalt, makeUiFeedListItem } from '../domain/feed';
+import { makeFeedId, makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed } from '../domain/feed';
 import { makeFeed } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
@@ -203,12 +203,37 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
   return makeSuccess('Feeds!', logData, data);
 };
 
-export const loadFeedById: RequestHandler = async function loadFeedById(
-  _reqId,
-  _reqBody,
-  _reqParams,
-  _reqSession,
-  _app
-) {
-  return makeAppError('Not implemented');
+export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _reqBody, reqParams, reqSession, app) {
+  const { logWarning } = makeCustomLoggers({ module: listFeeds.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const feedId = makeFeedId(reqParams['feedId']);
+
+  if (isErr(feedId)) {
+    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
+    return makeInputError(si`Invalid feedId: ${feedId.reason}`);
+  }
+
+  const { accountId } = session;
+  const feed = loadFeed(accountId, feedId, app.storage);
+
+  if (isErr(feed)) {
+    logWarning(si`Failed to ${loadFeed.name}`, { reason: feed.reason });
+    return makeAppError(si`Failed to load feed`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    logWarning(si`Feed to load not found`, { feedId: feed.feedId, accountId: accountId.value });
+    return makeAppError(si`Failed to load feed`);
+  }
+
+  const data = makeUiFeed(feed, app.env.DOMAIN_NAME);
+  const logData = {};
+
+  return makeSuccess('Feed', logData, data);
 };
