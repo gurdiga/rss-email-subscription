@@ -1,7 +1,7 @@
 import { isSuccess } from '../shared/api-response';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
+import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
 import { HttpMethod } from './shared';
 import { PagePaths } from '../shared/page-paths';
@@ -11,7 +11,7 @@ async function main() {
 
   if (isErr(secret)) {
     reportError(si`Invalid registration confirmation link: ${secret.reason}`);
-    displayMainError('Invalid registration confirmation link');
+    displayInitError('Invalid registration confirmation link');
     return;
   }
 
@@ -21,7 +21,7 @@ async function main() {
   });
 
   if (isErr(uiElements)) {
-    displayMainError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 

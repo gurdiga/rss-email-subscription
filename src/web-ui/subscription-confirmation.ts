@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { displayMainError, fillUiElements, displayApiResponse, HttpMethod } from './shared';
+import { displayInitError, fillUiElements, displayApiResponse, HttpMethod } from './shared';
 import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
 import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
 
@@ -7,7 +7,7 @@ function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
 
   if (isErr(queryParams)) {
-    displayMainError('Invalid subscription confirmation link');
+    displayInitError('Invalid subscription confirmation link');
     return;
   }
 
@@ -21,7 +21,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    displayMainError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 
@@ -39,7 +39,7 @@ function main() {
   ]);
 
   if (isErr(fillUiResult)) {
-    displayMainError(fillUiResult.reason);
+    displayInitError(fillUiResult.reason);
     return;
   }
 

@@ -77,7 +77,7 @@ export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   }
 }
 
-export function displayMainError(message: string) {
+export function displayInitError(message: string) {
   const errorMessageSelector = '#init-error-message';
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
@@ -88,6 +88,7 @@ export function displayMainError(message: string) {
 
   errorMessageElement.textContent = message;
   errorMessageElement.className = 'alert alert-danger';
+  errorMessageElement.removeAttribute('hidden');
 
   reportError(message);
 }

@@ -4,19 +4,17 @@ import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
-import { AppStatusUiElements, displayMainError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
+import { displayInitError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<UiElements>({
     spinner: '#spinner',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
-    apiResponseMessage: '#api-response-message',
-    appErrorMessage: '#app-error-message',
   });
 
   if (isErr(uiElements)) {
-    displayMainError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 
@@ -25,7 +23,7 @@ async function main() {
   uiElements.spinner.remove();
 
   if (isErr(uiFeedList)) {
-    displayMainError(uiFeedList.reason);
+    displayInitError(uiFeedList.reason);
     return;
   }
 
@@ -106,7 +104,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-interface UiElements extends AppStatusUiElements, FeedListUiElements {
+interface UiElements extends FeedListUiElements {
   spinner: HTMLElement;
 }
 

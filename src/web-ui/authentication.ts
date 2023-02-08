@@ -1,7 +1,7 @@
 import { isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
 import { HttpMethod, navigateTo, sendApiRequest } from './shared';
-import { clearValidationErrors, displayApiResponse, displayCommunicationError, displayMainError } from './shared';
+import { clearValidationErrors, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
 import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
 import { PagePaths } from '../shared/page-paths';
 
@@ -25,7 +25,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    displayMainError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 

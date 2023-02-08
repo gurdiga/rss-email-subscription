@@ -1,7 +1,7 @@
 import { isPlanId, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { attempt, isErr } from '../shared/lang';
-import { displayMainError, displayCommunicationError, unhideElement, displayAppError, HttpMethod } from './shared';
+import { displayInitError, displayCommunicationError, unhideElement, displayAppError, HttpMethod } from './shared';
 import { preventDoubleClick, requireUiElements, AppStatusUiElements } from './shared';
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
@@ -17,7 +17,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    displayMainError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 
