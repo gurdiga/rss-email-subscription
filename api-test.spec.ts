@@ -195,15 +195,10 @@ describe('API', () => {
           const loadedFeed = feeds![0]!;
 
           expect(feeds).to.have.lengthOf(1);
-          expect(loadedFeed).to.deep.include({
-            kind: 'Feed',
-            id: testFeedId,
+          expect(loadedFeed).to.deep.equal({
             displayName: testFeedProps.displayName,
-            url: testFeedProps.url,
-            replyTo: makeTestEmailAddress(testFeedProps.replyTo!),
-            cronPattern,
+            feedId: testFeedId,
           });
-          expect(loadedFeed.hashingSalt.value).to.match(/[0-9a-f]{16}/);
 
           const { responseBody: repeadedRequestResponseBody } = await createFeed(testFeedProps, authenticationHeaders);
           expect(repeadedRequestResponseBody).to.deep.equal(makeInputError('Feed ID taken'));
