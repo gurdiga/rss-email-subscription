@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { FeedId } from './feed';
-import { makeFeedId } from './feed';
+import { FeedId } from './feed-id';
+import { makeFeedId } from './feed-id';
 import { FeedHashingSalt, makeFeedHashingSalt } from './feed';
 import { makeErr } from '../shared/lang';
 

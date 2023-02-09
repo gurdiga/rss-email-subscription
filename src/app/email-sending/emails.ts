@@ -1,4 +1,5 @@
-import { FeedHashingSalt, FeedId } from '../../domain/feed';
+import { FeedHashingSalt } from '../../domain/feed';
+import { FeedId } from '../../domain/feed-id';
 import { getFeedStorageKey } from '../../storage/feed-storage';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';

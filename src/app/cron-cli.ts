@@ -1,6 +1,6 @@
 import { checkRss } from './rss-checking/index';
 import { sendEmails } from './email-sending/index';
-import { makeFeedId } from '../domain/feed';
+import { makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, loadFeed } from '../storage/feed-storage';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';

@@ -3,7 +3,7 @@ import { RssItem } from '../../domain/rss-item';
 import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
 import { FullEmailAddress, HashedEmail } from './emails';
 import { EmailAddress } from '../../domain/email-address';
-import { FeedId } from '../../domain/feed';
+import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
 
 export async function sendEmail(

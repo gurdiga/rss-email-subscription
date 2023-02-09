@@ -4,7 +4,7 @@ import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeUrl } from '../../shared/url';
 import { AppStorage } from '../../storage/storage';
-import { FeedId } from '../../domain/feed';
+import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';

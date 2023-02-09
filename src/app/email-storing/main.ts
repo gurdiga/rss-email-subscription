@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
 import { storeEmails } from '../email-sending/emails';
-import { makeFeedId } from '../../domain/feed';
+import { makeFeedId } from '../../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../../storage/feed-storage';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';

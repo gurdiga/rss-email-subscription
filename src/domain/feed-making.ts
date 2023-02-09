@@ -3,7 +3,8 @@ import { isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeUrl } from '../shared/url';
 import { makeUnixCronPattern } from './cron-pattern-making';
-import { FeedHashingSalt, Feed, makeFeedId } from './feed';
+import { FeedHashingSalt, Feed } from './feed';
+import { makeFeedId } from './feed-id';
 
 export interface MakeFeedInput {
   displayName?: string;

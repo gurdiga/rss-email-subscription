@@ -3,7 +3,7 @@ import { Feed } from '../domain/feed';
 import { alterExistingFeed, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
 import { markFeedAsDeleted, FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, loadFeed } from './feed-storage';
 import { loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
-import { makeFeedId } from '../domain/feed';
+import { makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
