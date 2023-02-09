@@ -1,13 +1,15 @@
-import { UiFeed, UiFeedListItem } from '../domain/feed';
+import { UiFeed } from '../domain/feed';
+import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
-import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
-import { displayInitError, HttpMethod, requireQueryStringParams, requireUiElements, sendApiRequest } from './shared';
+import { createElement } from './dom-isolation';
+import { displayInitError, HttpMethod, requireQueryParams, requireUiElements, sendApiRequest } from './shared';
+import { unhideElement } from './shared';
 
 async function main() {
-  const queryStringParams = requireQueryStringParams<QueryStringParams>({
+  const queryStringParams = requireQueryParams<RequiredParams>({
     id: 'id',
   });
 
@@ -16,9 +18,17 @@ async function main() {
     return;
   }
 
+  const feedId = makeFeedId(queryStringParams.id);
+
+  if (isErr(feedId)) {
+    displayInitError(si`Invalid feed ID: ${feedId.reason}`);
+    return;
+  }
+
   const uiElements = requireUiElements<UiElements>({
     spinner: '#spinner',
     feedAttributeList: '#feed-attribute-list',
+    editLink: '#edit-link',
   });
 
   if (isErr(uiElements)) {
@@ -26,16 +36,16 @@ async function main() {
     return;
   }
 
-  const feed = await loadFeed(queryStringParams.id);
+  const uiFeed = await loadFeed(queryStringParams.id);
 
   uiElements.spinner.remove();
 
-  if (isErr(feed)) {
-    displayInitError(feed.reason);
+  if (isErr(uiFeed)) {
+    displayInitError(uiFeed.reason);
     return;
   }
 
-  displayFeedAttributeList(feed, uiElements);
+  displayFeedAttributeList(uiFeed, uiElements, feedId);
 }
 
 async function loadFeed<T = UiFeed>(id: string): Promise<Result<T>> {
@@ -56,65 +66,75 @@ async function loadFeed<T = UiFeed>(id: string): Promise<Result<T>> {
   return response.responseData!;
 }
 
-function displayFeedAttributeList(_feed: UiFeed, _uiElements: UiElements): void {
-  // const feedListData = buildFeedListData(uiFeedList);
-  // feedListPreamble.textContent = feedListData.preambleMessage;
-  // feedListPreamble.removeAttribute('hidden');
-  // if (feedListData.linkData) {
-  //   const htmlListItems = feedListData.linkData.map(makeHtmlListItem);
-  //   feedList.append(...htmlListItems);
-  //   feedList.removeAttribute('hidden');
-  // }
+function displayFeedAttributeList(uiFeed: UiFeed, uiElements: UiElements, feedId: FeedId): void {
+  const { feedAttributeList, editLink } = uiElements;
+  const uiData = makeUiData(uiFeed, feedId);
+  const feedAttributeElements = uiData.feedAttributes.flatMap((feedAttribute) => {
+    const [dtElement, ddElement] = makeFeedAttributeElement(feedAttribute);
+
+    if (feedAttribute.name === 'subscriberCount') {
+      addManageSubscribersLink(ddElement, uiData.manageSubscribersLinkHref);
+    }
+
+    return [dtElement, ddElement];
+  });
+
+  feedAttributeList.append(...feedAttributeElements);
+  unhideElement(feedAttributeList);
+
+  editLink.href = uiData.editLinkHref;
 }
 
-export interface FeedListData {
-  preambleMessage: string;
-  linkData?: FeedLinkData[];
+function addManageSubscribersLink(ddElement: HTMLElement, href: string): void {
+  const manageSubscribersLink = createElement('a', 'Manage subscribers', { href });
+  const separator = createElement('span', '•', { class: 'separator' });
+
+  ddElement.append(separator, manageSubscribersLink);
 }
 
-interface FeedLinkData {
-  text: string;
-  href: string;
+function makeFeedAttributeElement(feedAttribute: FeedAttribute): [HTMLElement, HTMLElement] {
+  const dtElement = createElement('dt', feedAttribute.label);
+  const ddElement = createElement('dd', feedAttribute.value);
+
+  return [dtElement, ddElement];
 }
 
-export function buildFeedListData(feedList: UiFeedListItem[]): FeedListData {
-  const pluralSuffix = feedList.length === 1 ? '' : 's';
-
-  return isEmpty(feedList)
-    ? { preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!' }
-    : {
-        preambleMessage: si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`,
-        linkData: feedList.map(makeLinkData),
-      };
+export interface UiData {
+  feedAttributes: FeedAttribute[];
+  editLinkHref: string;
+  manageSubscribersLinkHref: string;
 }
 
-function makeLinkData(item: UiFeedListItem): FeedLinkData {
-  const text = item.displayName;
-  const hrefParams = new URLSearchParams({ id: item.feedId.value }).toString();
-  const href = si`${PagePaths.feedManage}?${hrefParams}`;
-
-  return { text, href };
+interface FeedAttribute {
+  name: keyof UiFeed;
+  label: string;
+  value: string;
 }
 
-makeHtmlListItem;
-function makeHtmlListItem(data: FeedLinkData): HTMLLIElement {
-  const li = document.createElement('li');
-  const a = document.createElement('a');
+export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
+  const feedAttributes: FeedAttribute[] = [
+    { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
+    { label: 'URL:', value: uiFeed.url, name: 'url' },
+    { label: 'Email:', value: uiFeed.email, name: 'email' },
+    { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
+    { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
+    { label: 'Active:', value: uiFeed.isActive ? 'Yes' : 'No', name: 'isActive' },
+  ];
 
-  a.textContent = data.text;
-  a.href = data.href;
+  const params = new URLSearchParams({ id: feedId.value }).toString();
+  const editLinkHref = si`${PagePaths.feedEdit}?${params}`;
+  const manageSubscribersLinkHref = si`${PagePaths.manageFeedSubscribers}?${params}`;
 
-  li.append(a);
-
-  return li;
+  return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
 }
 
 interface UiElements {
   spinner: HTMLElement;
   feedAttributeList: HTMLElement;
+  editLink: HTMLAnchorElement;
 }
 
-interface QueryStringParams {
+interface RequiredParams {
   id: string;
 }
 

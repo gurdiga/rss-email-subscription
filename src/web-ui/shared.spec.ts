@@ -6,7 +6,7 @@ import { makeSpy, makeStub } from '../shared/test-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 import { fillUiElements, parseConfirmationLinkUrlParams, reportError, requireUiElements } from './shared';
 import { UiElementFillSpec, displayValidationError, getOrCreateValidationMessage } from './shared';
-import { requireQueryStringParams, clearValidationErrors, getClassNames } from './shared';
+import { requireQueryParams, clearValidationErrors, getClassNames } from './shared';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
   it('returns a ConfirmationLinkUrlParams value from location.search', () => {
@@ -36,7 +36,7 @@ describe(parseConfirmationLinkUrlParams.name, () => {
   });
 });
 
-describe(requireQueryStringParams.name, () => {
+describe(requireQueryParams.name, () => {
   type RequiredParams = {
     one: string;
     two: string;
@@ -44,7 +44,7 @@ describe(requireQueryStringParams.name, () => {
 
   it('returns a dictionary with the required params from the query string', () => {
     const queryString = '?one=1&two=with%20spaces';
-    const result = requireQueryStringParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
+    const result = requireQueryParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
 
     expect(result).to.deep.equal({
       one: '1',
@@ -54,9 +54,9 @@ describe(requireQueryStringParams.name, () => {
 
   it('returns an Err if any of the params are missing', () => {
     const queryString = '';
-    const result = requireQueryStringParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
+    const result = requireQueryParams<RequiredParams>({ one: 'one', two: 'two' }, queryString);
 
-    expect(result).to.deep.equal(makeErr('Query paramn not found by name: "one"'));
+    expect(result).to.deep.equal(makeErr('Query param not found by name: "one"'));
   });
 });
 

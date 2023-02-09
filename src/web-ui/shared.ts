@@ -40,7 +40,7 @@ export function parseConfirmationLinkUrlParams(
   return params;
 }
 
-export function requireQueryStringParams<RequiredParams>(
+export function requireQueryParams<RequiredParams>(
   paramDictionary: Record<keyof RequiredParams, string>,
   locationSearch = window.location.search
 ) {
@@ -52,7 +52,7 @@ export function requireQueryStringParams<RequiredParams>(
     const element = urlSearchParams.get(paramName);
 
     if (!element) {
-      return makeErr(si`Query paramn not found by name: "${paramName}"`);
+      return makeErr(si`Query param not found by name: "${paramName}"`);
     }
 
     params[name] = element as any;
