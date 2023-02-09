@@ -87,18 +87,14 @@ function displayFeedAttributeList(uiFeed: UiFeed, uiElements: UiElements, feedId
 
 function addManageSubscribersLink(ddElement: HTMLElement, href: string): void {
   const manageSubscribersLink = createElement('a', 'Manage subscribers', { href });
-  const separator = createElement('span', '•', { class: 'mx-1' });
+  const separator = createElement('span', '•', { class: 'res-subscriber-count-separator' });
 
   ddElement.append(separator, manageSubscribersLink);
 }
 
 function makeFeedAttributeElement(feedAttribute: FeedAttribute): [HTMLElement, HTMLElement] {
-  const dtElement = createElement('dt', feedAttribute.label, {
-    class: 'form-text text-muted text-uppercase fw-normal m-0',
-  });
-  const ddElement = createElement('dd', feedAttribute.value, {
-    class: 'form-text text-muted text-reset mb-3',
-  });
+  const dtElement = createElement('dt', feedAttribute.label, { class: 'res-feed-attribute-label' });
+  const ddElement = createElement('dd', feedAttribute.value, { class: 'res-feed-attribute-value' });
 
   return [dtElement, ddElement];
 }
