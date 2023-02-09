@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { displayInitError, fillUiElements, displayApiResponse, HttpMethod } from './shared';
+import { displayInitError, fillUiElements, displayApiResponse, HttpMethod, unhideElement } from './shared';
 import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
 import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
 
@@ -43,8 +43,8 @@ function main() {
     return;
   }
 
-  uiElements.inputUiContainer.removeAttribute('hidden');
-  uiElements.formUiContainer.removeAttribute('hidden');
+  unhideElement(uiElements.inputUiContainer);
+  unhideElement(uiElements.formUiContainer);
 
   uiElements.confirmButton.addEventListener('click', async () => {
     try {

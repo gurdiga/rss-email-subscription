@@ -109,7 +109,7 @@ export function displayInitError(message: string) {
 
   errorMessageElement.textContent = message;
   errorMessageElement.className = 'alert alert-danger';
-  errorMessageElement.removeAttribute('hidden');
+  unhideElement(errorMessageElement);
 
   reportError(message);
 }
@@ -305,7 +305,7 @@ export function hideElement(element: HTMLElement): void {
   element.setAttribute('hidden', 'hidden');
 }
 
-export function unhideElement(element: HTMLElement): void {
+export function unhideElement(element: Element): void {
   element.removeAttribute('hidden');
 }
 

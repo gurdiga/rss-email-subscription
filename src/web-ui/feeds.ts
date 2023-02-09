@@ -4,7 +4,7 @@ import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePaths } from '../shared/page-paths';
 import { si } from '../shared/string-utils';
-import { displayInitError, HttpMethod, requireUiElements, sendApiRequest } from './shared';
+import { displayInitError, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<UiElements>({
@@ -35,13 +35,13 @@ function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiEle
   const feedListData = buildFeedListData(uiFeedList);
 
   feedListPreamble.textContent = feedListData.preambleMessage;
-  feedListPreamble.removeAttribute('hidden');
+  unhideElement(feedListPreamble);
 
   if (feedListData.linkData) {
     const htmlListItems = feedListData.linkData.map(makeHtmlListItem);
 
     feedList.append(...htmlListItems);
-    feedList.removeAttribute('hidden');
+    unhideElement(feedList);
   }
 }
 
