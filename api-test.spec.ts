@@ -9,7 +9,7 @@ import { MakeFeedInput } from './src/domain/feed-making';
 import { getFeedStorageKey } from './src/storage/feed-storage';
 import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
-import { readFile } from './src/shared/io-isolation';
+import { readFile } from './src/storage/io-isolation';
 import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
 import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';

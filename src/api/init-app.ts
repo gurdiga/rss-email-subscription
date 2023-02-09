@@ -2,7 +2,7 @@ import { AppSettings, loadAppSettings } from '../domain/app-settings';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppStorage, makeStorage } from '../shared/storage';
+import { AppStorage, makeStorage } from '../storage/storage';
 import { si } from '../shared/string-utils';
 
 export interface App {

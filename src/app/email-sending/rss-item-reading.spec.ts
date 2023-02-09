@@ -3,7 +3,7 @@ import { basename } from 'node:path';
 import { getFeedStorageKey } from '../../storage/feed-storage';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
-import { AppStorage } from '../../shared/storage';
+import { AppStorage } from '../../storage/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';

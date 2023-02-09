@@ -3,7 +3,7 @@ import { EmailAddress } from './email-address';
 import { hash, hashLength } from '../shared/crypto';
 import { parseDate } from '../shared/date-utils';
 import { Err, getTypeName, hasKind, isErr, isString, makeErr, Result } from '../shared/lang';
-import { AppStorage, StorageKey } from '../shared/storage';
+import { AppStorage, StorageKey } from '../storage/storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { HashedPassword, makeHashedPassword } from './hashed-password';

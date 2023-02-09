@@ -3,7 +3,7 @@ import { getFeedStorageKey } from '../../storage/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
-import { AppStorage } from '../../shared/storage';
+import { AppStorage } from '../../storage/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';

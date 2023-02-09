@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { hashLength } from '../shared/crypto';
 import { Err, makeErr } from '../shared/lang';
-import { AppStorage } from '../shared/storage';
+import { AppStorage } from '../storage/storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
 import { makeTestEmailAddress } from '../shared/test-utils';

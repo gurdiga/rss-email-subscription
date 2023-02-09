@@ -7,7 +7,7 @@ import { Feed, FeedHashingSalt, FeedId, isFeed, isFeedHashingSalt, isFeedId } fr
 import { makeFeed } from '../domain/feed-making';
 import { makeFeedHashingSalt, makeFeedId } from '../domain/feed';
 import { MakeFeedInput } from '../domain/feed-making';
-import { AppStorage, makeStorage, StorageKey, StorageValue } from './storage';
+import { AppStorage, makeStorage, StorageKey, StorageValue } from '../storage/storage';
 import { isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress } from '../domain/email-address';
 

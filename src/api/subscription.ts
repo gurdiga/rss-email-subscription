@@ -11,7 +11,7 @@ import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { AppStorage } from '../shared/storage';
+import { AppStorage } from '../storage/storage';
 import { RequestHandler } from './request-handler';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';

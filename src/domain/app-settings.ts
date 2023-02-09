@@ -1,6 +1,6 @@
 import { FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from '../app/email-sending/emails';
 import { isErr, makeErr, Result } from '../shared/lang';
-import { AppStorage } from '../shared/storage';
+import { AppStorage } from '../storage/storage';
 import { si } from '../shared/string-utils';
 
 export interface AppSettings {

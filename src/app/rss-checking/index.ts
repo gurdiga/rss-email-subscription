@@ -2,7 +2,7 @@ import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { Feed } from '../../domain/feed';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
-import { AppStorage } from '../../shared/storage';
+import { AppStorage } from '../../storage/storage';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';

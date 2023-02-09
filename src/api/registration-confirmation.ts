@@ -8,7 +8,7 @@ import {
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppStorage } from '../shared/storage';
+import { AppStorage } from '../storage/storage';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';

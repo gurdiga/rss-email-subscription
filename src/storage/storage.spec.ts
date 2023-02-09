@@ -1,11 +1,11 @@
 import { expect } from 'chai';
 import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn } from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
-import { makeErr } from './lang';
+import { makeErr } from '../shared/lang';
 import { makeStorage } from './storage';
-import { makePath } from './path-utils';
-import { makeSpy, makeStub, makeThrowingStub } from './test-utils';
-import { si } from './string-utils';
+import { makePath } from '../shared/path-utils';
+import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
+import { si } from '../shared/string-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';

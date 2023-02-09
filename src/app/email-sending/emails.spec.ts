@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { getFeedStorageKey } from '../../storage/feed-storage';
-import { ReadFileFn } from '../../shared/io-isolation';
+import { ReadFileFn } from '../../storage/io-isolation';
 import { Err, isErr, makeErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';

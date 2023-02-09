@@ -1,5 +1,5 @@
 import { Err, isErr, makeErr, Result, hasKind } from '../shared/lang';
-import { AppStorage } from '../shared/storage';
+import { AppStorage } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from '../domain/account';

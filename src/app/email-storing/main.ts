@@ -6,7 +6,7 @@ import { findFeedAccountId, loadFeed, isFeedNotFound } from '../../storage/feed-
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { getFirstCliArg } from '../../shared/process-utils';
-import { makeStorage } from '../../shared/storage';
+import { makeStorage } from '../../storage/storage';
 import { requireEnv } from '../../shared/env';
 import { AppEnv } from '../../api/init-app';
 import { si } from '../../shared/string-utils';

@@ -4,7 +4,7 @@ import { sendEmails } from '../app/email-sending';
 import { makeCustomLoggers } from '../shared/logging';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
 import { isErr } from '../shared/lang';
-import { AppStorage, makeStorage } from '../shared/storage';
+import { AppStorage, makeStorage } from '../storage/storage';
 import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
 import { accountsStorageKey, makeAccountId } from '../domain/account';

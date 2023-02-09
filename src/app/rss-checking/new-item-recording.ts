@@ -1,7 +1,7 @@
 import { HashFn, hash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { AppStorage } from '../../shared/storage';
+import { AppStorage } from '../../storage/storage';
 import { FeedId } from '../../domain/feed';
 import { getFeedStorageKey } from '../../storage/feed-storage';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
