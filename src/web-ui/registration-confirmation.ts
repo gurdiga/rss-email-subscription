@@ -15,8 +15,8 @@ async function main() {
     return;
   }
 
-  const uiElements = requireUiElements<RegistrationConfirmationUiElements>({
-    progressIndicator: '#progress-indicator',
+  const uiElements = requireUiElements<UiElements>({
+    spinner: '#spinner',
     apiResponseMessage: '#api-response-message',
   });
 
@@ -25,7 +25,7 @@ async function main() {
     return;
   }
 
-  unhideElement(uiElements.progressIndicator);
+  unhideElement(uiElements.spinner);
 
   const response = await attempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, { secret }));
 
@@ -34,11 +34,11 @@ async function main() {
     return;
   }
 
-  hideElement(uiElements.progressIndicator);
+  hideElement(uiElements.spinner);
   displayApiResponse(response, uiElements.apiResponseMessage);
 
   if (isSuccess(response)) {
-    hideElement(uiElements.progressIndicator);
+    hideElement(uiElements.spinner);
     navigateTo(PagePaths.userStart, 2000);
     return;
   }
@@ -56,8 +56,8 @@ function validateSecretFromQueryStringParam(locationSearch: string): Result<stri
   return secret;
 }
 
-interface RegistrationConfirmationUiElements extends ApiResponseUiElements {
-  progressIndicator: HTMLElement;
+interface UiElements extends ApiResponseUiElements {
+  spinner: HTMLElement;
 }
 
 main();
