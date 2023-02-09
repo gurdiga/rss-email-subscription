@@ -186,14 +186,19 @@ ssl:
 			--email gurdiga@gmail.com" certbot
 	docker kill --signal=SIGHUP website
 
+# NOTE: Eleventy manages the website’s /dist/, so I’m puting the compiled
+# scrips in its src/web-ui-scripts/ and let it take it from there. If I put
+# them directly in /dist/, Eleventy removes them as extraneous.
+WEB_UI_DEST_DIR=$(DOCUMENT_ROOT)/../src/web-ui-scripts/
+
 web-ui-systemjs:
-	mkdir -p $$DOCUMENT_ROOT/web-ui-scripts/
-	cp --target-directory=$$DOCUMENT_ROOT/web-ui-scripts/ \
+	mkdir -p $(WEB_UI_DEST_DIR)
+	cp --target-directory=$(WEB_UI_DEST_DIR) \
 		./node_modules/systemjs/dist/system.min.js* \
 		./src/web-ui/systemjs-resolve-patch.js
 
 web-ui-watch: web-ui-systemjs
-	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json --outDir $$DOCUMENT_ROOT/web-ui-scripts/ &
+	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json --outDir $(WEB_UI_DEST_DIR) &
 
 start-dev: web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
