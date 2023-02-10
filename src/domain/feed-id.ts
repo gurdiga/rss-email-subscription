@@ -1,4 +1,5 @@
 import { isString, makeErr, Result, hasKind } from '../shared/lang';
+import { si } from '../shared/string-utils';
 
 export interface FeedId {
   kind: 'FeedId';
@@ -9,23 +10,31 @@ export function isFeedId(value: unknown): value is FeedId {
   return hasKind(value, 'FeedId');
 }
 
+const minFeedIdLength = 3;
+
 export function makeFeedId(input: any): Result<FeedId> {
+  if (!input) {
+    return makeErr('Feed ID is missing', 'id');
+  }
+
   if (!isString(input)) {
-    return makeErr('Is not a string', input);
+    return makeErr('Feed ID is not a string', 'id');
   }
 
   const value = input.trim();
 
   if (value.length === 0) {
-    return makeErr('Is empty', value);
+    return makeErr('Feed ID is missing', 'id');
   }
 
-  if (value.length < 3) {
-    return makeErr('Is too short', value);
+  if (value.length < minFeedIdLength) {
+    return makeErr(si`Feed ID needs to be at least ${minFeedIdLength} characters`, 'id');
   }
 
-  return <FeedId>{
+  const feedId: FeedId = {
     kind: 'FeedId',
     value: value,
   };
+
+  return feedId;
 }

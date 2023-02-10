@@ -110,7 +110,7 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
   const input: MakeFeedInput = {
     displayName: 'Test Feed Name',
     url: 'https://test.com/rss.xml',
-    feedId: 'test-feed-id',
+    id: 'test-feed-id',
     replyTo: 'feed-replyTo@test.com',
     isDeleted: false,
     ...props,

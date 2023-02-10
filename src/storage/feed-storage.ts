@@ -167,7 +167,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
   const makeFeedInput: MakeFeedInput = {
     displayName: loadedData.displayName || feedId.value,
     url: loadedData.url,
-    feedId: feedId.value,
+    id: feedId.value,
     replyTo: loadedData.replyTo,
     isDeleted: !!loadedData.isDeleted,
     isActive: !!loadedData.isActive,

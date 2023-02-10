@@ -9,7 +9,7 @@ import { UnixCronPattern } from './cron-pattern';
 export interface MakeFeedInput {
   displayName?: string;
   url?: string;
-  feedId?: string;
+  id?: string;
   replyTo?: string;
   isDeleted?: boolean;
   isActive?: boolean;
@@ -30,26 +30,32 @@ export function makeFeed(
     return displayName;
   }
 
-  const id = makeFeedId(input.feedId);
-
-  if (isErr(id)) {
-    return makeErr(si`Invalid feed ID: "${String(input.feedId)}"`, 'id');
-  }
-
   if (!isString(input.url)) {
-    return makeErr(si`Non-string feed URL: "${input.url!}"`, 'url');
+    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input.url)}"`, 'url');
   }
 
-  const url = makeUrl(input.url);
+  const trimmedUrl = input.url.trim();
+
+  if (!trimmedUrl) {
+    return makeErr('Feed URL is missing', 'url');
+  }
+
+  const url = makeUrl(trimmedUrl);
 
   if (isErr(url)) {
-    return makeErr(si`Invalid feed URL: "${input.url}"`, 'url');
+    return makeErr(si`Invalid feed URL: "${trimmedUrl}"`, 'url');
+  }
+
+  const id = makeFeedId(input.id);
+
+  if (isErr(id)) {
+    return id;
   }
 
   const replyTo = makeEmailAddress(input.replyTo);
 
   if (isErr(replyTo)) {
-    return makeErr(si`Invalid Reply To email: "${input.replyTo!}"`, 'replyTo');
+    return makeErr(si`Invalid Reply To email`, 'replyTo');
   }
 
   const isDeleted = Boolean(input.isDeleted);
@@ -70,10 +76,30 @@ export function makeFeed(
   return feed;
 }
 
+export const maxFeedNameLength = 50;
+
 export function makeFeedDisplayName(input: unknown): Result<string> {
-  if (!isString(input) || input.trim().length < 5 || input.trim().length > 50) {
-    return makeErr(si`Invalid feed display name: "${String(input)}"`, 'displayName');
+  if (!input) {
+    return makeErr('Feed name is missing', 'displayName');
   }
 
-  return input.trim();
+  if (!isString(input)) {
+    return makeErr(si`Invalid feed name: expected type [string] but got "${getTypeName(input)}"`, 'displayName');
+  }
+
+  const trimmedInput = input.trim();
+
+  if (!trimmedInput) {
+    return makeErr('Feed name is missing', 'displayName');
+  }
+
+  if (trimmedInput.length < 5) {
+    return makeErr('Feed name is too short', 'displayName');
+  }
+
+  if (trimmedInput.length > maxFeedNameLength) {
+    return makeErr('Feed name is too long', 'displayName');
+  }
+
+  return trimmedInput;
 }

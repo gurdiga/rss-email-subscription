@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { Feed } from './feed';
-import { makeFeed, MakeFeedInput } from './feed-making';
+import { makeFeed, MakeFeedInput, maxFeedNameLength } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
 import { makeTestFeedHashingSalt, makeTestEmailAddress, makeTestUnixCronPattern } from '../shared/test-utils';
 import { makeTestFeedId } from '../shared/test-utils';
@@ -13,7 +13,7 @@ describe(makeFeed.name, () => {
     const input: MakeFeedInput = {
       displayName: 'Test Feed Name',
       url: 'https://test.com/rss.xml',
-      feedId: 'test-feed',
+      id: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
       isDeleted: true,
       isActive: true,
@@ -22,7 +22,7 @@ describe(makeFeed.name, () => {
 
     const expectedResult: Feed = {
       kind: 'Feed',
-      id: makeTestFeedId(input.feedId),
+      id: makeTestFeedId(input.id),
       displayName: 'Test Feed Name',
       url: new URL(input.url!),
       hashingSalt: hashingSalt,
@@ -47,28 +47,51 @@ describe(makeFeed.name, () => {
         'input2',
       ],
       [42 as any as MakeFeedInput, makeErr('Invalid input type: expected [object] but got [number]'), 'input3'],
-      [{}, makeErr('Invalid feed display name: "undefined"', 'displayName'), 'displayName'],
-      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID: "undefined"', 'id'), 'id1'],
+      [{}, makeErr('Feed name is missing', 'displayName'), 'displayName1'],
+      [{ displayName: '' }, makeErr('Feed name is missing', 'displayName'), 'displayName2'],
       [
-        {
-          displayName: 'test-value',
-          feedId: ' \t\r\n', // white-space
-        },
-        makeErr('Invalid feed ID: " \t\r\n"', 'id'),
+        { displayName: 42 as any as string },
+        makeErr('Invalid feed name: expected type [string] but got "number"', 'displayName'),
+        'displayName2',
+      ],
+      [{ displayName: ' \t\r\n   ' /* white-space */ }, makeErr('Feed name is missing', 'displayName'), 'displayName3'],
+      [{ displayName: 'lil' }, makeErr('Feed name is too short', 'displayName'), 'displayName4'],
+      [
+        { displayName: 'a'.repeat(maxFeedNameLength + 1) },
+        makeErr('Feed name is too long', 'displayName'),
+        'displayName5',
+      ],
+      [
+        { displayName: 'test-valid-displayName', url: 'https://test.com/rss.xml' },
+        makeErr('Feed ID is missing', 'id'),
+        'id1',
+      ],
+      [
+        { displayName: 'test-value', url: 'https://test.com/rss.xml', id: ' \t\r\n' /* white-space */ },
+        makeErr('Feed ID is missing', 'id'),
         'id2',
       ],
       [
         {
           displayName: 'test-valid-displayName',
-          feedId: 'valid-feedId',
+          id: 'valid-feedId',
+          url: ' \t\r\n   ' /* white-space */,
         },
-        makeErr('Non-string feed URL: ""', 'url'),
+        makeErr('Feed URL is missing', 'url'),
+        'url0',
+      ],
+      [
+        {
+          displayName: 'test-valid-displayName',
+          id: 'valid-feedId',
+        },
+        makeErr('Feed URL has the wrong type: "undefined"', 'url'),
         'url1',
       ],
       [
         {
           displayName: 'test-valid-displayName',
-          feedId: 'valid-feedId',
+          id: 'valid-feedId',
           url: 'not-an-url',
         },
         makeErr('Invalid feed URL: "not-an-url"', 'url'),
@@ -78,9 +101,9 @@ describe(makeFeed.name, () => {
         {
           displayName: 'test-value',
           url: 'https://test.com/rss.xml',
-          feedId: 'valid-feedId',
+          id: 'valid-feedId',
         },
-        makeErr('Invalid Reply To email: ""', 'replyTo'),
+        makeErr('Invalid Reply To email', 'replyTo'),
         'replyTo',
       ],
     ];

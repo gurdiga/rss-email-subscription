@@ -31,11 +31,11 @@ describe('API', () => {
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
     url: 'https://api-test.com/rss.xml',
-    feedId: 'api-test-feed',
+    id: 'api-test-feed',
     replyTo: 'feed-replyto@api-test.com',
   };
 
-  const testFeedId = makeTestFeedId(testFeedProps.feedId);
+  const testFeedId = makeTestFeedId(testFeedProps.id);
 
   describe('infrastructure', () => {
     before(() => expect(++step).to.equal(1, 'test are expected to run in source order'));

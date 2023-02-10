@@ -137,8 +137,8 @@ describe(loadFeedsByAccountId.name, () => {
     ]);
     expect(result.feedIdErrs).to.deep.equal([
       // prettier: keep these stacked
-      makeErr('Is too short', 'a'),
-      makeErr('Is not a string', 42 as any),
+      makeErr('Feed ID needs to be at least 3 characters', 'id'),
+      makeErr('Feed ID is not a string', 'id'),
     ]);
   });
 
@@ -179,7 +179,7 @@ describe(storeFeed.name, () => {
       {
         displayName: 'Test Feed Name',
         url: 'https://test.com/rss.xml',
-        feedId: feedId.value,
+        id: feedId.value,
         replyTo: 'feed-replyTo@test.com',
       },
       makeTestFeedHashingSalt(),
@@ -296,8 +296,8 @@ describe(markFeedAsDeleted.name, () => {
 });
 
 describe(alterExistingFeed.name, () => {
-  const existingFeed = makeTestFeed({ feedId: 'existing-feed' });
-  const newFeed = makeTestFeed({ feedId: 'new-feed' });
+  const existingFeed = makeTestFeed({ id: 'existing-feed' });
+  const newFeed = makeTestFeed({ id: 'new-feed' });
 
   it('stores properties from new feed EXCEPT hashingSalt', () => {
     const existingHashingSalt = existingFeed.hashingSalt;

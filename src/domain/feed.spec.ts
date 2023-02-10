@@ -10,12 +10,12 @@ describe(makeFeedId.name, () => {
   });
 
   it('returns an Err value when not OK', () => {
-    expect(makeFeedId(null)).to.deep.equal(makeErr('Is not a string'));
-    expect(makeFeedId(undefined)).to.deep.equal(makeErr('Is not a string'));
-    expect(makeFeedId(42)).to.deep.equal(makeErr('Is not a string', 42 as any));
-    expect(makeFeedId('')).to.deep.equal(makeErr('Is empty', ''));
-    expect(makeFeedId('  ')).to.deep.equal(makeErr('Is empty'));
-    expect(makeFeedId('ab')).to.deep.equal(makeErr('Is too short', 'ab'));
+    expect(makeFeedId(null)).to.deep.equal(makeErr('Feed ID is missing', 'id'));
+    expect(makeFeedId(undefined)).to.deep.equal(makeErr('Feed ID is missing', 'id'));
+    expect(makeFeedId(42)).to.deep.equal(makeErr('Feed ID is not a string', 'id'));
+    expect(makeFeedId('')).to.deep.equal(makeErr('Feed ID is missing', 'id'));
+    expect(makeFeedId('  ')).to.deep.equal(makeErr('Feed ID is missing', 'id'));
+    expect(makeFeedId('ab')).to.deep.equal(makeErr('Feed ID needs to be at least 3 characters', 'id'));
   });
 });
 
