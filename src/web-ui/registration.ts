@@ -1,6 +1,6 @@
 import { isPlanId, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { attempt, isErr } from '../shared/lang';
+import { asyncAttempt, isErr } from '../shared/lang';
 import { displayInitError, displayCommunicationError, unhideElement, displayAppError, HttpMethod } from './shared';
 import { preventDoubleClick, requireUiElements, AppStatusUiElements } from './shared';
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
@@ -28,7 +28,7 @@ function main() {
     clearValidationErrors(uiElements);
 
     preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await attempt(() =>
+      const response = await asyncAttempt(() =>
         sendApiRequest('/registration', HttpMethod.POST, {
           plan: uiElements.plan.value,
           email: uiElements.email.value,
