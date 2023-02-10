@@ -32,7 +32,7 @@ async function main() {
 
 function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
   const { feedListPreamble, feedList } = uiElements;
-  const feedListData = buildFeedListData(uiFeedList);
+  const feedListData = makeFeedListData(uiFeedList);
 
   feedListPreamble.textContent = feedListData.preambleMessage;
   unhideElement(feedListPreamble);
@@ -55,7 +55,7 @@ interface FeedLinkData {
   href: string;
 }
 
-export function buildFeedListData(feedList: UiFeedListItem[]): FeedListData {
+export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
   const pluralSuffix = feedList.length === 1 ? '' : 's';
 
   return isEmpty(feedList)

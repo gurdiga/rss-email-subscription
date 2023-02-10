@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
-import { buildRssItem, parseRssItems, RssParsingResult, ParsedRssItem, BuildRssItemFn } from './rss-parsing';
+import { makeRssItem, parseRssItems, RssParsingResult, ParsedRssItem, MakeRssItemFn } from './rss-parsing';
 import { ValidRssItem } from './rss-parsing';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
@@ -218,7 +218,7 @@ describe(parseRssItems.name, () => {
 
   it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
     const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.xml'), 'utf-8');
-    const buildRssItemFn = makeThrowingStub<BuildRssItemFn>(new Error('Something broke!'));
+    const buildRssItemFn = makeThrowingStub<MakeRssItemFn>(new Error('Something broke!'));
 
     const result = (await parseRssItems(
       {
@@ -232,7 +232,7 @@ describe(parseRssItems.name, () => {
     expect(result).to.deep.equal(makeErr('buildRssItemFn threw: Something broke!'));
   });
 
-  describe(buildRssItem.name, () => {
+  describe(makeRssItem.name, () => {
     it('returns a ValidRssItem value when input is valid', () => {
       const inputRssItems: ParsedRssItem[] = [
         {
@@ -273,7 +273,7 @@ describe(parseRssItems.name, () => {
           },
         };
 
-        expect(buildRssItem(inputItem, baseURL)).to.deep.equal(expectedResult);
+        expect(makeRssItem(inputItem, baseURL)).to.deep.equal(expectedResult);
       });
     });
 
@@ -287,35 +287,35 @@ describe(parseRssItems.name, () => {
       };
 
       let invalidInput: ParsedRssItem = { ...item, title: undefined };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post title is missing',
       });
 
       invalidInput = { ...item, content: undefined };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post content is missing',
       });
 
       invalidInput = { ...item, isoDate: undefined };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post publication timestamp is missing',
       });
 
       invalidInput = { ...item, isoDate: 'Not a JSON date string' };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post publication timestamp is not a valid JSON date string',
       });
 
       invalidInput = { ...item, link: undefined };
-      expect(buildRssItem(invalidInput, baseURL)).to.deep.equal({
+      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post link is missing',

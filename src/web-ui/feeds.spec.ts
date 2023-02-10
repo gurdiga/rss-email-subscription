@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { UiFeedListItem } from '../domain/feed';
 import { makeTestFeedId } from '../shared/test-utils';
-import { buildFeedListData, FeedListData } from './feeds';
+import { makeFeedListData, FeedListData } from './feeds';
 
-describe(buildFeedListData.name, () => {
+describe(makeFeedListData.name, () => {
   it('returns the data necessary to render the HTML from the given uiFeedList', () => {
     const uiFeedList: UiFeedListItem[] = [
       {
@@ -16,7 +16,7 @@ describe(buildFeedListData.name, () => {
       },
     ];
 
-    const result = buildFeedListData(uiFeedList);
+    const result = makeFeedListData(uiFeedList);
 
     expect(result).to.deep.equal(<FeedListData>{
       preambleMessage: 'You have 2 feeds registered at the moment.',
@@ -28,7 +28,7 @@ describe(buildFeedListData.name, () => {
   });
 
   it('returns no linkData when no feeds', () => {
-    const result = buildFeedListData([]);
+    const result = makeFeedListData([]);
 
     expect(result).to.deep.equal(<FeedListData>{
       preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!',

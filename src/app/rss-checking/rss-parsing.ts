@@ -16,7 +16,7 @@ export const maxValidItems = 10;
 
 export async function parseRssItems(
   rssResponse: RssResponse,
-  buildRssItemFn: BuildRssItemFn = buildRssItem
+  buildRssItemFn: MakeRssItemFn = makeRssItem
 ): Promise<Result<RssParsingResult>> {
   const parser = new Parser();
 
@@ -68,9 +68,9 @@ function isValidRssItem(value: unknown): value is ValidRssItem {
   return hasKind(value, 'ValidRssItem');
 }
 
-export type BuildRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
+export type MakeRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
 
-export function buildRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
+export function makeRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
   const { title, isoDate } = item;
   const content = item['content:encoded'] || item.content;
   const author = item.author || item.creator || 'Anonymous Coward';
