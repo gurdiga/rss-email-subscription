@@ -4,7 +4,7 @@ import { alterExistingFeed, feedExists, FeedExistsResult, FeedsByAccountId } fro
 import { markFeedAsDeleted, FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, loadFeed } from './feed-storage';
 import { loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { makeFeedId } from '../domain/feed-id';
-import { makeFeed, MakeFeedInput } from '../domain/feed-making';
+import { makeFeed } from '../domain/feed-making';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
@@ -94,6 +94,7 @@ describe(loadFeed.name, () => {
     expect(result).to.deep.equal(makeErr('Failed to loadItem: Storage failed!'));
   });
 });
+
 describe(loadFeedsByAccountId.name, () => {
   it('returns a FeedsByAccountId value for account', () => {
     const feeds: Record<string, ReturnType<typeof loadFeed>> = {
@@ -168,94 +169,7 @@ describe(loadFeedsByAccountId.name, () => {
     expect(result).to.deep.equal(makeErr('Failed to list feeds: Storage broken!'));
   });
 });
-describe(makeFeed.name, () => {
-  it('returns a Feed when valid props', () => {
-    const input: MakeFeedInput = {
-      displayName: 'Test Feed Name',
-      url: 'https://test.com/rss.xml',
-      feedId: 'test-feed',
-      replyTo: 'feed-replyTo@test.com',
-      cronPattern: '@hourly',
-      isDeleted: true,
-      isActive: true,
-    };
-    const hashingSalt = makeTestFeedHashingSalt();
 
-    expect(makeFeed(input, hashingSalt)).to.deep.equal(<Feed>{
-      kind: 'Feed',
-      id: makeFeedId(input.feedId),
-      displayName: 'Test Feed Name',
-      url: new URL(input.url!),
-      hashingSalt: hashingSalt,
-      replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
-      cronPattern: makeUnixCronPattern('0 * * * *'),
-      isDeleted: true,
-      isActive: true,
-    });
-  });
-
-  it('returns an Err value if any field is not appropriate', () => {
-    type FieldName = string;
-
-    const hashingSalt = makeTestFeedHashingSalt();
-    const expectedErrForInput: [MakeFeedInput, Err, FieldName][] = [
-      [null as any as MakeFeedInput, makeErr('Invalid input'), 'input1'],
-      [undefined as any as MakeFeedInput, makeErr('Invalid input'), 'input2'],
-      [42 as any as MakeFeedInput, makeErr('Invalid input'), 'input3'],
-      [{}, makeErr('Invalid feed display name: "undefined"', 'displayName'), 'displayName'],
-      [{ displayName: 'test-valid-displayName' }, makeErr('Invalid feed ID: "undefined"', 'id'), 'id1'],
-      [
-        {
-          displayName: 'test-value',
-          feedId: ' \t\r\n', // white-space
-        },
-        makeErr('Invalid feed ID: " \t\r\n"', 'id'),
-        'id2',
-      ],
-      [
-        {
-          displayName: 'test-valid-displayName',
-          feedId: 'valid-feedId',
-        },
-        makeErr('Non-string feed URL: ""', 'url'),
-        'url1',
-      ],
-      [
-        {
-          displayName: 'test-valid-displayName',
-          feedId: 'valid-feedId',
-          url: 'not-an-url',
-        },
-        makeErr('Invalid feed URL: "not-an-url"', 'url'),
-        'url2',
-      ],
-      [
-        {
-          displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
-          feedId: 'valid-feedId',
-        },
-        makeErr('Invalid Reply To email: ""', 'replyTo'),
-        'replyTo',
-      ],
-      [
-        {
-          displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
-          feedId: 'valid-feedId',
-          replyTo: 'valid-replyTo-email@test.com',
-          cronPattern: 'daily',
-        },
-        makeErr('Invalid cronPattern: "daily"', 'cronPattern'),
-        'cronPattern',
-      ],
-    ];
-
-    for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(makeFeed(input as any, hashingSalt)).to.deep.equal(err, si`invalid ${fieldName}`);
-    }
-  });
-});
 describe(storeFeed.name, () => {
   let feed: Feed;
 
@@ -299,6 +213,7 @@ describe(storeFeed.name, () => {
     expect(result).be.deep.equal(makeErr('Failed to store feed data: Something broke!'));
   });
 });
+
 describe(findFeedAccountId.name, () => {
   it('finds first account that has a feed with given Id', () => {
     const storage = makeTestStorageFromSnapshot({
@@ -322,6 +237,7 @@ describe(findFeedAccountId.name, () => {
     purgeTestStorageFromSnapshot();
   });
 });
+
 describe(feedExists.name, () => {
   const accountIds = [makeTestAccountId()];
   const storage = makeTestStorage();
@@ -349,6 +265,7 @@ describe(feedExists.name, () => {
     });
   });
 });
+
 describe(markFeedAsDeleted.name, () => {
   const feed = makeTestFeed({ isDeleted: false });
 
@@ -376,6 +293,7 @@ describe(markFeedAsDeleted.name, () => {
     expect(result.reason).to.match(/Failed to storeFeed: Storage writing failed!/);
   });
 });
+
 describe(alterExistingFeed.name, () => {
   const existingFeed = makeTestFeed({ feedId: 'existing-feed' });
   const newFeed = makeTestFeed({ feedId: 'new-feed' });

@@ -1,5 +1,5 @@
 import { makeEmailAddress } from './email-address-making';
-import { isErr, isObject, isString, makeErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeUrl } from '../shared/url';
 import { makeUnixCronPattern } from './cron-pattern-making';
@@ -18,7 +18,7 @@ export interface MakeFeedInput {
 
 export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Result<Feed> {
   if (!isObject(input)) {
-    return makeErr('Invalid input');
+    return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(input)}]`);
   }
 
   const displayName = makeFeedDisplayName(input.displayName);
