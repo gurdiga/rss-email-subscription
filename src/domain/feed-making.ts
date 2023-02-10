@@ -58,7 +58,7 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
   const isDeleted = Boolean(input.isDeleted);
   const isActive = Boolean(input.isActive);
 
-  return <Feed>{
+  const feed: Feed = {
     kind: 'Feed',
     id,
     displayName,
@@ -69,6 +69,8 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
     isDeleted,
     isActive,
   };
+
+  return feed;
 }
 
 export function makeFeedDisplayName(input: unknown): Result<string> {
