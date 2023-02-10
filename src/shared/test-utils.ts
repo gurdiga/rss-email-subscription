@@ -11,6 +11,9 @@ import { MakeFeedInput } from '../domain/feed-making';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from '../storage/storage';
 import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
+import { isUnixCronPattern, UnixCronPattern } from '../domain/cron-pattern';
+import { makeUnixCronPattern } from '../domain/cron-pattern-making';
+import { si } from './string-utils';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -98,7 +101,7 @@ export function die(errorMessage: string): never {
 export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
   const feedId = makeFeedId(idString);
 
-  assert(isFeedId(feedId), 'makeTestFeedId is expected to return a valid FeedId');
+  assert(isFeedId(feedId), si`${makeFeedId.name} did not return a valid FeedId`);
 
   return feedId;
 }
@@ -109,15 +112,15 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
     url: 'https://test.com/rss.xml',
     feedId: 'test-feed-id',
     replyTo: 'feed-replyTo@test.com',
-    cronPattern: '@hourly',
     isDeleted: false,
     ...props,
   };
 
   const hasingSalt = makeTestFeedHashingSalt();
-  const feed = makeFeed(input, hasingSalt);
+  const cronPattern = makeTestUnixCronPattern();
+  const feed = makeFeed(input, hasingSalt, cronPattern);
 
-  assert(isFeed(feed), 'makeTestFeedId is expected to return a valid FeedId');
+  assert(isFeed(feed), si`${makeFeed.name} did not return a valid Feed`);
 
   return feed;
 }
@@ -125,7 +128,7 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
 export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): AccountId {
   const accountId = makeAccountId(idString);
 
-  assert(isAccountId(accountId), 'makeTestAccountId is expected to return a valid AccountId');
+  assert(isAccountId(accountId), si`${makeAccountId.name} did not return a valid AccountId`);
 
   return accountId;
 }
@@ -133,7 +136,7 @@ export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): Acco
 export function makeTestEmailAddress(emailString: string): EmailAddress {
   const emailAddress = makeEmailAddress(emailString);
 
-  assert(isEmailAddress(emailAddress), 'makeTestEmailAddress is expected to return a valid EmailAddress');
+  assert(isEmailAddress(emailAddress), si`${makeEmailAddress.name} did not return a valid EmailAddress`);
 
   return emailAddress;
 }
@@ -145,7 +148,15 @@ export function deepClone(data: any): any {
 export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): FeedHashingSalt {
   const result = makeFeedHashingSalt(input);
 
-  assert(isFeedHashingSalt(result), 'makeTestFeedHashingSalt is expected to return a valid FeedHashingSalt');
+  assert(isFeedHashingSalt(result), si`${makeFeedHashingSalt.name} did not return a valid FeedHashingSalt`);
+
+  return result;
+}
+
+export function makeTestUnixCronPattern(input: string = '1 2 3 4 5'): UnixCronPattern {
+  const result = makeUnixCronPattern(input);
+
+  assert(isUnixCronPattern(result), si`${makeUnixCronPattern.name} did not return a valid UnixCronPattern`);
 
   return result;
 }

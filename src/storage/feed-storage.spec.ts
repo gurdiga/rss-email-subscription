@@ -9,9 +9,9 @@ import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { makeTestUnixCronPattern } from '../shared/test-utils';
 import { AccountData, getAccountStorageKey, makeAccountNotFound } from '../domain/account';
 import { si } from '../shared/string-utils';
-import { UnixCronPattern } from '../domain/cron-pattern';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 
 export const accountId = makeTestAccountId();
@@ -43,7 +43,7 @@ describe(loadFeed.name, () => {
       url: new URL(data.url),
       hashingSalt: makeTestFeedHashingSalt(data.hashingSalt),
       replyTo: makeTestEmailAddress(data.replyTo),
-      cronPattern: makeUnixCronPattern(data.cronPattern) as UnixCronPattern,
+      cronPattern: makeTestUnixCronPattern(data.cronPattern),
       isDeleted: false,
       isActive: true,
     };
@@ -172,6 +172,7 @@ describe(loadFeedsByAccountId.name, () => {
 
 describe(storeFeed.name, () => {
   let feed: Feed;
+  const cronPattern = makeTestUnixCronPattern();
 
   beforeEach(() => {
     feed = makeFeed(
@@ -180,9 +181,9 @@ describe(storeFeed.name, () => {
         url: 'https://test.com/rss.xml',
         feedId: feedId.value,
         replyTo: 'feed-replyTo@test.com',
-        cronPattern: '@hourly',
       },
-      makeTestFeedHashingSalt()
+      makeTestFeedHashingSalt(),
+      cronPattern
     ) as Feed;
   });
 
@@ -195,7 +196,7 @@ describe(storeFeed.name, () => {
       [
         si`/accounts/${accountId.value}/feeds/test-feed-id/feed.json`,
         {
-          cronPattern: '0 * * * *',
+          cronPattern: cronPattern.value,
           displayName: 'Test Feed Name',
           hashingSalt: feed.hashingSalt.value,
           url: 'https://test.com/rss.xml',

@@ -13,6 +13,7 @@ import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 import { loadStoredEmails } from '../app/email-sending/emails';
+import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 
 export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -64,7 +65,14 @@ export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBo
     return makeAppError('Application error!');
   }
 
-  const newFeed = makeFeed(reqBody, feedHashingSalt);
+  const cronPattern = makeUnixCronPattern(reqBody.cronPattern);
+
+  if (isErr(cronPattern)) {
+    logError(si`Failed to ${makeUnixCronPattern.name}`, cronPattern);
+    return makeAppError('Application error!');
+  }
+
+  const newFeed = makeFeed(reqBody, feedHashingSalt, cronPattern);
 
   if (isErr(newFeed)) {
     logError(si`Failed to ${makeFeed.name}`, newFeed);
@@ -117,7 +125,14 @@ export const createFeed: RequestHandler = async function createFeed(reqId, reqBo
     return makeAppError('Application error!');
   }
 
-  const feed = makeFeed(reqBody, feedHashingSalt);
+  const cronPattern = makeUnixCronPattern(reqBody.cronPattern);
+
+  if (isErr(cronPattern)) {
+    logError(si`Failed to ${makeUnixCronPattern.name}`, cronPattern);
+    return makeAppError('Application error!');
+  }
+
+  const feed = makeFeed(reqBody, feedHashingSalt, cronPattern);
 
   if (isErr(feed)) {
     logError(si`Failed to ${makeFeed.name}`, feed);

@@ -169,12 +169,11 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     url: loadedData.url,
     feedId: feedId.value,
     replyTo: loadedData.replyTo,
-    cronPattern: cronPattern.value,
     isDeleted: !!loadedData.isDeleted,
     isActive: !!loadedData.isActive,
   };
 
-  return makeFeed(makeFeedInput, hashingSalt);
+  return makeFeed(makeFeedInput, hashingSalt, cronPattern);
 }
 
 export interface FeedsByAccountId {

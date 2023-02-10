@@ -1,36 +1,38 @@
 import { expect } from 'chai';
 import { Feed } from './feed';
-import { makeFeedId } from './feed-id';
 import { makeFeed, MakeFeedInput } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
-import { makeTestFeedHashingSalt, makeTestEmailAddress } from '../shared/test-utils';
+import { makeTestFeedHashingSalt, makeTestEmailAddress, makeTestUnixCronPattern } from '../shared/test-utils';
+import { makeTestFeedId } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
-import { makeUnixCronPattern } from './cron-pattern-making';
 
 describe(makeFeed.name, () => {
+  const cronPattern = makeTestUnixCronPattern();
+
   it('returns a Feed when valid props', () => {
     const input: MakeFeedInput = {
       displayName: 'Test Feed Name',
       url: 'https://test.com/rss.xml',
       feedId: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
-      cronPattern: '@hourly',
       isDeleted: true,
       isActive: true,
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
-    expect(makeFeed(input, hashingSalt)).to.deep.equal(<Feed>{
+    const expectedResult: Feed = {
       kind: 'Feed',
-      id: makeFeedId(input.feedId),
+      id: makeTestFeedId(input.feedId),
       displayName: 'Test Feed Name',
       url: new URL(input.url!),
       hashingSalt: hashingSalt,
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
-      cronPattern: makeUnixCronPattern('0 * * * *'),
+      cronPattern,
       isDeleted: true,
       isActive: true,
-    });
+    };
+
+    expect(makeFeed(input, hashingSalt, cronPattern)).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value if any field is not appropriate', () => {
@@ -81,21 +83,10 @@ describe(makeFeed.name, () => {
         makeErr('Invalid Reply To email: ""', 'replyTo'),
         'replyTo',
       ],
-      [
-        {
-          displayName: 'test-value',
-          url: 'https://test.com/rss.xml',
-          feedId: 'valid-feedId',
-          replyTo: 'valid-replyTo-email@test.com',
-          cronPattern: 'daily',
-        },
-        makeErr('Invalid cronPattern: "daily"', 'cronPattern'),
-        'cronPattern',
-      ],
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
-      expect(makeFeed(input as any, hashingSalt)).to.deep.equal(err, si`invalid ${fieldName}`);
+      expect(makeFeed(input as any, hashingSalt, cronPattern)).to.deep.equal(err, si`invalid ${fieldName}`);
     }
   });
 });

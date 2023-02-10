@@ -14,8 +14,7 @@ import { readFile } from './src/storage/io-isolation';
 import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
 import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';
-import { UnixCronPattern } from './src/domain/cron-pattern';
-import { makeUnixCronPattern } from './src/domain/cron-pattern-making';
+import { makeTestUnixCronPattern } from './src/shared/test-utils';
 
 describe('API', () => {
   let step = 0; // NOTE: test are expected to run in source order
@@ -27,14 +26,13 @@ describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
   const userPlan = 'standard';
-  const cronPattern = makeUnixCronPattern('@hourly') as UnixCronPattern;
+  const cronPattern = makeTestUnixCronPattern();
 
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
     url: 'https://api-test.com/rss.xml',
     feedId: 'api-test-feed',
     replyTo: 'feed-replyto@api-test.com',
-    cronPattern: cronPattern.value,
   };
 
   const testFeedId = makeTestFeedId(testFeedProps.feedId);

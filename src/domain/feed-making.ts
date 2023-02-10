@@ -2,21 +2,24 @@ import { makeEmailAddress } from './email-address-making';
 import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeUrl } from '../shared/url';
-import { makeUnixCronPattern } from './cron-pattern-making';
 import { FeedHashingSalt, Feed } from './feed';
 import { makeFeedId } from './feed-id';
+import { UnixCronPattern } from './cron-pattern';
 
 export interface MakeFeedInput {
   displayName?: string;
   url?: string;
   feedId?: string;
   replyTo?: string;
-  cronPattern?: string;
   isDeleted?: boolean;
   isActive?: boolean;
 }
 
-export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Result<Feed> {
+export function makeFeed(
+  input: MakeFeedInput,
+  hashingSalt: FeedHashingSalt,
+  cronPattern: UnixCronPattern
+): Result<Feed> {
   if (!isObject(input)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(input)}]`);
   }
@@ -47,12 +50,6 @@ export function makeFeed(input: MakeFeedInput, hashingSalt: FeedHashingSalt): Re
 
   if (isErr(replyTo)) {
     return makeErr(si`Invalid Reply To email: "${input.replyTo!}"`, 'replyTo');
-  }
-
-  const cronPattern = makeUnixCronPattern(input.cronPattern);
-
-  if (isErr(cronPattern)) {
-    return makeErr(si`Invalid cronPattern: "${input.cronPattern!}"`, 'cronPattern');
   }
 
   const isDeleted = Boolean(input.isDeleted);
