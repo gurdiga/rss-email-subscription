@@ -29,7 +29,7 @@ describe(loadAccount.name, () => {
     const expectedResult: Account = {
       email: makeTestEmailAddress(accountData.email),
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
-      plan: makePlanId(accountData.plan) as PlanId,
+      planId: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
     };
 
@@ -99,7 +99,7 @@ describe(loadAccount.name, () => {
 describe(storeAccount.name, () => {
   it('stores the given account', () => {
     const account: Account = {
-      plan: 'sde',
+      planId: 'sde',
       email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       creationTimestamp,
@@ -119,7 +119,7 @@ describe(storeAccount.name, () => {
 
   function getAccountData(account: Account): AccountData {
     return {
-      plan: account.plan,
+      plan: account.planId,
       email: account.email.value,
       hashedPassword: account.hashedPassword.value,
       confirmationTimestamp: account.confirmationTimestamp,

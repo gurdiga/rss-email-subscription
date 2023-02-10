@@ -34,7 +34,7 @@ export function isAccountId(value: unknown): value is AccountId {
 }
 
 export interface Account {
-  plan: PlanId;
+  planId: PlanId;
   email: EmailAddress;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
@@ -67,10 +67,10 @@ export function loadAccount(
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${email.reason}`, 'email');
   }
 
-  const plan = makePlanId(loadItemResult.plan);
+  const planId = makePlanId(loadItemResult.plan);
 
-  if (isErr(plan)) {
-    return makeErr(si`Invalid stored data for account ${accountId.value}: ${plan.reason}`, 'plan');
+  if (isErr(planId)) {
+    return makeErr(si`Invalid stored data for account ${accountId.value}: ${planId.reason}`, 'plan');
   }
 
   const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
@@ -89,7 +89,7 @@ export function loadAccount(
   }
 
   return {
-    plan,
+    planId,
     email,
     hashedPassword,
     creationTimestamp,
@@ -99,7 +99,7 @@ export function loadAccount(
 export function storeAccount(storage: AppStorage, accountId: AccountId, account: Account): Result<void> {
   const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
-    plan: account.plan,
+    plan: account.planId,
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,

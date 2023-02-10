@@ -141,7 +141,7 @@ interface Input {
 
 interface ProcessedInput {
   kind: 'ProcessedInput';
-  plan: PlanId;
+  planId: PlanId;
   email: EmailAddress;
   password: NewPassword;
 }
@@ -150,11 +150,11 @@ function processInput(input: Input): Result<ProcessedInput, keyof Input> {
   const module = si`${registration.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
 
-  const plan = makePlanId(input.plan);
+  const planId = makePlanId(input.plan);
 
-  if (isErr(plan)) {
-    logWarning('Invalid plan', { input: input.plan, reason: plan.reason });
-    return { ...plan, field: 'plan' };
+  if (isErr(planId)) {
+    logWarning('Invalid plan ID', { input: input.plan, reason: planId.reason });
+    return { ...planId, field: 'plan' };
   }
 
   const email = makeEmailAddress(input.email);
@@ -173,7 +173,7 @@ function processInput(input: Input): Result<ProcessedInput, keyof Input> {
 
   return {
     kind: 'ProcessedInput',
-    plan,
+    planId,
     email,
     password,
   };
@@ -193,7 +193,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
 
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
   const account: Account = {
-    plan: input.plan,
+    planId: input.planId,
     email: input.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     creationTimestamp: new Date(),
