@@ -201,12 +201,12 @@ export function sendApiRequest<R extends any = any>(
   data: Record<string, string> = {}
 ): Promise<AuthenticatedApiResponse<R>> {
   const basePath = '/api';
-  const urlEnncodedData = new URLSearchParams(data);
+  const urlEncodedData = new URLSearchParams(data);
 
   const [url, body] =
     method === HttpMethod.POST
-      ? [si`${basePath}${relativePath}`, urlEnncodedData]
-      : [si`${basePath}${relativePath}?${urlEnncodedData.toString()}`, null];
+      ? [si`${basePath}${relativePath}`, urlEncodedData]
+      : [si`${basePath}${relativePath}?${urlEncodedData.toString()}`, null];
 
   return fetch(url, { method, body })
     .then(assertFound)
