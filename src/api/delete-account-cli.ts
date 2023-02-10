@@ -2,7 +2,7 @@
 
 import { rmSync } from 'node:fs';
 import { basename } from 'node:path';
-import { makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { accountsStorageKey, getAccountIdByEmail } from '../domain/account';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';

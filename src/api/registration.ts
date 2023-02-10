@@ -1,4 +1,4 @@
-import { makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { Account, accountExists, storeAccount, AccountId, getAccountIdByEmail } from '../domain/account';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';

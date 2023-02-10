@@ -1,4 +1,5 @@
-import { FullEmailAddress, makeEmailAddress, makeFullEmailAddress } from '../app/email-sending/emails';
+import { FullEmailAddress, makeFullEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from './email-address-making';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage } from '../storage/storage';
 import { si } from '../shared/string-utils';

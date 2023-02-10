@@ -1,4 +1,4 @@
-import { makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from './email-address-making';
 import { EmailAddress } from './email-address';
 import { hash, hashLength } from '../shared/crypto';
 import { parseDate } from '../shared/date-utils';

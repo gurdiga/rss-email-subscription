@@ -1,4 +1,4 @@
-import { makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from './email-address-making';
 import { isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeUrl } from '../shared/url';

@@ -1,4 +1,4 @@
-import { makeEmailAddress } from '../app/email-sending/emails';
+import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { AccountId, getAccountIdByEmail, loadAccount } from '../domain/account';
 import { makePassword, Password } from '../domain/password';

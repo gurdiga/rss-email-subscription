@@ -9,7 +9,7 @@ import { makeFeed } from '../domain/feed-making';
 import { makeFeedHashingSalt } from '../domain/feed';
 import { MakeFeedInput } from '../domain/feed-making';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from '../storage/storage';
-import { isEmailAddress, makeEmailAddress } from '../app/email-sending/emails';
+import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias

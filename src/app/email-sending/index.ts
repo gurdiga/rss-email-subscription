@@ -1,6 +1,7 @@
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
-import { loadStoredEmails, makeEmailAddress, makeFullEmailAddress } from './emails';
+import { loadStoredEmails, makeFullEmailAddress } from './emails';
+import { makeEmailAddress } from '../../domain/email-address-making';
 import { readStoredRssItems } from './rss-item-reading';
 import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
 import { makeCustomLoggers } from '../../shared/logging';
