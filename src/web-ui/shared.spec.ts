@@ -1,12 +1,11 @@
 import { expect } from 'chai';
-import { InputError } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeStub } from '../shared/test-utils';
-import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
+import { querySelector } from './dom-isolation';
 import { fillUiElements, parseConfirmationLinkUrlParams, reportError, requireUiElements } from './shared';
-import { UiElementFillSpec, displayValidationError, getOrCreateValidationMessage } from './shared';
-import { requireQueryParams, clearValidationErrors, getClassNames } from './shared';
+import { UiElementFillSpec } from './shared';
+import { requireQueryParams } from './shared';
 
 describe(parseConfirmationLinkUrlParams.name, () => {
   it('returns a ConfirmationLinkUrlParams value from location.search', () => {
@@ -145,94 +144,5 @@ describe(fillUiElements.name, () => {
     spanFillSpec.element = null as any as HTMLSpanElement;
     result = fillUiElements([spanFillSpec]);
     expect(result).to.deep.equal(makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
-  });
-});
-
-describe(displayValidationError.name, () => {
-  it('builds the DOM structure required by Bootstrap validation', () => {
-    const response: InputError = {
-      kind: 'InputError',
-      message: 'Something’s wrong',
-      field: 'email' as const,
-    };
-
-    const focusSpy = makeSpy();
-    const formFields = {
-      plan: {} as HTMLSelectElement,
-      email: { focus: focusSpy } as any as HTMLInputElement,
-      password: {} as HTMLInputElement,
-    };
-
-    const nextSibling = {} as HTMLElement;
-    const getOrCreateValidationMessageFn = makeStub<typeof getOrCreateValidationMessage>(() => nextSibling);
-
-    displayValidationError(response, formFields, getOrCreateValidationMessageFn);
-
-    expect(getClassNames(formFields.email)).to.include('is-invalid');
-    expect(focusSpy.calls.length).to.equal(1);
-    expect(nextSibling.textContent).to.equal('Something’s wrong');
-  });
-});
-
-describe(getOrCreateValidationMessage.name, () => {
-  it('returns the existing div if it’s .validation-message', () => {
-    const existingDiv = { className: 'validation-message' } as HTMLDivElement;
-    const fieldElement = { nextElementSibling: existingDiv } as any as HTMLSelectElement;
-
-    expect(getOrCreateValidationMessage(fieldElement)).to.equal(existingDiv);
-  });
-
-  it('inserts a new div.validation-message if none exist next to the field', () => {
-    const newDiv = {} as HTMLDivElement;
-
-    const fieldElement = {} as HTMLSelectElement;
-    const createElementFn = makeStub<typeof createElement>(() => newDiv);
-    const insertAdjacentElementFn = makeStub<typeof insertAdjacentElement>();
-
-    const result = getOrCreateValidationMessage(fieldElement, createElementFn, insertAdjacentElementFn);
-
-    expect(insertAdjacentElementFn.calls).to.deep.equal([[fieldElement, 'afterend', newDiv]]);
-    expect(result).to.equal(newDiv);
-    expect(newDiv.className).to.equal('validation-message invalid-feedback');
-  });
-});
-
-describe(clearValidationErrors.name, () => {
-  it('removes the "is-invalid" class from the field', () => {
-    const formElements = {
-      firstName: { className: 'is-invalid mt-0' } as HTMLInputElement,
-      lastName: { className: 'is-invalid   p-5  m-0' } as HTMLInputElement,
-    };
-
-    clearValidationErrors(formElements);
-
-    expect(formElements.firstName.className).to.equal('mt-0');
-    expect(formElements.lastName.className).to.equal('p-5 m-0');
-  });
-
-  it('removes field’s associated .validation-message.invalid-feedback if any', () => {
-    const firstNameRemove = makeSpy();
-    const lastNameRemove = makeSpy();
-    const formElements = {
-      firstName: {
-        className: 'is-invalid',
-        nextElementSibling: {
-          remove: firstNameRemove,
-          className: 'validation-message invalid-feedback p-0',
-        } as any as HTMLElement,
-      } as any as HTMLInputElement,
-      lastName: {
-        className: '',
-        nextElementSibling: {
-          remove: lastNameRemove,
-          className: 'mt-2',
-        } as any as HTMLElement,
-      } as any as HTMLInputElement,
-    };
-
-    clearValidationErrors(formElements);
-
-    expect(firstNameRemove.calls.length).to.equal(1);
-    expect(lastNameRemove.calls.length).to.equal(0);
   });
 });

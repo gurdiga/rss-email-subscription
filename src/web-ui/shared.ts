@@ -229,6 +229,7 @@ export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<v
   });
 }
 
+// TODO: How to test? Should I? Can I separate the data manipulation from DOM mechanics?
 export function displayValidationError<FF>(
   response: InputError,
   formFields: FF,
@@ -243,6 +244,11 @@ export function displayValidationError<FF>(
 
   const fieldElement = formFields[field] as HTMLElement;
 
+  if (!fieldElement) {
+    reportError(si`Form field not found by "field" prop in InputError from API: ${String(field)}`);
+    return;
+  }
+
   fieldElement.className += ' is-invalid';
   fieldElement.focus();
 
@@ -255,16 +261,20 @@ export function getOrCreateValidationMessage(
   fieldElement: HTMLElement,
   createElementFn = createElement,
   insertAdjacentElementFn = insertAdjacentElement
-): HTMLElement {
-  const existingElement = fieldElement.nextElementSibling as HTMLElement;
+): Element {
+  const isInputGroup = fieldElement.nextElementSibling?.classList.contains('input-group-text');
+  const existingElement = isInputGroup
+    ? fieldElement.nextElementSibling?.nextElementSibling
+    : fieldElement.nextElementSibling;
 
   if (existingElement && existingElement.className.includes('validation-message')) {
     return existingElement;
   } else {
+    const referenceElement = isInputGroup ? fieldElement.nextElementSibling! : fieldElement;
     const newElement = createElementFn('div');
 
     newElement.className = 'validation-message invalid-feedback';
-    insertAdjacentElementFn(fieldElement, 'afterend', newElement);
+    insertAdjacentElementFn(referenceElement, 'afterend', newElement);
 
     return newElement;
   }
@@ -273,32 +283,29 @@ export function getOrCreateValidationMessage(
 export function clearValidationErrors<FF>(formFields: FF): void {
   for (const field in formFields) {
     const fieldElement = formFields[field as keyof FF] as HTMLElement;
-    const isInvalid = getClassNames(fieldElement).includes('is-invalid');
+    const isInvalid = fieldElement.classList.contains('is-invalid');
 
     if (!isInvalid) {
       continue;
     }
 
-    fieldElement.className = getClassNames(fieldElement)
-      .filter((x) => x !== 'is-invalid')
-      .join(' ');
+    fieldElement.classList.remove('is-invalid');
 
-    const errorMessageElement = fieldElement.nextElementSibling;
+    const isInputGroup = fieldElement.nextElementSibling?.classList.contains('input-group-text');
+    const errorMessageElement = isInputGroup
+      ? fieldElement.nextElementSibling?.nextElementSibling
+      : fieldElement.nextElementSibling;
 
     if (!errorMessageElement) {
       continue;
     }
 
-    const classNames = getClassNames(errorMessageElement);
+    const classNames = errorMessageElement.classList;
 
-    if (classNames.includes('validation-message') && classNames.includes('invalid-feedback')) {
+    if (classNames.contains('validation-message') && classNames.contains('invalid-feedback')) {
       errorMessageElement.remove();
     }
   }
-}
-
-export function getClassNames(element: Element): string[] {
-  return element.className.split(/\s+/).filter((x) => !!x);
 }
 
 export function hideElement(element: HTMLElement): void {

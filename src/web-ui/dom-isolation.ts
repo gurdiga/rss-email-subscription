@@ -25,7 +25,7 @@ export function createElement(
 }
 
 export function insertAdjacentElement(
-  referenceElement: HTMLElement,
+  referenceElement: Element,
   insertPosition: InsertPosition,
   newElement: HTMLElement
 ) {
