@@ -117,6 +117,10 @@ logger:
 		--tag logger \
 		docker-services/logger
 
+logger-list-packages:
+	docker exec -it logger apk list -a |
+	grep -P "^(syslog-ng|logrotate|tini)-\d"
+
 smtp-out:
 	docker buildx build \
 		--progress=plain \
