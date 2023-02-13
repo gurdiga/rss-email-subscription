@@ -54,15 +54,15 @@ async function loadFeed<T = UiFeed>(id: string): Promise<Result<T>> {
   const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${id}`, HttpMethod.GET));
 
   if (isErr(response)) {
-    return makeErr('Failed to load the feed list');
+    return makeErr('Failed to load the feed');
   }
 
   if (isAppError(response)) {
-    return makeErr('Application error when loading the feed list');
+    return makeErr('Application error when loading the feed');
   }
 
   if (isInputError(response)) {
-    return makeErr('Input error when loading the feed list');
+    return makeErr('Input error when loading the feed');
   }
 
   return response.responseData!;
