@@ -2,7 +2,7 @@ import { getFeedInboxStorageKey, RSS_ITEM_FILE_PREFIX } from '../rss-checking/ne
 import { sortBy } from '../../shared/array-utils';
 import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { makeUrl } from '../../shared/url';
+import { makeHttpUrl } from '../../shared/url';
 import { AppStorage } from '../../storage/storage';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
@@ -87,7 +87,7 @@ export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredR
     return invalid('The "pubDate" property is not a valid JSON Date string');
   }
 
-  link = makeUrl(link);
+  link = makeHttpUrl(link);
 
   if (isErr(link)) {
     return invalid('The "link" property is not a valid URL');

@@ -2,7 +2,7 @@ import Parser, { Item } from 'rss-parser';
 import { sortBy, SortDirection } from '../../shared/array-utils';
 import { getErrorMessage, hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { makeUrl } from '../../shared/url';
+import { makeHttpUrl } from '../../shared/url';
 import { RssResponse } from './rss-response';
 import { si } from '../../shared/string-utils';
 
@@ -99,7 +99,7 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | I
     return invalidRssItem('Post link is missing');
   }
 
-  const link = makeUrl(linkString, baseURL);
+  const link = makeHttpUrl(linkString, baseURL);
 
   if (isErr(link)) {
     return invalidRssItem('Post link is not a valid URL');

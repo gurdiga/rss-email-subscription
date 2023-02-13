@@ -1,7 +1,7 @@
 import { makeEmailAddress } from './email-address-making';
 import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { makeUrl } from '../shared/url';
+import { makeHttpUrl } from '../shared/url';
 import { FeedHashingSalt, Feed } from './feed';
 import { makeFeedId } from './feed-id';
 import { UnixCronPattern } from './cron-pattern';
@@ -40,7 +40,7 @@ export function makeFeed(
     return makeErr('Feed URL is missing', 'url');
   }
 
-  const url = makeUrl(trimmedUrl);
+  const url = makeHttpUrl(trimmedUrl);
 
   if (isErr(url)) {
     return makeErr(si`Invalid feed URL: "${trimmedUrl}"`, 'url');
