@@ -1,6 +1,6 @@
 import { MakeFeedRequest, MakeFeedResponseData } from '../domain/feed';
-import { AuthenticatedApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { asyncAttempt, isErr, Result } from '../shared/lang';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
 import { displayInitError, displayValidationError, HttpMethod, navigateTo, requireUiElements } from './shared';
