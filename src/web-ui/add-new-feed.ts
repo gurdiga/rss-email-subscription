@@ -52,12 +52,12 @@ async function submitForm(uiElements: UiElements): Promise<Result<void>> {
   }
 
   if (isAppError(response)) {
-    return makeErr('Application error when loading the feed list');
+    return makeErr('Application error when loading the feed');
   }
 
   if (isInputError(response)) {
     displayValidationError(response, uiElements);
-    return makeErr('Input error when loading the feed list');
+    return makeErr('Input error when loading the feed');
   }
 }
 
