@@ -2,7 +2,13 @@ import { MakeFeedRequest, MakeFeedResponseData } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
+import {
+  ApiResponseUiElements,
+  clearValidationErrors,
+  displayApiResponse,
+  displayCommunicationError,
+  preventDoubleClick,
+} from './shared';
 import { displayInitError, displayValidationError, HttpMethod, navigateTo, requireUiElements } from './shared';
 import { sendApiRequest } from './shared';
 
@@ -25,42 +31,44 @@ async function main() {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    const response = await submitForm(uiElements);
+    preventDoubleClick(uiElements.submitButton, async () => {
+      const response = await submitForm(uiElements);
 
-    if (isErr(response)) {
-      displayCommunicationError(response, uiElements.apiResponseMessage);
-      return;
-    }
+      if (isErr(response)) {
+        displayCommunicationError(response, uiElements.apiResponseMessage);
+        return;
+      }
 
-    if (isAppError(response)) {
-      displayApiResponse(response, uiElements.apiResponseMessage);
-      return;
-    }
+      if (isAppError(response)) {
+        displayApiResponse(response, uiElements.apiResponseMessage);
+        return;
+      }
 
-    if (isInputError(response)) {
-      displayValidationError(response, uiElements);
-      return;
-    }
+      if (isInputError(response)) {
+        displayValidationError(response, uiElements);
+        return;
+      }
 
-    if (isSuccess(response)) {
-      displayApiResponse(response, uiElements.apiResponseMessage);
+      if (isSuccess(response)) {
+        displayApiResponse(response, uiElements.apiResponseMessage);
 
-      setTimeout(() => {
-        const nextPageParams = { id: response.responseData?.feedId! };
-        const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
+        setTimeout(() => {
+          const nextPageParams = { id: response.responseData?.feedId! };
+          const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
 
-        navigateTo(nextPage);
-      }, 1000);
-    }
+          navigateTo(nextPage);
+        }, 1000);
+      }
+    });
   });
 }
 
-async function submitForm(uiElements: UiElements) {
+async function submitForm(formFields: FormFields) {
   const makeFeedRequest: MakeFeedRequest = {
-    displayName: uiElements.displayName.value,
-    id: uiElements.id.value,
-    url: uiElements.url.value,
-    replyTo: uiElements.replyTo.value,
+    displayName: formFields.displayName.value,
+    id: formFields.id.value,
+    url: formFields.url.value,
+    replyTo: formFields.replyTo.value,
   };
 
   return await asyncAttempt(() =>
