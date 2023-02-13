@@ -1,8 +1,10 @@
-import { isAppError, isInputError } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
-import { PagePaths } from '../shared/page-paths';
-import { clearValidationErrors, displayInitError, displayValidationError, HttpMethod, navigateTo } from './shared';
-import { requireUiElements, sendApiRequest } from './shared';
+import { MakeFeedRequest, MakeFeedResponseData } from '../domain/feed';
+import { AuthenticatedApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { asyncAttempt, isErr, Result } from '../shared/lang';
+import { makePagePathWithParams, PagePaths } from '../shared/page-paths';
+import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
+import { displayInitError, displayValidationError, HttpMethod, navigateTo, requireUiElements } from './shared';
+import { sendApiRequest } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<UiElements>({
@@ -11,6 +13,7 @@ async function main() {
     id: '#feed-id-field',
     replyTo: '#feed-reply-to-field',
     submitButton: '#submit-button',
+    apiResponseMessage: '#api-response-message',
   });
 
   if (isErr(uiElements)) {
@@ -18,26 +21,39 @@ async function main() {
     return;
   }
 
-  uiElements.submitButton.addEventListener('click', (event: Event) => {
+  uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
+    clearValidationErrors(uiElements);
 
-    const result = submitForm(uiElements);
+    const response = await submitForm(uiElements);
 
-    if (isErr(result)) {
+    if (isErr(response)) {
+      displayCommunicationError(response, uiElements.apiResponseMessage);
       return;
     }
 
-    if (!'TODO: remove this if') {
-      navigateTo(PagePaths.feedList);
+    if (isAppError(response)) {
+      displayApiResponse(response, uiElements.apiResponseMessage);
+      return;
+    }
+
+    if (isInputError(response)) {
+      displayValidationError(response, uiElements);
+      return;
+    }
+
+    if (isSuccess(response)) {
+      setTimeout(() => {
+        const nextPageParams = { id: response.responseData?.feedId! };
+        const nextPage = makePagePathWithParams(PagePaths.feedManage, nextPageParams);
+
+        navigateTo(nextPage);
+      }, 1000);
     }
   });
 }
 
-type MakeFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
-
-async function submitForm(uiElements: UiElements): Promise<Result<void>> {
-  clearValidationErrors(uiElements);
-
+async function submitForm(uiElements: UiElements) {
   const makeFeedRequest: MakeFeedRequest = {
     displayName: uiElements.displayName.value,
     id: uiElements.id.value,
@@ -45,23 +61,12 @@ async function submitForm(uiElements: UiElements): Promise<Result<void>> {
     replyTo: uiElements.replyTo.value,
   };
 
-  const response = await asyncAttempt(() => sendApiRequest('/feeds/add-new-feed', HttpMethod.POST, makeFeedRequest));
-
-  if (isErr(response)) {
-    return response;
-  }
-
-  if (isAppError(response)) {
-    return makeErr('Application error when loading the feed');
-  }
-
-  if (isInputError(response)) {
-    displayValidationError(response, uiElements);
-    return makeErr('Input error when loading the feed');
-  }
+  return await asyncAttempt(() =>
+    sendApiRequest<MakeFeedResponseData>('/feeds/add-new-feed', HttpMethod.POST, makeFeedRequest)
+  );
 }
 
-interface UiElements extends FormFields {
+interface UiElements extends FormFields, ApiResponseUiElements {
   submitButton: HTMLButtonElement;
 }
 
