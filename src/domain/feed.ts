@@ -77,3 +77,8 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
     isActive: feed.isActive,
   };
 }
+
+export type MakeFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+export interface MakeFeedResponseData {
+  feedId: string;
+}

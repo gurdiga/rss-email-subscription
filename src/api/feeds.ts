@@ -1,7 +1,7 @@
 import { getAccountIdList } from '../domain/account';
 import { alterExistingFeed, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed } from '../domain/feed';
+import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, MakeFeedResponseData } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
@@ -159,7 +159,12 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
 
   logInfo('New feed added', { accountId: accountId.value, feed });
 
-  return makeSuccess('New feed added');
+  const logData = {};
+  const responseData: MakeFeedResponseData = {
+    feedId: feed.id.value,
+  };
+
+  return makeSuccess('New feed added', logData, responseData);
 };
 
 function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): Result<FeedExistsResult> {
