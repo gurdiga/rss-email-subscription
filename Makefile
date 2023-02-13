@@ -43,7 +43,7 @@ edit:
 e: edit
 
 compile:
-	node_modules/.bin/tsc --project tsconfig.json
+	node_modules/.bin/tsc --project tsconfig.json && \
 	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
 
 compile-quiet:
