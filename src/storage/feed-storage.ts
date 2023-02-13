@@ -16,7 +16,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   isDeleted?: boolean;
-  isActive?: boolean;
+  isActive: boolean;
 }
 
 export interface FeedNotFound {
@@ -129,6 +129,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     hashingSalt: feed.hashingSalt.value,
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
+    isActive: feed.isActive,
     isDeleted: feed.isDeleted,
   };
 

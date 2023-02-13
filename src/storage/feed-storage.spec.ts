@@ -191,19 +191,19 @@ describe(storeFeed.name, () => {
     const storage = makeTestStorage({ storeItem: () => void 0 });
     const result = storeFeed(accountId, feed, storage);
 
+    const expectedFeedStoredData: FeedStoredData = {
+      cronPattern: cronPattern.value,
+      displayName: 'Test Feed Name',
+      hashingSalt: feed.hashingSalt.value,
+      url: 'https://test.com/rss.xml',
+      replyTo: feed.replyTo.value,
+      isActive: false,
+      isDeleted: false,
+    };
+
     expect(isErr(result)).be.false;
     expect((storage.storeItem as Stub).calls).to.deep.equal([
-      [
-        si`/accounts/${accountId.value}/feeds/test-feed-id/feed.json`,
-        {
-          cronPattern: cronPattern.value,
-          displayName: 'Test Feed Name',
-          hashingSalt: feed.hashingSalt.value,
-          url: 'https://test.com/rss.xml',
-          replyTo: feed.replyTo.value,
-          isDeleted: false,
-        },
-      ],
+      [si`/accounts/${accountId.value}/feeds/test-feed-id/feed.json`, expectedFeedStoredData],
     ]);
   });
 
