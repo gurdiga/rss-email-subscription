@@ -28,6 +28,7 @@ async function main() {
   const uiElements = requireUiElements<UiElements>({
     spinner: '#spinner',
     feedAttributeList: '#feed-attribute-list',
+    feedActions: '#feed-actions',
     editLink: '#edit-link',
   });
 
@@ -45,6 +46,7 @@ async function main() {
     return;
   }
 
+  unhideElement(uiElements.feedActions);
   displayFeedAttributeList(uiFeed, uiElements, feedId);
 }
 
@@ -131,6 +133,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
 interface UiElements {
   spinner: HTMLElement;
   feedAttributeList: HTMLElement;
+  feedActions: HTMLElement;
   editLink: HTMLAnchorElement;
 }
 
