@@ -52,7 +52,7 @@ compile-quiet:
 
 c: compile
 cw:
-	node_modules/.bin/tsc -p tsconfig.json --watch
+	node_modules/.bin/tsc --project tsconfig.json --watch
 
 pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
