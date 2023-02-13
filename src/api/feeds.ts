@@ -145,8 +145,14 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
   }
 
   if (feedExistsResult.does) {
-    logWarning(si`Feed ID taken: ${feed.id.value}`);
-    return makeInputError('Feed ID taken');
+    const errorMessage =
+      feedExistsResult.does.value === session.accountId.value
+        ? 'You already have a feed with this ID'
+        : 'Feed ID is taken';
+
+    logWarning(si`${errorMessage}: ${feed.id.value}`);
+
+    return makeInputError(errorMessage, 'id');
   }
 
   const { accountId } = session;
@@ -164,7 +170,7 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
     feedId: feed.id.value,
   };
 
-  return makeSuccess('New feed added', logData, responseData);
+  return makeSuccess('New feed added. 👍', logData, responseData);
 };
 
 function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): Result<FeedExistsResult> {
