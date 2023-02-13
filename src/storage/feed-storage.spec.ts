@@ -243,11 +243,11 @@ describe(feedExists.name, () => {
   const accountIds = [makeTestAccountId()];
   const storage = makeTestStorage();
 
-  it('tells if feed by ID exists', () => {
+  it('tells if feed by ID exists and which acccount', () => {
     let accountHasFeedFn = () => true;
     let result = feedExists(feedId, accountIds, storage, accountHasFeedFn);
 
-    expect(result).to.deep.equal(<FeedExistsResult>{ does: true, errs: [] });
+    expect(result).to.deep.equal(<FeedExistsResult>{ does: accountIds[0], errs: [] });
 
     accountHasFeedFn = () => false;
     result = feedExists(feedId, accountIds, storage, accountHasFeedFn);

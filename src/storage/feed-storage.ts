@@ -44,7 +44,7 @@ export function getFeedJsonStorageKey(accountId: AccountId, feedId: FeedId) {
   return makePath(getFeedStorageKey(accountId, feedId), 'feed.json');
 }
 export interface FeedExistsResult {
-  does: boolean;
+  does: false | AccountId;
   errs: Err[];
 }
 
@@ -67,7 +67,7 @@ export function feedExists(
     }
 
     if (accountHasFeedResult === true) {
-      result.does = true;
+      result.does = accountId;
       break;
     }
   }
