@@ -99,11 +99,11 @@ export function die(errorMessage: string): never {
 }
 
 export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
-  const feedId = makeFeedId(idString);
+  const result = makeFeedId(idString);
 
-  assert(isFeedId(feedId), si`${makeFeedId.name} did not return a valid FeedId`);
+  assert(isFeedId(result), si`${makeFeedId.name} did not return a valid FeedId: ${JSON.stringify(result)}`);
 
-  return feedId;
+  return result;
 }
 
 export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
@@ -113,32 +113,36 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
     id: 'test-feed-id',
     replyTo: 'feed-replyTo@test.com',
     isDeleted: false,
+    isActive: false,
     ...props,
   };
 
   const hasingSalt = makeTestFeedHashingSalt();
   const cronPattern = makeTestUnixCronPattern();
-  const feed = makeFeed(input, hasingSalt, cronPattern);
+  const result = makeFeed(input, hasingSalt, cronPattern);
 
-  assert(isFeed(feed), si`${makeFeed.name} did not return a valid Feed`);
+  assert(isFeed(result), si`${makeFeed.name} did not return a valid Feed: ${JSON.stringify(result)}`);
 
-  return feed;
+  return result;
 }
 
 export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): AccountId {
-  const accountId = makeAccountId(idString);
+  const result = makeAccountId(idString);
 
-  assert(isAccountId(accountId), si`${makeAccountId.name} did not return a valid AccountId`);
+  assert(isAccountId(result), si`${makeAccountId.name} did not return a valid AccountId: ${JSON.stringify(result)}`);
 
-  return accountId;
+  return result;
 }
 
 export function makeTestEmailAddress(emailString: string): EmailAddress {
-  const emailAddress = makeEmailAddress(emailString);
+  const result = makeEmailAddress(emailString);
 
-  assert(isEmailAddress(emailAddress), si`${makeEmailAddress.name} did not return a valid EmailAddress`);
+  assert(
+    isEmailAddress(result),
+    si`${makeEmailAddress.name} did not return a valid EmailAddress: ${JSON.stringify(result)}`
+  );
 
-  return emailAddress;
+  return result;
 }
 
 export function deepClone(data: any): any {
@@ -148,7 +152,10 @@ export function deepClone(data: any): any {
 export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): FeedHashingSalt {
   const result = makeFeedHashingSalt(input);
 
-  assert(isFeedHashingSalt(result), si`${makeFeedHashingSalt.name} did not return a valid FeedHashingSalt`);
+  assert(
+    isFeedHashingSalt(result),
+    si`${makeFeedHashingSalt.name} did not return a valid FeedHashingSalt: ${JSON.stringify(result)}`
+  );
 
   return result;
 }
@@ -156,7 +163,10 @@ export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): Fee
 export function makeTestUnixCronPattern(input: string = '1 2 3 4 5'): UnixCronPattern {
   const result = makeUnixCronPattern(input);
 
-  assert(isUnixCronPattern(result), si`${makeUnixCronPattern.name} did not return a valid UnixCronPattern`);
+  assert(
+    isUnixCronPattern(result),
+    si`${makeUnixCronPattern.name} did not return a valid UnixCronPattern: ${JSON.stringify(result)}`
+  );
 
   return result;
 }
