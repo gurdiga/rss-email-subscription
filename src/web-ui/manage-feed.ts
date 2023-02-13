@@ -115,6 +115,7 @@ interface FeedAttribute {
 
 export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   const feedAttributes: FeedAttribute[] = [
+    { label: 'Feed ID:', value: uiFeed.id, name: 'id' },
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'URL:', value: uiFeed.url, name: 'url' },
     { label: 'Email:', value: uiFeed.email, name: 'email' },

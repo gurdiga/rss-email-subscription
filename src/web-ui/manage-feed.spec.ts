@@ -7,6 +7,7 @@ describe(makeUiData.name, () => {
   it('returns the field list and link hrefs', () => {
     const feedId = makeTestFeedId('just-add-light');
     const uiFeed: UiFeed = {
+      id: 'just-add-light',
       displayName: 'Just Add Light',
       url: 'https://test.com/just-add-light/feed.xml',
       email: 'just-add-light@test.com',
@@ -19,6 +20,7 @@ describe(makeUiData.name, () => {
 
     expect(result).to.deep.equal(<UiData>{
       feedAttributes: [
+        { label: 'Feed ID:', value: 'just-add-light', name: 'id' },
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
         { label: 'URL:', value: 'https://test.com/just-add-light/feed.xml', name: 'url' },
         { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },

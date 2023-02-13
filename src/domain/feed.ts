@@ -59,6 +59,7 @@ export function makeUiFeedListItem(feed: Feed): UiFeedListItem {
 }
 
 export interface UiFeed {
+  id: string;
   displayName: string;
   url: string;
   email: string;
@@ -69,6 +70,7 @@ export interface UiFeed {
 
 export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number): UiFeed {
   return {
+    id: feed.id.value,
     displayName: feed.displayName,
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domain}`,
