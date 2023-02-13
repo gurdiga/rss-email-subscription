@@ -125,10 +125,11 @@ export interface AppErrorUiElements {
 }
 
 export function displayApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
-  const className = isInputError(apiResponse) || isAppError(apiResponse) ? 'alert alert-danger' : 'alert alert-success';
+  const classNames =
+    isInputError(apiResponse) || isAppError(apiResponse) ? ['alert', 'alert-danger'] : ['alert', 'alert-success'];
 
   messageElement.textContent = apiResponse.message;
-  messageElement.className = className;
+  messageElement.classList.add(...classNames);
   messageElement.setAttribute('role', 'alert');
 }
 

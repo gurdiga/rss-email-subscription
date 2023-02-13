@@ -43,6 +43,8 @@ async function main() {
     }
 
     if (isSuccess(response)) {
+      displayApiResponse(response, uiElements.apiResponseMessage);
+
       setTimeout(() => {
         const nextPageParams = { id: response.responseData?.feedId! };
         const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
