@@ -20,7 +20,7 @@ import {
   makeRegistrationConfirmationSecret,
 } from '../domain/registration-confirmation-secrets';
 import { si } from '../shared/string-utils';
-import { PagePaths } from '../shared/page-paths';
+import { PagePath } from '../domain/page-path';
 
 export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
   const processInputResult = processInput(reqBody);
@@ -101,7 +101,7 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
 }
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
-  const url = new URL(si`https://${domainName}${PagePaths.registrationConfirmation}`);
+  const url = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
   const secret = makeConfirmationSecret(to, appHashingSalt);
 
   url.searchParams.set('secret', secret.value);

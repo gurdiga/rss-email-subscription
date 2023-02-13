@@ -4,7 +4,7 @@ import { si } from '../shared/string-utils';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
 import { HttpMethod } from './shared';
-import { PagePaths } from '../shared/page-paths';
+import { PagePath } from '../domain/page-path';
 
 async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
@@ -39,7 +39,7 @@ async function main() {
 
   if (isSuccess(response)) {
     hideElement(uiElements.spinner);
-    navigateTo(PagePaths.userStart, 2000);
+    navigateTo(PagePath.userStart, 2000);
     return;
   }
 }

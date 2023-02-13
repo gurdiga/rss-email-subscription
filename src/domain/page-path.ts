@@ -1,7 +1,6 @@
-import { si } from './string-utils';
+import { si } from '../shared/string-utils';
 
-// TODO: Rename to PagePath?
-export enum PagePaths {
+export enum PagePath {
   userAuthentication = '/user/authentication.html',
   userStart = '/user/feeds.html',
   feedList = '/user/feeds.html',
@@ -11,7 +10,7 @@ export enum PagePaths {
   registrationConfirmation = '/user/registration-confirmation.html',
 }
 
-export function makePagePathWithParams(pagePath: PagePaths, params: Record<string, string>) {
+export function makePagePathWithParams(pagePath: PagePath, params: Record<string, string>) {
   const queryParams = new URLSearchParams(params).toString();
 
   return si`${pagePath}?${queryParams}`;

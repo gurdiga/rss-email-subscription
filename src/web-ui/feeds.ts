@@ -2,7 +2,7 @@ import { UiFeedListItem } from '../domain/feed';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
-import { makePagePathWithParams, PagePaths } from '../shared/page-paths';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
 import { displayInitError, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
@@ -68,7 +68,7 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
 
 function makeLinkData(item: UiFeedListItem): FeedLinkData {
   const text = item.displayName;
-  const href = makePagePathWithParams(PagePaths.feedManage, { id: item.feedId.value });
+  const href = makePagePathWithParams(PagePath.feedManage, { id: item.feedId.value });
 
   return { text, href };
 }

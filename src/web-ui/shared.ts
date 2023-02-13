@@ -7,7 +7,7 @@ import {
   isInputError,
 } from '../shared/api-response';
 import { makeErr, Result } from '../shared/lang';
-import { PagePaths } from '../shared/page-paths';
+import { PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -174,7 +174,7 @@ function assertHeader(headerName: string, expectedHeaderValue: string) {
 function assertAuthorized(response: Response) {
   if (response.status === 401) {
     setTimeout(() => {
-      window.location.href = PagePaths.userAuthentication;
+      window.location.href = PagePath.userAuthentication;
     }, 2000);
 
     return response;

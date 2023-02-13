@@ -2,7 +2,7 @@ import { UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
-import { makePagePathWithParams, PagePaths } from '../shared/page-paths';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
 import { displayInitError, HttpMethod, requireQueryParams, requireUiElements, sendApiRequest } from './shared';
@@ -123,8 +123,8 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Active:', value: uiFeed.isActive ? 'Yes' : 'No', name: 'isActive' },
   ];
 
-  const editLinkHref = makePagePathWithParams(PagePaths.feedEdit, { id: feedId.value });
-  const manageSubscribersLinkHref = makePagePathWithParams(PagePaths.manageFeedSubscribers, { id: feedId.value });
+  const editLinkHref = makePagePathWithParams(PagePath.feedEdit, { id: feedId.value });
+  const manageSubscribersLinkHref = makePagePathWithParams(PagePath.manageFeedSubscribers, { id: feedId.value });
 
   return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
 }

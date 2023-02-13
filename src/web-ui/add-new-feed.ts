@@ -1,7 +1,7 @@
 import { MakeFeedRequest, MakeFeedResponseData } from '../domain/feed';
 import { AuthenticatedApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, Result } from '../shared/lang';
-import { makePagePathWithParams, PagePaths } from '../shared/page-paths';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
 import { displayInitError, displayValidationError, HttpMethod, navigateTo, requireUiElements } from './shared';
 import { sendApiRequest } from './shared';
@@ -45,7 +45,7 @@ async function main() {
     if (isSuccess(response)) {
       setTimeout(() => {
         const nextPageParams = { id: response.responseData?.feedId! };
-        const nextPage = makePagePathWithParams(PagePaths.feedManage, nextPageParams);
+        const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
 
         navigateTo(nextPage);
       }, 1000);
