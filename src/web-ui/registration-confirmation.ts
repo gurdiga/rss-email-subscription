@@ -1,5 +1,5 @@
 import { isSuccess } from '../shared/api-response';
-import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
 import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
@@ -27,7 +27,7 @@ async function main() {
 
   unhideElement(uiElements.spinner);
 
-  const response = await attempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, { secret }));
+  const response = await asyncAttempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, { secret }));
 
   if (isErr(response)) {
     displayCommunicationError(response, uiElements.apiResponseMessage);
