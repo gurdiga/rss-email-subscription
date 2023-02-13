@@ -318,7 +318,7 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
   }
 
   if (isFeedNotFound(feed)) {
-    logWarning(si`Feed to load not found`, { feedId: feed.feedId, accountId: accountId.value });
+    logWarning(si`Feed not found`, { feedId: feed.feedId, accountId: accountId.value });
     return makeAppError(si`Failed to load feed`);
   }
 
