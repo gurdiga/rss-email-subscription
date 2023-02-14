@@ -13,7 +13,7 @@ import { registrationConfirmation } from './registration-confirmation';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import { deauthentication } from './deauthentication';
-import { addNewFeed, createFeed, deleteFeed, listFeeds, loadFeedById, updateFeed } from './feeds';
+import { addNewFeed, createFeed, deleteFeed, editFeed, listFeeds, loadFeedById, updateFeed } from './feeds';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { getErrorMessage } from '../shared/lang';
@@ -48,6 +48,7 @@ async function main() {
   router.get('/feeds', makeRequestHandler(listFeeds, app));
   router.get('/feeds/:feedId', makeRequestHandler(loadFeedById, app));
   router.post('/feeds/add-new-feed', makeRequestHandler(addNewFeed, app));
+  router.post('/feeds/edit-feed', makeRequestHandler(editFeed, app));
   router.post('/feeds', makeRequestHandler(createFeed, app));
   router.put('/feeds', makeRequestHandler(updateFeed, app));
   router.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));

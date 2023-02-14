@@ -173,6 +173,19 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
   return makeSuccess('New feed added. 👍', logData, responseData);
 };
 
+// TODO: Add api-test
+export const editFeed: RequestHandler = async function editFeed(reqId, _reqBody, _reqParams, reqSession, _app) {
+  const { logWarning } = makeCustomLoggers({ module: editFeed.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  return makeAppError('Not implemented');
+};
+
 function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): Result<FeedExistsResult> {
   const { logWarning, logError } = makeCustomLoggers({ module: checkIfFeedExists.name, feedId: feedId.value, reqId });
   const accountIdList = getAccountIdList(storage);
