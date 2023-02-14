@@ -2,15 +2,9 @@ import { MakeFeedRequest, MakeFeedResponseData } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import {
-  ApiResponseUiElements,
-  clearValidationErrors,
-  displayApiResponse,
-  displayCommunicationError,
-  preventDoubleClick,
-} from './shared';
-import { displayInitError, displayValidationError, HttpMethod, navigateTo, requireUiElements } from './shared';
-import { sendApiRequest } from './shared';
+import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
+import { displayInitError, displayValidationError, HttpMethod, navigateTo, preventDoubleClick } from './shared';
+import { requireUiElements, sendApiRequest } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<UiElements>({
