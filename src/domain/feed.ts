@@ -80,7 +80,7 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
   };
 }
 
-export type MakeFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
-export interface MakeFeedResponseData {
+export type AddNewFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+export interface AddNewFeedResponseData {
   feedId: string;
 }
