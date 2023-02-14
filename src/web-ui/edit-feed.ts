@@ -5,6 +5,7 @@ import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
 import { displayInitError, displayValidationError, HttpMethod, loadUiFeed, navigateTo } from './shared';
 import { preventDoubleClick, requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import { UiFeedFormFields, uiFeedFormFields } from './shared';
 import { makeFeedId } from '../domain/feed-id';
 import { si } from '../shared/string-utils';
 
@@ -28,10 +29,7 @@ async function main() {
   const uiElements = requireUiElements<UiElements>({
     spinner: '#spinner',
     form: '#edit-form',
-    displayName: '#feed-name-field',
-    url: '#feed-url-field',
-    id: '#feed-id-field',
-    replyTo: '#feed-reply-to-field',
+    ...uiFeedFormFields,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
   });
@@ -89,14 +87,14 @@ async function main() {
   });
 }
 
-function fillForm(uiElements: FormFields, uiFeed: UiFeed) {
+function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed) {
   uiElements.displayName.value = uiFeed.displayName;
   uiElements.url.value = uiFeed.url;
   uiElements.id.value = uiFeed.id;
   uiElements.replyTo.value = uiFeed.replyTo;
 }
 
-async function submitForm(formFields: FormFields) {
+async function submitForm(formFields: UiFeedFormFields) {
   const editFeedRequest: EditFeedRequest = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
@@ -109,17 +107,10 @@ async function submitForm(formFields: FormFields) {
   );
 }
 
-interface UiElements extends FormFields, ApiResponseUiElements {
+interface UiElements extends UiFeedFormFields, ApiResponseUiElements {
   spinner: HTMLElement;
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
-}
-
-interface FormFields {
-  displayName: HTMLInputElement;
-  url: HTMLInputElement;
-  id: HTMLInputElement;
-  replyTo: HTMLInputElement;
 }
 
 interface RequiredParams {

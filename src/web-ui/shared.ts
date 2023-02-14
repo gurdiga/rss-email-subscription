@@ -336,3 +336,17 @@ export async function loadUiFeed<T = UiFeed>(id: string): Promise<Result<T>> {
 
   return response.responseData!;
 }
+
+export interface UiFeedFormFields {
+  displayName: HTMLInputElement;
+  url: HTMLInputElement;
+  id: HTMLInputElement;
+  replyTo: HTMLInputElement;
+}
+
+export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
+  displayName: '#feed-name-field',
+  url: '#feed-url-field',
+  id: '#feed-id-field',
+  replyTo: '#feed-reply-to-field',
+};

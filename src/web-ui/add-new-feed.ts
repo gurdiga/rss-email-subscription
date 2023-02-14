@@ -4,14 +4,11 @@ import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
 import { displayInitError, displayValidationError, HttpMethod, navigateTo, preventDoubleClick } from './shared';
-import { requireUiElements, sendApiRequest } from './shared';
+import { requireUiElements, sendApiRequest, uiFeedFormFields, UiFeedFormFields } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<UiElements>({
-    displayName: '#feed-name-field',
-    url: '#feed-url-field',
-    id: '#feed-id-field',
-    replyTo: '#feed-reply-to-field',
+    ...uiFeedFormFields,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
   });
@@ -57,7 +54,7 @@ async function main() {
   });
 }
 
-async function submitForm(formFields: FormFields) {
+async function submitForm(formFields: UiFeedFormFields) {
   const makeFeedRequest: AddNewFeedRequest = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
@@ -70,15 +67,8 @@ async function submitForm(formFields: FormFields) {
   );
 }
 
-interface UiElements extends FormFields, ApiResponseUiElements {
+interface UiElements extends UiFeedFormFields, ApiResponseUiElements {
   submitButton: HTMLButtonElement;
-}
-
-interface FormFields {
-  displayName: HTMLInputElement;
-  url: HTMLInputElement;
-  id: HTMLInputElement;
-  replyTo: HTMLInputElement;
 }
 
 globalThis.window && main();
