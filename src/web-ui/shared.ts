@@ -1,15 +1,10 @@
-import {
-  ApiResponse,
-  AppError,
-  AuthenticatedApiResponse,
-  InputError,
-  isAppError,
-  isInputError,
-} from '../shared/api-response';
-import { makeErr, Result } from '../shared/lang';
+import { ApiResponse, AppError, AuthenticatedApiResponse, InputError, isAppError } from '../shared/api-response';
+import { isInputError } from '../shared/api-response';
+import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
+import { UiFeed } from '../domain/feed';
 
 export interface ConfirmationLinkUrlParams {
   id: string;
@@ -322,4 +317,22 @@ export function navigateTo(url: string, delay = 0): void {
   setTimeout(() => {
     location.href = url;
   }, delay);
+}
+
+export async function loadUiFeed<T = UiFeed>(id: string): Promise<Result<T>> {
+  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${id}`, HttpMethod.GET));
+
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed');
+  }
+
+  if (isAppError(response)) {
+    return makeErr('Application error when loading the feed');
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed');
+  }
+
+  return response.responseData!;
 }

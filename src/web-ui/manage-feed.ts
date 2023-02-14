@@ -1,11 +1,10 @@
 import { UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { isAppError, isInputError } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
-import { displayInitError, HttpMethod, requireQueryParams, requireUiElements, sendApiRequest } from './shared';
+import { displayInitError, loadUiFeed, requireQueryParams, requireUiElements } from './shared';
 import { unhideElement } from './shared';
 
 async function main() {
@@ -37,7 +36,7 @@ async function main() {
     return;
   }
 
-  const uiFeed = await loadFeed(queryStringParams.id);
+  const uiFeed = await loadUiFeed(queryStringParams.id);
 
   uiElements.spinner.remove();
 
@@ -48,24 +47,6 @@ async function main() {
 
   unhideElement(uiElements.feedActions);
   displayFeedAttributeList(uiFeed, uiElements, feedId);
-}
-
-async function loadFeed<T = UiFeed>(id: string): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${id}`, HttpMethod.GET));
-
-  if (isErr(response)) {
-    return makeErr('Failed to load the feed');
-  }
-
-  if (isAppError(response)) {
-    return makeErr('Application error when loading the feed');
-  }
-
-  if (isInputError(response)) {
-    return makeErr('Input error when loading the feed');
-  }
-
-  return response.responseData!;
 }
 
 function displayFeedAttributeList(uiFeed: UiFeed, uiElements: UiElements, feedId: FeedId): void {
