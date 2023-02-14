@@ -84,3 +84,8 @@ export type AddNewFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo',
 export interface AddNewFeedResponseData {
   feedId: string;
 }
+
+export type EditFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+export interface EditFeedResponseData {
+  feedId: string;
+}
