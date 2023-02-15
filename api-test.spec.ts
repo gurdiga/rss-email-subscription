@@ -201,7 +201,7 @@ describe('API', () => {
 
           expect(responseBody).to.deep.equal(expectedAddFeedResponse);
 
-          const storedFeed = getStoredFeed(userEmail, testFeedId);
+          const storedFeed = loadStoredFeed(userEmail, testFeedId);
 
           expect(storedFeed.displayName).to.equal(testFeedProps.displayName);
           expect(storedFeed.url).to.equal(testFeedProps.url);
@@ -210,7 +210,7 @@ describe('API', () => {
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
           expect(storedFeed.isDeleted).to.equal(false);
 
-          const getUserFeedsResponse = await getUserFeeds(authenticationHeaders);
+          const getUserFeedsResponse = await listFeedsSend(authenticationHeaders);
           const { responseData: feeds } = getUserFeedsResponse.responseBody as Success<Feed[]>;
           const loadedFeed = feeds![0]!;
 
@@ -241,7 +241,7 @@ describe('API', () => {
           expect(editResponse.responseBody).to.deep.equal(expectedEditFeedResponse);
 
           const newFeedId = makeTestFeedId(editFeedRequest.id);
-          const editedFeed = getStoredFeed(userEmail, newFeedId);
+          const editedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(editedFeed.displayName).to.equal(displayNameUpdated);
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
           expect(editedFeed.isDeleted).be.false;
@@ -249,15 +249,15 @@ describe('API', () => {
           const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId, authenticationHeaders);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
-          const deletedFeed = getStoredFeed(userEmail, newFeedId);
+          const deletedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(deletedFeed.isDeleted).be.true;
 
-          const finalFeedList = await getUserFeeds(authenticationHeaders);
+          const finalFeedList = await listFeedsSend(authenticationHeaders);
           const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<Feed[]>;
           expect(feedsAfterDeletion).to.deep.equal([]);
         });
 
-        function getStoredFeed(email: string, feedId: FeedId) {
+        function loadStoredFeed(email: string, feedId: FeedId) {
           const [_, accountId] = loadAccountByEmail(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
@@ -283,13 +283,13 @@ describe('API', () => {
 
     context('when not authenticated', () => {
       it('responds with 403 if not authenticated', async () => {
-        const { responseBody } = await getUserFeeds(new Headers());
+        const { responseBody } = await listFeedsSend(new Headers());
 
         expect(responseBody.message).to.equal('Not authenticated');
       });
     });
 
-    async function getUserFeeds(authenticationHeaders: Headers) {
+    async function listFeedsSend(authenticationHeaders: Headers) {
       return await get<Feed[]>('/api/feeds', 'json', authenticationHeaders);
     }
   });
