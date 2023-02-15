@@ -1,8 +1,9 @@
 import { EmailAddress } from './email-address';
-import { getTypeName, isString, makeErr, Result, hasKind } from '../shared/lang';
+import { getTypeName, isString, makeErr, Result, hasKind, isObject, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
-import { FeedId } from './feed-id';
+import { FeedId, makeFeedId } from './feed-id';
+import { makeFeedDisplayName, makeFeedReplyToEmailAddress, makeFeedUrl } from './feed-making';
 
 export interface Feed {
   kind: 'Feed';
@@ -80,12 +81,53 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
   };
 }
 
-export type AddNewFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+export type AddNewFeedRequestData = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
 export interface AddNewFeedResponseData {
   feedId: string;
 }
 
-export type EditFeedRequest = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+export interface EditFeedRequest {
+  displayName: string;
+  url: URL;
+  id: FeedId;
+  replyTo: EmailAddress;
+}
+
+export type EditFeedRequestData = Record<keyof EditFeedRequest, string>;
+
 export interface EditFeedResponseData {
   feedId: string;
+}
+
+export function makeEditFeedRequest(input: unknown): Result<EditFeedRequest> {
+  if (!isObject(input)) {
+    return makeErr(si`Invalid input type: ${getTypeName(input)}`);
+  }
+
+  const editFeedRequestData = input as EditFeedRequestData;
+  const displayName = makeFeedDisplayName(editFeedRequestData.displayName);
+
+  if (isErr(displayName)) {
+    return displayName;
+  }
+
+  const url = makeFeedUrl(editFeedRequestData.url);
+
+  if (isErr(url)) {
+    return url;
+  }
+
+  const id = makeFeedId(editFeedRequestData.id);
+
+  if (isErr(id)) {
+    return id;
+  }
+
+  const replyTo = makeFeedReplyToEmailAddress(editFeedRequestData.replyTo);
+
+  if (isErr(replyTo)) {
+    return replyTo;
+  }
+
+  return { displayName, id, url, replyTo };
 }

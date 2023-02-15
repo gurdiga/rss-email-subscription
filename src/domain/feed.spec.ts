@@ -1,8 +1,10 @@
 import { expect } from 'chai';
 import { FeedId } from './feed-id';
 import { makeFeedId } from './feed-id';
-import { FeedHashingSalt, makeFeedHashingSalt } from './feed';
-import { makeErr } from '../shared/lang';
+import { EditFeedRequestData, FeedHashingSalt, makeEditFeedRequest, makeFeedHashingSalt } from './feed';
+import { Err, makeErr } from '../shared/lang';
+import { EmailAddress } from './email-address';
+import { si } from '../shared/string-utils';
 
 describe(makeFeedId.name, () => {
   it('returns a FeedId value when OK', () => {
@@ -33,5 +35,52 @@ describe(makeFeedHashingSalt.name, () => {
     const input = 'too-short';
 
     expect(makeFeedHashingSalt(input)).to.deep.equal(makeErr('Must have the length of 16'));
+  });
+});
+
+describe(makeEditFeedRequest.name, () => {
+  it('returns a EditFeedRequest value when input is OK', () => {
+    const input: EditFeedRequestData = {
+      displayName: 'Just Add Light',
+      url: 'https://just-add-light.com/blog/feed.rss',
+      id: 'just-add-light',
+      replyTo: 'just-add-light@test.com',
+    };
+
+    expect(makeEditFeedRequest(input)).to.deep.equal({
+      displayName: 'Just Add Light',
+      url: new URL(input.url),
+      id: <FeedId>{
+        kind: 'FeedId',
+        value: 'just-add-light',
+      },
+      replyTo: <EmailAddress>{
+        kind: 'EmailAddress',
+        value: 'just-add-light@test.com',
+      },
+    });
+  });
+
+  it('returns an Err when anything is wrong', () => {
+    type FieldName = string;
+    type Input = EditFeedRequestData;
+
+    const expectedErrForInput: [Input, Err, FieldName][] = [
+      [24 as any as Input, makeErr('Invalid input type: number'), 'input'],
+      [undefined as any as Input, makeErr('Invalid input type: undefined'), 'input2'],
+      [null as any as Input, makeErr('Invalid input type: null'), 'input3'],
+      [{} as Input, makeErr('Feed name is missing', 'displayName'), 'displayName'],
+      [{ displayName: 'Just Add Light' } as Input, makeErr('Feed URL is missing', 'url'), 'url'],
+      [{ displayName: 'Just Add Light', url: 'https://a.co' } as Input, makeErr('Feed ID is missing', 'id'), 'id'],
+      [
+        { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id' } as Input,
+        makeErr('Invalid Reply To email', 'replyTo'),
+        'replyTo',
+      ],
+    ];
+
+    for (const [input, err, fieldName] of expectedErrForInput) {
+      expect(makeEditFeedRequest(input)).to.deep.equal(err, si`invalid ${fieldName}`);
+    }
   });
 });

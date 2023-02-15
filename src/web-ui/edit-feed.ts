@@ -1,4 +1,4 @@
-import { EditFeedRequest, EditFeedResponseData, UiFeed } from '../domain/feed';
+import { EditFeedRequestData, EditFeedResponseData, UiFeed } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
@@ -95,7 +95,7 @@ function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed) {
 }
 
 async function submitForm(formFields: UiFeedFormFields) {
-  const editFeedRequest: EditFeedRequest = {
+  const editFeedRequest: EditFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
     url: formFields.url.value,

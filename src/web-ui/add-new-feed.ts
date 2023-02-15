@@ -1,4 +1,4 @@
-import { AddNewFeedRequest, AddNewFeedResponseData } from '../domain/feed';
+import { AddNewFeedRequestData, AddNewFeedResponseData } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
@@ -55,7 +55,7 @@ async function main() {
 }
 
 async function submitForm(formFields: UiFeedFormFields) {
-  const makeFeedRequest: AddNewFeedRequest = {
+  const makeFeedRequest: AddNewFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
     url: formFields.url.value,
