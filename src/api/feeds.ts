@@ -1,7 +1,8 @@
 import { getAccountIdList } from '../domain/account';
-import { alterExistingFeed, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
+import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
 import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, AddNewFeedResponseData } from '../domain/feed';
+import { EditFeedResponseData, makeEditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
@@ -50,66 +51,6 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqB
   logInfo('Feed deleted', { feedId: feedId.value });
 
   return makeSuccess('Feed deleted');
-};
-
-export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBody, _reqParams, reqSession, app) {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: updateFeed.name, reqId });
-  const session = checkSession(reqSession);
-
-  if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
-    return makeNotAuthenticatedError();
-  }
-
-  const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
-
-  if (isErr(feedHashingSalt)) {
-    logError(si`Failed to ${makeFeedHashingSalt.name}`, feedHashingSalt);
-    return makeAppError('Application error');
-  }
-
-  const cronPattern = makeUnixCronPattern(reqBody.cronPattern);
-
-  if (isErr(cronPattern)) {
-    logError(si`Failed to ${makeUnixCronPattern.name}`, cronPattern);
-    return makeAppError('Application error');
-  }
-
-  const newFeed = makeFeed(reqBody, feedHashingSalt, cronPattern);
-
-  if (isErr(newFeed)) {
-    logError(si`Failed to ${makeFeed.name}`, newFeed);
-    return makeInputError(newFeed.reason, newFeed.field);
-  }
-
-  const { accountId } = session;
-  const loadFeedResult = loadFeed(accountId, newFeed.id, app.storage);
-
-  if (isErr(loadFeedResult)) {
-    logError(si`Failed to ${loadFeed.name}`, { reason: loadFeedResult.reason });
-    return makeAppError('Application error');
-  }
-
-  if (isFeedNotFound(loadFeedResult)) {
-    logError(si`Feed not found for update`, { feedId: newFeed.id.value, accountId: accountId.value });
-    return makeAppError('Application error');
-  }
-
-  const existingdFeed = loadFeedResult;
-  const alterExistingFeedResult = alterExistingFeed(accountId, existingdFeed, newFeed, app.storage);
-
-  if (isErr(alterExistingFeedResult)) {
-    logError(si`Failed to ${alterExistingFeed.name}`, {
-      reason: alterExistingFeedResult.reason,
-      existingdFeed,
-      newFeed,
-    });
-    return makeAppError('Application error');
-  }
-
-  logInfo('Feed updated', { accountId: accountId.value, newFeed });
-
-  return makeSuccess('Feed updated');
 };
 
 export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
@@ -173,8 +114,8 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
 };
 
 // TODO: Add api-test
-export const editFeed: RequestHandler = async function editFeed(reqId, _reqBody, _reqParams, reqSession, _app) {
-  const { logWarning } = makeCustomLoggers({ module: editFeed.name, reqId });
+export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
+  const { logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -182,7 +123,30 @@ export const editFeed: RequestHandler = async function editFeed(reqId, _reqBody,
     return makeNotAuthenticatedError();
   }
 
-  return makeAppError('Not implemented');
+  const { accountId } = session;
+  const editFeedRequest = makeEditFeedRequest(reqBody);
+
+  if (isErr(editFeedRequest)) {
+    logError(si`Failed to ${makeEditFeedRequest.name}`, {
+      field: editFeedRequest.field,
+      reason: editFeedRequest.reason,
+    });
+    return makeInputError(editFeedRequest.reason, editFeedRequest.field);
+  }
+
+  const result = applyEditFeedRequest(editFeedRequest, accountId, app.storage);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${applyEditFeedRequest.name}`, { reason: result.reason });
+    return makeAppError('Application error');
+  }
+
+  const logData = {};
+  const responseData: EditFeedResponseData = {
+    feedId: editFeedRequest.id.value,
+  };
+
+  return makeSuccess('Feed updated. 👍', logData, responseData);
 };
 
 function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): Result<FeedExistsResult> {
