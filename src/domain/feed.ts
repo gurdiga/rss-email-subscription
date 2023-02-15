@@ -90,6 +90,7 @@ export interface EditFeedRequest {
   displayName: string;
   url: URL;
   id: FeedId;
+  initialId: FeedId;
   replyTo: EmailAddress;
 }
 
@@ -123,11 +124,17 @@ export function makeEditFeedRequest(input: unknown): Result<EditFeedRequest> {
     return id;
   }
 
+  const initialId = makeFeedId(editFeedRequestData.initialId, 'initialId');
+
+  if (isErr(initialId)) {
+    return initialId;
+  }
+
   const replyTo = makeFeedReplyToEmailAddress(editFeedRequestData.replyTo);
 
   if (isErr(replyTo)) {
     return replyTo;
   }
 
-  return { displayName, id, url, replyTo };
+  return { displayName, id, initialId, url, replyTo };
 }

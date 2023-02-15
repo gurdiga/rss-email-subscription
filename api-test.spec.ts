@@ -9,7 +9,7 @@ import { FeedId } from './src/domain/feed-id';
 import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/storage/feed-storage';
 import { MakeFeedInput } from './src/domain/feed-making';
 import { getFeedStorageKey } from './src/storage/feed-storage';
-import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
+import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/storage/io-isolation';
 import { si } from './src/shared/string-utils';
@@ -222,25 +222,31 @@ describe('API', () => {
 
           const displayNameUpdated = 'API Test Feed Name *Updated*';
           const initialSaltedHash = storedFeed.hashingSalt;
-          const editFeedRequest: EditFeedRequestData = { ...addNewFeedRequest, displayName: displayNameUpdated };
+          const editFeedRequest: EditFeedRequestData = {
+            ...addNewFeedRequest,
+            initialId: testFeedId.value,
+            id: 'new-feed-id',
+            displayName: displayNameUpdated,
+          };
           const editResponse = await editFeed(editFeedRequest, authenticationHeaders);
 
           const expectedEditFeedResponse: Success<EditFeedResponseData> = {
             kind: 'Success',
             message: 'Feed updated. 👍',
-            responseData: { feedId: addNewFeedRequest.id },
+            responseData: { feedId: editFeedRequest.id },
           };
           expect(editResponse.responseBody).to.deep.equal(expectedEditFeedResponse);
 
-          const editedFeed = getStoredFeed(userEmail, testFeedId);
+          const newFeedId = makeTestFeedId(editFeedRequest.id);
+          const editedFeed = getStoredFeed(userEmail, newFeedId);
           expect(editedFeed.displayName).to.equal(displayNameUpdated);
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
           expect(editedFeed.isDeleted).be.false;
 
-          const { responseBody: deleteResponse } = await deleteFeed(testFeedId, authenticationHeaders);
+          const { responseBody: deleteResponse } = await deleteFeed(newFeedId, authenticationHeaders);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
-          const deletedFeed = getStoredFeed(userEmail, testFeedId);
+          const deletedFeed = getStoredFeed(userEmail, newFeedId);
           expect(deletedFeed.isDeleted).be.true;
 
           const finalFeedList = await getUserFeeds(authenticationHeaders);
@@ -292,14 +298,30 @@ describe('API', () => {
     const storage = makeTestStorage({}, dataDirRoot);
     let emailHash: string;
 
+    beforeEach(async () => {
+      const authenticationResponse = await authenticationDo(userEmail, userPassword);
+
+      expect(authenticationResponse.responseBody.kind).to.equal('Success', 'authentication');
+      const authenticationHeaders = getAuthenticationHeaders(authenticationResponse.responseHeaders);
+
+      const addNewFeedRequest: AddNewFeedRequestData = {
+        displayName: testFeedProps.displayName!,
+        url: testFeedProps.url!,
+        id: testFeedProps.id!,
+        replyTo: testFeedProps.replyTo!,
+      };
+      const addNewFeedResponse = await addNewFeed(addNewFeedRequest, authenticationHeaders);
+      expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');
+    });
+
     it('flows', async () => {
       // ASSUMPTION: The feed testFeedId exists
       const { responseBody: subscriptionResult } = await subscriptionDo(testFeedId, subscriberEmail);
-      expect(subscriptionResult).to.include({ kind: 'Success' }, 'subscription result');
+      expect(subscriptionResult).to.include(<Success>{ kind: 'Success' }, 'subscription result');
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionDo(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
-        { kind: 'InputError', message: 'Email is already subscribed' },
+        <InputError>{ kind: 'InputError', message: 'Email is already subscribed' },
         'repeated subscription result'
       );
 
@@ -331,7 +353,7 @@ describe('API', () => {
       const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionDo(testFeedId, emailHash);
 
       expect(repeatedUnsubscriptionResult).to.deep.equal(
-        { kind: 'Success', message: 'Solidly unsubscribed.' },
+        <Success>{ kind: 'Success', message: 'Solidly unsubscribed.' },
         'repeated unsubscription'
       );
     });

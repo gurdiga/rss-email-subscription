@@ -113,7 +113,6 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
   return makeSuccess('New feed added. 👍', logData, responseData);
 };
 
-// TODO: Add api-test
 export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
   const session = checkSession(reqSession);

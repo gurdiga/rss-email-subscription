@@ -246,17 +246,17 @@ export function applyEditFeedRequest(
   storage: AppStorage,
   loadFeedFn = loadFeed
 ): Result<void> {
-  const feed = loadFeedFn(accountId, editFeedRequest.id, storage);
+  const feed = loadFeedFn(accountId, editFeedRequest.initialId, storage);
 
   if (isErr(feed)) {
     return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
   }
 
   if (isFeedNotFound(feed)) {
-    return makeErr(si`Feed not found for update: ${editFeedRequest.id.value}, accountId: ${accountId.value}`);
+    return makeErr(si`Feed not found for update: ${editFeedRequest.initialId.value}, accountId: ${accountId.value}`);
   }
 
-  const oldStorageKey = getFeedStorageKey(accountId, feed.id);
+  const oldStorageKey = getFeedStorageKey(accountId, editFeedRequest.initialId);
   const newStorageKey = getFeedStorageKey(accountId, editFeedRequest.id);
 
   feed.displayName = editFeedRequest.displayName;

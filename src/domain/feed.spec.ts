@@ -1,7 +1,13 @@
 import { expect } from 'chai';
 import { FeedId } from './feed-id';
 import { makeFeedId } from './feed-id';
-import { EditFeedRequestData, FeedHashingSalt, makeEditFeedRequest, makeFeedHashingSalt } from './feed';
+import {
+  EditFeedRequest,
+  EditFeedRequestData,
+  FeedHashingSalt,
+  makeEditFeedRequest,
+  makeFeedHashingSalt,
+} from './feed';
 import { Err, makeErr } from '../shared/lang';
 import { EmailAddress } from './email-address';
 import { si } from '../shared/string-utils';
@@ -44,13 +50,18 @@ describe(makeEditFeedRequest.name, () => {
       displayName: 'Just Add Light',
       url: 'https://just-add-light.com/blog/feed.rss',
       id: 'just-add-light',
+      initialId: 'just-add-light',
       replyTo: 'just-add-light@test.com',
     };
 
-    expect(makeEditFeedRequest(input)).to.deep.equal({
+    expect(makeEditFeedRequest(input)).to.deep.equal(<EditFeedRequest>{
       displayName: 'Just Add Light',
       url: new URL(input.url),
       id: <FeedId>{
+        kind: 'FeedId',
+        value: 'just-add-light',
+      },
+      initialId: <FeedId>{
         kind: 'FeedId',
         value: 'just-add-light',
       },
@@ -74,6 +85,11 @@ describe(makeEditFeedRequest.name, () => {
       [{ displayName: 'Just Add Light', url: 'https://a.co' } as Input, makeErr('Feed ID is missing', 'id'), 'id'],
       [
         { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id' } as Input,
+        makeErr('Feed ID is missing', 'initialId'),
+        'replyTo',
+      ],
+      [
+        { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id', initialId: 'init-feed-id' } as Input,
         makeErr('Invalid Reply To email', 'replyTo'),
         'replyTo',
       ],

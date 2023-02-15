@@ -12,23 +12,23 @@ export function isFeedId(value: unknown): value is FeedId {
 
 const minFeedIdLength = 3;
 
-export function makeFeedId(input: any): Result<FeedId> {
+export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
   if (!input) {
-    return makeErr('Feed ID is missing', 'id');
+    return makeErr('Feed ID is missing', field);
   }
 
   if (!isString(input)) {
-    return makeErr('Feed ID is not a string', 'id');
+    return makeErr('Feed ID is not a string', field);
   }
 
   const value = input.trim();
 
   if (value.length === 0) {
-    return makeErr('Feed ID is missing', 'id');
+    return makeErr('Feed ID is missing', field);
   }
 
   if (value.length < minFeedIdLength) {
-    return makeErr(si`Feed ID needs to be at least ${minFeedIdLength} characters`, 'id');
+    return makeErr(si`Feed ID needs to be at least ${minFeedIdLength} characters`, field);
   }
 
   const feedId: FeedId = {

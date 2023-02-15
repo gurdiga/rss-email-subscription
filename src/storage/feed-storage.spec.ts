@@ -299,10 +299,13 @@ describe(applyEditFeedRequest.name, () => {
   const feed = makeTestFeed();
 
   it('applies the requested changes', () => {
+    const initialFeedId = makeTestFeedId('initial-feed-id');
+    const newFeedId = makeTestFeedId('new-feed-id');
     const editFeedRequest: EditFeedRequest = {
       displayName: 'New name',
       url: new URL('https://new-test-url.com'),
-      id: makeTestFeedId('edited-feed-id'),
+      id: initialFeedId,
+      initialId: newFeedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
     };
     const loadFeedFn = () => feed;
@@ -323,15 +326,17 @@ describe(applyEditFeedRequest.name, () => {
 
     const renameItem = storage.renameItem as any as Spy;
     expect(renameItem.calls, 'renames the storage item based on the new feed ID').to.deep.equal([
-      [getFeedStorageKey(accountId, feedId), getFeedStorageKey(accountId, editFeedRequest.id)],
+      [getFeedStorageKey(accountId, editFeedRequest.initialId), getFeedStorageKey(accountId, editFeedRequest.id)],
     ]);
   });
 
   it('renames the feed storage item if id changes', () => {
+    const feedId = makeTestFeedId('new-feed-id');
     const editFeedRequest: EditFeedRequest = {
       displayName: 'New name',
       url: new URL('https://new-test-url.com'),
-      id: makeTestFeedId('new-feed-id'),
+      id: feedId,
+      initialId: feedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
     };
     const feed = makeTestFeed({ id: editFeedRequest.id.value });
@@ -351,10 +356,13 @@ describe(applyEditFeedRequest.name, () => {
   });
 
   it('returns the Err from storage or loadFeedFn if any', () => {
+    const initialFeedId = makeTestFeedId('initial-feed-id');
+    const feedId = makeTestFeedId('edited-feed-id');
     const editFeedRequest: EditFeedRequest = {
       displayName: 'New name',
       url: new URL('https://new-test-url.com'),
-      id: makeTestFeedId('edited-feed-id'),
+      id: feedId,
+      initialId: initialFeedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
     };
     const loadFeedErr = makeErr('Loading failed');

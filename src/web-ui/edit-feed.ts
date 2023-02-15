@@ -6,7 +6,7 @@ import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displ
 import { displayInitError, displayValidationError, HttpMethod, loadUiFeed, navigateTo } from './shared';
 import { preventDoubleClick, requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
 import { UiFeedFormFields, uiFeedFormFields } from './shared';
-import { makeFeedId } from '../domain/feed-id';
+import { FeedId, makeFeedId } from '../domain/feed-id';
 import { si } from '../shared/string-utils';
 
 async function main() {
@@ -39,7 +39,7 @@ async function main() {
     return;
   }
 
-  const uiFeed = await loadUiFeed(queryStringParams.id);
+  const uiFeed = await loadUiFeed(feedId.value);
 
   uiElements.spinner.remove();
 
@@ -56,7 +56,7 @@ async function main() {
     clearValidationErrors(uiElements);
 
     preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await submitForm(uiElements);
+      const response = await submitForm(uiElements, feedId);
 
       if (isErr(response)) {
         displayCommunicationError(response, uiElements.apiResponseMessage);
@@ -94,10 +94,11 @@ function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed) {
   uiElements.replyTo.value = uiFeed.replyTo;
 }
 
-async function submitForm(formFields: UiFeedFormFields) {
+async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   const editFeedRequest: EditFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
+    initialId: initialId.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,
   };
