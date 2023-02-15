@@ -112,7 +112,6 @@ export const updateFeed: RequestHandler = async function updateFeed(reqId, reqBo
   return makeSuccess('Feed updated');
 };
 
-// TODO: Add api-test
 export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: addNewFeed.name, reqId });
   const session = checkSession(reqSession);

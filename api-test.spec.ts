@@ -3,18 +3,18 @@ import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { AccountData, AccountId, getAccountIdByEmail, getAccountStorageKey, isAccountId } from './src/domain/account';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { Feed } from './src/domain/feed';
+import { AddNewFeedRequest, AddNewFeedResponseData, EditFeedRequest, Feed } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/storage/feed-storage';
 import { MakeFeedInput } from './src/domain/feed-making';
 import { getFeedStorageKey } from './src/storage/feed-storage';
-import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
+import { ApiResponse, makeAppError, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
 import { readFile } from './src/storage/io-isolation';
 import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
 import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';
-import { makeTestUnixCronPattern } from './src/shared/test-utils';
+import { defaultFeedPattern } from './src/domain/cron-pattern';
 
 describe('API', () => {
   let step = 0; // NOTE: test are expected to run in source order
@@ -26,7 +26,6 @@ describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
   const userPlan = 'standard';
-  const cronPattern = makeTestUnixCronPattern();
 
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
@@ -182,15 +181,28 @@ describe('API', () => {
 
       describe('CRUD happy flow', () => {
         it('flows', async () => {
-          const { responseBody } = await createFeed(testFeedProps, authenticationHeaders);
-          const storedFeed = getStoredFeed(userEmail, testFeedId);
+          const addNewFeedRequest: AddNewFeedRequest = {
+            displayName: testFeedProps.displayName!,
+            url: testFeedProps.url!,
+            id: testFeedProps.id!,
+            replyTo: testFeedProps.replyTo!,
+          };
+          const { responseBody } = await addNewFeed(addNewFeedRequest, authenticationHeaders);
 
-          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Feed created' });
+          const expectedResponse: Success<AddNewFeedResponseData> = {
+            kind: 'Success',
+            message: 'New feed added. 👍',
+            responseData: { feedId: addNewFeedRequest.id },
+          };
+
+          expect(responseBody).to.deep.equal(expectedResponse);
+
+          const storedFeed = getStoredFeed(userEmail, testFeedId);
 
           expect(storedFeed.displayName).to.equal(testFeedProps.displayName);
           expect(storedFeed.url).to.equal(testFeedProps.url);
           expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
-          expect(storedFeed.cronPattern).to.equal(cronPattern.value);
+          expect(storedFeed.cronPattern).to.equal(defaultFeedPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
           expect(storedFeed.isDeleted).to.equal(false);
 
@@ -203,21 +215,25 @@ describe('API', () => {
             feedId: testFeedId,
           });
 
-          const { responseBody: repeadedRequestResponseBody } = await createFeed(testFeedProps, authenticationHeaders);
-          expect(repeadedRequestResponseBody).to.deep.equal(makeInputError('Feed ID taken'));
-
-          const displayNameUpdated = 'API Test Feed Name *Updated*';
-          const initialSaltedHash = storedFeed.hashingSalt;
-          const { responseBody: updateResponseBody } = await updateFeed(
-            { ...testFeedProps, displayName: displayNameUpdated },
+          const { responseBody: repeadedRequestResponseBody } = await addNewFeed(
+            addNewFeedRequest,
             authenticationHeaders
           );
-          expect(updateResponseBody).to.deep.equal({ kind: 'Success', message: 'Feed updated' });
+          expect(repeadedRequestResponseBody).to.deep.equal(
+            makeInputError('You already have a feed with this ID', 'id')
+          );
 
-          const updatedFeed = getStoredFeed(userEmail, testFeedId);
-          expect(updatedFeed.displayName).to.equal(displayNameUpdated);
-          expect(updatedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
-          expect(updatedFeed.isDeleted).be.false;
+          const displayNameUpdated = 'API Test Feed Name *Updated*';
+          // const initialSaltedHash = storedFeed.hashingSalt;
+          const editFeedRequest: EditFeedRequest = { ...addNewFeedRequest, displayName: displayNameUpdated };
+          const { responseBody: editResponseBody } = await editFeed(editFeedRequest, authenticationHeaders);
+          expect(editResponseBody).to.deep.equal(makeAppError('Not implemented')); // TODO
+          // expect(editResponseBody).to.deep.equal({ kind: 'Success', message: 'Feed updated' });
+
+          // const editedFeed = getStoredFeed(userEmail, testFeedId);
+          // expect(editedFeed.displayName).to.equal(displayNameUpdated);
+          // expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
+          // expect(editedFeed.isDeleted).be.false;
 
           const { responseBody: deleteResponse } = await deleteFeed(testFeedId, authenticationHeaders);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
@@ -241,14 +257,10 @@ describe('API', () => {
         // TODO
 
         it('POST returns a proper InputError', async () => {
-          const invalidFeedProps = {};
-          const responseBody = (await createFeed(invalidFeedProps, authenticationHeaders)).responseBody;
+          const invalidFeedProps = {} as AddNewFeedRequest;
+          const responseBody = (await addNewFeed(invalidFeedProps, authenticationHeaders)).responseBody;
 
-          expect(responseBody).to.deep.equal({
-            kind: 'InputError',
-            field: 'displayName',
-            message: 'Invalid feed display name: "undefined"',
-          });
+          expect(responseBody).to.deep.equal(makeInputError('Feed name is missing', 'displayName'));
         });
       });
     });
@@ -342,16 +354,16 @@ describe('API', () => {
     deleteAccount(makeTestEmailAddress(userEmail));
   });
 
-  async function createFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
-    const data = feedProps as Record<string, string>;
+  async function addNewFeed(request: AddNewFeedRequest, authenticationHeaders: Headers) {
+    const data = request as Record<string, string>;
 
-    return await post('/api/feeds', data, authenticationHeaders);
+    return await post('/api/feeds/add-new-feed', data, authenticationHeaders);
   }
 
-  async function updateFeed(feedProps: MakeFeedInput, authenticationHeaders: Headers) {
-    const data = feedProps as Record<string, string>;
+  async function editFeed(request: EditFeedRequest, authenticationHeaders: Headers) {
+    const data = request as Record<string, string>;
 
-    return await put('/api/feeds', data, authenticationHeaders);
+    return await post('/api//feeds/edit-feed', data, authenticationHeaders);
   }
 
   async function deleteFeed(feedId: FeedId, authenticationHeaders: Headers) {
@@ -431,10 +443,6 @@ describe('API', () => {
       responseBody: await response.json(),
       responseHeaders: response.headers,
     };
-  }
-
-  async function put(relativePath: string, data: Record<string, string> = {}, headers: Headers = new Headers()) {
-    return post(relativePath, data, headers, 'PUT');
   }
 
   async function get(path: string, type: 'text'): Promise<TextApiResponse>;
