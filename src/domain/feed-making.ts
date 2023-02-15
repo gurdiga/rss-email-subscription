@@ -5,6 +5,7 @@ import { makeHttpUrl } from '../shared/url';
 import { FeedHashingSalt, Feed } from './feed';
 import { makeFeedId } from './feed-id';
 import { UnixCronPattern } from './cron-pattern';
+import { EmailAddress } from './email-address';
 
 export interface MakeFeedInput {
   displayName?: string;
@@ -30,20 +31,10 @@ export function makeFeed(
     return displayName;
   }
 
-  if (!isString(input.url)) {
-    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input.url)}"`, 'url');
-  }
-
-  const trimmedUrl = input.url.trim();
-
-  if (!trimmedUrl) {
-    return makeErr('Feed URL is missing', 'url');
-  }
-
-  const url = makeHttpUrl(trimmedUrl);
+  const url = makeFeedUrl(input.url);
 
   if (isErr(url)) {
-    return makeErr(si`Invalid feed URL: "${trimmedUrl}"`, 'url');
+    return url;
   }
 
   const id = makeFeedId(input.id);
@@ -52,14 +43,10 @@ export function makeFeed(
     return id;
   }
 
-  const replyTo = makeEmailAddress(input.replyTo);
+  const replyTo = makeFeedReplyToEmailAddress(input.replyTo);
 
   if (isErr(replyTo)) {
-    return makeErr('Invalid Reply To email', 'replyTo');
-  }
-
-  if (replyTo.value.endsWith('@feedsubscription.com')) {
-    return makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo');
+    return replyTo;
   }
 
   const isDeleted = Boolean(input.isDeleted);
@@ -78,6 +65,34 @@ export function makeFeed(
   };
 
   return feed;
+}
+
+export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress> {
+  const emailAddress = makeEmailAddress(input);
+
+  if (isErr(emailAddress)) {
+    return makeErr('Invalid Reply To email', 'replyTo');
+  }
+
+  if (emailAddress.value.endsWith('@feedsubscription.com')) {
+    return makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo');
+  }
+
+  return emailAddress;
+}
+
+export function makeFeedUrl(input: unknown): Result<URL> {
+  if (!isString(input)) {
+    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input)}"`, 'url');
+  }
+
+  const trimmedUrl = input.trim();
+
+  if (!trimmedUrl) {
+    return makeErr('Feed URL is missing', 'url');
+  }
+
+  return makeHttpUrl(trimmedUrl, undefined, 'url');
 }
 
 export const maxFeedNameLength = 50;

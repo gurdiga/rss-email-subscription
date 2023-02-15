@@ -94,7 +94,7 @@ describe(makeFeed.name, () => {
           id: 'valid-feedId',
           url: 'not-an-url',
         },
-        makeErr('Invalid feed URL: "not-an-url"', 'url'),
+        makeErr('Invalid URL: not-an-url', 'url'),
         'url2',
       ],
       [
