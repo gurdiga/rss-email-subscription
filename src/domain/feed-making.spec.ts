@@ -85,7 +85,7 @@ describe(makeFeed.name, () => {
           displayName: 'test-valid-displayName',
           id: 'valid-feedId',
         },
-        makeErr('Feed URL has the wrong type: "undefined"', 'url'),
+        makeErr('Feed URL is missing', 'url'),
         'url1',
       ],
       [

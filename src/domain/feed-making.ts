@@ -16,41 +16,38 @@ export interface MakeFeedInput {
   isActive?: boolean;
 }
 
-export function makeFeed(
-  input: MakeFeedInput,
-  hashingSalt: FeedHashingSalt,
-  cronPattern: UnixCronPattern
-): Result<Feed> {
+export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPattern: UnixCronPattern): Result<Feed> {
   if (!isObject(input)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(input)}]`);
   }
 
-  const displayName = makeFeedDisplayName(input.displayName);
+  const makeFeedInput = input as MakeFeedInput;
+  const displayName = makeFeedDisplayName(makeFeedInput.displayName);
 
   if (isErr(displayName)) {
     return displayName;
   }
 
-  const url = makeFeedUrl(input.url);
+  const url = makeFeedUrl(makeFeedInput.url);
 
   if (isErr(url)) {
     return url;
   }
 
-  const id = makeFeedId(input.id);
+  const id = makeFeedId(makeFeedInput.id);
 
   if (isErr(id)) {
     return id;
   }
 
-  const replyTo = makeFeedReplyToEmailAddress(input.replyTo);
+  const replyTo = makeFeedReplyToEmailAddress(makeFeedInput.replyTo);
 
   if (isErr(replyTo)) {
     return replyTo;
   }
 
-  const isDeleted = Boolean(input.isDeleted);
-  const isActive = Boolean(input.isActive);
+  const isDeleted = Boolean(makeFeedInput.isDeleted);
+  const isActive = Boolean(makeFeedInput.isActive);
 
   const feed: Feed = {
     kind: 'Feed',
@@ -82,6 +79,10 @@ export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress
 }
 
 export function makeFeedUrl(input: unknown): Result<URL> {
+  if (!input) {
+    return makeErr('Feed URL is missing', 'url');
+  }
+
   if (!isString(input)) {
     return makeErr(si`Feed URL has the wrong type: "${getTypeName(input)}"`, 'url');
   }
@@ -97,27 +98,27 @@ export function makeFeedUrl(input: unknown): Result<URL> {
 
 export const maxFeedNameLength = 50;
 
-export function makeFeedDisplayName(input: unknown): Result<string> {
+export function makeFeedDisplayName(input: unknown, field = 'displayName'): Result<string> {
   if (!input) {
-    return makeErr('Feed name is missing', 'displayName');
+    return makeErr('Feed name is missing', field);
   }
 
   if (!isString(input)) {
-    return makeErr(si`Invalid feed name: expected type [string] but got "${getTypeName(input)}"`, 'displayName');
+    return makeErr(si`Invalid feed name: expected type [string] but got "${getTypeName(input)}"`, field);
   }
 
   const trimmedInput = input.trim();
 
   if (!trimmedInput) {
-    return makeErr('Feed name is missing', 'displayName');
+    return makeErr('Feed name is missing', field);
   }
 
   if (trimmedInput.length < 5) {
-    return makeErr('Feed name is too short', 'displayName');
+    return makeErr('Feed name is too short', field);
   }
 
   if (trimmedInput.length > maxFeedNameLength) {
-    return makeErr('Feed name is too long', 'displayName');
+    return makeErr('Feed name is too long', field);
   }
 
   return trimmedInput;
