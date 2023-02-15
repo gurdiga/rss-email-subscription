@@ -1,8 +1,8 @@
 import { expect } from 'chai';
-import { Feed } from '../domain/feed';
-import { alterExistingFeed, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
-import { markFeedAsDeleted, FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, loadFeed } from './feed-storage';
-import { loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
+import { EditFeedRequest, Feed } from '../domain/feed';
+import { applyEditFeedRequest, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
+import { getFeedStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
+import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { Err, isErr, makeErr } from '../shared/lang';
@@ -295,36 +295,85 @@ describe(markFeedAsDeleted.name, () => {
   });
 });
 
-describe(alterExistingFeed.name, () => {
-  const existingFeed = makeTestFeed({ id: 'existing-feed' });
-  const newFeed = makeTestFeed({ id: 'new-feed' });
+describe(applyEditFeedRequest.name, () => {
+  const feed = makeTestFeed();
 
-  it('stores properties from new feed EXCEPT hashingSalt', () => {
-    const existingHashingSalt = existingFeed.hashingSalt;
-    const storage = makeTestStorage({ storeItem: () => {} });
+  it('applies the requested changes', () => {
+    const editFeedRequest: EditFeedRequest = {
+      displayName: 'New name',
+      url: new URL('https://new-test-url.com'),
+      id: makeTestFeedId('edited-feed-id'),
+      replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+    };
+    const loadFeedFn = () => feed;
+    const storage = makeTestStorage({ storeItem: makeStub(), renameItem: makeStub() });
 
-    const result = alterExistingFeed(accountId, existingFeed, newFeed, storage);
-    expect(isErr(result)).to.be.false;
+    const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
+    expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
+
+    const storageKey = (storage.storeItem as Spy).calls[0]![0] as FeedStoredData;
+    expect(storageKey, 'initially stores the item under the old key').to.equal(
+      getFeedJsonStorageKey(accountId, feed.id)
+    );
 
     const storedFeed = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);
+    expect(storedFeed.replyTo).to.equal(editFeedRequest.replyTo.value);
+    expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
 
-    expect(storedFeed.displayName).to.equal(newFeed.displayName);
-    expect(storedFeed.cronPattern).to.equal(newFeed.cronPattern.value);
-    expect(storedFeed.replyTo).to.equal(newFeed.replyTo.value);
-    expect(storedFeed.url).to.equal(newFeed.url.toString());
-
-    expect(storedFeed.hashingSalt).to.deep.equal(
-      existingHashingSalt.value,
-      'hashing salt should NOT change because unsubscribe URLs depend on it'
-    );
+    const renameItem = storage.renameItem as any as Spy;
+    expect(renameItem.calls, 'renames the storage item based on the new feed ID').to.deep.equal([
+      [getFeedStorageKey(accountId, feedId), getFeedStorageKey(accountId, editFeedRequest.id)],
+    ]);
   });
 
-  it('returns the Err from storage if any', () => {
-    const err = makeErr('Storage broke!');
-    const storage = makeTestStorage({ storeItem: () => err });
+  it('renames the feed storage item if id changes', () => {
+    const editFeedRequest: EditFeedRequest = {
+      displayName: 'New name',
+      url: new URL('https://new-test-url.com'),
+      id: makeTestFeedId('new-feed-id'),
+      replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+    };
+    const feed = makeTestFeed({ id: editFeedRequest.id.value });
+    const loadFeedFn = () => feed;
+    const storage = makeTestStorage({ storeItem: makeStub(), renameItem: makeStub() });
 
-    const result = alterExistingFeed(accountId, existingFeed, newFeed, storage);
+    const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
+    expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
 
-    expect(result).to.deep.equal(makeErr('Failed to store feed data: Storage broke!'));
+    const storedFeed = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);
+    expect(storedFeed.replyTo).to.equal(editFeedRequest.replyTo.value);
+    expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
+
+    const renameItem = storage.renameItem as any as Spy;
+    expect(renameItem.calls).to.deep.equal([]);
+  });
+
+  it('returns the Err from storage or loadFeedFn if any', () => {
+    const editFeedRequest: EditFeedRequest = {
+      displayName: 'New name',
+      url: new URL('https://new-test-url.com'),
+      id: makeTestFeedId('edited-feed-id'),
+      replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+    };
+    const loadFeedErr = makeErr('Loading failed');
+    const failingLoadFeedFn = () => loadFeedErr;
+    let storage = makeTestStorage({ storeItem: makeStub(), renameItem: makeStub() });
+
+    let result = applyEditFeedRequest(editFeedRequest, accountId, storage, failingLoadFeedFn);
+    expect(result).deep.equal(makeErr(si`Failed to loadFeed: ${loadFeedErr.reason}`));
+
+    const loadFeedFn = () => feed;
+
+    const storeItemErr = makeErr('Error from storeItem');
+    storage = makeTestStorage({ storeItem: () => storeItemErr, renameItem: makeStub() });
+    result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
+    expect(result).deep.equal(makeErr(si`Failed to store feed data: ${storeItemErr.reason}`));
+
+    const renameItemErr = makeErr('Error from renameItem');
+    storage = makeTestStorage({ storeItem: makeStub(), renameItem: () => renameItemErr });
+    result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
+    expect(result).deep.equal(makeErr(si`Failed to rename item: ${renameItemErr.reason}`));
   });
 });

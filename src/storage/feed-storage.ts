@@ -5,7 +5,7 @@ import { makePath } from '../shared/path-utils';
 import { AccountId, AccountNotFound, accountsStorageKey, makeAccountId } from '../domain/account';
 import { makeAccountNotFound } from '../domain/account';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
-import { Feed, makeFeedHashingSalt, isFeed } from '../domain/feed';
+import { Feed, makeFeedHashingSalt, isFeed, EditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId, isFeedId } from '../domain/feed-id';
 import { MakeFeedInput, makeFeed } from '../domain/feed-making';
 
@@ -105,20 +105,6 @@ export function markFeedAsDeleted(
   if (isErr(result)) {
     return makeErr(si`Failed to ${storeFeed.name}: ${result.reason}`);
   }
-}
-
-export function alterExistingFeed(
-  accountId: AccountId,
-  existingFeed: Feed,
-  newFeed: Feed,
-  storage: AppStorage
-): Result<void> {
-  existingFeed.displayName = newFeed.displayName;
-  existingFeed.cronPattern = newFeed.cronPattern;
-  existingFeed.replyTo = newFeed.replyTo;
-  existingFeed.url = newFeed.url;
-
-  return storeFeed(accountId, existingFeed, storage);
 }
 
 export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage): Result<void> {
@@ -252,4 +238,46 @@ export function findFeedAccountId(feedId: FeedId, storage: AppStorage): Result<A
   }
 
   return makeAccountNotFound();
+}
+
+export function applyEditFeedRequest(
+  editFeedRequest: EditFeedRequest,
+  accountId: AccountId,
+  storage: AppStorage,
+  loadFeedFn = loadFeed
+): Result<void> {
+  const feed = loadFeedFn(accountId, editFeedRequest.id, storage);
+
+  if (isErr(feed)) {
+    return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    return makeErr(si`Feed not found for update: ${editFeedRequest.id.value}, accountId: ${accountId.value}`);
+  }
+
+  const oldStorageKey = getFeedStorageKey(accountId, feed.id);
+  const newStorageKey = getFeedStorageKey(accountId, editFeedRequest.id);
+
+  feed.displayName = editFeedRequest.displayName;
+  feed.url = editFeedRequest.url;
+  feed.replyTo = editFeedRequest.replyTo;
+
+  const storeFeedResult = storeFeed(accountId, feed, storage);
+
+  if (isErr(storeFeedResult)) {
+    return storeFeedResult;
+  }
+
+  if (oldStorageKey === newStorageKey) {
+    return;
+  }
+
+  const renameResult = storage.renameItem(oldStorageKey, newStorageKey);
+
+  if (isErr(renameResult)) {
+    return makeErr(si`Failed to rename item: ${renameResult.reason}`);
+  }
+
+  return renameResult;
 }
