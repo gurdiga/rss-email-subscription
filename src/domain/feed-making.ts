@@ -55,7 +55,11 @@ export function makeFeed(
   const replyTo = makeEmailAddress(input.replyTo);
 
   if (isErr(replyTo)) {
-    return makeErr(si`Invalid Reply To email`, 'replyTo');
+    return makeErr('Invalid Reply To email', 'replyTo');
+  }
+
+  if (replyTo.value.endsWith('@feedsubscription.com')) {
+    return makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo');
   }
 
   const isDeleted = Boolean(input.isDeleted);

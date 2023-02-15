@@ -106,6 +106,16 @@ describe(makeFeed.name, () => {
         makeErr('Invalid Reply To email', 'replyTo'),
         'replyTo',
       ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          id: 'valid-feedId',
+          replyTo: 'some-id@feedsubscription.com',
+        },
+        makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo'),
+        'replyTo',
+      ],
     ];
 
     for (const [input, err, fieldName] of expectedErrForInput) {
