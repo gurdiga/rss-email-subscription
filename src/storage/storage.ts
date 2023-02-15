@@ -1,6 +1,6 @@
 import { dirname, join } from 'node:path';
 import { deleteFile, DeleteFileFn, fileExists, FileExistsFn, listFiles, listDirectories } from './io-isolation';
-import { ListFilesFn } from './io-isolation';
+import { ListFilesFn, renameFile, RenameFileFn } from './io-isolation';
 import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io-isolation';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -20,6 +20,12 @@ export interface AppStorage {
   loadItem: (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
   hasItem: (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
   removeItem: (key: StorageKey, deleteFileFn?: DeleteFileFn, fileExistsFn?: FileExistsFn) => Result<void>;
+  renameItem: (
+    oldKey: StorageKey,
+    newKey: StorageKey,
+    renameFileFn?: RenameFileFn,
+    fileExistsFn?: FileExistsFn
+  ) => Result<void>;
   listItems: (key: StorageKey, listFilesFn?: ListFilesFn, fileExistsFn?: FileExistsFn) => Result<StorageKey[]>;
 
   listSubdirectories: (
@@ -108,6 +114,42 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     }
   }
 
+  function renameItem(
+    oldKey: StorageKey,
+    newKey: StorageKey,
+    renameFileFn: RenameFileFn = renameFile,
+    fileExistsFn: FileExistsFn = fileExists
+  ): Result<void> {
+    const oldPath = join(dataDirRoot, oldKey);
+    const newPath = join(dataDirRoot, newKey);
+
+    const oldExists = attempt(() => fileExistsFn(oldPath));
+
+    if (isErr(oldExists)) {
+      return makeErr(si`Failed to check file exists: ${oldExists.reason}`);
+    }
+
+    if (oldExists === false) {
+      return makeErr(si`Item not found: ${oldKey}`);
+    }
+
+    const newExists = attempt(() => fileExistsFn(newPath));
+
+    if (isErr(newExists)) {
+      return makeErr(si`Failed to check file exists: ${newExists.reason}`);
+    }
+
+    if (newExists === true) {
+      return makeErr(si`Item already exists: ${newKey}`);
+    }
+
+    const result = attempt(() => renameFileFn(oldPath, newPath));
+
+    if (isErr(result)) {
+      return makeErr(si`Failed to rename file: ${result.reason}`);
+    }
+  }
+
   function listItems(
     key: StorageKey,
     listFilesFn: ListFilesFn = listFiles,
@@ -155,6 +197,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     loadItem,
     hasItem,
     removeItem,
+    renameItem,
     listItems,
     listSubdirectories,
   };

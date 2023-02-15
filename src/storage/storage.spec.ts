@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn } from './io-isolation';
+import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn, RenameFileFn } from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from '../shared/lang';
 import { makeStorage } from './storage';
@@ -9,7 +9,8 @@ import { si } from '../shared/string-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem, hasItem, removeItem, listItems, listSubdirectories } = makeStorage(dataDirRoot);
+  const { loadItem, storeItem, hasItem, removeItem, renameItem, listItems, listSubdirectories } =
+    makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = makePath(dataDirRoot, key);
 
@@ -104,6 +105,57 @@ describe(makeStorage.name, () => {
       let result = hasItem(key, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Failed to check file: Nope!!'));
+    });
+  });
+
+  describe(renameItem.name, () => {
+    const oldPath = '/some/path/old-key';
+    const newPath = '/some/path/new-key';
+
+    const fullOldPath = makePath(dataDirRoot, oldPath);
+    const fullNewPath = makePath(dataDirRoot, newPath);
+
+    it('renames an existing file', () => {
+      const renameFileFn = makeStub<RenameFileFn>();
+      const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath === fullOldPath);
+
+      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+
+      expect(result, si`result: ${JSON.stringify(result)}`).to.be.undefined;
+      expect(renameFileFn.calls).to.deep.equal([[fullOldPath, fullNewPath]]);
+      expect(fileExistsFn.calls).to.deep.equal([[fullOldPath], [fullNewPath]]);
+    });
+
+    it('returns an Err value when file does not exist', () => {
+      const renameFileFn = makeStub<RenameFileFn>();
+      const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath !== fullOldPath);
+
+      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Item not found: /some/path/old-key'));
+      expect(renameFileFn.calls).to.deep.equal([], 'renameFileFn not called');
+    });
+
+    it('returns an Err value when new file already exist', () => {
+      const renameFileFn = makeStub<RenameFileFn>();
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+
+      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Item already exists: /some/path/new-key'));
+      expect(renameFileFn.calls).to.deep.equal([], 'renameFileFn not called');
+    });
+
+    it('returns an Err value when renameFileFn fails', () => {
+      const renameFileFn = makeStub<RenameFileFn>(() => {
+        throw new Error('Boom!');
+      });
+      const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath === fullOldPath);
+
+      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Failed to rename file: Boom!'));
+      expect(renameFileFn.calls).to.deep.equal([[fullOldPath, fullNewPath]]);
     });
   });
 
