@@ -48,7 +48,7 @@ describe('API', () => {
         const sessionId = (responseBody as Success).responseData!['sessionId'];
         expect(sessionId).to.exist;
 
-        const sessionData = getSessionData(sessionId!);
+        const sessionData = loadSessionData(sessionId!);
         expect(sessionData['works']).to.equal(true);
 
         const cookie = responseHeaders.get('set-cookie')!;
@@ -103,8 +103,8 @@ describe('API', () => {
     before(() => expect(++step).to.equal(2, 'test are expected to run in source order'));
 
     it('flows', async () => {
-      const { responseBody: registrationResponse } = await registrationDo(userPlan, userEmail, userPassword);
-      const [account, accountId] = getAccountByEmail(userEmail);
+      const { responseBody: registrationResponse } = await registrationSend(userPlan, userEmail, userPassword);
+      const [account, accountId] = loadAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
       expect(account.plan).to.equal(userPlan, 'registration plan');
@@ -113,31 +113,34 @@ describe('API', () => {
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
-      const { responseBody: repeatedRegistration } = await registrationDo(userPlan, userEmail, userPassword);
+      const { responseBody: repeatedRegistration } = await registrationSend(userPlan, userEmail, userPassword);
       expect(repeatedRegistration).to.deep.equal(makeInputError('Email already taken', 'email'));
 
-      const { responseBody: registrationConfirmationResponse } = await registrationConfirmationDo(userEmail);
+      const { responseBody: registrationConfirmationResponse } = await registrationConfirmationSend(userEmail);
       expect(registrationConfirmationResponse).to.include({ kind: 'Success' }, 'registration confirmation');
 
       let sessionId = (registrationConfirmationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
 
-      const sessionDataAfterConfirmation = getSessionData(sessionId!);
+      const sessionDataAfterConfirmation = loadSessionData(sessionId!);
       expect(sessionDataAfterConfirmation.accountId).to.equal(
         accountId.value,
         'registration confirmation session accountId'
       );
 
-      const [accountAfterConfirmation] = getAccountByEmail(userEmail);
+      const [accountAfterConfirmation] = loadAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
-      const { responseBody: authenticationResponse, responseHeaders } = await authenticationDo(userEmail, userPassword);
+      const { responseBody: authenticationResponse, responseHeaders } = await authenticationSend(
+        userEmail,
+        userPassword
+      );
       expect(authenticationResponse.kind).to.equal('Success', 'authentication');
 
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
 
-      const sessionData = getSessionData(sessionId!);
+      const sessionData = loadSessionData(sessionId!);
       const sessionCookie = sessionData.cookie!;
 
       expect(sessionData.accountId).to.equal(accountId.value, 'authentication session accountId');
@@ -153,7 +156,7 @@ describe('API', () => {
       const { responseBody: deauthenticationResponse } = await deauthenticationDo(responseHeaders);
       expect(deauthenticationResponse.kind).to.equal('Success', 'deauthentication');
 
-      const sessionDataAfterDeauthentication = getSessionData(sessionId!);
+      const sessionDataAfterDeauthentication = loadSessionData(sessionId!);
       expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
         .exist;
     }).timeout(5000);
@@ -174,7 +177,7 @@ describe('API', () => {
       let authenticationHeaders: Headers;
 
       before(async () => {
-        const { responseBody, responseHeaders } = await authenticationDo(userEmail, userPassword);
+        const { responseBody, responseHeaders } = await authenticationSend(userEmail, userPassword);
 
         expect(responseBody.kind).to.equal('Success', 'authentication');
         authenticationHeaders = getAuthenticationHeaders(responseHeaders);
@@ -188,7 +191,7 @@ describe('API', () => {
             id: testFeedProps.id!,
             replyTo: testFeedProps.replyTo!,
           };
-          const { responseBody } = await addNewFeed(addNewFeedRequest, authenticationHeaders);
+          const { responseBody } = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
 
           const expectedAddFeedResponse: Success<AddNewFeedResponseData> = {
             kind: 'Success',
@@ -217,7 +220,7 @@ describe('API', () => {
             feedId: testFeedId,
           });
 
-          const repeadedAdd = await addNewFeed(addNewFeedRequest, authenticationHeaders);
+          const repeadedAdd = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
           expect(repeadedAdd.responseBody).to.deep.equal(makeInputError('You already have a feed with this ID', 'id'));
 
           const displayNameUpdated = 'API Test Feed Name *Updated*';
@@ -228,7 +231,7 @@ describe('API', () => {
             id: 'new-feed-id',
             displayName: displayNameUpdated,
           };
-          const editResponse = await editFeed(editFeedRequest, authenticationHeaders);
+          const editResponse = await editFeedSend(editFeedRequest, authenticationHeaders);
 
           const expectedEditFeedResponse: Success<EditFeedResponseData> = {
             kind: 'Success',
@@ -243,7 +246,7 @@ describe('API', () => {
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
           expect(editedFeed.isDeleted).be.false;
 
-          const { responseBody: deleteResponse } = await deleteFeed(newFeedId, authenticationHeaders);
+          const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId, authenticationHeaders);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
           const deletedFeed = getStoredFeed(userEmail, newFeedId);
@@ -255,7 +258,7 @@ describe('API', () => {
         });
 
         function getStoredFeed(email: string, feedId: FeedId) {
-          const [_, accountId] = getAccountByEmail(email);
+          const [_, accountId] = loadAccountByEmail(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
         }
@@ -264,14 +267,14 @@ describe('API', () => {
       describe('failure paths', () => {
         it('/api/feeds/add-new-feed returns a proper InputError', async () => {
           const invalidRequest = {} as AddNewFeedRequestData;
-          const responseBody = (await addNewFeed(invalidRequest, authenticationHeaders)).responseBody;
+          const responseBody = (await addNewFeedSend(invalidRequest, authenticationHeaders)).responseBody;
 
           expect(responseBody).to.deep.equal(makeInputError('Feed name is missing', 'displayName'));
         });
 
         it('/api/feeds/edit-feed returns a proper InputError', async () => {
           const invalidRequest = { displayName: 'Something' } as EditFeedRequestData;
-          const responseBody = (await editFeed(invalidRequest, authenticationHeaders)).responseBody;
+          const responseBody = (await editFeedSend(invalidRequest, authenticationHeaders)).responseBody;
 
           expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
         });
@@ -299,7 +302,7 @@ describe('API', () => {
     let emailHash: string;
 
     beforeEach(async () => {
-      const authenticationResponse = await authenticationDo(userEmail, userPassword);
+      const authenticationResponse = await authenticationSend(userEmail, userPassword);
 
       expect(authenticationResponse.responseBody.kind).to.equal('Success', 'authentication');
       const authenticationHeaders = getAuthenticationHeaders(authenticationResponse.responseHeaders);
@@ -310,16 +313,16 @@ describe('API', () => {
         id: testFeedProps.id!,
         replyTo: testFeedProps.replyTo!,
       };
-      const addNewFeedResponse = await addNewFeed(addNewFeedRequest, authenticationHeaders);
+      const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
       expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');
     });
 
     it('flows', async () => {
       // ASSUMPTION: The feed testFeedId exists
-      const { responseBody: subscriptionResult } = await subscriptionDo(testFeedId, subscriberEmail);
+      const { responseBody: subscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(subscriptionResult).to.include(<Success>{ kind: 'Success' }, 'subscription result');
 
-      const { responseBody: repeatedSubscriptionResult } = await subscriptionDo(testFeedId, subscriberEmail);
+      const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
         <InputError>{ kind: 'InputError', message: 'Email is already subscribed' },
         'repeated subscription result'
@@ -328,7 +331,7 @@ describe('API', () => {
       const accountId = findFeedAccountId(testFeedId, storage) as AccountId;
       expect(isAccountId(accountId), 'feed account not found').to.be.true;
 
-      const emails = getFeedSubscriberEmails(accountId, testFeedId);
+      const emails = loadFeedSubscriberEmails(accountId, testFeedId);
       const storedEmail = Object.entries(emails).find(
         ([_, data]: [string, any]) => data.emailAddress === subscriberEmail
       )!;
@@ -339,18 +342,18 @@ describe('API', () => {
 
       expect(emails[emailHash].isConfirmed).to.be.false;
 
-      const { responseBody: subscriptionConfirmationResult } = await subscriptionConfirmationDo(testFeedId, emailHash);
-      expect(subscriptionConfirmationResult.kind).to.equal('Success');
+      const { responseBody: confirmationResult } = await subscriptionConfirmationSend(testFeedId, emailHash);
+      expect(confirmationResult.kind).to.equal('Success');
 
-      const emailAfterConfirmation = getFeedSubscriberEmails(accountId, testFeedId);
+      const emailAfterConfirmation = loadFeedSubscriberEmails(accountId, testFeedId);
       expect(emailAfterConfirmation[emailHash].isConfirmed).to.be.true;
 
-      const { responseBody: unsubscriptionResult } = await unsubscriptionDo(testFeedId, emailHash);
+      const { responseBody: unsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
 
       expect(unsubscriptionResult.kind).to.equal('Success', 'unsubscription result');
-      expect(getFeedSubscriberEmails(accountId, testFeedId), 'email removed from feed').not.to.include.keys(emailHash);
+      expect(loadFeedSubscriberEmails(accountId, testFeedId), 'email removed from feed').not.to.include.keys(emailHash);
 
-      const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionDo(testFeedId, emailHash);
+      const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
 
       expect(repeatedUnsubscriptionResult).to.deep.equal(
         <Success>{ kind: 'Success', message: 'Solidly unsubscribed.' },
@@ -359,22 +362,22 @@ describe('API', () => {
     });
 
     after(async () => {
-      await unsubscriptionDo(testFeedId, emailHash);
+      await unsubscriptionSend(testFeedId, emailHash);
     });
 
-    async function subscriptionDo(feedId: FeedId, email: string) {
+    async function subscriptionSend(feedId: FeedId, email: string) {
       return post('/api/subscription', { feedId: feedId.value, email });
     }
 
-    async function subscriptionConfirmationDo(feedId: FeedId, emailHash: string) {
+    async function subscriptionConfirmationSend(feedId: FeedId, emailHash: string) {
       return post('/api/subscription-confirmation', { id: si`${feedId.value}-${emailHash}` });
     }
 
-    async function unsubscriptionDo(feedId: FeedId, emailHash: string) {
+    async function unsubscriptionSend(feedId: FeedId, emailHash: string) {
       return post('/api/unsubscription', { id: si`${feedId.value}-${emailHash}` });
     }
 
-    function getFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
+    function loadFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
       return loadJSON(makePath(getFeedStorageKey(accountId, feedId), 'emails.json'));
     }
   }).timeout(5000);
@@ -383,25 +386,25 @@ describe('API', () => {
     deleteAccount(makeTestEmailAddress(userEmail));
   });
 
-  async function addNewFeed(request: AddNewFeedRequestData, authenticationHeaders: Headers) {
+  async function addNewFeedSend(request: AddNewFeedRequestData, authenticationHeaders: Headers) {
     const data = request as Record<string, string>;
 
     return await post('/api/feeds/add-new-feed', data, authenticationHeaders);
   }
 
-  async function editFeed(request: EditFeedRequestData, authenticationHeaders: Headers) {
+  async function editFeedSend(request: EditFeedRequestData, authenticationHeaders: Headers) {
     const data = request as Record<string, string>;
 
     return await post('/api/feeds/edit-feed', data, authenticationHeaders);
   }
 
-  async function deleteFeed(feedId: FeedId, authenticationHeaders: Headers) {
+  async function deleteFeedSend(feedId: FeedId, authenticationHeaders: Headers) {
     const path = makePath('/api/feeds', feedId.value);
 
     return await delete_(path, authenticationHeaders);
   }
 
-  async function authenticationDo(email: string, password: string) {
+  async function authenticationSend(email: string, password: string) {
     return post('/api/authentication', { email, password });
   }
 
@@ -411,25 +414,25 @@ describe('API', () => {
     return new Headers({ cookie });
   }
 
-  async function registrationDo(plan: string, email: string, password: string) {
+  async function registrationSend(plan: string, email: string, password: string) {
     return post('/api/registration', { plan, email, password });
   }
 
-  async function registrationConfirmationDo(email: string) {
+  async function registrationConfirmationSend(email: string) {
     const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
     const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
     return post('/api/registration-confirmation', { secret });
   }
 
-  function getAccountByEmail(email: string): [AccountData, AccountId] {
+  function loadAccountByEmail(email: string): [AccountData, AccountId] {
     const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
 
     return [loadJSON(makePath(getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
 
-  function getSessionData(sessionId: string) {
+  function loadSessionData(sessionId: string) {
     return loadJSON(makePath('sessions', si`${sessionId}.json`));
   }
 
