@@ -68,7 +68,7 @@ export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress
   const emailAddress = makeEmailAddress(input);
 
   if (isErr(emailAddress)) {
-    return makeErr('Invalid Reply To email', 'replyTo');
+    return makeErr(si`Invalid Reply To email: ${emailAddress.reason}`, 'replyTo');
   }
 
   if (emailAddress.value.endsWith('@feedsubscription.com')) {

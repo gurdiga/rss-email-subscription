@@ -22,7 +22,7 @@ export function makeEmailAddress(input: unknown): Result<EmailAddress> {
   }
 
   if (email.length > maxEmailAddressLength) {
-    return makeErr('Email too long');
+    return makeErr(si`Email needs to have less than ${maxEmailAddressLength} characters`);
   }
 
   const err = makeErr(si`Email is syntactically incorrect: "${emailString}"`);

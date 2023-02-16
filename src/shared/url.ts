@@ -13,7 +13,7 @@ export function makeHttpUrl(value: string, baseURL?: string | URL, fieldName = '
     }
 
     if (url.toString().length > maxUrlLength) {
-      return makeErr(si`The URL needs to be less than ${maxUrlLength} characters.`, fieldName);
+      return makeErr(si`The URL needs to have less than ${maxUrlLength} characters`, fieldName);
     }
 
     return url;

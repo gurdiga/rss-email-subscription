@@ -49,7 +49,7 @@ describe(makeEmailAddress.name, () => {
   it('returns an Err value when the email is longer than maxEmailLength', () => {
     const tooLongAnEmail = si`${'a'.repeat(maxEmailAddressLength)}@toolong.com`;
 
-    expect(makeEmailAddress(tooLongAnEmail)).to.deep.equal(makeErr('Email too long'));
+    expect(makeEmailAddress(tooLongAnEmail)).to.deep.equal(makeErr('Email needs to have less than 100 characters'));
   });
 
   it('returns an Err value when the email is invalid', () => {

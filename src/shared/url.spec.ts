@@ -29,7 +29,7 @@ describe(makeHttpUrl.name, () => {
     const urlString = 'https://test.com/'.concat('x'.repeat(maxUrlLength));
 
     expect(makeHttpUrl(urlString)).to.deep.equal(
-      makeErr(si`The URL needs to be less than ${maxUrlLength} characters.`, 'url')
+      makeErr(si`The URL needs to have less than ${maxUrlLength} characters`, 'url')
     );
   });
 });

@@ -107,7 +107,7 @@ describe(makeFeed.name, () => {
           url: 'https://test.com/rss.xml',
           id: 'valid-feedId',
         },
-        makeErr('Invalid Reply To email', 'replyTo'),
+        makeErr('Invalid Reply To email: Email is empty', 'replyTo'),
         'replyTo',
       ],
       [

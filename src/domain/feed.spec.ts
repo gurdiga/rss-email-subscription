@@ -69,7 +69,7 @@ describe(makeEditFeedRequest.name, () => {
       ],
       [
         { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id', initialId: 'init-feed-id' } as Input,
-        makeErr('Invalid Reply To email', 'replyTo'),
+        makeErr('Invalid Reply To email: Email is empty', 'replyTo'),
         'replyTo',
       ],
     ];
