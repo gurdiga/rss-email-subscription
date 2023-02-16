@@ -1,5 +1,4 @@
 import { expect } from 'chai';
-import { hashLength } from '../shared/crypto';
 import { Err, makeErr } from '../shared/lang';
 import { AppStorage } from './storage';
 import { si } from '../shared/string-utils';
@@ -28,11 +27,11 @@ describe(getAccountStorageKey.name, () => {
 describe(getAccountIdList.name, () => {
   it('returns a list of the stored AccountIds and any eventual errors', () => {
     const accountIds = Array.from('abc')
-      .map((letter) => letter.repeat(hashLength))
+      .map((letter) => letter.repeat(64))
       .map(makeAccountId) as AccountId[];
     const validAccountIdStrings = accountIds.map((x) => x.value);
 
-    const invalidAccountIdStrings = ['42', 'bad-account-id'];
+    const invalidAccountIdStrings = [42 as any as string, undefined as any as string];
     const errs = invalidAccountIdStrings.map(makeAccountId) as Err[];
 
     const subdirectoryNames = [...validAccountIdStrings, ...invalidAccountIdStrings];

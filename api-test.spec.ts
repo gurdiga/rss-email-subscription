@@ -1,7 +1,8 @@
 import { expect } from 'chai';
 import fetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
-import { AccountData, AccountId, getAccountIdByEmail, isAccountId } from './src/domain/account';
+import { AccountData, AccountId, isAccountId } from './src/domain/account';
+import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/storage/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { AddNewFeedRequestData, AddNewFeedResponseData, EditFeedRequestData } from './src/domain/feed';

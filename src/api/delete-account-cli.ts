@@ -4,7 +4,7 @@ import { rmSync } from 'node:fs';
 import { basename } from 'node:path';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
-import { getAccountIdByEmail } from '../domain/account';
+import { getAccountIdByEmail } from '../domain/account-crypto';
 import { accountsStorageKey } from '../storage/account-storage';
 import { attempt, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';

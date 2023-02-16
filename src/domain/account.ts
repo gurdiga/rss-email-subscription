@@ -1,5 +1,4 @@
 import { EmailAddress } from './email-address';
-import { hash, hashLength } from '../shared/crypto';
 import { Err, getTypeName, hasKind, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { HashedPassword } from './hashed-password';
@@ -13,10 +12,6 @@ export interface AccountId {
 export function makeAccountId(value: string): Result<AccountId> {
   if (!isString(value)) {
     return makeErr(si`Not a string: ${getTypeName(value)} "${value}"`);
-  }
-
-  if (value.length !== hashLength) {
-    return makeErr(si`Expected to be a 64-character hex hash: ${getTypeName(value)} "${value}"`);
   }
 
   return {
@@ -44,12 +39,6 @@ export interface AccountData {
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
   feedIds?: string[];
-}
-
-export function getAccountIdByEmail(email: EmailAddress, hashingSalt: string): AccountId {
-  // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
-  // ASSUMPTION: SHA256 is 64-character long.
-  return makeAccountId(hash(email.value, hashingSalt)) as AccountId;
 }
 
 export interface AccountNotFound {

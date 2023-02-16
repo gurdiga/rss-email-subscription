@@ -23,8 +23,6 @@ describe(checkSession.name, () => {
 
     expect(checkSession(null)).to.include(reason('reqSession is not an Object'));
     expect(checkSession({})).to.include(reason('Non-string accountId'));
-    expect(checkSession({ accountId: '' })).to.include(reason('Expected to be a 64-character hex hash: string ""'));
-    expect(checkSession({ accountId: '  ' })).to.include(reason('Expected to be a 64-character hex hash: string "  "'));
     expect(checkSession({ accountId: null })).to.include(reason('Non-string accountId'));
     expect(checkSession({ accountId: 42 })).to.include(reason('Non-string accountId'));
     expect(checkSession({ accountId: {} })).to.include(reason('Non-string accountId'));
