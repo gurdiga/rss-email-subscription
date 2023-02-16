@@ -48,7 +48,11 @@ compile:
 
 compile-quiet:
 	@printf "Compile... "
-	$(TIME) $(MAKE) compile > /dev/null
+	$(TIME) $(MAKE) compile check-no-node-in-web-ui > /dev/null
+
+check-no-node-in-web-ui:
+	@grep --line-number --color=always -RF 'node:' dist/api/web-ui-scripts/ |
+	tee /dev/stderr | ifne false
 
 c: compile
 cw:
