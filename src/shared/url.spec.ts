@@ -21,6 +21,6 @@ describe(makeHttpUrl.name, () => {
   });
 
   it('rejects non-HTTP URLs', () => {
-    expect(makeHttpUrl('ftp://file-server.com/feed.xml')).to.deep.equal(makeErr('Invalid URL protocol: ftp:', 'url'));
+    expect(makeHttpUrl('ftp://file-server.com/feed.xml')).to.deep.equal(makeErr('Invalid URL protocol: “ftp:”', 'url'));
   });
 });

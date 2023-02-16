@@ -96,6 +96,7 @@ export function makeFeedUrl(input: unknown): Result<URL> {
   return makeHttpUrl(trimmedUrl, undefined, 'url');
 }
 
+const minFeedNameLength = 5;
 export const maxFeedNameLength = 50;
 
 export function makeFeedDisplayName(input: unknown, field = 'displayName'): Result<string> {
@@ -113,12 +114,12 @@ export function makeFeedDisplayName(input: unknown, field = 'displayName'): Resu
     return makeErr('Feed name is missing', field);
   }
 
-  if (trimmedInput.length < 5) {
-    return makeErr('Feed name is too short', field);
+  if (trimmedInput.length < minFeedNameLength) {
+    return makeErr(si`Feed name is too short. I needs to be at least ${minFeedNameLength} characters.`, field);
   }
 
   if (trimmedInput.length > maxFeedNameLength) {
-    return makeErr('Feed name is too long', field);
+    return makeErr(si`Feed name is too long. It needs to be less than ${maxFeedNameLength} characters.`, field);
   }
 
   return trimmedInput;

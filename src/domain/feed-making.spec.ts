@@ -55,10 +55,14 @@ describe(makeFeed.name, () => {
         'displayName2',
       ],
       [{ displayName: ' \t\r\n   ' /* white-space */ }, makeErr('Feed name is missing', 'displayName'), 'displayName3'],
-      [{ displayName: 'lil' }, makeErr('Feed name is too short', 'displayName'), 'displayName4'],
+      [
+        { displayName: 'lil' },
+        makeErr('Feed name is too short. I needs to be at least 5 characters.', 'displayName'),
+        'displayName4',
+      ],
       [
         { displayName: 'a'.repeat(maxFeedNameLength + 1) },
-        makeErr('Feed name is too long', 'displayName'),
+        makeErr('Feed name is too long. It needs to be less than 50 characters.', 'displayName'),
         'displayName5',
       ],
       [
