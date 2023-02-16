@@ -7,7 +7,8 @@ import { isErr } from '../shared/lang';
 import { AppStorage, makeStorage } from '../storage/storage';
 import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
-import { accountsStorageKey, makeAccountId } from '../domain/account';
+import { makeAccountId } from '../domain/account';
+import { accountsStorageKey } from '../storage/account-storage';
 import { si } from '../shared/string-utils';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 

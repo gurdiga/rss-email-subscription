@@ -1,6 +1,7 @@
 import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
-import { AccountId, getAccountIdByEmail, loadAccount } from '../domain/account';
+import { AccountId, getAccountIdByEmail } from '../domain/account';
+import { loadAccount } from '../storage/account-storage';
 import { makePassword, Password } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';

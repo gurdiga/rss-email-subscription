@@ -1,4 +1,4 @@
-import { getAccountIdList } from '../domain/account';
+import { getAccountIdList } from '../storage/account-storage';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
 import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, AddNewFeedResponseData } from '../domain/feed';

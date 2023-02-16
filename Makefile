@@ -201,6 +201,9 @@ web-ui-systemjs:
 		./node_modules/systemjs/dist/system.min.js* \
 		./src/web-ui/systemjs-resolve-patch.js
 
+web-ui:
+	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
+
 web-ui-watch: web-ui-systemjs
 	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json --outDir $(WEB_UI_DEST_DIR) &
 

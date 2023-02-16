@@ -10,7 +10,8 @@ import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, dee
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { makeTestUnixCronPattern } from '../shared/test-utils';
-import { AccountData, getAccountStorageKey, makeAccountNotFound } from '../domain/account';
+import { AccountData, makeAccountNotFound } from '../domain/account';
+import { getAccountStorageKey } from './account-storage';
 import { si } from '../shared/string-utils';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 

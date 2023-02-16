@@ -1,4 +1,5 @@
-import { AccountId, confirmAccount } from '../domain/account';
+import { AccountId } from '../domain/account';
+import { confirmAccount } from '../storage/account-storage';
 import {
   deleteRegistrationConfirmationSecret,
   getAccountIdForRegistrationConfirmationSecret,
