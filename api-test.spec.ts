@@ -210,15 +210,28 @@ describe('API', () => {
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
           expect(storedFeed.isDeleted).to.equal(false);
 
-          const getUserFeedsResponse = await listFeedsSend(authenticationHeaders);
-          const { responseData: feeds } = getUserFeedsResponse.responseBody as Success<Feed[]>;
-          const loadedFeed = feeds![0]!;
+          const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId, authenticationHeaders);
+          const { responseData: loadedFeed } = loadFeedByIdResponse.responseBody as Success<Feed>;
 
-          expect(feeds).to.have.lengthOf(1);
           expect(loadedFeed).to.deep.equal({
-            displayName: testFeedProps.displayName,
-            feedId: testFeedId,
+            id: 'api-test-feed',
+            displayName: 'API Test Feed Name',
+            url: 'https://api-test.com/rss.xml',
+            email: 'api-test-feed@localhost.feedsubscription.com',
+            replyTo: 'feed-replyto@api-test.com',
+            subscriberCount: 0,
+            isActive: false,
           });
+
+          const listFeedsResponse = await listFeedsSend(authenticationHeaders);
+          const { responseData: loadedFeeds } = listFeedsResponse.responseBody as Success<Feed[]>;
+
+          expect(loadedFeeds).to.deep.equal([
+            {
+              displayName: testFeedProps.displayName,
+              feedId: testFeedId,
+            },
+          ]);
 
           const repeadedAdd = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
           expect(repeadedAdd.responseBody).to.deep.equal(makeInputError('You already have a feed with this ID', 'id'));
@@ -288,6 +301,10 @@ describe('API', () => {
         expect(responseBody.message).to.equal('Not authenticated');
       });
     });
+
+    async function loadFeedByIdSend(feedId: FeedId, authenticationHeaders: Headers) {
+      return await get<Feed>(`/api/feeds/${feedId.value}`, 'json', authenticationHeaders);
+    }
 
     async function listFeedsSend(authenticationHeaders: Headers) {
       return await get<Feed[]>('/api/feeds', 'json', authenticationHeaders);
