@@ -11,6 +11,7 @@ export function isFeedId(value: unknown): value is FeedId {
 }
 
 const minFeedIdLength = 3;
+export const maxFeedIdLength = 64; // See https://www.rfc-editor.org/errata/eid1690
 
 export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
   if (!input) {
@@ -29,6 +30,10 @@ export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
 
   if (value.length < minFeedIdLength) {
     return makeErr(si`Feed ID needs to be at least ${minFeedIdLength} characters`, field);
+  }
+
+  if (value.length > maxFeedIdLength) {
+    return makeErr(si`Feed ID needs to be max ${maxFeedIdLength} characters`, field);
   }
 
   const feedId: FeedId = {
