@@ -104,7 +104,7 @@ describe('API', () => {
 
     it('flows', async () => {
       const { responseBody: registrationResponse } = await registrationSend(userPlan, userEmail, userPassword);
-      const [account, accountId] = loadAccountByEmail(userEmail);
+      const [account, accountId] = loadStoredAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
       expect(account.plan).to.equal(userPlan, 'registration plan');
@@ -128,7 +128,7 @@ describe('API', () => {
         'registration confirmation session accountId'
       );
 
-      const [accountAfterConfirmation] = loadAccountByEmail(userEmail);
+      const [accountAfterConfirmation] = loadStoredAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
       const { responseBody: authenticationResponse, responseHeaders } = await authenticationSend(
@@ -223,8 +223,8 @@ describe('API', () => {
             isActive: false,
           });
 
-          const listFeedsResponse = await listFeedsSend(authenticationHeaders);
-          const { responseData: loadedFeeds } = listFeedsResponse.responseBody as Success<Feed[]>;
+          const loadFeedsResponse = await loadFeedsSend(authenticationHeaders);
+          const { responseData: loadedFeeds } = loadFeedsResponse.responseBody as Success<Feed[]>;
 
           expect(loadedFeeds).to.deep.equal([
             {
@@ -265,13 +265,13 @@ describe('API', () => {
           const deletedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(deletedFeed.isDeleted).be.true;
 
-          const finalFeedList = await listFeedsSend(authenticationHeaders);
+          const finalFeedList = await loadFeedsSend(authenticationHeaders);
           const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<Feed[]>;
           expect(feedsAfterDeletion).to.deep.equal([]);
         });
 
         function loadStoredFeed(email: string, feedId: FeedId) {
-          const [_, accountId] = loadAccountByEmail(email);
+          const [_, accountId] = loadStoredAccountByEmail(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
         }
@@ -296,7 +296,7 @@ describe('API', () => {
 
     context('when not authenticated', () => {
       it('responds with 403 if not authenticated', async () => {
-        const { responseBody } = await listFeedsSend(new Headers());
+        const { responseBody } = await loadFeedsSend(new Headers());
 
         expect(responseBody.message).to.equal('Not authenticated');
       });
@@ -306,7 +306,7 @@ describe('API', () => {
       return await get<Feed>(`/api/feeds/${feedId.value}`, 'json', authenticationHeaders);
     }
 
-    async function listFeedsSend(authenticationHeaders: Headers) {
+    async function loadFeedsSend(authenticationHeaders: Headers) {
       return await get<Feed[]>('/api/feeds', 'json', authenticationHeaders);
     }
   });
@@ -348,7 +348,7 @@ describe('API', () => {
       const accountId = findFeedAccountId(testFeedId, storage) as AccountId;
       expect(isAccountId(accountId), 'feed account not found').to.be.true;
 
-      const emails = loadFeedSubscriberEmails(accountId, testFeedId);
+      const emails = loadStoredFeedSubscriberEmails(accountId, testFeedId);
       const storedEmail = Object.entries(emails).find(
         ([_, data]: [string, any]) => data.emailAddress === subscriberEmail
       )!;
@@ -362,13 +362,15 @@ describe('API', () => {
       const { responseBody: confirmationResult } = await subscriptionConfirmationSend(testFeedId, emailHash);
       expect(confirmationResult.kind).to.equal('Success');
 
-      const emailAfterConfirmation = loadFeedSubscriberEmails(accountId, testFeedId);
+      const emailAfterConfirmation = loadStoredFeedSubscriberEmails(accountId, testFeedId);
       expect(emailAfterConfirmation[emailHash].isConfirmed).to.be.true;
 
       const { responseBody: unsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
 
       expect(unsubscriptionResult.kind).to.equal('Success', 'unsubscription result');
-      expect(loadFeedSubscriberEmails(accountId, testFeedId), 'email removed from feed').not.to.include.keys(emailHash);
+      expect(loadStoredFeedSubscriberEmails(accountId, testFeedId), 'email removed from feed').not.to.include.keys(
+        emailHash
+      );
 
       const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
 
@@ -394,7 +396,7 @@ describe('API', () => {
       return post('/api/unsubscription', { id: si`${feedId.value}-${emailHash}` });
     }
 
-    function loadFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
+    function loadStoredFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
       return loadJSON(makePath(getFeedStorageKey(accountId, feedId), 'emails.json'));
     }
   }).timeout(5000);
@@ -442,7 +444,7 @@ describe('API', () => {
     return post('/api/registration-confirmation', { secret });
   }
 
-  function loadAccountByEmail(email: string): [AccountData, AccountId] {
+  function loadStoredAccountByEmail(email: string): [AccountData, AccountId] {
     const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
 

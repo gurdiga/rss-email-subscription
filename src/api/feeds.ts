@@ -238,7 +238,7 @@ export const createFeed: RequestHandler = async function createFeed(reqId, reqBo
   return makeSuccess('Feed created');
 };
 
-export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
+export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name, reqId });
   const session = checkSession(reqSession);
 
@@ -280,7 +280,7 @@ export const listFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
 };
 
 export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _reqBody, reqParams, reqSession, app) {
-  const { logWarning } = makeCustomLoggers({ module: listFeeds.name, reqId });
+  const { logWarning } = makeCustomLoggers({ module: loadFeeds.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
