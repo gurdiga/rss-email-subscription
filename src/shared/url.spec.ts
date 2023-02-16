@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from './lang';
-import { makeHttpUrl } from './url';
+import { si } from './string-utils';
+import { makeHttpUrl, maxUrlLength } from './url';
 
 describe(makeHttpUrl.name, () => {
   it('returns an URL value from a valid URL string', () => {
@@ -22,5 +23,13 @@ describe(makeHttpUrl.name, () => {
 
   it('rejects non-HTTP URLs', () => {
     expect(makeHttpUrl('ftp://file-server.com/feed.xml')).to.deep.equal(makeErr('Invalid URL protocol: “ftp:”', 'url'));
+  });
+
+  it('rejects URLs longer than maxUrlLength', () => {
+    const urlString = 'https://test.com/'.concat('x'.repeat(maxUrlLength));
+
+    expect(makeHttpUrl(urlString)).to.deep.equal(
+      makeErr(si`The URL needs to be less than ${maxUrlLength} characters.`, 'url')
+    );
   });
 });
