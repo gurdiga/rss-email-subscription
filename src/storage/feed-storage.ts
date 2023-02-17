@@ -257,9 +257,6 @@ export function applyEditFeedRequest(
     return makeErr(si`Feed not found for update: ${editFeedRequest.initialId.value}, accountId: ${accountId.value}`);
   }
 
-  const oldStorageKey = getFeedStorageKey(accountId, editFeedRequest.initialId);
-  const newStorageKey = getFeedStorageKey(accountId, editFeedRequest.id);
-
   feed.displayName = editFeedRequest.displayName;
   feed.url = editFeedRequest.url;
   feed.replyTo = editFeedRequest.replyTo;
@@ -269,6 +266,9 @@ export function applyEditFeedRequest(
   if (isErr(storeFeedResult)) {
     return storeFeedResult;
   }
+
+  const oldStorageKey = getFeedStorageKey(accountId, editFeedRequest.initialId);
+  const newStorageKey = getFeedStorageKey(accountId, editFeedRequest.id);
 
   if (oldStorageKey === newStorageKey) {
     return;
