@@ -228,7 +228,7 @@ watch-app:
 			-e '"message":"Starting (cron|API server)' \
 			-e '"message":"Sending report"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
-			-e '"message":"(Unsubscribed|unsubscription succeeded)"' \
+			-e '"message":"(Unsubscribed)"' \
 			-e '"message":"(User registered|User confirmed registration|User logged in)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
