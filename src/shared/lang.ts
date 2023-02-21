@@ -98,6 +98,10 @@ export function hasKind(x: unknown, kind: string): boolean {
   return isObject(x) && (x as any).kind === kind;
 }
 
+export function hasKey(x: unknown, propName: string): boolean {
+  return isObject(x) && propName in x;
+}
+
 export function readStringArray(stringArray: unknown): Result<string[]> {
   if (!stringArray) {
     return [];
