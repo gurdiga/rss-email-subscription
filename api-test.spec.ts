@@ -5,7 +5,7 @@ import { AccountData, AccountId, isAccountId } from './src/domain/account';
 import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/storage/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { AddNewFeedRequestData, AddNewFeedResponseData, EditFeedRequestData } from './src/domain/feed';
+import { AddNewFeedRequestData, AddNewFeedResponseData, EditFeedRequestData, FeedStatus } from './src/domain/feed';
 import { EditFeedResponseData, Feed } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/storage/feed-storage';
@@ -222,7 +222,7 @@ describe('API', () => {
             email: 'api-test-feed@localhost.feedsubscription.com',
             replyTo: 'feed-replyto@api-test.com',
             subscriberCount: 0,
-            isActive: false,
+            status: FeedStatus.AwaitingReview,
           });
 
           const loadFeedsResponse = await loadFeedsSend(authenticationHeaders);
@@ -280,9 +280,14 @@ describe('API', () => {
       });
 
       describe('failure paths', () => {
-        it('/api/feeds/add-new-feed returns a proper InputError', async () => {
-          const invalidRequest = {} as AddNewFeedRequestData;
-          const responseBody = (await addNewFeedSend(invalidRequest, authenticationHeaders)).responseBody;
+        it('/api/feeds/add-new-feed returns a proper InputError for proper AddNewFeedRequestData', async () => {
+          const invalidRequest: AddNewFeedRequestData = {
+            displayName: '', // Fields are empty
+            url: '',
+            id: '',
+            replyTo: '',
+          };
+          const { responseBody } = await addNewFeedSend(invalidRequest, authenticationHeaders);
 
           expect(responseBody).to.deep.equal(makeInputError('Feed name is missing', 'displayName'));
         });

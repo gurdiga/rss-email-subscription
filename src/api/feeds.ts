@@ -1,10 +1,11 @@
 import { getAccountIdList } from '../storage/account-storage';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, AddNewFeedResponseData } from '../domain/feed';
-import { EditFeedResponseData, makeEditFeedRequest } from '../domain/feed';
+import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, FeedStatus } from '../domain/feed';
+import { AddNewFeedResponseData, isAddNewFeedRequestData, EditFeedResponseData, Feed } from '../domain/feed';
+import { makeEditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { makeFeed } from '../domain/feed-making';
+import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isNotEmpty } from '../shared/array-utils';
@@ -18,6 +19,7 @@ import { loadStoredEmails } from '../app/email-sending/emails';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 import { defaultFeedPattern } from '../domain/cron-pattern';
 import { AppStorage } from '../storage/storage';
+import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 
 export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -53,6 +55,25 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqB
   return makeSuccess('Feed deleted');
 };
 
+function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
+  if (!isAddNewFeedRequestData(requestData)) {
+    return makeErr('Invalid request');
+  }
+
+  const feedHashingSalt = makeNewFeedHashingSalt();
+  const cronPattern = defaultFeedPattern;
+
+  const makeFeedInput: MakeFeedInput = {
+    displayName: requestData.displayName,
+    url: requestData.url,
+    id: requestData.id,
+    replyTo: requestData.replyTo,
+    status: FeedStatus.AwaitingReview,
+  };
+
+  return makeFeed(makeFeedInput, feedHashingSalt, cronPattern);
+}
+
 export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: addNewFeed.name, reqId });
   const session = checkSession(reqSession);
@@ -62,15 +83,7 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
     return makeNotAuthenticatedError();
   }
 
-  const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
-
-  if (isErr(feedHashingSalt)) {
-    logError(si`Failed to ${makeFeedHashingSalt.name}`, feedHashingSalt);
-    return makeAppError('Application error');
-  }
-
-  const cronPattern = defaultFeedPattern;
-  const feed = makeFeed(reqBody, feedHashingSalt, cronPattern);
+  const feed = makeFeedFromAddNewFeedRequestData(reqBody);
 
   if (isErr(feed)) {
     logError(si`Failed to ${makeFeed.name}`, feed);
