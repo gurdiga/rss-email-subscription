@@ -101,7 +101,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Email:', value: uiFeed.email, name: 'email' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
     { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
-    { label: 'Active:', value: uiFeed.isActive ? 'Yes' : 'No', name: 'isActive' },
+    { label: 'Status:', value: uiFeed.status, name: 'status' },
   ];
 
   const editLinkHref = makePagePathWithParams(PagePath.feedEdit, { id: feedId.value });

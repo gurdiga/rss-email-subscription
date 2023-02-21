@@ -14,7 +14,7 @@ export interface Feed {
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
   isDeleted: boolean;
-  isActive: boolean;
+  status: FeedStatus;
 }
 
 export function isFeed(value: unknown): value is Feed {
@@ -66,7 +66,31 @@ export interface UiFeed {
   email: string;
   replyTo: string;
   subscriberCount: number;
-  isActive: boolean;
+  status: FeedStatus;
+}
+
+export enum FeedStatus {
+  AwaitingReview = 'Awaiting Review',
+  Approved = 'Approved',
+  Rejected = 'Rejected',
+}
+
+export function makeFeedStatus(value: unknown, field = 'status'): Result<FeedStatus> {
+  if (!value) {
+    return makeErr('Missing feed status', field);
+  }
+
+  if (!isString(value)) {
+    return makeErr(si`Invalid feed status type: ${getTypeName(value)}`, field);
+  }
+
+  const validValues = Object.values(FeedStatus);
+
+  if (!validValues.includes(value as any)) {
+    return makeErr(si`Invalid feed status: ${value}`, field);
+  }
+
+  return value as FeedStatus;
 }
 
 export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number): UiFeed {
@@ -77,7 +101,7 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
     email: si`${feed.id.value}@${domain}`,
     replyTo: feed.replyTo.value,
     subscriberCount,
-    isActive: feed.isActive,
+    status: feed.status,
   };
 }
 

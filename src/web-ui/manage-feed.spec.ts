@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { UiFeed } from '../domain/feed';
+import { FeedStatus, UiFeed } from '../domain/feed';
 import { makeTestFeedId } from '../shared/test-utils';
 import { makeUiData, UiData } from './manage-feed';
 
@@ -13,7 +13,7 @@ describe(makeUiData.name, () => {
       email: 'just-add-light@test.com',
       replyTo: 'reply-to@test.com',
       subscriberCount: 42,
-      isActive: true,
+      status: FeedStatus.AwaitingReview,
     };
 
     const result = makeUiData(uiFeed, feedId);
@@ -25,7 +25,7 @@ describe(makeUiData.name, () => {
         { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
         { label: 'Subscriber count:', value: '42', name: 'subscriberCount' },
-        { label: 'Active:', value: 'Yes', name: 'isActive' },
+        { label: 'Status:', value: FeedStatus.AwaitingReview, name: 'status' },
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',
       manageSubscribersLinkHref: '/user/manage-feed-subscribers.html?id=just-add-light',

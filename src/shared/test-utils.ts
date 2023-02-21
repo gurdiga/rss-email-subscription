@@ -3,7 +3,7 @@ import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { Feed, FeedHashingSalt, isFeed, isFeedHashingSalt } from '../domain/feed';
+import { Feed, FeedHashingSalt, FeedStatus, isFeed, isFeedHashingSalt } from '../domain/feed';
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { makeFeedHashingSalt } from '../domain/feed';
@@ -113,7 +113,7 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
     id: 'test-feed-id',
     replyTo: 'feed-replyTo@test.com',
     isDeleted: false,
-    isActive: false,
+    status: FeedStatus.AwaitingReview,
     ...props,
   };
 

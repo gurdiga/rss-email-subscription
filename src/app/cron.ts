@@ -11,6 +11,7 @@ import { makeAccountId } from '../domain/account';
 import { accountsStorageKey } from '../storage/account-storage';
 import { si } from '../shared/string-utils';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
+import { FeedStatus } from '../domain/feed';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -85,9 +86,9 @@ function scheduleFeedChecks(env: AppEnv, storage: AppStorage): CronJob[] {
       logInfo('No feeds for account', { dirName });
     }
 
-    const activeFeeds = feedsByAccountId.validFeeds.filter((x) => x.isActive);
+    const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved);
 
-    for (const feed of activeFeeds) {
+    for (const feed of approvedFeeds) {
       logInfo('Scheduling feed check', { feed });
 
       cronJobs.push(

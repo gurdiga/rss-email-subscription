@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Feed } from './feed';
+import { Feed, FeedStatus } from './feed';
 import { makeFeed, MakeFeedInput, maxFeedNameLength } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
 import { makeTestFeedHashingSalt, makeTestEmailAddress, makeTestUnixCronPattern } from '../shared/test-utils';
@@ -16,7 +16,7 @@ describe(makeFeed.name, () => {
       id: 'test-feed',
       replyTo: 'feed-replyTo@test.com',
       isDeleted: true,
-      isActive: true,
+      status: FeedStatus.AwaitingReview,
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
@@ -28,8 +28,8 @@ describe(makeFeed.name, () => {
       hashingSalt: hashingSalt,
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern,
-      isDeleted: true,
-      isActive: true,
+      isDeleted: input.isDeleted!,
+      status: input.status!,
     };
 
     expect(makeFeed(input, hashingSalt, cronPattern)).to.deep.equal(expectedResult);
@@ -118,7 +118,28 @@ describe(makeFeed.name, () => {
           replyTo: 'some-id@feedsubscription.com',
         },
         makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo'),
-        'replyTo',
+        'replyTo2',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          id: 'valid-feedId',
+          replyTo: 'some-id@test.com',
+        },
+        makeErr('Missing feed status', 'status'),
+        'status',
+      ],
+      [
+        {
+          displayName: 'test-value',
+          url: 'https://test.com/rss.xml',
+          id: 'valid-feedId',
+          replyTo: 'some-id@test.com',
+          status: 'Forgotten' as any,
+        },
+        makeErr('Invalid feed status: Forgotten', 'status'),
+        'status2',
       ],
     ];
 

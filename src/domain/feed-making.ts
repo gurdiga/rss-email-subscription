@@ -2,7 +2,7 @@ import { makeEmailAddress } from './email-address-making';
 import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
-import { FeedHashingSalt, Feed } from './feed';
+import { FeedHashingSalt, Feed, FeedStatus, makeFeedStatus } from './feed';
 import { makeFeedId } from './feed-id';
 import { UnixCronPattern } from './cron-pattern';
 import { EmailAddress } from './email-address';
@@ -13,7 +13,7 @@ export interface MakeFeedInput {
   id?: string;
   replyTo?: string;
   isDeleted?: boolean;
-  isActive?: boolean;
+  status?: FeedStatus;
 }
 
 export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPattern: UnixCronPattern): Result<Feed> {
@@ -47,7 +47,11 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
   }
 
   const isDeleted = Boolean(makeFeedInput.isDeleted);
-  const isActive = Boolean(makeFeedInput.isActive);
+  const status = makeFeedStatus(makeFeedInput.status);
+
+  if (isErr(status)) {
+    return status;
+  }
 
   const feed: Feed = {
     kind: 'Feed',
@@ -58,7 +62,7 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
     replyTo,
     cronPattern,
     isDeleted,
-    isActive,
+    status,
   };
 
   return feed;

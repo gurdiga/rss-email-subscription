@@ -1,10 +1,9 @@
 import { expect } from 'chai';
-import { EditFeedRequest, Feed } from '../domain/feed';
+import { EditFeedRequest, Feed, FeedStatus } from '../domain/feed';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
 import { getFeedStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
 import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { makeFeedId } from '../domain/feed-id';
-import { makeFeed } from '../domain/feed-making';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
@@ -22,13 +21,13 @@ describe(loadFeed.name, () => {
   const storageKey = getFeedJsonStorageKey(accountId, feedId);
   const hashingSalt = makeTestFeedHashingSalt();
 
-  const data = {
+  const data: FeedStoredData = {
     displayName: 'Just Add Light and Stir',
     url: 'https://example.com/feed.xml',
     hashingSalt: hashingSalt.value,
     replyTo: 'sandra@test.com',
     cronPattern: '5 * * * *',
-    isActive: true,
+    status: FeedStatus.Approved,
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -46,7 +45,7 @@ describe(loadFeed.name, () => {
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeTestUnixCronPattern(data.cronPattern),
       isDeleted: false,
-      isActive: true,
+      status: data.status,
     };
 
     expect(result).to.deep.include(expectedResult);
@@ -109,7 +108,7 @@ describe(loadFeedsByAccountId.name, () => {
         replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
         cronPattern: makeUnixCronPattern('1 1 1 1 1'),
         isDeleted: false,
-        isActive: false,
+        status: FeedStatus.AwaitingReview,
       },
       missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
       missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
@@ -172,20 +171,11 @@ describe(loadFeedsByAccountId.name, () => {
 });
 
 describe(storeFeed.name, () => {
-  let feed: Feed;
-  const cronPattern = makeTestUnixCronPattern();
-
-  beforeEach(() => {
-    feed = makeFeed(
-      {
-        displayName: 'Test Feed Name',
-        url: 'https://test.com/rss.xml',
-        id: feedId.value,
-        replyTo: 'feed-replyTo@test.com',
-      },
-      makeTestFeedHashingSalt(),
-      cronPattern
-    ) as Feed;
+  const feed = makeTestFeed({
+    displayName: 'Test Feed Name',
+    url: 'https://test.com/rss.xml',
+    id: feedId.value,
+    replyTo: 'feed-replyTo@test.com',
   });
 
   it('stores the feed data', () => {
@@ -193,12 +183,12 @@ describe(storeFeed.name, () => {
     const result = storeFeed(accountId, feed, storage);
 
     const expectedFeedStoredData: FeedStoredData = {
-      cronPattern: cronPattern.value,
+      cronPattern: feed.cronPattern.value,
       displayName: 'Test Feed Name',
       hashingSalt: feed.hashingSalt.value,
       url: 'https://test.com/rss.xml',
       replyTo: feed.replyTo.value,
-      isActive: false,
+      status: feed.status,
       isDeleted: false,
     };
 

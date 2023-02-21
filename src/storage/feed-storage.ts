@@ -6,7 +6,7 @@ import { AccountId, AccountNotFound, makeAccountId } from '../domain/account';
 import { accountsStorageKey } from './account-storage';
 import { makeAccountNotFound } from '../domain/account';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
-import { Feed, makeFeedHashingSalt, isFeed, EditFeedRequest } from '../domain/feed';
+import { Feed, makeFeedHashingSalt, isFeed, EditFeedRequest, FeedStatus } from '../domain/feed';
 import { FeedId, makeFeedId, isFeedId } from '../domain/feed-id';
 import { MakeFeedInput, makeFeed } from '../domain/feed-making';
 
@@ -17,7 +17,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   isDeleted?: boolean;
-  isActive: boolean;
+  status: FeedStatus;
 }
 
 export interface FeedNotFound {
@@ -116,7 +116,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     hashingSalt: feed.hashingSalt.value,
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
-    isActive: feed.isActive,
+    status: feed.status,
     isDeleted: feed.isDeleted,
   };
 
@@ -158,7 +158,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     id: feedId.value,
     replyTo: loadedData.replyTo,
     isDeleted: !!loadedData.isDeleted,
-    isActive: !!loadedData.isActive,
+    status: loadedData.status,
   };
 
   return makeFeed(makeFeedInput, hashingSalt, cronPattern);
