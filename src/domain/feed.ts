@@ -1,5 +1,5 @@
 import { EmailAddress } from './email-address';
-import { getTypeName, isString, makeErr, Result, hasKind, isObject, isErr } from '../shared/lang';
+import { getTypeName, isString, makeErr, Result, hasKind, isObject, isErr, hasKey } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
 import { FeedId, makeFeedId } from './feed-id';
@@ -26,7 +26,7 @@ export interface FeedHashingSalt {
   value: string;
 }
 
-const feedHashingSaltLength = 16;
+export const feedHashingSaltLength = 16;
 
 export function makeFeedHashingSalt(input: unknown): Result<FeedHashingSalt> {
   if (!isString(input)) {
@@ -37,10 +37,12 @@ export function makeFeedHashingSalt(input: unknown): Result<FeedHashingSalt> {
     return makeErr(si`Must have the length of ${feedHashingSaltLength}`);
   }
 
-  return <FeedHashingSalt>{
+  const salt: FeedHashingSalt = {
     kind: 'FeedHashingSalt',
     value: input,
   };
+
+  return salt;
 }
 
 export function isFeedHashingSalt(value: unknown): value is FeedHashingSalt {
@@ -108,6 +110,12 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
 export type AddNewFeedRequestData = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
 export interface AddNewFeedResponseData {
   feedId: string;
+}
+
+export function isAddNewFeedRequestData(value: unknown): value is AddNewFeedRequestData {
+  const expectedKeys: (keyof AddNewFeedRequestData)[] = ['displayName', 'url', 'id', 'replyTo'];
+
+  return expectedKeys.every((keyName) => hasKey(value, keyName));
 }
 
 export interface EditFeedRequest {
