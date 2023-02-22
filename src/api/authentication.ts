@@ -82,7 +82,7 @@ function processInput(input: Input): Result<ProcessedInput> {
 function checkCredentials({ settings, storage }: App, input: ProcessedInput): Result<AccountId> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: input.email.value,
-    module: si`${authentication.name}:${checkCredentials.name}`,
+    module: checkCredentials.name,
   });
   const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
   const account = loadAccount(storage, accountId);
