@@ -92,6 +92,17 @@ function checkCredentials({ settings, storage }: App, input: ProcessedInput): Re
     return makeErr('Could not find your account', 'email');
   }
 
+  const emailNotConfirmed = !account.confirmationTimestamp;
+
+  if (emailNotConfirmed) {
+    logWarning('Email not confirmed on login', { email: account.email.value });
+
+    return makeErr(
+      'Please click the registration confirmation link in the email we sent you on registration.',
+      'email'
+    );
+  }
+
   const inputHashedPassword = hash(input.password.value, settings.hashingSalt);
   const storedHashedPassword = account.hashedPassword.value;
 
