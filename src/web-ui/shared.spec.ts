@@ -111,12 +111,12 @@ describe(requireUiElements.name, () => {
 
 describe(fillUiElements.name, () => {
   it('sets specific props on UI elements with the given values', () => {
-    const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
+    const spanFillSpec: UiElementFillSpec = {
       element: { id: 'email-label', textContent: '' } as HTMLSpanElement,
       propName: 'textContent',
       value: 'test@test.com',
     };
-    const inputFillSpec: UiElementFillSpec<HTMLInputElement> = {
+    const inputFillSpec: UiElementFillSpec = {
       element: { id: 'form-field', className: '' } as HTMLInputElement,
       propName: 'className',
       value: 'col-md-12',
@@ -129,17 +129,16 @@ describe(fillUiElements.name, () => {
   });
 
   it('returns an Err value wiht message on failure', () => {
-    const badPropName: keyof HTMLSpanElement = 'magic' as any;
     const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
       element: { id: 'email-label', tagName: 'SPAN', draggable: true } as HTMLSpanElement,
-      propName: badPropName,
+      propName: 'magic' as any,
       value: 'abracadabra',
     };
 
     let result: Result<void>;
 
     result = fillUiElements([spanFillSpec]);
-    expect(result).to.deep.equal(makeErr(si`Prop "${badPropName}" does not exist on SPAN`));
+    expect(result).to.deep.equal(makeErr(si`Prop "magic" does not exist on SPAN`));
 
     spanFillSpec.element = null as any as HTMLSpanElement;
     result = fillUiElements([spanFillSpec]);

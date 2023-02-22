@@ -73,13 +73,13 @@ export function requireUiElements<T>(selectors: Record<keyof T, string>, querySe
   return uiElements;
 }
 
-export interface UiElementFillSpec<T extends HTMLElement = any> {
+export interface UiElementFillSpec<T extends HTMLElement = HTMLElement> {
   element: T;
-  propName: keyof T;
+  propName: 'textContent' | 'className';
   value: string;
 }
 
-export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
+export function fillUiElements(specs: UiElementFillSpec<HTMLElement>[]): Result<void> {
   for (const spec of specs) {
     if (!spec.element) {
       return makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spec)}`);

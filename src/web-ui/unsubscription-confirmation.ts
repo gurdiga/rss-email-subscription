@@ -25,18 +25,20 @@ function main() {
     return;
   }
 
-  const fillUiResult = fillUiElements([
-    <UiElementFillSpec<HTMLSpanElement>>{
+  const fillUiSpec: UiElementFillSpec[] = [
+    {
       element: uiElements.feedNameLabel,
       propName: 'textContent',
       value: queryParams.displayName,
     },
-    <UiElementFillSpec<HTMLSpanElement>>{
+    {
       element: uiElements.emailLabel,
       propName: 'textContent',
       value: queryParams.email,
     },
-  ]);
+  ];
+
+  const fillUiResult = fillUiElements(fillUiSpec);
 
   if (isErr(fillUiResult)) {
     displayInitError(fillUiResult.reason);
@@ -68,12 +70,12 @@ main();
 interface RequiredUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
 
 interface InputUiElements {
-  inputUiContainer: Element;
-  feedNameLabel: Element;
-  emailLabel: Element;
+  inputUiContainer: HTMLElement;
+  feedNameLabel: HTMLElement;
+  emailLabel: HTMLElement;
 }
 
 interface FormUiElements {
-  formUiContainer: Element;
-  confirmButton: Element;
+  formUiContainer: HTMLElement;
+  confirmButton: HTMLElement;
 }
