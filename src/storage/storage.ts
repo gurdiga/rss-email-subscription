@@ -54,7 +54,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
       }
     }
 
-    const writeFileResult = attempt(() => writeFileFn(filePath, JSON.stringify(value)));
+    const writeFileResult = attempt(() => writeFileFn(filePath, JSON.stringify(value, null, 2)));
 
     if (isErr(writeFileResult)) {
       return makeErr(si`Couldn’t write file: ${writeFileResult.reason}`);

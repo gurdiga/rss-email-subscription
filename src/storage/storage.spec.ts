@@ -26,7 +26,7 @@ describe(makeStorage.name, () => {
 
       expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'creates the necessary directory structure');
       expect(writeFileFn.calls[0]).deep.equal(
-        [expectedFilePath, JSON.stringify(value)],
+        [expectedFilePath, JSON.stringify(value, null, 2)],
         'stores data in the given file'
       );
     });
@@ -50,7 +50,7 @@ describe(makeStorage.name, () => {
       const result = storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
       expect(writeFileFn.calls[0]).deep.equal(
-        [expectedFilePath, JSON.stringify(value)],
+        [expectedFilePath, JSON.stringify(value, null, 2)],
         'stores data in the given file'
       );
       expect(result).to.deep.equal(makeErr('Couldn’t write file: Disk is full!!'));
