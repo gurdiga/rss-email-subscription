@@ -1,5 +1,5 @@
 import { makeEmailAddress } from '../domain/email-address-making';
-import { parseDate } from '../shared/date-utils';
+import { parseDate, parseOptionalDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
@@ -91,11 +91,21 @@ export function loadAccount(
     );
   }
 
+  const confirmationTimestamp = parseOptionalDate(loadItemResult.confirmationTimestamp);
+
+  if (isErr(confirmationTimestamp)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${confirmationTimestamp.reason}`,
+      'confirmationTimestamp'
+    );
+  }
+
   return {
     planId,
     email,
     hashedPassword,
     creationTimestamp,
+    confirmationTimestamp,
   };
 }
 

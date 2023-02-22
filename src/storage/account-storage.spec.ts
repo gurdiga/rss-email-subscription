@@ -58,6 +58,7 @@ describe(loadAccount.name, () => {
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       planId: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
+      confirmationTimestamp: undefined,
     };
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
