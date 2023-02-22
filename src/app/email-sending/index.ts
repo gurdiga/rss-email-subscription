@@ -74,6 +74,8 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
   const report = {
+    newItems: validItems.length,
+    subscribers: confirmedEmails.length,
     sentExpected: validItems.length * confirmedEmails.length,
     sent: 0,
     failed: 0,
