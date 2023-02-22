@@ -47,21 +47,32 @@ describe(makeFeed.name, () => {
         'input2',
       ],
       [42 as any as MakeFeedInput, makeErr('Invalid input type: expected [object] but got [number]'), 'input3'],
-      [{}, makeErr('Feed name is missing', 'displayName'), 'displayName1'],
-      [{ displayName: '' }, makeErr('Feed name is missing', 'displayName'), 'displayName2'],
+      [{ url: ' \t\r\n   ' /* white-space */ }, makeErr('Feed URL is missing', 'url'), 'url0'],
+      [{}, makeErr('Feed URL is missing', 'url'), 'url1'],
+      [{ url: 'not-an-url' }, makeErr('Invalid URL: not-an-url', 'url'), 'url2'],
+      [{ url: 'https://test.com/rss.xml' }, makeErr('Feed name is missing', 'displayName'), 'displayName1'],
       [
-        { displayName: 42 as any as string },
+        { url: 'https://test.com/rss.xml', displayName: '' },
+        makeErr('Feed name is missing', 'displayName'),
+        'displayName2',
+      ],
+      [
+        { url: 'https://test.com/rss.xml', displayName: 42 as any as string },
         makeErr('Invalid feed name: expected type [string] but got "number"', 'displayName'),
         'displayName2',
       ],
-      [{ displayName: ' \t\r\n   ' /* white-space */ }, makeErr('Feed name is missing', 'displayName'), 'displayName3'],
       [
-        { displayName: 'lil' },
+        { url: 'https://test.com/rss.xml', displayName: ' \t\r\n   ' /* white-space */ },
+        makeErr('Feed name is missing', 'displayName'),
+        'displayName3',
+      ],
+      [
+        { url: 'https://test.com/rss.xml', displayName: 'lil' },
         makeErr('Feed name is too short. I needs to be at least 5 characters.', 'displayName'),
         'displayName4',
       ],
       [
-        { displayName: 'a'.repeat(maxFeedNameLength + 1) },
+        { url: 'https://test.com/rss.xml', displayName: 'a'.repeat(maxFeedNameLength + 1) },
         makeErr('Feed name is too long. It needs to be less than 50 characters.', 'displayName'),
         'displayName5',
       ],
@@ -75,32 +86,7 @@ describe(makeFeed.name, () => {
         makeErr('Feed ID is missing', 'id'),
         'id2',
       ],
-      [
-        {
-          displayName: 'test-valid-displayName',
-          id: 'valid-feedId',
-          url: ' \t\r\n   ' /* white-space */,
-        },
-        makeErr('Feed URL is missing', 'url'),
-        'url0',
-      ],
-      [
-        {
-          displayName: 'test-valid-displayName',
-          id: 'valid-feedId',
-        },
-        makeErr('Feed URL is missing', 'url'),
-        'url1',
-      ],
-      [
-        {
-          displayName: 'test-valid-displayName',
-          id: 'valid-feedId',
-          url: 'not-an-url',
-        },
-        makeErr('Invalid URL: not-an-url', 'url'),
-        'url2',
-      ],
+
       [
         {
           displayName: 'test-value',

@@ -22,16 +22,16 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
   }
 
   const makeFeedInput = input as MakeFeedInput;
-  const displayName = makeFeedDisplayName(makeFeedInput.displayName);
-
-  if (isErr(displayName)) {
-    return displayName;
-  }
-
   const url = makeFeedUrl(makeFeedInput.url);
 
   if (isErr(url)) {
     return url;
+  }
+
+  const displayName = makeFeedDisplayName(makeFeedInput.displayName);
+
+  if (isErr(displayName)) {
+    return displayName;
   }
 
   const id = makeFeedId(makeFeedInput.id);
