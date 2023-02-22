@@ -21,8 +21,8 @@ describe(makeFeedListData.name, () => {
     expect(result).to.deep.equal(<FeedListData>{
       preambleMessage: 'You have 2 feeds registered at the moment.',
       linkData: [
-        { text: 'Just Add Light', href: '/user/manage-feed.html?id=feed-id-1' },
         { text: 'Geeky Stories', href: '/user/manage-feed.html?id=feed-id-2' },
+        { text: 'Just Add Light', href: '/user/manage-feed.html?id=feed-id-1' },
       ],
     });
   });

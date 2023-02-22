@@ -62,7 +62,7 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
     ? { preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!' }
     : {
         preambleMessage: si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`,
-        linkData: feedList.map(makeLinkData),
+        linkData: feedList.map(makeLinkData).sort((a, b) => (a.text > b.text ? 1 : -1)),
       };
 }
 
