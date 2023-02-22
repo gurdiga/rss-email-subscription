@@ -1,7 +1,7 @@
 import { getAccountIdList } from '../storage/account-storage';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeFeedHashingSalt, makeUiFeedListItem, makeUiFeed, FeedStatus } from '../domain/feed';
+import { makeUiFeedListItem, makeUiFeed, FeedStatus } from '../domain/feed';
 import { AddNewFeedResponseData, isAddNewFeedRequestData, EditFeedResponseData, Feed } from '../domain/feed';
 import { makeEditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
@@ -9,14 +9,12 @@ import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isNotEmpty } from '../shared/array-utils';
-import { getRandomString } from '../shared/crypto';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 import { loadStoredEmails } from '../app/email-sending/emails';
-import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 import { defaultFeedPattern } from '../domain/cron-pattern';
 import { AppStorage } from '../storage/storage';
 import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
@@ -180,76 +178,6 @@ function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): 
 
   return feedExists(feedId, accountIds, storage);
 }
-
-export const createFeed: RequestHandler = async function createFeed(reqId, reqBody, _reqParams, reqSession, app) {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: createFeed.name, reqId });
-  const session = checkSession(reqSession);
-
-  if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
-    return makeNotAuthenticatedError();
-  }
-
-  const feedHashingSalt = makeFeedHashingSalt(getRandomString(16));
-
-  if (isErr(feedHashingSalt)) {
-    logError(si`Failed to ${makeFeedHashingSalt.name}`, feedHashingSalt);
-    return makeAppError('Application error');
-  }
-
-  const cronPattern = makeUnixCronPattern(reqBody.cronPattern);
-
-  if (isErr(cronPattern)) {
-    logError(si`Failed to ${makeUnixCronPattern.name}`, cronPattern);
-    return makeAppError('Application error');
-  }
-
-  const feed = makeFeed(reqBody, feedHashingSalt, cronPattern);
-
-  if (isErr(feed)) {
-    logError(si`Failed to ${makeFeed.name}`, feed);
-    return makeInputError(feed.reason, feed.field);
-  }
-
-  const accountList = getAccountIdList(app.storage);
-
-  if (isErr(accountList)) {
-    logError(si`Failed to ${getAccountIdList.name}`, { reason: accountList.reason });
-    return makeAppError('Application error');
-  }
-
-  const { accountIds, errs } = accountList;
-
-  if (isNotEmpty(errs)) {
-    logWarning(si`Some account subdirectory names are invalid account IDs`, {
-      errs: errs.map((x) => x.reason),
-    });
-  }
-
-  const feedExistsResult = feedExists(feed.id, accountIds, app.storage);
-
-  if (isErr(feedExistsResult)) {
-    logError(si`Failed to check if ${feedExists.name}`, { reason: feedExistsResult.reason });
-    return makeAppError('Application error');
-  }
-
-  if (feedExistsResult.does) {
-    logWarning(si`Feed ID taken: ${feed.id.value}`);
-    return makeInputError('Feed ID taken');
-  }
-
-  const { accountId } = session;
-  const storeFeedResult = storeFeed(accountId, feed, app.storage);
-
-  if (isErr(storeFeedResult)) {
-    logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
-    return makeAppError('Failed to create feed');
-  }
-
-  logInfo('Feed created', { accountId: accountId.value, feed });
-
-  return makeSuccess('Feed created');
-};
 
 export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name, reqId });
