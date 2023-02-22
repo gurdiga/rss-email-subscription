@@ -21,7 +21,7 @@ describe(makeUiData.name, () => {
     expect(result).to.deep.equal(<UiData>{
       feedAttributes: [
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
-        { label: 'URL:', value: 'https://test.com/just-add-light/feed.xml', name: 'url' },
+        { label: 'RSS URL:', value: 'https://test.com/just-add-light/feed.xml', name: 'url' },
         { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
         { label: 'Subscriber count:', value: '42', name: 'subscriberCount' },

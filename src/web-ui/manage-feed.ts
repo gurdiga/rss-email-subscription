@@ -97,7 +97,7 @@ interface FeedAttribute {
 export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   const feedAttributes: FeedAttribute[] = [
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
-    { label: 'URL:', value: uiFeed.url, name: 'url' },
+    { label: 'RSS URL:', value: uiFeed.url, name: 'url' },
     { label: 'Email:', value: uiFeed.email, name: 'email' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
     { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
