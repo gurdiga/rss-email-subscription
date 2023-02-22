@@ -4,8 +4,16 @@ export function parseDate(dateString: string): Result<Date> {
   const date = new Date(dateString);
 
   if (date.toString() === 'Invalid Date') {
-    return makeErr('Input string unrecognized as a timestamp');
+    return makeErr('Input string not recognized as a date string');
   }
 
   return date;
+}
+
+export function parseOptionalDate(dateString: string): Result<Date> | undefined {
+  if (!dateString) {
+    return undefined;
+  }
+
+  return parseDate(dateString);
 }
