@@ -2,7 +2,7 @@ import { isPlanId, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { displayInitError, displayCommunicationError, unhideElement, displayAppError, HttpMethod } from './shared';
-import { preventDoubleClick, requireUiElements, AppStatusUiElements } from './shared';
+import { hideElement, preventDoubleClick, requireUiElements, AppStatusUiElements } from './shared';
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
 function main() {
@@ -53,6 +53,7 @@ function main() {
 
       if (isSuccess(response)) {
         unhideElement(uiElements.confirmationMessage);
+        hideElement(uiElements.email.form!);
       }
     });
   });
