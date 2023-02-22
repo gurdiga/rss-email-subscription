@@ -119,7 +119,10 @@ describe('API', () => {
       expect(repeatedRegistration).to.deep.equal(makeInputError('Email already taken', 'email'));
 
       const { responseBody: registrationConfirmationResponse } = await registrationConfirmationSend(userEmail);
-      expect(registrationConfirmationResponse).to.include({ kind: 'Success' }, 'registration confirmation');
+      expect(registrationConfirmationResponse).to.include(
+        { kind: 'Success' },
+        si`registration confirmation: ${JSON.stringify(registrationConfirmationResponse)}`
+      );
 
       let sessionId = (registrationConfirmationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
@@ -137,7 +140,10 @@ describe('API', () => {
         userEmail,
         userPassword
       );
-      expect(authenticationResponse.kind).to.equal('Success', 'authentication');
+      expect(authenticationResponse.kind).to.equal(
+        'Success',
+        si`authentication: ${JSON.stringify(authenticationResponse)}`
+      );
 
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
@@ -156,7 +162,10 @@ describe('API', () => {
       );
 
       const { responseBody: deauthenticationResponse } = await deauthenticationDo(responseHeaders);
-      expect(deauthenticationResponse.kind).to.equal('Success', 'deauthentication');
+      expect(deauthenticationResponse.kind).to.equal(
+        'Success',
+        si`deauthentication: ${JSON.stringify(deauthenticationResponse)}`
+      );
 
       const sessionDataAfterDeauthentication = loadSessionData(sessionId!);
       expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
