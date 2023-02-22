@@ -185,6 +185,10 @@ interface AccountAlreadyExists {
   kind: 'AccountAlreadyExists';
 }
 
+function makeAccountAlreadyExists(): AccountAlreadyExists {
+  return { kind: 'AccountAlreadyExists' };
+}
+
 export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
   return hasKind(x, 'AccountAlreadyExists');
 }
@@ -205,7 +209,7 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
 
   if (accountExists(storage, accountId)) {
     logWarning('Account already exists', { email: input.email.value });
-    return { kind: 'AccountAlreadyExists' };
+    return makeAccountAlreadyExists();
   }
 
   const storeAccountResult = storeAccount(storage, accountId, account);
