@@ -1,4 +1,4 @@
-import { isErr } from '../shared/lang';
+import { asyncAttempt, isErr } from '../shared/lang';
 import { displayInitError, fillUiElements, displayApiResponse, HttpMethod, unhideElement } from './shared';
 import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
 import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
@@ -47,16 +47,19 @@ function main() {
   unhideElement(uiElements.formUiContainer);
 
   uiElements.confirmButton.addEventListener('click', async () => {
-    try {
-      const response = await sendApiRequest('/unsubscription', HttpMethod.POST, {
+    const response = await asyncAttempt(() =>
+      sendApiRequest('/unsubscription', HttpMethod.POST, {
         id: queryParams.id,
         email: queryParams.email,
-      });
+      })
+    );
 
-      displayApiResponse(response, uiElements.apiResponseMessage);
-    } catch (error) {
-      displayCommunicationError(error, uiElements.apiResponseMessage);
+    if (isErr(response)) {
+      displayCommunicationError(response, uiElements.apiResponseMessage);
+      return;
     }
+
+    displayApiResponse(response, uiElements.apiResponseMessage);
   });
 }
 
