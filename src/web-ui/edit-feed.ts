@@ -26,7 +26,7 @@ async function main() {
     return;
   }
 
-  const uiElements = requireUiElements<UiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     spinner: '#spinner',
     form: '#edit-form',
     ...uiFeedFormFields,
@@ -108,7 +108,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   );
 }
 
-interface UiElements extends UiFeedFormFields, ApiResponseUiElements {
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements {
   spinner: HTMLElement;
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;

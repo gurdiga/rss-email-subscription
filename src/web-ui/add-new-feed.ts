@@ -7,7 +7,7 @@ import { displayInitError, displayValidationError, HttpMethod, navigateTo, preve
 import { requireUiElements, sendApiRequest, uiFeedFormFields, UiFeedFormFields } from './shared';
 
 async function main() {
-  const uiElements = requireUiElements<UiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     ...uiFeedFormFields,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
@@ -67,7 +67,7 @@ async function submitForm(formFields: UiFeedFormFields) {
   );
 }
 
-interface UiElements extends UiFeedFormFields, ApiResponseUiElements {
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements {
   submitButton: HTMLButtonElement;
 }
 

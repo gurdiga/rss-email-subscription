@@ -6,7 +6,7 @@ import { hideElement, preventDoubleClick, requireUiElements, AppStatusUiElements
 import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
 
 function main() {
-  const uiElements = requireUiElements<RegistrationUiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     plan: '#plan',
     email: '#email',
     password: '#password',
@@ -59,7 +59,7 @@ function main() {
   });
 }
 
-export interface RegistrationUiElements extends FormUiElements, AppStatusUiElements {
+export interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
   confirmationMessage: HTMLElement;
 }
 

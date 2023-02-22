@@ -24,7 +24,7 @@ async function main() {
     return;
   }
 
-  const uiElements = requireUiElements<UiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     spinner: '#spinner',
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
@@ -49,7 +49,7 @@ async function main() {
   displayFeedAttributeList(uiFeed, uiElements, feedId);
 }
 
-function displayFeedAttributeList(uiFeed: UiFeed, uiElements: UiElements, feedId: FeedId): void {
+function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
   const { feedAttributeList, editLink } = uiElements;
   const uiData = makeUiData(uiFeed, feedId);
   const feedAttributeElements = uiData.feedAttributes.flatMap((feedAttribute) => {
@@ -110,7 +110,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
 }
 
-interface UiElements {
+interface RequiredUiElements {
   spinner: HTMLElement;
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;

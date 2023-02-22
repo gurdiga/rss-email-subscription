@@ -5,19 +5,8 @@ import { clearValidationErrors, displayApiResponse, displayCommunicationError, d
 import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
 import { PagePath } from '../domain/page-path';
 
-export interface AuthenticationUiElements extends FormUiElements, ApiResponseUiElements {}
-
-export interface FormFields {
-  email: HTMLInputElement;
-  password: HTMLInputElement;
-}
-
-export interface FormUiElements extends FormFields {
-  submitButton: HTMLButtonElement;
-}
-
 function main() {
-  const uiElements = requireUiElements<AuthenticationUiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
@@ -58,6 +47,17 @@ function main() {
       }
     });
   });
+}
+
+export interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {}
+
+export interface FormFields {
+  email: HTMLInputElement;
+  password: HTMLInputElement;
+}
+
+export interface FormUiElements extends FormFields {
+  submitButton: HTMLButtonElement;
 }
 
 main();

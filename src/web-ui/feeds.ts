@@ -7,7 +7,7 @@ import { si } from '../shared/string-utils';
 import { displayInitError, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
-  const uiElements = requireUiElements<UiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     spinner: '#spinner',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
@@ -103,7 +103,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-interface UiElements extends FeedListUiElements {
+interface RequiredUiElements extends FeedListUiElements {
   spinner: HTMLElement;
 }
 

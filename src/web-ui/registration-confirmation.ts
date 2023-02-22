@@ -15,7 +15,7 @@ async function main() {
     return;
   }
 
-  const uiElements = requireUiElements<UiElements>({
+  const uiElements = requireUiElements<RequiredUiElements>({
     spinner: '#spinner',
     apiResponseMessage: '#api-response-message',
   });
@@ -56,7 +56,7 @@ function validateSecretFromQueryStringParam(locationSearch: string): Result<stri
   return secret;
 }
 
-interface UiElements extends ApiResponseUiElements {
+interface RequiredUiElements extends ApiResponseUiElements {
   spinner: HTMLElement;
 }
 
