@@ -54,8 +54,34 @@ async function main() {
   }
 
   fillUi(uiElements, data);
+  handleDeleteSelectedButton(uiElements, feedId);
 
   // TODO: Handle buttons
+}
+
+function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: FeedId): void {
+  const { emailList, deleteSelectedButton } = uiElements;
+
+  emailList.addEventListener('pointerdown', (event: Event) => {
+    toggleSelection(event);
+    enableIf(deleteSelectedButton, emailList.selectedOptions.length > 0);
+  });
+
+  deleteSelectedButton.addEventListener('click', () => {
+    // TODO: sendDeleteSelectedRequest
+  });
+}
+
+function enableIf(element: { disabled: boolean }, enabled: boolean): void {
+  element.disabled = !enabled;
+}
+
+function toggleSelection(event: Event) {
+  // Presumably a better UX: tap to select/unselect options.
+  const option = event.target as HTMLOptionElement;
+
+  option.selected = !option.selected;
+  event.preventDefault();
 }
 
 function fillUi(uiElements: RequiredUiElements, data: LoadFeedSubscribersResponseData): void {
