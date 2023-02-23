@@ -1,9 +1,11 @@
+import { LoadFeedSubscribersResponseData } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { isAppError, isInputError } from '../shared/api-response';
+import { isEmpty, sortBy } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
-import { displayInitError, displayValidationError, HttpMethod, preventDoubleClick, requireQueryParams } from './shared';
+import { createElement } from './dom-isolation';
+import { displayInitError, requireQueryParams } from './shared';
 import { requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
@@ -25,9 +27,16 @@ async function main() {
 
   const uiElements = requireUiElements<RequiredUiElements>({
     spinner: '#spinner',
-    form: '#feed-subscribers-form',
-    submitButton: '#submit-button',
-    apiResponseMessage: '#api-response-message',
+    feedNameContainer: '#feed-name-container',
+    feedName: '#feed-name',
+    forms: '#forms',
+    emailList: '#email-list',
+    emailListCounter: '#email-list-counter',
+    deleteSelectedButton: '#delete-selected-button',
+    deleteSelectedApiResponseMessage: '#delete-selected-api-response-message',
+    emailsToAddField: '#emails-to-add-field',
+    addEmailsButton: '#add-emails-button',
+    addEmailsApiResponseMessage: '#add-emails-api-response-message',
   });
 
   if (isErr(uiElements)) {
@@ -35,7 +44,7 @@ async function main() {
     return;
   }
 
-  const data = await loadSubscribersFormData(queryStringParams.id);
+  const data = await loadFeedSubscribersData(feedId);
 
   uiElements.spinner.remove();
 
@@ -44,49 +53,54 @@ async function main() {
     return;
   }
 
-  fillForm(uiElements, data);
-  unhideElement(uiElements.form);
+  fillUi(uiElements, data);
 
-  uiElements.submitButton.addEventListener('click', async (event: Event) => {
-    event.preventDefault();
-    clearValidationErrors(uiElements);
+  // TODO: Handle buttons
+}
 
-    preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await submitForm(uiElements, feedId);
+function fillUi(uiElements: RequiredUiElements, data: LoadFeedSubscribersResponseData): void {
+  fillFeedName(uiElements, data.displayName);
+  fillEmailList(uiElements, data.emails);
 
-      if (isErr(response)) {
-        displayCommunicationError(response, uiElements.apiResponseMessage);
-        return;
-      }
+  unhideElement(uiElements.feedNameContainer);
+  unhideElement(uiElements.forms);
+}
 
-      if (isAppError(response)) {
-        displayApiResponse(response, uiElements.apiResponseMessage);
-        return;
-      }
+function fillFeedName(uiElements: RequiredUiElements, displayName: string): void {
+  uiElements.feedName.textContent = displayName;
+}
 
-      if (isInputError(response)) {
-        displayValidationError(response, uiElements);
-        return;
-      }
-
-      if (isSuccess(response)) {
-        displayApiResponse(response, uiElements.apiResponseMessage);
-      }
+function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
+  if (!isEmpty(emails)) {
+    const byDomainAndThenByLocalPart = sortBy((x: string) => {
+      const [localPart, domain] = x.split('@');
+      return [domain, localPart].join('');
     });
-  });
+
+    const options = [...emails].sort(byDomainAndThenByLocalPart).map((x) => createElement('option', x));
+
+    uiElements.emailList.replaceChildren(...options);
+  }
+
+  uiElements.emailListCounter.textContent = emails.length.toString();
 }
 
-interface SubscribersFormData {
-  // TODO
-}
+async function loadFeedSubscribersData<T = LoadFeedSubscribersResponseData>(feedId: FeedId): Promise<Result<T>> {
+  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${feedId.value}/emails`));
 
-function loadSubscribersFormData(_id: string): Result<SubscribersFormData> {
-  // TODO
-  return makeErr('Not implemented: loadSubscribersFormData');
-}
+  if (isErr(response)) {
+    return makeErr('Failed to load feed subscribers');
+  }
 
-function fillForm(_uiElements: RequiredUiElements, _data: SubscribersFormData): void {
-  // TODO
+  if (isAppError(response)) {
+    return makeErr(si`Application error when loading feed subscribers: ${response.message}`);
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading feed subscribers');
+  }
+
+  return response.responseData!;
 }
 
 interface UpdateSubscribersRequest {
@@ -95,17 +109,18 @@ interface UpdateSubscribersRequest {
 
 export type UpdateSubscribersRequestData = Record<keyof UpdateSubscribersRequest, string>;
 
-async function submitForm(_uiElements: RequiredUiElements, _feedId: FeedId) {
-  const request: UpdateSubscribersRequestData = {};
-
-  return await asyncAttempt(() => sendApiRequest<SubscribersFormData>('/feeds/edit-feed', HttpMethod.POST, request));
-}
-
-interface RequiredUiElements extends ApiResponseUiElements {
+interface RequiredUiElements {
   spinner: HTMLElement;
-  form: HTMLFormElement;
-  submitButton: HTMLButtonElement;
-  // TODO
+  feedNameContainer: HTMLElement;
+  feedName: HTMLElement;
+  forms: HTMLElement;
+  emailList: HTMLSelectElement;
+  emailListCounter: HTMLElement;
+  deleteSelectedButton: HTMLButtonElement;
+  deleteSelectedApiResponseMessage: HTMLElement;
+  emailsToAddField: HTMLTextAreaElement;
+  addEmailsButton: HTMLButtonElement;
+  addEmailsApiResponseMessage: HTMLElement;
 }
 
 interface RequiredParams {
