@@ -30,8 +30,9 @@ export enum SortDirection {
 
 export function sortBy<T>(mapFn: (value: T) => ComparableType, direction: SortDirection = SortDirection.Asc) {
   const result = direction === SortDirection.Asc ? 1 : -1;
+
   return (a: T, b: T) => {
-    return mapFn(a) > mapFn(b) ? result : -result;
+    return mapFn(a) > mapFn(b) ? +result : -result;
   };
 }
 
