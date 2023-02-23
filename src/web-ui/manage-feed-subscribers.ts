@@ -62,7 +62,7 @@ async function main() {
 function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: FeedId): void {
   const { emailList, deleteSelectedButton } = uiElements;
 
-  emailList.addEventListener('pointerdown', (event: Event) => {
+  emailList.addEventListener('click', (event: Event) => {
     toggleSelection(event);
 
     const anyItemSelected = !!emailList.querySelector('.list-group-item.active');
@@ -84,7 +84,6 @@ function toggleSelection(event: Event) {
   const option = event.target as HTMLLIElement;
 
   option.classList.toggle('active');
-  event.preventDefault();
 }
 
 function fillUi(uiElements: RequiredUiElements, data: LoadFeedSubscribersResponseData): void {
