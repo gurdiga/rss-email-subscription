@@ -64,7 +64,10 @@ function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: Fee
 
   emailList.addEventListener('pointerdown', (event: Event) => {
     toggleSelection(event);
-    enableIf(deleteSelectedButton, emailList.selectedOptions.length > 0);
+
+    const anyItemSelected = !!emailList.querySelector('.list-group-item.active');
+
+    enableIf(deleteSelectedButton, anyItemSelected);
   });
 
   deleteSelectedButton.addEventListener('click', () => {
@@ -77,10 +80,10 @@ function enableIf(element: { disabled: boolean }, enabled: boolean): void {
 }
 
 function toggleSelection(event: Event) {
-  // Presumably a better UX: tap to select/unselect options.
-  const option = event.target as HTMLOptionElement;
+  // Tap to select/unselect.
+  const option = event.target as HTMLLIElement;
 
-  option.selected = !option.selected;
+  option.classList.toggle('active');
   event.preventDefault();
 }
 
@@ -103,7 +106,9 @@ function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
       return [domain, localPart].join('');
     });
 
-    const options = [...emails].sort(byDomainAndThenByLocalPart).map((x) => createElement('option', x));
+    const options = [...emails]
+      .sort(byDomainAndThenByLocalPart)
+      .map((x) => createElement('li', x, { class: 'list-group-item' }));
 
     uiElements.emailList.replaceChildren(...options);
   }
@@ -140,7 +145,7 @@ interface RequiredUiElements {
   feedNameContainer: HTMLElement;
   feedName: HTMLElement;
   forms: HTMLElement;
-  emailList: HTMLSelectElement;
+  emailList: HTMLUListElement;
   emailListCounter: HTMLElement;
   deleteSelectedButton: HTMLButtonElement;
   deleteSelectedApiResponseMessage: HTMLElement;
