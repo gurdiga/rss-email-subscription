@@ -63,11 +63,8 @@ function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: Fee
   const { emailList, deleteSelectedButton } = uiElements;
 
   emailList.addEventListener('click', (event: Event) => {
-    toggleSelection(event);
-
-    const anyItemSelected = !!emailList.querySelector('.list-group-item.active');
-
-    enableIf(deleteSelectedButton, anyItemSelected);
+    toggleItemSelection(event);
+    maybeEnableButton(deleteSelectedButton, emailList);
   });
 
   deleteSelectedButton.addEventListener('click', () => {
@@ -75,15 +72,16 @@ function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: Fee
   });
 }
 
-function enableIf(element: { disabled: boolean }, enabled: boolean): void {
-  element.disabled = !enabled;
+function maybeEnableButton(button: HTMLButtonElement, emailList: HTMLUListElement): void {
+  const noItemSelected = !emailList.querySelector('.list-group-item.active');
+
+  button.disabled = noItemSelected;
 }
 
-function toggleSelection(event: Event) {
-  // Tap to select/unselect.
-  const option = event.target as HTMLLIElement;
+function toggleItemSelection(event: Event) {
+  const item = event.target as HTMLLIElement;
 
-  option.classList.toggle('active');
+  item.classList.toggle('active');
 }
 
 function fillUi(uiElements: RequiredUiElements, data: LoadFeedSubscribersResponseData): void {
