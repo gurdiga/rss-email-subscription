@@ -1,7 +1,7 @@
 import { getAccountIdList } from '../storage/account-storage';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeUiFeedListItem, makeUiFeed, FeedStatus } from '../domain/feed';
+import { makeUiFeedListItem, makeUiFeed, FeedStatus, LoadFeedSubscribersResponseData } from '../domain/feed';
 import { AddNewFeedResponseData, isAddNewFeedRequestData, EditFeedResponseData, Feed } from '../domain/feed';
 import { makeEditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
@@ -221,7 +221,7 @@ export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
 };
 
 export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _reqBody, reqParams, reqSession, app) {
-  const { logWarning } = makeCustomLoggers({ module: loadFeeds.name, reqId });
+  const { logWarning } = makeCustomLoggers({ module: loadFeedById.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -259,6 +259,57 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
   const subscriberCount = storedEmails.validEmails.length;
   const data = makeUiFeed(feed, app.env.DOMAIN_NAME, subscriberCount);
   const logData = {};
+
+  return makeSuccess('Feed', logData, data);
+};
+
+export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscribers(
+  reqId,
+  _reqBody,
+  reqParams,
+  reqSession,
+  app
+) {
+  const { logWarning } = makeCustomLoggers({ module: loadFeedSubscribers.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const feedId = makeFeedId(reqParams['feedId']);
+
+  if (isErr(feedId)) {
+    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
+    return makeInputError(si`Invalid feedId: ${feedId.reason}`);
+  }
+
+  const { accountId } = session;
+  const feed = loadFeed(accountId, feedId, app.storage);
+
+  if (isErr(feed)) {
+    logWarning(si`Failed to ${loadFeed.name}`, { reason: feed.reason });
+    return makeAppError(si`Failed to load feed`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    logWarning(si`Feed not found`, { feedId: feed.feedId, accountId: accountId.value });
+    return makeAppError(si`Feed not found`);
+  }
+
+  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+
+  if (isErr(storedEmails)) {
+    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    return makeAppError(si`Failed to load subscriber list`);
+  }
+
+  const logData = {};
+  const data: LoadFeedSubscribersResponseData = {
+    displayName: feed.displayName,
+    emails: storedEmails.validEmails.map((x) => x.emailAddress.value),
+  };
 
   return makeSuccess('Feed', logData, data);
 };

@@ -170,3 +170,8 @@ export function makeEditFeedRequest(input: unknown): Result<EditFeedRequest> {
 
   return { displayName, id, initialId, url, replyTo };
 }
+
+export interface LoadFeedSubscribersResponseData {
+  displayName: string;
+  emails: string[];
+}
