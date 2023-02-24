@@ -1,24 +1,49 @@
-import { getAccountIdList } from '../storage/account-storage';
-import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
-import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeUiFeedListItem, makeUiFeed, FeedStatus, LoadEmailsResponseData } from '../domain/feed';
-import { DeleteEmailsResponseData, DeleteEmailsRequest, makeUiEmailList } from '../domain/feed';
-import { AddNewFeedResponseData, isAddNewFeedRequestData, EditFeedResponseData, Feed } from '../domain/feed';
-import { makeEditFeedRequest } from '../domain/feed';
+import {
+  loadStoredEmails,
+  makeEmailHashFn,
+  makeHashedEmail,
+  parseEmails,
+  storeEmails,
+} from '../app/email-sending/emails';
+import { defaultFeedPattern } from '../domain/cron-pattern';
+import {
+  AddEmailsRequest,
+  AddEmailsResponseData,
+  AddNewFeedResponseData,
+  DeleteEmailsRequest,
+  DeleteEmailsResponseData,
+  EditFeedResponseData,
+  Feed,
+  FeedStatus,
+  isAddNewFeedRequestData,
+  LoadEmailsResponseData,
+  makeEditFeedRequest,
+  makeUiEmailList,
+  makeUiFeed,
+  makeUiFeedListItem,
+} from '../domain/feed';
+import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
-import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { getTypeName, isErr, isString, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
+import { getAccountIdList } from '../storage/account-storage';
+import {
+  applyEditFeedRequest,
+  feedExists,
+  FeedExistsResult,
+  isFeedNotFound,
+  loadFeed,
+  loadFeedsByAccountId,
+  markFeedAsDeleted,
+  storeFeed,
+} from '../storage/feed-storage';
+import { AppStorage } from '../storage/storage';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
-import { loadStoredEmails, parseEmails, storeEmails } from '../app/email-sending/emails';
-import { defaultFeedPattern } from '../domain/cron-pattern';
-import { AppStorage } from '../storage/storage';
-import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 
 export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -409,4 +434,99 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
   };
 
   return makeSuccess('Deleted subscribers', logData, responseData);
+};
+
+export const addFeedSubscribers: RequestHandler = async function addFeedSubscribers(
+  reqId,
+  reqBody,
+  reqParams,
+  reqSession,
+  app
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: addFeedSubscribers.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const feedId = makeFeedId(reqParams['feedId']);
+
+  if (isErr(feedId)) {
+    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
+    return makeInputError(si`Invalid feedId: ${feedId.reason}`);
+  }
+
+  const emails = (reqBody as AddEmailsRequest).emailsOnePerLine;
+
+  if (!isString(emails)) {
+    return makeInputError(si`Invalid emails list: expected [string] but got [${getTypeName(emails)}]`);
+  }
+
+  const parseResult = parseEmails(emails);
+
+  if (isErr(parseResult)) {
+    logWarning(si`Failed to ${parseEmails.name}`, { reason: parseResult.reason });
+    return makeInputError('Invalid emails list');
+  }
+
+  if (!isEmpty(parseResult.invalidEmails)) {
+    logWarning('Failed to parse some of the emails', { invalidEmails: parseResult.invalidEmails });
+    return makeInputError('Invalid emails list');
+  }
+
+  if (isEmpty(parseResult.validEmails)) {
+    logWarning('Empty list of emails');
+    return makeInputError('Empty emails list');
+  }
+
+  const { accountId } = session;
+  const feed = loadFeed(accountId, feedId, app.storage);
+
+  if (isErr(feed)) {
+    logWarning(si`Failed to ${loadFeed.name}`, { reason: feed.reason });
+    return makeAppError(si`Failed to load feed`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    logWarning(si`Feed not found`, { feedId: feed.feedId, accountId: accountId.value });
+    return makeAppError(si`Feed not found`);
+  }
+
+  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+
+  if (isErr(storedEmails)) {
+    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    return makeAppError(si`Failed to load subscriber list`);
+  }
+
+  if (!isEmpty(storedEmails.invalidEmails)) {
+    logWarning(si`Failed to load some subscribers`, { invalidEmails: storedEmails.invalidEmails });
+    return makeAppError(si`Failed to load some subscribers`);
+  }
+
+  const storedEmailStrings = storedEmails.validEmails.map((x) => x.emailAddress.value);
+  const emailHashFn = makeEmailHashFn(feed.hashingSalt);
+  const confirmationState = true;
+  const newHashedEmails = parseResult.validEmails
+    .filter((x) => !storedEmailStrings.includes(x.value))
+    .map((x) => makeHashedEmail(x, emailHashFn, confirmationState));
+  const newEmailsToStore = storedEmails.validEmails.concat(...newHashedEmails);
+  const result = storeEmails(newEmailsToStore, accountId, feedId, app.storage);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${storeEmails.name}`, { reason: result.reason });
+    return makeAppError(si`Failed to delete subscribers`);
+  }
+
+  const logData = {};
+
+  const newEmailsCount = newHashedEmails.length;
+  const responseData: AddEmailsResponseData = {
+    newEmailsCount,
+    currentEmails: makeUiEmailList(newEmailsToStore),
+  };
+
+  return makeSuccess(si`Added ${newEmailsCount} subscribers`, logData, responseData);
 };

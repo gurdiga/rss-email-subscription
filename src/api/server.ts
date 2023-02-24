@@ -1,23 +1,31 @@
+import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
-import cors from 'cors';
+import { getErrorMessage } from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
+import { makePath } from '../shared/path-utils';
+import { si } from '../shared/string-utils';
+import { authentication } from './authentication';
+import { deauthentication } from './deauthentication';
+import {
+  addFeedSubscribers,
+  addNewFeed,
+  deleteFeed,
+  deleteFeedSubscribers,
+  editFeed,
+  loadFeedById,
+  loadFeeds,
+  loadFeedSubscribers,
+} from './feeds';
+import { initApp } from './init-app';
+import { registration } from './registration';
+import { registrationConfirmation } from './registration-confirmation';
+import { makeRequestHandler } from './request-handler';
+import { makeExpressSession } from './session';
+import { sessionTest } from './session-test';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
-import { registration } from './registration';
-import { makeRequestHandler } from './request-handler';
-import { initApp } from './init-app';
-import { makeCustomLoggers } from '../shared/logging';
-import { authentication } from './authentication';
-import { registrationConfirmation } from './registration-confirmation';
-import { makeExpressSession } from './session';
-import { sessionTest } from './session-test';
-import { deauthentication } from './deauthentication';
-import { addNewFeed, deleteFeed, editFeed, loadFeeds, loadFeedById, loadFeedSubscribers } from './feeds';
-import { deleteFeedSubscribers } from './feeds';
-import { si } from '../shared/string-utils';
-import { makePath } from '../shared/path-utils';
-import { getErrorMessage } from '../shared/lang';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -50,6 +58,7 @@ async function main() {
   router.get('/feeds/:feedId', makeRequestHandler(loadFeedById, app));
   router.get('/feeds/:feedId/subscribers', makeRequestHandler(loadFeedSubscribers, app));
   router.post('/feeds/:feedId/delete-subscribers', makeRequestHandler(deleteFeedSubscribers, app));
+  router.post('/feeds/:feedId/add-subscribers', makeRequestHandler(addFeedSubscribers, app));
   router.post('/feeds/add-new-feed', makeRequestHandler(addNewFeed, app));
   router.post('/feeds/edit-feed', makeRequestHandler(editFeed, app));
   router.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));

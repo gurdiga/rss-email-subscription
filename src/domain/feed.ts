@@ -196,3 +196,10 @@ export type DeleteEmailsRequest = Record<'emailsToDeleteJoinedByNewLines', strin
 export interface DeleteEmailsResponseData {
   currentEmails: UiEmailList;
 }
+
+export type AddEmailsRequest = Record<'emailsOnePerLine', string>;
+
+export interface AddEmailsResponseData {
+  newEmailsCount: number;
+  currentEmails: UiEmailList;
+}
