@@ -8,7 +8,7 @@ import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { markFeedAsDeleted, storeFeed } from '../storage/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isNotEmpty } from '../shared/array-utils';
+import { isNotEmpty, sortBy } from '../shared/array-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -308,8 +308,13 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   const logData = {};
   const data: LoadFeedSubscribersResponseData = {
     displayName: feed.displayName,
-    emails: storedEmails.validEmails.map((x) => x.emailAddress.value),
+    emails: storedEmails.validEmails.map((x) => x.emailAddress.value).sort(byDomainAndThenByLocalPart),
   };
 
   return makeSuccess('Feed', logData, data);
 };
+
+export const byDomainAndThenByLocalPart = sortBy((x: string) => {
+  const [localPart, domain] = x.split('@');
+  return [domain, localPart].join('');
+});

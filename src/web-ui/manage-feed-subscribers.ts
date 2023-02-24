@@ -1,7 +1,7 @@
 import { LoadFeedSubscribersResponseData } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
-import { isEmpty, sortBy } from '../shared/array-utils';
+import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
@@ -97,21 +97,19 @@ function fillFeedName(uiElements: RequiredUiElements, displayName: string): void
 }
 
 function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
-  if (!isEmpty(emails)) {
-    const byDomainAndThenByLocalPart = sortBy((x: string) => {
-      const [localPart, domain] = x.split('@');
-      return [domain, localPart].join('');
-    });
+  const hasEmails = !isEmpty(emails);
 
-    const options = [...emails]
-      .sort(byDomainAndThenByLocalPart)
-      .map((x) => createElement('li', x, { class: 'list-group-item' }));
+  if (hasEmails) {
+    const items = emails.map(createItem);
 
-    uiElements.emailList.replaceChildren(...options);
+    uiElements.emailList.replaceChildren(...items);
   }
 
-  uiElements.deleteSelectedButton.toggleAttribute('hidden', isEmpty(emails));
+  uiElements.deleteSelectedButton.toggleAttribute('hidden', !hasEmails);
   uiElements.emailListCounter.textContent = emails.length.toString();
+}
+function createItem(text: string) {
+  return createElement('li', text, { class: 'list-group-item' });
 }
 
 async function loadFeedSubscribersData<T = LoadFeedSubscribersResponseData>(feedId: FeedId): Promise<Result<T>> {
