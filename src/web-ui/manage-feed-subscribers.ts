@@ -110,6 +110,7 @@ function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
     uiElements.emailList.replaceChildren(...options);
   }
 
+  uiElements.deleteSelectedButton.toggleAttribute('hidden', isEmpty(emails));
   uiElements.emailListCounter.textContent = emails.length.toString();
 }
 
