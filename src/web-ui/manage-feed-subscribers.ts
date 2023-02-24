@@ -54,16 +54,21 @@ async function main() {
   }
 
   fillUi(uiElements, data);
-  handleDeleteSelectedButton(uiElements, feedId);
-
-  // TODO: Handle buttons
+  bindDeleteSelectedButton(uiElements, feedId);
+  bindAddEmailsButton(uiElements, feedId);
 }
 
-function handleDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId): void {
+function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): void {
+  const { addEmailsButton } = uiElements;
+
+  addEmailsButton.addEventListener('click', () => {});
+}
+
+function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId): void {
   const { emailList, deleteSelectedButton, deleteSelectedApiResponseMessage } = uiElements;
 
   emailList.addEventListener('click', (event: Event) => {
-    toggleItemSelection(event);
+    toggleItemSelection(event.target as HTMLLIElement);
     maybeEnableButton(deleteSelectedButton, emailList);
   });
 
@@ -107,9 +112,7 @@ function maybeEnableButton(button: HTMLButtonElement, emailList: HTMLUListElemen
   button.disabled = !emailList.querySelector('.list-group-item.active');
 }
 
-function toggleItemSelection(event: Event) {
-  const item = event.target as HTMLLIElement;
-
+function toggleItemSelection(item: HTMLLIElement) {
   item.classList.toggle('active');
 }
 
