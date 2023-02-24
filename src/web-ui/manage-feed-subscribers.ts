@@ -1,12 +1,26 @@
-import { DeleteEmailsRequest, DeleteEmailsResponseData, LoadEmailsResponseData } from '../domain/feed';
+import {
+  AddEmailsRequest,
+  AddEmailsResponseData,
+  DeleteEmailsRequest,
+  DeleteEmailsResponseData,
+  LoadEmailsResponseData,
+} from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
-import { displayApiResponse, displayCommunicationError, displayInitError, HttpMethod } from './shared';
-import { requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import {
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  HttpMethod,
+  requireQueryParams,
+  requireUiElements,
+  sendApiRequest,
+  unhideElement,
+} from './shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
@@ -59,9 +73,44 @@ async function main() {
 }
 
 function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): void {
-  const { addEmailsButton } = uiElements;
+  const { addEmailsButton, emailsToAddField, addEmailsApiResponseMessage, emailList } = uiElements;
 
-  addEmailsButton.addEventListener('click', () => {});
+  addEmailsButton.addEventListener('click', async () => {
+    const response = await sendAddEmailsRequest(emailsToAddField.value, feedId);
+
+    if (isErr(response)) {
+      displayCommunicationError(response.reason, addEmailsApiResponseMessage);
+      return;
+    }
+
+    if (isAppError(response) || isInputError(response)) {
+      displayApiResponse(response, addEmailsApiResponseMessage);
+      return;
+    }
+
+    const { newEmailsCount, currentEmails } = response.responseData!;
+    const initialVerticalScrollPosition = emailList.scrollTop;
+
+    fillEmailList(uiElements, currentEmails);
+    emailList.scrollTop = initialVerticalScrollPosition;
+    emailsToAddField.value = '';
+
+    if (newEmailsCount === 0) {
+      response.message = 'No new emails';
+    }
+
+    displayApiResponse(response, addEmailsApiResponseMessage);
+  });
+}
+
+async function sendAddEmailsRequest(emailsOnePerLine: string, feedId: FeedId) {
+  const request: AddEmailsRequest = {
+    emailsOnePerLine,
+  };
+
+  return await asyncAttempt(() =>
+    sendApiRequest<AddEmailsResponseData>(si`/feeds/${feedId.value}/add-subscribers`, HttpMethod.POST, request)
+  );
 }
 
 function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -77,8 +126,7 @@ function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId
       return;
     }
 
-    const selectedEmails = [...emailList.querySelectorAll('.list-group-item.active')].map((x) => x.textContent!);
-    const response = await sendDeleteEmailsRequest(selectedEmails, feedId);
+    const response = await sendDeleteEmailsRequest(emailList, feedId);
 
     if (isErr(response)) {
       displayCommunicationError(response.reason, deleteSelectedApiResponseMessage);
@@ -98,9 +146,10 @@ function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId
   });
 }
 
-async function sendDeleteEmailsRequest(emails: string[], feedId: FeedId) {
+async function sendDeleteEmailsRequest(emailList: HTMLUListElement, feedId: FeedId) {
+  const selectedEmails = [...emailList.querySelectorAll('.list-group-item.active')].map((x) => x.textContent!);
   const request: DeleteEmailsRequest = {
-    emailsToDeleteJoinedByNewLines: emails.join('\n'),
+    emailsToDeleteJoinedByNewLines: selectedEmails.join('\n'),
   };
 
   return await asyncAttempt(() =>
