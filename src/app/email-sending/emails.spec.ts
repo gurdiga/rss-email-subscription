@@ -8,7 +8,8 @@ import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId } from '..
 import { makeTestEmailAddress } from '../../shared/test-utils';
 import { makeThrowingStub, Stub } from '../../shared/test-utils';
 import { EmailList, parseEmails, readEmailListFromCsvFile, EmailIndex } from './emails';
-import { StoredEmails, loadStoredEmails, addEmail, EmailHashFn, HashedEmail } from './emails';
+import { StoredEmails, loadStoredEmails, addEmail, EmailHashFn } from './emails';
+import { HashedEmail } from '../../domain/email-address';
 
 describe(parseEmails.name, () => {
   it('parses the emails from a one-per-line string', async () => {

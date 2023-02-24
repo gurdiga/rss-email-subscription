@@ -1,4 +1,4 @@
-import { EmailHash } from '../app/email-sending/emails';
+import { EmailHash } from './email-address';
 import { Result, makeErr } from '../shared/lang';
 
 interface SubscriptionId {

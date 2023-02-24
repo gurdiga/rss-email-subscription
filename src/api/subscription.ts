@@ -1,8 +1,8 @@
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { loadStoredEmails, makeEmailHashFn, StoredEmails } from '../app/email-sending/emails';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { makeHashedEmail, HashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
-import { EmailAddress } from '../domain/email-address';
+import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
+import { EmailAddress, HashedEmail } from '../domain/email-address';
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { requireEnv } from '../shared/env';

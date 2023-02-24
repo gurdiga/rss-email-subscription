@@ -4,13 +4,13 @@ import { getFeedStorageKey } from '../../storage/feed-storage';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../storage/io-isolation';
-import { Err, getErrorMessage, getTypeName, hasKind, isErr, isNonEmptyString, isObject } from '../../shared/lang';
+import { getErrorMessage, getTypeName, hasKind, isErr, isNonEmptyString, isObject } from '../../shared/lang';
 import { makeErr, makeTypeMismatchErr, Result } from '../../shared/lang';
 import { AppStorage } from '../../storage/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';
-import { EmailAddress } from '../../domain/email-address';
+import { EmailAddress, EmailHash, HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress, isEmailAddress } from '../../domain/email-address-making';
 
 export interface EmailList {
@@ -47,7 +47,6 @@ export function parseEmails(emailList: string): Result<EmailList> {
 }
 
 export type EmailHashFn = (emailAddress: EmailAddress) => EmailHash;
-export type EmailHash = string;
 export type EmailIndex = Record<EmailHash, EmailAddress['value'] | EmailInformation>;
 
 interface EmailInformation {
@@ -79,13 +78,6 @@ export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileF
 export interface StoredEmails {
   validEmails: HashedEmail[];
   invalidEmails: string[];
-}
-
-export interface HashedEmail {
-  kind: 'HashedEmail';
-  emailAddress: EmailAddress;
-  saltedHash: EmailHash;
-  isConfirmed: boolean;
 }
 
 export function makeHashedEmail(
@@ -197,7 +189,7 @@ export function storeEmails(
   accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage
-): Err | void {
+): Result<void> {
   const emailIndex: EmailIndex = {};
 
   hashedEmails.forEach((e) => {

@@ -4,7 +4,8 @@ import { RssItem } from '../../domain/rss-item';
 import { encodeSearchParamValue, makeTestEmailAddress, makeTestFeedId } from '../../shared/test-utils';
 import { makeThrowingStub } from '../../shared/test-utils';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
-import { FullEmailAddress, HashedEmail, makeFullEmailAddress } from './emails';
+import { FullEmailAddress, makeFullEmailAddress } from './emails';
+import { HashedEmail } from '../../domain/email-address';
 import { makeEmailContent, makeUnsubscribeUrl, EmailContent, sendEmail } from './item-sending';
 import { si } from '../../shared/string-utils';
 
