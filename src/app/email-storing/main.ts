@@ -80,6 +80,7 @@ async function main(): Promise<number | undefined> {
     validEmails: [],
     invalidEmails: [],
   };
+
   const emailHashFn = makeEmailHashFn(feed.hashingSalt);
 
   for (const emailAddress of validEmails) {
