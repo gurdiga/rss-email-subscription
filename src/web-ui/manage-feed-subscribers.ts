@@ -1,12 +1,12 @@
-import { LoadFeedSubscribersResponseData } from '../domain/feed';
+import { DeleteEmailsRequest, DeleteEmailsResponseData, LoadEmailsResponseData } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
-import { displayInitError, requireQueryParams } from './shared';
-import { requireUiElements, sendApiRequest, unhideElement } from './shared';
+import { displayApiResponse, displayCommunicationError, displayInitError, HttpMethod } from './shared';
+import { requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
@@ -59,23 +59,52 @@ async function main() {
   // TODO: Handle buttons
 }
 
-function handleDeleteSelectedButton(uiElements: RequiredUiElements, _feedId: FeedId): void {
-  const { emailList, deleteSelectedButton } = uiElements;
+function handleDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId): void {
+  const { emailList, deleteSelectedButton, deleteSelectedApiResponseMessage } = uiElements;
 
   emailList.addEventListener('click', (event: Event) => {
     toggleItemSelection(event);
     maybeEnableButton(deleteSelectedButton, emailList);
   });
 
-  deleteSelectedButton.addEventListener('click', () => {
-    // TODO: sendDeleteSelectedRequest
+  deleteSelectedButton.addEventListener('click', async () => {
+    if (!confirm('Delete the selected emails?')) {
+      return;
+    }
+
+    const selectedEmails = [...emailList.querySelectorAll('.list-group-item.active')].map((x) => x.textContent!);
+    const response = await sendDeleteEmailsRequest(selectedEmails, feedId);
+
+    if (isErr(response)) {
+      displayCommunicationError(response.reason, deleteSelectedApiResponseMessage);
+      return;
+    }
+
+    if (isAppError(response) || isInputError(response)) {
+      displayApiResponse(response, deleteSelectedApiResponseMessage);
+      return;
+    }
+
+    const { currentEmails } = response.responseData!;
+    const initialVerticalScrollPosition = emailList.scrollTop;
+
+    fillEmailList(uiElements, currentEmails);
+    emailList.scrollTop = initialVerticalScrollPosition;
   });
 }
 
-function maybeEnableButton(button: HTMLButtonElement, emailList: HTMLUListElement): void {
-  const noItemSelected = !emailList.querySelector('.list-group-item.active');
+async function sendDeleteEmailsRequest(emails: string[], feedId: FeedId) {
+  const request: DeleteEmailsRequest = {
+    emailsToDeleteJoinedByNewLines: emails.join('\n'),
+  };
 
-  button.disabled = noItemSelected;
+  return await asyncAttempt(() =>
+    sendApiRequest<DeleteEmailsResponseData>(si`/feeds/${feedId.value}/delete-subscribers`, HttpMethod.POST, request)
+  );
+}
+
+function maybeEnableButton(button: HTMLButtonElement, emailList: HTMLUListElement): void {
+  button.disabled = !emailList.querySelector('.list-group-item.active');
 }
 
 function toggleItemSelection(event: Event) {
@@ -84,7 +113,7 @@ function toggleItemSelection(event: Event) {
   item.classList.toggle('active');
 }
 
-function fillUi(uiElements: RequiredUiElements, data: LoadFeedSubscribersResponseData): void {
+function fillUi(uiElements: RequiredUiElements, data: LoadEmailsResponseData): void {
   fillFeedName(uiElements, data.displayName);
   fillEmailList(uiElements, data.emails);
 
@@ -97,23 +126,25 @@ function fillFeedName(uiElements: RequiredUiElements, displayName: string): void
 }
 
 function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
-  const hasEmails = !isEmpty(emails);
+  const items = emails.map((text) => createElement('li', text, { class: 'list-group-item' }));
+  const noEmails = isEmpty(emails);
 
-  if (hasEmails) {
-    const items = emails.map(createItem);
+  if (noEmails) {
+    const noEmailsItem = createElement('li', 'No emails yet. 🤷🏻‍♂️ — Add some below.', {
+      class: 'list-group-item disabled',
+      'aria-disabled': 'true',
+    });
 
-    uiElements.emailList.replaceChildren(...items);
+    items.push(noEmailsItem);
   }
 
-  uiElements.deleteSelectedButton.toggleAttribute('hidden', !hasEmails);
+  uiElements.emailList.replaceChildren(...items);
+  uiElements.deleteSelectedButton.toggleAttribute('hidden', noEmails);
   uiElements.emailListCounter.textContent = emails.length.toString();
 }
-function createItem(text: string) {
-  return createElement('li', text, { class: 'list-group-item' });
-}
 
-async function loadFeedSubscribersData<T = LoadFeedSubscribersResponseData>(feedId: FeedId): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${feedId.value}/emails`));
+async function loadFeedSubscribersData<T = LoadEmailsResponseData>(feedId: FeedId): Promise<Result<T>> {
+  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${feedId.value}/subscribers`));
 
   if (isErr(response)) {
     return makeErr('Failed to load feed subscribers');

@@ -186,13 +186,13 @@ export const byDomainAndThenByLocalPart = sortBy((x: string) => {
   return [domain, localPart].join('');
 });
 
-export interface LoadFeedSubscribersResponseData {
+export interface LoadEmailsResponseData {
   displayName: string;
   emails: UiEmailList;
 }
 
-export type DeleteFeedSubscribersRequest = Record<'emailsToDeleteJoinedByNewLines', string>;
+export type DeleteEmailsRequest = Record<'emailsToDeleteJoinedByNewLines', string>;
 
-export interface DeleteFeedSubscribersResponseData {
+export interface DeleteEmailsResponseData {
   currentEmails: UiEmailList;
 }

@@ -1,8 +1,8 @@
 import { getAccountIdList } from '../storage/account-storage';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, isFeedNotFound, loadFeed } from '../storage/feed-storage';
 import { loadFeedsByAccountId } from '../storage/feed-storage';
-import { makeUiFeedListItem, makeUiFeed, FeedStatus, LoadFeedSubscribersResponseData } from '../domain/feed';
-import { DeleteFeedSubscribersResponseData, DeleteFeedSubscribersRequest, makeUiEmailList } from '../domain/feed';
+import { makeUiFeedListItem, makeUiFeed, FeedStatus, LoadEmailsResponseData } from '../domain/feed';
+import { DeleteEmailsResponseData, DeleteEmailsRequest, makeUiEmailList } from '../domain/feed';
 import { AddNewFeedResponseData, isAddNewFeedRequestData, EditFeedResponseData, Feed } from '../domain/feed';
 import { makeEditFeedRequest } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
@@ -307,7 +307,7 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   }
 
   const logData = {};
-  const data: LoadFeedSubscribersResponseData = {
+  const data: LoadEmailsResponseData = {
     displayName: feed.displayName,
     emails: makeUiEmailList(storedEmails.validEmails),
   };
@@ -338,7 +338,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
     return makeInputError(si`Invalid feedId: ${feedId.reason}`);
   }
 
-  const emails = (reqBody as DeleteFeedSubscribersRequest).emailsToDeleteJoinedByNewLines;
+  const emails = (reqBody as DeleteEmailsRequest).emailsToDeleteJoinedByNewLines;
 
   if (!isString(emails)) {
     return makeInputError(si`Invalid emails list: expected [string] but got [${getTypeName(emails)}]`);
@@ -404,7 +404,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
   }
 
   const logData = {};
-  const responseData: DeleteFeedSubscribersResponseData = {
+  const responseData: DeleteEmailsResponseData = {
     currentEmails: makeUiEmailList(newEmailsToStore),
   };
 
