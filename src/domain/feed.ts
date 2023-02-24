@@ -1,9 +1,10 @@
-import { EmailAddress } from './email-address';
+import { EmailAddress, HashedEmail } from './email-address';
 import { getTypeName, isString, makeErr, Result, hasKind, isObject, isErr, hasKey } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
 import { FeedId, makeFeedId } from './feed-id';
 import { makeFeedDisplayName, makeFeedReplyToEmailAddress, makeFeedUrl } from './feed-making';
+import { sortBy } from '../shared/array-utils';
 
 export interface Feed {
   kind: 'Feed';
@@ -171,7 +172,27 @@ export function makeEditFeedRequest(input: unknown): Result<EditFeedRequest> {
   return { displayName, id, initialId, url, replyTo };
 }
 
+type UiEmailList = string[];
+
+export function makeUiEmailList(emails: HashedEmail[]): UiEmailList {
+  return emails
+    .filter((x) => x.isConfirmed)
+    .map((x) => x.emailAddress.value)
+    .sort(byDomainAndThenByLocalPart);
+}
+
+export const byDomainAndThenByLocalPart = sortBy((x: string) => {
+  const [localPart, domain] = x.split('@');
+  return [domain, localPart].join('');
+});
+
 export interface LoadFeedSubscribersResponseData {
   displayName: string;
-  emails: string[];
+  emails: UiEmailList;
+}
+
+export type DeleteFeedSubscribersRequest = Record<'emailsToDeleteJoinedByNewLines', string>;
+
+export interface DeleteFeedSubscribersResponseData {
+  currentEmails: UiEmailList;
 }
