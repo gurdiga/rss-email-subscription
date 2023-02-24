@@ -201,6 +201,8 @@
     displayMessage: (message: string) => void,
     clearField: () => void
   ): Promise<void> {
+    displayMessage('' /* empty */);
+
     const url = new URL(`/api/subscription`, origin);
     const formData = new URLSearchParams({
       feedId: data.feedId,
