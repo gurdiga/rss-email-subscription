@@ -1,9 +1,9 @@
 import {
   AddEmailsRequest,
-  AddEmailsResponseData,
+  AddEmailsResponse,
   DeleteEmailsRequest,
-  DeleteEmailsResponseData,
-  LoadEmailsResponseData,
+  DeleteEmailsResponse,
+  LoadEmailsResponse,
 } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
@@ -109,7 +109,7 @@ async function sendAddEmailsRequest(emailsOnePerLine: string, feedId: FeedId) {
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<AddEmailsResponseData>(si`/feeds/${feedId.value}/add-subscribers`, HttpMethod.POST, request)
+    sendApiRequest<AddEmailsResponse>(si`/feeds/${feedId.value}/add-subscribers`, HttpMethod.POST, request)
   );
 }
 
@@ -143,17 +143,18 @@ function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId
 
     fillEmailList(uiElements, currentEmails);
     emailList.scrollTop = initialVerticalScrollPosition;
+    maybeEnableButton(deleteSelectedButton, emailList);
   });
 }
 
 async function sendDeleteEmailsRequest(emailList: HTMLUListElement, feedId: FeedId) {
   const selectedEmails = [...emailList.querySelectorAll('.list-group-item.active')].map((x) => x.textContent!);
   const request: DeleteEmailsRequest = {
-    emailsToDeleteJoinedByNewLines: selectedEmails.join('\n'),
+    emailsToDeleteOnePerLine: selectedEmails.join('\n'),
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<DeleteEmailsResponseData>(si`/feeds/${feedId.value}/delete-subscribers`, HttpMethod.POST, request)
+    sendApiRequest<DeleteEmailsResponse>(si`/feeds/${feedId.value}/delete-subscribers`, HttpMethod.POST, request)
   );
 }
 
@@ -165,7 +166,7 @@ function toggleItemSelection(item: HTMLLIElement) {
   item.classList.toggle('active');
 }
 
-function fillUi(uiElements: RequiredUiElements, data: LoadEmailsResponseData): void {
+function fillUi(uiElements: RequiredUiElements, data: LoadEmailsResponse): void {
   fillFeedName(uiElements, data.displayName);
   fillEmailList(uiElements, data.emails);
 
@@ -195,7 +196,7 @@ function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
   uiElements.emailListCounter.textContent = emails.length.toString();
 }
 
-async function loadFeedSubscribersData<T = LoadEmailsResponseData>(feedId: FeedId): Promise<Result<T>> {
+async function loadFeedSubscribersData<T = LoadEmailsResponse>(feedId: FeedId): Promise<Result<T>> {
   const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${feedId.value}/subscribers`));
 
   if (isErr(response)) {

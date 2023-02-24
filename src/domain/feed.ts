@@ -129,7 +129,7 @@ export interface EditFeedRequest {
 
 export type EditFeedRequestData = Record<keyof EditFeedRequest, string>;
 
-export interface EditFeedResponseData {
+export interface EditFeedResponse {
   feedId: string;
 }
 
@@ -186,20 +186,20 @@ export const byDomainAndThenByLocalPart = sortBy((x: string) => {
   return [domain, localPart].join('');
 });
 
-export interface LoadEmailsResponseData {
+export interface LoadEmailsResponse {
   displayName: string;
   emails: UiEmailList;
 }
 
-export type DeleteEmailsRequest = Record<'emailsToDeleteJoinedByNewLines', string>;
+export type DeleteEmailsRequest = Record<'emailsToDeleteOnePerLine', string>;
 
-export interface DeleteEmailsResponseData {
+export interface DeleteEmailsResponse {
   currentEmails: UiEmailList;
 }
 
 export type AddEmailsRequest = Record<'emailsOnePerLine', string>;
 
-export interface AddEmailsResponseData {
+export interface AddEmailsResponse {
   newEmailsCount: number;
   currentEmails: UiEmailList;
 }

@@ -1,4 +1,4 @@
-import { EditFeedRequestData, EditFeedResponseData, UiFeed } from '../domain/feed';
+import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
@@ -104,7 +104,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<EditFeedResponseData>('/feeds/edit-feed', HttpMethod.POST, editFeedRequest)
+    sendApiRequest<EditFeedResponse>('/feeds/edit-feed', HttpMethod.POST, editFeedRequest)
   );
 }
 

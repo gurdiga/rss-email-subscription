@@ -8,15 +8,15 @@ import {
 import { defaultFeedPattern } from '../domain/cron-pattern';
 import {
   AddEmailsRequest,
-  AddEmailsResponseData,
+  AddEmailsResponse,
   AddNewFeedResponseData,
   DeleteEmailsRequest,
-  DeleteEmailsResponseData,
-  EditFeedResponseData,
+  DeleteEmailsResponse,
+  EditFeedResponse,
   Feed,
   FeedStatus,
   isAddNewFeedRequestData,
-  LoadEmailsResponseData,
+  LoadEmailsResponse,
   makeEditFeedRequest,
   makeUiEmailList,
   makeUiFeed,
@@ -178,7 +178,7 @@ export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, 
   }
 
   const logData = {};
-  const responseData: EditFeedResponseData = {
+  const responseData: EditFeedResponse = {
     feedId: editFeedRequest.id.value,
   };
 
@@ -332,7 +332,7 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   }
 
   const logData = {};
-  const data: LoadEmailsResponseData = {
+  const data: LoadEmailsResponse = {
     displayName: feed.displayName,
     emails: makeUiEmailList(storedEmails.validEmails),
   };
@@ -363,7 +363,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
     return makeInputError(si`Invalid feedId: ${feedId.reason}`);
   }
 
-  const emails = (reqBody as DeleteEmailsRequest).emailsToDeleteJoinedByNewLines;
+  const emails = (reqBody as DeleteEmailsRequest).emailsToDeleteOnePerLine;
 
   if (!isString(emails)) {
     return makeInputError(si`Invalid emails list: expected [string] but got [${getTypeName(emails)}]`);
@@ -429,7 +429,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
   }
 
   const logData = {};
-  const responseData: DeleteEmailsResponseData = {
+  const responseData: DeleteEmailsResponse = {
     currentEmails: makeUiEmailList(newEmailsToStore),
   };
 
@@ -523,7 +523,7 @@ export const addFeedSubscribers: RequestHandler = async function addFeedSubscrib
   const logData = {};
 
   const newEmailsCount = newHashedEmails.length;
-  const responseData: AddEmailsResponseData = {
+  const responseData: AddEmailsResponse = {
     newEmailsCount,
     currentEmails: makeUiEmailList(newEmailsToStore),
   };

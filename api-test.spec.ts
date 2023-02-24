@@ -6,7 +6,7 @@ import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/storage/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { AddNewFeedRequestData, AddNewFeedResponseData, EditFeedRequestData, FeedStatus } from './src/domain/feed';
-import { EditFeedResponseData, Feed } from './src/domain/feed';
+import { EditFeedResponse, Feed } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/storage/feed-storage';
 import { MakeFeedInput } from './src/domain/feed-making';
@@ -257,7 +257,7 @@ describe('API', () => {
           };
           const editResponse = await editFeedSend(editFeedRequest, authenticationHeaders);
 
-          const expectedEditFeedResponse: Success<EditFeedResponseData> = {
+          const expectedEditFeedResponse: Success<EditFeedResponse> = {
             kind: 'Success',
             message: 'Feed updated. 👍',
             responseData: { feedId: editFeedRequest.id },
