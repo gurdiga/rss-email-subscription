@@ -1,18 +1,18 @@
 import { expect } from 'chai';
-import { EditFeedRequest, Feed, FeedStatus } from '../domain/feed';
+import { EditFeedRequest, Feed, FeedStatus } from './feed';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
 import { getFeedStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
 import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
-import { makeFeedId } from '../domain/feed-id';
+import { makeFeedId } from './feed-id';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
 import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { makeTestUnixCronPattern } from '../shared/test-utils';
-import { AccountData, makeAccountNotFound } from '../domain/account';
+import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
 import { si } from '../shared/string-utils';
-import { makeUnixCronPattern } from '../domain/cron-pattern-making';
+import { makeUnixCronPattern } from './cron-pattern-making';
 
 export const accountId = makeTestAccountId();
 export const feedId = makeTestFeedId();

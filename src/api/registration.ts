@@ -2,7 +2,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { Account, AccountId } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { accountExists, storeAccount } from '../storage/account-storage';
+import { accountExists, storeAccount } from '../domain/account-storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { hasKind, isErr, makeErr, Result } from '../shared/lang';

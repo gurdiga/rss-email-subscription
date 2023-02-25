@@ -3,7 +3,7 @@ import { sortBy } from '../../shared/array-utils';
 import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeHttpUrl } from '../../shared/url';
-import { AppStorage } from '../../storage/storage';
+import { AppStorage } from '../../domain/storage';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';

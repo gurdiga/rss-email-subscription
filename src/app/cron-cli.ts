@@ -1,11 +1,11 @@
 import { checkRss } from './rss-checking/index';
 import { sendEmails } from './email-sending/index';
 import { makeFeedId } from '../domain/feed-id';
-import { findFeedAccountId, loadFeed } from '../storage/feed-storage';
+import { findFeedAccountId, loadFeed } from '../domain/feed-storage';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
-import { makeStorage } from '../storage/storage';
+import { makeStorage } from '../domain/storage';
 import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
 import { si } from '../shared/string-utils';

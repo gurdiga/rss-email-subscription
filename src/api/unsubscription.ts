@@ -5,7 +5,7 @@ import { parseSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
 import { makeFeedId } from '../domain/feed-id';
-import { findFeedAccountId } from '../storage/feed-storage';
+import { findFeedAccountId } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 

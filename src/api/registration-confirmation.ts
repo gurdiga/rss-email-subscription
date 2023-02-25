@@ -1,5 +1,5 @@
 import { AccountId } from '../domain/account';
-import { confirmAccount } from '../storage/account-storage';
+import { confirmAccount } from '../domain/account-storage';
 import {
   deleteRegistrationConfirmationSecret,
   getAccountIdForRegistrationConfirmationSecret,
@@ -9,7 +9,7 @@ import {
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { AppStorage } from '../storage/storage';
+import { AppStorage } from '../domain/storage';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
-import { AppStorage } from '../storage/storage';
+import { AppStorage } from './storage';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy } from '../shared/test-utils';
 import {
   validateRegistrationConfirmationSecret,

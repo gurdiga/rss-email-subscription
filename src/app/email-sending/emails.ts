@@ -1,12 +1,12 @@
 import { FeedHashingSalt } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
-import { getFeedStorageKey } from '../../storage/feed-storage';
+import { getFeedStorageKey } from '../../domain/feed-storage';
 import { filterUniqBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
-import { readFile, ReadFileFn } from '../../storage/io-isolation';
+import { readFile, ReadFileFn } from '../../domain/io-isolation';
 import { getErrorMessage, getTypeName, hasKind, isErr, isNonEmptyString, isObject } from '../../shared/lang';
 import { makeErr, makeTypeMismatchErr, Result } from '../../shared/lang';
-import { AppStorage } from '../../storage/storage';
+import { AppStorage } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';

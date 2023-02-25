@@ -1,6 +1,6 @@
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { getStoredRssItemStorageKey, ValidStoredRssItem } from './rss-item-reading';
-import { AppStorage } from '../../storage/storage';
+import { AppStorage } from '../../domain/storage';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
 import { AccountId } from '../../domain/account';

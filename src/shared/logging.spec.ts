@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { StdOutPrinterFn } from '../storage/io-isolation';
+import { StdOutPrinterFn } from '../domain/io-isolation';
 import { log, LoggerFunction, LoggerName, LogRecord, makeCustomLoggers, maxStringValue } from './logging';
 import { si } from './string-utils';
 import { Spy, makeSpy } from './test-utils';

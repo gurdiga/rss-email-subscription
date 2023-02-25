@@ -1,12 +1,12 @@
-import { makeEmailAddress } from '../domain/email-address-making';
+import { makeEmailAddress } from './email-address-making';
 import { parseDate, parseOptionalDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
-import { makeHashedPassword } from '../domain/hashed-password';
-import { makePlanId } from '../domain/plan';
-import { AccountIdList, makeAccountId, isAccountId, AccountId, Account, AccountData } from '../domain/account';
+import { makeHashedPassword } from './hashed-password';
+import { makePlanId } from './plan';
+import { AccountIdList, makeAccountId, isAccountId, AccountId, Account, AccountData } from './account';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
   const accountIdStrings = storage.listSubdirectories(accountsStorageKey);

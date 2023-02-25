@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import { basename } from 'node:path';
-import { getFeedStorageKey } from '../../storage/feed-storage';
+import { getFeedStorageKey } from '../../domain/feed-storage';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
-import { AppStorage } from '../../storage/storage';
+import { AppStorage } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';

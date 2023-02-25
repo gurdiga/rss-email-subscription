@@ -1,9 +1,9 @@
 import { FeedId } from '../../domain/feed-id';
-import { getFeedStorageKey } from '../../storage/feed-storage';
+import { getFeedStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
-import { AppStorage } from '../../storage/storage';
+import { AppStorage } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';

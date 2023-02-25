@@ -30,7 +30,7 @@ import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { getTypeName, isErr, isString, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { getAccountIdList } from '../storage/account-storage';
+import { getAccountIdList } from '../domain/account-storage';
 import {
   applyEditFeedRequest,
   feedExists,
@@ -40,8 +40,8 @@ import {
   loadFeedsByAccountId,
   markFeedAsDeleted,
   storeFeed,
-} from '../storage/feed-storage';
-import { AppStorage } from '../storage/storage';
+} from '../domain/feed-storage';
+import { AppStorage } from '../domain/storage';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 

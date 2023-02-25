@@ -2,7 +2,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { AccountId } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { loadAccount } from '../storage/account-storage';
+import { loadAccount } from '../domain/account-storage';
 import { makePassword, Password } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';

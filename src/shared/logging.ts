@@ -1,4 +1,4 @@
-import { stdOutPrinter, StdOutPrinterFn } from '../storage/io-isolation';
+import { stdOutPrinter, StdOutPrinterFn } from '../domain/io-isolation';
 import { si } from './string-utils';
 
 export type Severity = 'info' | 'warning' | 'error';

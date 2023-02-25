@@ -4,13 +4,13 @@ import { AppStorage } from './storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
 import { makeTestEmailAddress } from '../shared/test-utils';
-import { Account, AccountData, AccountId, AccountIdList } from '../domain/account';
+import { Account, AccountData, AccountId, AccountIdList } from './account';
 import { confirmAccount } from './account-storage';
 import { getAccountIdList, getAccountStorageKey } from './account-storage';
-import { makeAccountId } from '../domain/account';
+import { makeAccountId } from './account';
 import { loadAccount, storeAccount } from './account-storage';
-import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
-import { makePlanId, PlanId } from '../domain/plan';
+import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
+import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
 export const accountId = makeTestAccountId();

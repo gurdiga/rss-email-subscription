@@ -1,5 +1,5 @@
 import { getTypeName, makeErr, Result } from '../shared/lang';
-import { AppStorage, StorageKey } from '../storage/storage';
+import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { AccountId } from './account';

@@ -8,7 +8,7 @@ import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { makeFeedHashingSalt } from '../domain/feed';
 import { MakeFeedInput } from '../domain/feed-making';
-import { AppStorage, makeStorage, StorageKey, StorageValue } from '../storage/storage';
+import { AppStorage, makeStorage, StorageKey, StorageValue } from '../domain/storage';
 import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
 import { isUnixCronPattern, UnixCronPattern } from '../domain/cron-pattern';
