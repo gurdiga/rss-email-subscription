@@ -282,11 +282,11 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
     return makeAppError(si`Failed to load subscriber list`);
   }
 
-  const subscriberCount = storedEmails.validEmails.length;
-  const data = makeUiFeed(feed, app.env.DOMAIN_NAME, subscriberCount);
+  const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
+  const responseData = makeUiFeed(feed, app.env.DOMAIN_NAME, subscriberCount);
   const logData = {};
 
-  return makeSuccess('Feed', logData, data);
+  return makeSuccess('Feed', logData, responseData);
 };
 
 export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscribers(
