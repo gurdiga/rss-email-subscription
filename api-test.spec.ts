@@ -5,22 +5,33 @@ import { AccountData, AccountId, isAccountId } from './src/domain/account';
 import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
-import { AddNewFeedRequestData, AddNewFeedResponseData, EditFeedRequestData, FeedStatus } from './src/domain/feed';
-import { EditFeedResponse, Feed } from './src/domain/feed';
+import { defaultFeedPattern } from './src/domain/cron-pattern';
+import {
+  AddEmailsRequest,
+  AddEmailsResponse,
+  AddNewFeedRequestData,
+  AddNewFeedResponseData,
+  byDomainAndThenByLocalPart,
+  DeleteEmailsRequest,
+  DeleteEmailsResponse,
+  EditFeedRequestData,
+  EditFeedResponse,
+  Feed,
+  FeedStatus,
+  LoadEmailsResponse,
+} from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
-import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey } from './src/domain/feed-storage';
 import { MakeFeedInput } from './src/domain/feed-making';
-import { getFeedStorageKey } from './src/domain/feed-storage';
+import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, getFeedStorageKey } from './src/domain/feed-storage';
+import { readFile } from './src/domain/io-isolation';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { hash } from './src/shared/crypto';
-import { readFile } from './src/domain/io-isolation';
-import { si } from './src/shared/string-utils';
 import { makePath } from './src/shared/path-utils';
-import { die, makeTestStorage, makeTestFeedId, makeTestEmailAddress } from './src/shared/test-utils';
-import { defaultFeedPattern } from './src/domain/cron-pattern';
+import { si } from './src/shared/string-utils';
+import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
 
 describe('API', () => {
-  let step = 0; // NOTE: test are expected to run in source order
+  let step = 0; // NOTE: Test are expected to run in source order AND with the --bail option.
 
   const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
   const domainName = 'localhost.feedsubscription.com';
@@ -270,6 +281,48 @@ describe('API', () => {
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
           expect(editedFeed.isDeleted).be.false;
 
+          let expectedResponse: Success<LoadEmailsResponse> = {
+            kind: 'Success',
+            message: 'Feed subscribers',
+            responseData: { displayName: displayNameUpdated, emails: [] },
+          };
+          let { responseBody: loadEmailsResponse } = await loadEmailsSend(newFeedId, authenticationHeaders);
+          expect(loadEmailsResponse).to.deep.equal(expectedResponse);
+
+          const emailsToAdd = ['one@api-test.com', 'two@api-test.com', 'three@api-test.com'];
+          const addEmailsRequest: AddEmailsRequest = {
+            emailsOnePerLine: emailsToAdd.join('\n'),
+          };
+          let { responseBody: addEmailsResponse } = await addEmailsSend(
+            newFeedId,
+            addEmailsRequest,
+            authenticationHeaders
+          );
+          const expectedAddEmailsResponse: Success<AddEmailsResponse> = {
+            kind: 'Success',
+            message: 'Added 3 subscribers',
+            responseData: {
+              currentEmails: [...emailsToAdd].sort(byDomainAndThenByLocalPart),
+              newEmailsCount: emailsToAdd.length,
+            },
+          };
+          expect(addEmailsResponse).to.deep.equal(expectedAddEmailsResponse);
+
+          const deleteEmailsRequest: DeleteEmailsRequest = {
+            emailsToDeleteOnePerLine: emailsToAdd[1]!,
+          };
+          let { responseBody: deleteEmailsResponse } = await deleteEmailsSend(
+            newFeedId,
+            deleteEmailsRequest,
+            authenticationHeaders
+          );
+          const expectedDeleteEmailsResponse: Success<DeleteEmailsResponse> = {
+            kind: 'Success',
+            message: 'Deleted subscribers',
+            responseData: { currentEmails: [emailsToAdd[0]!, emailsToAdd[2]!] },
+          };
+          expect(deleteEmailsResponse).to.deep.equal(expectedDeleteEmailsResponse);
+
           const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId, authenticationHeaders);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
@@ -317,6 +370,18 @@ describe('API', () => {
         expect(responseBody.message).to.equal('Not authenticated');
       });
     });
+
+    async function loadEmailsSend(feedId: FeedId, authenticationHeaders: Headers) {
+      return await get<LoadEmailsResponse>(`/api/feeds/${feedId.value}/subscribers`, 'json', authenticationHeaders);
+    }
+
+    async function addEmailsSend(feedId: FeedId, request: AddEmailsRequest, authenticationHeaders: Headers) {
+      return await post(`/api/feeds/${feedId.value}/add-subscribers`, request, authenticationHeaders);
+    }
+
+    async function deleteEmailsSend(feedId: FeedId, request: DeleteEmailsRequest, authenticationHeaders: Headers) {
+      return await post(`/api/feeds/${feedId.value}/delete-subscribers`, request, authenticationHeaders);
+    }
 
     async function loadFeedByIdSend(feedId: FeedId, authenticationHeaders: Headers) {
       return await get<Feed>(`/api/feeds/${feedId.value}`, 'json', authenticationHeaders);
@@ -382,18 +447,14 @@ describe('API', () => {
       expect(emailAfterConfirmation[emailHash].isConfirmed).to.be.true;
 
       const { responseBody: unsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
-
       expect(unsubscriptionResult.kind).to.equal('Success', 'unsubscription result');
       expect(loadStoredFeedSubscriberEmails(accountId, testFeedId), 'email removed from feed').not.to.include.keys(
         emailHash
       );
 
       const { responseBody: repeatedUnsubscriptionResult } = await unsubscriptionSend(testFeedId, emailHash);
-
-      expect(repeatedUnsubscriptionResult).to.deep.equal(
-        <Success>{ kind: 'Success', message: 'Solidly unsubscribed.' },
-        'repeated unsubscription'
-      );
+      const expectedResponse: Success = { kind: 'Success', message: 'Solidly unsubscribed.' };
+      expect(repeatedUnsubscriptionResult).to.deep.equal(expectedResponse, 'repeated unsubscription');
     });
 
     after(async () => {
@@ -486,11 +547,10 @@ describe('API', () => {
   async function post(
     relativePath: string,
     data: Record<string, string> = {},
-    headers: Headers = new Headers(),
-    method: 'POST' | 'PUT' = 'POST'
+    headers: Headers = new Headers()
   ): Promise<JsonApiResponse> {
     const response = await fetch(makePath(apiOrigin, relativePath), {
-      method,
+      method: 'POST',
       body: new URLSearchParams(data),
       headers,
     });
