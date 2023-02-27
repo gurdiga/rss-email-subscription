@@ -33,7 +33,7 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
   };
 }
 
-export function parseEmails(emailList: string): Result<EmailList> {
+export function parseEmails(emailList: string): EmailList {
   const emailStrings = emailList.split('\n').filter(isNonEmptyString);
   const emails = emailStrings.map(makeEmailAddress);
   const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
