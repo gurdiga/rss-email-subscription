@@ -371,14 +371,9 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
 
   const parseResult = parseEmails(emails);
 
-  if (isErr(parseResult)) {
-    logWarning(si`Failed to ${parseEmails.name}`, { reason: parseResult.reason });
-    return makeInputError('Invalid emails list');
-  }
-
   if (!isEmpty(parseResult.invalidEmails)) {
     logWarning('Failed to parse some of the emails', { invalidEmails: parseResult.invalidEmails });
-    return makeInputError('Invalid emails list');
+    return makeInputError(si`Found a few invalid emails:\n- ${parseResult.invalidEmails.join('\n- ')}`);
   }
 
   if (isEmpty(parseResult.validEmails)) {
@@ -466,14 +461,9 @@ export const addFeedSubscribers: RequestHandler = async function addFeedSubscrib
 
   const parseResult = parseEmails(emails);
 
-  if (isErr(parseResult)) {
-    logWarning(si`Failed to ${parseEmails.name}`, { reason: parseResult.reason });
-    return makeInputError('Invalid emails list');
-  }
-
   if (!isEmpty(parseResult.invalidEmails)) {
     logWarning('Failed to parse some of the emails', { invalidEmails: parseResult.invalidEmails });
-    return makeInputError('Invalid emails list');
+    return makeInputError(si`Invalid emails list:\n- ${parseResult.invalidEmails.join('\n- ')}`);
   }
 
   if (isEmpty(parseResult.validEmails)) {
