@@ -402,16 +402,6 @@ init-data-dir:
 	mkdir $$DATA_DIR_ROOT/accounts
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
-reset-account-index:
-	@require=$${DATA_DIR_ROOT:?envar is missing}
-
-	if [[ "$$NODE_ENV" != "development" ]]; then
-		echo "This is only for the development environment."
-		false;
-	fi
-
-	find $$DATA_DIR_ROOT/accounts -mindepth 1 -type d | xargs rm -rfv
-
 sent-count:
 	@quiet=true
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
