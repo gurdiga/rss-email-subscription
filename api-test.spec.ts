@@ -178,7 +178,7 @@ describe('API', () => {
         si`deauthentication: ${JSON.stringify(deauthenticationResponse)}`
       );
 
-      const sessionDataAfterDeauthentication = loadSessionData(sessionId!);
+      const sessionDataAfterDeauthentication = loadSessionData(sessionId);
       expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
         .exist;
     }).timeout(5000);
