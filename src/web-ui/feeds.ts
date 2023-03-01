@@ -89,7 +89,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   const response = await asyncAttempt(() => sendApiRequest<L>('/feeds', HttpMethod.GET));
 
   if (isErr(response)) {
-    return makeErr('Failed to load the feed list');
+    return makeErr(si`Failed to load the feed list: ${response.reason}`);
   }
 
   if (isAppError(response)) {
