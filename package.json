@@ -26,6 +26,7 @@
     "@types/node-fetch": "^2.6.2",
     "@types/nodemailer": "^6.4.7",
     "chai": "^4.3.7",
+    "fetch-cookie": "^2.1.0",
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.19",
     "prettier": "^2.8.4",

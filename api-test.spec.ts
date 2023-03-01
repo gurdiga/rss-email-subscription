@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import fetch, { Headers } from 'node-fetch';
+import fetchCookie from 'fetch-cookie';
+import nodeFetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { AccountData, AccountId, isAccountId } from './src/domain/account';
 import { getAccountIdByEmail } from './src/domain/account-crypto';
@@ -30,6 +31,8 @@ import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
 import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
 
+const fetch = fetchCookie(nodeFetch);
+
 describe('API', () => {
   let step = 0; // NOTE: Test are expected to run in source order AND with the --bail option.
 
@@ -55,7 +58,7 @@ describe('API', () => {
 
     describe('http session test', () => {
       it('works', async () => {
-        const { responseBody, responseHeaders } = await get('/api/session-test', 'json');
+        const { responseBody } = await get('/api/session-test', 'json');
         expect(responseBody.kind).to.equal('Success');
 
         const sessionId = (responseBody as Success).responseData!['sessionId'];
@@ -64,13 +67,7 @@ describe('API', () => {
         const sessionData = loadSessionData(sessionId!);
         expect(sessionData['works']).to.equal(true);
 
-        const cookie = responseHeaders.get('set-cookie')!;
-        const { responseBody: subsequentRequestResponse } = await get(
-          '/api/session-test',
-          'json',
-          new Headers({ cookie })
-        );
-
+        const { responseBody: subsequentRequestResponse } = await get('/api/session-test', 'json');
         const subsequentRequestSession = (subsequentRequestResponse as Success).responseData!['sessionId'];
         expect(subsequentRequestSession).to.equal(sessionId);
       });
@@ -147,10 +144,7 @@ describe('API', () => {
       const [accountAfterConfirmation] = loadStoredAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
-      const { responseBody: authenticationResponse, responseHeaders } = await authenticationSend(
-        userEmail,
-        userPassword
-      );
+      const { responseBody: authenticationResponse } = await authenticationSend(userEmail, userPassword);
       expect(authenticationResponse.kind).to.equal(
         'Success',
         si`authentication: ${JSON.stringify(authenticationResponse)}`
@@ -172,7 +166,7 @@ describe('API', () => {
         'authentication session is rolling'
       );
 
-      const { responseBody: deauthenticationResponse } = await deauthenticationDo(responseHeaders);
+      const { responseBody: deauthenticationResponse } = await deauthenticationDo();
       expect(deauthenticationResponse.kind).to.equal(
         'Success',
         si`deauthentication: ${JSON.stringify(deauthenticationResponse)}`
@@ -182,27 +176,16 @@ describe('API', () => {
       expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
         .exist;
     }).timeout(5000);
-
-    async function deauthenticationDo(responseHeaders: Headers) {
-      const cookie = responseHeaders.get('set-cookie')!;
-      const headers = new Headers({ cookie });
-      const data = {};
-
-      return post('/api/deauthentication', data, headers);
-    }
   });
 
   describe('/api/feeds', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
 
     context('when authenticated', () => {
-      let authenticationHeaders: Headers;
-
       before(async () => {
-        const { responseBody, responseHeaders } = await authenticationSend(userEmail, userPassword);
+        const { responseBody } = await authenticationSend(userEmail, userPassword);
 
         expect(responseBody.kind).to.equal('Success', 'authentication');
-        authenticationHeaders = getAuthenticationHeaders(responseHeaders);
       });
 
       describe('CRUD happy path', () => {
@@ -213,7 +196,7 @@ describe('API', () => {
             id: testFeedProps.id!,
             replyTo: testFeedProps.replyTo!,
           };
-          const { responseBody } = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
+          const { responseBody } = await addNewFeedSend(addNewFeedRequest);
 
           const expectedAddFeedResponse: Success<AddNewFeedResponseData> = {
             kind: 'Success',
@@ -232,7 +215,7 @@ describe('API', () => {
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
           expect(storedFeed.isDeleted).to.equal(false);
 
-          const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId, authenticationHeaders);
+          const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId);
           const { responseData: loadedFeed } = loadFeedByIdResponse.responseBody as Success<Feed>;
 
           expect(loadedFeed).to.deep.equal({
@@ -245,7 +228,7 @@ describe('API', () => {
             status: FeedStatus.AwaitingReview,
           });
 
-          const loadFeedsResponse = await loadFeedsSend(authenticationHeaders);
+          const loadFeedsResponse = await loadFeedsSend();
           const { responseData: loadedFeeds } = loadFeedsResponse.responseBody as Success<Feed[]>;
 
           expect(loadedFeeds).to.deep.equal([
@@ -255,7 +238,7 @@ describe('API', () => {
             },
           ]);
 
-          const repeadedAdd = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
+          const repeadedAdd = await addNewFeedSend(addNewFeedRequest);
           expect(repeadedAdd.responseBody).to.deep.equal(makeInputError('You already have a feed with this ID', 'id'));
 
           const displayNameUpdated = 'API Test Feed Name *Updated*';
@@ -266,7 +249,7 @@ describe('API', () => {
             id: 'new-feed-id',
             displayName: displayNameUpdated,
           };
-          const editResponse = await editFeedSend(editFeedRequest, authenticationHeaders);
+          const editResponse = await editFeedSend(editFeedRequest);
 
           const expectedEditFeedResponse: Success<EditFeedResponse> = {
             kind: 'Success',
@@ -286,18 +269,14 @@ describe('API', () => {
             message: 'Feed subscribers',
             responseData: { displayName: displayNameUpdated, emails: [] },
           };
-          let { responseBody: loadEmailsResponse } = await loadEmailsSend(newFeedId, authenticationHeaders);
+          let { responseBody: loadEmailsResponse } = await loadEmailsSend(newFeedId);
           expect(loadEmailsResponse).to.deep.equal(expectedResponse);
 
           const emailsToAdd = ['one@api-test.com', 'two@api-test.com', 'three@api-test.com'];
           const addEmailsRequest: AddEmailsRequest = {
             emailsOnePerLine: emailsToAdd.join('\n'),
           };
-          let { responseBody: addEmailsResponse } = await addEmailsSend(
-            newFeedId,
-            addEmailsRequest,
-            authenticationHeaders
-          );
+          let { responseBody: addEmailsResponse } = await addEmailsSend(newFeedId, addEmailsRequest);
           const expectedAddEmailsResponse: Success<AddEmailsResponse> = {
             kind: 'Success',
             message: 'Added 3 subscribers',
@@ -311,11 +290,7 @@ describe('API', () => {
           const deleteEmailsRequest: DeleteEmailsRequest = {
             emailsToDeleteOnePerLine: emailsToAdd[1]!,
           };
-          let { responseBody: deleteEmailsResponse } = await deleteEmailsSend(
-            newFeedId,
-            deleteEmailsRequest,
-            authenticationHeaders
-          );
+          let { responseBody: deleteEmailsResponse } = await deleteEmailsSend(newFeedId, deleteEmailsRequest);
           const expectedDeleteEmailsResponse: Success<DeleteEmailsResponse> = {
             kind: 'Success',
             message: 'Deleted subscribers',
@@ -323,13 +298,13 @@ describe('API', () => {
           };
           expect(deleteEmailsResponse).to.deep.equal(expectedDeleteEmailsResponse);
 
-          const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId, authenticationHeaders);
+          const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
           const deletedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(deletedFeed.isDeleted).be.true;
 
-          const finalFeedList = await loadFeedsSend(authenticationHeaders);
+          const finalFeedList = await loadFeedsSend();
           const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<Feed[]>;
           expect(feedsAfterDeletion).to.deep.equal([]);
         });
@@ -349,14 +324,14 @@ describe('API', () => {
             id: '',
             replyTo: '',
           };
-          const { responseBody } = await addNewFeedSend(invalidRequest, authenticationHeaders);
+          const { responseBody } = await addNewFeedSend(invalidRequest);
 
           expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
         });
 
         it('/api/feeds/edit-feed returns a proper InputError', async () => {
           const invalidRequest = { displayName: 'Something' } as EditFeedRequestData;
-          const responseBody = (await editFeedSend(invalidRequest, authenticationHeaders)).responseBody;
+          const responseBody = (await editFeedSend(invalidRequest)).responseBody;
 
           expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
         });
@@ -365,30 +340,31 @@ describe('API', () => {
 
     context('when not authenticated', () => {
       it('responds with 403 if not authenticated', async () => {
-        const { responseBody } = await loadFeedsSend(new Headers());
+        await deauthenticationDo();
+        const { responseBody } = await loadFeedsSend();
 
         expect(responseBody.message).to.equal('Not authenticated');
       });
     });
 
-    async function loadEmailsSend(feedId: FeedId, authenticationHeaders: Headers) {
-      return await get<LoadEmailsResponse>(`/api/feeds/${feedId.value}/subscribers`, 'json', authenticationHeaders);
+    async function loadEmailsSend(feedId: FeedId) {
+      return await get<LoadEmailsResponse>(`/api/feeds/${feedId.value}/subscribers`, 'json');
     }
 
-    async function addEmailsSend(feedId: FeedId, request: AddEmailsRequest, authenticationHeaders: Headers) {
-      return await post(`/api/feeds/${feedId.value}/add-subscribers`, request, authenticationHeaders);
+    async function addEmailsSend(feedId: FeedId, request: AddEmailsRequest) {
+      return await post(`/api/feeds/${feedId.value}/add-subscribers`, request);
     }
 
-    async function deleteEmailsSend(feedId: FeedId, request: DeleteEmailsRequest, authenticationHeaders: Headers) {
-      return await post(`/api/feeds/${feedId.value}/delete-subscribers`, request, authenticationHeaders);
+    async function deleteEmailsSend(feedId: FeedId, request: DeleteEmailsRequest) {
+      return await post(`/api/feeds/${feedId.value}/delete-subscribers`, request);
     }
 
-    async function loadFeedByIdSend(feedId: FeedId, authenticationHeaders: Headers) {
-      return await get<Feed>(`/api/feeds/${feedId.value}`, 'json', authenticationHeaders);
+    async function loadFeedByIdSend(feedId: FeedId) {
+      return await get<Feed>(`/api/feeds/${feedId.value}`, 'json');
     }
 
-    async function loadFeedsSend(authenticationHeaders: Headers) {
-      return await get<Feed[]>('/api/feeds', 'json', authenticationHeaders);
+    async function loadFeedsSend() {
+      return await get<Feed[]>('/api/feeds', 'json');
     }
   });
 
@@ -403,7 +379,6 @@ describe('API', () => {
       const authenticationResponse = await authenticationSend(userEmail, userPassword);
 
       expect(authenticationResponse.responseBody.kind).to.equal('Success', 'authentication');
-      const authenticationHeaders = getAuthenticationHeaders(authenticationResponse.responseHeaders);
 
       const addNewFeedRequest: AddNewFeedRequestData = {
         displayName: testFeedProps.displayName!,
@@ -411,7 +386,7 @@ describe('API', () => {
         id: testFeedProps.id!,
         replyTo: testFeedProps.replyTo!,
       };
-      const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest, authenticationHeaders);
+      const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest);
       expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');
     });
 
@@ -482,32 +457,30 @@ describe('API', () => {
     deleteAccount(makeTestEmailAddress(userEmail));
   });
 
-  async function addNewFeedSend(request: AddNewFeedRequestData, authenticationHeaders: Headers) {
-    const data = request as Record<string, string>;
-
-    return await post('/api/feeds/add-new-feed', data, authenticationHeaders);
+  async function deauthenticationDo() {
+    return post('/api/deauthentication');
   }
 
-  async function editFeedSend(request: EditFeedRequestData, authenticationHeaders: Headers) {
+  async function addNewFeedSend(request: AddNewFeedRequestData) {
     const data = request as Record<string, string>;
 
-    return await post('/api/feeds/edit-feed', data, authenticationHeaders);
+    return await post('/api/feeds/add-new-feed', data);
   }
 
-  async function deleteFeedSend(feedId: FeedId, authenticationHeaders: Headers) {
+  async function editFeedSend(request: EditFeedRequestData) {
+    const data = request as Record<string, string>;
+
+    return await post('/api/feeds/edit-feed', data);
+  }
+
+  async function deleteFeedSend(feedId: FeedId) {
     const path = makePath('/api/feeds', feedId.value);
 
-    return await delete_(path, authenticationHeaders);
+    return await delete_(path);
   }
 
   async function authenticationSend(email: string, password: string) {
     return post('/api/authentication', { email, password });
-  }
-
-  function getAuthenticationHeaders(responseHeaders: Headers): Headers {
-    const cookie = responseHeaders.get('set-cookie')!;
-
-    return new Headers({ cookie });
   }
 
   async function registrationSend(plan: string, email: string, password: string) {
@@ -544,15 +517,10 @@ describe('API', () => {
     responseBody: ApiResponse<D>;
   }
 
-  async function post(
-    relativePath: string,
-    data: Record<string, string> = {},
-    headers: Headers = new Headers()
-  ): Promise<JsonApiResponse> {
+  async function post(relativePath: string, data: Record<string, string> = {}): Promise<JsonApiResponse> {
     const response = await fetch(makePath(apiOrigin, relativePath), {
       method: 'POST',
       body: new URLSearchParams(data),
-      headers,
     });
 
     return {
@@ -563,8 +531,8 @@ describe('API', () => {
     };
   }
 
-  async function delete_(relativePath: string, headers: Headers = new Headers()): Promise<TextApiResponse> {
-    const response = await fetch(makePath(apiOrigin, relativePath), { method: 'DELETE', headers });
+  async function delete_(relativePath: string): Promise<TextApiResponse> {
+    const response = await fetch(makePath(apiOrigin, relativePath), { method: 'DELETE' });
 
     return {
       responseBody: await response.json(),
@@ -573,8 +541,6 @@ describe('API', () => {
   }
 
   async function get(path: string, type: 'text'): Promise<TextApiResponse>;
-  async function get(path: string, type: 'text', headers: Headers): Promise<TextApiResponse>;
-  async function get<D extends any = any>(path: string, type: 'json', headers: Headers): Promise<JsonApiResponse<D>>;
   async function get<D extends any = any>(path: string, type: 'json'): Promise<JsonApiResponse<D>>;
   async function get<D extends any = any>(path: string): Promise<JsonApiResponse<D>>;
   async function get<D extends any = any>(
