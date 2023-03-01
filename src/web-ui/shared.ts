@@ -174,7 +174,7 @@ function assertAuthorized(response: Response) {
       window.location.href = PagePath.userAuthentication;
     }, 2000);
 
-    return response;
+    throw new Error('401 Not Authorized');
   } else {
     return response;
   }
