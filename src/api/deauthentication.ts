@@ -1,4 +1,5 @@
 import { makeSuccess } from '../shared/api-response';
+import { disablePrivateNavbarCookie } from './app-cookie';
 import { RequestHandler } from './request-handler';
 import { deinitSession } from './session';
 
@@ -11,5 +12,9 @@ export const deauthentication: RequestHandler = async function deauthentication(
 ) {
   deinitSession(reqSession);
 
-  return makeSuccess('Have a nice day!');
+  const logData = {};
+  const responseData = {};
+  const cookies = [disablePrivateNavbarCookie];
+
+  return makeSuccess('Have a nice day!', logData, responseData, cookies);
 };

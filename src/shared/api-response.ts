@@ -1,3 +1,4 @@
+import { AppCookie } from '../api/app-cookie';
 import { hasKind } from './lang';
 
 export type ApiResponse<D extends any = any> = AuthenticatedApiResponse<D> | NotAuthenticatedError;
@@ -10,18 +11,25 @@ export interface Success<D extends any = any> {
   message: string;
   logData?: LogData;
   responseData?: D;
+  cookies?: AppCookie[];
 }
 
 export function isSuccess(x: unknown): x is Success {
   return hasKind(x, 'Success');
 }
 
-export function makeSuccess<D extends any = any>(message: string, logData?: LogData, responseData?: D): Success<D> {
+export function makeSuccess<D extends any = any>(
+  message: string,
+  logData?: LogData,
+  responseData?: D,
+  cookies?: AppCookie[]
+): Success<D> {
   return {
     kind: 'Success',
     message,
     logData,
     responseData,
+    cookies,
   };
 }
 

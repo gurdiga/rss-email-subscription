@@ -30,6 +30,8 @@ import { hash } from './src/shared/crypto';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
 import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
+import cookie from 'cookie';
+import { navbarCookieName } from './src/api/app-cookie';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -64,7 +66,7 @@ describe('API', () => {
         const sessionId = (responseBody as Success).responseData!['sessionId'];
         expect(sessionId).to.exist;
 
-        const sessionData = loadSessionData(sessionId!);
+        const sessionData = loadSessionData(sessionId);
         expect(sessionData['works']).to.equal(true);
 
         const { responseBody: subsequentRequestResponse } = await get('/api/session-test', 'json');
@@ -144,11 +146,15 @@ describe('API', () => {
       const [accountAfterConfirmation] = loadStoredAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
 
-      const { responseBody: authenticationResponse } = await authenticationSend(userEmail, userPassword);
+      const { responseBody: authenticationResponse, responseHeaders: authenticationResponseHeaders } =
+        await authenticationSend(userEmail, userPassword);
       expect(authenticationResponse.kind).to.equal(
         'Success',
         si`authentication: ${JSON.stringify(authenticationResponse)}`
       );
+
+      let navbarCookie = getCookie(authenticationResponseHeaders, navbarCookieName);
+      expect(navbarCookie).to.include({ [navbarCookieName]: 'true' }, 'sets the navbar cookie');
 
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
@@ -166,11 +172,15 @@ describe('API', () => {
         'authentication session is rolling'
       );
 
-      const { responseBody: deauthenticationResponse } = await deauthenticationDo();
-      expect(deauthenticationResponse.kind).to.equal(
+      const { responseBody: deauthenticationResponseBody, responseHeaders: deauthenticationResponseHeaders } =
+        await deauthenticationSend();
+      expect(deauthenticationResponseBody.kind).to.equal(
         'Success',
-        si`deauthentication: ${JSON.stringify(deauthenticationResponse)}`
+        si`deauthentication response: ${JSON.stringify(deauthenticationResponseBody)}`
       );
+
+      navbarCookie = getCookie(deauthenticationResponseHeaders, navbarCookieName);
+      expect(navbarCookie).to.include({ [navbarCookieName]: 'false' }, 'unsets the navbar cookie');
 
       const sessionDataAfterDeauthentication = loadSessionData(sessionId);
       expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
@@ -340,7 +350,7 @@ describe('API', () => {
 
     context('when not authenticated', () => {
       it('responds with 403 if not authenticated', async () => {
-        await deauthenticationDo();
+        await deauthenticationSend();
         const { responseBody } = await loadFeedsSend();
 
         expect(responseBody.message).to.equal('Not authenticated');
@@ -393,7 +403,10 @@ describe('API', () => {
     it('flows', async () => {
       // ASSUMPTION: The feed testFeedId exists
       const { responseBody: subscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
-      expect(subscriptionResult).to.include(<Success>{ kind: 'Success' }, 'subscription result');
+      expect(subscriptionResult).to.include(
+        <Success>{ kind: 'Success' },
+        si`subscription result: ${JSON.stringify(subscriptionResult)}`
+      );
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
@@ -457,7 +470,17 @@ describe('API', () => {
     deleteAccount(makeTestEmailAddress(userEmail));
   });
 
-  async function deauthenticationDo() {
+  function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string> | null {
+    const rawCookie = responseHeaders.raw()['set-cookie']?.find((x) => x.startsWith(si`${cookieName}=`));
+
+    if (!rawCookie) {
+      return null;
+    }
+
+    return cookie.parse(rawCookie);
+  }
+
+  async function deauthenticationSend() {
     return post('/api/deauthentication');
   }
 

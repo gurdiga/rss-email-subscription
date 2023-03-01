@@ -13,6 +13,7 @@ import { AppStorage } from '../domain/storage';
 import { si } from '../shared/string-utils';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';
+import { enablePrivateNavbarCookie } from './app-cookie';
 
 interface Input {
   secret: unknown;
@@ -43,8 +44,9 @@ export const registrationConfirmation: RequestHandler = async function registrat
 
   const logData = {};
   const responseData = { sessionId: reqSession.id };
+  const cookies = [enablePrivateNavbarCookie];
 
-  return makeSuccess('Account registration confirmed.', logData, responseData);
+  return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
 };
 
 interface ProcessedInput {

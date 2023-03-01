@@ -12,6 +12,7 @@ import { si } from '../shared/string-utils';
 import { App } from './init-app';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';
+import { enablePrivateNavbarCookie } from './app-cookie';
 
 export const authentication: RequestHandler = async function authentication(
   _reqId,
@@ -39,8 +40,9 @@ export const authentication: RequestHandler = async function authentication(
 
   const logData = {};
   const responseData = { sessionId: reqSession.id };
+  const cookies = [enablePrivateNavbarCookie];
 
-  return makeSuccess('Welcome back!', logData, responseData);
+  return makeSuccess('Welcome back!', logData, responseData, cookies);
 };
 
 interface Input {

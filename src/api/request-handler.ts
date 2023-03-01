@@ -1,8 +1,9 @@
-import { RequestHandler as ExpressRequestHandler, Request } from 'express';
-import { ApiResponse } from '../shared/api-response';
+import { Request, RequestHandler as ExpressRequestHandler, Response } from 'express';
+import { ApiResponse, Success } from '../shared/api-response';
 import { exhaustivenessCheck } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
+import { AppCookie } from './app-cookie';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
@@ -39,7 +40,7 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
       case 'Success': {
         logInfo(si`${action} succeeded`, { ...result.logData, durationMs });
         delete result.logData;
-        res.status(200).send(result);
+        sendSuccess(res, result);
         break;
       }
       case 'NotAuthenticatedError': {
@@ -61,4 +62,23 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
         exhaustivenessCheck(result);
     }
   };
+}
+
+function sendSuccess(res: Response, result: Success): void {
+  maybeSetCookies(res, result.cookies);
+  sendJson(res, result);
+}
+
+function sendJson(res: Response, result: Success): void {
+  res.status(200).json(result);
+}
+
+function maybeSetCookies(res: Response, cookies?: AppCookie[]): void {
+  if (!cookies) {
+    return;
+  }
+
+  for (const cookie of cookies) {
+    res.cookie(cookie.name, cookie.value, cookie.options || {});
+  }
 }
