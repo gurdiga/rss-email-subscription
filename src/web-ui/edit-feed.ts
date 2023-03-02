@@ -58,12 +58,15 @@ async function main() {
 
   fillForm(uiElements, uiFeed);
   unhideElement(uiElements.form);
+  bindSubmitButton(uiElements, feedId);
   displayBreadcrumbs(uiElements, [
     feedListBreadcrumbsLink,
     makeFeedManageBreadcrumbsLink(uiFeed.displayName, feedId),
     { label: 'Edit feed' },
   ]);
+}
 
+function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void {
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
