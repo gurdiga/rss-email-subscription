@@ -174,7 +174,7 @@ function assertAuthorized(response: Response) {
       window.location.href = PagePath.userAuthentication;
     }, 2000);
 
-    throw new Error('401 Not Authorized');
+    throw new Error('Session expired');
   } else {
     return response;
   }
