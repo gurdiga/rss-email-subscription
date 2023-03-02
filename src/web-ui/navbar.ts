@@ -1,11 +1,15 @@
-import { navbarCookieName } from '../api/app-cookie';
 import { asyncAttempt, isErr } from '../shared/lang';
-import { si } from '../shared/string-utils';
-import { displayInitError, hideElement, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import {
+  displayInitError,
+  hideElement,
+  HttpMethod,
+  isAuthenticated,
+  requireUiElements,
+  sendApiRequest,
+  unhideElement,
+} from './shared';
 
 function main() {
-  const navbarCookie = getCookieByName(navbarCookieName);
-
   const uiElements = requireUiElements<RequiredUiElements>({
     publicNav: '#right-navbar-nav-public',
     privateNav: '#right-navbar-nav-private',
@@ -17,7 +21,7 @@ function main() {
     return;
   }
 
-  if (navbarCookie === 'true') {
+  if (isAuthenticated()) {
     displayPrivateNavbar(uiElements);
   } else {
     displayPublicNavbar(uiElements);
@@ -48,16 +52,6 @@ function displayPrivateNavbar(uiElements: RequiredUiElements): void {
 
     location.href = signOutLink.href;
   });
-}
-
-export function getCookieByName(name: string, documentCookie = document.cookie): string {
-  const pairs = documentCookie.split('; ');
-  const pair = pairs.find((x) => x.startsWith(si`${name}=`)) || '';
-
-  const encodedValue = pair.split('=')[1] || '';
-  const value = decodeURIComponent(encodedValue);
-
-  return value;
 }
 
 interface RequiredUiElements {

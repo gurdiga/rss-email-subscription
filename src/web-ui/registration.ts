@@ -1,11 +1,29 @@
+import { PagePath } from '../domain/page-path';
 import { isPlanId, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
-import { displayInitError, displayCommunicationError, unhideElement, displayAppError, HttpMethod } from './shared';
-import { hideElement, preventDoubleClick, requireUiElements, AppStatusUiElements } from './shared';
-import { sendApiRequest, clearValidationErrors, displayValidationError } from './shared';
+import {
+  AppStatusUiElements,
+  clearValidationErrors,
+  displayAppError,
+  displayCommunicationError,
+  displayInitError,
+  displayValidationError,
+  hideElement,
+  HttpMethod,
+  isAuthenticated,
+  preventDoubleClick,
+  requireUiElements,
+  sendApiRequest,
+  unhideElement,
+} from './shared';
 
 function main() {
+  if (isAuthenticated()) {
+    location.href = PagePath.feedList;
+    return;
+  }
+
   const uiElements = requireUiElements<RequiredUiElements>({
     plan: '#plan',
     email: '#email',

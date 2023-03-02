@@ -3,7 +3,13 @@ import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
-import { fillUiElements, parseConfirmationLinkUrlParams, reportError, requireUiElements } from './shared';
+import {
+  fillUiElements,
+  getCookieByName,
+  parseConfirmationLinkUrlParams,
+  reportError,
+  requireUiElements,
+} from './shared';
 import { UiElementFillSpec } from './shared';
 import { requireQueryParams } from './shared';
 
@@ -143,5 +149,15 @@ describe(fillUiElements.name, () => {
     spanFillSpec.element = null as any as HTMLSpanElement;
     result = fillUiElements([spanFillSpec]);
     expect(result).to.deep.equal(makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
+  });
+});
+
+describe(getCookieByName.name, () => {
+  it('returns a cookie’s value by name or empty string if not found', () => {
+    const cookieRequestHeader = 'displayPrivateNavbar=true; testName=with spaces';
+
+    expect(getCookieByName('displayPrivateNavbar', cookieRequestHeader)).to.equal('true');
+    expect(getCookieByName('testName', cookieRequestHeader)).to.equal('with spaces');
+    expect(getCookieByName('magics', cookieRequestHeader)).to.equal('');
   });
 });

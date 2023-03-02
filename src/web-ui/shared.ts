@@ -1,10 +1,17 @@
-import { ApiResponse, AppError, AuthenticatedApiResponse, InputError, isAppError } from '../shared/api-response';
-import { isInputError } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { navbarCookieName } from '../api/app-cookie';
+import { UiFeed } from '../domain/feed';
 import { PagePath } from '../domain/page-path';
+import {
+  ApiResponse,
+  AppError,
+  AuthenticatedApiResponse,
+  InputError,
+  isAppError,
+  isInputError,
+} from '../shared/api-response';
+import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
-import { UiFeed } from '../domain/feed';
 
 export interface ConfirmationLinkUrlParams {
   id: string;
@@ -351,3 +358,17 @@ export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
   id: '#feed-id-field',
   replyTo: '#feed-reply-to-field',
 };
+
+export function getCookieByName(name: string, documentCookie = document.cookie): string {
+  const pairs = documentCookie.split('; ');
+  const pair = pairs.find((x) => x.startsWith(si`${name}=`)) || '';
+
+  const encodedValue = pair.split('=')[1] || '';
+  const value = decodeURIComponent(encodedValue);
+
+  return value;
+}
+
+export function isAuthenticated(): boolean {
+  return getCookieByName(navbarCookieName) === 'true';
+}

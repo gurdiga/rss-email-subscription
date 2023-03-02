@@ -1,11 +1,27 @@
+import { PagePath } from '../domain/page-path';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
-import { HttpMethod, navigateTo, sendApiRequest } from './shared';
-import { clearValidationErrors, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
-import { displayValidationError, preventDoubleClick, requireUiElements, ApiResponseUiElements } from './shared';
-import { PagePath } from '../domain/page-path';
+import {
+  ApiResponseUiElements,
+  clearValidationErrors,
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  displayValidationError,
+  HttpMethod,
+  isAuthenticated,
+  navigateTo,
+  preventDoubleClick,
+  requireUiElements,
+  sendApiRequest,
+} from './shared';
 
 function main() {
+  if (isAuthenticated()) {
+    location.href = PagePath.feedList;
+    return;
+  }
+
   const uiElements = requireUiElements<RequiredUiElements>({
     email: '#email',
     password: '#password',
