@@ -1,7 +1,8 @@
 import { UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import { isErr } from '../shared/lang';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   BreadcrumbsUiElements,
@@ -10,7 +11,16 @@ import {
   feedListBreadcrumbsLink,
 } from './breadcrumbs';
 import { createElement } from './dom-isolation';
-import { displayInitError, loadUiFeed, requireQueryParams, requireUiElements, unhideElement } from './shared';
+import {
+  displayInitError,
+  HttpMethod,
+  loadUiFeed,
+  navigateTo,
+  requireQueryParams,
+  requireUiElements,
+  sendApiRequest,
+  unhideElement,
+} from './shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
@@ -35,6 +45,7 @@ async function main() {
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
     editLink: '#edit-link',
+    deleteButton: '#delete-button',
   });
 
   if (isErr(uiElements)) {
@@ -53,11 +64,45 @@ async function main() {
 
   unhideElement(uiElements.feedActions);
   displayFeedAttributeList(uiFeed, uiElements, feedId);
+  bindDeleteButton(uiElements.deleteButton, uiFeed.displayName, feedId);
   displayBreadcrumbs(uiElements, [
     // prettier: keep these stacked
     feedListBreadcrumbsLink,
     { label: uiFeed.displayName },
   ]);
+}
+
+function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: FeedId): void {
+  button.addEventListener('click', async () => {
+    if (!confirm(si`Do you really want to delete the feed “${feedName}”?`)) {
+      return;
+    }
+
+    const result = sendDeleteRequest(feedId);
+
+    if (isSuccess(result)) {
+      navigateTo(PagePath.feedList);
+    }
+  });
+}
+
+async function sendDeleteRequest(feedId: FeedId): Promise<Result<void>> {
+  const data = { id: feedId.value };
+  const response = await asyncAttempt(() => sendApiRequest(si`/feeds/delete-feed`, HttpMethod.POST, data));
+
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed');
+  }
+
+  if (isAppError(response)) {
+    return makeErr(si`Application error when loading the feed: ${response.message}`);
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed');
+  }
+
+  return response.responseData;
 }
 
 function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -126,6 +171,7 @@ interface RequiredUiElements extends BreadcrumbsUiElements {
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;
+  deleteButton: HTMLButtonElement;
 }
 
 interface RequiredParams {
