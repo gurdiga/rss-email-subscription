@@ -67,9 +67,9 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
   const pluralSuffix = feedList.length === 1 ? '' : 's';
 
   return isEmpty(feedList)
-    ? { preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!' }
+    ? { preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!' }
     : {
-        preambleMessage: si`You have ${feedList.length} feed${pluralSuffix} registered at the moment.`,
+        preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
         linkData: feedList.map(makeLinkData).sort((a, b) => (a.text > b.text ? 1 : -1)),
       };
 }

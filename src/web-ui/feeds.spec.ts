@@ -19,7 +19,7 @@ describe(makeFeedListData.name, () => {
     const result = makeFeedListData(uiFeedList);
 
     expect(result).to.deep.equal(<FeedListData>{
-      preambleMessage: 'You have 2 feeds registered at the moment.',
+      preambleMessage: 'You have 2 blog feeds registered at the moment.',
       linkData: [
         { text: 'Geeky Stories', href: '/user/manage-feed.html?id=feed-id-2' },
         { text: 'Just Add Light', href: '/user/manage-feed.html?id=feed-id-1' },
@@ -31,7 +31,7 @@ describe(makeFeedListData.name, () => {
     const result = makeFeedListData([]);
 
     expect(result).to.deep.equal(<FeedListData>{
-      preambleMessage: 'You don’t have any feeds yet. Go ahead and add one!',
+      preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!',
     });
   });
 });

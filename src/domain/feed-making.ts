@@ -109,7 +109,7 @@ export function makeFeedDisplayName(input: unknown, field = 'displayName'): Resu
   }
 
   if (!isString(input)) {
-    return makeErr(si`Invalid feed name: expected type [string] but got "${getTypeName(input)}"`, field);
+    return makeErr(si`Invalid blog feed name: expected type [string] but got "${getTypeName(input)}"`, field);
   }
 
   const trimmedInput = input.trim();

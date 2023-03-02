@@ -58,7 +58,7 @@ describe(makeFeed.name, () => {
       ],
       [
         { url: 'https://test.com/rss.xml', displayName: 42 as any as string },
-        makeErr('Invalid feed name: expected type [string] but got "number"', 'displayName'),
+        makeErr('Invalid blog feed name: expected type [string] but got "number"', 'displayName'),
         'displayName2',
       ],
       [

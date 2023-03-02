@@ -37,7 +37,11 @@ async function main() {
     return;
   }
 
-  displayBreadcrumbs(uiElements, [feedListBreadcrumbsLink]);
+  displayBreadcrumbs(uiElements, [
+    // prettier: keep these stacked
+    feedListBreadcrumbsLink,
+    { label: uiElements.pageTitle.textContent! },
+  ]);
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();

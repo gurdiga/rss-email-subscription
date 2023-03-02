@@ -62,7 +62,7 @@ async function main() {
   displayBreadcrumbs(uiElements, [
     feedListBreadcrumbsLink,
     makeFeedManageBreadcrumbsLink(uiFeed.displayName, feedId),
-    { label: 'Edit feed' },
+    { label: uiElements.pageTitle.textContent! },
   ]);
 }
 

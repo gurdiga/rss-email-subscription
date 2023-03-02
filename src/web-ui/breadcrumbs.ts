@@ -43,7 +43,7 @@ function createBreadcrumbElement(segment: BreadcrumbsSegment): HTMLLIElement {
 }
 
 export const feedListBreadcrumbsLink: BreadcrumbsLink = {
-  label: 'Feeds',
+  label: 'Blog feeds',
   href: PagePath.feedList,
 };
 
