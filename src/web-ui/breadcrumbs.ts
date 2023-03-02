@@ -1,14 +1,17 @@
 import { FeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { createElement } from './dom-isolation';
+import { hideElement } from './shared';
 
 export interface BreadcrumbsUiElements {
   breadcrumbs: HTMLOListElement;
+  mobileBreadcrumbs: HTMLAnchorElement;
   pageTitle: HTMLHeadingElement;
 }
 
 export const breadcrumbsUiElements: Record<keyof BreadcrumbsUiElements, string> = {
   breadcrumbs: '#breadcrumbs',
+  mobileBreadcrumbs: '#mobile-breadcrumbs',
   pageTitle: 'h1',
 };
 
@@ -24,9 +27,25 @@ interface BreadcrumbsLabel {
 }
 
 export function displayBreadcrumbs(uiElements: BreadcrumbsUiElements, segments: BreadcrumbsSegment[]): void {
+  displayDesktopBreadcrumbs(uiElements, segments);
+  displayMobileBreadcrumbs(uiElements, segments);
+}
+
+function displayDesktopBreadcrumbs(uiElements: BreadcrumbsUiElements, segments: BreadcrumbsSegment[]): void {
   const segmentElements = segments.map(createBreadcrumbElement);
 
   uiElements.breadcrumbs.append(...segmentElements);
+}
+
+function displayMobileBreadcrumbs(uiElements: BreadcrumbsUiElements, segments: BreadcrumbsSegment[]): void {
+  const previousPageLink = segments.slice(-2, -1)[0] as BreadcrumbsLink;
+
+  if (previousPageLink) {
+    uiElements.mobileBreadcrumbs.textContent = previousPageLink.label;
+    uiElements.mobileBreadcrumbs.href = previousPageLink.href;
+  } else {
+    hideElement(uiElements.mobileBreadcrumbs);
+  }
 }
 
 function createBreadcrumbElement(segment: BreadcrumbsSegment): HTMLLIElement {
