@@ -45,7 +45,7 @@ import { AppStorage } from '../domain/storage';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
-export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqBody, reqParams, reqSession, app) {
+export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
   const session = checkSession(reqSession);
 
@@ -54,7 +54,7 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, _reqB
     return makeNotAuthenticatedError();
   }
 
-  const feedId = makeFeedId(reqParams['feedId']);
+  const feedId = makeFeedId(reqBody['id']);
 
   if (isErr(feedId)) {
     logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });

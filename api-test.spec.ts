@@ -497,9 +497,9 @@ describe('API', () => {
   }
 
   async function deleteFeedSend(feedId: FeedId) {
-    const path = makePath('/api/feeds', feedId.value);
+    const data = { id: feedId.value };
 
-    return await delete_(path);
+    return await post('/api/feeds/delete-feed', data);
   }
 
   async function authenticationSend(email: string, password: string) {
@@ -550,15 +550,6 @@ describe('API', () => {
       responseBody: response.headers.get('content-type')?.includes('application/json')
         ? await response.json()
         : await response.text(),
-      responseHeaders: response.headers,
-    };
-  }
-
-  async function delete_(relativePath: string): Promise<TextApiResponse> {
-    const response = await fetch(makePath(apiOrigin, relativePath), { method: 'DELETE' });
-
-    return {
-      responseBody: await response.json(),
       responseHeaders: response.headers,
     };
   }

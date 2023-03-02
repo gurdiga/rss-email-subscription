@@ -61,7 +61,7 @@ async function main() {
   router.post('/feeds/:feedId/add-subscribers', makeRequestHandler(addFeedSubscribers, app));
   router.post('/feeds/add-new-feed', makeRequestHandler(addNewFeed, app));
   router.post('/feeds/edit-feed', makeRequestHandler(editFeed, app));
-  router.delete('/feeds/:feedId', makeRequestHandler(deleteFeed, app));
+  router.post('/feeds/delete-feed', makeRequestHandler(deleteFeed, app));
 
   if (process.env['NODE_ENV'] === 'development') {
     server.use('/api', router);
