@@ -107,7 +107,7 @@
   function createFieldLabel(index: number, textContent?: string, className?: string): HTMLLabelElement {
     return createElement('label', {
       htmlFor: fieldId(index),
-      textContent: textContent || 'Subscribe to receive new posts:',
+      textContent: textContent || 'Get new posts in your inbox:',
       className: className || '',
       style: <CSSStyleDeclaration>{
         marginRight: '0.5em',
