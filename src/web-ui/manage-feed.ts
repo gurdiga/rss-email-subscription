@@ -1,11 +1,16 @@
 import { UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import {
+  BreadcrumbsUiElements,
+  breadcrumbsUiElements,
+  displayBreadcrumbs,
+  feedListBreadcrumbsLink,
+} from './breadcrumbs';
 import { createElement } from './dom-isolation';
-import { displayInitError, loadUiFeed, requireQueryParams, requireUiElements } from './shared';
-import { unhideElement } from './shared';
+import { displayInitError, loadUiFeed, requireQueryParams, requireUiElements, unhideElement } from './shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
@@ -25,6 +30,7 @@ async function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
+    ...breadcrumbsUiElements,
     spinner: '#spinner',
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
@@ -47,6 +53,11 @@ async function main() {
 
   unhideElement(uiElements.feedActions);
   displayFeedAttributeList(uiFeed, uiElements, feedId);
+  displayBreadcrumbs(uiElements, [
+    // prettier: keep these stacked
+    feedListBreadcrumbsLink,
+    { label: uiFeed.displayName },
+  ]);
 }
 
 function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -110,7 +121,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
 }
 
-interface RequiredUiElements {
+interface RequiredUiElements extends BreadcrumbsUiElements {
   spinner: HTMLElement;
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;

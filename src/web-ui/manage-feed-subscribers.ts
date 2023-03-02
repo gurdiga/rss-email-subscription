@@ -10,6 +10,13 @@ import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import {
+  breadcrumbsUiElements,
+  BreadcrumbsUiElements,
+  displayBreadcrumbs,
+  makeFeedManageBreadcrumbsLink,
+  feedListBreadcrumbsLink,
+} from './breadcrumbs';
 import { createElement } from './dom-isolation';
 import {
   displayApiResponse,
@@ -40,6 +47,7 @@ async function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
+    ...breadcrumbsUiElements,
     spinner: '#spinner',
     feedNameContainer: '#feed-name-container',
     feedName: '#feed-name',
@@ -70,6 +78,13 @@ async function main() {
   fillUi(uiElements, data);
   bindDeleteSelectedButton(uiElements, feedId);
   bindAddEmailsButton(uiElements, feedId);
+  displayBreadcrumbs(uiElements, [
+    feedListBreadcrumbsLink,
+    makeFeedManageBreadcrumbsLink(data.displayName, feedId),
+    {
+      label: uiElements.pageTitle.textContent!,
+    },
+  ]);
 }
 
 function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -220,7 +235,7 @@ interface UpdateSubscribersRequest {
 
 export type UpdateSubscribersRequestData = Record<keyof UpdateSubscribersRequest, string>;
 
-interface RequiredUiElements {
+interface RequiredUiElements extends BreadcrumbsUiElements {
   spinner: HTMLElement;
   feedNameContainer: HTMLElement;
   feedName: HTMLElement;

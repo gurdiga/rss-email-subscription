@@ -1,14 +1,33 @@
 import { AddNewFeedRequestData, AddNewFeedResponseData } from '../domain/feed';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
-import { displayInitError, displayValidationError, HttpMethod, navigateTo, preventDoubleClick } from './shared';
-import { requireUiElements, sendApiRequest, uiFeedFormFields, UiFeedFormFields } from './shared';
+import {
+  breadcrumbsUiElements,
+  BreadcrumbsUiElements,
+  displayBreadcrumbs,
+  feedListBreadcrumbsLink,
+} from './breadcrumbs';
+import {
+  ApiResponseUiElements,
+  clearValidationErrors,
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  displayValidationError,
+  HttpMethod,
+  navigateTo,
+  preventDoubleClick,
+  requireUiElements,
+  sendApiRequest,
+  uiFeedFormFields,
+  UiFeedFormFields,
+} from './shared';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...uiFeedFormFields,
+    ...breadcrumbsUiElements,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
   });
@@ -17,6 +36,8 @@ async function main() {
     displayInitError(uiElements.reason);
     return;
   }
+
+  displayBreadcrumbs(uiElements, [feedListBreadcrumbsLink]);
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
@@ -67,7 +88,7 @@ async function submitForm(formFields: UiFeedFormFields) {
   );
 }
 
-interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements {
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {
   submitButton: HTMLButtonElement;
 }
 

@@ -3,6 +3,13 @@ import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
+import {
+  BreadcrumbsUiElements,
+  breadcrumbsUiElements,
+  displayBreadcrumbs,
+  feedListBreadcrumbsLink,
+  makeFeedManageBreadcrumbsLink,
+} from './breadcrumbs';
 import { displayInitError, displayValidationError, HttpMethod, loadUiFeed, navigateTo } from './shared';
 import { preventDoubleClick, requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
 import { UiFeedFormFields, uiFeedFormFields } from './shared';
@@ -30,6 +37,7 @@ async function main() {
     spinner: '#spinner',
     form: '#edit-form',
     ...uiFeedFormFields,
+    ...breadcrumbsUiElements,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
   });
@@ -50,6 +58,11 @@ async function main() {
 
   fillForm(uiElements, uiFeed);
   unhideElement(uiElements.form);
+  displayBreadcrumbs(uiElements, [
+    feedListBreadcrumbsLink,
+    makeFeedManageBreadcrumbsLink(uiFeed.displayName, feedId),
+    { label: 'Edit feed' },
+  ]);
 
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
@@ -108,7 +121,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   );
 }
 
-interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements {
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {
   spinner: HTMLElement;
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;

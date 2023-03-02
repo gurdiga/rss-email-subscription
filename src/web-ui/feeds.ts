@@ -1,13 +1,15 @@
 import { UiFeedListItem } from '../domain/feed';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { si } from '../shared/string-utils';
+import { breadcrumbsUiElements, BreadcrumbsUiElements, displayBreadcrumbs } from './breadcrumbs';
 import { displayInitError, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
+    ...breadcrumbsUiElements,
     spinner: '#spinner',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
@@ -17,6 +19,12 @@ async function main() {
     displayInitError(uiElements.reason);
     return;
   }
+
+  displayBreadcrumbs(uiElements, [
+    {
+      label: uiElements.pageTitle.textContent!,
+    },
+  ]);
 
   const uiFeedList = await loadUiFeedList();
 
@@ -103,7 +111,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends FeedListUiElements {
+interface RequiredUiElements extends FeedListUiElements, BreadcrumbsUiElements {
   spinner: HTMLElement;
 }
 
