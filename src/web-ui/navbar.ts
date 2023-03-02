@@ -3,12 +3,6 @@ import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { displayInitError, hideElement, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
 
-interface RequiredUiElements {
-  publicNav: HTMLElement;
-  privateNav: HTMLElement;
-  signOutLink: HTMLAnchorElement;
-}
-
 function main() {
   const navbarCookie = getCookieByName(navbarCookieName);
 
@@ -64,6 +58,12 @@ export function getCookieByName(name: string, documentCookie = document.cookie):
   const value = decodeURIComponent(encodedValue);
 
   return value;
+}
+
+interface RequiredUiElements {
+  publicNav: HTMLElement;
+  privateNav: HTMLElement;
+  signOutLink: HTMLAnchorElement;
 }
 
 globalThis.window && main();
