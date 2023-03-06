@@ -14,9 +14,7 @@ import {
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...spinnerUiElements,
-    planNameLabel: '#plan-name-label',
     emailLabel: '#email-label',
-    changePlanButton: '#change-plan',
     changeEmailButton: '#change-email',
     changePasswordButton: '#change-password',
   });
@@ -35,7 +33,13 @@ async function main() {
     return;
   }
 
-  const fillUiResult = fillUi(uiElements, uiAccount);
+  const fillUiResult = fillUiElements([
+    {
+      element: uiElements.emailLabel,
+      propName: 'textContent',
+      value: uiAccount.email,
+    },
+  ]);
 
   if (isErr(fillUiResult)) {
     displayInitError(fillUiResult.reason);
@@ -52,22 +56,6 @@ async function main() {
 function bindChangePlanButton(_uiElements: RequiredUiElements, _uiAccount: UiAccount): void {
   // TODO: Add planId to UiAccount to be able to pre-select it in the dropdown.
   // TODO: Prep the edit form markup, and unhide it here.
-}
-
-function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  return fillUiElements([
-    {
-      element: uiElements.planNameLabel,
-      propName: 'textContent',
-      value: uiAccount.planName,
-    },
-
-    {
-      element: uiElements.emailLabel,
-      propName: 'textContent',
-      value: uiAccount.email,
-    },
-  ]);
 }
 
 export async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
@@ -88,15 +76,16 @@ export async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends PlanSectionUiElements, SpinnerUiElements {
+interface RequiredUiElements extends EmailUiElements, PasswordUiElements, SpinnerUiElements {}
+
+interface EmailUiElements {
   emailLabel: HTMLElement;
   changeEmailButton: HTMLButtonElement;
-  changePasswordButton: HTMLButtonElement;
+  // TODO: Add edit form elements.
 }
 
-interface PlanSectionUiElements {
-  planNameLabel: HTMLElement;
-  changePlanButton: HTMLButtonElement;
+interface PasswordUiElements {
+  changePasswordButton: HTMLButtonElement;
   // TODO: Add edit form elements.
 }
 

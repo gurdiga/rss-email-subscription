@@ -1,6 +1,5 @@
 import { UiAccount } from '../domain/account';
 import { loadAccount } from '../domain/account-storage';
-import { getPlanName } from '../domain/plan';
 import { makeAppError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -33,7 +32,6 @@ export const loadCurrentAccount: RequestHandler = async function loadCurrentAcco
 
   const logData = {};
   const responseData: UiAccount = {
-    planName: getPlanName(account.planId),
     email: account.email.value,
   };
 

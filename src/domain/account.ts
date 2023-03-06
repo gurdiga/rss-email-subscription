@@ -42,7 +42,6 @@ export interface AccountData {
 }
 
 export interface UiAccount {
-  planName: string;
   email: string;
 }
 
