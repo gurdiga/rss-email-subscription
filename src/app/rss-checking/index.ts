@@ -35,7 +35,10 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
   const { validItems, invalidItems } = rssParsingResult;
 
   if (isNotEmpty(invalidItems)) {
-    logWarning('Found invalid items', { count: invalidItems.length, invalidItems });
+    logWarning('Found invalid items', {
+      count: invalidItems.length,
+      first2InvalidItems: invalidItems.slice(0, 2), // Slicing because of Docker’s 16k log message length.
+    });
   }
 
   if (isEmpty(validItems)) {
