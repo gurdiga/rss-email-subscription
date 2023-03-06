@@ -1,5 +1,4 @@
 import { PagePath } from '../domain/page-path';
-import { isPlanId, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
@@ -25,7 +24,6 @@ function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
-    plan: '#plan',
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
@@ -39,8 +37,6 @@ function main() {
     return;
   }
 
-  maybePreselectPlan(uiElements.plan, location.href);
-
   uiElements.submitButton.addEventListener('click', async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
@@ -48,7 +44,6 @@ function main() {
     preventDoubleClick(uiElements.submitButton, async () => {
       const response = await asyncAttempt(() =>
         sendApiRequest('/registration', HttpMethod.POST, {
-          plan: uiElements.plan.value,
           email: uiElements.email.value,
           password: uiElements.password.value,
         })
@@ -82,22 +77,12 @@ export interface RequiredUiElements extends FormUiElements, AppStatusUiElements 
 }
 
 export interface FormFields {
-  plan: HTMLSelectElement;
   email: HTMLInputElement;
   password: HTMLInputElement;
 }
 
 export interface FormUiElements extends FormFields {
   submitButton: HTMLButtonElement;
-}
-
-export function maybePreselectPlan(planDropDown: HTMLSelectElement, locationHref: string) {
-  const planParam = new URL(locationHref).searchParams.get('plan')!;
-  const planId = makePlanId(planParam);
-
-  if (isPlanId(planId)) {
-    planDropDown.value = planId;
-  }
 }
 
 globalThis.window && main();

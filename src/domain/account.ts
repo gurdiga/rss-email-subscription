@@ -2,7 +2,6 @@ import { EmailAddress } from './email-address';
 import { Err, getTypeName, hasKind, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { HashedPassword } from './hashed-password';
-import { PlanId } from './plan';
 
 export interface AccountId {
   kind: 'AccountId';
@@ -25,7 +24,6 @@ export function isAccountId(value: unknown): value is AccountId {
 }
 
 export interface Account {
-  planId: PlanId;
   email: EmailAddress;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
@@ -33,7 +31,6 @@ export interface Account {
 }
 
 export interface AccountData {
-  plan: string;
   email: string;
   hashedPassword: string;
   creationTimestamp: Date;

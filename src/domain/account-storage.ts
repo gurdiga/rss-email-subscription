@@ -5,7 +5,6 @@ import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { makeHashedPassword } from './hashed-password';
-import { makePlanId } from './plan';
 import { AccountIdList, makeAccountId, isAccountId, AccountId, Account, AccountData } from './account';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
@@ -70,12 +69,6 @@ export function loadAccount(
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${email.reason}`, 'email');
   }
 
-  const planId = makePlanId(loadItemResult.plan);
-
-  if (isErr(planId)) {
-    return makeErr(si`Invalid stored data for account ${accountId.value}: ${planId.reason}`, 'plan');
-  }
-
   const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
 
   if (isErr(hashedPassword)) {
@@ -101,7 +94,6 @@ export function loadAccount(
   }
 
   return {
-    planId,
     email,
     hashedPassword,
     creationTimestamp,
@@ -112,7 +104,6 @@ export function loadAccount(
 export function storeAccount(storage: AppStorage, accountId: AccountId, account: Account): Result<void> {
   const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
-    plan: account.planId,
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,

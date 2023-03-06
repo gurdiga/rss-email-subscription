@@ -10,7 +10,6 @@ import { makeCustomLoggers } from '../shared/logging';
 import { App } from './init-app';
 import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { RequestHandler } from './request-handler';
-import { makePlanId, PlanId } from '../domain/plan';
 import { AppSettings } from '../domain/app-settings';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
@@ -143,21 +142,13 @@ interface Input {
 
 interface ProcessedInput {
   kind: 'ProcessedInput';
-  planId: PlanId;
   email: EmailAddress;
   password: NewPassword;
 }
 
 function processInput(input: Input): Result<ProcessedInput, keyof Input> {
   const module = si`${registration.name}-${processInput.name}`;
-  const { logWarning } = makeCustomLoggers({ plan: input.plan, email: input.email, module });
-
-  const planId = makePlanId(input.plan);
-
-  if (isErr(planId)) {
-    logWarning('Invalid plan ID', { input: input.plan, reason: planId.reason });
-    return { ...planId, field: 'plan' };
-  }
+  const { logWarning } = makeCustomLoggers({ email: input.email, module });
 
   const email = makeEmailAddress(input.email);
 
@@ -175,7 +166,6 @@ function processInput(input: Input): Result<ProcessedInput, keyof Input> {
 
   return {
     kind: 'ProcessedInput',
-    planId,
     email,
     password,
   };
@@ -199,7 +189,6 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
 
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
   const account: Account = {
-    planId: input.planId,
     email: input.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     creationTimestamp: new Date(),

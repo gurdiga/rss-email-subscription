@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Err, makeErr } from '../shared/lang';
+import { Err, isErr, makeErr } from '../shared/lang';
 import { AppStorage } from './storage';
 import { si } from '../shared/string-utils';
 import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
@@ -10,7 +10,6 @@ import { getAccountIdList, getAccountStorageKey } from './account-storage';
 import { makeAccountId } from './account';
 import { loadAccount, storeAccount } from './account-storage';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
-import { makePlanId, PlanId } from './plan';
 
 const creationTimestamp = new Date();
 export const accountId = makeTestAccountId();
@@ -45,7 +44,6 @@ describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
     const storageKey = '/account';
     const accountData: AccountData = {
-      plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
@@ -56,7 +54,6 @@ describe(loadAccount.name, () => {
     const expectedResult: Account = {
       email: makeTestEmailAddress(accountData.email),
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
-      planId: makePlanId(accountData.plan) as PlanId,
       creationTimestamp,
       confirmationTimestamp: undefined,
     };
@@ -74,7 +71,6 @@ describe(loadAccount.name, () => {
 
   it('returns an Err value when stored email is invalid', () => {
     const accountData: AccountData = {
-      plan: 'sde',
       email: 'not-an-email-really',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
@@ -90,24 +86,8 @@ describe(loadAccount.name, () => {
     );
   });
 
-  it('returns an Err value when stored plan ID is unrecognized', () => {
-    const accountData: AccountData = {
-      plan: 'magic',
-      email: 'test@test.com',
-      hashedPassword: 'x'.repeat(hashedPasswordLength),
-      creationTimestamp,
-    };
-    const storage = makeTestStorage({ loadItem: () => accountData });
-    const result = loadAccount(storage, accountId);
-
-    expect(result).to.deep.equal(
-      makeErr(si`Invalid stored data for account ${accountId.value}: Unknown plan ID: magic`, 'plan')
-    );
-  });
-
   it('returns an Err value when stored hashed password is invalid', () => {
     const accountData: AccountData = {
-      plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'la-la-la',
       creationTimestamp,
@@ -127,7 +107,6 @@ describe(loadAccount.name, () => {
 describe(storeAccount.name, () => {
   it('stores the given account', () => {
     const account: Account = {
-      planId: 'sde',
       email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       creationTimestamp,
@@ -147,7 +126,6 @@ describe(storeAccount.name, () => {
 
   function getAccountData(account: Account): AccountData {
     return {
-      plan: account.planId,
       email: account.email.value,
       hashedPassword: account.hashedPassword.value,
       confirmationTimestamp: account.confirmationTimestamp,
@@ -159,7 +137,6 @@ describe(storeAccount.name, () => {
 describe(confirmAccount.name, () => {
   it('sets confirmationTimestamp on the given account', () => {
     const accountData: AccountData = {
-      plan: 'sde',
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       creationTimestamp,
@@ -176,8 +153,9 @@ describe(confirmAccount.name, () => {
 
     const result = confirmAccount(storage, accountId, () => confirmationTimestamp);
 
+    expect(isErr(result), si`result: ${JSON.stringify(result)}`).to.be.false;
+
     const expectedStoredData: AccountData = {
-      plan: accountData.plan,
       email: accountData.email,
       hashedPassword: accountData.hashedPassword,
       confirmationTimestamp,
