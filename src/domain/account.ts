@@ -41,6 +41,11 @@ export interface AccountData {
   feedIds?: string[];
 }
 
+export interface UiAccount {
+  planName: string;
+  email: string;
+}
+
 export interface AccountNotFound {
   kind: 'AccountNotFound';
 }

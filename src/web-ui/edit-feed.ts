@@ -1,8 +1,9 @@
 import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
+import { FeedId, makeFeedId } from '../domain/feed-id';
+import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import { ApiResponseUiElements, clearValidationErrors, displayApiResponse, displayCommunicationError } from './shared';
+import { si } from '../shared/string-utils';
 import {
   BreadcrumbsUiElements,
   breadcrumbsUiElements,
@@ -10,11 +11,26 @@ import {
   feedListBreadcrumbsLink,
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
-import { displayInitError, displayValidationError, HttpMethod, loadUiFeed, navigateTo } from './shared';
-import { preventDoubleClick, requireQueryParams, requireUiElements, sendApiRequest, unhideElement } from './shared';
-import { UiFeedFormFields, uiFeedFormFields } from './shared';
-import { FeedId, makeFeedId } from '../domain/feed-id';
-import { si } from '../shared/string-utils';
+import {
+  ApiResponseUiElements,
+  clearValidationErrors,
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  displayValidationError,
+  HttpMethod,
+  loadUiFeed,
+  navigateTo,
+  preventDoubleClick,
+  requireQueryParams,
+  requireUiElements,
+  sendApiRequest,
+  SpinnerUiElements,
+  spinnerUiElements,
+  UiFeedFormFields,
+  uiFeedFormFields,
+  unhideElement,
+} from './shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
@@ -34,10 +50,10 @@ async function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
-    spinner: '#spinner',
     form: '#edit-form',
     ...uiFeedFormFields,
     ...breadcrumbsUiElements,
+    ...spinnerUiElements,
     submitButton: '#submit-button',
     apiResponseMessage: '#api-response-message',
   });
@@ -124,8 +140,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   );
 }
 
-interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {
-  spinner: HTMLElement;
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements, SpinnerUiElements {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
 }

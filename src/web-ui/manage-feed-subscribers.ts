@@ -26,6 +26,8 @@ import {
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
+  spinnerUiElements,
+  SpinnerUiElements,
   unhideElement,
 } from './shared';
 
@@ -48,7 +50,7 @@ async function main() {
 
   const uiElements = requireUiElements<RequiredUiElements>({
     ...breadcrumbsUiElements,
-    spinner: '#spinner',
+    ...spinnerUiElements,
     feedNameContainer: '#feed-name-container',
     feedName: '#feed-name',
     forms: '#forms',
@@ -235,8 +237,7 @@ interface UpdateSubscribersRequest {
 
 export type UpdateSubscribersRequestData = Record<keyof UpdateSubscribersRequest, string>;
 
-interface RequiredUiElements extends BreadcrumbsUiElements {
-  spinner: HTMLElement;
+interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   feedNameContainer: HTMLElement;
   feedName: HTMLElement;
   forms: HTMLElement;

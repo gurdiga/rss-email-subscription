@@ -22,3 +22,14 @@ export function makePlanId(planId: string): Result<PlanId> {
 
   return planId as PlanId;
 }
+
+export function getPlanName(planId: PlanId): string {
+  switch (planId) {
+    case 'minimal':
+      return 'Minimal';
+    case 'standard':
+      return 'Standard';
+    case 'sde':
+      return 'SDE';
+  }
+}

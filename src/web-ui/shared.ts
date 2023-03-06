@@ -110,7 +110,6 @@ export function displayInitError(message: string) {
   }
 
   errorMessageElement.textContent = message;
-  errorMessageElement.className = 'alert alert-danger';
   unhideElement(errorMessageElement);
 
   reportError(message);
@@ -125,6 +124,14 @@ export interface ApiResponseUiElements {
 export interface AppErrorUiElements {
   appErrorMessage: HTMLElement;
 }
+
+export interface SpinnerUiElements {
+  spinner: HTMLElement;
+}
+
+export const spinnerUiElements: Record<keyof SpinnerUiElements, string> = {
+  spinner: '#spinner',
+};
 
 export function displayApiResponse(apiResponse: ApiResponse, messageElement: Element): void {
   const isDanger = isInputError(apiResponse) || isAppError(apiResponse);

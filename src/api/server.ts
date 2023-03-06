@@ -5,7 +5,7 @@ import { getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
-import { loadAccount } from './account';
+import { loadCurrentAccount } from './account';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
 import {
@@ -55,7 +55,7 @@ async function main() {
   router.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
   router.post('/authentication', makeRequestHandler(authentication, app));
   router.post('/deauthentication', makeRequestHandler(deauthentication, app));
-  router.get('/account', makeRequestHandler(loadAccount, app));
+  router.get('/account', makeRequestHandler(loadCurrentAccount, app));
   router.get('/feeds', makeRequestHandler(loadFeeds, app));
   router.get('/feeds/:feedId', makeRequestHandler(loadFeedById, app));
   router.get('/feeds/:feedId/subscribers', makeRequestHandler(loadFeedSubscribers, app));

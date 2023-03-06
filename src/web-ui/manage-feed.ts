@@ -19,6 +19,8 @@ import {
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
+  SpinnerUiElements,
+  spinnerUiElements,
   unhideElement,
 } from './shared';
 
@@ -41,7 +43,7 @@ async function main() {
 
   const uiElements = requireUiElements<RequiredUiElements>({
     ...breadcrumbsUiElements,
-    spinner: '#spinner',
+    ...spinnerUiElements,
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
     editLink: '#edit-link',
@@ -166,8 +168,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
 }
 
-interface RequiredUiElements extends BreadcrumbsUiElements {
-  spinner: HTMLElement;
+interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;

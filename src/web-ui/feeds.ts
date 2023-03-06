@@ -5,12 +5,20 @@ import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { breadcrumbsUiElements, BreadcrumbsUiElements, displayBreadcrumbs } from './breadcrumbs';
-import { displayInitError, HttpMethod, requireUiElements, sendApiRequest, unhideElement } from './shared';
+import {
+  displayInitError,
+  HttpMethod,
+  requireUiElements,
+  sendApiRequest,
+  SpinnerUiElements,
+  spinnerUiElements,
+  unhideElement,
+} from './shared';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...breadcrumbsUiElements,
-    spinner: '#spinner',
+    ...spinnerUiElements,
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
   });
@@ -111,9 +119,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends FeedListUiElements, BreadcrumbsUiElements {
-  spinner: HTMLElement;
-}
+interface RequiredUiElements extends FeedListUiElements, BreadcrumbsUiElements, SpinnerUiElements {}
 
 interface FeedListUiElements {
   feedListPreamble: HTMLElement;

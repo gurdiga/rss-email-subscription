@@ -1,10 +1,22 @@
+import { PagePath } from '../domain/page-path';
 import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { ApiResponseUiElements, displayApiResponse, displayCommunicationError, displayInitError } from './shared';
-import { hideElement, reportError, navigateTo, requireUiElements, sendApiRequest, unhideElement } from './shared';
-import { HttpMethod } from './shared';
-import { PagePath } from '../domain/page-path';
+import {
+  ApiResponseUiElements,
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  hideElement,
+  HttpMethod,
+  navigateTo,
+  reportError,
+  requireUiElements,
+  sendApiRequest,
+  SpinnerUiElements,
+  spinnerUiElements,
+  unhideElement,
+} from './shared';
 
 async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
@@ -16,7 +28,7 @@ async function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
-    spinner: '#spinner',
+    ...spinnerUiElements,
     apiResponseMessage: '#api-response-message',
   });
 
@@ -56,8 +68,6 @@ function validateSecretFromQueryStringParam(locationSearch: string): Result<stri
   return secret;
 }
 
-interface RequiredUiElements extends ApiResponseUiElements {
-  spinner: HTMLElement;
-}
+interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {}
 
 main();
