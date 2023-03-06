@@ -16,6 +16,9 @@ async function main() {
     ...spinnerUiElements,
     planNameLabel: '#plan-name-label',
     emailLabel: '#email-label',
+    changePlanButton: '#change-plan',
+    changeEmailButton: '#change-email',
+    changePasswordButton: '#change-password',
   });
 
   if (isErr(uiElements)) {
@@ -39,9 +42,16 @@ async function main() {
     return;
   }
 
+  bindChangePlanButton(uiElements, uiAccount);
+
   // TODO
   // - Edit each of the sections
   console.log('Hello account', uiAccount);
+}
+
+function bindChangePlanButton(_uiElements: RequiredUiElements, _uiAccount: UiAccount): void {
+  // TODO: Add planId to UiAccount to be able to pre-select it in the dropdown.
+  // TODO: Prep the edit form markup, and unhide it here.
 }
 
 function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
@@ -78,9 +88,16 @@ export async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends SpinnerUiElements {
-  planNameLabel: HTMLElement;
+interface RequiredUiElements extends PlanSectionUiElements, SpinnerUiElements {
   emailLabel: HTMLElement;
+  changeEmailButton: HTMLButtonElement;
+  changePasswordButton: HTMLButtonElement;
+}
+
+interface PlanSectionUiElements {
+  planNameLabel: HTMLElement;
+  changePlanButton: HTMLButtonElement;
+  // TODO: Add edit form elements.
 }
 
 main();
