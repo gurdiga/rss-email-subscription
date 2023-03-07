@@ -15,11 +15,7 @@ import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { requireEnv } from '../shared/env';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
-import {
-  RegistrationConfirmationSecret,
-  storeRegistrationConfirmationSecret,
-  makeRegistrationConfirmationSecret,
-} from '../domain/registration-confirmation-secrets';
+import { ConfirmationSecret, storeConfirmationSecret, makeConfirmationSecret } from '../domain/confirmation-secrets';
 import { si } from '../shared/string-utils';
 import { PagePath } from '../domain/page-path';
 
@@ -48,7 +44,7 @@ export const registration: RequestHandler = async function registration(_reqId, 
   }
 
   const accountId = initAccountResult;
-  const storeConfirmationSecretResult = storeConfirmationSecret(app, email, accountId);
+  const storeConfirmationSecretResult = storeRegistrationConfirmationSecret(app, email, accountId);
 
   if (isErr(storeConfirmationSecretResult)) {
     return makeAppError(storeConfirmationSecretResult.reason);
@@ -57,19 +53,19 @@ export const registration: RequestHandler = async function registration(_reqId, 
   return makeSuccess('Account created. Welcome aboard! 🙂');
 };
 
-export function storeConfirmationSecret(
+export function storeRegistrationConfirmationSecret(
   { settings, storage }: App,
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const module = si`${registration.name}-${storeConfirmationSecret.name}`;
+  const module = si`${registration.name}-${storeRegistrationConfirmationSecret.name}`;
   const { logError, logInfo } = makeCustomLoggers({ accountId, module });
 
-  const confirmationSecret = makeConfirmationSecret(emailAddress, settings.hashingSalt);
-  const result = storeRegistrationConfirmationSecret(storage, confirmationSecret, accountId);
+  const confirmationSecret = makeRegistrationConfirmationSecret(emailAddress, settings.hashingSalt);
+  const result = storeConfirmationSecret(storage, confirmationSecret, accountId);
 
   if (isErr(result)) {
-    logError(si`Failed to ${storeRegistrationConfirmationSecret.name}`, { reason: result.reason });
+    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: result.reason });
     return makeErr('Couldn’t store confirmation secret');
   }
 
@@ -103,18 +99,18 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
 
 export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
   const url = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
-  const secret = makeConfirmationSecret(to, appHashingSalt);
+  const secret = makeRegistrationConfirmationSecret(to, appHashingSalt);
 
   url.searchParams.set('secret', secret.value);
 
   return url;
 }
 
-function makeConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): RegistrationConfirmationSecret {
+function makeRegistrationConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): ConfirmationSecret {
   // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
   const emailAddressHash = hash(emailAddress.value, si`confirmation-secret-${appHashingSalt}`);
 
-  return makeRegistrationConfirmationSecret(emailAddressHash);
+  return makeConfirmationSecret(emailAddressHash);
 }
 
 export function makeRegistrationConfirmationEmailContent(confirmationLink: URL): EmailContent {

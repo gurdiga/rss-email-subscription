@@ -3,10 +3,7 @@ import { EmailChangeResponse, makeEmailChangeRequest, UiAccount } from '../domai
 import { setAccountNewUnconfirmedEmail, loadAccount } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
 import { PagePath } from '../domain/page-path';
-import {
-  makeRegistrationConfirmationSecret,
-  RegistrationConfirmationSecret,
-} from '../domain/registration-confirmation-secrets';
+import { makeConfirmationSecret, ConfirmationSecret } from '../domain/confirmation-secrets';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
@@ -113,14 +110,11 @@ export function makeEmailChangeConfirmationLink(to: EmailAddress, appHashingSalt
 
 // TODO: Store confirmation secrets separately or re-use registration confirmation secrets?
 
-function makeEmailConfirmationSecret(
-  emailAddress: EmailAddress,
-  appHashingSalt: string
-): RegistrationConfirmationSecret {
+function makeEmailConfirmationSecret(emailAddress: EmailAddress, appHashingSalt: string): ConfirmationSecret {
   // ASSUMPTION: SHA256 gives good enough uniqueness (extremely rare collisions).
   const emailAddressHash = hash(emailAddress.value, si`email-change-confirmation-secret-${appHashingSalt}`);
 
-  return makeRegistrationConfirmationSecret(emailAddressHash);
+  return makeConfirmationSecret(emailAddressHash);
 }
 
 export function makeEmailChangeConfirmationEmailContent(confirmationLink: URL): EmailContent {

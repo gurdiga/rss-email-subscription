@@ -1,11 +1,11 @@
 import { AccountId } from '../domain/account';
 import { confirmAccount } from '../domain/account-storage';
 import {
-  deleteRegistrationConfirmationSecret,
-  getAccountIdForRegistrationConfirmationSecret,
-  validateRegistrationConfirmationSecret,
-  RegistrationConfirmationSecret,
-} from '../domain/registration-confirmation-secrets';
+  deleteConfirmationSecret,
+  getDataForConfirmationSecret,
+  validateConfirmationSecret,
+  ConfirmationSecret,
+} from '../domain/confirmation-secrets';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -50,31 +50,31 @@ export const registrationConfirmation: RequestHandler = async function registrat
 };
 
 interface ProcessedInput {
-  secret: RegistrationConfirmationSecret;
+  secret: ConfirmationSecret;
 }
 
 function processInput(input: Input): Result<ProcessedInput> {
   const module = si`${registrationConfirmation.name}-${processInput.name}`;
   const { logWarning } = makeCustomLoggers({ module, secret: input.secret });
 
-  const secret = validateRegistrationConfirmationSecret(input.secret);
+  const secret = validateConfirmationSecret(input.secret);
 
   if (isErr(secret)) {
-    logWarning(si`Failed to ${validateRegistrationConfirmationSecret.name}`, { reason: secret.reason });
+    logWarning(si`Failed to ${validateConfirmationSecret.name}`, { reason: secret.reason });
     return makeErr('Invalid registration confirmation link');
   }
 
   return { secret };
 }
 
-function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirmationSecret): Result<AccountId> {
+function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
   const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;
   const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
 
-  const accountId = getAccountIdForRegistrationConfirmationSecret(storage, secret);
+  const accountId = getDataForConfirmationSecret(storage, secret);
 
   if (isErr(accountId)) {
-    logWarning(si`Failed to ${getAccountIdForRegistrationConfirmationSecret.name}`, { reason: accountId.reason });
+    logWarning(si`Failed to ${getDataForConfirmationSecret.name}`, { reason: accountId.reason });
     return makeErr('Invalid registration confirmation link');
   }
 
@@ -85,10 +85,10 @@ function confirmAccountBySecret(storage: AppStorage, secret: RegistrationConfirm
     return makeErr('Failed to confirm account');
   }
 
-  const deleteRegistrationConfirmationSecretResult = deleteRegistrationConfirmationSecret(storage, secret);
+  const deleteRegistrationConfirmationSecretResult = deleteConfirmationSecret(storage, secret);
 
   if (isErr(deleteRegistrationConfirmationSecretResult)) {
-    logError(si`Failed to ${deleteRegistrationConfirmationSecret.name}`, {
+    logError(si`Failed to ${deleteConfirmationSecret.name}`, {
       reason: deleteRegistrationConfirmationSecretResult.reason,
       secret: secret.value,
     });
