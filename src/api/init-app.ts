@@ -14,11 +14,12 @@ export interface App {
 export interface AppEnv {
   DATA_DIR_ROOT: string;
   DOMAIN_NAME: string;
+  SMTP_CONNECTION_STRING: string;
 }
 
 export function initApp(): App {
   const { logError } = makeCustomLoggers({ module: initApp.name });
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
