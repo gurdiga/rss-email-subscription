@@ -35,7 +35,7 @@ export function makeFullEmailAddress(displayName: string, emailAddress: EmailAdd
 
 export function parseEmails(emailList: string): EmailList {
   const emailStrings = emailList.split('\n').filter(isNonEmptyString);
-  const emails = emailStrings.map(makeEmailAddress);
+  const emails = emailStrings.map((x) => makeEmailAddress(x));
   const validEmails = emails.filter(isEmailAddress).filter(filterUniqBy((e) => e.value));
   const invalidEmails = emails.filter(isErr).map((e) => e.reason);
 

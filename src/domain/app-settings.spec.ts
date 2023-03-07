@@ -55,7 +55,7 @@ describe(loadAppSettings.name, () => {
 
     expect(result({ displayName: undefined })).to.deep.equal(makeErr('Display name is missing in app settings.'));
     expect(result({ emailAddress: '@no-email' })).to.deep.equal(
-      makeErr('Email is syntactically incorrect: "@no-email"')
+      makeErr('Email is syntactically incorrect: "@no-email"', 'email')
     );
   });
 });

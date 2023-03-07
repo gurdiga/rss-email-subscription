@@ -1,31 +1,30 @@
-import { hasKind } from '../shared/lang';
-import { makeErr, Result } from '../shared/lang';
+import { hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { EmailAddress } from './email-address';
 
 export const maxEmailAddressLength = 100;
 
-export function makeEmailAddress(input: unknown): Result<EmailAddress> {
+export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailAddress> {
   if (!input) {
-    return makeErr('Email is empty');
+    return makeErr('Email is empty', field);
   }
 
   if (typeof input !== 'string') {
-    return makeErr('Email must be a string');
+    return makeErr('Email must be a string', field);
   }
 
   const emailString = input;
   const email = emailString.trim().toLocaleLowerCase();
 
   if (!email) {
-    return makeErr('Email is empty');
+    return makeErr('Email is empty', field);
   }
 
   if (email.length > maxEmailAddressLength) {
-    return makeErr(si`Email needs to have less than ${maxEmailAddressLength} characters`);
+    return makeErr(si`Email needs to have less than ${maxEmailAddressLength} characters`, field);
   }
 
-  const err = makeErr(si`Email is syntactically incorrect: "${emailString}"`);
+  const err = makeErr(si`Email is syntactically incorrect: "${emailString}"`, field);
 
   const keyCharacters = ['.', '@'];
   const containsKeyCharacters = keyCharacters.every((c) => email.includes(c));
