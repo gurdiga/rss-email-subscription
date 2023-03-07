@@ -12,7 +12,7 @@ describe(parseRssItems.name, () => {
   const baseURL = new URL('https://example.com');
 
   it('returns a RssParsingResult containing the items', async () => {
-    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.xml'), 'utf-8');
+    const xml = readFixture('rss-parsing.spec.fixture.xml');
     const expectedValidItems: RssItem[] = [
       {
         title: 'Serial post Sat Jun 12 19:04:59 EEST 2021',
@@ -54,7 +54,7 @@ describe(parseRssItems.name, () => {
   });
 
   it('can extract <content:encoded>', async () => {
-    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.seth.xml'), 'utf-8');
+    const xml = readFixture('rss-parsing.spec.fixture.seth.xml');
     const expectedValidItems: RssItem[] = [
       {
         title: 'Instead',
@@ -89,7 +89,7 @@ describe(parseRssItems.name, () => {
   });
 
   it('only returns maxValidItems most recent valid items', async () => {
-    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.max.xml'), 'utf-8');
+    const xml = readFixture('rss-parsing.spec.fixture.max.xml');
 
     const result = (await parseRssItems({
       kind: 'RssResponse',
@@ -193,7 +193,7 @@ describe(parseRssItems.name, () => {
   });
 
   it('takes "summary" when no "content"', async () => {
-    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.2ality.xml'), 'utf-8');
+    const xml = readFixture('rss-parsing.spec.fixture.2ality.xml');
 
     const result = (await parseRssItems({
       kind: 'RssResponse',
@@ -201,7 +201,7 @@ describe(parseRssItems.name, () => {
       baseURL,
     })) as RssParsingResult;
 
-    expect(result.validItems[1]?.content).to.equal('Sample content');
+    expect(result.validItems[1]?.content).to.equal('Sample summary content');
   });
 
   it('returns an InvalidRssParsingResult value when invalid XML', async () => {
@@ -229,7 +229,7 @@ describe(parseRssItems.name, () => {
   });
 
   it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
-    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.xml'), 'utf-8');
+    const xml = readFixture('rss-parsing.spec.fixture.xml');
     const buildRssItemFn = makeThrowingStub<MakeRssItemFn>(new Error('Something broke!'));
 
     const result = (await parseRssItems(
@@ -334,4 +334,8 @@ describe(parseRssItems.name, () => {
       });
     });
   });
+
+  function readFixture(fileName: string): string {
+    return readFileSync(makePath(__dirname, fileName), 'utf-8');
+  }
 });
