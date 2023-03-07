@@ -8,16 +8,23 @@ import { si } from '../../shared/string-utils';
 
 export async function sendEmail(
   from: FullEmailAddress,
-  { value: to }: EmailAddress,
-  { value: replyTo }: EmailAddress,
-  { subject, htmlBody }: EmailContent,
+  to: EmailAddress,
+  replyTo: EmailAddress,
+  emailContent: EmailContent,
   env: EmailDeliveryEnv,
   deliverEmailFn: DeliverEmailFn = deliverEmail
 ): Promise<Result<DeliveryInfo>> {
   try {
-    return await deliverEmailFn({ from, to, replyTo, subject, htmlBody, env });
+    return await deliverEmailFn({
+      from,
+      to: to.value,
+      replyTo: replyTo.value,
+      subject: emailContent.subject,
+      htmlBody: emailContent.htmlBody,
+      env,
+    });
   } catch (error) {
-    return makeErr(si`Could not deliver email to ${to}: ${getErrorMessage(error)}`);
+    return makeErr(si`Could not deliver email to ${to.value}: ${getErrorMessage(error)}`);
   }
 }
 
