@@ -8,6 +8,7 @@ export enum PagePath {
   feedEdit = '/user/edit-feed.html',
   manageFeedSubscribers = '/user/manage-feed-subscribers.html',
   registrationConfirmation = '/user/registration-confirmation.html',
+  emailChangeConfirmation = '/user/email-change-confirmation.html',
 }
 
 export function makePagePathWithParams(pagePath: PagePath, params: Record<string, string>) {
