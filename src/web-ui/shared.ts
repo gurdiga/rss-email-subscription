@@ -63,7 +63,9 @@ export function requireQueryParams<RequiredParams>(
   return params;
 }
 
-export function requireUiElements<T>(selectors: Record<keyof T, string>, querySelectorFn = querySelector): Result<T> {
+export type ElementSelectors<T> = Record<keyof T, string>;
+
+export function requireUiElements<T>(selectors: ElementSelectors<T>, querySelectorFn = querySelector): Result<T> {
   const uiElements = {} as T;
 
   for (const name in selectors) {
