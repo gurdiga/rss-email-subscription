@@ -14,6 +14,12 @@ import { EmailAddress } from '../domain/email-address';
 import { isUnixCronPattern, UnixCronPattern } from '../domain/cron-pattern';
 import { makeUnixCronPattern } from '../domain/cron-pattern-making';
 import { si } from './string-utils';
+import {
+  ConfirmationSecret,
+  confirmationSecretLength,
+  isConfirmationSecret,
+  makeConfirmationSecret,
+} from '../domain/confirmation-secrets';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -166,6 +172,17 @@ export function makeTestUnixCronPattern(input: string = '1 2 3 4 5'): UnixCronPa
   assert(
     isUnixCronPattern(result),
     si`${makeUnixCronPattern.name} did not return a valid UnixCronPattern: ${JSON.stringify(result)}`
+  );
+
+  return result;
+}
+
+export function makeTestConfirmationSecret(input: string = 'a'.repeat(confirmationSecretLength)): ConfirmationSecret {
+  const result = makeConfirmationSecret(input);
+
+  assert(
+    isConfirmationSecret(result),
+    si`${makeConfirmationSecret.name} did not return a valid ConfirmationSecret: ${JSON.stringify(result)}`
   );
 
   return result;

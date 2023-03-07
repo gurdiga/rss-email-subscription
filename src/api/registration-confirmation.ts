@@ -3,8 +3,8 @@ import { confirmAccount } from '../domain/account-storage';
 import {
   deleteConfirmationSecret,
   getDataForConfirmationSecret,
-  validateConfirmationSecret,
   ConfirmationSecret,
+  makeConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeErr, Result } from '../shared/lang';
@@ -15,10 +15,6 @@ import { RequestHandler } from './request-handler';
 import { initSession } from './session';
 import { enablePrivateNavbarCookie } from './app-cookie';
 
-interface Input {
-  secret: unknown;
-}
-
 export const registrationConfirmation: RequestHandler = async function registrationConfirmation(
   _reqId,
   reqBody,
@@ -26,19 +22,19 @@ export const registrationConfirmation: RequestHandler = async function registrat
   reqSession,
   { storage }
 ) {
-  const processInputResult = processInput({ secret: reqBody['secret'] });
+  const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
+  const secret = makeConfirmationSecret(reqBody['secret']);
 
-  if (isErr(processInputResult)) {
-    return makeInputError(processInputResult.reason, processInputResult.field);
+  if (isErr(secret)) {
+    logWarning(si`Failed to ${makeConfirmationSecret.name}`, { reason: secret.reason, secret: reqBody['secret'] });
+    return makeInputError('Invalid registration confirmation link');
   }
 
-  const confirmAccountBySecretResult = confirmAccountBySecret(storage, processInputResult.secret);
+  const accountId = confirmAccountBySecret(storage, secret);
 
-  if (isErr(confirmAccountBySecretResult)) {
-    return makeAppError(confirmAccountBySecretResult.reason);
+  if (isErr(accountId)) {
+    return makeAppError(accountId.reason);
   }
-
-  const accountId = confirmAccountBySecretResult;
 
   initSession(reqSession, accountId);
 
@@ -48,24 +44,6 @@ export const registrationConfirmation: RequestHandler = async function registrat
 
   return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
 };
-
-interface ProcessedInput {
-  secret: ConfirmationSecret;
-}
-
-function processInput(input: Input): Result<ProcessedInput> {
-  const module = si`${registrationConfirmation.name}-${processInput.name}`;
-  const { logWarning } = makeCustomLoggers({ module, secret: input.secret });
-
-  const secret = validateConfirmationSecret(input.secret);
-
-  if (isErr(secret)) {
-    logWarning(si`Failed to ${validateConfirmationSecret.name}`, { reason: secret.reason });
-    return makeErr('Invalid registration confirmation link');
-  }
-
-  return { secret };
-}
 
 function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
   const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;

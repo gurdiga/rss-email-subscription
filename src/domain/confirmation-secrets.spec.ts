@@ -1,33 +1,41 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { AppStorage } from './storage';
-import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy } from '../shared/test-utils';
 import {
-  validateConfirmationSecret,
-  storeConfirmationSecret,
+  makeSpy,
+  makeTestStorage,
+  makeStub,
+  makeTestAccountId,
+  Spy,
+  makeTestConfirmationSecret,
+} from '../shared/test-utils';
+import {
   makeConfirmationSecret,
+  storeConfirmationSecret,
   deleteConfirmationSecret,
   getDataForConfirmationSecret,
+  confirmationSecretLength,
 } from './confirmation-secrets';
+import { si } from '../shared/string-utils';
 
 describe('Confirmation secrets', () => {
-  describe(validateConfirmationSecret.name, () => {
+  describe(makeConfirmationSecret.name, () => {
     it('returns a ConfirmationSecret value for a valid string input', () => {
       const input = 'x'.repeat(64);
-      const result = validateConfirmationSecret(input);
+      const result = makeConfirmationSecret(input);
 
       expect(result).to.deep.equal(makeConfirmationSecret(input));
     });
 
     it('returns an Err value if input is incorrect', () => {
-      expect(validateConfirmationSecret(undefined as any)).to.deep.equal(makeErr('Empty input'));
-      expect(validateConfirmationSecret('')).to.deep.equal(makeErr('Empty input'));
-      expect(validateConfirmationSecret(42 as any)).to.deep.equal(makeErr('Input of invalid type: number'));
-      expect(validateConfirmationSecret('42x')).to.deep.equal(makeErr('Input of invalid length; expected 64'));
+      expect(makeConfirmationSecret(undefined as any)).to.deep.equal(makeErr('Empty input'));
+      expect(makeConfirmationSecret('')).to.deep.equal(makeErr('Empty input'));
+      expect(makeConfirmationSecret(42 as any)).to.deep.equal(makeErr('Input of invalid type: number'));
+      expect(makeConfirmationSecret('42x')).to.deep.equal(makeErr('Input of invalid length; expected 64'));
     });
   });
 
-  const secret = makeConfirmationSecret('secret-email-hash-id');
+  const secret = makeTestConfirmationSecret('X'.repeat(confirmationSecretLength));
   const accountId = makeTestAccountId();
   const storageErr = makeErr('Boom!');
 
@@ -38,7 +46,7 @@ describe('Confirmation secrets', () => {
 
       storeConfirmationSecret(storage, secret, accountId);
 
-      expect(storeItem.calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json', accountId]]);
+      expect(storeItem.calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`, accountId]]);
     });
 
     it('returns an Err value when storage fails', () => {
@@ -55,7 +63,7 @@ describe('Confirmation secrets', () => {
 
       deleteConfirmationSecret(storage, secret);
 
-      expect((storage.removeItem as Spy).calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json']]);
+      expect((storage.removeItem as Spy).calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
     });
 
     it('returns an Err value when storage fails', () => {
@@ -71,7 +79,7 @@ describe('Confirmation secrets', () => {
       const storage = makeTestStorage({ loadItem: makeStub(() => accountId) });
       const result = getDataForConfirmationSecret(storage, secret);
 
-      expect((storage.loadItem as Spy).calls).to.deep.equal([['/confirmation-secrets/secret-email-hash-id.json']]);
+      expect((storage.loadItem as Spy).calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
       expect(result).to.equal(accountId);
     });
 

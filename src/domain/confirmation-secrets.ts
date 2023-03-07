@@ -1,4 +1,4 @@
-import { getTypeName, makeErr, Result } from '../shared/lang';
+import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
@@ -9,9 +9,13 @@ export interface ConfirmationSecret {
   value: string;
 }
 
-const confirmationSecretLength = 64;
+export const confirmationSecretLength = 64;
 
-export function validateConfirmationSecret(input: unknown): Result<ConfirmationSecret> {
+export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {
+  return hasKind(value, 'ConfirmationSecret');
+}
+
+export function makeConfirmationSecret(input: unknown): Result<ConfirmationSecret> {
   if (!input) {
     return makeErr('Empty input');
   }
@@ -24,10 +28,6 @@ export function validateConfirmationSecret(input: unknown): Result<ConfirmationS
     return makeErr(si`Input of invalid length; expected ${confirmationSecretLength}`);
   }
 
-  return makeConfirmationSecret(input);
-}
-
-export function makeConfirmationSecret(input: string): ConfirmationSecret {
   return {
     kind: 'ConfirmationSecret',
     value: input,
