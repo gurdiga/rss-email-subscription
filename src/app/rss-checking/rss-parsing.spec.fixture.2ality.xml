@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title type="html">2ality – JavaScript and more</title>
+  <link href="https://2ality.com/" />
+  <link rel="self" href="https://2ality.com/feeds/posts.atom" />
+  <link rel="first" href="https://2ality.com/feeds/posts.atom" />
+  <link rel="last" href="https://2ality.com/feeds/posts-2005.atom" />
+  <link rel="next" href="https://2ality.com/feeds/posts-2021.atom" />
+  <updated>2022-12-15T00:00:00.000Z</updated>
+  <author>
+    <name>Dr. Axel Rauschmayer</name>
+  </author>
+  <id>https://2ality.com/</id>
+  <entry>
+    <title type="html">ECMAScript proposal: Set methods</title>
+    <link href="https://2ality.com/2022/12/set-methods.html" />
+    <id>https://2ality.com/2022/12/set-methods.html</id>
+    <updated>2022-12-14T00:00:00.000Z</updated>
+    <summary type="html">Sample content</summary>
+  </entry>
+  <entry>
+    <title type="html">ECMAScript proposal: iterator helpers</title>
+    <link href="https://2ality.com/2022/12/iterator-helpers.html" />
+    <id>https://2ality.com/2022/12/iterator-helpers.html</id>
+    <updated>2022-12-15T00:00:00.000Z</updated>
+    <summary type="html">&lt;p&gt;In this blog post, we look at &lt;a
+      href=&quot;https://github.com/tc39/proposal-iterator-helpers&quot;&gt;the ECMAScript proposal
+      “Iterator helpers”&lt;/a&gt; by Gus Caplan, Michael Ficarra, Adam Vandolder, Jason Orendorff,
+      Kevin Gibbons, and Yulia Startsev. It introduces utility methods for working with iterable
+      data: &lt;code&gt;.map()&lt;/code&gt;, &lt;code&gt;.filter()&lt;/code&gt;,
+      &lt;code&gt;.take()&lt;/code&gt;, etc.&lt;/p&gt;
+      &lt;p&gt;The style of the proposed API clashes with the style of the current iteration API.
+      We’ll explore how we can fix that.&lt;/p&gt;
+</summary>
+  </entry>
+  <entry>
+    <title type="html">Testing static types in TypeScript</title>
+    <link href="https://2ality.com/2022/11/testing-static-types-typescript.html" />
+    <id>https://2ality.com/2022/11/testing-static-types-typescript.html</id>
+    <updated>2022-11-28T00:00:00.000Z</updated>
+    <summary type="html">&lt;p&gt;When it comes to TypeScript code:&lt;/p&gt;
+      &lt;ul&gt;
+      &lt;li&gt;There are many options for testing its behavior at runtime.&lt;/li&gt;
+      &lt;li&gt;There are far fewer options for testing its compile-type types.&lt;/li&gt;
+      &lt;/ul&gt;
+      &lt;p&gt;In this blog post, we look at the latter.&lt;/p&gt;
+</summary>
+  </entry>
+</feed>

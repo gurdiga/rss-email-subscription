@@ -192,6 +192,18 @@ describe(parseRssItems.name, () => {
     expect(result.validItems[0]!.guid).to.equal(link.toString());
   });
 
+  it('takes "summary" when no "content"', async () => {
+    const xml = readFileSync(makePath(__dirname, 'rss-parsing.spec.fixture.2ality.xml'), 'utf-8');
+
+    const result = (await parseRssItems({
+      kind: 'RssResponse',
+      xml,
+      baseURL,
+    })) as RssParsingResult;
+
+    expect(result.validItems[1]?.content).to.equal('Sample content');
+  });
+
   it('returns an InvalidRssParsingResult value when invalid XML', async () => {
     const xml = `
     <?xml version="1.0" encoding="utf-8"?>

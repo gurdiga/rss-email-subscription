@@ -72,7 +72,7 @@ export type MakeRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem 
 
 export function makeRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
   const { title, isoDate } = item;
-  const content = item['content:encoded'] || item.content;
+  const content = item['content:encoded'] || item.content || item.summary;
   const author = item.author || item.creator || 'Anonymous Coward';
   const isMissing = (value: string | undefined): value is undefined => !value?.trim();
   const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
