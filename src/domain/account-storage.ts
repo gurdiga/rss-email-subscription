@@ -6,6 +6,7 @@ import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import { makeHashedPassword } from './hashed-password';
 import { AccountIdList, makeAccountId, isAccountId, AccountId, Account, AccountData } from './account';
+import { EmailAddress } from './email-address';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
   const accountIdStrings = storage.listSubdirectories(accountsStorageKey);
@@ -121,4 +122,20 @@ export const accountsStorageKey = '/accounts';
 
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
   return makePath(accountsStorageKey, accountId.value, 'account.json');
+}
+
+export function setAccountNewUnconfirmedEmail(
+  accountId: AccountId,
+  newEmail: EmailAddress,
+  storage: AppStorage
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
+  }
+
+  account.newUnconfirmedEmail = newEmail;
+
+  return storeAccount(storage, accountId, account);
 }

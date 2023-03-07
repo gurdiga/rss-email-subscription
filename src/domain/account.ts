@@ -25,6 +25,7 @@ export function isAccountId(value: unknown): value is AccountId {
 
 export interface Account {
   email: EmailAddress;
+  newUnconfirmedEmail?: EmailAddress;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp?: Date;
