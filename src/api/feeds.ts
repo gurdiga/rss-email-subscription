@@ -340,7 +340,6 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   return makeSuccess('Feed subscribers', logData, data);
 };
 
-// TODO: Add api-test
 export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSubscribers(
   reqId,
   reqBody,
