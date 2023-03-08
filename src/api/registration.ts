@@ -119,7 +119,7 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
     htmlBody: si`
       <p>Hi there,</p>
 
-      <p>Please confirm FeedSubscription registration by clicking the link below:</p>
+      <p>Please confirm <b><font color="#0163ee">Feed</font>Subscription</b> registration by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
 
