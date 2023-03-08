@@ -4,7 +4,6 @@ import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { breadcrumbsUiElements, BreadcrumbsUiElements, displayBreadcrumbs } from './breadcrumbs';
 import {
   displayInitError,
   HttpMethod,
@@ -17,7 +16,6 @@ import {
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
-    ...breadcrumbsUiElements,
     ...spinnerUiElements,
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
@@ -27,12 +25,6 @@ async function main() {
     displayInitError(uiElements.reason);
     return;
   }
-
-  displayBreadcrumbs(uiElements, [
-    {
-      label: uiElements.pageTitle.textContent!,
-    },
-  ]);
 
   const uiFeedList = await loadUiFeedList();
 
@@ -119,7 +111,7 @@ async function loadUiFeedList<L = UiFeedListItem[]>(): Promise<Result<L>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends FeedListUiElements, BreadcrumbsUiElements, SpinnerUiElements {}
+interface RequiredUiElements extends FeedListUiElements, SpinnerUiElements {}
 
 interface FeedListUiElements {
   feedListPreamble: HTMLElement;
