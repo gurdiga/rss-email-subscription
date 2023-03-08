@@ -42,6 +42,18 @@ export const loadCurrentAccount: RequestHandler = async function loadCurrentAcco
   return makeSuccess<UiAccount>('Success', logData, responseData);
 };
 
+export const changeAccountEmailConfirmation: RequestHandler = async function changeAccountEmailConfirmation(
+  reqId,
+  _reqBody,
+  _reqParams,
+  _reqSession,
+  _app
+) {
+  const {} = makeCustomLoggers({ module: changeAccountEmail.name, reqId });
+
+  return makeAppError('Not implemented');
+};
+
 export const changeAccountEmail: RequestHandler = async function changeAccountEmail(
   reqId,
   reqBody,
