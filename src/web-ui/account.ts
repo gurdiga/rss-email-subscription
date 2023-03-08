@@ -65,6 +65,7 @@ function addChangeEmailEventHandlers(
     cancelEmailChangeButton,
     submitNewEmailButton,
     newEmailField,
+    emailChangeConfirmationMessage,
   } = uiElements;
 
   changeEmailButton.addEventListener('click', () => {
@@ -84,7 +85,7 @@ function addChangeEmailEventHandlers(
 
   submitNewEmailButton.addEventListener('click', () => {
     clearValidationErrors(uiElements);
-    hideElement(uiElements.emailChangeConfirmationMessage);
+    hideElement(emailChangeConfirmationMessage);
 
     preventDoubleClick(submitNewEmailButton, async () => {
       const response = await submitNewEmail(newEmailField.value);
