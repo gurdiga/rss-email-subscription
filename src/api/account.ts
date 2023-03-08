@@ -1,5 +1,5 @@
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { AccountId, EmailChangeResponse, makeEmailChangeRequest, UiAccount } from '../domain/account';
+import { AccountId, makeEmailChangeRequest, UiAccount } from '../domain/account';
 import { setAccountNewUnconfirmedEmail, loadAccount } from '../domain/account-storage';
 import { ConfirmationSecret, makeConfirmationSecret, storeConfirmationSecret } from '../domain/confirmation-secrets';
 import { PagePath } from '../domain/page-path';
@@ -103,12 +103,7 @@ export const changeAccountEmail: RequestHandler = async function changeAccountEm
     return makeAppError('Application error');
   }
 
-  const logData = {};
-  const responseData: EmailChangeResponse = {
-    newEmail: request.newEmail.value,
-  };
-
-  return makeSuccess('Success', logData, responseData);
+  return makeSuccess('We send a confirmation email. Please che');
 };
 
 export function makeEmailChangeConfirmationEmailContent(

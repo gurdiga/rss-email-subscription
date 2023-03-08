@@ -100,7 +100,3 @@ export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): 
 
   return { newEmail };
 }
-
-export interface EmailChangeResponse {
-  newEmail: string;
-}
