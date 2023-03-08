@@ -243,7 +243,6 @@ export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<v
   });
 }
 
-// TODO: How to test? Should I? Can I separate the data manipulation from DOM mechanics?
 export function displayValidationError<FF>(
   response: InputError,
   formFields: FF,
@@ -263,7 +262,7 @@ export function displayValidationError<FF>(
     return;
   }
 
-  fieldElement.className += ' is-invalid';
+  fieldElement.classList.add('is-invalid');
   fieldElement.focus();
 
   const validationMessage = getOrCreateValidationMessageFn(fieldElement);
