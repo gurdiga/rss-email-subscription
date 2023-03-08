@@ -74,12 +74,12 @@ function addChangeEmailEventHandlers(
   });
 
   cancelEmailChangeButton.addEventListener('click', () => {
-    displaViewEmailSection(uiElements);
+    dismissChangeEmailForm(uiElements);
   });
 
   newEmailField.addEventListener(
     'keydown',
-    ifEscape(() => displaViewEmailSection(uiElements))
+    ifEscape(() => dismissChangeEmailForm(uiElements))
   );
 
   submitNewEmailButton.addEventListener('click', () => {
@@ -126,12 +126,11 @@ function handleEmailChangeResponse(
   }
 }
 
-function displaViewEmailSection({
-  changeEmailSection,
-  viewEmailSection,
-}: ViewEmailUiElements & ChangeEmailUiElements): void {
-  hideElement(changeEmailSection);
-  unhideElement(viewEmailSection);
+function dismissChangeEmailForm(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {
+  clearValidationErrors(uiElements);
+  hideElement(uiElements.emailChangeConfirmationMessage);
+  hideElement(uiElements.changeEmailSection);
+  unhideElement(uiElements.viewEmailSection);
 }
 
 function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
