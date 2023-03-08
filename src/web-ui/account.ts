@@ -70,11 +70,17 @@ function addChangeEmailEventHandlers(
   changeEmailButton.addEventListener('click', () => {
     hideElement(viewEmailSection);
     unhideElement(changeEmailSection);
+    newEmailField.focus();
   });
 
   cancelEmailChangeButton.addEventListener('click', () => {
     displaViewEmailSection(uiElements);
   });
+
+  newEmailField.addEventListener(
+    'keydown',
+    ifEscape(() => displaViewEmailSection(uiElements))
+  );
 
   submitNewEmailButton.addEventListener('click', () => {
     clearValidationErrors(uiElements);
@@ -142,7 +148,7 @@ function fillEmail(currentEmailLabel: HTMLElement, email: string) {
   ]);
 }
 
-export async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
+async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   const response = await asyncAttempt(() => sendApiRequest<T>('/account'));
 
   if (isErr(response)) {
@@ -158,6 +164,14 @@ export async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   }
 
   return response.responseData!;
+}
+
+function ifEscape(f: Function) {
+  return (event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      f();
+    }
+  };
 }
 
 interface RequiredUiElements
