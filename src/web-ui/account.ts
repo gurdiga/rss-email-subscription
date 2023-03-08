@@ -1,4 +1,4 @@
-import { EmailChangeRequestData, EmailChangeResponse, UiAccount } from '../domain/account';
+import { EmailChangeRequestData, UiAccount } from '../domain/account';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -70,12 +70,12 @@ function bindChangeEmailButtons(uiElements: ViewEmailUiElements & ChangeEmailUiE
   });
 
   cancelEmailChangeButton.addEventListener('click', () => {
-    hideElement(changeEmailSection);
-    unhideElement(viewEmailSection);
+    displaViewEmailSection(uiElements);
   });
 
   submitNewEmailButton.addEventListener('click', () => {
     clearValidationErrors(uiElements);
+    hideElement(uiElements.emailChangeConfirmationMessage);
 
     preventDoubleClick(submitNewEmailButton, async () => {
       const response = await submitNewEmail(newEmailField.value);
@@ -94,8 +94,8 @@ async function submitNewEmail(newEmail: string) {
 }
 
 function handleEmailChangeResponse(
-  uiElements: ChangeEmailUiElements,
-  response: Result<ApiResponse<EmailChangeResponse>>
+  uiElements: ViewEmailUiElements & ChangeEmailUiElements,
+  response: Result<ApiResponse<void>>
 ): void {
   if (isErr(response)) {
     displayCommunicationError(response, uiElements.emailChangeApiResponseMessage);
@@ -113,23 +113,28 @@ function handleEmailChangeResponse(
   }
 
   if (isSuccess(response)) {
-    displayApiResponse(response, uiElements.emailChangeApiResponseMessage);
-
-    setTimeout(() => {
-      // TODO
-      // - Update the email in UI
-      // - Switch to the view view
-    }, 1000);
+    unhideElement(uiElements.emailChangeConfirmationMessage);
   }
-  // TODO: Display the validation message
+}
+
+function displaViewEmailSection({
+  changeEmailSection,
+  viewEmailSection,
+}: ViewEmailUiElements & ChangeEmailUiElements): void {
+  hideElement(changeEmailSection);
+  unhideElement(viewEmailSection);
 }
 
 function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
+  return fillEmail(uiElements.currentEmailLabel, uiAccount.email);
+}
+
+function fillEmail(currentEmailLabel: HTMLElement, email: string) {
   return fillUiElements([
     {
-      element: uiElements.currentEmailLabel,
+      element: currentEmailLabel,
       propName: 'textContent',
-      value: uiAccount.email,
+      value: email,
     },
   ]);
 }
@@ -176,6 +181,7 @@ interface ChangeEmailUiElements {
   submitNewEmailButton: HTMLButtonElement;
   cancelEmailChangeButton: HTMLButtonElement;
   emailChangeApiResponseMessage: HTMLElement;
+  emailChangeConfirmationMessage: HTMLElement;
 }
 
 const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
@@ -184,6 +190,7 @@ const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
   submitNewEmailButton: '#submit-new-email-button',
   cancelEmailChangeButton: '#cancel-email-change-button',
   emailChangeApiResponseMessage: '#email-change-api-response-message',
+  emailChangeConfirmationMessage: '#email-change-confirmation-message',
 };
 
 interface VewPasswordUiElements {
