@@ -4,6 +4,14 @@ import { EmailAddress } from './email-address';
 
 export const maxEmailAddressLength = 100;
 
+export function makeOptionalEmailAddress(input: unknown, field = 'email'): Result<undefined | EmailAddress> {
+  if (!input) {
+    return undefined;
+  }
+
+  return makeEmailAddress(input, field);
+}
+
 export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailAddress> {
   if (!input) {
     return makeErr('Email is empty', field);

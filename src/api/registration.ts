@@ -186,7 +186,10 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
   const account: Account = {
     email: input.email,
+    newUnconfirmedEmail: undefined,
+    newUnconfirmedEmailTimestamp: undefined,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
+    confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
   };
 

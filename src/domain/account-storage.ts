@@ -1,4 +1,4 @@
-import { makeEmailAddress } from './email-address-making';
+import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
 import { parseDate, parseOptionalDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
@@ -58,25 +58,43 @@ export function loadAccount(
   accountId: AccountId,
   storageKey = getAccountStorageKey(accountId)
 ): Result<Account> {
-  const loadItemResult = storage.loadItem(storageKey);
+  const item = storage.loadItem(storageKey);
 
-  if (isErr(loadItemResult)) {
-    return makeErr(si`Failed to load account data: ${loadItemResult.reason}`);
+  if (isErr(item)) {
+    return makeErr(si`Failed to load account data: ${item.reason}`);
   }
 
-  const email = makeEmailAddress(loadItemResult.email);
+  const email = makeEmailAddress(item.email);
 
   if (isErr(email)) {
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${email.reason}`, 'email');
   }
 
-  const hashedPassword = makeHashedPassword(loadItemResult.hashedPassword);
+  const newUnconfirmedEmail = makeOptionalEmailAddress(item.newUnconfirmedEmail);
+
+  if (isErr(newUnconfirmedEmail)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${newUnconfirmedEmail.reason}`,
+      'newUnconfirmedEmail'
+    );
+  }
+
+  const newUnconfirmedEmailTimestamp = parseOptionalDate(item.newUnconfirmedEmailTimestamp);
+
+  if (isErr(newUnconfirmedEmailTimestamp)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${newUnconfirmedEmailTimestamp.reason}`,
+      'newUnconfirmedEmailTimestamp'
+    );
+  }
+
+  const hashedPassword = makeHashedPassword(item.hashedPassword);
 
   if (isErr(hashedPassword)) {
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${hashedPassword.reason}`, 'hashedPassword');
   }
 
-  const creationTimestamp = parseDate(loadItemResult.creationTimestamp);
+  const creationTimestamp = parseDate(item.creationTimestamp);
 
   if (isErr(creationTimestamp)) {
     return makeErr(
@@ -85,7 +103,7 @@ export function loadAccount(
     );
   }
 
-  const confirmationTimestamp = parseOptionalDate(loadItemResult.confirmationTimestamp);
+  const confirmationTimestamp = parseOptionalDate(item.confirmationTimestamp);
 
   if (isErr(confirmationTimestamp)) {
     return makeErr(
@@ -96,6 +114,8 @@ export function loadAccount(
 
   return {
     email,
+    newUnconfirmedEmail,
+    newUnconfirmedEmailTimestamp,
     hashedPassword,
     creationTimestamp,
     confirmationTimestamp,
@@ -106,6 +126,8 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
     email: account.email.value,
+    newUnconfirmedEmail: account.newUnconfirmedEmail?.value,
+    newUnconfirmedEmailTimestamp: account.newUnconfirmedEmailTimestamp,
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
@@ -136,6 +158,7 @@ export function setAccountNewUnconfirmedEmail(
   }
 
   account.newUnconfirmedEmail = newEmail;
+  account.newUnconfirmedEmailTimestamp = new Date();
 
   return storeAccount(storage, accountId, account);
 }

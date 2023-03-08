@@ -26,18 +26,20 @@ export function isAccountId(value: unknown): value is AccountId {
 
 export interface Account {
   email: EmailAddress;
-  newUnconfirmedEmail?: EmailAddress;
+  newUnconfirmedEmail: EmailAddress | undefined;
+  newUnconfirmedEmailTimestamp: Date | undefined;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
-  confirmationTimestamp?: Date;
+  confirmationTimestamp: Date | undefined;
 }
 
 export interface AccountData {
   email: string;
+  newUnconfirmedEmail: string | undefined;
+  newUnconfirmedEmailTimestamp: Date | undefined;
   hashedPassword: string;
   creationTimestamp: Date;
-  confirmationTimestamp?: Date;
-  feedIds?: string[];
+  confirmationTimestamp: Date | undefined;
 }
 
 export interface UiAccount {

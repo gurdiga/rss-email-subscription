@@ -1,7 +1,7 @@
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { EmailChangeResponse, makeEmailChangeRequest, UiAccount } from '../domain/account';
+import { AccountId, EmailChangeResponse, makeEmailChangeRequest, UiAccount } from '../domain/account';
 import { setAccountNewUnconfirmedEmail, loadAccount } from '../domain/account-storage';
-import { EmailAddress } from '../domain/email-address';
+import { ConfirmationSecret, makeConfirmationSecret, storeConfirmationSecret } from '../domain/confirmation-secrets';
 import { PagePath } from '../domain/page-path';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -72,11 +72,15 @@ export const changeAccountEmail: RequestHandler = async function changeAccountEm
     return makeAppError('Application error');
   }
 
-  // TODO:
-  // - Send confirmation email
+  const secret = hash(request.newEmail.value, si`email-change-confirmation-secret-${settings.hashingSalt}`);
+  const confirmationSecret = makeConfirmationSecret(secret);
 
-  const confirmationLink = makeEmailChangeConfirmationLink(request.newEmail, settings.hashingSalt, env.DOMAIN_NAME);
-  const emailContent = makeEmailChangeConfirmationEmailContent(confirmationLink);
+  if (isErr(confirmationSecret)) {
+    logError(si`Failed to ${makeConfirmationSecret.name}`, { secret, reason: confirmationSecret.reason });
+    return makeAppError('App error');
+  }
+
+  const emailContent = makeEmailChangeConfirmationEmailContent(env.DOMAIN_NAME, confirmationSecret);
   const sendEmailResult = await sendEmail(
     settings.fullEmailAddress,
     request.newEmail,
@@ -90,6 +94,15 @@ export const changeAccountEmail: RequestHandler = async function changeAccountEm
     return makeAppError('Application error');
   }
 
+  const timestamp = new Date();
+  const confirmationSecretData: EmailChangeConfirmationSecretData = { accountId, timestamp };
+  const storeConfirmationSecretResult = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
+
+  if (isErr(storeConfirmationSecretResult)) {
+    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: storeConfirmationSecretResult.reason });
+    return makeAppError('Application error');
+  }
+
   const logData = {};
   const responseData: EmailChangeResponse = {
     newEmail: request.newEmail.value,
@@ -98,16 +111,14 @@ export const changeAccountEmail: RequestHandler = async function changeAccountEm
   return makeSuccess('Success', logData, responseData);
 };
 
-export function makeEmailChangeConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
-  const url = new URL(si`https://${domainName}${PagePath.emailChangeConfirmation}`);
-  const secret = hash(to.value, si`email-change-confirmation-secret-${appHashingSalt}`);
+export function makeEmailChangeConfirmationEmailContent(
+  domainName: string,
+  confirmationSecret: ConfirmationSecret
+): EmailContent {
+  const confirmationLink = new URL(si`https://${domainName}${PagePath.emailChangeConfirmation}`);
 
-  url.searchParams.set('secret', secret);
+  confirmationLink.searchParams.set('secret', confirmationSecret.value);
 
-  return url;
-}
-
-export function makeEmailChangeConfirmationEmailContent(confirmationLink: URL): EmailContent {
   return {
     subject: 'Please confirm FeedSubscription email change',
     htmlBody: si`
@@ -115,11 +126,17 @@ export function makeEmailChangeConfirmationEmailContent(confirmationLink: URL): 
 
       <p>Please confirm <b><font color="#0163ee">Feed</font>Subscription</b> email change by clicking the link below:</p>
 
-      <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
+      <p><a href="${confirmationLink.toString()}">Yes, I confirm email change</a>.</p>
 
-      <p>If you did not register, please ignore this message.</p>
+      <p>If you did not initiate an account email change, please ignore this message.</p>
 
       <p>Have a nice day.</p>
     `,
   };
+}
+
+// We’ll record this data just for debugging potential issues.
+interface EmailChangeConfirmationSecretData {
+  accountId: AccountId;
+  timestamp: Date;
 }
