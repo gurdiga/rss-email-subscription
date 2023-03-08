@@ -114,7 +114,7 @@ services:
   certbot:
     container_name: certbot
     hostname: certbot
-    image: certbot/certbot:v1.32.2
+    image: certbot/certbot:v2.4.0
     restart: always
     volumes:
       - ./.tmp/certbot/conf:/etc/letsencrypt
