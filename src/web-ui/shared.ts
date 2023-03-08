@@ -123,6 +123,10 @@ export interface ApiResponseUiElements {
   apiResponseMessage: HTMLElement;
 }
 
+export const apiResponseUiElements: ElementSelectors<ApiResponseUiElements> = {
+  apiResponseMessage: '#api-response-message',
+};
+
 export interface AppErrorUiElements {
   appErrorMessage: HTMLElement;
 }

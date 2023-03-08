@@ -1,7 +1,18 @@
 import { asyncAttempt, isErr } from '../shared/lang';
-import { displayInitError, fillUiElements, displayApiResponse, HttpMethod, unhideElement } from './shared';
-import { displayCommunicationError, parseConfirmationLinkUrlParams, requireUiElements } from './shared';
-import { ApiResponseUiElements, sendApiRequest, UiElementFillSpec } from './shared';
+import {
+  apiResponseUiElements,
+  ApiResponseUiElements,
+  displayApiResponse,
+  displayCommunicationError,
+  displayInitError,
+  fillUiElements,
+  HttpMethod,
+  parseConfirmationLinkUrlParams,
+  requireUiElements,
+  sendApiRequest,
+  UiElementFillSpec,
+  unhideElement,
+} from './shared';
 
 function main() {
   const queryParams = parseConfirmationLinkUrlParams(location.search);
@@ -12,12 +23,12 @@ function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
+    ...apiResponseUiElements,
     inputUiContainer: '#input-ui',
     feedNameLabel: '#feed-name-label',
     emailLabel: '#email-label',
     formUiContainer: '#form-ui',
     confirmButton: '#confirm-button',
-    apiResponseMessage: '#api-response-message',
   });
 
   if (isErr(uiElements)) {

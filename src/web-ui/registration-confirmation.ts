@@ -3,6 +3,7 @@ import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
+  apiResponseUiElements,
   ApiResponseUiElements,
   displayApiResponse,
   displayCommunicationError,
@@ -10,7 +11,6 @@ import {
   hideElement,
   HttpMethod,
   navigateTo,
-  reportError,
   requireUiElements,
   sendApiRequest,
   SpinnerUiElements,
@@ -22,14 +22,13 @@ async function main() {
   const secret = validateSecretFromQueryStringParam(location.search);
 
   if (isErr(secret)) {
-    reportError(si`Invalid registration confirmation link: ${secret.reason}`);
-    displayInitError('Invalid registration confirmation link');
+    displayInitError(si`Invalid registration confirmation link: ${secret.reason}`);
     return;
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
     ...spinnerUiElements,
-    apiResponseMessage: '#api-response-message',
+    ...apiResponseUiElements,
   });
 
   if (isErr(uiElements)) {
@@ -50,7 +49,6 @@ async function main() {
   displayApiResponse(response, uiElements.apiResponseMessage);
 
   if (isSuccess(response)) {
-    hideElement(uiElements.spinner);
     navigateTo(PagePath.userStart, 2000);
     return;
   }

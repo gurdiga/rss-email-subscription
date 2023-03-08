@@ -2,6 +2,7 @@ import { PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
+  apiResponseUiElements,
   AppStatusUiElements,
   clearValidationErrors,
   displayAppError,
@@ -24,10 +25,10 @@ function main() {
   }
 
   const uiElements = requireUiElements<RequiredUiElements>({
+    ...apiResponseUiElements,
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
-    apiResponseMessage: '#api-response-message',
     appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
   });

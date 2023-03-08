@@ -12,6 +12,7 @@ import {
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
 import {
+  apiResponseUiElements,
   ApiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
@@ -54,8 +55,8 @@ async function main() {
     ...uiFeedFormFields,
     ...breadcrumbsUiElements,
     ...spinnerUiElements,
+    ...apiResponseUiElements,
     submitButton: '#submit-button',
-    apiResponseMessage: '#api-response-message',
   });
 
   if (isErr(uiElements)) {

@@ -9,6 +9,7 @@ import {
   feedListBreadcrumbsLink,
 } from './breadcrumbs';
 import {
+  apiResponseUiElements,
   ApiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
@@ -28,8 +29,8 @@ async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...uiFeedFormFields,
     ...breadcrumbsUiElements,
+    ...apiResponseUiElements,
     submitButton: '#submit-button',
-    apiResponseMessage: '#api-response-message',
   });
 
   if (isErr(uiElements)) {
