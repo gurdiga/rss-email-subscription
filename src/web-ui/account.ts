@@ -50,11 +50,14 @@ async function main() {
     return;
   }
 
-  bindChangeEmailButtons(uiElements, uiAccount);
+  addChangeEmailEventHandlers(uiElements, uiAccount);
   console.log('Hello account', { uiElements, uiAccount });
 }
 
-function bindChangeEmailButtons(uiElements: ViewEmailUiElements & ChangeEmailUiElements, _uiAccount: UiAccount): void {
+function addChangeEmailEventHandlers(
+  uiElements: ViewEmailUiElements & ChangeEmailUiElements,
+  _uiAccount: UiAccount
+): void {
   const {
     changeEmailButton,
     viewEmailSection,
