@@ -51,6 +51,8 @@ export const changeAccountEmailConfirmation: RequestHandler = async function cha
 ) {
   const {} = makeCustomLoggers({ module: changeAccountEmail.name, reqId });
 
+  // TODO: DO NOT initiate the session.
+
   return makeAppError('Not implemented');
 };
 

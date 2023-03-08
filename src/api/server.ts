@@ -78,13 +78,18 @@ async function main() {
     expressServer.use(router);
   }
 
-  const devSsslKeys = {
-    key: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/privkey.pem'),
-    cert: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/cert.pem'),
-  };
-
   const [port, scheme, server] = isDev
-    ? [443, 'https', https.createServer(devSsslKeys, expressServer)]
+    ? [
+        443,
+        'https',
+        https.createServer(
+          {
+            key: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/privkey.pem'),
+            cert: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/cert.pem'),
+          },
+          expressServer
+        ),
+      ]
     : [3000, 'http', http.createServer(expressServer)];
 
   const shutdownHandle = server.listen(port, () => {
