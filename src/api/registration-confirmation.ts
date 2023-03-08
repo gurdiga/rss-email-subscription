@@ -63,11 +63,11 @@ function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret)
     return makeErr('Failed to confirm account');
   }
 
-  const deleteRegistrationConfirmationSecretResult = deleteConfirmationSecret(storage, secret);
+  const deleteResult = deleteConfirmationSecret(storage, secret);
 
-  if (isErr(deleteRegistrationConfirmationSecretResult)) {
+  if (isErr(deleteResult)) {
     logError(si`Failed to ${deleteConfirmationSecret.name}`, {
-      reason: deleteRegistrationConfirmationSecretResult.reason,
+      reason: deleteResult.reason,
       secret: secret.value,
     });
 
