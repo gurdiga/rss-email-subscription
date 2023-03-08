@@ -231,12 +231,6 @@ async function loadFeedSubscribersData<T = LoadEmailsResponse>(feedId: FeedId): 
   return response.responseData!;
 }
 
-interface UpdateSubscribersRequest {
-  // TODO
-}
-
-export type UpdateSubscribersRequestData = Record<keyof UpdateSubscribersRequest, string>;
-
 interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   feedNameContainer: HTMLElement;
   feedName: HTMLElement;
