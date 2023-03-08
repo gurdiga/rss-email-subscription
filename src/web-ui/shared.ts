@@ -198,7 +198,7 @@ function assertAuthorized(response: Response) {
 
 export function assertFound(response: Response) {
   if (response.status === 404) {
-    throw new TypeError('API endpoint not found (404)');
+    throw new TypeError(si`404 API endpoint not found: ${response.url}`);
   } else {
     return response;
   }
