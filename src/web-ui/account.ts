@@ -61,11 +61,11 @@ function addChangeEmailEventHandlers(
   const {
     changeEmailButton,
     viewEmailSection,
-    changeEmailSection,
+    changeEmailForm: changeEmailSection,
     cancelEmailChangeButton,
     submitNewEmailButton,
     newEmailField,
-    emailChangeConfirmationMessage,
+    emailChangeSuccessMessage: emailChangeConfirmationMessage,
   } = uiElements;
 
   changeEmailButton.addEventListener('click', () => {
@@ -124,7 +124,7 @@ function handleEmailChangeResponse(
   }
 
   if (isSuccess(response)) {
-    unhideElement(uiElements.emailChangeConfirmationMessage);
+    unhideElement(uiElements.emailChangeSuccessMessage);
     uiElements.newEmailLabel.textContent = newEmail;
     uiElements.newEmailField.value = '';
   }
@@ -132,8 +132,8 @@ function handleEmailChangeResponse(
 
 function dismissChangeEmailForm(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {
   clearValidationErrors(uiElements);
-  hideElement(uiElements.emailChangeConfirmationMessage);
-  hideElement(uiElements.changeEmailSection);
+  hideElement(uiElements.emailChangeSuccessMessage);
+  hideElement(uiElements.changeEmailForm);
   unhideElement(uiElements.viewEmailSection);
 }
 
@@ -196,23 +196,23 @@ const viewEmailUiElements: ElementSelectors<ViewEmailUiElements> = {
 };
 
 interface ChangeEmailUiElements {
-  changeEmailSection: HTMLFormElement;
+  changeEmailForm: HTMLFormElement;
   newEmailField: HTMLInputElement;
   newEmailLabel: HTMLElement;
   submitNewEmailButton: HTMLButtonElement;
   cancelEmailChangeButton: HTMLButtonElement;
   emailChangeApiResponseMessage: HTMLElement;
-  emailChangeConfirmationMessage: HTMLElement;
+  emailChangeSuccessMessage: HTMLElement;
 }
 
 const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
-  changeEmailSection: '#change-email-section',
+  changeEmailForm: '#change-email-section',
   newEmailField: '#new-email-field',
   newEmailLabel: '#new-email-label',
   submitNewEmailButton: '#submit-new-email-button',
   cancelEmailChangeButton: '#cancel-email-change-button',
   emailChangeApiResponseMessage: '#email-change-api-response-message',
-  emailChangeConfirmationMessage: '#email-change-confirmation-message',
+  emailChangeSuccessMessage: '#email-change-success-message',
 };
 
 interface VewPasswordUiElements {
@@ -224,14 +224,14 @@ const vewPasswordUiElements: ElementSelectors<VewPasswordUiElements> = {
 };
 
 interface ChangePasswordUiElements {
-  changePasswordSection: HTMLElement;
+  changePasswordForm: HTMLFormElement;
   currentPasswordField: HTMLInputElement;
   newPasswordField: HTMLInputElement;
   submitNewPasswordButton: HTMLButtonElement;
 }
 
 const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
-  changePasswordSection: '#change-password-section',
+  changePasswordForm: '#change-password-section',
   currentPasswordField: '#current-password-field',
   newPasswordField: '#new-password-field',
   submitNewPasswordButton: '#submit-new-password-button',
