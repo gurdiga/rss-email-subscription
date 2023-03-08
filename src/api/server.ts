@@ -1,6 +1,9 @@
 import cors from 'cors';
 import express from 'express';
+import { readFileSync } from 'fs';
 import helmet from 'helmet';
+import http from 'http';
+import https from 'https';
 import { getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
@@ -31,8 +34,7 @@ import { unsubscription } from './unsubscription';
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
 
-  const port = 3000;
-  const server = express();
+  const expressServer = express();
   const router = express.Router();
   const app = initApp();
 
@@ -66,16 +68,27 @@ async function main() {
   router.post('/feeds/edit-feed', makeRequestHandler(editFeed, app));
   router.post('/feeds/delete-feed', makeRequestHandler(deleteFeed, app));
 
-  if (process.env['NODE_ENV'] === 'development') {
-    server.use('/api', router);
-    server.use('/', express.static(process.env['DOCUMENT_ROOT']!));
+  const isDev = process.env['NODE_ENV'] === 'development';
+
+  if (isDev) {
+    expressServer.use('/api', router);
+    expressServer.use('/', express.static(process.env['DOCUMENT_ROOT']!));
   } else {
-    server.use(router);
+    expressServer.use(router);
   }
+
+  const devSsslKeys = {
+    key: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/privkey.pem'),
+    cert: readFileSync('.tmp/certbot/conf/live/feedsubscription.com/cert.pem'),
+  };
+
+  const [port, scheme, server] = isDev
+    ? [443, 'https', https.createServer(devSsslKeys, expressServer)]
+    : [3000, 'http', http.createServer(expressServer)];
 
   const shutdownHandle = server.listen(port, () => {
     logInfo(si`Starting API server in ${process.env['NODE_ENV']!} environment`);
-    logInfo(si`Listening on http://0.0.0.0:${port.toString()}`);
+    logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
   });
 
   process.on('SIGTERM', () => {
