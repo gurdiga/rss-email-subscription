@@ -90,7 +90,7 @@ function addChangeEmailEventHandlers(
     preventDoubleClick(submitNewEmailButton, async () => {
       const response = await submitNewEmail(newEmailField.value);
 
-      handleEmailChangeResponse(uiElements, response);
+      handleEmailChangeResponse(uiElements, response, newEmailField.value);
     });
   });
 }
@@ -105,7 +105,8 @@ async function submitNewEmail(newEmail: string) {
 
 function handleEmailChangeResponse(
   uiElements: ViewEmailUiElements & ChangeEmailUiElements,
-  response: Result<ApiResponse<void>>
+  response: Result<ApiResponse<void>>,
+  newEmail: string
 ): void {
   if (isErr(response)) {
     displayCommunicationError(response, uiElements.emailChangeApiResponseMessage);
@@ -124,6 +125,8 @@ function handleEmailChangeResponse(
 
   if (isSuccess(response)) {
     unhideElement(uiElements.emailChangeConfirmationMessage);
+    uiElements.newEmailLabel.textContent = newEmail;
+    uiElements.newEmailField.value = '';
   }
 }
 
@@ -193,8 +196,9 @@ const viewEmailUiElements: ElementSelectors<ViewEmailUiElements> = {
 };
 
 interface ChangeEmailUiElements {
-  changeEmailSection: HTMLElement;
+  changeEmailSection: HTMLFormElement;
   newEmailField: HTMLInputElement;
+  newEmailLabel: HTMLElement;
   submitNewEmailButton: HTMLButtonElement;
   cancelEmailChangeButton: HTMLButtonElement;
   emailChangeApiResponseMessage: HTMLElement;
@@ -204,6 +208,7 @@ interface ChangeEmailUiElements {
 const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
   changeEmailSection: '#change-email-section',
   newEmailField: '#new-email-field',
+  newEmailLabel: '#new-email-label',
   submitNewEmailButton: '#submit-new-email-button',
   cancelEmailChangeButton: '#cancel-email-change-button',
   emailChangeApiResponseMessage: '#email-change-api-response-message',
