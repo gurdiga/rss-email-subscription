@@ -1,6 +1,6 @@
 import { makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
-import { AccountId } from '../domain/account';
+import { AccountId, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount } from '../domain/account-storage';
 import { makePassword, Password } from '../domain/password';
@@ -91,6 +91,11 @@ function checkCredentials({ settings, storage }: App, input: ProcessedInput): Re
 
   if (isErr(account)) {
     logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
+    return makeErr('Could not find your account', 'email');
+  }
+
+  if (isAccountNotFound(account)) {
+    logError('Account not found by ID', { accountId: accountId.value });
     return makeErr('Could not find your account', 'email');
   }
 

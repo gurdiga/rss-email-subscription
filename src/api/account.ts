@@ -1,13 +1,32 @@
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { AccountId, makeEmailChangeRequest, UiAccount } from '../domain/account';
-import { setAccountNewUnconfirmedEmail, loadAccount } from '../domain/account-storage';
-import { ConfirmationSecret, makeConfirmationSecret, storeConfirmationSecret } from '../domain/confirmation-secrets';
+import {
+  AccountId,
+  isAccountNotFound,
+  makeEmailChangeConfirmationRequest,
+  makeEmailChangeRequest,
+  UiAccount,
+} from '../domain/account';
+import { loadAccount, setAccountEmail } from '../domain/account-storage';
+import { AppSettings } from '../domain/app-settings';
+import {
+  ConfirmationSecret,
+  isConfirmationSecretNotFound,
+  makeConfirmationSecret,
+} from '../domain/confirmation-secrets';
+import {
+  deleteConfirmationSecret,
+  loadConfirmationSecret,
+  storeConfirmationSecret,
+} from '../domain/confirmation-secrets-storage';
+import { EmailAddress } from '../domain/email-address';
 import { PagePath } from '../domain/page-path';
+import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { isErr } from '../shared/lang';
+import { isErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
+import { AppEnv } from './init-app';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
@@ -29,6 +48,11 @@ export const loadCurrentAccount: RequestHandler = async function loadCurrentAcco
   const { accountId } = session;
   const account = loadAccount(app.storage, accountId);
 
+  if (isAccountNotFound(account)) {
+    logWarning('Account not found', { accountId: accountId.value });
+    return makeNotAuthenticatedError();
+  }
+
   if (isErr(account)) {
     logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
     return makeAppError('Application error');
@@ -42,28 +66,63 @@ export const loadCurrentAccount: RequestHandler = async function loadCurrentAcco
   return makeSuccess<UiAccount>('Success', logData, responseData);
 };
 
-export const changeAccountEmailConfirmation: RequestHandler = async function changeAccountEmailConfirmation(
+export const confirmAccountEmailChange: RequestHandler = async function confirmAccountEmailChange(
   reqId,
-  _reqBody,
+  reqBody,
   _reqParams,
   _reqSession,
-  _app
+  { storage }
 ) {
-  const {} = makeCustomLoggers({ module: changeAccountEmail.name, reqId });
+  const { logWarning, logError } = makeCustomLoggers({ module: confirmAccountEmailChange.name, reqId });
+  const request = makeEmailChangeConfirmationRequest(reqBody);
 
-  // TODO: DO NOT initiate the session.
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeEmailChangeConfirmationRequest.name}`, { reason: request.reason });
+    return makeInputError('Invalid registration confirmation link');
+  }
 
-  return makeAppError('Not implemented');
+  const { secret } = request;
+  const data = loadConfirmationSecret<EmailChangeRequestSecretData>(storage, secret);
+
+  if (isErr(data)) {
+    logError(si`Failed to ${loadConfirmationSecret.name}`, { reason: data.reason });
+    return makeAppError('Application error');
+  }
+
+  if (isConfirmationSecretNotFound(data)) {
+    logWarning('Confirmation secret not found', { confirmationSecret: secret.value });
+    return makeInputError('Confirmation link expired or has already been confirmed');
+  }
+
+  const { accountId, newEmail } = data;
+  const result = setAccountEmail(storage, accountId, newEmail);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${setAccountEmail.name}`, { reason: result.reason });
+    return makeAppError('Application error');
+  }
+
+  const deleteResult = deleteConfirmationSecret(storage, secret);
+
+  if (isErr(deleteResult)) {
+    logError(si`Failed to ${deleteConfirmationSecret.name}`, {
+      reason: deleteResult.reason,
+      secret: secret.value,
+    });
+    return makeAppError('Application error');
+  }
+
+  return makeSuccess('Confirmed email change');
 };
 
-export const changeAccountEmail: RequestHandler = async function changeAccountEmail(
+export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(
   reqId,
   reqBody,
   _reqParams,
   reqSession,
   { storage, settings, env }
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ module: changeAccountEmail.name, reqId });
+  const { logWarning, logError } = makeCustomLoggers({ module: requestAccountEmailChange.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -75,50 +134,71 @@ export const changeAccountEmail: RequestHandler = async function changeAccountEm
   const request = makeEmailChangeRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning('Invalid EmailChangeRequest', { reason: request.reason });
+    logWarning(si`Failed to ${makeEmailChangeRequest.name}`, { reason: request.reason });
     return makeInputError(request.reason, request.field);
   }
 
-  const result = setAccountNewUnconfirmedEmail(accountId, request.newEmail, storage);
+  const { newEmail } = request;
+  const confirmationSecret = makeEmailChangeConfirmationSecret(newEmail, settings.hashingSalt);
 
-  if (isErr(result)) {
-    logError(si`Failed to ${setAccountNewUnconfirmedEmail.name}`, { reason: result.reason });
+  if (isErr(confirmationSecret)) {
+    logError(si`Failed to ${makeConfirmationSecret.name}`, {
+      reason: confirmationSecret.reason,
+      newEmail: newEmail.value,
+    });
     return makeAppError('Application error');
   }
 
-  const secret = hash(request.newEmail.value, si`email-change-confirmation-secret-${settings.hashingSalt}`);
-  const confirmationSecret = makeConfirmationSecret(secret);
+  const sendEmailResult = await sendConfirmationEmail(newEmail, confirmationSecret, settings, env);
 
-  if (isErr(confirmationSecret)) {
-    logError(si`Failed to ${makeConfirmationSecret.name}`, { secret, reason: confirmationSecret.reason });
-    return makeAppError('App error');
+  if (isErr(sendEmailResult)) {
+    logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendEmailResult.reason });
+    return makeAppError('Application error');
   }
 
+  const storeResult = storeEmailChangeRequestSecret(accountId, newEmail, confirmationSecret, storage);
+
+  if (isErr(storeResult)) {
+    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: storeResult.reason });
+    return makeAppError('Application error');
+  }
+
+  return makeSuccess('Success');
+};
+
+async function sendConfirmationEmail(
+  newEmail: EmailAddress,
+  confirmationSecret: ConfirmationSecret,
+  settings: AppSettings,
+  env: AppEnv
+) {
   const emailContent = makeEmailChangeConfirmationEmailContent(env.DOMAIN_NAME, confirmationSecret);
   const sendEmailResult = await sendEmail(
     settings.fullEmailAddress,
-    request.newEmail,
+    newEmail,
     settings.fullEmailAddress.emailAddress,
     emailContent,
     env
   );
+  return sendEmailResult;
+}
 
-  if (isErr(sendEmailResult)) {
-    logError(si`Failed to ${sendEmail.name}`, { reason: sendEmailResult.reason });
-    return makeAppError('Application error');
-  }
+function makeEmailChangeConfirmationSecret(newEmail: EmailAddress, hashingSalt: string): Result<ConfirmationSecret> {
+  const secret = hash(newEmail.value, si`email-change-confirmation-secret-${hashingSalt}`);
 
+  return makeConfirmationSecret(secret);
+}
+
+function storeEmailChangeRequestSecret(
+  accountId: AccountId,
+  newEmail: EmailAddress,
+  confirmationSecret: ConfirmationSecret,
+  storage: AppStorage
+) {
   const timestamp = new Date();
-  const confirmationSecretData: EmailChangeConfirmationSecretData = { accountId, timestamp };
-  const storeConfirmationSecretResult = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
-
-  if (isErr(storeConfirmationSecretResult)) {
-    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: storeConfirmationSecretResult.reason });
-    return makeAppError('Application error');
-  }
-
-  return makeSuccess('We send a confirmation email. Please che');
-};
+  const confirmationSecretData: EmailChangeRequestSecretData = { accountId, newEmail, timestamp };
+  return storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
+}
 
 export function makeEmailChangeConfirmationEmailContent(
   domainName: string,
@@ -144,8 +224,8 @@ export function makeEmailChangeConfirmationEmailContent(
   };
 }
 
-// We’ll record this data just for debugging potential issues.
-interface EmailChangeConfirmationSecretData {
+interface EmailChangeRequestSecretData {
   accountId: AccountId;
+  newEmail: EmailAddress;
   timestamp: Date;
 }

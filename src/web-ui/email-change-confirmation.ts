@@ -1,3 +1,4 @@
+import { EmailChangeConfirmationRequestData } from '../domain/account';
 import { PagePath } from '../domain/page-path';
 import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -37,10 +38,7 @@ async function main() {
     return;
   }
 
-  const { secret } = queryStringParams;
-  const response = await asyncAttempt(() =>
-    sendApiRequest('/account/change-email-confirmation', HttpMethod.POST, { secret })
-  );
+  const response = await submitConfirmation(queryStringParams.secret);
 
   if (isErr(response)) {
     displayCommunicationError(response.reason, uiElements.apiResponseMessage);
@@ -54,6 +52,12 @@ async function main() {
     navigateTo(PagePath.userStart, 2000);
     return;
   }
+}
+
+async function submitConfirmation(secret: string) {
+  const request: EmailChangeConfirmationRequestData = { secret };
+
+  return await asyncAttempt(() => sendApiRequest('/account/confirm-change-email', HttpMethod.POST, request));
 }
 
 interface RequiredParams {

@@ -8,7 +8,7 @@ import { getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
-import { changeAccountEmail, changeAccountEmailConfirmation, loadCurrentAccount } from './account';
+import { requestAccountEmailChange, confirmAccountEmailChange, loadCurrentAccount } from './account';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
 import {
@@ -22,8 +22,7 @@ import {
   loadFeedSubscribers,
 } from './feeds';
 import { initApp } from './init-app';
-import { registration } from './registration';
-import { registrationConfirmation } from './registration-confirmation';
+import { registration, registrationConfirmation } from './registration';
 import { makeRequestHandler } from './request-handler';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
@@ -58,8 +57,8 @@ async function main() {
   router.post('/authentication', makeRequestHandler(authentication, app));
   router.post('/deauthentication', makeRequestHandler(deauthentication, app));
   router.get('/account', makeRequestHandler(loadCurrentAccount, app));
-  router.post('/account/change-email', makeRequestHandler(changeAccountEmail, app));
-  router.post('/account/change-email-confirmation', makeRequestHandler(changeAccountEmailConfirmation, app));
+  router.post('/account/request-change-email', makeRequestHandler(requestAccountEmailChange, app));
+  router.post('/account/confirm-change-email', makeRequestHandler(confirmAccountEmailChange, app));
   router.get('/feeds', makeRequestHandler(loadFeeds, app));
   router.get('/feeds/:feedId', makeRequestHandler(loadFeedById, app));
   router.get('/feeds/:feedId/subscribers', makeRequestHandler(loadFeedSubscribers, app));

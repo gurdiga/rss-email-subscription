@@ -1,15 +1,11 @@
 import { expect } from 'chai';
 import { Err, isErr, makeErr } from '../shared/lang';
-import { AppStorage } from './storage';
 import { si } from '../shared/string-utils';
-import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, Spy, Stub } from '../shared/test-utils';
-import { makeTestEmailAddress } from '../shared/test-utils';
-import { Account, AccountData, AccountId, AccountIdList } from './account';
-import { confirmAccount } from './account-storage';
-import { getAccountIdList, getAccountStorageKey } from './account-storage';
-import { makeAccountId } from './account';
-import { loadAccount, storeAccount } from './account-storage';
+import { makeSpy, makeStub, makeTestAccountId, makeTestEmailAddress, makeTestStorage } from '../shared/test-utils';
+import { Account, AccountData, AccountId, AccountIdList, makeAccountId } from './account';
+import { confirmAccount, getAccountIdList, getAccountStorageKey, loadAccount, storeAccount } from './account-storage';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
+import { AppStorage } from './storage';
 
 const creationTimestamp = new Date();
 export const accountId = makeTestAccountId();
@@ -43,33 +39,31 @@ describe(getAccountIdList.name, () => {
 describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
     const storageKey = '/account';
-    const timestamp = new Date();
     const accountData: AccountData = {
       email: 'test@test.com',
-      newUnconfirmedEmail: 'new-test@test.com',
-      newUnconfirmedEmailTimestamp: timestamp,
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
     };
-    const storage = makeTestStorage({ loadItem: () => accountData });
+    const hasItem = makeStub(() => true);
+    const loadItem = makeStub(() => accountData);
+    const storage = makeTestStorage({ hasItem, loadItem });
     const result = loadAccount(storage, accountId, storageKey);
 
     const expectedResult: Account = {
       email: makeTestEmailAddress(accountData.email),
-      newUnconfirmedEmail: makeTestEmailAddress(accountData.newUnconfirmedEmail!),
-      newUnconfirmedEmailTimestamp: timestamp,
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       creationTimestamp,
       confirmationTimestamp: undefined,
     };
 
-    expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
+    expect(hasItem.calls).to.deep.equal([[storageKey]]);
+    expect(loadItem.calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal(expectedResult);
   });
 
   it('returns an Err value when storage fails', () => {
-    const storage = makeTestStorage({ loadItem: () => makeErr('Bad sector!') });
+    const storage = makeTestStorage({ loadItem: () => makeErr('Bad sector!'), hasItem: () => true });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(makeErr('Failed to load account data: Bad sector!'));
@@ -78,13 +72,11 @@ describe(loadAccount.name, () => {
   it('returns an Err value when stored email is invalid', () => {
     const accountData: AccountData = {
       email: 'not-an-email-really',
-      newUnconfirmedEmail: undefined,
-      newUnconfirmedEmailTimestamp: undefined,
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
     };
-    const storage = makeTestStorage({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
@@ -98,13 +90,11 @@ describe(loadAccount.name, () => {
   it('returns an Err value when stored hashed password is invalid', () => {
     const accountData: AccountData = {
       email: 'test@test.com',
-      newUnconfirmedEmail: undefined,
-      newUnconfirmedEmailTimestamp: undefined,
       hashedPassword: 'la-la-la',
       confirmationTimestamp: undefined,
       creationTimestamp,
     };
-    const storage = makeTestStorage({ loadItem: () => accountData });
+    const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
@@ -117,33 +107,26 @@ describe(loadAccount.name, () => {
 });
 
 describe(storeAccount.name, () => {
-  it('stores the given account', () => {
+  it('stores the given account data', () => {
     const account: Account = {
       email: makeTestEmailAddress('test@test.com'),
-      newUnconfirmedEmail: undefined,
-      newUnconfirmedEmailTimestamp: undefined,
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       confirmationTimestamp: undefined,
       creationTimestamp,
     };
-    const storage = makeTestStorage({
-      loadItem: makeStub(() => getAccountData(account)),
-      storeItem: makeSpy(),
-    });
+    const storeItem = makeSpy<AppStorage['storeItem']>();
+    const loadItem = makeStub(() => getAccountData(account));
+    const storage = makeTestStorage({ loadItem, storeItem });
 
     const result = storeAccount(storage, accountId, account);
 
-    expect((storage.storeItem as Spy).calls).to.deep.equal([
-      [getAccountStorageKey(accountId), getAccountData(account)],
-    ]);
+    expect(storeItem.calls).to.deep.equal([[getAccountStorageKey(accountId), getAccountData(account)]]);
     expect(result).to.be.undefined;
   });
 
   function getAccountData(account: Account): AccountData {
     return {
       email: account.email.value,
-      newUnconfirmedEmail: account.newUnconfirmedEmail?.value,
-      newUnconfirmedEmailTimestamp: account.newUnconfirmedEmailTimestamp,
       hashedPassword: account.hashedPassword.value,
       confirmationTimestamp: account.confirmationTimestamp,
       creationTimestamp: account.creationTimestamp,
@@ -155,8 +138,6 @@ describe(confirmAccount.name, () => {
   it('sets confirmationTimestamp on the given account', () => {
     const accountData: AccountData = {
       email: 'test@test.com',
-      newUnconfirmedEmail: undefined,
-      newUnconfirmedEmailTimestamp: undefined,
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
@@ -164,10 +145,8 @@ describe(confirmAccount.name, () => {
 
     const loadItem = makeStub(() => accountData);
     const storeItem = makeSpy<AppStorage['storeItem']>();
-    const storage = makeTestStorage({
-      loadItem: loadItem,
-      storeItem: storeItem,
-    });
+    const hasItem = makeStub(() => true);
+    const storage = makeTestStorage({ loadItem, storeItem, hasItem });
 
     const confirmationTimestamp = new Date('2022-10-07');
 
@@ -177,13 +156,12 @@ describe(confirmAccount.name, () => {
 
     const expectedStoredData: AccountData = {
       email: accountData.email,
-      newUnconfirmedEmail: undefined,
-      newUnconfirmedEmailTimestamp: undefined,
       hashedPassword: accountData.hashedPassword,
       confirmationTimestamp,
       creationTimestamp,
     };
 
+    expect(hasItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
     expect(loadItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
     expect(storeItem.calls).to.deep.equal([[getAccountStorageKey(accountId), expectedStoredData]]);
     expect(result).to.be.undefined;

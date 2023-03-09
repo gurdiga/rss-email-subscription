@@ -100,7 +100,7 @@ async function submitNewEmail(newEmail: string) {
     newEmail: newEmail,
   };
 
-  return await asyncAttempt(() => sendApiRequest('/account/change-email', HttpMethod.POST, request));
+  return await asyncAttempt(() => sendApiRequest('/account/request-change-email', HttpMethod.POST, request));
 }
 
 function handleEmailChangeResponse(

@@ -1,23 +1,35 @@
-import { makeEmailAddress } from '../domain/email-address-making';
-import { EmailAddress } from '../domain/email-address';
+import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
+import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { Account, AccountId } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { accountExists, storeAccount } from '../domain/account-storage';
+import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
+import { AppSettings } from '../domain/app-settings';
+import {
+  ConfirmationSecret,
+  isConfirmationSecretNotFound,
+  makeConfirmationSecret,
+} from '../domain/confirmation-secrets';
+import {
+  deleteConfirmationSecret,
+  loadConfirmationSecret,
+  storeConfirmationSecret,
+} from '../domain/confirmation-secrets-storage';
+import { EmailAddress } from '../domain/email-address';
+import { makeEmailAddress } from '../domain/email-address-making';
+import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
+import { makeNewPassword, NewPassword } from '../domain/new-password';
+import { PagePath } from '../domain/page-path';
+import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
+import { requireEnv } from '../shared/env';
 import { hasKind, isErr, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { App } from './init-app';
-import { makeNewPassword, NewPassword } from '../domain/new-password';
-import { RequestHandler } from './request-handler';
-import { AppSettings } from '../domain/app-settings';
-import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
-import { requireEnv } from '../shared/env';
-import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
-import { storeConfirmationSecret, makeConfirmationSecret } from '../domain/confirmation-secrets';
 import { si } from '../shared/string-utils';
-import { PagePath } from '../domain/page-path';
+import { enablePrivateNavbarCookie } from './app-cookie';
+import { App } from './init-app';
+import { RequestHandler } from './request-handler';
+import { initSession } from './session';
 
 export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
   const processInputResult = processInput(reqBody);
@@ -69,7 +81,8 @@ export function storeRegistrationConfirmationSecret(
     return makeErr('Couldn’t make confirmation secret');
   }
 
-  const result = storeConfirmationSecret(storage, confirmationSecret, accountId);
+  const confirmationSecretData: RegistrationConfirmationSecretData = { accountId };
+  const result = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 
   if (isErr(result)) {
     logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: result.reason });
@@ -77,6 +90,10 @@ export function storeRegistrationConfirmationSecret(
   }
 
   logInfo('Stored registration confirmation secret');
+}
+
+interface RegistrationConfirmationSecretData {
+  accountId: AccountId;
 }
 
 async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
@@ -186,8 +203,6 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   const hashedPassword = hash(input.password.value, settings.hashingSalt);
   const account: Account = {
     email: input.email,
-    newUnconfirmedEmail: undefined,
-    newUnconfirmedEmailTimestamp: undefined,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
@@ -208,6 +223,79 @@ function initAccount({ storage, settings }: App, input: ProcessedInput): Result<
   }
 
   logInfo('User registered', account);
+
+  return accountId;
+}
+
+export const registrationConfirmation: RequestHandler = async function registrationConfirmation(
+  _reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  { storage }
+) {
+  const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
+  const secret = makeConfirmationSecret(reqBody['secret']);
+
+  if (isErr(secret)) {
+    logWarning(si`Failed to ${makeConfirmationSecret.name}`, { reason: secret.reason, secret: reqBody['secret'] });
+    return makeInputError('Invalid registration confirmation link');
+  }
+
+  const accountId = confirmAccountBySecret(storage, secret);
+
+  if (isErr(accountId)) {
+    return makeAppError(accountId.reason);
+  }
+
+  initSession(reqSession, accountId);
+
+  const logData = {};
+  const responseData = { sessionId: reqSession.id };
+  const cookies = [enablePrivateNavbarCookie];
+
+  return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
+};
+
+function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
+  const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;
+  const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
+
+  const data = loadConfirmationSecret<RegistrationConfirmationSecretData>(storage, secret);
+
+  if (isErr(data)) {
+    logError(si`Failed to ${loadConfirmationSecret.name}`, { reason: data.reason });
+    return makeErr('Invalid registration confirmation link');
+  }
+
+  if (isConfirmationSecretNotFound(data)) {
+    logWarning('Confirmation secret not found', { secret: secret.value });
+    return makeErr('Confirmation link expired or has already been confirmed');
+  }
+
+  const { accountId } = data;
+  const confirmAccountResult = confirmAccount(storage, accountId);
+
+  if (isErr(confirmAccountResult)) {
+    logWarning(si`Failed to ${confirmAccount.name}`, {
+      accountId: accountId.value,
+      reason: confirmAccountResult.reason,
+    });
+    return makeErr('Failed to confirm account');
+  }
+
+  const deleteResult = deleteConfirmationSecret(storage, secret);
+
+  if (isErr(deleteResult)) {
+    logError(si`Failed to ${deleteConfirmationSecret.name}`, {
+      reason: deleteResult.reason,
+      secret: secret.value,
+    });
+
+    // NOTE: This is still a success from user’s perspective, so will not makeErr here.
+  }
+
+  logInfo('User confirmed registration');
 
   return accountId;
 }

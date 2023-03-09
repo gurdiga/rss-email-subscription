@@ -1,12 +1,22 @@
-import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
 import { parseDate, parseOptionalDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
-import { AppStorage, StorageKey } from './storage';
-import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
-import { makeHashedPassword } from './hashed-password';
-import { AccountIdList, makeAccountId, isAccountId, AccountId, Account, AccountData } from './account';
+import { si } from '../shared/string-utils';
+import {
+  Account,
+  AccountData,
+  AccountId,
+  AccountIdList,
+  AccountNotFound,
+  isAccountId,
+  isAccountNotFound,
+  makeAccountId,
+  makeAccountNotFound,
+} from './account';
 import { EmailAddress } from './email-address';
+import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
+import { makeHashedPassword } from './hashed-password';
+import { AppStorage, StorageKey } from './storage';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
   const accountIdStrings = storage.listSubdirectories(accountsStorageKey);
@@ -26,10 +36,10 @@ export function confirmAccount(
   storage: AppStorage,
   accountId: AccountId,
   getCurrentTimestampFn = () => new Date()
-): Result<void> {
+): Result<AccountNotFound | void> {
   const account = loadAccount(storage, accountId);
 
-  if (isErr(account)) {
+  if (isErr(account) || isAccountNotFound(account)) {
     return account;
   }
 
@@ -40,6 +50,22 @@ export function confirmAccount(
   if (isErr(storeAccountResult)) {
     return makeErr(si`Couldn’t ${storeAccount.name}: ${storeAccountResult.reason}`);
   }
+}
+
+export function setAccountEmail(
+  storage: AppStorage,
+  accountId: AccountId,
+  emailAddress: EmailAddress
+): Result<AccountNotFound | void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    return account;
+  }
+
+  account.email = emailAddress;
+
+  return storeAccount(storage, accountId, account);
 }
 
 export function accountExists(storage: AppStorage, accountId: AccountId): Result<boolean> {
@@ -57,7 +83,17 @@ export function loadAccount(
   storage: AppStorage,
   accountId: AccountId,
   storageKey = getAccountStorageKey(accountId)
-): Result<Account> {
+): Result<AccountNotFound | Account> {
+  const exists = storage.hasItem(storageKey);
+
+  if (isErr(exists)) {
+    return makeErr(si`Failed to check account exists: ${exists.reason}`);
+  }
+
+  if (exists === false) {
+    return makeAccountNotFound();
+  }
+
   const item = storage.loadItem(storageKey);
 
   if (isErr(item)) {
@@ -114,8 +150,6 @@ export function loadAccount(
 
   return {
     email,
-    newUnconfirmedEmail,
-    newUnconfirmedEmailTimestamp,
     hashedPassword,
     creationTimestamp,
     confirmationTimestamp,
@@ -126,8 +160,6 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
     email: account.email.value,
-    newUnconfirmedEmail: account.newUnconfirmedEmail?.value,
-    newUnconfirmedEmailTimestamp: account.newUnconfirmedEmailTimestamp,
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
@@ -144,21 +176,4 @@ export const accountsStorageKey = '/accounts';
 
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
   return makePath(accountsStorageKey, accountId.value, 'account.json');
-}
-
-export function setAccountNewUnconfirmedEmail(
-  accountId: AccountId,
-  newEmail: EmailAddress,
-  storage: AppStorage
-): Result<void> {
-  const account = loadAccount(storage, accountId);
-
-  if (isErr(account)) {
-    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
-  }
-
-  account.newUnconfirmedEmail = newEmail;
-  account.newUnconfirmedEmailTimestamp = new Date();
-
-  return storeAccount(storage, accountId, account);
 }

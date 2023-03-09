@@ -1,5 +1,6 @@
 import { Err, getTypeName, hasKind, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { ConfirmationSecret, makeConfirmationSecret } from './confirmation-secrets';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress } from './email-address-making';
 import { HashedPassword } from './hashed-password';
@@ -26,8 +27,6 @@ export function isAccountId(value: unknown): value is AccountId {
 
 export interface Account {
   email: EmailAddress;
-  newUnconfirmedEmail: EmailAddress | undefined;
-  newUnconfirmedEmailTimestamp: Date | undefined;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
@@ -35,8 +34,6 @@ export interface Account {
 
 export interface AccountData {
   email: string;
-  newUnconfirmedEmail: string | undefined;
-  newUnconfirmedEmailTimestamp: Date | undefined;
   hashedPassword: string;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
@@ -71,34 +68,22 @@ export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfi
 
 export type EmailChangeRequestData = Record<keyof EmailChangeRequest, string>;
 
-function isEmailChangeRequestData(value: unknown): value is EmailChangeRequestData {
-  if (!isObject(value)) {
-    return false;
-  }
-
-  const keyName: keyof EmailChangeRequestData = 'newEmail';
-
-  if (!(keyName in value)) {
-    return false;
-  }
-
-  if (typeof value[keyName] !== 'string') {
-    return false;
-  }
-
-  return true;
-}
-
 export interface EmailChangeRequest {
   newEmail: EmailAddress;
 }
 
 export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): Result<EmailChangeRequest> {
-  if (!isEmailChangeRequestData(data)) {
-    return makeErr('Invalid email change request');
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
   }
 
-  const newEmail = makeEmailAddress(data.newEmail, 'newEmail' as keyof EmailChangeRequestData);
+  const keyName: keyof EmailChangeRequestData = 'newEmail';
+
+  if (!(keyName in data)) {
+    return makeErr(si`Invalid request: missing "${keyName}" prop`, keyName);
+  }
+
+  const newEmail = makeEmailAddress(data.newEmail, keyName);
 
   if (isErr(newEmail)) {
     return newEmail;
@@ -107,4 +92,30 @@ export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): 
   return { newEmail };
 }
 
-export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
+export interface EmailChangeConfirmationRequest {
+  secret: ConfirmationSecret;
+}
+
+export function makeEmailChangeConfirmationRequest(
+  data: unknown | EmailChangeConfirmationRequestData
+): Result<EmailChangeConfirmationRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
+
+  const keyName: keyof EmailChangeConfirmationRequestData = 'secret';
+
+  if (!(keyName in data)) {
+    return makeErr(si`Invalid request: missing "${keyName}" prop`, keyName);
+  }
+
+  const secret = makeConfirmationSecret(data.secret);
+
+  if (isErr(secret)) {
+    return makeErr(si`Invalid request "${keyName}": ${secret.reason}`, keyName);
+  }
+
+  return { secret };
+}
+
+export type EmailChangeConfirmationRequestData = Record<keyof EmailChangeConfirmationRequest, string>;

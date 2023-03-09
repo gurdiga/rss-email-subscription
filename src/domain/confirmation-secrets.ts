@@ -1,8 +1,5 @@
 import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
-import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
-import { makePath } from '../shared/path-utils';
-import { AccountId } from './account';
 
 export interface ConfirmationSecret {
   kind: 'ConfirmationSecret';
@@ -34,24 +31,18 @@ export function makeConfirmationSecret(input: unknown): Result<ConfirmationSecre
   };
 }
 
-export function storeConfirmationSecret(storage: AppStorage, secret: ConfirmationSecret, data: any): Result<void> {
-  const storageKey = getStorageKey(secret);
-
-  return storage.storeItem(storageKey, data);
+export interface ConfirmationSecretNotFound {
+  kind: 'ConfirmationSecretNotFound';
+  secret: ConfirmationSecret;
 }
 
-export function deleteConfirmationSecret(storage: AppStorage, secret: ConfirmationSecret): Result<void> {
-  const storageKey = getStorageKey(secret);
-
-  return storage.removeItem(storageKey);
+export function isConfirmationSecretNotFound(value: unknown): value is ConfirmationSecretNotFound {
+  return hasKind(value, 'ConfirmationSecretNotFound');
 }
 
-export function getDataForConfirmationSecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
-  const storageKey = getStorageKey(secret);
-
-  return storage.loadItem(storageKey);
-}
-
-function getStorageKey(secret: ConfirmationSecret): StorageKey {
-  return makePath('/confirmation-secrets', si`${secret.value}.json`);
+export function makeConfirmationSecretNotFound(secret: ConfirmationSecret): ConfirmationSecretNotFound {
+  return {
+    kind: 'ConfirmationSecretNotFound',
+    secret,
+  };
 }
