@@ -15,6 +15,7 @@ import {
   byDomainAndThenByLocalPart,
   DeleteEmailsRequest,
   DeleteEmailsResponse,
+  DeleteFeedRequestData,
   EditFeedRequestData,
   EditFeedResponse,
   Feed,
@@ -496,7 +497,7 @@ describe('API', () => {
   }
 
   async function deleteFeedSend(feedId: FeedId) {
-    const data = { id: feedId.value };
+    const data: DeleteFeedRequestData = { feedId: feedId.value };
 
     return await post('/api/feeds/delete-feed', data);
   }

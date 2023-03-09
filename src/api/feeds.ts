@@ -12,6 +12,8 @@ import {
   AddNewFeedResponseData,
   DeleteEmailsRequest,
   DeleteEmailsResponse,
+  DeleteFeedRequest,
+  DeleteFeedRequestData,
   EditFeedResponse,
   Feed,
   FeedStatus,
@@ -27,7 +29,7 @@ import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
-import { getTypeName, isErr, isString, makeErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { getAccountIdList } from '../domain/account-storage';
@@ -54,13 +56,14 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBo
     return makeNotAuthenticatedError();
   }
 
-  const feedId = makeFeedId(reqBody['id']);
+  const request = makeDeleteFeedRequest(reqBody);
 
-  if (isErr(feedId)) {
-    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
-    return makeInputError(si`Invalid feedId: ${feedId.reason}`);
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeDeleteFeedRequest.name}`, { reason: request.reason });
+    return makeInputError(request.reason, request.field);
   }
 
+  const { feedId } = request;
   const { accountId } = session;
   const result = markFeedAsDeleted(accountId, feedId, app.storage);
 
@@ -70,7 +73,7 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBo
   }
 
   if (isFeedNotFound(result)) {
-    logWarning('Feed to delete not found', { feedId: result.feedId, accountId: accountId.value });
+    logWarning('Feed to delete not found', { feedId: result.feedId.value, accountId: accountId.value });
     return makeInputError('Feed not found');
   }
 
@@ -78,6 +81,26 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBo
 
   return makeSuccess('Feed deleted');
 };
+
+function makeDeleteFeedRequest(data: unknown | DeleteFeedRequestData): Result<DeleteFeedRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
+
+  const idKeyName: keyof DeleteFeedRequestData = 'feedId';
+
+  if (!(idKeyName in data)) {
+    return makeErr(si`Invalid request: missing "${idKeyName}"`, idKeyName);
+  }
+
+  const feedId = makeFeedId(data.feedId, idKeyName);
+
+  if (isErr(feedId)) {
+    return feedId;
+  }
+
+  return { feedId };
+}
 
 function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
   if (!isAddNewFeedRequestData(requestData)) {

@@ -1,4 +1,4 @@
-import { UiFeed } from '../domain/feed';
+import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
@@ -89,7 +89,7 @@ function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: F
 }
 
 async function sendDeleteRequest(feedId: FeedId): Promise<Result<void>> {
-  const data = { id: feedId.value };
+  const data: DeleteFeedRequestData = { feedId: feedId.value };
   const response = await asyncAttempt(() => sendApiRequest(si`/feeds/delete-feed`, HttpMethod.POST, data));
 
   if (isErr(response)) {

@@ -108,6 +108,12 @@ export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number):
   };
 }
 
+export interface DeleteFeedRequest {
+  feedId: FeedId;
+}
+
+export type DeleteFeedRequestData = Record<keyof DeleteFeedRequest, string>;
+
 export type AddNewFeedRequestData = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
 export interface AddNewFeedResponseData {
   feedId: string;
