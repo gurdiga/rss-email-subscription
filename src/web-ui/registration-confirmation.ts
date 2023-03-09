@@ -1,7 +1,7 @@
+import { RegistrationConfirmationRequestData } from '../domain/account';
 import { PagePath } from '../domain/page-path';
 import { isSuccess } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
-import { si } from '../shared/string-utils';
+import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
   ApiResponseUiElements,
@@ -11,6 +11,7 @@ import {
   hideElement,
   HttpMethod,
   navigateTo,
+  requireQueryParams,
   requireUiElements,
   sendApiRequest,
   SpinnerUiElements,
@@ -19,10 +20,12 @@ import {
 } from './shared';
 
 async function main() {
-  const secret = validateSecretFromQueryStringParam(location.search);
+  const queryStringParams = requireQueryParams<RequiredParams>({
+    secret: 'secret',
+  });
 
-  if (isErr(secret)) {
-    displayInitError(si`Invalid registration confirmation link: ${secret.reason}`);
+  if (isErr(queryStringParams)) {
+    displayInitError(queryStringParams.reason);
     return;
   }
 
@@ -38,7 +41,7 @@ async function main() {
 
   unhideElement(uiElements.spinner);
 
-  const response = await asyncAttempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, { secret }));
+  const response = await submitConfirmation(queryStringParams.secret);
 
   if (isErr(response)) {
     displayCommunicationError(response, uiElements.apiResponseMessage);
@@ -54,16 +57,14 @@ async function main() {
   }
 }
 
-function validateSecretFromQueryStringParam(locationSearch: string): Result<string> {
-  const paramName = 'secret';
-  const params = new URLSearchParams(locationSearch);
-  const secret = params.get(paramName);
+async function submitConfirmation(secret: string) {
+  const request: RegistrationConfirmationRequestData = { secret };
 
-  if (!secret) {
-    return makeErr(si`Missing or empty param "${paramName}" in "${locationSearch}"`);
-  }
+  return await asyncAttempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, request));
+}
 
-  return secret;
+interface RequiredParams {
+  secret: string;
 }
 
 interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {}

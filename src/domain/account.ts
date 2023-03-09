@@ -63,6 +63,12 @@ export interface AccountIdList {
   errs: Err[];
 }
 
+export interface RegistrationConfirmationRequest {
+  secret: string;
+}
+
+export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
+
 export type EmailChangeRequestData = Record<keyof EmailChangeRequest, string>;
 
 function isEmailChangeRequestData(value: unknown): value is EmailChangeRequestData {
@@ -100,3 +106,5 @@ export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): 
 
   return { newEmail };
 }
+
+export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
