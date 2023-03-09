@@ -281,7 +281,7 @@ function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret)
       accountId: accountId.value,
       reason: confirmAccountResult.reason,
     });
-    return makeErr('Failed to confirm account');
+    return makeErr('Application error');
   }
 
   const deleteResult = deleteConfirmationSecret(storage, secret);
@@ -291,8 +291,7 @@ function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret)
       reason: deleteResult.reason,
       secret: secret.value,
     });
-
-    // NOTE: This is still a success from user’s perspective, so will not makeErr here.
+    return makeErr('Application error');
   }
 
   logInfo('User confirmed registration');
