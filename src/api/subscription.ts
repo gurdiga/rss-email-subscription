@@ -1,11 +1,9 @@
-import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { loadStoredEmails, makeEmailHashFn, StoredEmails } from '../app/email-sending/emails';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress, HashedEmail } from '../domain/email-address';
 import { storeEmails, addEmail } from '../app/email-sending/emails';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { requireEnv } from '../shared/env';
 import { Feed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../domain/feed-storage';
@@ -23,7 +21,7 @@ export const subscription: RequestHandler = async function subscription(
   reqBody,
   _reqParams,
   _reqSession,
-  { storage }
+  { storage, env }
 ) {
   const { email } = reqBody;
   const { logWarning, logError, logInfo } = makeCustomLoggers({
@@ -31,12 +29,6 @@ export const subscription: RequestHandler = async function subscription(
     feedId: reqBody.feedId,
     module: subscription.name,
   });
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
-
-  if (isErr(env)) {
-    logError('Invalid environment', { reason: env.reason });
-    return makeAppError('Environment error');
-  }
 
   const inputProcessingResult = processInput({ reqId, feedId: reqBody.feedId, email }, storage);
 
