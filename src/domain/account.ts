@@ -61,6 +61,13 @@ export interface AccountIdList {
   errs: Err[];
 }
 
+export interface RegistrationRequest {
+  email: EmailAddress;
+  password: Password;
+}
+
+export type RegistrationRequestData = Record<keyof RegistrationRequest, string>;
+
 export interface AuthenticationRequest {
   email: EmailAddress;
   password: Password;

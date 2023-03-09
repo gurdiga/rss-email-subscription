@@ -1,3 +1,4 @@
+import { RegistrationRequestData } from '../domain/account';
 import { PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -43,12 +44,12 @@ function main() {
     clearValidationErrors(uiElements);
 
     preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await asyncAttempt(() =>
-        sendApiRequest('/registration', HttpMethod.POST, {
-          email: uiElements.email.value,
-          password: uiElements.password.value,
-        })
-      );
+      const request: RegistrationRequestData = {
+        email: uiElements.email.value,
+        password: uiElements.password.value,
+      };
+
+      const response = await asyncAttempt(() => sendApiRequest('/registration', HttpMethod.POST, request));
 
       if (isErr(response)) {
         displayCommunicationError(response, uiElements.apiResponseMessage);

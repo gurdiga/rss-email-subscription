@@ -1,6 +1,6 @@
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { Account, AccountId } from '../domain/account';
+import { Account, AccountId, RegistrationRequest, RegistrationRequestData } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
@@ -17,13 +17,13 @@ import {
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
-import { makeNewPassword, NewPassword } from '../domain/new-password';
 import { PagePath } from '../domain/page-path';
+import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { requireEnv } from '../shared/env';
-import { hasKind, isErr, makeErr, Result } from '../shared/lang';
+import { getTypeName, hasKind, isErr, isObject, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
@@ -32,23 +32,23 @@ import { RequestHandler } from './request-handler';
 import { initSession } from './session';
 
 export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
-  const processInputResult = processInput(reqBody);
+  const request = makeRegistrationRequest(reqBody);
 
-  if (isErr(processInputResult)) {
-    return makeInputError<keyof Input>(processInputResult.reason, processInputResult.field);
+  if (isErr(request)) {
+    return makeInputError(request.reason, request.field);
   }
 
-  const initAccountResult = initAccount(app, processInputResult);
+  const initAccountResult = initAccount(app, request);
 
   if (isErr(initAccountResult)) {
     return makeAppError(initAccountResult.reason);
   }
 
   if (isAccountAlreadyExists(initAccountResult)) {
-    return makeInputError<keyof Input>('Email already taken', 'email');
+    return makeInputError('Email already taken', 'email' as keyof RegistrationRequest);
   }
 
-  const { email } = processInputResult;
+  const { email } = request;
   const sendConfirmationEmailResult = await sendConfirmationEmail(email, app.settings);
 
   if (isErr(sendConfirmationEmailResult)) {
@@ -147,43 +147,37 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
   };
 }
 
-interface Input {
-  plan: string; // Maybe switch to 'unknown' type and see what comes out
-  email: string;
-  password: string;
-}
+export function makeRegistrationRequest(data: unknown): Result<RegistrationRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
 
-interface ProcessedInput {
-  kind: 'ProcessedInput';
-  email: EmailAddress;
-  password: NewPassword;
-}
+  const emailKeyName: keyof RegistrationRequestData = 'email';
 
-function processInput(input: Input): Result<ProcessedInput, keyof Input> {
-  const module = si`${registration.name}-${processInput.name}`;
-  const { logWarning } = makeCustomLoggers({ email: input.email, module });
+  if (!(emailKeyName in data)) {
+    return makeErr(si`Invalid request: missing "${emailKeyName}" prop`, emailKeyName);
+  }
 
-  const email = makeEmailAddress(input.email);
+  const email = makeEmailAddress(data[emailKeyName], emailKeyName);
 
   if (isErr(email)) {
-    logWarning('Invalid email', { reason: email.reason });
-    return { ...email, field: 'email' };
+    return email;
   }
 
-  const password = makeNewPassword(input.password);
+  const passwordKeyName: keyof RegistrationRequestData = 'password';
+
+  if (!(passwordKeyName in data)) {
+    return makeErr(si`Invalid request: missing "${passwordKeyName}" prop`, passwordKeyName);
+  }
+
+  const password = makePassword(data[passwordKeyName]);
 
   if (isErr(password)) {
-    logWarning('Invalid new password', { password: input.password, reason: password.reason });
-    return makeErr<keyof Input>(si`Invalid password: ${password.reason}`, 'password');
+    return password;
   }
 
-  return {
-    kind: 'ProcessedInput',
-    email,
-    password,
-  };
+  return { email, password };
 }
-
 interface AccountAlreadyExists {
   kind: 'AccountAlreadyExists';
 }
@@ -196,22 +190,25 @@ export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
   return hasKind(x, 'AccountAlreadyExists');
 }
 
-function initAccount({ storage, settings }: App, input: ProcessedInput): Result<AccountId | AccountAlreadyExists> {
+function initAccount(
+  { storage, settings }: App,
+  request: RegistrationRequest
+): Result<AccountId | AccountAlreadyExists> {
   const module = si`${registration.name}-${initAccount.name}`;
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
 
-  const hashedPassword = hash(input.password.value, settings.hashingSalt);
+  const hashedPassword = hash(request.password.value, settings.hashingSalt);
   const account: Account = {
-    email: input.email,
+    email: request.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
   };
 
-  const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
+  const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
 
   if (accountExists(storage, accountId)) {
-    logWarning('Account already exists', { email: input.email.value });
+    logWarning('Account already exists', { email: request.email.value });
     return makeAccountAlreadyExists();
   }
 
