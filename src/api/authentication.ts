@@ -1,12 +1,17 @@
 import { makeEmailAddress } from '../domain/email-address-making';
-import { EmailAddress } from '../domain/email-address';
-import { AccountId, isAccountNotFound } from '../domain/account';
+import {
+  AccountId,
+  AuthenticationResponseData,
+  AuthenticationRequest,
+  AuthenticationRequestData,
+  isAccountNotFound,
+} from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount } from '../domain/account-storage';
-import { makePassword, Password } from '../domain/password';
+import { makePassword } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { isErr, makeErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isObject, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -21,72 +26,65 @@ export const authentication: RequestHandler = async function authentication(
   reqSession,
   app
 ) {
-  const { email, password } = reqBody as Input;
-  const processInputResult = processInput({ email, password });
+  const request = makeAuthenticationRequest(reqBody);
 
-  if (isErr(processInputResult)) {
-    return makeInputError(processInputResult.reason, processInputResult.field);
+  if (isErr(request)) {
+    return makeInputError(request.reason, request.field);
   }
 
-  const checkCredentialsResult = checkCredentials(app, processInputResult);
+  const accountId = checkCredentials(app, request);
 
-  if (isErr(checkCredentialsResult)) {
-    return makeInputError(checkCredentialsResult.reason, checkCredentialsResult.field);
+  if (isErr(accountId)) {
+    return makeInputError(accountId.reason, accountId.field);
   }
-
-  const accountId = checkCredentialsResult as AccountId;
 
   initSession(reqSession, accountId);
 
   const logData = {};
-  const responseData = { sessionId: reqSession.id };
+  const responseData: AuthenticationResponseData = { sessionId: reqSession.id };
   const cookies = [enablePrivateNavbarCookie];
 
   return makeSuccess('Welcome back!', logData, responseData, cookies);
 };
 
-interface Input {
-  email: string;
-  password: string;
-}
+function makeAuthenticationRequest(data: unknown | AuthenticationRequestData): Result<AuthenticationRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
 
-interface ProcessedInput {
-  kind: 'ProcessedInput';
-  email: EmailAddress;
-  password: Password;
-}
+  const emailKeyName: keyof AuthenticationRequestData = 'email';
 
-function processInput(input: Input): Result<ProcessedInput> {
-  const module = si`${authentication.name}-${processInput.name}`;
-  const { logWarning } = makeCustomLoggers({ module });
+  if (!(emailKeyName in data)) {
+    return makeErr(si`Invalid request: missing "${emailKeyName}"`, emailKeyName);
+  }
 
-  const email = makeEmailAddress(input.email);
+  const email = makeEmailAddress(data.email, emailKeyName);
 
   if (isErr(email)) {
-    logWarning('Invalid email', { input: input.email, reason: email.reason });
-    return makeErr(email.reason, 'email');
+    return email;
   }
 
-  const password = makePassword(input.password);
+  const passwordKeyName: keyof AuthenticationRequestData = 'password';
+
+  if (!(passwordKeyName in data)) {
+    return makeErr(si`Invalid request: missing "${passwordKeyName}"`, passwordKeyName);
+  }
+
+  const password = makePassword(data.password, passwordKeyName);
 
   if (isErr(password)) {
-    logWarning('Invalid input password', { input: input.password, reason: password.reason });
-    return makeErr(password.reason, 'password');
+    return password;
   }
 
-  return {
-    kind: 'ProcessedInput',
-    email,
-    password,
-  };
+  return { email, password };
 }
 
-function checkCredentials({ settings, storage }: App, input: ProcessedInput): Result<AccountId> {
+function checkCredentials({ settings, storage }: App, request: AuthenticationRequest): Result<AccountId> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
-    email: input.email.value,
+    email: request.email.value,
     module: checkCredentials.name,
   });
-  const accountId = getAccountIdByEmail(input.email, settings.hashingSalt);
+  const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
@@ -110,7 +108,7 @@ function checkCredentials({ settings, storage }: App, input: ProcessedInput): Re
     );
   }
 
-  const inputHashedPassword = hash(input.password.value, settings.hashingSalt);
+  const inputHashedPassword = hash(request.password.value, settings.hashingSalt);
   const storedHashedPassword = account.hashedPassword.value;
 
   if (inputHashedPassword !== storedHashedPassword) {

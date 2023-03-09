@@ -4,6 +4,7 @@ import { ConfirmationSecret, makeConfirmationSecret } from './confirmation-secre
 import { EmailAddress } from './email-address';
 import { makeEmailAddress } from './email-address-making';
 import { HashedPassword } from './hashed-password';
+import { Password } from './password';
 
 export interface AccountId {
   kind: 'AccountId';
@@ -60,6 +61,17 @@ export interface AccountIdList {
   errs: Err[];
 }
 
+export interface AuthenticationRequest {
+  email: EmailAddress;
+  password: Password;
+}
+
+export type AuthenticationRequestData = Record<keyof AuthenticationRequest, string>;
+
+export interface AuthenticationResponseData {
+  sessionId: string;
+}
+
 export interface RegistrationConfirmationRequest {
   secret: string;
 }
@@ -106,7 +118,7 @@ export function makeEmailChangeConfirmationRequest(
   const keyName: keyof EmailChangeConfirmationRequestData = 'secret';
 
   if (!(keyName in data)) {
-    return makeErr(si`Invalid request: missing "${keyName}" prop`, keyName);
+    return makeErr(si`Invalid request: missing "${keyName}"`, keyName);
   }
 
   const secret = makeConfirmationSecret(data.secret);
