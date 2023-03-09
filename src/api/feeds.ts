@@ -36,7 +36,6 @@ import { getAccountIdList } from '../domain/account-storage';
 import {
   applyEditFeedRequest,
   feedExists,
-  FeedExistsResult,
   isFeedNotFound,
   loadFeed,
   loadFeedsByAccountId,
@@ -46,6 +45,7 @@ import {
 import { AppStorage } from '../domain/storage';
 import { RequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
+import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../domain/account';
 
 export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -137,20 +137,18 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
     return makeInputError(feed.reason, feed.field);
   }
 
-  const feedExistsResult = checkIfFeedExists(feed.id, app.storage, reqId);
+  const feedAccountId = getFeedAccountId(feed.id, app.storage, reqId);
 
-  if (isErr(feedExistsResult)) {
-    logError(si`Failed to check if ${feedExists.name}`, { reason: feedExistsResult.reason });
+  if (isErr(feedAccountId)) {
+    logError(si`Failed to check if ${getFeedAccountId.name}`, { reason: feedAccountId.reason });
     return makeAppError('Application error');
   }
 
-  if (feedExistsResult.does) {
+  if (isAccountId(feedAccountId)) {
     const errorMessage =
-      feedExistsResult.does.value === session.accountId.value
-        ? 'You already have a feed with this ID'
-        : 'Feed ID is taken';
+      feedAccountId.value === session.accountId.value ? 'You already have a feed with this ID' : 'Feed ID is taken';
 
-    logWarning(si`${errorMessage}: ${feed.id.value}`);
+    logWarning(errorMessage, { feedId: feed.id.value });
 
     return makeInputError(errorMessage, 'id');
   }
@@ -208,8 +206,8 @@ export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, 
   return makeSuccess('Feed updated. 👍', logData, responseData);
 };
 
-function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): Result<FeedExistsResult> {
-  const { logWarning, logError } = makeCustomLoggers({ module: checkIfFeedExists.name, feedId: feedId.value, reqId });
+function getFeedAccountId(feedId: FeedId, storage: AppStorage, reqId: number): Result<AccountId | AccountNotFound> {
+  const { logWarning, logError } = makeCustomLoggers({ module: getFeedAccountId.name, feedId: feedId.value, reqId });
   const accountIdList = getAccountIdList(storage);
 
   if (isErr(accountIdList)) {
@@ -225,7 +223,25 @@ function checkIfFeedExists(feedId: FeedId, storage: AppStorage, reqId: number): 
     });
   }
 
-  return feedExists(feedId, accountIds, storage);
+  const feedExistsResult = feedExists(feedId, accountIds, storage);
+
+  if (isErr(feedExistsResult)) {
+    return feedExistsResult;
+  }
+
+  if (!isEmpty(feedExistsResult.errs)) {
+    logWarning(si`Some errors while checking ${feedExists.name}`, {
+      errs: feedExistsResult.errs.map((x) => x.reason),
+    });
+  }
+
+  if (feedExistsResult.does === false) {
+    return makeAccountNotFound();
+  }
+
+  const accountId = feedExistsResult.does;
+
+  return accountId;
 }
 
 export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
