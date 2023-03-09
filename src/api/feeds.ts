@@ -372,12 +372,12 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   }
 
   const logData = {};
-  const data: LoadEmailsResponse = {
+  const responseData: LoadEmailsResponse = {
     displayName: feed.displayName,
     emails: makeUiEmailList(storedEmails.validEmails),
   };
 
-  return makeSuccess('Feed subscribers', logData, data);
+  return makeSuccess('Feed subscribers', logData, responseData);
 };
 
 export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSubscribers(
