@@ -1,10 +1,11 @@
 import { expect } from 'chai';
 import { RssItem } from '../../domain/rss-item';
-import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
+import { AppStorage } from '../../domain/storage';
 import { makeErr } from '../../shared/lang';
-import { makeSpy, makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Spy } from '../../shared/test-utils';
-import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 import { si } from '../../shared/string-utils';
+import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
+import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
+import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
 
 describe(recordNewRssItems.name, () => {
   const accountId = makeTestAccountId();
@@ -38,11 +39,12 @@ describe(recordNewRssItems.name, () => {
   ];
 
   it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
-    const storage = makeTestStorage({ storeItem: makeSpy() });
+    const storeItem = makeSpy<AppStorage['storeItem']>();
+    const storage = makeTestStorage({ storeItem });
     const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
     const result = recordNewRssItems(accountId, feedId, storage, rssItems, nameFile);
 
-    expect((storage.storeItem as Spy).calls).to.deep.equal([
+    expect(storeItem.calls).to.deep.equal([
       [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[0]!)), rssItems[0]],
       [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[1]!)), rssItems[1]],
       [getStoredRssItemStorageKey(accountId, feedId, nameFile(rssItems[2]!)), rssItems[2]],

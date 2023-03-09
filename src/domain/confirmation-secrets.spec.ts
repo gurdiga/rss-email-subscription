@@ -1,22 +1,21 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
-import { AppStorage } from './storage';
+import { si } from '../shared/string-utils';
 import {
   makeSpy,
-  makeTestStorage,
   makeStub,
   makeTestAccountId,
-  Spy,
   makeTestConfirmationSecret,
+  makeTestStorage,
 } from '../shared/test-utils';
 import {
+  confirmationSecretLength,
+  deleteConfirmationSecret,
+  loadConfirmationSecret,
   makeConfirmationSecret,
   storeConfirmationSecret,
-  deleteConfirmationSecret,
-  getDataForConfirmationSecret,
-  confirmationSecretLength,
 } from './confirmation-secrets';
-import { si } from '../shared/string-utils';
+import { AppStorage } from './storage';
 
 describe('Confirmation secrets', () => {
   describe(makeConfirmationSecret.name, () => {
@@ -59,11 +58,12 @@ describe('Confirmation secrets', () => {
 
   describe(deleteConfirmationSecret.name, () => {
     it('deletes the corresponding storage item', () => {
-      const storage = makeTestStorage({ removeItem: makeSpy() });
+      const removeItem = makeSpy<AppStorage['removeItem']>();
+      const storage = makeTestStorage({ removeItem });
 
       deleteConfirmationSecret(storage, secret);
 
-      expect((storage.removeItem as Spy).calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
+      expect(removeItem.calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
     });
 
     it('returns an Err value when storage fails', () => {
@@ -74,18 +74,19 @@ describe('Confirmation secrets', () => {
     });
   });
 
-  describe(getDataForConfirmationSecret.name, () => {
+  describe(loadConfirmationSecret.name, () => {
     it('returns the content of the contents of the appropriate storage item', () => {
-      const storage = makeTestStorage({ loadItem: makeStub(() => accountId) });
-      const result = getDataForConfirmationSecret(storage, secret);
+      const loadItem = makeStub(() => accountId);
+      const storage = makeTestStorage({ loadItem });
+      const result = loadConfirmationSecret(storage, secret);
 
-      expect((storage.loadItem as Spy).calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
+      expect(loadItem.calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
       expect(result).to.equal(accountId);
     });
 
     it('returns an Err value when storage fails', () => {
       const storage = makeTestStorage({ loadItem: () => storageErr });
-      const result = getDataForConfirmationSecret(storage, secret);
+      const result = loadConfirmationSecret(storage, secret);
 
       expect(result).to.deep.equal(storageErr);
     });

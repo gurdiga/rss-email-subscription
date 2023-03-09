@@ -5,14 +5,23 @@ import { getFeedStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId
 import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { makeFeedId } from './feed-id';
 import { Err, isErr, makeErr } from '../shared/lang';
-import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId, Stub, deepClone } from '../shared/test-utils';
-import { makeTestFeedHashingSalt, makeTestFeed, Spy, makeTestEmailAddress } from '../shared/test-utils';
+import {
+  makeTestStorage,
+  makeStub,
+  makeTestAccountId,
+  makeTestFeedId,
+  Stub,
+  deepClone,
+  makeSpy,
+} from '../shared/test-utils';
+import { makeTestFeedHashingSalt, makeTestFeed, makeTestEmailAddress } from '../shared/test-utils';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { makeTestUnixCronPattern } from '../shared/test-utils';
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
 import { si } from '../shared/string-utils';
 import { makeUnixCronPattern } from './cron-pattern-making';
+import { AppStorage } from './storage';
 
 export const accountId = makeTestAccountId();
 export const feedId = makeTestFeedId();
@@ -263,12 +272,13 @@ describe(markFeedAsDeleted.name, () => {
 
   it('sets feed’s isDeleted to true', () => {
     const loadFeed = makeStub(() => feed);
-    const storage = makeTestStorage({ storeItem: () => {} });
+    const storeItem = makeSpy<AppStorage['storeItem']>();
+    const storage = makeTestStorage({ storeItem });
 
     const result = markFeedAsDeleted(accountId, feed.id, storage, loadFeed);
     expect(result).to.be.undefined;
 
-    const storedData = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    const storedData = storeItem.calls[0]![1] as FeedStoredData;
     expect(storedData.isDeleted).to.be.true;
   });
 
@@ -300,22 +310,23 @@ describe(applyEditFeedRequest.name, () => {
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
     };
     const loadFeedFn = () => feed;
-    const storage = makeTestStorage({ storeItem: makeStub(), renameItem: makeStub() });
+    const storeItem = makeStub<AppStorage['storeItem']>();
+    const renameItem = makeStub<AppStorage['renameItem']>();
+    const storage = makeTestStorage({ storeItem, renameItem });
 
     const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
     expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
 
-    const storageKey = (storage.storeItem as Spy).calls[0]![0] as FeedStoredData;
+    const storageKey = storeItem.calls[0]![0] as FeedStoredData;
     expect(storageKey, 'initially stores the item under the old key').to.equal(
       getFeedJsonStorageKey(accountId, feed.id)
     );
 
-    const storedFeed = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    const storedFeed = storeItem.calls[0]![1] as FeedStoredData;
     expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);
     expect(storedFeed.replyTo).to.equal(editFeedRequest.replyTo.value);
     expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
 
-    const renameItem = storage.renameItem as any as Spy;
     expect(renameItem.calls, 'renames the storage item based on the new feed ID').to.deep.equal([
       [getFeedStorageKey(accountId, editFeedRequest.initialId), getFeedStorageKey(accountId, editFeedRequest.id)],
     ]);
@@ -332,17 +343,18 @@ describe(applyEditFeedRequest.name, () => {
     };
     const feed = makeTestFeed({ id: editFeedRequest.id.value });
     const loadFeedFn = () => feed;
-    const storage = makeTestStorage({ storeItem: makeStub(), renameItem: makeStub() });
+    const storeItem = makeStub<AppStorage['storeItem']>();
+    const renameItem = makeStub<AppStorage['renameItem']>();
+    const storage = makeTestStorage({ storeItem, renameItem });
 
     const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
     expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
 
-    const storedFeed = (storage.storeItem as Spy).calls[0]![1] as FeedStoredData;
+    const storedFeed = storeItem.calls[0]![1] as FeedStoredData;
     expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);
     expect(storedFeed.replyTo).to.equal(editFeedRequest.replyTo.value);
     expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
 
-    const renameItem = storage.renameItem as any as Spy;
     expect(renameItem.calls).to.deep.equal([]);
   });
 
