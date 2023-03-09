@@ -21,6 +21,7 @@ import {
   Feed,
   FeedStatus,
   LoadEmailsResponse,
+  LoadFeedsResponseData,
 } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import { MakeFeedInput } from './src/domain/feed-making';
@@ -239,7 +240,7 @@ describe('API', () => {
           });
 
           const loadFeedsResponse = await loadFeedsSend();
-          const { responseData: loadedFeeds } = loadFeedsResponse.responseBody as Success<Feed[]>;
+          const { responseData: loadedFeeds } = loadFeedsResponse.responseBody as Success<LoadFeedsResponseData>;
 
           expect(loadedFeeds).to.deep.equal([
             {
@@ -315,7 +316,7 @@ describe('API', () => {
           expect(deletedFeed.isDeleted).be.true;
 
           const finalFeedList = await loadFeedsSend();
-          const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<Feed[]>;
+          const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<LoadFeedsResponseData>;
           expect(feedsAfterDeletion).to.deep.equal([]);
         });
 

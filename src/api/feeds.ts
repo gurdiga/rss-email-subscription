@@ -19,6 +19,7 @@ import {
   FeedStatus,
   isAddNewFeedRequestData,
   LoadEmailsResponse,
+  LoadFeedsResponseData,
   makeEditFeedRequest,
   makeUiEmailList,
   makeUiFeed,
@@ -279,10 +280,10 @@ export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
     });
   }
 
-  const data = result.validFeeds.map(makeUiFeedListItem);
   const logData = {};
+  const responseData: LoadFeedsResponseData = result.validFeeds.map(makeUiFeedListItem);
 
-  return makeSuccess('Feeds!', logData, data);
+  return makeSuccess('Feeds!', logData, responseData);
 };
 
 export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _reqBody, reqParams, reqSession, app) {

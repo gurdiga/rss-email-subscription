@@ -96,6 +96,8 @@ export function makeFeedStatus(value: unknown, field = 'status'): Result<FeedSta
   return value as FeedStatus;
 }
 
+export type LoadFeedsResponseData = UiFeedListItem[];
+
 export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number): UiFeed {
   return {
     id: feed.id.value,
