@@ -390,9 +390,11 @@ format-check-quiet:
 	@printf "Format check... "
 	$(TIME) $(MAKE) format-check > /dev/null
 
-clean: stop
-	docker image rm --force app
+clean:
 	rm -rf website/html/ src/api/web-ui-scripts/ dist/
+
+clean-docker: stop
+	docker image rm --force app
 
 init-data-dir:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
