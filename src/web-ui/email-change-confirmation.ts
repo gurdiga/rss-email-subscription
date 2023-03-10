@@ -16,6 +16,7 @@ import {
   sendApiRequest,
   SpinnerUiElements,
   spinnerUiElements,
+  unhideElement,
 } from './shared';
 
 async function main() {
@@ -31,6 +32,8 @@ async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...spinnerUiElements,
     ...apiResponseUiElements,
+    successMessage: '#success-message',
+    redirectTimeout: '#redirect-timeout',
   });
 
   if (isErr(uiElements)) {
@@ -46,12 +49,24 @@ async function main() {
   }
 
   hideElement(uiElements.spinner);
-  displayApiResponse(response, uiElements.apiResponseMessage);
 
-  if (isSuccess(response)) {
-    navigateTo(PagePath.userStart, 2000);
+  if (!isSuccess(response)) {
+    displayApiResponse(response, uiElements.apiResponseMessage);
     return;
   }
+
+  const deauthenticationResponse = await asyncAttempt(() => sendApiRequest('/deauthentication', HttpMethod.POST));
+
+  if (isErr(deauthenticationResponse)) {
+    displayApiResponse(response, uiElements.apiResponseMessage);
+    return;
+  }
+
+  const timeoutSeconds = 5;
+
+  unhideElement(uiElements.successMessage);
+  uiElements.redirectTimeout.textContent = timeoutSeconds.toString();
+  navigateTo(PagePath.userAuthentication, timeoutSeconds * 1000);
 }
 
 async function submitConfirmation(secret: string) {
@@ -64,6 +79,9 @@ interface RequiredParams {
   secret: string;
 }
 
-interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {}
+interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {
+  successMessage: HTMLElement;
+  redirectTimeout: HTMLElement;
+}
 
 main();
