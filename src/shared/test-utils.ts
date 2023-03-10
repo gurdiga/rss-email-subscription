@@ -2,7 +2,7 @@ import { rmSync } from 'node:fs';
 import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { AccountId, isAccountId, makeAccountId } from '../domain/account';
+import { Account, AccountData, AccountId, isAccountId, makeAccountId } from '../domain/account';
 import { Feed, FeedHashingSalt, FeedStatus, isFeed, isFeedHashingSalt } from '../domain/feed';
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
@@ -20,6 +20,7 @@ import {
   isConfirmationSecret,
   makeConfirmationSecret,
 } from '../domain/confirmation-secrets';
+import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -128,6 +129,25 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
   const result = makeFeed(input, hasingSalt, cronPattern);
 
   assert(isFeed(result), si`${makeFeed.name} did not return a valid Feed: ${JSON.stringify(result)}`);
+
+  return result;
+}
+
+export function makeTestAccount(customAccountData: Partial<AccountData> = {}): Account {
+  const accountData: AccountData = {
+    email: 'test@test.com',
+    hashedPassword: 'x'.repeat(hashedPasswordLength),
+    creationTimestamp: new Date(),
+    confirmationTimestamp: undefined,
+    ...customAccountData,
+  };
+
+  const result = {
+    email: makeTestEmailAddress(accountData.email),
+    hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
+    confirmationTimestamp: undefined,
+    creationTimestamp: accountData.creationTimestamp,
+  };
 
   return result;
 }
