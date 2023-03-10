@@ -56,7 +56,7 @@ async function main() {
     return;
   }
 
-  const uiFeed = await loadUiFeed(queryStringParams.id);
+  const uiFeed = await loadUiFeed(feedId);
 
   uiElements.spinner.remove();
 

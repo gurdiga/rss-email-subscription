@@ -65,7 +65,7 @@ async function main() {
     return;
   }
 
-  const uiFeed = await loadUiFeed(feedId.value);
+  const uiFeed = await loadUiFeed(feedId);
 
   uiElements.spinner.remove();
 

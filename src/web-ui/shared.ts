@@ -1,6 +1,7 @@
 import { navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
 import { UiFeed } from '../domain/feed';
+import { FeedId } from '../domain/feed-id';
 import { PagePath } from '../domain/page-path';
 import {
   ApiResponse,
@@ -340,8 +341,10 @@ export function navigateTo(url: string, delay = 0): void {
   }, delay);
 }
 
-export async function loadUiFeed<T = UiFeed>(id: string): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId: id }));
+export async function loadUiFeed<T = UiFeed>(feedId: FeedId): Promise<Result<T>> {
+  const response = await asyncAttempt(() =>
+    sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId: feedId.value })
+  );
 
   if (isErr(response)) {
     return makeErr('Failed to load the feed');
