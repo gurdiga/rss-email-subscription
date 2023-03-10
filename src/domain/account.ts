@@ -1,8 +1,7 @@
-import { Err, getTypeName, hasKind, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
+import { Err, getTypeName, hasKind, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { ConfirmationSecret, makeConfirmationSecret } from './confirmation-secrets';
+import { ConfirmationSecret } from './confirmation-secrets';
 import { EmailAddress } from './email-address';
-import { makeEmailAddress } from './email-address-making';
 import { HashedPassword } from './hashed-password';
 import { Password } from './password';
 
@@ -91,50 +90,8 @@ export interface EmailChangeRequest {
   newEmail: EmailAddress;
 }
 
-export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): Result<EmailChangeRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const keyName: keyof EmailChangeRequestData = 'newEmail';
-
-  if (!(keyName in data)) {
-    return makeErr(si`Invalid request: missing "${keyName}" prop`, keyName);
-  }
-
-  const newEmail = makeEmailAddress(data.newEmail, keyName);
-
-  if (isErr(newEmail)) {
-    return newEmail;
-  }
-
-  return { newEmail };
-}
-
 export interface EmailChangeConfirmationRequest {
   secret: ConfirmationSecret;
-}
-
-export function makeEmailChangeConfirmationRequest(
-  data: unknown | EmailChangeConfirmationRequestData
-): Result<EmailChangeConfirmationRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const keyName: keyof EmailChangeConfirmationRequestData = 'secret';
-
-  if (!(keyName in data)) {
-    return makeErr(si`Invalid request: missing "${keyName}"`, keyName);
-  }
-
-  const secret = makeConfirmationSecret(data.secret);
-
-  if (isErr(secret)) {
-    return makeErr(si`Invalid request "${keyName}": ${secret.reason}`, keyName);
-  }
-
-  return { secret };
 }
 
 export type EmailChangeConfirmationRequestData = Record<keyof EmailChangeConfirmationRequest, string>;

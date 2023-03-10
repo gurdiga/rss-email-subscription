@@ -1,9 +1,11 @@
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import {
   AccountId,
+  EmailChangeConfirmationRequest,
+  EmailChangeConfirmationRequestData,
+  EmailChangeRequest,
+  EmailChangeRequestData,
   isAccountNotFound,
-  makeEmailChangeConfirmationRequest,
-  makeEmailChangeRequest,
   UiAccount,
 } from '../domain/account';
 import { loadAccount, setAccountEmail } from '../domain/account-storage';
@@ -19,11 +21,12 @@ import {
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
+import { makeEmailAddress } from '../domain/email-address-making';
 import { PagePath } from '../domain/page-path';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { isErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isObject, makeErr, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppEnv } from './init-app';
@@ -123,6 +126,32 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
   return makeSuccess('Confirmed email change', logData);
 };
 
+export function makeEmailChangeConfirmationRequest(
+  data: unknown | EmailChangeConfirmationRequestData
+): Result<EmailChangeConfirmationRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
+
+  const keyName: keyof EmailChangeConfirmationRequestData = 'secret';
+
+  if (!(keyName in data)) {
+    return makeErr(si`Invalid request: missing "${keyName}"`, keyName);
+  }
+
+  const secret = makeConfirmationSecret(data.secret);
+
+  if (isErr(secret)) {
+    return makeErr(si`Invalid request "${keyName}": ${secret.reason}`, keyName);
+  }
+
+  return { secret };
+}
+
+function sendInformationEmail(_oldEmail: EmailAddress, _settings: AppSettings, _env: AppEnv) {
+  // TODO
+}
+
 export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(
   reqId,
   reqBody,
@@ -173,6 +202,26 @@ export const requestAccountEmailChange: RequestHandler = async function requestA
 
   return makeSuccess('Success');
 };
+
+export function makeEmailChangeRequest(data: unknown | EmailChangeRequestData): Result<EmailChangeRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
+
+  const keyName: keyof EmailChangeRequestData = 'newEmail';
+
+  if (!(keyName in data)) {
+    return makeErr(si`Invalid request: missing "${keyName}" prop`, keyName);
+  }
+
+  const newEmail = makeEmailAddress(data.newEmail, keyName);
+
+  if (isErr(newEmail)) {
+    return newEmail;
+  }
+
+  return { newEmail };
+}
 
 async function sendConfirmationEmail(
   newEmail: EmailAddress,
