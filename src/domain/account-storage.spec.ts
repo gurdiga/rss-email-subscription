@@ -1,9 +1,25 @@
 import { expect } from 'chai';
 import { Err, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { makeSpy, makeStub, makeTestAccountId, makeTestEmailAddress, makeTestStorage } from '../shared/test-utils';
-import { Account, AccountData, AccountId, AccountIdList, makeAccountId } from './account';
-import { confirmAccount, getAccountIdList, getAccountStorageKey, loadAccount, storeAccount } from './account-storage';
+import {
+  makeSpy,
+  makeStub,
+  makeTestAccount,
+  makeTestAccountId,
+  makeTestEmailAddress,
+  makeTestStorage,
+} from '../shared/test-utils';
+import { Account, AccountData, AccountId, AccountIdList, makeAccountId, makeAccountNotFound } from './account';
+import { getAccountIdByEmail } from './account-crypto';
+import {
+  confirmAccount,
+  getAccountIdList,
+  getAccountRootStorageKey,
+  getAccountStorageKey,
+  loadAccount,
+  setAccountEmail,
+  storeAccount,
+} from './account-storage';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { AppStorage } from './storage';
 
@@ -123,15 +139,6 @@ describe(storeAccount.name, () => {
     expect(storeItem.calls).to.deep.equal([[getAccountStorageKey(accountId), getAccountData(account)]]);
     expect(result).to.be.undefined;
   });
-
-  function getAccountData(account: Account): AccountData {
-    return {
-      email: account.email.value,
-      hashedPassword: account.hashedPassword.value,
-      confirmationTimestamp: account.confirmationTimestamp,
-      creationTimestamp: account.creationTimestamp,
-    };
-  }
 });
 
 describe(confirmAccount.name, () => {
@@ -167,3 +174,67 @@ describe(confirmAccount.name, () => {
     expect(result).to.be.undefined;
   });
 });
+
+describe(setAccountEmail.name, () => {
+  const newEmail = makeTestEmailAddress('new-email@test.com');
+  const hashingSalt = 'test-hashing-salt';
+
+  it('stores the given email on the account and returns the old email', () => {
+    const oldEmail = makeTestEmailAddress('old-email@test.com');
+    const account = makeTestAccount({ email: oldEmail.value });
+    const accountData = getAccountData(account);
+
+    const hasItem = makeStub(() => true);
+    const loadItem = makeStub(() => accountData);
+    const storeItem = makeSpy<AppStorage['storeItem']>();
+    const renameItem = makeSpy<AppStorage['renameItem']>();
+    const storage = makeTestStorage({ hasItem, loadItem, storeItem, renameItem });
+
+    const result = setAccountEmail(storage, accountId, newEmail, hashingSalt);
+
+    expect(result).to.deep.equal(oldEmail);
+    expect(hasItem.calls).not.to.be.empty;
+    expect(storeItem.calls).to.deep.equal([
+      [
+        getAccountStorageKey(accountId),
+        {
+          email: newEmail.value,
+          hashedPassword: account.hashedPassword.value,
+          confirmationTimestamp: account.confirmationTimestamp,
+          creationTimestamp: account.creationTimestamp,
+        },
+      ],
+    ]);
+    expect(renameItem.calls).to.deep.equal([
+      [
+        // prettier: keep these stacked
+        getAccountRootStorageKey(accountId),
+        getAccountRootStorageKey(getAccountIdByEmail(newEmail, hashingSalt)),
+      ],
+    ]);
+  });
+
+  it('returns AccountNotFound when the case', () => {
+    const storage = makeTestStorage({ hasItem: () => false });
+    const result = setAccountEmail(storage, accountId, newEmail, hashingSalt);
+
+    expect(result).to.deep.equal(makeAccountNotFound());
+  });
+
+  it('returns the storage Err when any', () => {
+    const storageErr = makeErr('Fails!');
+    const storage = makeTestStorage({ hasItem: () => storageErr });
+    const result = setAccountEmail(storage, accountId, newEmail, hashingSalt);
+
+    expect(result).to.deep.equal(makeErr(si`Failed to check account exists: ${storageErr.reason}`));
+  });
+});
+
+function getAccountData(account: Account): AccountData {
+  return {
+    email: account.email.value,
+    hashedPassword: account.hashedPassword.value,
+    confirmationTimestamp: account.confirmationTimestamp,
+    creationTimestamp: account.creationTimestamp,
+  };
+}

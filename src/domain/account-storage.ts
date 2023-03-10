@@ -58,12 +58,14 @@ export function setAccountEmail(
   accountId: AccountId,
   newEmail: EmailAddress,
   hashingSalt: string
-): Result<AccountNotFound | void> {
+): Result<AccountNotFound | EmailAddress> {
   const account = loadAccount(storage, accountId);
 
   if (isErr(account) || isAccountNotFound(account)) {
     return account;
   }
+
+  const oldEmail = account.email;
 
   account.email = newEmail;
 
@@ -83,7 +85,7 @@ export function setAccountEmail(
     return makeErr(si`Failed to rename item: ${renameResult.reason}`);
   }
 
-  return renameResult;
+  return oldEmail;
 }
 
 export function accountExists(storage: AppStorage, accountId: AccountId): Result<boolean> {
