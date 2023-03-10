@@ -12,6 +12,10 @@ export function loadConfirmationSecret<T>(
   const exists = storage.hasItem(storageKey);
 
   if (isErr(exists)) {
+    return exists;
+  }
+
+  if (exists === false) {
     return makeConfirmationSecretNotFound(secret);
   }
 

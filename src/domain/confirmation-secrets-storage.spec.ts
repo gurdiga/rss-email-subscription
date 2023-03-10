@@ -8,7 +8,7 @@ import {
   makeTestConfirmationSecret,
   makeTestAccountId,
 } from '../shared/test-utils';
-import { confirmationSecretLength } from './confirmation-secrets';
+import { confirmationSecretLength, makeConfirmationSecretNotFound } from './confirmation-secrets';
 import {
   storeConfirmationSecret,
   deleteConfirmationSecret,
@@ -40,8 +40,9 @@ describe(storeConfirmationSecret.name, () => {
 
 describe(deleteConfirmationSecret.name, () => {
   it('deletes the corresponding storage item', () => {
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
     const removeItem = makeSpy<AppStorage['removeItem']>();
-    const storage = makeTestStorage({ removeItem });
+    const storage = makeTestStorage({ hasItem, removeItem });
 
     deleteConfirmationSecret(storage, secret);
 
@@ -49,7 +50,7 @@ describe(deleteConfirmationSecret.name, () => {
   });
 
   it('returns an Err value when storage fails', () => {
-    const storage = makeTestStorage({ removeItem: () => storageErr });
+    const storage = makeTestStorage({ hasItem: () => true, removeItem: () => storageErr });
     const result = deleteConfirmationSecret(storage, secret);
 
     expect(result).to.deep.equal(storageErr);
@@ -58,18 +59,33 @@ describe(deleteConfirmationSecret.name, () => {
 
 describe(loadConfirmationSecret.name, () => {
   it('returns the content of the contents of the appropriate storage item', () => {
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
     const loadItem = makeStub(() => accountId);
-    const storage = makeTestStorage({ loadItem });
+    const storage = makeTestStorage({ hasItem, loadItem });
     const result = loadConfirmationSecret(storage, secret);
 
+    expect(hasItem.calls).to.have.lengthOf(1);
     expect(loadItem.calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`]]);
     expect(result).to.equal(accountId);
   });
 
-  it('returns an Err value when storage fails', () => {
-    const storage = makeTestStorage({ loadItem: () => storageErr });
+  it('returns ConfirmationSecretNotFound when the case', () => {
+    const hasItem = makeStub<AppStorage['hasItem']>(() => false);
+    const loadItem = makeStub(() => accountId);
+    const storage = makeTestStorage({ hasItem, loadItem });
     const result = loadConfirmationSecret(storage, secret);
 
+    expect(hasItem.calls).to.have.lengthOf(1);
+    expect(loadItem.calls).to.be.empty;
+    expect(result).to.deep.equal(makeConfirmationSecretNotFound(secret));
+  });
+
+  it('returns an Err value when storage fails', () => {
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
+    const storage = makeTestStorage({ hasItem, loadItem: () => storageErr });
+    const result = loadConfirmationSecret(storage, secret);
+
+    expect(hasItem.calls).to.have.lengthOf(1);
     expect(result).to.deep.equal(storageErr);
   });
 });
