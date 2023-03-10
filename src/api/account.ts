@@ -28,7 +28,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppEnv } from './init-app';
 import { RequestHandler } from './request-handler';
-import { checkSession, isAuthenticatedSession } from './session';
+import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 
 export const loadCurrentAccount: RequestHandler = async function loadCurrentAccount(
   reqId,
@@ -111,6 +111,8 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
     });
     return makeAppError('Application error');
   }
+
+  deinitSession(reqSession);
 
   const logData = {
     newEmail: newEmail.value,
