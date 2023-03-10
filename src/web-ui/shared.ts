@@ -351,7 +351,7 @@ export async function loadUiFeed<T = UiFeed>(feedId: FeedId): Promise<Result<T>>
   }
 
   if (isAppError(response)) {
-    return makeErr(si`Application error when loading the feed: ${response.message}`);
+    return makeErr(response.message);
   }
 
   if (isInputError(response)) {
