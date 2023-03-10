@@ -1,4 +1,5 @@
 import { RegistrationRequestData } from '../domain/account';
+import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -49,7 +50,7 @@ function main() {
         password: uiElements.password.value,
       };
 
-      const response = await asyncAttempt(() => sendApiRequest('/registration', HttpMethod.POST, request));
+      const response = await asyncAttempt(() => sendApiRequest(ApiPath.registration, HttpMethod.POST, request));
 
       if (isErr(response)) {
         displayCommunicationError(response, uiElements.apiResponseMessage);

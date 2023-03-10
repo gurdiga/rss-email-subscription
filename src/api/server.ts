@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import helmet from 'helmet';
 import http from 'http';
 import https from 'https';
+import { apiBasePath, ApiPath } from '../domain/api-path';
 import { getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
@@ -38,40 +39,40 @@ async function main() {
   const app = initApp();
 
   router.use(
-    '/web-ui-scripts',
+    ApiPath.webUiScripts,
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
     express.static(makePath(__dirname, 'web-ui-scripts'))
   );
-  router.use('/version.txt', express.static(makePath(__dirname, 'version.txt')));
+  router.use(ApiPath.versionTxt, express.static(makePath(__dirname, 'version.txt')));
   router.use(helmet());
   router.use(cors());
-  router.get('/cors-test', (_req, res) => res.send('CORS test'));
+  router.get(ApiPath.corsTest, (_req, res) => res.send('CORS test'));
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
-  router.get('/session-test', makeRequestHandler(sessionTest, app));
-  router.post('/subscription', makeRequestHandler(subscription, app));
-  router.post('/subscription-confirmation', makeRequestHandler(subscriptionConfirmation, app));
-  router.post('/unsubscription', makeRequestHandler(unsubscription, app));
-  router.post('/registration', makeRequestHandler(registration, app));
-  router.post('/registration-confirmation', makeRequestHandler(registrationConfirmation, app));
-  router.post('/authentication', makeRequestHandler(authentication, app));
-  router.post('/deauthentication', makeRequestHandler(deauthentication, app));
-  router.get('/account', makeRequestHandler(loadCurrentAccount, app));
-  router.post('/account/request-change-email', makeRequestHandler(requestAccountEmailChange, app));
-  router.post('/account/confirm-change-email', makeRequestHandler(confirmAccountEmailChange, app));
-  router.get('/feeds', makeRequestHandler(loadFeeds, app));
-  router.get('/feeds/:feedId', makeRequestHandler(loadFeedById, app));
-  router.get('/feeds/:feedId/subscribers', makeRequestHandler(loadFeedSubscribers, app));
-  router.post('/feeds/:feedId/delete-subscribers', makeRequestHandler(deleteFeedSubscribers, app));
-  router.post('/feeds/:feedId/add-subscribers', makeRequestHandler(addFeedSubscribers, app));
-  router.post('/feeds/add-new-feed', makeRequestHandler(addNewFeed, app));
-  router.post('/feeds/edit-feed', makeRequestHandler(editFeed, app));
-  router.post('/feeds/delete-feed', makeRequestHandler(deleteFeed, app));
+  router.get(ApiPath.sessionTest, makeRequestHandler(sessionTest, app));
+  router.post(ApiPath.subscription, makeRequestHandler(subscription, app));
+  router.post(ApiPath.subscriptionConfirmation, makeRequestHandler(subscriptionConfirmation, app));
+  router.post(ApiPath.unsubscription, makeRequestHandler(unsubscription, app));
+  router.post(ApiPath.registration, makeRequestHandler(registration, app));
+  router.post(ApiPath.registrationConfirmation, makeRequestHandler(registrationConfirmation, app));
+  router.post(ApiPath.authentication, makeRequestHandler(authentication, app));
+  router.post(ApiPath.deauthentication, makeRequestHandler(deauthentication, app));
+  router.get(ApiPath.loadCurrentAccount, makeRequestHandler(loadCurrentAccount, app));
+  router.post(ApiPath.requestAccountEmailChange, makeRequestHandler(requestAccountEmailChange, app));
+  router.post(ApiPath.confirmAccountEmailChange, makeRequestHandler(confirmAccountEmailChange, app));
+  router.get(ApiPath.loadFeeds, makeRequestHandler(loadFeeds, app));
+  router.get(ApiPath.loadFeedById, makeRequestHandler(loadFeedById, app));
+  router.get(ApiPath.loadFeedSubscribers, makeRequestHandler(loadFeedSubscribers, app));
+  router.post(ApiPath.deleteFeedSubscribers, makeRequestHandler(deleteFeedSubscribers, app));
+  router.post(ApiPath.addFeedSubscribers, makeRequestHandler(addFeedSubscribers, app));
+  router.post(ApiPath.addNewFeed, makeRequestHandler(addNewFeed, app));
+  router.post(ApiPath.editFeed, makeRequestHandler(editFeed, app));
+  router.post(ApiPath.deleteFeed, makeRequestHandler(deleteFeed, app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 
   if (isDev) {
-    expressServer.use('/api', router);
+    expressServer.use(apiBasePath, router);
     expressServer.use('/', express.static(process.env['DOCUMENT_ROOT']!));
   } else {
     expressServer.use(router);

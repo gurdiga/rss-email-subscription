@@ -1,4 +1,5 @@
 import { RegistrationConfirmationRequestData } from '../domain/account';
+import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -60,7 +61,7 @@ async function main() {
 async function submitConfirmation(secret: string) {
   const request: RegistrationConfirmationRequestData = { secret };
 
-  return await asyncAttempt(() => sendApiRequest('/registration-confirmation', HttpMethod.POST, request));
+  return await asyncAttempt(() => sendApiRequest(ApiPath.registrationConfirmation, HttpMethod.POST, request));
 }
 
 interface RequiredParams {

@@ -1,3 +1,4 @@
+import { ApiPath } from '../domain/api-path';
 import { AddNewFeedRequestData, AddNewFeedResponseData } from '../domain/feed';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
@@ -89,7 +90,7 @@ async function submitForm(formFields: UiFeedFormFields) {
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<AddNewFeedResponseData>('/feeds/add-new-feed', HttpMethod.POST, makeFeedRequest)
+    sendApiRequest<AddNewFeedResponseData>(ApiPath.addNewFeed, HttpMethod.POST, makeFeedRequest)
   );
 }
 

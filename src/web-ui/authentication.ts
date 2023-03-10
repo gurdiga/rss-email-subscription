@@ -1,4 +1,5 @@
 import { AuthenticationRequestData } from '../domain/account';
+import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -45,7 +46,7 @@ function main() {
         email: uiElements.email.value,
         password: uiElements.password.value,
       };
-      const response = await asyncAttempt(() => sendApiRequest('/authentication', HttpMethod.POST, request));
+      const response = await asyncAttempt(() => sendApiRequest(ApiPath.authentication, HttpMethod.POST, request));
 
       if (isErr(response)) {
         displayCommunicationError(response, uiElements.apiResponseMessage);

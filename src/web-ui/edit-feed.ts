@@ -1,3 +1,4 @@
+import { ApiPath } from '../domain/api-path';
 import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
@@ -136,9 +137,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
     replyTo: formFields.replyTo.value,
   };
 
-  return await asyncAttempt(() =>
-    sendApiRequest<EditFeedResponse>('/feeds/edit-feed', HttpMethod.POST, editFeedRequest)
-  );
+  return await asyncAttempt(() => sendApiRequest<EditFeedResponse>(ApiPath.editFeed, HttpMethod.POST, editFeedRequest));
 }
 
 interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements, SpinnerUiElements {

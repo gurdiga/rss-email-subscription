@@ -1,5 +1,6 @@
 import { LoadFeedsResponseData, UiFeedListItem } from '../domain/feed';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { ApiPath } from '../domain/api-path';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
@@ -94,7 +95,7 @@ function makeHtmlListItem(data: FeedLinkData): HTMLLIElement {
 }
 
 async function loadUiFeedList(): Promise<Result<UiFeedListItem[]>> {
-  const response = await asyncAttempt(() => sendApiRequest<LoadFeedsResponseData>('/feeds', HttpMethod.GET));
+  const response = await asyncAttempt(() => sendApiRequest<LoadFeedsResponseData>(ApiPath.loadFeeds, HttpMethod.GET));
 
   if (isErr(response)) {
     return makeErr(si`Failed to load the feed list: ${response.reason}`);

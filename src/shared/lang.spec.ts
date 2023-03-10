@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName, isObject, makeErr, readStringArray } from './lang';
+import { getErrorMessage, getTypeName, isEmptyObject, isObject, makeErr, readStringArray } from './lang';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -111,5 +111,19 @@ describe(isObject.name, () => {
     expect(isObject(new Date())).to.be.true;
     expect(isObject(new Map())).to.be.true;
     expect(isObject(new String('String instance'))).to.be.true;
+  });
+});
+
+describe(isEmptyObject.name, () => {
+  it('tells if the Record-like object is empty', () => {
+    expect(isEmptyObject({})).to.be.true;
+    expect(isEmptyObject(null)).to.be.false;
+    expect(isEmptyObject(undefined)).to.be.false;
+    expect(isEmptyObject('')).to.be.false;
+    expect(isEmptyObject(0)).to.be.false;
+    expect(isEmptyObject(new Date())).to.be.false;
+    expect(isEmptyObject(new String())).to.be.false;
+    expect(isEmptyObject(new Number())).to.be.false;
+    expect(isEmptyObject(NaN)).to.be.false;
   });
 });

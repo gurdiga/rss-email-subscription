@@ -1,3 +1,4 @@
+import { ApiPath } from '../domain/api-path';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   displayInitError,
@@ -42,7 +43,7 @@ function displayPrivateNavbar(uiElements: RequiredUiElements): void {
   signOutLink.addEventListener('click', async (e: Event) => {
     e.preventDefault();
 
-    const response = await asyncAttempt(() => sendApiRequest('/deauthentication', HttpMethod.POST));
+    const response = await asyncAttempt(() => sendApiRequest(ApiPath.deauthentication, HttpMethod.POST));
 
     if (isErr(response)) {
       signOutLink.textContent = 'Failed!';

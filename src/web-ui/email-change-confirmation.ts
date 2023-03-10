@@ -1,4 +1,5 @@
 import { EmailChangeConfirmationRequestData } from '../domain/account';
+import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
@@ -55,7 +56,7 @@ async function main() {
     return;
   }
 
-  const deauthenticationResponse = await asyncAttempt(() => sendApiRequest('/deauthentication', HttpMethod.POST));
+  const deauthenticationResponse = await asyncAttempt(() => sendApiRequest(ApiPath.deauthentication, HttpMethod.POST));
 
   if (isErr(deauthenticationResponse)) {
     displayApiResponse(response, uiElements.apiResponseMessage);
@@ -72,7 +73,7 @@ async function main() {
 async function submitConfirmation(secret: string) {
   const request: EmailChangeConfirmationRequestData = { secret };
 
-  return await asyncAttempt(() => sendApiRequest('/account/confirm-change-email', HttpMethod.POST, request));
+  return await asyncAttempt(() => sendApiRequest(ApiPath.confirmAccountEmailChange, HttpMethod.POST, request));
 }
 
 interface RequiredParams {

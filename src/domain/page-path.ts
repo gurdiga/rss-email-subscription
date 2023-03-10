@@ -1,3 +1,4 @@
+import { isEmptyObject } from '../shared/lang';
 import { si } from '../shared/string-utils';
 
 export enum PagePath {
@@ -12,7 +13,7 @@ export enum PagePath {
 }
 
 export function makePagePathWithParams(pagePath: PagePath, params: Record<string, string>) {
-  const queryParams = new URLSearchParams(params).toString();
+  const queryParams = isEmptyObject(params) ? '' : '?' + new URLSearchParams(params).toString();
 
-  return si`${pagePath}?${queryParams}`;
+  return si`${pagePath}${queryParams}`;
 }

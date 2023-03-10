@@ -1,3 +1,4 @@
+import { ApiPath } from '../domain/api-path';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
@@ -61,7 +62,7 @@ function main() {
 
   uiElements.confirmButton.addEventListener('click', async () => {
     const response = await asyncAttempt(() =>
-      sendApiRequest('/unsubscription', HttpMethod.POST, {
+      sendApiRequest(ApiPath.unsubscription, HttpMethod.POST, {
         id: queryParams.id,
         email: queryParams.email,
       })

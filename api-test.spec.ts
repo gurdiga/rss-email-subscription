@@ -34,6 +34,7 @@ import { si } from './src/shared/string-utils';
 import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
 import cookie from 'cookie';
 import { navbarCookieName } from './src/api/app-cookie';
+import { getFullApiPath, ApiPath } from './src/domain/api-path';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -62,7 +63,7 @@ describe('API', () => {
 
     describe('http session test', () => {
       it('works', async () => {
-        const { responseBody } = await get('/api/session-test', 'json');
+        const { responseBody } = await get(getFullApiPath(ApiPath.sessionTest), 'json');
         expect(responseBody.kind).to.equal('Success');
 
         const sessionId = (responseBody as Success).responseData!['sessionId'];
@@ -71,7 +72,7 @@ describe('API', () => {
         const sessionData = loadSessionData(sessionId);
         expect(sessionData['works']).to.equal(true);
 
-        const { responseBody: subsequentRequestResponse } = await get('/api/session-test', 'json');
+        const { responseBody: subsequentRequestResponse } = await get(getFullApiPath(ApiPath.sessionTest), 'json');
         const subsequentRequestSession = (subsequentRequestResponse as Success).responseData!['sessionId'];
         expect(subsequentRequestSession).to.equal(sessionId);
       });
@@ -79,7 +80,7 @@ describe('API', () => {
 
     describe('web-ui-scripts', () => {
       it('are served', async () => {
-        const sampleScript = '/web-ui-scripts/web-ui/unsubscription-confirmation.js';
+        const sampleScript = si`${ApiPath.webUiScripts}/web-ui/unsubscription-confirmation.js`;
         const { responseBody } = await get(sampleScript, 'text');
 
         expect(responseBody).to.equal(readFile(`website/html/${sampleScript}`));
@@ -88,7 +89,7 @@ describe('API', () => {
 
     describe('CORP policy', () => {
       it('allows embedding JS', async () => {
-        const subscriptionFormEmbedScript = '/web-ui-scripts/web-ui/subscription-form.js';
+        const subscriptionFormEmbedScript = `${ApiPath.webUiScripts}/web-ui/subscription-form.js`;
         const { responseHeaders } = await get(subscriptionFormEmbedScript, 'text');
 
         expect(responseHeaders.get('cross-origin-resource-policy')).to.equal('cross-origin');
@@ -97,7 +98,7 @@ describe('API', () => {
 
     describe('CORS policy', () => {
       it('is widely open', async () => {
-        const { responseHeaders } = await get('/api/cors-test', 'text');
+        const { responseHeaders } = await get(getFullApiPath(ApiPath.corsTest), 'text');
 
         expect(responseHeaders.get('access-control-allow-origin')).to.equal('*');
       });
@@ -105,7 +106,7 @@ describe('API', () => {
 
     describe('API code Git revisions', () => {
       it('is available', async () => {
-        const { responseBody } = await get('/api/version.txt', 'text');
+        const { responseBody } = await get(getFullApiPath(ApiPath.versionTxt), 'text');
         const gitRevisionMask = /[a-f0-9]{40}\n/m;
 
         expect(responseBody).to.match(gitRevisionMask);
@@ -285,9 +286,10 @@ describe('API', () => {
 
           const emailsToAdd = ['one@api-test.com', 'two@api-test.com', 'three@api-test.com'];
           const addEmailsRequest: AddEmailsRequest = {
+            feedId: newFeedId.value,
             emailsOnePerLine: emailsToAdd.join('\n'),
           };
-          let { responseBody: addEmailsResponse } = await addEmailsSend(newFeedId, addEmailsRequest);
+          let { responseBody: addEmailsResponse } = await addEmailsSend(addEmailsRequest);
           const expectedAddEmailsResponse: Success<AddEmailsResponse> = {
             kind: 'Success',
             message: 'Added 3 subscribers',
@@ -299,9 +301,10 @@ describe('API', () => {
           expect(addEmailsResponse).to.deep.equal(expectedAddEmailsResponse);
 
           const deleteEmailsRequest: DeleteEmailsRequest = {
+            feedId: newFeedId.value,
             emailsToDeleteOnePerLine: emailsToAdd[1]!,
           };
-          let { responseBody: deleteEmailsResponse } = await deleteEmailsSend(newFeedId, deleteEmailsRequest);
+          let { responseBody: deleteEmailsResponse } = await deleteEmailsSend(deleteEmailsRequest);
           const expectedDeleteEmailsResponse: Success<DeleteEmailsResponse> = {
             kind: 'Success',
             message: 'Deleted subscribers',
@@ -328,7 +331,7 @@ describe('API', () => {
       });
 
       describe('failure paths', () => {
-        it('/api/feeds/add-new-feed returns a proper InputError for proper AddNewFeedRequestData', async () => {
+        it(si`${ApiPath.addNewFeed} returns a proper InputError for proper AddNewFeedRequestData`, async () => {
           const invalidRequest: AddNewFeedRequestData = {
             displayName: '', // Fields are empty
             url: '',
@@ -340,7 +343,7 @@ describe('API', () => {
           expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
         });
 
-        it('/api/feeds/edit-feed returns a proper InputError', async () => {
+        it(si`${ApiPath.editFeed} returns a proper InputError`, async () => {
           const invalidRequest = { displayName: 'Something' } as EditFeedRequestData;
           const responseBody = (await editFeedSend(invalidRequest)).responseBody;
 
@@ -359,23 +362,27 @@ describe('API', () => {
     });
 
     async function loadEmailsSend(feedId: FeedId) {
-      return await get<LoadEmailsResponse>(`/api/feeds/${feedId.value}/subscribers`, 'json');
+      const path = getFullApiPath(ApiPath.loadFeedSubscribers, { feedId: feedId.value });
+      return await get<LoadEmailsResponse>(path, 'json');
     }
 
-    async function addEmailsSend(feedId: FeedId, request: AddEmailsRequest) {
-      return await post(`/api/feeds/${feedId.value}/add-subscribers`, request);
+    async function addEmailsSend(request: AddEmailsRequest) {
+      const path = getFullApiPath(ApiPath.addFeedSubscribers);
+      return await post(path, request);
     }
 
-    async function deleteEmailsSend(feedId: FeedId, request: DeleteEmailsRequest) {
-      return await post(`/api/feeds/${feedId.value}/delete-subscribers`, request);
+    async function deleteEmailsSend(request: DeleteEmailsRequest) {
+      const path = getFullApiPath(ApiPath.deleteFeedSubscribers);
+      return await post(path, request);
     }
 
     async function loadFeedByIdSend(feedId: FeedId) {
-      return await get<Feed>(`/api/feeds/${feedId.value}`, 'json');
+      const path = getFullApiPath(ApiPath.loadFeedById, { feedId: feedId.value });
+      return await get<Feed>(path, 'json');
     }
 
     async function loadFeedsSend() {
-      return await get<Feed[]>('/api/feeds', 'json');
+      return await get<Feed[]>(getFullApiPath(ApiPath.loadFeeds), 'json');
     }
   });
 
@@ -451,15 +458,15 @@ describe('API', () => {
     });
 
     async function subscriptionSend(feedId: FeedId, email: string) {
-      return post('/api/subscription', { feedId: feedId.value, email });
+      return post(getFullApiPath(ApiPath.subscription), { feedId: feedId.value, email });
     }
 
     async function subscriptionConfirmationSend(feedId: FeedId, emailHash: string) {
-      return post('/api/subscription-confirmation', { id: si`${feedId.value}-${emailHash}` });
+      return post(getFullApiPath(ApiPath.subscriptionConfirmation), { id: si`${feedId.value}-${emailHash}` });
     }
 
     async function unsubscriptionSend(feedId: FeedId, emailHash: string) {
-      return post('/api/unsubscription', { id: si`${feedId.value}-${emailHash}` });
+      return post(getFullApiPath(ApiPath.unsubscription), { id: si`${feedId.value}-${emailHash}` });
     }
 
     function loadStoredFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
@@ -482,40 +489,42 @@ describe('API', () => {
   }
 
   async function deauthenticationSend() {
-    return post('/api/deauthentication');
+    return post(getFullApiPath(ApiPath.deauthentication));
   }
 
   async function addNewFeedSend(request: AddNewFeedRequestData) {
     const data = request as Record<string, string>;
 
-    return await post('/api/feeds/add-new-feed', data);
+    return await post(getFullApiPath(ApiPath.addNewFeed), data);
   }
 
   async function editFeedSend(request: EditFeedRequestData) {
+    const path = getFullApiPath(ApiPath.editFeed);
     const data = request as Record<string, string>;
 
-    return await post('/api/feeds/edit-feed', data);
+    return await post(path, data);
   }
 
   async function deleteFeedSend(feedId: FeedId) {
     const data: DeleteFeedRequestData = { feedId: feedId.value };
+    const path = getFullApiPath(ApiPath.deleteFeed);
 
-    return await post('/api/feeds/delete-feed', data);
+    return await post(path, data);
   }
 
   async function authenticationSend(email: string, password: string) {
-    return post('/api/authentication', { email, password });
+    return post(getFullApiPath(ApiPath.authentication), { email, password });
   }
 
   async function registrationSend(plan: string, email: string, password: string) {
-    return post('/api/registration', { plan, email, password });
+    return post(getFullApiPath(ApiPath.registration), { plan, email, password });
   }
 
   async function registrationConfirmationSend(email: string) {
     const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
     const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
 
-    return post('/api/registration-confirmation', { secret });
+    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret });
   }
 
   function loadStoredAccountByEmail(email: string): [AccountData, AccountId] {
@@ -563,7 +572,8 @@ describe('API', () => {
     type: 'json' | 'text' = 'json',
     headers?: Headers
   ): Promise<JsonApiResponse<D> | TextApiResponse> {
-    const response = await fetch(makePath(apiOrigin, relativePath), { headers });
+    const url = new URL(relativePath, apiOrigin);
+    const response = await fetch(url, { headers });
 
     return {
       responseBody: await response[type](),

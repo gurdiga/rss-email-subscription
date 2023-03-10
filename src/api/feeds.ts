@@ -295,7 +295,7 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
     return makeNotAuthenticatedError();
   }
 
-  const feedId = makeFeedId(reqParams['feedId']);
+  const feedId = makeFeedId(reqParams['feedId']); // TODO: add {make,}LoadFeed{Request,Response}Data so that "feedId" is not hard-coded here
 
   if (isErr(feedId)) {
     logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
@@ -383,7 +383,7 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
 export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSubscribers(
   reqId,
   reqBody,
-  reqParams,
+  _reqParams,
   reqSession,
   app
 ) {
@@ -395,7 +395,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
     return makeNotAuthenticatedError();
   }
 
-  const feedId = makeFeedId(reqParams['feedId']);
+  const feedId = makeFeedId(reqBody['feedId']);
 
   if (isErr(feedId)) {
     logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
@@ -473,7 +473,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
 export const addFeedSubscribers: RequestHandler = async function addFeedSubscribers(
   reqId,
   reqBody,
-  reqParams,
+  _reqParams,
   reqSession,
   app
 ) {
@@ -485,7 +485,7 @@ export const addFeedSubscribers: RequestHandler = async function addFeedSubscrib
     return makeNotAuthenticatedError();
   }
 
-  const feedId = makeFeedId(reqParams['feedId']);
+  const feedId = makeFeedId(reqBody['feedId']);
 
   if (isErr(feedId)) {
     logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });

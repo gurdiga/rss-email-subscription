@@ -1,3 +1,4 @@
+import { ApiPath } from '../domain/api-path';
 import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
@@ -80,7 +81,11 @@ function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: F
       return;
     }
 
-    const result = sendDeleteRequest(feedId);
+    const result = await sendDeleteRequest(feedId);
+
+    if (isErr(result)) {
+      // TODO: Display the error
+    }
 
     if (isSuccess(result)) {
       navigateTo(PagePath.feedList);
@@ -90,7 +95,7 @@ function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: F
 
 async function sendDeleteRequest(feedId: FeedId): Promise<Result<void>> {
   const data: DeleteFeedRequestData = { feedId: feedId.value };
-  const response = await asyncAttempt(() => sendApiRequest(si`/feeds/delete-feed`, HttpMethod.POST, data));
+  const response = await asyncAttempt(() => sendApiRequest(ApiPath.deleteFeed, HttpMethod.POST, data));
 
   if (isErr(response)) {
     return makeErr('Failed to load the feed');

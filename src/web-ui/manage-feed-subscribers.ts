@@ -1,8 +1,10 @@
+import { ApiPath } from '../domain/api-path';
 import {
   AddEmailsRequest,
   AddEmailsResponse,
   DeleteEmailsRequest,
   DeleteEmailsResponse,
+  LoadEmailsRequestData,
   LoadEmailsResponse,
 } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
@@ -122,11 +124,12 @@ function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): vo
 
 async function sendAddEmailsRequest(emailsOnePerLine: string, feedId: FeedId) {
   const request: AddEmailsRequest = {
+    feedId: feedId.value,
     emailsOnePerLine,
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<AddEmailsResponse>(si`/feeds/${feedId.value}/add-subscribers`, HttpMethod.POST, request)
+    sendApiRequest<AddEmailsResponse>(ApiPath.addFeedSubscribers, HttpMethod.POST, request)
   );
 }
 
@@ -167,11 +170,12 @@ function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId
 async function sendDeleteEmailsRequest(emailList: HTMLUListElement, feedId: FeedId) {
   const selectedEmails = [...emailList.querySelectorAll('.list-group-item.active')].map((x) => x.textContent!);
   const request: DeleteEmailsRequest = {
+    feedId: feedId.value,
     emailsToDeleteOnePerLine: selectedEmails.join('\n'),
   };
 
   return await asyncAttempt(() =>
-    sendApiRequest<DeleteEmailsResponse>(si`/feeds/${feedId.value}/delete-subscribers`, HttpMethod.POST, request)
+    sendApiRequest<DeleteEmailsResponse>(ApiPath.deleteFeedSubscribers, HttpMethod.POST, request)
   );
 }
 
@@ -214,7 +218,8 @@ function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
 }
 
 async function loadFeedSubscribersData<T = LoadEmailsResponse>(feedId: FeedId): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${feedId.value}/subscribers`));
+  const request: LoadEmailsRequestData = { feedId: feedId.value };
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedSubscribers, HttpMethod.GET, request));
 
   if (isErr(response)) {
     return makeErr('Failed to load feed subscribers');

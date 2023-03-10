@@ -1,4 +1,5 @@
 import { EmailChangeRequestData, UiAccount } from '../domain/account';
+import { ApiPath } from '../domain/api-path';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -100,7 +101,7 @@ async function submitNewEmail(newEmail: string) {
     newEmail: newEmail,
   };
 
-  return await asyncAttempt(() => sendApiRequest('/account/request-change-email', HttpMethod.POST, request));
+  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountEmailChange, HttpMethod.POST, request));
 }
 
 function handleEmailChangeResponse(
@@ -152,7 +153,7 @@ function fillEmail(currentEmailLabel: HTMLElement, email: string) {
 }
 
 async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>('/account'));
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadCurrentAccount));
 
   if (isErr(response)) {
     return makeErr('Failed to load the account information');

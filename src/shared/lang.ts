@@ -90,6 +90,11 @@ export function isObject(value: unknown): value is Object {
   return value !== null && typeof value === 'object';
 }
 
+// TODO: Add unit test
+export function isEmptyObject(value: unknown): boolean {
+  return isObject(value) && Object.keys(value).length === 0 && value.constructor === Object;
+}
+
 export function isString(value: unknown): value is string {
   return typeof value === 'string';
 }

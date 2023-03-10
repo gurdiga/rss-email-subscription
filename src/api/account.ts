@@ -30,6 +30,7 @@ import { AppEnv } from './init-app';
 import { RequestHandler } from './request-handler';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 
+// TODO: Add api-test
 export const loadCurrentAccount: RequestHandler = async function loadCurrentAccount(
   reqId,
   _reqBody,

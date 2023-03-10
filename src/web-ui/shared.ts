@@ -1,4 +1,5 @@
 import { navbarCookieName } from '../api/app-cookie';
+import { ApiPath, getFullApiPath } from '../domain/api-path';
 import { UiFeed } from '../domain/feed';
 import { PagePath } from '../domain/page-path';
 import {
@@ -214,17 +215,17 @@ export enum HttpMethod {
 }
 
 export function sendApiRequest<R extends any = any>(
-  relativePath: string,
+  relativePath: ApiPath,
   method: HttpMethod = HttpMethod.GET,
   data: Record<string, string> = {}
 ): Promise<AuthenticatedApiResponse<R>> {
-  const basePath = '/api';
   const urlEncodedData = new URLSearchParams(data);
+  const apiFullPath = getFullApiPath(relativePath);
 
   const [url, body] =
     method === HttpMethod.POST
-      ? [si`${basePath}${relativePath}`, urlEncodedData]
-      : [si`${basePath}${relativePath}?${urlEncodedData.toString()}`, null];
+      ? [si`${apiFullPath}`, urlEncodedData]
+      : [si`${apiFullPath}?${urlEncodedData.toString()}`, null];
 
   return fetch(url, { method, body })
     .then(assertFound)
@@ -340,7 +341,7 @@ export function navigateTo(url: string, delay = 0): void {
 }
 
 export async function loadUiFeed<T = UiFeed>(id: string): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(si`/feeds/${id}`, HttpMethod.GET));
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId: id }));
 
   if (isErr(response)) {
     return makeErr('Failed to load the feed');

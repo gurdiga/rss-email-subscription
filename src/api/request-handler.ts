@@ -10,7 +10,7 @@ import { ReqSession } from './session';
 export type RequestHandler = (
   reqId: number,
   reqBody: Request['body'],
-  reqParams: Request['params'],
+  reqParams: Request['query'],
   reqSession: ReqSession,
   app: App
 ) => Promise<ApiResponse>;
@@ -19,7 +19,7 @@ export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRe
   return async (req, res) => {
     const reqId = new Date().getTime();
     const reqBody = (req.body || {}) as unknown;
-    const reqParams = req.params || {};
+    const reqParams = req.query || {};
     const reqSession = req.session || {};
     const action = handler.name;
 
