@@ -112,7 +112,12 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
     return makeAppError('Application error');
   }
 
-  return makeSuccess('Confirmed email change');
+  const logData = {
+    newEmail: newEmail.value,
+    accountId: accountId.value,
+  };
+
+  return makeSuccess('Confirmed email change', logData);
 };
 
 export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(
