@@ -75,7 +75,7 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
   reqBody,
   _reqParams,
   reqSession,
-  { storage, settings }
+  { storage, settings, env }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: confirmAccountEmailChange.name, reqId });
   const request = makeEmailChangeConfirmationRequest(reqBody);
@@ -99,10 +99,15 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
   }
 
   const { accountId, newEmail } = data;
-  const result = setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
+  const oldEmail = setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
 
-  if (isErr(result)) {
-    logError(si`Failed to ${setAccountEmail.name}`, { reason: result.reason });
+  if (isErr(oldEmail)) {
+    logError(si`Failed to ${setAccountEmail.name}`, { reason: oldEmail.reason });
+    return makeAppError('Application error');
+  }
+
+  if (isAccountNotFound(oldEmail)) {
+    logError(si`Account to set email not found`, { accountId: accountId.value });
     return makeAppError('Application error');
   }
 
@@ -117,6 +122,7 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
   }
 
   deinitSession(reqSession);
+  sendInformationEmail(oldEmail, settings, env, newEmail);
 
   const logData = {
     newEmail: newEmail.value,
@@ -148,8 +154,35 @@ export function makeEmailChangeConfirmationRequest(
   return { secret };
 }
 
-function sendInformationEmail(_oldEmail: EmailAddress, _settings: AppSettings, _env: AppEnv) {
-  // TODO
+async function sendInformationEmail(
+  oldEmail: EmailAddress,
+  settings: AppSettings,
+  env: AppEnv,
+  newEmail: EmailAddress
+) {
+  const emailContent = makeEmailChangeInformationEmailContent(oldEmail, newEmail);
+
+  return await sendEmail(
+    settings.fullEmailAddress,
+    oldEmail,
+    settings.fullEmailAddress.emailAddress,
+    emailContent,
+    env
+  );
+}
+
+function makeEmailChangeInformationEmailContent(oldEmail: EmailAddress, newEmail: EmailAddress): EmailContent {
+  return {
+    subject: 'Please note FeedSubscription email change',
+    htmlBody: si`
+      <p>Hi there,</p>
+
+      <p>Please note that the account email at <b><font color="#0163ee">Feed</font>Subscription</b>
+      has been changed from <b>${oldEmail.value}</b> to <b>${newEmail.value}</b>.</p>
+
+      <p>Have a nice day.</p>
+    `,
+  };
 }
 
 export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(
@@ -230,14 +263,14 @@ async function sendConfirmationEmail(
   env: AppEnv
 ) {
   const emailContent = makeEmailChangeConfirmationEmailContent(env.DOMAIN_NAME, confirmationSecret);
-  const sendEmailResult = await sendEmail(
+
+  return await sendEmail(
     settings.fullEmailAddress,
     newEmail,
     settings.fullEmailAddress.emailAddress,
     emailContent,
     env
   );
-  return sendEmailResult;
 }
 
 function makeEmailChangeConfirmationSecret(newEmail: EmailAddress, hashingSalt: string): Result<ConfirmationSecret> {
