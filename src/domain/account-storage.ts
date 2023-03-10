@@ -13,6 +13,7 @@ import {
   makeAccountId,
   makeAccountNotFound,
 } from './account';
+import { getAccountIdByEmail } from './account-crypto';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
 import { makeHashedPassword } from './hashed-password';
@@ -55,7 +56,8 @@ export function confirmAccount(
 export function setAccountEmail(
   storage: AppStorage,
   accountId: AccountId,
-  emailAddress: EmailAddress
+  newEmail: EmailAddress,
+  hashingSalt: string
 ): Result<AccountNotFound | void> {
   const account = loadAccount(storage, accountId);
 
@@ -63,9 +65,25 @@ export function setAccountEmail(
     return account;
   }
 
-  account.email = emailAddress;
+  account.email = newEmail;
 
-  return storeAccount(storage, accountId, account);
+  const storeResult = storeAccount(storage, accountId, account);
+
+  if (isErr(storeResult)) {
+    return storeResult;
+  }
+
+  const newAccountId = getAccountIdByEmail(newEmail, hashingSalt);
+  const oldStorageKey = getAccountRootStorageKey(accountId);
+  const newStorageKey = getAccountRootStorageKey(newAccountId);
+
+  const renameResult = storage.renameItem(oldStorageKey, newStorageKey);
+
+  if (isErr(renameResult)) {
+    return makeErr(si`Failed to rename item: ${renameResult.reason}`);
+  }
+
+  return renameResult;
 }
 
 export function accountExists(storage: AppStorage, accountId: AccountId): Result<boolean> {
@@ -174,6 +192,10 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
 
 export const accountsStorageKey = '/accounts';
 
+export function getAccountRootStorageKey(accountId: AccountId): StorageKey {
+  return makePath(accountsStorageKey, accountId.value);
+}
+
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
-  return makePath(accountsStorageKey, accountId.value, 'account.json');
+  return makePath(getAccountRootStorageKey(accountId), 'account.json');
 }

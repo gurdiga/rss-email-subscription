@@ -70,8 +70,8 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
   reqId,
   reqBody,
   _reqParams,
-  _reqSession,
-  { storage }
+  reqSession,
+  { storage, settings }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: confirmAccountEmailChange.name, reqId });
   const request = makeEmailChangeConfirmationRequest(reqBody);
@@ -91,11 +91,11 @@ export const confirmAccountEmailChange: RequestHandler = async function confirmA
 
   if (isConfirmationSecretNotFound(data)) {
     logWarning('Confirmation secret not found', { confirmationSecret: secret.value });
-    return makeInputError('Confirmation link expired or has already been confirmed');
+    return makeInputError('Confirmation has already been confirmed');
   }
 
   const { accountId, newEmail } = data;
-  const result = setAccountEmail(storage, accountId, newEmail);
+  const result = setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
 
   if (isErr(result)) {
     logError(si`Failed to ${setAccountEmail.name}`, { reason: result.reason });
