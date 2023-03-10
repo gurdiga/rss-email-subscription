@@ -2,7 +2,7 @@ import { ApiPath } from '../domain/api-path';
 import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makePagePathWithParams, PagePath } from '../domain/page-path';
-import { isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { isAppError, isInputError, isSuccess, Success } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
@@ -93,7 +93,7 @@ function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: F
   });
 }
 
-async function sendDeleteRequest(feedId: FeedId): Promise<Result<void>> {
+async function sendDeleteRequest(feedId: FeedId): Promise<Result<Success>> {
   const data: DeleteFeedRequestData = { feedId: feedId.value };
   const response = await asyncAttempt(() => sendApiRequest(ApiPath.deleteFeed, HttpMethod.POST, data));
 
@@ -109,7 +109,7 @@ async function sendDeleteRequest(feedId: FeedId): Promise<Result<void>> {
     return makeErr('Input error when loading the feed');
   }
 
-  return response.responseData;
+  return response;
 }
 
 function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
