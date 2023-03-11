@@ -78,13 +78,6 @@ describe(loadFeed.name, () => {
     expect(result).to.deep.equal(makeFeedNotFound(feedId));
   });
 
-  it('returns an FeedNotFound when isDeleted', () => {
-    const storage = makeTestStorage({ loadItem: () => ({ ...data, isDeleted: true }), hasItem: () => true });
-    const result = loadFeed(accountId, feedId, storage);
-
-    expect(result).to.deep.equal(makeFeedNotFound(feedId));
-  });
-
   it('returns an Err value when cronPattern or hashingSalt is invalid', () => {
     const resultForData = (data: Partial<FeedStoredData>): ReturnType<typeof loadFeed> => {
       const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });

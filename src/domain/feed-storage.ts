@@ -141,10 +141,6 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     return makeErr(si`Failed to loadItem: ${loadedData.reason}`);
   }
 
-  if (loadedData.isDeleted) {
-    return makeFeedNotFound(feedId);
-  }
-
   const hashingSalt = makeFeedHashingSalt(loadedData.hashingSalt);
 
   if (isErr(hashingSalt)) {
