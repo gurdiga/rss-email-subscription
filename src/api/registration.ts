@@ -1,6 +1,13 @@
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import { Account, AccountId, RegistrationRequest, RegistrationRequestData } from '../domain/account';
+import {
+  Account,
+  AccountId,
+  RegistrationRequest,
+  RegistrationRequestData,
+  RegistrationConfirmationRequest,
+  RegistrationConfirmationRequestData,
+} from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
@@ -232,13 +239,14 @@ export const registrationConfirmation: RequestHandler = async function registrat
   { storage }
 ) {
   const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
-  const secret = makeConfirmationSecret(reqBody['secret']);
+  const request = makeRegistrationConfirmationRequest(reqBody);
 
-  if (isErr(secret)) {
-    logWarning(si`Failed to ${makeConfirmationSecret.name}`, { reason: secret.reason, secret: reqBody['secret'] });
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeRegistrationConfirmationRequest.name}`, { reason: request.reason, reqBody: reqBody });
     return makeInputError('Invalid registration confirmation link');
   }
 
+  const { secret } = request;
   const accountId = confirmAccountBySecret(storage, secret);
 
   if (isErr(accountId)) {
@@ -253,6 +261,26 @@ export const registrationConfirmation: RequestHandler = async function registrat
 
   return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
 };
+
+function makeRegistrationConfirmationRequest(data: unknown): Result<RegistrationConfirmationRequest> {
+  if (!isObject(data)) {
+    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
+  }
+
+  const keyName: keyof RegistrationConfirmationRequestData = 'secret';
+
+  if (!(keyName in data)) {
+    return makeErr(si`Invalid request: missing "${keyName}"`, keyName);
+  }
+
+  const secret = makeConfirmationSecret(data['secret']);
+
+  if (isErr(secret)) {
+    return makeErr(si`Invalid request "${keyName}": ${secret.reason}`, keyName);
+  }
+
+  return { secret };
+}
 
 function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
   const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;

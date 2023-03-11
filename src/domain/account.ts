@@ -79,7 +79,7 @@ export interface AuthenticationResponseData {
 }
 
 export interface RegistrationConfirmationRequest {
-  secret: string;
+  secret: ConfirmationSecret;
 }
 
 export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
