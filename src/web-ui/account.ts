@@ -26,7 +26,7 @@ async function main() {
     ...spinnerUiElements,
     ...viewEmailUiElements,
     ...changeEmailUiElements,
-    ...vewPasswordUiElements,
+    ...viewPasswordUiElements,
     ...changePasswordUiElements,
   });
 
@@ -51,11 +51,19 @@ async function main() {
     return;
   }
 
-  addChangeEmailEventHandlers(uiElements, uiAccount);
+  addEmailChangeEventHandlers(uiElements, uiAccount);
+  addPasswordChangeEventHandlers(uiElements, uiAccount);
   console.log('Hello account', { uiElements, uiAccount });
 }
 
-function addChangeEmailEventHandlers(
+function addPasswordChangeEventHandlers(
+  _uiElements: ViewPasswordUiElements & ChangePasswordUiElements,
+  _uiAccount: UiAccount
+): void {
+  // TODO
+}
+
+function addEmailChangeEventHandlers(
   uiElements: ViewEmailUiElements & ChangeEmailUiElements,
   _uiAccount: UiAccount
 ): void {
@@ -182,7 +190,8 @@ interface RequiredUiElements
   extends SpinnerUiElements,
     ViewEmailUiElements,
     ChangeEmailUiElements,
-    VewPasswordUiElements {}
+    ViewPasswordUiElements,
+    ChangePasswordUiElements {}
 
 interface ViewEmailUiElements {
   viewEmailSection: HTMLElement;
@@ -216,11 +225,11 @@ const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
   emailChangeSuccessMessage: '#email-change-success-message',
 };
 
-interface VewPasswordUiElements {
+interface ViewPasswordUiElements {
   changePasswordButton: HTMLButtonElement;
 }
 
-const vewPasswordUiElements: ElementSelectors<VewPasswordUiElements> = {
+const viewPasswordUiElements: ElementSelectors<ViewPasswordUiElements> = {
   changePasswordButton: '#change-password',
 };
 
@@ -229,6 +238,9 @@ interface ChangePasswordUiElements {
   currentPasswordField: HTMLInputElement;
   newPasswordField: HTMLInputElement;
   submitNewPasswordButton: HTMLButtonElement;
+  passwordChangeApiResponseMessage: HTMLElement;
+  passwordChangeSuccessMessage: HTMLElement;
+  oldEmailLabel: HTMLElement;
 }
 
 const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
@@ -236,6 +248,9 @@ const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
   currentPasswordField: '#current-password-field',
   newPasswordField: '#new-password-field',
   submitNewPasswordButton: '#submit-new-password-button',
+  passwordChangeApiResponseMessage: '#password-change-api-response-message',
+  passwordChangeSuccessMessage: '#password-change-success-message',
+  oldEmailLabel: '#old-email-label',
 };
 
 main();
