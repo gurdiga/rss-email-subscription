@@ -222,6 +222,14 @@ snyk:
 
 # cron @reboot
 watch-app:
+	@function handle_ENOTFOUND {
+		while read -r _getaddrinfo _ENOTFOUND server_name; do
+			echo -e "\nserver_name: $$server_name\n"
+			echo -e "Trying to resolve...\n"
+			nslookup $$server_name
+		done
+	}
+
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/{app,api}.log |
 	grep --line-buffered -E \
 			-e '"severity":"(error|warning)"' \
@@ -236,11 +244,14 @@ watch-app:
 			container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
 			severity=$$(jq -r .severity <<<"$$json")
 			message=$$(jq -r .message <<<"$$json")
+			reason=$$(jq -r .data.reason <<<"$$json")
 
 			echo "Subject: RES $$container_name $$severity: $$message"
-			echo "From: RES <watch-app@feedsubscription.com>";
+			echo "From: RES <watch-app@feedsubscription.com>"
 			echo
 			jq . <<<"$$json"
+
+			if [[ $$reason == "getaddrinfo ENOTFOUND"* ]]; then handle_ENOTFOUND <<<"$$reason"; fi
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
 	done \
