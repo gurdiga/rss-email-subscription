@@ -1,6 +1,6 @@
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
-import { getAccountIdByEmail } from '../domain/account-crypto';
+import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
@@ -82,7 +82,7 @@ function storeRegistrationConfirmationSecret(
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const secret = makeConfirmationSecretHash(emailAddress, settings.hashingSalt);
+  const secret = makeRegistrationConfirmationSecretHash(emailAddress, settings.hashingSalt);
   const confirmationSecret = makeConfirmationSecret(secret);
 
   if (isErr(confirmationSecret)) {
@@ -138,7 +138,7 @@ export function makeRegistrationConfirmationEmailContent(
   domainName: string
 ): EmailContent {
   const confirmationLink = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
-  const secret = makeConfirmationSecretHash(email, hashingSalt);
+  const secret = makeRegistrationConfirmationSecretHash(email, hashingSalt);
 
   confirmationLink.searchParams.set('secret', secret);
 
@@ -156,10 +156,6 @@ export function makeRegistrationConfirmationEmailContent(
       <p>Have a nice day.</p>
     `,
   };
-}
-
-function makeConfirmationSecretHash(email: EmailAddress, hashingSalt: string) {
-  return hash(email.value, si`registration-confirmation-secret-${hashingSalt}`);
 }
 
 export function makeRegistrationRequest(data: unknown): Result<RegistrationRequest> {

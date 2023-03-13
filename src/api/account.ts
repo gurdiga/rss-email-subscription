@@ -8,6 +8,7 @@ import {
   PasswordChangeRequestData,
   UiAccount,
 } from '../domain/account';
+import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
 import { loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
@@ -339,7 +340,7 @@ async function sendEmailChangeConfirmationEmail(
 }
 
 function makeEmailChangeConfirmationSecret(newEmail: EmailAddress, hashingSalt: string): Result<ConfirmationSecret> {
-  const secret = hash(newEmail.value, si`email-change-confirmation-secret-${hashingSalt}`);
+  const secret = makeEmailChangeConfirmationSecretHash(newEmail, hashingSalt);
 
   return makeConfirmationSecret(secret);
 }

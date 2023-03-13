@@ -3,7 +3,7 @@ import fetchCookie from 'fetch-cookie';
 import nodeFetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { AccountData, AccountId, isAccountId } from './src/domain/account';
-import { getAccountIdByEmail } from './src/domain/account-crypto';
+import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { defaultFeedPattern } from './src/domain/cron-pattern';
@@ -28,7 +28,6 @@ import { MakeFeedInput } from './src/domain/feed-making';
 import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, getFeedStorageKey } from './src/domain/feed-storage';
 import { readFile } from './src/domain/io-isolation';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
-import { hash } from './src/shared/crypto';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
 import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
@@ -522,7 +521,7 @@ describe('API', () => {
 
   async function registrationConfirmationSend(email: string) {
     const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
-    const secret = hash(email, `confirmation-secret-${appSettings.hashingSalt}`);
+    const secret = makeRegistrationConfirmationSecretHash(makeTestEmailAddress(email), appSettings.hashingSalt);
 
     return post(getFullApiPath(ApiPath.registrationConfirmation), { secret });
   }
