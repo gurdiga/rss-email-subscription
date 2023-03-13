@@ -350,13 +350,23 @@ function storeEmailChangeRequestSecret(
   confirmationSecret: ConfirmationSecret,
   storage: AppStorage
 ) {
-  const timestamp = new Date();
-  const confirmationSecretData: EmailChangeRequestSecretData = { accountId, newEmail, timestamp };
+  const confirmationSecretData = makeEmailChangeRequestSecretData(accountId, newEmail);
+
   return storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 }
 
 interface EmailChangeRequestSecretData {
+  kind: 'EmailChangeRequestSecretData';
   accountId: AccountId;
   newEmail: EmailAddress;
   timestamp: Date;
+}
+
+function makeEmailChangeRequestSecretData(accountId: AccountId, newEmail: EmailAddress): EmailChangeRequestSecretData {
+  return {
+    kind: 'EmailChangeRequestSecretData',
+    accountId,
+    newEmail,
+    timestamp: new Date(),
+  };
 }

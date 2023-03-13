@@ -31,69 +31,80 @@ import { App } from './init-app';
 import { RequestHandler } from './request-handler';
 import { initSession } from './session';
 
-export const registration: RequestHandler = async function registration(_reqId, reqBody, _reqParams, _reqSession, app) {
+export const registration: RequestHandler = async function registration(reqId, reqBody, _reqParams, _reqSession, app) {
+  const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
   const request = makeRegistrationRequest(reqBody);
 
   if (isErr(request)) {
+    logWarning(si`Failed to ${makeRegistrationRequest.name}`, { reason: request.reason, reqBody });
     return makeInputError(request.reason, request.field);
   }
 
-  const initAccountResult = initAccount(app, request);
+  const accountId = initAccount(app, request);
 
-  if (isErr(initAccountResult)) {
-    return makeAppError(initAccountResult.reason);
+  if (isErr(accountId)) {
+    logError(si`Failed to ${initAccount.name}`, { reason: accountId.reason, request });
+    return makeAppError(accountId.reason);
   }
 
-  if (isAccountAlreadyExists(initAccountResult)) {
+  if (isAccountAlreadyExists(accountId)) {
+    logWarning('Account to register already exists', { request });
     return makeInputError('Email already taken', 'email' as keyof RegistrationRequest);
   }
 
   const { email } = request;
-  const sendConfirmationEmailResult = await sendConfirmationEmail(email, app.settings);
+  const sendResult = await sendConfirmationEmail(email, app.settings);
 
-  if (isErr(sendConfirmationEmailResult)) {
-    return makeAppError(sendConfirmationEmailResult.reason);
+  if (isErr(sendResult)) {
+    logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendResult.reason, email: email.value });
+    return makeAppError(sendResult.reason);
   }
 
-  const accountId = initAccountResult;
-  const storeConfirmationSecretResult = storeRegistrationConfirmationSecret(app, email, accountId);
+  const result = storeRegistrationConfirmationSecret(app, email, accountId);
 
-  if (isErr(storeConfirmationSecretResult)) {
-    return makeAppError(storeConfirmationSecretResult.reason);
+  if (isErr(result)) {
+    logError(si`Failed to ${storeRegistrationConfirmationSecret.name}`, {
+      reason: result.reason,
+      accountId: accountId.value,
+    });
+    return makeAppError(result.reason);
   }
 
   return makeSuccess('Account created. Welcome aboard! 🙂');
 };
 
-export function storeRegistrationConfirmationSecret(
+function storeRegistrationConfirmationSecret(
   { settings, storage }: App,
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const module = si`${registration.name}-${storeRegistrationConfirmationSecret.name}`;
-  const { logError, logInfo } = makeCustomLoggers({ accountId, module });
-
   const emailAddressHash = hash(emailAddress.value, si`confirmation-secret-${settings.hashingSalt}`);
   const confirmationSecret = makeConfirmationSecret(emailAddressHash);
 
   if (isErr(confirmationSecret)) {
-    logError(si`Failed to ${makeConfirmationSecret.name}`, { reason: confirmationSecret.reason });
-    return makeErr('Couldn’t make confirmation secret');
+    return makeErr(si`Couldn’t make confirmation secret: ${confirmationSecret.reason}`);
   }
 
-  const confirmationSecretData: RegistrationConfirmationSecretData = { accountId };
+  const confirmationSecretData = makeRegistrationConfirmationSecretData(accountId);
   const result = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 
   if (isErr(result)) {
-    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: result.reason });
-    return makeErr('Couldn’t store confirmation secret');
+    return makeErr(si`Couldn’t store confirmation secret: ${result.reason}`);
   }
-
-  logInfo('Stored registration confirmation secret');
 }
 
 interface RegistrationConfirmationSecretData {
+  kind: 'RegistrationConfirmationSecretData'; // for inspectability
   accountId: AccountId;
+  timestamp: Date;
+}
+
+function makeRegistrationConfirmationSecretData(accountId: AccountId): RegistrationConfirmationSecretData {
+  return {
+    kind: 'RegistrationConfirmationSecretData',
+    accountId,
+    timestamp: new Date(),
+  };
 }
 
 async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
