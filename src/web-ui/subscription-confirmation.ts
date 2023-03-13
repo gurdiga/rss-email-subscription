@@ -8,6 +8,7 @@ import {
   displayInitError,
   fillUiElements,
   HttpMethod,
+  onClick,
   parseConfirmationLinkUrlParams,
   requireUiElements,
   sendApiRequest,
@@ -59,7 +60,7 @@ function main() {
   unhideElement(uiElements.inputUiContainer);
   unhideElement(uiElements.formUiContainer);
 
-  uiElements.confirmButton.addEventListener('click', async () => {
+  onClick(uiElements.confirmButton, async () => {
     const response = await asyncAttempt(() =>
       sendApiRequest(ApiPath.subscriptionConfirmation, HttpMethod.POST, { id: queryParams.id })
     );

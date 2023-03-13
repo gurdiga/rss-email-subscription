@@ -25,6 +25,7 @@ import {
   displayCommunicationError,
   displayInitError,
   HttpMethod,
+  onClick,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -94,7 +95,7 @@ async function main() {
 function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): void {
   const { addEmailsButton, emailsToAddField, addEmailsApiResponseMessage, emailList } = uiElements;
 
-  addEmailsButton.addEventListener('click', async () => {
+  onClick(addEmailsButton, async () => {
     const response = await sendAddEmailsRequest(emailsToAddField.value, feedId);
 
     if (isErr(response)) {
@@ -136,12 +137,12 @@ async function sendAddEmailsRequest(emailsOnePerLine: string, feedId: FeedId) {
 function bindDeleteSelectedButton(uiElements: RequiredUiElements, feedId: FeedId): void {
   const { emailList, deleteSelectedButton, deleteSelectedApiResponseMessage } = uiElements;
 
-  emailList.addEventListener('click', (event: Event) => {
+  onClick(emailList, (event: Event) => {
     toggleItemSelection(event.target as HTMLLIElement);
     maybeEnableButton(deleteSelectedButton, emailList);
   });
 
-  deleteSelectedButton.addEventListener('click', async () => {
+  onClick(deleteSelectedButton, async () => {
     if (!confirm('Delete the selected emails?')) {
       return;
     }

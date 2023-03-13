@@ -388,3 +388,7 @@ export function getCookieByName(name: string, documentCookie = document.cookie):
 export function isAuthenticated(): boolean {
   return getCookieByName(navbarCookieName) === 'true';
 }
+
+export function onClick(element: HTMLElement, f: (event: Event) => void) {
+  element.addEventListener('click', f);
+}

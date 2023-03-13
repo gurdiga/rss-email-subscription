@@ -5,6 +5,7 @@ import {
   hideElement,
   HttpMethod,
   isAuthenticated,
+  onClick,
   requireUiElements,
   sendApiRequest,
   unhideElement,
@@ -40,7 +41,7 @@ function displayPrivateNavbar(uiElements: RequiredUiElements): void {
   unhideElement(privateNav);
   hideElement(publicNav);
 
-  signOutLink.addEventListener('click', async (e: Event) => {
+  onClick(signOutLink, async (e: Event) => {
     e.preventDefault();
 
     const response = await asyncAttempt(() => sendApiRequest(ApiPath.deauthentication, HttpMethod.POST));

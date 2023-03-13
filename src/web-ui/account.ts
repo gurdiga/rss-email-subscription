@@ -13,6 +13,7 @@ import {
   fillUiElements,
   hideElement,
   HttpMethod,
+  onClick,
   preventDoubleClick,
   requireUiElements,
   sendApiRequest,
@@ -205,15 +206,11 @@ function dismissChangeEmailForm(uiElements: ViewEmailUiElements & ChangeEmailUiE
 }
 
 function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  return fillEmail(uiElements.currentEmailLabel, uiAccount.email);
-}
-
-function fillEmail(currentEmailLabel: HTMLElement, email: string) {
   return fillUiElements([
     {
-      element: currentEmailLabel,
+      element: uiElements.currentEmailLabel,
       propName: 'textContent',
-      value: email,
+      value: uiAccount.email,
     },
   ]);
 }
@@ -236,18 +233,12 @@ async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   return response.responseData!;
 }
 
-// TODO: Move to shared
 function onEscape(element: HTMLElement, f: Function) {
   element.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.code === 'Escape') {
       f();
     }
   });
-}
-
-// TODO: Move to shared
-function onClick(element: HTMLElement, f: (event: Event) => void) {
-  element.addEventListener('click', f);
 }
 
 interface RequiredUiElements

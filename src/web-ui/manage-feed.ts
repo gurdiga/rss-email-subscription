@@ -17,6 +17,7 @@ import {
   HttpMethod,
   loadUiFeed,
   navigateTo,
+  onClick,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -76,7 +77,7 @@ async function main() {
 }
 
 function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: FeedId): void {
-  button.addEventListener('click', async () => {
+  onClick(button, async () => {
     if (!confirm(si`Do you really want to delete the feed “${feedName}”?`)) {
       return;
     }

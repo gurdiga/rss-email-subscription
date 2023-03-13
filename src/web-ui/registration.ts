@@ -14,6 +14,7 @@ import {
   hideElement,
   HttpMethod,
   isAuthenticated,
+  onClick,
   preventDoubleClick,
   requireUiElements,
   sendApiRequest,
@@ -40,7 +41,7 @@ function main() {
     return;
   }
 
-  uiElements.submitButton.addEventListener('click', async (event: Event) => {
+  onClick(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 

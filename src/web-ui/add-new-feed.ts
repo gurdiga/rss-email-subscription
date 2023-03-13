@@ -19,6 +19,7 @@ import {
   displayValidationError,
   HttpMethod,
   navigateTo,
+  onClick,
   preventDoubleClick,
   requireUiElements,
   sendApiRequest,
@@ -45,7 +46,7 @@ async function main() {
     { label: uiElements.pageTitle.textContent! },
   ]);
 
-  uiElements.submitButton.addEventListener('click', async (event: Event) => {
+  onClick(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 

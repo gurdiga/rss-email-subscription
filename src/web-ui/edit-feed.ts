@@ -23,6 +23,7 @@ import {
   HttpMethod,
   loadUiFeed,
   navigateTo,
+  onClick,
   preventDoubleClick,
   requireQueryParams,
   requireUiElements,
@@ -85,7 +86,7 @@ async function main() {
 }
 
 function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void {
-  uiElements.submitButton.addEventListener('click', async (event: Event) => {
+  onClick(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
