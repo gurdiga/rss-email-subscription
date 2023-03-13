@@ -1,4 +1,4 @@
-import { parseDate, parseOptionalDate } from '../shared/date-utils';
+import { makeDate, parseOptionalDate } from '../shared/date-utils';
 import { isErr, makeErr, Result } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
@@ -150,7 +150,7 @@ export function loadAccount(
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${hashedPassword.reason}`, 'hashedPassword');
   }
 
-  const creationTimestamp = parseDate(item.creationTimestamp);
+  const creationTimestamp = makeDate(item.creationTimestamp);
 
   if (isErr(creationTimestamp)) {
     return makeErr(

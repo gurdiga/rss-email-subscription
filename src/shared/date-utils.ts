@@ -1,6 +1,6 @@
 import { makeErr, Result } from './lang';
 
-export function parseDate(dateString: string): Result<Date> {
+export function makeDate(dateString: string): Result<Date> {
   const date = new Date(dateString);
 
   if (date.toString() === 'Invalid Date') {
@@ -15,5 +15,5 @@ export function parseOptionalDate(dateString: string): Result<Date> | undefined 
     return undefined;
   }
 
-  return parseDate(dateString);
+  return makeDate(dateString);
 }
