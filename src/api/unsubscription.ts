@@ -1,7 +1,7 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { parseSubscriptionId } from '../domain/subscription-id';
+import { makeSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
 import { makeFeedId } from '../domain/feed-id';
@@ -18,10 +18,10 @@ export const unsubscription: RequestHandler = async function unsubscription(
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscription.name });
   const { id, email } = reqBody;
-  const parseResult = parseSubscriptionId(id);
+  const parseResult = makeSubscriptionId(id);
 
   if (isErr(parseResult)) {
-    logWarning(si`Failed to ${parseSubscriptionId.name}`, { id, reason: parseResult.reason });
+    logWarning(si`Failed to ${makeSubscriptionId.name}`, { id, reason: parseResult.reason });
     return makeInputError('Invalid unsubscription link');
   }
 

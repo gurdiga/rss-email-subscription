@@ -1,7 +1,7 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { parseSubscriptionId } from '../domain/subscription-id';
+import { makeSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
 import { makeFeedId } from '../domain/feed-id';
@@ -18,7 +18,7 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: subscriptionConfirmation.name });
   const { id } = reqBody;
-  const parseResult = parseSubscriptionId(id);
+  const parseResult = makeSubscriptionId(id);
 
   if (isErr(parseResult)) {
     logWarning('Invalid subscription ID', { id, reason: parseResult.reason });

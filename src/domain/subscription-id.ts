@@ -6,7 +6,7 @@ interface SubscriptionId {
   emailHash: EmailHash;
 }
 
-export function parseSubscriptionId(id: unknown): Result<SubscriptionId> {
+export function makeSubscriptionId(id: unknown): Result<SubscriptionId> {
   if (typeof id !== 'string') {
     return makeErr('Unsubscription ID is not a string');
   }
