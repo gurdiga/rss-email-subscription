@@ -19,7 +19,7 @@ export function isSuccess(x: unknown): x is Success {
 }
 
 export function makeSuccess<D extends any = any>(
-  message: string,
+  message: string = 'Success',
   logData?: LogData,
   responseData?: D,
   cookies?: AppCookie[]

@@ -8,7 +8,7 @@ import {
   PasswordChangeRequestData,
   UiAccount,
 } from '../domain/account';
-import { loadAccount, setAccountEmail } from '../domain/account-storage';
+import { loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
@@ -22,6 +22,7 @@ import {
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
+import { makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
@@ -218,7 +219,19 @@ export const requestAccountPasswordChange: RequestHandler = async function reque
     );
   }
 
-  return makeSuccess('Not implemented');
+  const newHashedPassword = makeHashedPassword(hash(request.newPassword.value, settings.hashingSalt));
+
+  if (isErr(newHashedPassword)) {
+    logError(si`Failed to ${makeHashedPassword.name}`, { reason: newHashedPassword.reason });
+    return makeAppError();
+  }
+
+  account.hashedPassword = newHashedPassword;
+  storeAccount(storage, accountId, account);
+
+  // TODO: send notification email
+
+  return makeSuccess();
 };
 
 function makePasswordChangeRequest(data: unknown | PasswordChangeRequestData): Result<PasswordChangeRequest> {
