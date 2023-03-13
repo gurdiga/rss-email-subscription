@@ -9,11 +9,11 @@ import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { initSession } from './session';
 import { enablePrivateNavbarCookie } from './app-cookie';
 
-export const authentication: RequestHandler = async function authentication(
+export const authentication: AppRequestHandler = async function authentication(
   _reqId,
   reqBody,
   _reqParams,

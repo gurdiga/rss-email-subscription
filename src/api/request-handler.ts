@@ -1,4 +1,4 @@
-import { Request, RequestHandler as ExpressRequestHandler, Response } from 'express';
+import { Request, RequestHandler, Response } from 'express';
 import { ApiResponse, Success } from '../shared/api-response';
 import { exhaustivenessCheck } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -7,7 +7,7 @@ import { AppCookie } from './app-cookie';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
-export type RequestHandler = (
+export type AppRequestHandler = (
   reqId: number,
   reqBody: Request['body'],
   reqParams: Request['query'],
@@ -15,7 +15,7 @@ export type RequestHandler = (
   app: App
 ) => Promise<ApiResponse>;
 
-export function makeRequestHandler(handler: RequestHandler, app: App): ExpressRequestHandler {
+export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
   return async (req, res) => {
     const reqId = new Date().getTime();
     const reqBody = (req.body || {}) as unknown;

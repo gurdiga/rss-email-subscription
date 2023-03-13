@@ -43,11 +43,11 @@ import {
   storeFeed,
 } from '../domain/feed-storage';
 import { AppStorage } from '../domain/storage';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../domain/account';
 
-export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {
+export const deleteFeed: AppRequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
   const session = checkSession(reqSession);
 
@@ -108,7 +108,7 @@ function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
   return makeFeed(makeFeedInput, feedHashingSalt, cronPattern);
 }
 
-export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
+export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: addNewFeed.name, reqId });
   const session = checkSession(reqSession);
 
@@ -158,7 +158,7 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
   return makeSuccess('New feed added. 👍', logData, responseData);
 };
 
-export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
+export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
   const session = checkSession(reqSession);
 
@@ -231,7 +231,7 @@ function getFeedAccountId(feedId: FeedId, storage: AppStorage, reqId: number): R
   return accountId;
 }
 
-export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
+export const loadFeeds: AppRequestHandler = async function listFeeds(reqId, _reqBody, _reqParams, reqSession, app) {
   const { logWarning, logError } = makeCustomLoggers({ module: listFeeds.name, reqId });
   const session = checkSession(reqSession);
 
@@ -272,7 +272,13 @@ export const loadFeeds: RequestHandler = async function listFeeds(reqId, _reqBod
   return makeSuccess('Feeds!', logData, responseData);
 };
 
-export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _reqBody, reqParams, reqSession, app) {
+export const loadFeedById: AppRequestHandler = async function loadFeedById(
+  reqId,
+  _reqBody,
+  reqParams,
+  reqSession,
+  app
+) {
   const { logWarning } = makeCustomLoggers({ module: loadFeedById.name, reqId });
   const session = checkSession(reqSession);
 
@@ -315,7 +321,7 @@ export const loadFeedById: RequestHandler = async function loadFeedById(reqId, _
   return makeSuccess('Feed', logData, responseData);
 };
 
-export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscribers(
+export const loadFeedSubscribers: AppRequestHandler = async function loadFeedSubscribers(
   reqId,
   _reqBody,
   reqParams,
@@ -366,7 +372,7 @@ export const loadFeedSubscribers: RequestHandler = async function loadFeedSubscr
   return makeSuccess('Feed subscribers', logData, responseData);
 };
 
-export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSubscribers(
+export const deleteFeedSubscribers: AppRequestHandler = async function deleteFeedSubscribers(
   reqId,
   reqBody,
   _reqParams,
@@ -456,7 +462,7 @@ export const deleteFeedSubscribers: RequestHandler = async function deleteFeedSu
   return makeSuccess('Deleted subscribers', logData, responseData);
 };
 
-export const addFeedSubscribers: RequestHandler = async function addFeedSubscribers(
+export const addFeedSubscribers: AppRequestHandler = async function addFeedSubscribers(
   reqId,
   reqBody,
   _reqParams,

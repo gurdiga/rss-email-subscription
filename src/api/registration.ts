@@ -28,10 +28,16 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
 import { App } from './init-app';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { initSession } from './session';
 
-export const registration: RequestHandler = async function registration(reqId, reqBody, _reqParams, _reqSession, app) {
+export const registration: AppRequestHandler = async function registration(
+  reqId,
+  reqBody,
+  _reqParams,
+  _reqSession,
+  app
+) {
   const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
   const request = makeRegistrationRequest(reqBody);
 
@@ -211,7 +217,7 @@ function initAccount(
   return accountId;
 }
 
-export const registrationConfirmation: RequestHandler = async function registrationConfirmation(
+export const registrationConfirmation: AppRequestHandler = async function registrationConfirmation(
   _reqId,
   reqBody,
   _reqParams,

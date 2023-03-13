@@ -32,11 +32,11 @@ import { isErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppEnv } from './init-app';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 
 // TODO: Add api-test
-export const loadCurrentAccount: RequestHandler = async function loadCurrentAccount(
+export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,
   _reqBody,
   _reqParams,
@@ -72,7 +72,7 @@ export const loadCurrentAccount: RequestHandler = async function loadCurrentAcco
   return makeSuccess<UiAccount>('Success', logData, responseData);
 };
 
-export const confirmAccountEmailChange: RequestHandler = async function confirmAccountEmailChange(
+export const confirmAccountEmailChange: AppRequestHandler = async function confirmAccountEmailChange(
   reqId,
   reqBody,
   _reqParams,
@@ -167,7 +167,7 @@ async function sendEmailChangeInformationEmail(
   );
 }
 
-export const requestAccountPasswordChange: RequestHandler = async function requestAccountPasswordChange(
+export const requestAccountPasswordChange: AppRequestHandler = async function requestAccountPasswordChange(
   reqId,
   reqBody,
   _reqParams,
@@ -249,7 +249,7 @@ function makePasswordChangeRequest(data: unknown | PasswordChangeRequestData): R
   return makeValues<PasswordChangeRequest>(data, { currentPassword: makePassword, newPassword: makePassword });
 }
 
-export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(
+export const requestAccountEmailChange: AppRequestHandler = async function requestAccountEmailChange(
   reqId,
   reqBody,
   _reqParams,

@@ -12,11 +12,11 @@ import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../domain/storage';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 
-export const subscription: RequestHandler = async function subscription(
+export const subscription: AppRequestHandler = async function subscription(
   reqId,
   reqBody,
   _reqParams,

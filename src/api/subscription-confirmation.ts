@@ -3,12 +3,12 @@ import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makeSubscriptionId, SubscriptionConfirmationRequest } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { RequestHandler } from './request-handler';
+import { AppRequestHandler } from './request-handler';
 import { findFeedAccountId, isFeedNotFound } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 
-export const subscriptionConfirmation: RequestHandler = async function subscriptionConfirmation(
+export const subscriptionConfirmation: AppRequestHandler = async function subscriptionConfirmation(
   reqId,
   reqBody,
   _reqParams,
