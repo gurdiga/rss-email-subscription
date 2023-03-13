@@ -1,4 +1,5 @@
 import { ApiPath } from '../domain/api-path';
+import { UnsubscriptionConfirmationRequestData } from '../domain/subscription-id';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
@@ -62,12 +63,8 @@ function main() {
   unhideElement(uiElements.formUiContainer);
 
   onClick(uiElements.confirmButton, async () => {
-    const response = await asyncAttempt(() =>
-      sendApiRequest(ApiPath.unsubscription, HttpMethod.POST, {
-        id: queryParams.id,
-        email: queryParams.email,
-      })
-    );
+    const request: UnsubscriptionConfirmationRequestData = { id: queryParams.id };
+    const response = await asyncAttempt(() => sendApiRequest(ApiPath.unsubscription, HttpMethod.POST, request));
 
     if (isErr(response)) {
       displayCommunicationError(response, uiElements.apiResponseMessage);

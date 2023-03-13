@@ -1,10 +1,9 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
-import { isErr } from '../shared/lang';
+import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { makeSubscriptionId } from '../domain/subscription-id';
+import { makeSubscriptionId, SubscriptionConfirmationRequest } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, isFeedNotFound } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
@@ -17,22 +16,14 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
   { storage }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: subscriptionConfirmation.name });
-  const { id } = reqBody;
-  const parseResult = makeSubscriptionId(id);
+  const request = makeSubscriptionConfirmationRequest(reqBody);
 
-  if (isErr(parseResult)) {
-    logWarning('Invalid subscription ID', { id, reason: parseResult.reason });
-    return makeInputError('Invalid confirmation link');
+  if (isErr(request)) {
+    logWarning('Invalid subscription ID', { reason: request.reason, reqBody });
+    return makeInputError(request.reason, request.field);
   }
 
-  const { emailHash } = parseResult;
-  const feedId = makeFeedId(parseResult.feedId);
-
-  if (isErr(feedId)) {
-    logWarning('Invalid feed ID', { feedId, reason: feedId.reason });
-    return makeInputError('Invalid confirmation link');
-  }
-
+  const { emailHash, feedId } = request.id;
   const accountId = findFeedAccountId(feedId, storage);
 
   if (isErr(accountId)) {
@@ -80,3 +71,9 @@ export const subscriptionConfirmation: RequestHandler = async function subscript
 
   return makeSuccess('Emai confirmed. Welcome aboard! 😎');
 };
+
+function makeSubscriptionConfirmationRequest(data: unknown) {
+  return makeValues<SubscriptionConfirmationRequest>(data, {
+    id: makeSubscriptionId,
+  });
+}

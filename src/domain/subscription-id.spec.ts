@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { makeTestFeedId } from '../shared/test-utils';
 import { makeSubscriptionId } from './subscription-id';
 
 describe(makeSubscriptionId.name, () => {
@@ -10,7 +11,7 @@ describe(makeSubscriptionId.name, () => {
     const id = si`${feedId}-${emailHash}`;
 
     expect(makeSubscriptionId(id)).to.deep.equal({
-      feedId,
+      feedId: makeTestFeedId(feedId),
       emailHash,
     });
   });
@@ -21,9 +22,15 @@ describe(makeSubscriptionId.name, () => {
     const id = si`${feedId}-${emailHash}`;
 
     expect(makeSubscriptionId(id)).to.deep.equal({
-      feedId,
+      feedId: makeTestFeedId(feedId),
       emailHash,
     });
+  });
+
+  it('returns an Err value when feed ID is invalid', () => {
+    const id = 'ye-6968c45bb2091e472b299923b254f5a2780941ab2d6b1f6e0d27ee356ee30e44';
+
+    expect(makeSubscriptionId(id)).to.deep.equal(makeErr('Feed ID needs to be at least 3 characters', 'id'));
   });
 
   it('returns an Err value when can’t ID doesn’t match the format', () => {

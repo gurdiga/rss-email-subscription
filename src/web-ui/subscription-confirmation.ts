@@ -1,4 +1,5 @@
 import { ApiPath } from '../domain/api-path';
+import { SubscriptionConfirmationRequestData } from '../domain/subscription-id';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
@@ -61,8 +62,9 @@ function main() {
   unhideElement(uiElements.formUiContainer);
 
   onClick(uiElements.confirmButton, async () => {
+    const request: SubscriptionConfirmationRequestData = { id: queryParams.id };
     const response = await asyncAttempt(() =>
-      sendApiRequest(ApiPath.subscriptionConfirmation, HttpMethod.POST, { id: queryParams.id })
+      sendApiRequest(ApiPath.subscriptionConfirmation, HttpMethod.POST, request)
     );
 
     if (isErr(response)) {

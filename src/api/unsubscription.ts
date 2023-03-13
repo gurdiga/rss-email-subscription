@@ -1,10 +1,9 @@
 import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
-import { isErr } from '../shared/lang';
+import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { makeSubscriptionId } from '../domain/subscription-id';
+import { makeSubscriptionId, UnsubscriptionConfirmationRequest } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { RequestHandler } from './request-handler';
-import { makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
@@ -17,27 +16,19 @@ export const unsubscription: RequestHandler = async function unsubscription(
   { storage }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ reqId, module: unsubscription.name });
-  const { id, email } = reqBody;
-  const parseResult = makeSubscriptionId(id);
+  const request = makeUnsubscriptionConfirmationRequest(reqBody);
 
-  if (isErr(parseResult)) {
-    logWarning(si`Failed to ${makeSubscriptionId.name}`, { id, reason: parseResult.reason });
-    return makeInputError('Invalid unsubscription link');
+  if (isErr(request)) {
+    logWarning('Invalid subscription ID', { reason: request.reason, reqBody });
+    return makeInputError(request.reason, request.field);
   }
 
-  const { emailHash } = parseResult;
-  const feedId = makeFeedId(parseResult.feedId);
-
-  if (isErr(feedId)) {
-    logError(si`Invalid feedId: ${parseResult.feedId}`, { reason: feedId.reason });
-    return makeAppError('Database read error');
-  }
-
+  const { emailHash, feedId } = request.id;
   const accountId = findFeedAccountId(feedId, storage);
 
   if (isErr(accountId)) {
     logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });
-    return makeAppError('Feed not found');
+    return makeAppError();
   }
 
   if (isAccountNotFound(accountId)) {
@@ -49,7 +40,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
 
   if (isErr(storedEmails)) {
     logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
-    return makeAppError('Database read error');
+    return makeAppError();
   }
 
   const { validEmails } = storedEmails;
@@ -57,7 +48,7 @@ export const unsubscription: RequestHandler = async function unsubscription(
   const isEmailSubscribed = !!existingEmail;
 
   if (!isEmailSubscribed) {
-    logWarning('Email not found by hash', { email, emailHash });
+    logWarning('Email not found by hash', { emailHash });
     return makeSuccess('Solidly unsubscribed.');
   }
 
@@ -67,10 +58,16 @@ export const unsubscription: RequestHandler = async function unsubscription(
 
   if (isErr(storeResult)) {
     logError(si`Failed to ${storeEmails.name}`, { reason: storeResult.reason });
-    return makeAppError('Database write error: registering unsubscription failed');
+    return makeAppError();
   }
 
   logInfo('Unsubscribed', { feedId: feedId.value, email: existingEmail.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
+
+function makeUnsubscriptionConfirmationRequest(data: unknown) {
+  return makeValues<UnsubscriptionConfirmationRequest>(data, {
+    id: makeSubscriptionId,
+  });
+}
