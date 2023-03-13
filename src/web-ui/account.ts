@@ -14,7 +14,7 @@ import {
   hideElement,
   HttpMethod,
   onClick,
-  preventDoubleClick,
+  onSubmit,
   requireUiElements,
   sendApiRequest,
   SpinnerUiElements,
@@ -80,15 +80,13 @@ function addPasswordChangeEventHandlers(uiElements: ViewPasswordUiElements & Cha
 
   onEscape(changePasswordForm, () => dismissChangePasswordForm(uiElements));
 
-  onClick(submitNewPasswordButton, () => {
+  onSubmit(submitNewPasswordButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(passwordChangeSuccessMessage);
 
-    preventDoubleClick(submitNewPasswordButton, async () => {
-      const response = await submitNewPassword(currentPasswordField.value, newPasswordField.value);
+    const response = await submitNewPassword(currentPasswordField.value, newPasswordField.value);
 
-      handlePasswordChangeResponse(uiElements, response);
-    });
+    handlePasswordChangeResponse(uiElements, response);
   });
 }
 
@@ -153,15 +151,13 @@ function addEmailChangeEventHandlers(uiElements: ViewEmailUiElements & ChangeEma
   onClick(cancelEmailChangeButton, () => dismissChangeEmailForm(uiElements));
   onEscape(newEmailField, () => dismissChangeEmailForm(uiElements));
 
-  onClick(submitNewEmailButton, () => {
+  onSubmit(submitNewEmailButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(emailChangeSuccessMessage);
 
-    preventDoubleClick(submitNewEmailButton, async () => {
-      const response = await submitNewEmail(newEmailField.value);
+    const response = await submitNewEmail(newEmailField.value);
 
-      handleEmailChangeResponse(uiElements, response, newEmailField.value);
-    });
+    handleEmailChangeResponse(uiElements, response, newEmailField.value);
   });
 }
 

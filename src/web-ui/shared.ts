@@ -235,6 +235,14 @@ export function sendApiRequest<R extends any = any>(
     .then(async (r) => (await r.json()) as AuthenticatedApiResponse<R>);
 }
 
+export function onSubmit(submitButton: HTMLButtonElement, handler: (event: Event) => Promise<void>) {
+  onClick(submitButton, (event: Event) => {
+    preventDoubleClick(submitButton, async () => {
+      await handler(event);
+    });
+  });
+}
+
 export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<void>): void {
   const initialTextContent = button.textContent;
 

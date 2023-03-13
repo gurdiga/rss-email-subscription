@@ -23,8 +23,7 @@ import {
   HttpMethod,
   loadUiFeed,
   navigateTo,
-  onClick,
-  preventDoubleClick,
+  onSubmit,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -86,39 +85,37 @@ async function main() {
 }
 
 function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void {
-  onClick(uiElements.submitButton, async (event: Event) => {
+  onSubmit(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    preventDoubleClick(uiElements.submitButton, async () => {
-      const response = await submitForm(uiElements, feedId);
+    const response = await submitForm(uiElements, feedId);
 
-      if (isErr(response)) {
-        displayCommunicationError(response, uiElements.apiResponseMessage);
-        return;
-      }
+    if (isErr(response)) {
+      displayCommunicationError(response, uiElements.apiResponseMessage);
+      return;
+    }
 
-      if (isAppError(response)) {
-        displayApiResponse(response, uiElements.apiResponseMessage);
-        return;
-      }
+    if (isAppError(response)) {
+      displayApiResponse(response, uiElements.apiResponseMessage);
+      return;
+    }
 
-      if (isInputError(response)) {
-        displayValidationError(response, uiElements);
-        return;
-      }
+    if (isInputError(response)) {
+      displayValidationError(response, uiElements);
+      return;
+    }
 
-      if (isSuccess(response)) {
-        displayApiResponse(response, uiElements.apiResponseMessage);
+    if (isSuccess(response)) {
+      displayApiResponse(response, uiElements.apiResponseMessage);
 
-        setTimeout(() => {
-          const nextPageParams = { id: response.responseData?.feedId! };
-          const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
+      setTimeout(() => {
+        const nextPageParams = { id: response.responseData?.feedId! };
+        const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
 
-          navigateTo(nextPage);
-        }, 1000);
-      }
-    });
+        navigateTo(nextPage);
+      }, 1000);
+    }
   });
 }
 

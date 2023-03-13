@@ -14,8 +14,7 @@ import {
   HttpMethod,
   isAuthenticated,
   navigateTo,
-  onClick,
-  preventDoubleClick,
+  onSubmit,
   requireUiElements,
   sendApiRequest,
 } from './shared';
@@ -38,33 +37,31 @@ function main() {
     return;
   }
 
-  onClick(uiElements.submitButton, async (event: Event) => {
+  onSubmit(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    preventDoubleClick(uiElements.submitButton, async () => {
-      const request: AuthenticationRequestData = {
-        email: uiElements.email.value,
-        password: uiElements.password.value,
-      };
-      const response = await asyncAttempt(() => sendApiRequest(ApiPath.authentication, HttpMethod.POST, request));
+    const request: AuthenticationRequestData = {
+      email: uiElements.email.value,
+      password: uiElements.password.value,
+    };
+    const response = await asyncAttempt(() => sendApiRequest(ApiPath.authentication, HttpMethod.POST, request));
 
-      if (isErr(response)) {
-        displayCommunicationError(response, uiElements.apiResponseMessage);
-        return;
-      }
+    if (isErr(response)) {
+      displayCommunicationError(response, uiElements.apiResponseMessage);
+      return;
+    }
 
-      if (isInputError(response)) {
-        displayValidationError(response, uiElements);
-        return;
-      }
+    if (isInputError(response)) {
+      displayValidationError(response, uiElements);
+      return;
+    }
 
-      displayApiResponse(response, uiElements.apiResponseMessage);
+    displayApiResponse(response, uiElements.apiResponseMessage);
 
-      if (isSuccess(response)) {
-        navigateTo(PagePath.userStart, 1000);
-      }
-    });
+    if (isSuccess(response)) {
+      navigateTo(PagePath.userStart, 1000);
+    }
   });
 }
 

@@ -14,8 +14,7 @@ import {
   hideElement,
   HttpMethod,
   isAuthenticated,
-  onClick,
-  preventDoubleClick,
+  onSubmit,
   requireUiElements,
   sendApiRequest,
   unhideElement,
@@ -41,38 +40,36 @@ function main() {
     return;
   }
 
-  onClick(uiElements.submitButton, async (event: Event) => {
+  onSubmit(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    preventDoubleClick(uiElements.submitButton, async () => {
-      const request: RegistrationRequestData = {
-        email: uiElements.email.value,
-        password: uiElements.password.value,
-      };
+    const request: RegistrationRequestData = {
+      email: uiElements.email.value,
+      password: uiElements.password.value,
+    };
 
-      const response = await asyncAttempt(() => sendApiRequest(ApiPath.registration, HttpMethod.POST, request));
+    const response = await asyncAttempt(() => sendApiRequest(ApiPath.registration, HttpMethod.POST, request));
 
-      if (isErr(response)) {
-        displayCommunicationError(response, uiElements.apiResponseMessage);
-        return;
-      }
+    if (isErr(response)) {
+      displayCommunicationError(response, uiElements.apiResponseMessage);
+      return;
+    }
 
-      if (isAppError(response)) {
-        displayAppError(response, uiElements.appErrorMessage);
-        return;
-      }
+    if (isAppError(response)) {
+      displayAppError(response, uiElements.appErrorMessage);
+      return;
+    }
 
-      if (isInputError(response)) {
-        displayValidationError(response, uiElements);
-        return;
-      }
+    if (isInputError(response)) {
+      displayValidationError(response, uiElements);
+      return;
+    }
 
-      if (isSuccess(response)) {
-        unhideElement(uiElements.confirmationMessage);
-        hideElement(uiElements.email.form!);
-      }
-    });
+    if (isSuccess(response)) {
+      unhideElement(uiElements.confirmationMessage);
+      hideElement(uiElements.email.form!);
+    }
   });
 }
 
