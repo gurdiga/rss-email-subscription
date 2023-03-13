@@ -10,7 +10,7 @@ import {
   fillUiElements,
   HttpMethod,
   onClick,
-  parseConfirmationLinkUrlParams,
+  requireQueryParams,
   requireUiElements,
   sendApiRequest,
   UiElementFillSpec,
@@ -18,7 +18,11 @@ import {
 } from './shared';
 
 function main() {
-  const queryParams = parseConfirmationLinkUrlParams(location.search);
+  const queryParams = requireQueryParams<RequiredParams>({
+    id: 'id',
+    displayName: 'displayName',
+    email: 'email',
+  });
 
   if (isErr(queryParams)) {
     displayInitError('Invalid unsubscribe link');
@@ -76,6 +80,12 @@ function main() {
 }
 
 main();
+
+interface RequiredParams {
+  id: string;
+  displayName: string;
+  email: string;
+}
 
 interface RequiredUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
 

@@ -21,29 +21,6 @@ export interface ConfirmationLinkUrlParams {
   email: string;
 }
 
-export function parseConfirmationLinkUrlParams(
-  locationSearch: string,
-  logErrorFn: typeof reportError = reportError
-): Result<ConfirmationLinkUrlParams> {
-  const queryParams = new URLSearchParams(locationSearch);
-  const params: ConfirmationLinkUrlParams = {
-    id: queryParams.get('id')!,
-    displayName: queryParams.get('displayName')!,
-    email: queryParams.get('email')!,
-  };
-
-  let paramName: keyof typeof params;
-
-  for (paramName in params) {
-    if (!params[paramName]) {
-      logErrorFn(si`Missing parameter: ${paramName}`);
-      return makeErr('Invalid confirmation link');
-    }
-  }
-
-  return params;
-}
-
 export function requireQueryParams<RequiredParams>(
   paramDictionary: Record<keyof RequiredParams, string>,
   locationSearch = window.location.search

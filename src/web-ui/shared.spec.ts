@@ -1,45 +1,11 @@
 import { expect } from 'chai';
 import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { makeSpy, makeStub } from '../shared/test-utils';
+import { makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
-import {
-  fillUiElements,
-  getCookieByName,
-  parseConfirmationLinkUrlParams,
-  reportError,
-  requireUiElements,
-} from './shared';
+import { fillUiElements, getCookieByName, requireUiElements } from './shared';
 import { UiElementFillSpec } from './shared';
 import { requireQueryParams } from './shared';
-
-describe(parseConfirmationLinkUrlParams.name, () => {
-  it('returns a ConfirmationLinkUrlParams value from location.search', () => {
-    const subscriptionId = 'feedId-emailHash';
-    const feedDisplayName = 'Just Add Light and Stir';
-    const emailAddress = 'test@test.com';
-
-    const locationSearch = [
-      si`id=${subscriptionId}`,
-      si`displayName=${feedDisplayName}`,
-      si`email=${emailAddress}`,
-    ].join('&');
-
-    expect(parseConfirmationLinkUrlParams(locationSearch)).to.deep.equal({
-      id: subscriptionId,
-      displayName: feedDisplayName,
-      email: emailAddress,
-    });
-  });
-
-  it('returns a descriptive Err value when any param is missing, and logs the specific missing field', () => {
-    const logFn = makeSpy<typeof reportError>();
-    const result = parseConfirmationLinkUrlParams('', logFn);
-
-    expect(result).to.deep.equal(makeErr('Invalid confirmation link'));
-    expect(logFn.calls).to.deep.equal([['Missing parameter: id']]);
-  });
-});
 
 describe(requireQueryParams.name, () => {
   type RequiredParams = {
