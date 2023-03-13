@@ -1,4 +1,4 @@
-import { EmailChangeRequestData, UiAccount } from '../domain/account';
+import { EmailChangeRequestData, PasswordChangeRequestData, UiAccount } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
@@ -51,50 +51,110 @@ async function main() {
     return;
   }
 
-  addEmailChangeEventHandlers(uiElements, uiAccount);
-  addPasswordChangeEventHandlers(uiElements, uiAccount);
-  console.log('Hello account', { uiElements, uiAccount });
+  addEmailChangeEventHandlers(uiElements);
+  addPasswordChangeEventHandlers(uiElements);
 }
 
-function addPasswordChangeEventHandlers(
-  _uiElements: ViewPasswordUiElements & ChangePasswordUiElements,
-  _uiAccount: UiAccount
-): void {
-  // TODO
+function addPasswordChangeEventHandlers(uiElements: ViewPasswordUiElements & ChangePasswordUiElements): void {
+  const {
+    changePasswordButton,
+    viewPasswordSection,
+    changePasswordForm,
+    currentPasswordField,
+    newPasswordField,
+    submitNewPasswordButton,
+    cancelPasswordChangeButton,
+    passwordChangeSuccessMessage,
+  } = uiElements;
+
+  onClick(changePasswordButton, () => {
+    hideElement(viewPasswordSection);
+    unhideElement(changePasswordForm);
+    currentPasswordField.focus();
+  });
+
+  onClick(cancelPasswordChangeButton, () => {
+    dismissChangePasswordForm(uiElements);
+  });
+
+  onEscape(changePasswordForm, () => dismissChangePasswordForm(uiElements));
+
+  onClick(submitNewPasswordButton, () => {
+    clearValidationErrors(uiElements);
+    hideElement(passwordChangeSuccessMessage);
+
+    preventDoubleClick(submitNewPasswordButton, async () => {
+      const response = await submitNewPassword(currentPasswordField.value, newPasswordField.value);
+
+      handlePasswordChangeResponse(uiElements, response);
+    });
+  });
 }
 
-function addEmailChangeEventHandlers(
-  uiElements: ViewEmailUiElements & ChangeEmailUiElements,
-  _uiAccount: UiAccount
+function handlePasswordChangeResponse(
+  uiElements: ViewPasswordUiElements & ChangePasswordUiElements,
+  response: Result<ApiResponse<void>>
 ): void {
+  if (isErr(response)) {
+    displayCommunicationError(response, uiElements.passwordChangeApiResponseMessage);
+    return;
+  }
+
+  if (isAppError(response)) {
+    displayApiResponse(response, uiElements.passwordChangeApiResponseMessage);
+    return;
+  }
+
+  if (isInputError(response)) {
+    displayValidationError(response, {
+      currentPassword: uiElements.currentPasswordField,
+      newPassword: uiElements.newPasswordField,
+    });
+    return;
+  }
+
+  if (isSuccess(response)) {
+    unhideElement(uiElements.passwordChangeSuccessMessage);
+    uiElements.currentPasswordField.value = '';
+    uiElements.newPasswordField.value = '';
+  }
+}
+async function submitNewPassword(currentPassword: string, newPassword: string) {
+  const request: PasswordChangeRequestData = { currentPassword, newPassword };
+
+  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountPasswordChange, HttpMethod.POST, request));
+}
+
+function dismissChangePasswordForm(uiElements: ViewPasswordUiElements & ChangePasswordUiElements): void {
+  clearValidationErrors(uiElements);
+  hideElement(uiElements.passwordChangeSuccessMessage);
+  hideElement(uiElements.changePasswordForm);
+  unhideElement(uiElements.viewPasswordSection);
+}
+
+function addEmailChangeEventHandlers(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {
   const {
     changeEmailButton,
     viewEmailSection,
-    changeEmailForm: changeEmailSection,
+    changeEmailForm,
     cancelEmailChangeButton,
     submitNewEmailButton,
     newEmailField,
-    emailChangeSuccessMessage: emailChangeConfirmationMessage,
+    emailChangeSuccessMessage,
   } = uiElements;
 
-  changeEmailButton.addEventListener('click', () => {
+  onClick(changeEmailButton, () => {
     hideElement(viewEmailSection);
-    unhideElement(changeEmailSection);
+    unhideElement(changeEmailForm);
     newEmailField.focus();
   });
 
-  cancelEmailChangeButton.addEventListener('click', () => {
-    dismissChangeEmailForm(uiElements);
-  });
+  onClick(cancelEmailChangeButton, () => dismissChangeEmailForm(uiElements));
+  onEscape(newEmailField, () => dismissChangeEmailForm(uiElements));
 
-  newEmailField.addEventListener(
-    'keydown',
-    ifEscape(() => dismissChangeEmailForm(uiElements))
-  );
-
-  submitNewEmailButton.addEventListener('click', () => {
+  onClick(submitNewEmailButton, () => {
     clearValidationErrors(uiElements);
-    hideElement(emailChangeConfirmationMessage);
+    hideElement(emailChangeSuccessMessage);
 
     preventDoubleClick(submitNewEmailButton, async () => {
       const response = await submitNewEmail(newEmailField.value);
@@ -105,9 +165,7 @@ function addEmailChangeEventHandlers(
 }
 
 async function submitNewEmail(newEmail: string) {
-  const request: EmailChangeRequestData = {
-    newEmail: newEmail,
-  };
+  const request: EmailChangeRequestData = { newEmail };
 
   return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountEmailChange, HttpMethod.POST, request));
 }
@@ -178,12 +236,18 @@ async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   return response.responseData!;
 }
 
-function ifEscape(f: Function) {
-  return (event: KeyboardEvent) => {
+// TODO: Move to shared
+function onEscape(element: HTMLElement, f: Function) {
+  element.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.code === 'Escape') {
       f();
     }
-  };
+  });
+}
+
+// TODO: Move to shared
+function onClick(element: HTMLElement, f: (event: Event) => void) {
+  element.addEventListener('click', f);
 }
 
 interface RequiredUiElements
@@ -227,10 +291,12 @@ const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
 
 interface ViewPasswordUiElements {
   changePasswordButton: HTMLButtonElement;
+  viewPasswordSection: HTMLElement;
 }
 
 const viewPasswordUiElements: ElementSelectors<ViewPasswordUiElements> = {
   changePasswordButton: '#change-password',
+  viewPasswordSection: '#view-password-section',
 };
 
 interface ChangePasswordUiElements {
@@ -238,9 +304,9 @@ interface ChangePasswordUiElements {
   currentPasswordField: HTMLInputElement;
   newPasswordField: HTMLInputElement;
   submitNewPasswordButton: HTMLButtonElement;
+  cancelPasswordChangeButton: HTMLButtonElement;
   passwordChangeApiResponseMessage: HTMLElement;
   passwordChangeSuccessMessage: HTMLElement;
-  oldEmailLabel: HTMLElement;
 }
 
 const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
@@ -248,9 +314,9 @@ const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
   currentPasswordField: '#current-password-field',
   newPasswordField: '#new-password-field',
   submitNewPasswordButton: '#submit-new-password-button',
+  cancelPasswordChangeButton: '#cancel-password-change-button',
   passwordChangeApiResponseMessage: '#password-change-api-response-message',
   passwordChangeSuccessMessage: '#password-change-success-message',
-  oldEmailLabel: '#old-email-label',
 };
 
 main();
