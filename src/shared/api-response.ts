@@ -61,7 +61,7 @@ export interface AppError {
   message: string;
 }
 
-export function makeAppError(message: string): AppError {
+export function makeAppError(message: string = 'Application error'): AppError {
   return {
     kind: 'AppError',
     message,

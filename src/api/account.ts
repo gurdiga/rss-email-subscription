@@ -4,6 +4,8 @@ import {
   EmailChangeConfirmationRequest,
   EmailChangeRequest,
   isAccountNotFound,
+  PasswordChangeRequest,
+  PasswordChangeRequestData,
   UiAccount,
 } from '../domain/account';
 import { loadAccount, setAccountEmail } from '../domain/account-storage';
@@ -166,6 +168,61 @@ function makeEmailChangeInformationEmailContent(oldEmail: EmailAddress, newEmail
       <p>Have a nice day.</p>
     `,
   };
+}
+
+export const requestAccountPasswordChange: RequestHandler = async function requestAccountPasswordChange(
+  reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  { storage, settings }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: requestAccountPasswordChange.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const { accountId } = session;
+  const request = makePasswordChangeRequest(reqBody);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makePasswordChangeRequest.name}`, { reason: request.reason, reqBody });
+    return makeInputError(request.reason, request.field);
+  }
+
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logError(si`Account not found`, { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  const currentHashedPassword = hash(request.currentPassword.value, settings.hashingSalt);
+
+  if (currentHashedPassword !== account.hashedPassword.value) {
+    return makeInputError<keyof PasswordChangeRequest>(si`Current password doesn’t match`, 'currentPassword');
+  }
+
+  if (request.currentPassword.value === request.newPassword.value) {
+    return makeInputError<keyof PasswordChangeRequest>(
+      si`New password can’t be the same as the old one`,
+      'newPassword'
+    );
+  }
+
+  return makeSuccess('Not implemented');
+};
+
+function makePasswordChangeRequest(data: unknown | PasswordChangeRequestData): Result<PasswordChangeRequest> {
+  return makeValues<PasswordChangeRequest>(data, { currentPassword: makePassword, newPassword: makePassword });
 }
 
 export const requestAccountEmailChange: RequestHandler = async function requestAccountEmailChange(

@@ -9,7 +9,12 @@ import { getErrorMessage } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
-import { requestAccountEmailChange, confirmAccountEmailChange, loadCurrentAccount } from './account';
+import {
+  requestAccountEmailChange,
+  confirmAccountEmailChange,
+  loadCurrentAccount,
+  requestAccountPasswordChange,
+} from './account';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
 import {
@@ -60,6 +65,7 @@ async function main() {
   router.get(ApiPath.loadCurrentAccount, makeRequestHandler(loadCurrentAccount, app));
   router.post(ApiPath.requestAccountEmailChange, makeRequestHandler(requestAccountEmailChange, app));
   router.post(ApiPath.confirmAccountEmailChange, makeRequestHandler(confirmAccountEmailChange, app));
+  router.post(ApiPath.requestAccountPasswordChange, makeRequestHandler(requestAccountPasswordChange, app));
   router.get(ApiPath.loadFeeds, makeRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeRequestHandler(loadFeedById, app));
   router.get(ApiPath.loadFeedSubscribers, makeRequestHandler(loadFeedSubscribers, app));
