@@ -62,20 +62,20 @@ describe(makeEditFeedRequest.name, () => {
     type Input = EditFeedRequestData;
 
     const expectedErrForInput: [Input, Err, FieldName][] = [
-      [24 as any as Input, makeErr('Invalid input type: number'), 'input'],
-      [undefined as any as Input, makeErr('Invalid input type: undefined'), 'input2'],
-      [null as any as Input, makeErr('Invalid input type: null'), 'input3'],
-      [{} as Input, makeErr('Feed name is missing', 'displayName'), 'displayName'],
-      [{ displayName: 'Just Add Light' } as Input, makeErr('Feed URL is missing', 'url'), 'url'],
-      [{ displayName: 'Just Add Light', url: 'https://a.co' } as Input, makeErr('Feed ID is missing', 'id'), 'id'],
+      [24 as any as Input, makeErr('Invalid input type: expected [object] but got [number]'), 'input'],
+      [undefined as any as Input, makeErr('Invalid input type: expected [object] but got [undefined]'), 'input2'],
+      [null as any as Input, makeErr('Invalid input type: expected [object] but got [null]'), 'input3'],
+      [{} as Input, makeErr('Missing value', 'displayName'), 'displayName'],
+      [{ displayName: 'Just Add Light' } as Input, makeErr('Missing value', 'url'), 'url'],
+      [{ displayName: 'Just Add Light', url: 'https://a.co' } as Input, makeErr('Missing value', 'id'), 'id'],
       [
         { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id' } as Input,
-        makeErr('Feed ID is missing', 'initialId'),
+        makeErr('Missing value', 'initialId'),
         'replyTo',
       ],
       [
         { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id', initialId: 'init-feed-id' } as Input,
-        makeErr('Invalid Reply To email: Email is empty', 'replyTo'),
+        makeErr('Missing value', 'replyTo'),
         'replyTo',
       ],
     ];

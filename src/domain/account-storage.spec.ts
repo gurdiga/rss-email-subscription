@@ -39,11 +39,11 @@ describe(getAccountIdList.name, () => {
   it('returns a list of the stored AccountIds and any eventual errors', () => {
     const accountIds = Array.from('abc')
       .map((letter) => letter.repeat(64))
-      .map(makeAccountId) as AccountId[];
+      .map((x) => makeAccountId(x)) as AccountId[];
     const validAccountIdStrings = accountIds.map((x) => x.value);
 
     const invalidAccountIdStrings = [42 as any as string, undefined as any as string];
-    const errs = invalidAccountIdStrings.map(makeAccountId) as Err[];
+    const errs = invalidAccountIdStrings.map((x) => makeAccountId(x)) as Err[];
 
     const subdirectoryNames = [...validAccountIdStrings, ...invalidAccountIdStrings];
     const storage = makeTestStorage({ listSubdirectories: () => subdirectoryNames });

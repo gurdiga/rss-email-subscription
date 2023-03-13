@@ -1,13 +1,6 @@
 import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
-import {
-  Account,
-  AccountId,
-  RegistrationRequest,
-  RegistrationRequestData,
-  RegistrationConfirmationRequest,
-  RegistrationConfirmationRequestData,
-} from '../domain/account';
+import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
@@ -30,7 +23,7 @@ import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
 import { requireEnv } from '../shared/env';
-import { getTypeName, hasKind, isErr, isObject, makeErr, Result } from '../shared/lang';
+import { hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
@@ -155,36 +148,12 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
 }
 
 export function makeRegistrationRequest(data: unknown): Result<RegistrationRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const emailKeyName: keyof RegistrationRequestData = 'email';
-
-  if (!(emailKeyName in data)) {
-    return makeErr(si`Invalid request: missing "${emailKeyName}" prop`, emailKeyName);
-  }
-
-  const email = makeEmailAddress(data[emailKeyName], emailKeyName);
-
-  if (isErr(email)) {
-    return email;
-  }
-
-  const passwordKeyName: keyof RegistrationRequestData = 'password';
-
-  if (!(passwordKeyName in data)) {
-    return makeErr(si`Invalid request: missing "${passwordKeyName}" prop`, passwordKeyName);
-  }
-
-  const password = makePassword(data[passwordKeyName]);
-
-  if (isErr(password)) {
-    return password;
-  }
-
-  return { email, password };
+  return makeValues<RegistrationRequest>(data, {
+    email: makeEmailAddress,
+    password: makePassword,
+  });
 }
+
 interface AccountAlreadyExists {
   kind: 'AccountAlreadyExists';
 }
@@ -263,23 +232,9 @@ export const registrationConfirmation: RequestHandler = async function registrat
 };
 
 function makeRegistrationConfirmationRequest(data: unknown): Result<RegistrationConfirmationRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const keyName: keyof RegistrationConfirmationRequestData = 'secret';
-
-  if (!(keyName in data)) {
-    return makeErr(si`Invalid request: missing "${keyName}"`, keyName);
-  }
-
-  const secret = makeConfirmationSecret(data['secret']);
-
-  if (isErr(secret)) {
-    return makeErr(si`Invalid request "${keyName}": ${secret.reason}`, keyName);
-  }
-
-  return { secret };
+  return makeValues<RegistrationConfirmationRequest>(data, {
+    secret: makeConfirmationSecret,
+  });
 }
 
 function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {

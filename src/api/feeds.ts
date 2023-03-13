@@ -13,7 +13,6 @@ import {
   DeleteEmailsRequest,
   DeleteEmailsResponse,
   DeleteFeedRequest,
-  DeleteFeedRequestData,
   EditFeedResponse,
   Feed,
   FeedStatus,
@@ -30,7 +29,7 @@ import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
-import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isString, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { getAccountIdList } from '../domain/account-storage';
@@ -83,26 +82,13 @@ export const deleteFeed: RequestHandler = async function deleteFeed(reqId, reqBo
   return makeSuccess('Feed deleted');
 };
 
-function makeDeleteFeedRequest(data: unknown | DeleteFeedRequestData): Result<DeleteFeedRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const idKeyName: keyof DeleteFeedRequestData = 'feedId';
-
-  if (!(idKeyName in data)) {
-    return makeErr(si`Invalid request: missing "${idKeyName}"`, idKeyName);
-  }
-
-  const feedId = makeFeedId(data.feedId, idKeyName);
-
-  if (isErr(feedId)) {
-    return feedId;
-  }
-
-  return { feedId };
+function makeDeleteFeedRequest(data: unknown): Result<DeleteFeedRequest> {
+  return makeValues<DeleteFeedRequest>(data, {
+    feedId: makeFeedId,
+  });
 }
 
+// TODO: Refactor towards makeValues<Feed>
 function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
   if (!isAddNewFeedRequestData(requestData)) {
     return makeErr('Invalid request');

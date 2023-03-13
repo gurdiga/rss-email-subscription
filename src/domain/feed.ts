@@ -1,10 +1,10 @@
-import { EmailAddress, HashedEmail } from './email-address';
-import { getTypeName, isString, makeErr, Result, hasKind, isObject, isErr, hasKey } from '../shared/lang';
+import { sortBy } from '../shared/array-utils';
+import { getTypeName, hasKey, hasKind, isString, makeErr, makeValues, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
+import { EmailAddress, HashedEmail } from './email-address';
 import { FeedId, makeFeedId } from './feed-id';
 import { makeFeedDisplayName, makeFeedReplyToEmailAddress, makeFeedUrl } from './feed-making';
-import { sortBy } from '../shared/array-utils';
 
 export interface Feed {
   kind: 'Feed';
@@ -141,43 +141,14 @@ export interface EditFeedResponse {
   feedId: string;
 }
 
-export function makeEditFeedRequest(input: unknown): Result<EditFeedRequest> {
-  if (!isObject(input)) {
-    return makeErr(si`Invalid input type: ${getTypeName(input)}`);
-  }
-
-  const editFeedRequestData = input as EditFeedRequestData;
-  const displayName = makeFeedDisplayName(editFeedRequestData.displayName);
-
-  if (isErr(displayName)) {
-    return displayName;
-  }
-
-  const url = makeFeedUrl(editFeedRequestData.url);
-
-  if (isErr(url)) {
-    return url;
-  }
-
-  const id = makeFeedId(editFeedRequestData.id);
-
-  if (isErr(id)) {
-    return id;
-  }
-
-  const initialId = makeFeedId(editFeedRequestData.initialId, 'initialId');
-
-  if (isErr(initialId)) {
-    return initialId;
-  }
-
-  const replyTo = makeFeedReplyToEmailAddress(editFeedRequestData.replyTo);
-
-  if (isErr(replyTo)) {
-    return replyTo;
-  }
-
-  return { displayName, id, initialId, url, replyTo };
+export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
+  return makeValues<EditFeedRequest>(data, {
+    displayName: makeFeedDisplayName,
+    url: makeFeedUrl,
+    id: makeFeedId,
+    initialId: makeFeedId,
+    replyTo: makeFeedReplyToEmailAddress,
+  });
 }
 
 type UiEmailList = string[];

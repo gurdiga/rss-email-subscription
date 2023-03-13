@@ -26,7 +26,7 @@ export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
     return makeErr(si`Failed to list accoundIds: ${accountIdStrings.reason}`);
   }
 
-  const results = accountIdStrings.map(makeAccountId);
+  const results = accountIdStrings.map((x) => makeAccountId(x));
   const accountIds = results.filter(isAccountId);
   const errs = results.filter(isErr);
 

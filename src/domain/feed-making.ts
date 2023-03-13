@@ -82,22 +82,22 @@ export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress
   return emailAddress;
 }
 
-export function makeFeedUrl(input: unknown): Result<URL> {
+export function makeFeedUrl(input: unknown, field = 'url'): Result<URL> {
   if (!input) {
-    return makeErr('Feed URL is missing', 'url');
+    return makeErr('Feed URL is missing', field);
   }
 
   if (!isString(input)) {
-    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input)}"`, 'url');
+    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input)}"`, field);
   }
 
   const trimmedUrl = input.trim();
 
   if (!trimmedUrl) {
-    return makeErr('Feed URL is missing', 'url');
+    return makeErr('Feed URL is missing', field);
   }
 
-  return makeHttpUrl(trimmedUrl, undefined, 'url');
+  return makeHttpUrl(trimmedUrl, undefined, field);
 }
 
 const minFeedNameLength = 5;

@@ -10,9 +10,9 @@ export interface AccountId {
   value: string;
 }
 
-export function makeAccountId(value: string): Result<AccountId> {
+export function makeAccountId(value: string, field = 'accountId'): Result<AccountId> {
   if (!isString(value)) {
-    return makeErr(si`Not a string: ${getTypeName(value)} "${value}"`);
+    return makeErr(si`Not a string: ${getTypeName(value)} "${value}"`, field);
   }
 
   return {
@@ -84,14 +84,25 @@ export interface RegistrationConfirmationRequest {
 
 export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
 
-export type EmailChangeRequestData = Record<keyof EmailChangeRequest, string>;
-
 export interface EmailChangeRequest {
   newEmail: EmailAddress;
 }
+
+export type EmailChangeRequestData = Record<keyof EmailChangeRequest, string>;
 
 export interface EmailChangeConfirmationRequest {
   secret: ConfirmationSecret;
 }
 
 export type EmailChangeConfirmationRequestData = Record<keyof EmailChangeConfirmationRequest, string>;
+
+export interface PasswordChangeRequest {
+  currentPassword: Password;
+  newPassword: Password;
+}
+
+export type PasswordChangeRequestData = Record<keyof PasswordChangeRequest, string>;
+
+export interface PasswordChangeConfirmationRequest {}
+
+export type PasswordChangeConfirmationRequestData = Record<keyof PasswordChangeConfirmationRequest, string>;

@@ -1,17 +1,11 @@
 import { makeEmailAddress } from '../domain/email-address-making';
-import {
-  AccountId,
-  AuthenticationResponseData,
-  AuthenticationRequest,
-  AuthenticationRequestData,
-  isAccountNotFound,
-} from '../domain/account';
+import { AccountId, AuthenticationResponseData, AuthenticationRequest, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount } from '../domain/account-storage';
 import { makePassword } from '../domain/password';
 import { makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { getTypeName, isErr, isObject, makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -47,36 +41,11 @@ export const authentication: RequestHandler = async function authentication(
   return makeSuccess('Welcome back!', logData, responseData, cookies);
 };
 
-function makeAuthenticationRequest(data: unknown | AuthenticationRequestData): Result<AuthenticationRequest> {
-  if (!isObject(data)) {
-    return makeErr(si`Invalid request data type: expected [object] but got [${getTypeName(data)}]`);
-  }
-
-  const emailKeyName: keyof AuthenticationRequestData = 'email';
-
-  if (!(emailKeyName in data)) {
-    return makeErr(si`Invalid request: missing "${emailKeyName}"`, emailKeyName);
-  }
-
-  const email = makeEmailAddress(data.email, emailKeyName);
-
-  if (isErr(email)) {
-    return email;
-  }
-
-  const passwordKeyName: keyof AuthenticationRequestData = 'password';
-
-  if (!(passwordKeyName in data)) {
-    return makeErr(si`Invalid request: missing "${passwordKeyName}"`, passwordKeyName);
-  }
-
-  const password = makePassword(data.password, passwordKeyName);
-
-  if (isErr(password)) {
-    return password;
-  }
-
-  return { email, password };
+function makeAuthenticationRequest(data: unknown): Result<AuthenticationRequest> {
+  return makeValues<AuthenticationRequest>(data, {
+    email: makeEmailAddress,
+    password: makePassword,
+  });
 }
 
 function checkCredentials({ settings, storage }: App, request: AuthenticationRequest): Result<AccountId> {

@@ -347,7 +347,7 @@ describe('API', () => {
           const invalidRequest = { displayName: 'Something' } as EditFeedRequestData;
           const responseBody = (await editFeedSend(invalidRequest)).responseBody;
 
-          expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
+          expect(responseBody).to.deep.equal(makeInputError('Missing value', 'url'));
         });
       });
     });

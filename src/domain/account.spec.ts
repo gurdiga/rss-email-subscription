@@ -15,6 +15,6 @@ describe(makeAccountId.name, () => {
   });
 
   it('returns an Err value when not so good', () => {
-    expect(makeAccountId(42 as any as string)).to.deep.equal(makeErr('Not a string: number "42"'));
+    expect(makeAccountId(42 as any as string)).to.deep.equal(makeErr('Not a string: number "42"', 'accountId'));
   });
 });
