@@ -128,7 +128,7 @@ export const addNewFeed: RequestHandler = async function addNewFeed(reqId, reqBo
 
   if (isErr(feedAccountId)) {
     logError(si`Failed to check if ${getFeedAccountId.name}`, { reason: feedAccountId.reason });
-    return makeAppError('Application error');
+    return makeAppError();
   }
 
   if (isAccountId(feedAccountId)) {
@@ -182,7 +182,7 @@ export const editFeed: RequestHandler = async function editFeed(reqId, reqBody, 
 
   if (isErr(result)) {
     logError(si`Failed to ${applyEditFeedRequest.name}`, { reason: result.reason });
-    return makeAppError('Application error');
+    return makeAppError();
   }
 
   const logData = {};

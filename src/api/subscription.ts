@@ -82,7 +82,7 @@ export const subscription: RequestHandler = async function subscription(
       domainName: env.DOMAIN_NAME,
       reason: fromAddress.reason,
     });
-    return makeAppError('Application error');
+    return makeAppError();
   }
 
   const { displayName, replyTo } = feed;
