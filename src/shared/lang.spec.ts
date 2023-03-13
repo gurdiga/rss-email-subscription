@@ -1,5 +1,19 @@
 import { expect } from 'chai';
-import { getErrorMessage, getTypeName, isEmptyObject, isObject, makeErr, readStringArray } from './lang';
+import { AccountId, makeAccountId } from '../domain/account';
+import { EmailAddress } from '../domain/email-address';
+import { makeEmailAddress } from '../domain/email-address-making';
+import { makePassword, Password } from '../domain/password';
+import {
+  getErrorMessage,
+  getTypeName,
+  isEmptyObject,
+  isObject,
+  makeErr,
+  MakeFns,
+  makeValues,
+  readStringArray,
+} from './lang';
+import { makeTestAccountId } from './test-utils';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -125,5 +139,57 @@ describe(isEmptyObject.name, () => {
     expect(isEmptyObject(new String())).to.be.false;
     expect(isEmptyObject(new Number())).to.be.false;
     expect(isEmptyObject(NaN)).to.be.false;
+  });
+});
+
+describe(makeValues.name, () => {
+  interface Values {
+    email: EmailAddress;
+    accountId: AccountId;
+    password: Password;
+  }
+  type InputData = Record<keyof Values, unknown>;
+
+  const makeFns: MakeFns<Values> = {
+    email: makeEmailAddress,
+    accountId: makeAccountId,
+    password: makePassword,
+  };
+
+  it('makes the values with the given make functions', () => {
+    const requestData: InputData = {
+      email: 'test-email@test.com',
+      accountId: makeTestAccountId().value,
+      password: 'CNbwahYSdRVw2b3L',
+    };
+
+    const result = makeValues<Values>(requestData, makeFns);
+
+    expect(result).to.deep.equal(<Values>{
+      email: <EmailAddress>{
+        kind: 'EmailAddress',
+        value: requestData.email,
+      },
+      accountId: <AccountId>{
+        kind: 'AccountId',
+        value: requestData.accountId,
+      },
+      password: <Password>{
+        kind: 'Password',
+        value: requestData.password,
+      },
+    });
+  });
+
+  it('returns the first making Err on failure', () => {
+    const requestData: InputData = {
+      email: 'not-an-email',
+      accountId: makeTestAccountId().value,
+      password: 'tKi8MOC0ZeGdUPZ8',
+    };
+
+    const result = makeValues<Values>(requestData, makeFns);
+
+    expect(result).to.deep.equal(makeErr('Email is syntactically incorrect: "not-an-email"', 'email'));
   });
 });

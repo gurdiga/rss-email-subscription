@@ -122,3 +122,32 @@ export function readStringArray(stringArray: unknown): Result<string[]> {
 export function exhaustivenessCheck(_x: never): never {
   throw new Error('Exhaustiveness check failed');
 }
+
+type MakeFn<T extends unknown> = (input: any, field: string) => Result<T[keyof T]>;
+export type MakeFns<T extends unknown> = Record<keyof T, MakeFn<T>>;
+
+export function makeValues<T extends unknown>(x: unknown, makeFns: MakeFns<T>): Result<T> {
+  if (!isObject(x)) {
+    return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(x)}]`);
+  }
+
+  const values = {} as T;
+
+  for (const keyName in makeFns) {
+    const unknownValue = (x as any)[keyName];
+
+    if (!unknownValue) {
+      return makeErr(si`Missing value`, keyName);
+    }
+
+    const value = makeFns[keyName](unknownValue, keyName);
+
+    if (isErr(value)) {
+      return value;
+    }
+
+    (values as any)[keyName] = value;
+  }
+
+  return values;
+}
