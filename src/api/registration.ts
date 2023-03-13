@@ -1,4 +1,3 @@
-import { EmailDeliveryEnv } from '../app/email-sending/email-delivery';
 import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
 import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
@@ -22,12 +21,11 @@ import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { requireEnv } from '../shared/env';
 import { hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
-import { App } from './init-app';
+import { App, AppEnv } from './init-app';
 import { AppRequestHandler } from './request-handler';
 import { initSession } from './session';
 
@@ -59,7 +57,7 @@ export const registration: AppRequestHandler = async function registration(
   }
 
   const { email } = request;
-  const sendResult = await sendConfirmationEmail(email, app.settings);
+  const sendResult = await sendConfirmationEmail(email, app.settings, app.env);
 
   if (isErr(sendResult)) {
     logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendResult.reason, email: email.value });
@@ -84,8 +82,8 @@ function storeRegistrationConfirmationSecret(
   emailAddress: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const emailAddressHash = hash(emailAddress.value, si`confirmation-secret-${settings.hashingSalt}`);
-  const confirmationSecret = makeConfirmationSecret(emailAddressHash);
+  const secret = makeConfirmationSecretHash(emailAddress, settings.hashingSalt);
+  const confirmationSecret = makeConfirmationSecret(secret);
 
   if (isErr(confirmationSecret)) {
     return makeErr(si`Couldn’t make confirmation secret: ${confirmationSecret.reason}`);
@@ -113,21 +111,17 @@ function makeRegistrationConfirmationSecretData(accountId: AccountId): Registrat
   };
 }
 
-async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSettings): Promise<Result<void | AppError>> {
+async function sendConfirmationEmail(
+  recipient: EmailAddress,
+  settings: AppSettings,
+  env: AppEnv
+): Promise<Result<void | AppError>> {
   const module = si`${registration.name}-${sendConfirmationEmail.name}`;
   const { logError, logInfo } = makeCustomLoggers({ email: recipient.value, module });
 
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
-
-  if (isErr(env)) {
-    logError('Invalid environment', { reason: env.reason });
-    return makeAppError('Environment error');
-  }
-
   const from = settings.fullEmailAddress;
   const replyTo = settings.fullEmailAddress.emailAddress;
-  const confirmationLink = makeRegistrationConfirmationLink(recipient, settings.hashingSalt, env.DOMAIN_NAME);
-  const emailContent = makeRegistrationConfirmationEmailContent(confirmationLink);
+  const emailContent = makeRegistrationConfirmationEmailContent(recipient, settings.hashingSalt, env.DOMAIN_NAME);
   const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
   if (isErr(sendEmailResult)) {
@@ -138,16 +132,16 @@ async function sendConfirmationEmail(recipient: EmailAddress, settings: AppSetti
   logInfo('Sent registration confirmation email');
 }
 
-export function makeRegistrationConfirmationLink(to: EmailAddress, appHashingSalt: string, domainName: string): URL {
-  const url = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
-  const secret = hash(to.value, si`confirmation-secret-${appHashingSalt}`);
+export function makeRegistrationConfirmationEmailContent(
+  email: EmailAddress,
+  hashingSalt: string,
+  domainName: string
+): EmailContent {
+  const confirmationLink = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
+  const secret = makeConfirmationSecretHash(email, hashingSalt);
 
-  url.searchParams.set('secret', secret);
+  confirmationLink.searchParams.set('secret', secret);
 
-  return url;
-}
-
-export function makeRegistrationConfirmationEmailContent(confirmationLink: URL): EmailContent {
   return {
     subject: 'Please confirm FeedSubscription registration',
     htmlBody: si`
@@ -162,6 +156,10 @@ export function makeRegistrationConfirmationEmailContent(confirmationLink: URL):
       <p>Have a nice day.</p>
     `,
   };
+}
+
+function makeConfirmationSecretHash(email: EmailAddress, hashingSalt: string) {
+  return hash(email.value, si`registration-confirmation-secret-${hashingSalt}`);
 }
 
 export function makeRegistrationRequest(data: unknown): Result<RegistrationRequest> {
