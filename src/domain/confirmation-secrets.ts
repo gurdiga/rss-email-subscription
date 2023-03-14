@@ -1,5 +1,7 @@
 import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { AccountId } from './account';
+import { EmailAddress } from './email-address';
 
 export interface ConfirmationSecret {
   kind: 'ConfirmationSecret';
@@ -44,5 +46,24 @@ export function makeConfirmationSecretNotFound(secret: ConfirmationSecret): Conf
   return {
     kind: 'ConfirmationSecretNotFound',
     secret,
+  };
+}
+
+export interface EmailChangeRequestSecretData {
+  kind: 'EmailChangeRequestSecretData';
+  accountId: AccountId;
+  newEmail: EmailAddress;
+  timestamp: Date;
+}
+
+export function makeEmailChangeRequestSecretData(
+  accountId: AccountId,
+  newEmail: EmailAddress
+): EmailChangeRequestSecretData {
+  return {
+    kind: 'EmailChangeRequestSecretData',
+    accountId,
+    newEmail,
+    timestamp: new Date(),
   };
 }

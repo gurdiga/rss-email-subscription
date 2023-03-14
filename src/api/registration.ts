@@ -79,17 +79,17 @@ export const registration: AppRequestHandler = async function registration(
 
 function storeRegistrationConfirmationSecret(
   { settings, storage }: App,
-  emailAddress: EmailAddress,
+  email: EmailAddress,
   accountId: AccountId
 ): Result<void> {
-  const secret = makeRegistrationConfirmationSecretHash(emailAddress, settings.hashingSalt);
+  const secret = makeRegistrationConfirmationSecretHash(email, settings.hashingSalt);
   const confirmationSecret = makeConfirmationSecret(secret);
 
   if (isErr(confirmationSecret)) {
     return makeErr(si`Couldn’t make confirmation secret: ${confirmationSecret.reason}`);
   }
 
-  const confirmationSecretData = makeRegistrationConfirmationSecretData(accountId);
+  const confirmationSecretData = makeRegistrationConfirmationSecretData(accountId, email);
   const result = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 
   if (isErr(result)) {
@@ -100,13 +100,18 @@ function storeRegistrationConfirmationSecret(
 interface RegistrationConfirmationSecretData {
   kind: 'RegistrationConfirmationSecretData'; // for inspectability
   accountId: AccountId;
+  email: EmailAddress;
   timestamp: Date;
 }
 
-function makeRegistrationConfirmationSecretData(accountId: AccountId): RegistrationConfirmationSecretData {
+function makeRegistrationConfirmationSecretData(
+  accountId: AccountId,
+  email: EmailAddress
+): RegistrationConfirmationSecretData {
   return {
     kind: 'RegistrationConfirmationSecretData',
     accountId,
+    email,
     timestamp: new Date(),
   };
 }
@@ -222,18 +227,20 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   const request = makeRegistrationConfirmationRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning(si`Failed to ${makeRegistrationConfirmationRequest.name}`, { reason: request.reason, reqBody: reqBody });
+    logWarning(si`Failed to ${makeRegistrationConfirmationRequest.name}`, { reason: request.reason, reqBody });
     return makeInputError('Invalid registration confirmation link');
   }
 
   const { secret } = request;
-  const accountId = confirmAccountBySecret(storage, secret);
+  const confirmationSecretData = confirmAccountBySecret(storage, secret);
 
-  if (isErr(accountId)) {
-    return makeAppError(accountId.reason);
+  if (isErr(confirmationSecretData)) {
+    return makeAppError(confirmationSecretData.reason);
   }
 
-  initSession(reqSession, accountId);
+  const { accountId, email } = confirmationSecretData;
+
+  initSession(reqSession, accountId, email);
 
   const logData = {};
   const responseData = { sessionId: reqSession.id };
@@ -248,7 +255,10 @@ function makeRegistrationConfirmationRequest(data: unknown): Result<Registration
   });
 }
 
-function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret): Result<AccountId> {
+function confirmAccountBySecret(
+  storage: AppStorage,
+  secret: ConfirmationSecret
+): Result<RegistrationConfirmationSecretData> {
   const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;
   const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
 
@@ -287,5 +297,5 @@ function confirmAccountBySecret(storage: AppStorage, secret: ConfirmationSecret)
 
   logInfo('User confirmed registration');
 
-  return accountId;
+  return data;
 }

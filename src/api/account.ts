@@ -3,6 +3,7 @@ import {
   AccountId,
   EmailChangeConfirmationRequest,
   EmailChangeRequest,
+  EmailChangeRequestData,
   isAccountNotFound,
   PasswordChangeRequest,
   PasswordChangeRequestData,
@@ -13,8 +14,10 @@ import { loadAccount, setAccountEmail, storeAccount } from '../domain/account-st
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
+  EmailChangeRequestSecretData,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
+  makeEmailChangeRequestSecretData,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -48,7 +51,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 
@@ -179,7 +182,7 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 
@@ -261,11 +264,11 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 
-  const { accountId } = session;
+  const { accountId, email } = session;
   const request = makeEmailChangeRequest(reqBody);
 
   if (isErr(request)) {
@@ -274,6 +277,11 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
   }
 
   const { newEmail } = request;
+
+  if (newEmail.value === email.value) {
+    return makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail');
+  }
+
   const confirmationSecret = makeEmailChangeConfirmationSecret(newEmail, settings.hashingSalt);
 
   if (isErr(confirmationSecret)) {
@@ -354,20 +362,4 @@ function storeEmailChangeRequestSecret(
   const confirmationSecretData = makeEmailChangeRequestSecretData(accountId, newEmail);
 
   return storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
-}
-
-interface EmailChangeRequestSecretData {
-  kind: 'EmailChangeRequestSecretData';
-  accountId: AccountId;
-  newEmail: EmailAddress;
-  timestamp: Date;
-}
-
-function makeEmailChangeRequestSecretData(accountId: AccountId, newEmail: EmailAddress): EmailChangeRequestSecretData {
-  return {
-    kind: 'EmailChangeRequestSecretData',
-    accountId,
-    newEmail,
-    timestamp: new Date(),
-  };
 }

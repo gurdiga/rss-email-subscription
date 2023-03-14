@@ -32,7 +32,7 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(accountId.reason, accountId.field);
   }
 
-  initSession(reqSession, accountId);
+  initSession(reqSession, accountId, request.email);
 
   const logData = {};
   const responseData: AuthenticationResponseData = { sessionId: reqSession.id };

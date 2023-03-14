@@ -8,7 +8,7 @@ export function loadConfirmationSecret<T>(
   storage: AppStorage,
   secret: ConfirmationSecret
 ): Result<ConfirmationSecretNotFound | T> {
-  const storageKey = getStorageKey(secret);
+  const storageKey = getConfirmationSecretStorageKey(secret);
   const exists = storage.hasItem(storageKey);
 
   if (isErr(exists)) {
@@ -23,17 +23,17 @@ export function loadConfirmationSecret<T>(
 }
 
 export function storeConfirmationSecret<D>(storage: AppStorage, secret: ConfirmationSecret, data: D): Result<void> {
-  const storageKey = getStorageKey(secret);
+  const storageKey = getConfirmationSecretStorageKey(secret);
 
   return storage.storeItem(storageKey, data);
 }
 
 export function deleteConfirmationSecret(storage: AppStorage, secret: ConfirmationSecret): Result<void> {
-  const storageKey = getStorageKey(secret);
+  const storageKey = getConfirmationSecretStorageKey(secret);
 
   return storage.removeItem(storageKey);
 }
 
-export function getStorageKey(secret: ConfirmationSecret): StorageKey {
+export function getConfirmationSecretStorageKey(secret: ConfirmationSecret): StorageKey {
   return makePath('/confirmation-secrets', si`${secret.value}.json`);
 }

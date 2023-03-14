@@ -1,7 +1,8 @@
 import { AccountId, makeAccountId } from '../domain/account';
-import { hasKind, isErr, isObject } from '../shared/lang';
+import { EmailAddress } from '../domain/email-address';
+import { makeEmailAddress } from '../domain/email-address-making';
+import { Err, hasKind, isErr, makeValues } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
-import { si } from '../shared/string-utils';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -25,7 +26,8 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
 
 export interface SessionFields {
   accountId: unknown | AccountId;
-  works: boolean;
+  email: unknown | EmailAddress;
+  works: unknown | boolean;
 }
 
 export type SessionFieldName = keyof SessionFields;
@@ -47,18 +49,21 @@ function setSessionConfig(reqSession: ReqSession): void {
   reqSession.cookie.sameSite = 'strict';
 }
 
-export function initSession(reqSession: ReqSession, accountId: AccountId): void {
+export function initSession(reqSession: ReqSession, accountId: AccountId, email: EmailAddress): void {
   storeSessionValue(reqSession, 'accountId', accountId.value);
+  storeSessionValue(reqSession, 'email', email.value);
   setSessionConfig(reqSession);
 }
 
 export function deinitSession(reqSession: ReqSession): void {
   deleteSessionValue(reqSession, 'accountId');
+  deleteSessionValue(reqSession, 'email');
 }
 
-export interface AuthenticatedSession extends Pick<SessionFields, 'accountId'> {
+export interface AuthenticatedSession extends Pick<SessionFields, 'accountId' | 'email'> {
   kind: 'AuthenticatedSession';
   accountId: AccountId;
+  email: EmailAddress;
 }
 
 export function isAuthenticatedSession(x: any): x is AuthenticatedSession {
@@ -66,26 +71,19 @@ export function isAuthenticatedSession(x: any): x is AuthenticatedSession {
 }
 export interface UnauthenticatedSession {
   kind: 'UnauthenticatedSession';
-  reason: string;
+  err: Err;
 }
 
 export function checkSession(reqSession: unknown): AuthenticatedSession | UnauthenticatedSession {
-  if (!isObject(reqSession)) {
-    return { kind: 'UnauthenticatedSession', reason: 'reqSession is not an Object' };
+  type AuthenticatedSessionValues = Omit<AuthenticatedSession, 'kind'>;
+  const values = makeValues<AuthenticatedSessionValues>(reqSession, {
+    accountId: makeAccountId,
+    email: makeEmailAddress,
+  });
+
+  if (isErr(values)) {
+    return { kind: 'UnauthenticatedSession', err: values };
   }
 
-  if (!('accountId' in reqSession) || typeof reqSession.accountId !== 'string') {
-    return { kind: 'UnauthenticatedSession', reason: si`Non-string accountId` };
-  }
-
-  const accountId = makeAccountId(reqSession.accountId);
-
-  if (isErr(accountId)) {
-    return { kind: 'UnauthenticatedSession', reason: accountId.reason };
-  }
-
-  return {
-    kind: 'AuthenticatedSession',
-    accountId,
-  };
+  return { kind: 'AuthenticatedSession', ...values };
 }

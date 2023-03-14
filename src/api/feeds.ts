@@ -52,7 +52,7 @@ export const deleteFeed: AppRequestHandler = async function deleteFeed(reqId, re
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 
@@ -113,7 +113,7 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 
@@ -163,7 +163,7 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.reason });
+    logWarning('Not authenticated', { reason: session.err.reason });
     return makeNotAuthenticatedError();
   }
 

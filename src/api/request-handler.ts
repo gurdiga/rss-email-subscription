@@ -3,7 +3,6 @@ import { ApiResponse, Success } from '../shared/api-response';
 import { exhaustivenessCheck } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { AppCookie } from './app-cookie';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
@@ -65,7 +64,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 }
 
 function sendSuccess(res: Response, result: Success): void {
-  maybeSetCookies(res, result.cookies);
+  maybeSetCookies(res, result);
   sendJson(res, result);
 }
 
@@ -73,12 +72,14 @@ function sendJson(res: Response, result: Success): void {
   res.status(200).json(result);
 }
 
-function maybeSetCookies(res: Response, cookies?: AppCookie[]): void {
-  if (!cookies) {
+function maybeSetCookies(res: Response, result: Success): void {
+  if (!result.cookies) {
     return;
   }
 
-  for (const cookie of cookies) {
+  for (const cookie of result.cookies) {
     res.cookie(cookie.name, cookie.value, cookie.options || {});
   }
+
+  delete result.cookies;
 }
