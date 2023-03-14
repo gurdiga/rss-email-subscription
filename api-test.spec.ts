@@ -2,8 +2,18 @@ import { expect } from 'chai';
 import fetchCookie from 'fetch-cookie';
 import nodeFetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
-import { AccountData, AccountId, isAccountId } from './src/domain/account';
-import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from './src/domain/account-crypto';
+import {
+  AccountData,
+  AccountId,
+  EmailChangeRequestData,
+  isAccountId,
+  PasswordChangeRequestData,
+} from './src/domain/account';
+import {
+  getAccountIdByEmail,
+  makeEmailChangeConfirmationSecretHash,
+  makeRegistrationConfirmationSecretHash,
+} from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { defaultFeedPattern } from './src/domain/cron-pattern';
@@ -30,10 +40,19 @@ import { readFile } from './src/domain/io-isolation';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
-import { die, makeTestEmailAddress, makeTestFeedId, makeTestStorage } from './src/shared/test-utils';
+import {
+  die,
+  makeTestConfirmationSecret,
+  makeTestEmailAddress,
+  makeTestFeedId,
+  makeTestStorage,
+} from './src/shared/test-utils';
 import cookie from 'cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { getFullApiPath, ApiPath } from './src/domain/api-path';
+import { EmailAddress } from './src/domain/email-address';
+import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
+import { EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -47,6 +66,8 @@ describe('API', () => {
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
   const userPlan = 'standard';
+
+  const newUserEmail = 'api-test-new-email@test.com';
 
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
@@ -143,6 +164,7 @@ describe('API', () => {
         accountId.value,
         'registration confirmation session accountId'
       );
+      expect(sessionDataAfterConfirmation.email).to.equal(userEmail, 'registration confirmation session email');
 
       const [accountAfterConfirmation] = loadStoredAccountByEmail(userEmail);
       expect(accountAfterConfirmation.confirmationTimestamp).to.be.a('string', 'confirmation timestamp');
@@ -164,6 +186,7 @@ describe('API', () => {
       const sessionCookie = sessionData.cookie!;
 
       expect(sessionData.accountId).to.equal(accountId.value, 'authentication session accountId');
+      expect(sessionData.email).to.equal(userEmail, 'authentication session email');
       expect(sessionCookie.originalMaxAge).to.equal(172800000, 'authentication cookie maxAge');
       expect(sessionCookie.sameSite).to.equal('strict', 'authentication cookie sameSite');
       expect(sessionCookie.httpOnly).to.equal(true, 'authentication cookie httpOnly');
@@ -193,11 +216,7 @@ describe('API', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
 
     context('when authenticated', () => {
-      before(async () => {
-        const { responseBody } = await authenticationSend(userEmail, userPassword);
-
-        expect(responseBody.kind).to.equal('Success', 'authentication');
-      });
+      before(assertAuthenticated);
 
       describe('CRUD happy path', () => {
         it('flows', async () => {
@@ -473,8 +492,81 @@ describe('API', () => {
     }
   }).timeout(5000);
 
+  describe('Account page endpoints', () => {
+    before(() => expect(++step).to.equal(5, 'test are expected to run in source order'));
+
+    describe('authenticated', () => {
+      before(assertAuthenticated);
+
+      describe('Email change', () => {
+        it('can submit email change request', async () => {
+          const newEmail = makeTestEmailAddress(newUserEmail);
+          const { responseBody } = await requestAccountEmailChangeSend(newEmail);
+          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
+
+          const storedSecret = loadStoredEmailChangeConfirmationSecret(newEmail);
+          expect(storedSecret.kind).to.equal('EmailChangeRequestSecretData');
+          // TODO: Check the rest of the props.
+
+          // TODO: Confirm the storage
+          // TODO: Confirmation?
+        });
+
+        it('rejects the same email', async () => {
+          const sameEmail = makeTestEmailAddress(userEmail);
+          const { responseBody } = await requestAccountEmailChangeSend(sameEmail);
+
+          expect(responseBody).to.deep.equal(
+            makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail')
+          );
+        });
+
+        it('rejects invalid email', async () => {
+          const invalidEmail: EmailAddress = {
+            kind: 'EmailAddress',
+            value: 'not-an-email',
+          };
+          const { responseBody } = await requestAccountEmailChangeSend(invalidEmail);
+
+          expect(responseBody).to.deep.equal(
+            makeInputError<keyof EmailChangeRequestData>('Email is syntactically incorrect: "not-an-email"', 'newEmail')
+          );
+        });
+
+        async function requestAccountEmailChangeSend(newEmail: EmailAddress) {
+          const request: EmailChangeRequestData = { newEmail: newEmail.value };
+          const path = getFullApiPath(ApiPath.requestAccountEmailChange);
+
+          return await post(path, request);
+        }
+      });
+
+      describe('Password change', () => {
+        it('can submit email change request', async () => {
+          const newPassword = 'A-long-S3cre7-password-changed';
+          const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
+
+          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
+        });
+
+        async function requestAccountPasswordChangeSend(currentPassword: string, newPassword: string) {
+          const request: PasswordChangeRequestData = { currentPassword, newPassword };
+          const path = getFullApiPath(ApiPath.requestAccountPasswordChange);
+
+          return await post(path, request);
+        }
+      });
+    });
+
+    // TODO: Password change
+    // TODO: Failure paths
+    // - Errors
+    // - Unauthenticated
+  });
+
   after(() => {
     deleteAccount(makeTestEmailAddress(userEmail));
+    deleteAccount(makeTestEmailAddress(newUserEmail));
   });
 
   function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string> | null {
@@ -533,6 +625,14 @@ describe('API', () => {
     return [loadJSON(makePath(getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
 
+  function loadStoredEmailChangeConfirmationSecret(email: EmailAddress) {
+    const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
+    const hash = makeEmailChangeConfirmationSecretHash(email, hashingSalt);
+    const secret = makeTestConfirmationSecret(hash);
+
+    return loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as EmailChangeRequestSecretData;
+  }
+
   function loadSessionData(sessionId: string) {
     return loadJSON(makePath('sessions', si`${sessionId}.json`));
   }
@@ -583,5 +683,10 @@ describe('API', () => {
   function loadJSON(filePath: string) {
     const jsonString = readFile(makePath(dataDirRoot, filePath));
     return JSON.parse(jsonString);
+  }
+
+  async function assertAuthenticated() {
+    const { responseBody } = await authenticationSend(userEmail, userPassword);
+    expect(responseBody).to.include({ kind: 'Success' });
   }
 });
