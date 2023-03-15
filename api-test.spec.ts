@@ -5,6 +5,7 @@ import { deleteAccount } from './src/api/delete-account-cli';
 import {
   AccountData,
   AccountId,
+  EmailChangeConfirmationRequestData,
   EmailChangeRequestData,
   isAccountId,
   PasswordChangeRequestData,
@@ -52,7 +53,7 @@ import { navbarCookieName } from './src/api/app-cookie';
 import { getFullApiPath, ApiPath } from './src/domain/api-path';
 import { EmailAddress } from './src/domain/email-address';
 import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
-import { EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
+import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -62,6 +63,7 @@ describe('API', () => {
   const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
   const domainName = 'localhost.feedsubscription.com';
   const apiOrigin = `https://${domainName}`;
+  const appSettings = loadAppSettings();
 
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
@@ -501,15 +503,29 @@ describe('API', () => {
       describe('Email change', () => {
         it('can submit email change request', async () => {
           const newEmail = makeTestEmailAddress(newUserEmail);
-          const { responseBody } = await requestAccountEmailChangeSend(newEmail);
-          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
+          const { responseBody: changeRequestResponse } = await requestAccountEmailChangeSend(newEmail);
+          let expectedResponse: Success = { kind: 'Success', message: 'Success' };
+          expect(changeRequestResponse).to.deep.equal(expectedResponse);
 
-          const storedSecret = loadStoredEmailChangeConfirmationSecret(newEmail);
-          expect(storedSecret.kind).to.equal('EmailChangeRequestSecretData');
-          // TODO: Check the rest of the props.
+          const [confirmationSecret, secretData] = loadStoredEmailChangeConfirmationSecret(newEmail);
+          expect(secretData.kind).to.equal('EmailChangeRequestSecretData');
+          expect(isAccountId(secretData.accountId)).to.be.true;
+          expect(secretData.newEmail).to.deep.equal(newEmail);
+          expect(secretData.timestamp).to.exist;
 
+          const timestampSeconds = new Date(secretData.timestamp).getSeconds();
+          const nowSeconds = new Date().getSeconds();
+          expect(timestampSeconds).to.be.closeTo(nowSeconds, 2);
+
+          const { responseBody: changeConfirmationResponse } = await confirmAccountEmailChangeSend(confirmationSecret);
+          expectedResponse = {
+            kind: 'Success',
+            message: 'Confirmed email change',
+          };
+          expect(changeConfirmationResponse).to.deep.equal(expectedResponse);
+
+          // TODO: Confirmation
           // TODO: Confirm the storage
-          // TODO: Confirmation?
         });
 
         it('rejects the same email', async () => {
@@ -539,6 +555,13 @@ describe('API', () => {
 
           return await post(path, request);
         }
+
+        async function confirmAccountEmailChangeSend(confirmationSecret: ConfirmationSecret) {
+          const request: EmailChangeConfirmationRequestData = { secret: confirmationSecret.value };
+          const path = getFullApiPath(ApiPath.confirmAccountEmailChange);
+
+          return await post(path, request);
+        }
       });
 
       describe('Password change', () => {
@@ -556,7 +579,7 @@ describe('API', () => {
           return await post(path, request);
         }
       });
-    });
+    }).timeout(5000);
 
     // TODO: Password change
     // TODO: Failure paths
@@ -619,18 +642,24 @@ describe('API', () => {
   }
 
   function loadStoredAccountByEmail(email: string): [AccountData, AccountId] {
-    const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
+    const hashingSalt = appSettings.hashingSalt;
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
 
     return [loadJSON(makePath(getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
 
-  function loadStoredEmailChangeConfirmationSecret(email: EmailAddress) {
-    const hashingSalt = loadJSON(makePath(appSettingsStorageKey))['hashingSalt'];
+  function loadStoredEmailChangeConfirmationSecret(
+    email: EmailAddress
+  ): [ConfirmationSecret, EmailChangeRequestSecretData] {
+    const hashingSalt = appSettings.hashingSalt;
     const hash = makeEmailChangeConfirmationSecretHash(email, hashingSalt);
     const secret = makeTestConfirmationSecret(hash);
 
-    return loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as EmailChangeRequestSecretData;
+    return [secret, loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as EmailChangeRequestSecretData];
+  }
+
+  function loadAppSettings(): AppSettings {
+    return loadJSON(makePath(appSettingsStorageKey));
   }
 
   function loadSessionData(sessionId: string) {
