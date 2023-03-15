@@ -55,6 +55,8 @@ import { EmailAddress } from './src/domain/email-address';
 import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
 import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
 import { sessionCookieMaxage } from './src/api/session';
+import { hash } from './src/shared/crypto';
+import { isErr } from './src/shared/lang';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -432,8 +434,8 @@ describe('API', () => {
     it('flows', async () => {
       // ASSUMPTION: The feed testFeedId exists
       const { responseBody: subscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
-      expect(subscriptionResult).to.include(
-        <Success>{ kind: 'Success' },
+      expect(subscriptionResult.kind).to.equal(
+        'Success',
         si`subscription result: ${JSON.stringify(subscriptionResult)}`
       );
 
@@ -498,97 +500,134 @@ describe('API', () => {
   describe('Account page endpoints', () => {
     before(() => expect(++step).to.equal(5, 'test are expected to run in source order'));
 
-    describe('authenticated', () => {
-      describe('Email change', () => {
-        before(authenticate);
+    describe('Email change', () => {
+      before(authenticate);
 
-        it('can submit email change request', async () => {
-          const sameEmail = makeTestEmailAddress(userEmail);
-          const { responseBody: sameEmailResponse } = await requestAccountEmailChangeSend(sameEmail);
-          expect(sameEmailResponse).to.deep.equal(
-            makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail'),
-            'rejects a request of change with the same email'
-          );
+      it('allows requesting and then confirming email change', async () => {
+        const sameEmail = makeTestEmailAddress(userEmail);
+        const { responseBody: sameEmailResponse } = await requestAccountEmailChangeSend(sameEmail);
+        expect(sameEmailResponse).to.deep.equal(
+          makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail'),
+          'rejects a request of change with the same email'
+        );
 
-          const invalidEmail: EmailAddress = {
-            kind: 'EmailAddress',
-            value: 'not-an-email',
-          };
-          const { responseBody: invalidEmailResponse } = await requestAccountEmailChangeSend(invalidEmail);
-          expect(invalidEmailResponse).to.deep.equal(
-            makeInputError<keyof EmailChangeRequestData>('Email is syntactically incorrect: "not-an-email"', 'newEmail')
-          );
+        const invalidEmail: EmailAddress = { kind: 'EmailAddress', value: 'not-an-email' };
+        const { responseBody: invalidEmailResponse } = await requestAccountEmailChangeSend(invalidEmail);
+        expect(invalidEmailResponse).to.deep.equal(
+          makeInputError<keyof EmailChangeRequestData>('Email is syntactically incorrect: "not-an-email"', 'newEmail')
+        );
 
-          const newEmail = makeTestEmailAddress(newUserEmail);
-          const { responseBody: changeRequestResponse } = await requestAccountEmailChangeSend(newEmail);
-          expect(changeRequestResponse).to.deep.equal({ kind: 'Success', message: 'Success' });
+        const newEmail = makeTestEmailAddress(newUserEmail);
+        const { responseBody: changeRequestResponse } = await requestAccountEmailChangeSend(newEmail);
+        expect(changeRequestResponse).to.deep.equal({ kind: 'Success', message: 'Success' });
 
-          const [confirmationSecret, secretData] = loadStoredEmailChangeConfirmationSecret(newEmail);
-          expect(secretData.kind).to.equal('EmailChangeRequestSecretData');
-          expect(isAccountId(secretData.accountId)).to.be.true;
-          expect(secretData.newEmail).to.deep.equal(newEmail);
-          expect(secretData.timestamp).to.exist;
+        const [confirmationSecret, secretData] = loadStoredEmailChangeConfirmationSecret(newEmail);
+        expect(secretData.kind).to.equal('EmailChangeRequestSecretData');
+        expect(secretData.accountId).to.deep.include({ kind: 'AccountId' });
+        expect(secretData.newEmail).to.deep.equal(newEmail);
+        expect(secretData.timestamp).to.exist;
 
-          const timestampSeconds = new Date(secretData.timestamp).getSeconds();
-          const nowSeconds = new Date().getSeconds();
-          expect(timestampSeconds).to.be.closeTo(nowSeconds, 2);
+        const timestampSeconds = new Date(secretData.timestamp).getSeconds();
+        const nowSeconds = new Date().getSeconds();
+        expect(timestampSeconds).to.be.closeTo(nowSeconds, 2);
 
-          const { responseBody: changeConfirmationResponse } = await confirmAccountEmailChangeSend(confirmationSecret);
-          expect(changeConfirmationResponse).to.deep.equal({ kind: 'Success', message: 'Confirmed email change' });
+        const { responseBody: changeConfirmationResponse } = await confirmAccountEmailChangeSend(confirmationSecret);
+        expect(changeConfirmationResponse).to.deep.equal({ kind: 'Success', message: 'Confirmed email change' });
 
-          const [storedAccount] = loadStoredAccountByEmail(newEmail.value);
-          expect(storedAccount.email).to.deep.equal(newEmail.value);
+        const [storedAccount] = loadStoredAccountByEmail(newEmail.value);
+        expect(storedAccount.email).to.deep.equal(newEmail.value);
 
-          // Change back the email so that the subsequent tests can still work.
-          const oldEmail = makeTestEmailAddress(userEmail);
-          await requestAccountEmailChangeSend(oldEmail);
-          const [oldConfirmationSecret] = loadStoredEmailChangeConfirmationSecret(oldEmail);
-          await confirmAccountEmailChangeSend(oldConfirmationSecret);
-        });
-
-        async function requestAccountEmailChangeSend(newEmail: EmailAddress) {
-          const request: EmailChangeRequestData = { newEmail: newEmail.value };
-          const path = getFullApiPath(ApiPath.requestAccountEmailChange);
-
-          return await post(path, request);
-        }
-
-        async function confirmAccountEmailChangeSend(confirmationSecret: ConfirmationSecret) {
-          const request: EmailChangeConfirmationRequestData = { secret: confirmationSecret.value };
-          const path = getFullApiPath(ApiPath.confirmAccountEmailChange);
-
-          return await post(path, request);
-        }
+        await changeBackEmailFrom(newEmail);
       }).timeout(5000);
 
-      describe.skip('Password change', () => {
-        before(authenticate);
+      async function changeBackEmailFrom(newEmail: EmailAddress) {
+        const { responseBody: authenticationResponse } = await authenticationSend(newEmail.value, userPassword);
+        expect(authenticationResponse).to.include(
+          { kind: 'Success' },
+          si`authenticationResponse: ${JSON.stringify(authenticationResponse)}`
+        );
 
-        it('can submit email change request', async () => {
-          const newPassword = 'A-long-S3cre7-password-changed';
-          const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
+        const oldEmail = makeTestEmailAddress(userEmail);
+        const { responseBody: changeRequestResponse2 } = await requestAccountEmailChangeSend(oldEmail);
+        expect(changeRequestResponse2.kind).to.equal(
+          'Success',
+          si`changeRequestResponse2: ${JSON.stringify(changeRequestResponse2)}`
+        );
 
-          expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
-        });
+        const [oldConfirmationSecret] = loadStoredEmailChangeConfirmationSecret(oldEmail);
+        const { responseBody: confirmRequestResponse2 } = await confirmAccountEmailChangeSend(oldConfirmationSecret);
+        expect(confirmRequestResponse2.kind).to.equal(
+          'Success',
+          si`confirmRequestResponse2: ${JSON.stringify(confirmRequestResponse2)}`
+        );
+      }
 
-        async function requestAccountPasswordChangeSend(currentPassword: string, newPassword: string) {
-          const request: PasswordChangeRequestData = { currentPassword, newPassword };
-          const path = getFullApiPath(ApiPath.requestAccountPasswordChange);
+      async function requestAccountEmailChangeSend(newEmail: EmailAddress) {
+        const request: EmailChangeRequestData = { newEmail: newEmail.value };
+        const path = getFullApiPath(ApiPath.requestAccountEmailChange);
 
-          return await post(path, request);
-        }
-      });
+        return await post(path, request);
+      }
+
+      async function confirmAccountEmailChangeSend(confirmationSecret: ConfirmationSecret) {
+        const request: EmailChangeConfirmationRequestData = { secret: confirmationSecret.value };
+        const path = getFullApiPath(ApiPath.confirmAccountEmailChange);
+
+        return await post(path, request);
+      }
     });
 
-    // TODO: Password change
-    // TODO: Failure paths
-    // - Errors
-    // - Unauthenticated
+    describe('Password change', () => {
+      before(authenticate);
+
+      it('allows changing password', async () => {
+        const samePassword = userPassword;
+        const { responseBody: samePasswordResponse } = await requestAccountPasswordChangeSend(
+          userPassword,
+          samePassword
+        );
+        expect(samePasswordResponse).to.deep.equal(
+          makeInputError('New password can’t be the same as the old one', 'newPassword')
+        );
+
+        const emptyPassword = '';
+        const { responseBody: emptyPasswordResponse } = await requestAccountPasswordChangeSend(
+          userPassword,
+          emptyPassword
+        );
+        expect(emptyPasswordResponse).to.deep.equal(
+          makeInputError('Missing value', 'newPassword'),
+          'empty passwords are not allowed'
+        );
+
+        const newPassword = 'A-long-S3cre7-password-changed';
+        const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
+        expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
+
+        const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
+        const [storedAccount] = loadStoredAccountByEmail(userEmail);
+        expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+
+        await changeBackPasswordFrom(newPassword);
+      });
+
+      async function changeBackPasswordFrom(newPassword: string) {
+        const { responseBody } = await requestAccountPasswordChangeSend(newPassword, userPassword);
+        expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
+      }
+
+      async function requestAccountPasswordChangeSend(currentPassword: string, newPassword: string) {
+        const request: PasswordChangeRequestData = { currentPassword, newPassword };
+        const path = getFullApiPath(ApiPath.requestAccountPasswordChange);
+
+        return await post(path, request);
+      }
+    });
   });
 
   after(() => {
-    deleteAccount(makeTestEmailAddress(userEmail));
-    deleteAccount(makeTestEmailAddress(newUserEmail));
+    const cleanup = deleteAccount(makeTestEmailAddress(userEmail));
+    expect(isErr(cleanup), si`cleanup deleteAccount failed: ${JSON.stringify(cleanup)}`).to.be.false;
   });
 
   function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string> | null {
@@ -715,6 +754,6 @@ describe('API', () => {
 
   async function authenticate() {
     const { responseBody } = await authenticationSend(userEmail, userPassword);
-    expect(responseBody).to.include({ kind: 'Success' });
+    expect(responseBody).to.include({ kind: 'Success' }, si`responseBody: ${JSON.stringify(responseBody)}`);
   }
 });
