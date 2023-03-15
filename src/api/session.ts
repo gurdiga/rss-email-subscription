@@ -44,8 +44,10 @@ export function deleteSessionValue(reqSession: ReqSession, name: SessionFieldNam
   delete reqSession[name];
 }
 
+export const sessionCookieMaxage = 2 * 24 * 3600 * 1000;
+
 function setSessionConfig(reqSession: ReqSession): void {
-  reqSession.cookie.maxAge = 2 * 24 * 3600 * 1000;
+  reqSession.cookie.maxAge = sessionCookieMaxage;
   reqSession.cookie.sameSite = 'strict';
 }
 

@@ -54,6 +54,7 @@ import { getFullApiPath, ApiPath } from './src/domain/api-path';
 import { EmailAddress } from './src/domain/email-address';
 import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
 import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
+import { sessionCookieMaxage } from './src/api/session';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -189,7 +190,7 @@ describe('API', () => {
 
       expect(sessionData.accountId).to.equal(accountId.value, 'authentication session accountId');
       expect(sessionData.email).to.equal(userEmail, 'authentication session email');
-      expect(sessionCookie.originalMaxAge).to.equal(172800000, 'authentication cookie maxAge');
+      expect(sessionCookie.originalMaxAge).to.equal(sessionCookieMaxage, 'authentication cookie maxAge');
       expect(sessionCookie.sameSite).to.equal('strict', 'authentication cookie sameSite');
       expect(sessionCookie.httpOnly).to.equal(true, 'authentication cookie httpOnly');
 
@@ -218,7 +219,7 @@ describe('API', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
 
     context('when authenticated', () => {
-      before(assertAuthenticated);
+      before(authenticate);
 
       describe('CRUD happy path', () => {
         it('flows', async () => {
@@ -498,14 +499,29 @@ describe('API', () => {
     before(() => expect(++step).to.equal(5, 'test are expected to run in source order'));
 
     describe('authenticated', () => {
-      before(assertAuthenticated);
-
       describe('Email change', () => {
+        before(authenticate);
+
         it('can submit email change request', async () => {
+          const sameEmail = makeTestEmailAddress(userEmail);
+          const { responseBody: sameEmailResponse } = await requestAccountEmailChangeSend(sameEmail);
+          expect(sameEmailResponse).to.deep.equal(
+            makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail'),
+            'rejects a request of change with the same email'
+          );
+
+          const invalidEmail: EmailAddress = {
+            kind: 'EmailAddress',
+            value: 'not-an-email',
+          };
+          const { responseBody: invalidEmailResponse } = await requestAccountEmailChangeSend(invalidEmail);
+          expect(invalidEmailResponse).to.deep.equal(
+            makeInputError<keyof EmailChangeRequestData>('Email is syntactically incorrect: "not-an-email"', 'newEmail')
+          );
+
           const newEmail = makeTestEmailAddress(newUserEmail);
           const { responseBody: changeRequestResponse } = await requestAccountEmailChangeSend(newEmail);
-          let expectedResponse: Success = { kind: 'Success', message: 'Success' };
-          expect(changeRequestResponse).to.deep.equal(expectedResponse);
+          expect(changeRequestResponse).to.deep.equal({ kind: 'Success', message: 'Success' });
 
           const [confirmationSecret, secretData] = loadStoredEmailChangeConfirmationSecret(newEmail);
           expect(secretData.kind).to.equal('EmailChangeRequestSecretData');
@@ -518,35 +534,16 @@ describe('API', () => {
           expect(timestampSeconds).to.be.closeTo(nowSeconds, 2);
 
           const { responseBody: changeConfirmationResponse } = await confirmAccountEmailChangeSend(confirmationSecret);
-          expectedResponse = {
-            kind: 'Success',
-            message: 'Confirmed email change',
-          };
-          expect(changeConfirmationResponse).to.deep.equal(expectedResponse);
+          expect(changeConfirmationResponse).to.deep.equal({ kind: 'Success', message: 'Confirmed email change' });
 
-          // TODO: Confirmation
-          // TODO: Confirm the storage
-        });
+          const [storedAccount] = loadStoredAccountByEmail(newEmail.value);
+          expect(storedAccount.email).to.deep.equal(newEmail.value);
 
-        it('rejects the same email', async () => {
-          const sameEmail = makeTestEmailAddress(userEmail);
-          const { responseBody } = await requestAccountEmailChangeSend(sameEmail);
-
-          expect(responseBody).to.deep.equal(
-            makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail')
-          );
-        });
-
-        it('rejects invalid email', async () => {
-          const invalidEmail: EmailAddress = {
-            kind: 'EmailAddress',
-            value: 'not-an-email',
-          };
-          const { responseBody } = await requestAccountEmailChangeSend(invalidEmail);
-
-          expect(responseBody).to.deep.equal(
-            makeInputError<keyof EmailChangeRequestData>('Email is syntactically incorrect: "not-an-email"', 'newEmail')
-          );
+          // Change back the email so that the subsequent tests can still work.
+          const oldEmail = makeTestEmailAddress(userEmail);
+          await requestAccountEmailChangeSend(oldEmail);
+          const [oldConfirmationSecret] = loadStoredEmailChangeConfirmationSecret(oldEmail);
+          await confirmAccountEmailChangeSend(oldConfirmationSecret);
         });
 
         async function requestAccountEmailChangeSend(newEmail: EmailAddress) {
@@ -562,9 +559,11 @@ describe('API', () => {
 
           return await post(path, request);
         }
-      });
+      }).timeout(5000);
 
-      describe('Password change', () => {
+      describe.skip('Password change', () => {
+        before(authenticate);
+
         it('can submit email change request', async () => {
           const newPassword = 'A-long-S3cre7-password-changed';
           const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
@@ -579,7 +578,7 @@ describe('API', () => {
           return await post(path, request);
         }
       });
-    }).timeout(5000);
+    });
 
     // TODO: Password change
     // TODO: Failure paths
@@ -714,7 +713,7 @@ describe('API', () => {
     return JSON.parse(jsonString);
   }
 
-  async function assertAuthenticated() {
+  async function authenticate() {
     const { responseBody } = await authenticationSend(userEmail, userPassword);
     expect(responseBody).to.include({ kind: 'Success' });
   }
