@@ -114,7 +114,7 @@ export interface SpinnerUiElements {
   spinner: HTMLElement;
 }
 
-export const spinnerUiElements: Record<keyof SpinnerUiElements, string> = {
+export const spinnerUiElements: ElementSelectors<SpinnerUiElements> = {
   spinner: '#spinner',
 };
 
