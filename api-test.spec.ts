@@ -72,7 +72,7 @@ describe('API', () => {
   const userPassword = 'A-long-S3cre7-password';
   const userPlan = 'standard';
 
-  const newUserEmail = 'api-test-new-email@test.com';
+  const newUserEmail = 'api-test-new-email@feedsubscription.com';
 
   const testFeedProps: MakeFeedInput = {
     displayName: 'API Test Feed Name',
