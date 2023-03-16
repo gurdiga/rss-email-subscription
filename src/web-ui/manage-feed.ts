@@ -1,7 +1,7 @@
 import { ApiPath } from '../domain/api-path';
 import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedSubscribeFormParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess, Success } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -49,6 +49,7 @@ async function main() {
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
     editLink: '#edit-link',
+    subscribeFormLink: '#subscribe-form-link',
     deleteButton: '#delete-button',
   });
 
@@ -114,7 +115,7 @@ async function sendDeleteRequest(feedId: FeedId): Promise<Result<Success>> {
 }
 
 function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
-  const { feedAttributeList, editLink } = uiElements;
+  const { feedAttributeList, editLink, subscribeFormLink } = uiElements;
   const uiData = makeUiData(uiFeed, feedId);
   const feedAttributeElements = uiData.feedAttributes.flatMap((feedAttribute) => {
     const [dtElement, ddElement] = makeFeedAttributeElement(feedAttribute);
@@ -130,6 +131,7 @@ function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements
   unhideElement(feedAttributeList);
 
   editLink.href = uiData.editLinkHref;
+  subscribeFormLink.href = uiData.subscribeFormLink;
 }
 
 function addManageSubscribersLink(ddElement: HTMLElement, href: string): void {
@@ -149,6 +151,7 @@ function makeFeedAttributeElement(feedAttribute: FeedAttribute): [HTMLElement, H
 export interface UiData {
   feedAttributes: FeedAttribute[];
   editLinkHref: string;
+  subscribeFormLink: string;
   manageSubscribersLinkHref: string;
 }
 
@@ -169,15 +172,20 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   ];
 
   const editLinkHref = makePagePathWithParams(PagePath.feedEdit, { id: feedId.value });
+  const subscribeFormLink = makePagePathWithParams<FeedSubscribeFormParams>(PagePath.feedSubscribeForm, {
+    id: feedId.value,
+    displayName: uiFeed.displayName,
+  });
   const manageSubscribersLinkHref = makePagePathWithParams(PagePath.manageFeedSubscribers, { id: feedId.value });
 
-  return { feedAttributes, editLinkHref, manageSubscribersLinkHref };
+  return { feedAttributes, editLinkHref, subscribeFormLink, manageSubscribersLinkHref };
 }
 
 interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;
+  subscribeFormLink: HTMLAnchorElement;
   deleteButton: HTMLButtonElement;
 }
 

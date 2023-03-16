@@ -16,9 +16,7 @@ describe(makeUiData.name, () => {
       status: FeedStatus.AwaitingReview,
     };
 
-    const result = makeUiData(uiFeed, feedId);
-
-    expect(result).to.deep.equal(<UiData>{
+    const expectedUiData: UiData = {
       feedAttributes: [
         { label: 'Blog feed URL:', value: 'https://test.com/just-add-light/feed.xml', name: 'url' },
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
@@ -29,6 +27,11 @@ describe(makeUiData.name, () => {
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',
       manageSubscribersLinkHref: '/user/manage-feed-subscribers.html?id=just-add-light',
-    });
+      subscribeFormLink: '/user/feed-subscribe-form.html?id=just-add-light&displayName=Just+Add+Light',
+    };
+
+    const result = makeUiData(uiFeed, feedId);
+
+    expect(result).to.deep.equal(expectedUiData);
   });
 });

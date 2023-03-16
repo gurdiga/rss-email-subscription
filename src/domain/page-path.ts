@@ -7,12 +7,18 @@ export enum PagePath {
   feedList = '/user/feeds.html',
   feedManage = '/user/manage-feed.html',
   feedEdit = '/user/edit-feed.html',
+  feedSubscribeForm = '/user/feed-subscribe-form.html',
   manageFeedSubscribers = '/user/manage-feed-subscribers.html',
   registrationConfirmation = '/user/registration-confirmation.html',
   emailChangeConfirmation = '/user/email-change-confirmation.html',
 }
 
-export function makePagePathWithParams(pagePath: PagePath, params: Record<string, string>) {
+export interface FeedSubscribeFormParams {
+  id: 'id';
+  displayName: 'displayName';
+}
+
+export function makePagePathWithParams<T>(pagePath: PagePath, params: Record<keyof T, string>) {
   const queryParams = isEmptyObject(params) ? '' : '?' + new URLSearchParams(params).toString();
 
   return si`${pagePath}${queryParams}`;
