@@ -1,7 +1,13 @@
 import { ApiPath } from '../domain/api-path';
 import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { FeedSubscribeFormParams, makePagePathWithParams, PagePath } from '../domain/page-path';
+import {
+  FeedEditParams,
+  FeedSubscribeFormParams,
+  makePagePathWithParams,
+  ManageFeedSubscribersParams,
+  PagePath,
+} from '../domain/page-path';
 import { isAppError, isInputError, isSuccess, Success } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -171,12 +177,15 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Status:', value: uiFeed.status, name: 'status' },
   ];
 
-  const editLinkHref = makePagePathWithParams(PagePath.feedEdit, { id: feedId.value });
+  const editLinkHref = makePagePathWithParams<FeedEditParams>(PagePath.feedEdit, { id: feedId.value });
   const subscribeFormLink = makePagePathWithParams<FeedSubscribeFormParams>(PagePath.feedSubscribeForm, {
     id: feedId.value,
     displayName: uiFeed.displayName,
   });
-  const manageSubscribersLinkHref = makePagePathWithParams(PagePath.manageFeedSubscribers, { id: feedId.value });
+  const manageSubscribersLinkHref = makePagePathWithParams<ManageFeedSubscribersParams>(
+    PagePath.manageFeedSubscribers,
+    { id: feedId.value }
+  );
 
   return { feedAttributes, editLinkHref, subscribeFormLink, manageSubscribersLinkHref };
 }

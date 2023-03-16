@@ -14,8 +14,20 @@ export enum PagePath {
 }
 
 export interface FeedSubscribeFormParams {
-  id: 'id';
-  displayName: 'displayName';
+  id: string;
+  displayName: string;
+}
+
+export interface FeedManageParams {
+  id: string;
+}
+
+export interface FeedEditParams {
+  id: string;
+}
+
+export interface ManageFeedSubscribersParams {
+  id: string;
 }
 
 export function makePagePathWithParams<T>(pagePath: PagePath, params: Record<keyof T, string>) {

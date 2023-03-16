@@ -1,5 +1,5 @@
 import { FeedId } from '../domain/feed-id';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { createElement } from './dom-isolation';
 import { hideElement } from './shared';
 
@@ -69,7 +69,7 @@ export const feedListBreadcrumbsLink: BreadcrumbsLink = {
 export function makeFeedManageBreadcrumbsLink(displayName: string, feedId: FeedId): BreadcrumbsLink {
   const link: BreadcrumbsLink = {
     label: displayName,
-    href: makePagePathWithParams(PagePath.feedManage, { id: feedId.value }),
+    href: makePagePathWithParams<FeedManageParams>(PagePath.feedManage, { id: feedId.value }),
   };
 
   return link;

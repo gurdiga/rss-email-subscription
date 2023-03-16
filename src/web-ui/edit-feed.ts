@@ -1,7 +1,7 @@
 import { ApiPath } from '../domain/api-path';
 import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -111,7 +111,7 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
 
       setTimeout(() => {
         const nextPageParams = { id: response.responseData?.feedId! };
-        const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
+        const nextPage = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, nextPageParams);
 
         navigateTo(nextPage);
       }, 1000);

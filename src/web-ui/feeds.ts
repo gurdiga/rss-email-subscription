@@ -1,5 +1,5 @@
 import { LoadFeedsResponseData, UiFeedListItem } from '../domain/feed';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiPath } from '../domain/api-path';
 import { isAppError, isInputError } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
@@ -77,7 +77,7 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
 
 function makeLinkData(item: UiFeedListItem): FeedLinkData {
   const text = item.displayName;
-  const href = makePagePathWithParams(PagePath.feedManage, { id: item.feedId.value });
+  const href = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, { id: item.feedId.value });
 
   return { text, href };
 }

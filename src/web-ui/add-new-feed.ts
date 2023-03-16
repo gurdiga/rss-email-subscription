@@ -1,6 +1,6 @@
 import { ApiPath } from '../domain/api-path';
 import { AddNewFeedRequestData, AddNewFeedResponseData } from '../domain/feed';
-import { makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
@@ -70,7 +70,7 @@ async function main() {
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       setTimeout(() => {
-        const nextPageParams = { id: response.responseData?.feedId! };
+        const nextPageParams: FeedManageParams = { id: response.responseData?.feedId! };
         const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
 
         navigateTo(nextPage);
