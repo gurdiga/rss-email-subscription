@@ -2,8 +2,8 @@ import { CronCommand, CronJob } from 'cron';
 import { AppEnv } from '../api/init-app';
 import { sendEmails } from '../app/email-sending';
 import { checkRss } from '../app/rss-checking';
-import { makeAccountId } from '../domain/account';
-import { accountsStorageKey } from '../domain/account-storage';
+import { isAccountNotFound, makeAccountId } from '../domain/account';
+import { accountsStorageKey, loadAccount } from '../domain/account-storage';
 import { FeedStatus } from '../domain/feed';
 import { loadFeedsByAccountId } from '../domain/feed-storage';
 import { makeStorage } from '../domain/storage';
@@ -43,10 +43,9 @@ function main() {
 
 async function checkFeeds(dataDirRoot: string): Promise<void> {
   const logData = { module: 'cron' };
-  const loggers = makeCustomLoggers(logData);
 
-  logDuration('Feed checking', loggers, async () => {
-    const { logError, logInfo } = loggers;
+  logDuration('Feed checking', logData, async () => {
+    const { logError, logInfo } = makeCustomLoggers(logData);
     const storage = makeStorage(dataDirRoot);
     const accountDirs = storage.listSubdirectories(accountsStorageKey);
 
@@ -68,45 +67,54 @@ async function checkFeeds(dataDirRoot: string): Promise<void> {
         continue;
       }
 
+      const account = loadAccount(storage, accountId);
+
+      if (isErr(account)) {
+        logError(si`Failed to ${loadAccount.name}`, { accountId: accountId.value, reason: account.reason });
+        continue;
+      }
+
+      if (isAccountNotFound(account)) {
+        logError('Account not found', { accountId: accountId.value });
+        continue;
+      }
+
+      const logData = {
+        accountEmail: account.email.value,
+        accountId: accountId.value,
+      };
       const feedsByAccountId = loadFeedsByAccountId(accountId, storage);
 
       if (isErr(feedsByAccountId)) {
-        logError(si`Failed to ${loadFeedsByAccountId.name}`, {
-          accountId: accountId.value,
-          reason: feedsByAccountId.reason,
-        });
+        logError(si`Failed to ${loadFeedsByAccountId.name}`, { ...logData, reason: feedsByAccountId.reason });
         continue;
       }
 
       if (isNotEmpty(feedsByAccountId.errs)) {
         const errs = feedsByAccountId.errs.map((x) => x.reason);
-        logError(si`Errors on ${loadFeedsByAccountId.name}`, { accountId: accountId.value, errs });
+        logError(si`Errors on ${loadFeedsByAccountId.name}`, { ...logData, errs });
       }
 
       if (isEmpty(feedsByAccountId.validFeeds)) {
-        logInfo('No feeds for account', { accountId: accountId.value });
+        logInfo('No feeds for account', logData);
       }
 
       const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
-      const feedCount = approvedFeeds.length;
 
-      logInfo(si`Checking ${feedCount} feeds`, { accountId: accountId.value });
+      logInfo('Counting feeds', { ...logData, feedCount: approvedFeeds.length });
 
       for (const feed of approvedFeeds) {
-        const logLabel = si`${feed.displayName} (${feed.id.value})`;
+        const feedLogData = { ...logData, displayName: feed.displayName, feedId: feed.id.value };
 
-        await logDuration(si`RSS checking: ${logLabel}`, loggers, () => checkRss(accountId, feed, storage));
-        await logDuration(si`Email sending: ${logLabel}`, loggers, () => sendEmails(accountId, feed, storage));
+        await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage));
+        await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage));
       }
     }
   });
 }
 
-async function logDuration(
-  label: string,
-  { logInfo }: ReturnType<typeof makeCustomLoggers>,
-  f: AnyAsyncFunction
-): Promise<void> {
+async function logDuration(label: string, logData: object, f: AnyAsyncFunction): Promise<void> {
+  let { logInfo } = makeCustomLoggers(logData);
   const startTimestamp = new Date();
 
   logInfo(si`Started ${label}`);
