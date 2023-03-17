@@ -14,7 +14,6 @@ describe(makeRegistrationConfirmationEmailContent.name, () => {
     const emailContent = makeRegistrationConfirmationEmailContent(email, appHashingSalt, domainName);
 
     expect(emailContent.subject).to.equal('Please confirm FeedSubscription registration');
-    console.log(emailContent.htmlBody);
     expect(emailContent.htmlBody).to.include(confirmationLink);
   });
 });
