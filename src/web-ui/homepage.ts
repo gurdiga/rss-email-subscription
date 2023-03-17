@@ -53,6 +53,7 @@ function main() {
     if (isSuccess(response)) {
       rssUrlContainer.textContent = response.responseData?.feedUrl!;
       unhideElement(successMessage);
+      return;
     }
 
     reportError(si`Unhandled response type: ${JSON.stringify(response)}`);
