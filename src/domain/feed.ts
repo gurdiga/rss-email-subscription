@@ -188,3 +188,13 @@ export interface AddEmailsResponse {
   newEmailsCount: number;
   currentEmails: UiEmailList;
 }
+
+export interface CheckFeedUrlRequest {
+  blogUrl: URL;
+}
+
+export type CheckFeedUrlRequestData = Record<keyof CheckFeedUrlRequest, string>;
+
+export interface CheckFeedUrlResponseData {
+  feedUrl: string;
+}

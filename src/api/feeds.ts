@@ -1,3 +1,4 @@
+import { parse } from 'node-html-parser';
 import {
   loadStoredEmails,
   makeEmailHashFn,
@@ -5,11 +6,16 @@ import {
   parseEmails,
   storeEmails,
 } from '../app/email-sending/emails';
+import { fetch } from '../app/rss-checking/fetch';
+import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../domain/account';
+import { getAccountIdList } from '../domain/account-storage';
 import { defaultFeedPattern } from '../domain/cron-pattern';
 import {
   AddEmailsRequest,
   AddEmailsResponse,
   AddNewFeedResponseData,
+  CheckFeedUrlRequest,
+  CheckFeedUrlResponseData,
   DeleteEmailsRequest,
   DeleteEmailsResponse,
   DeleteFeedRequest,
@@ -27,12 +33,6 @@ import {
 import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed, MakeFeedInput } from '../domain/feed-making';
-import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isEmpty, isNotEmpty } from '../shared/array-utils';
-import { getTypeName, isErr, isString, makeErr, makeValues, Result } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
-import { si } from '../shared/string-utils';
-import { getAccountIdList } from '../domain/account-storage';
 import {
   applyEditFeedRequest,
   feedExists,
@@ -43,9 +43,23 @@ import {
   storeFeed,
 } from '../domain/feed-storage';
 import { AppStorage } from '../domain/storage';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
+import { isEmpty, isNotEmpty } from '../shared/array-utils';
+import {
+  asyncAttempt,
+  getErrorMessage,
+  getTypeName,
+  isErr,
+  isString,
+  makeErr,
+  makeValues,
+  Result,
+} from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
+import { si } from '../shared/string-utils';
+import { makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
-import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../domain/account';
 
 export const deleteFeed: AppRequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteFeed.name, reqId });
@@ -551,3 +565,105 @@ export const addFeedSubscribers: AppRequestHandler = async function addFeedSubsc
 
   return makeSuccess(si`Added ${newEmailsCount} subscribers`, logData, responseData);
 };
+
+export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
+  reqId,
+  reqBody,
+  _reqParams,
+  _reqSession,
+  _app
+) {
+  const { logWarning } = makeCustomLoggers({ module: checkFeedUrl.name, reqId });
+  const fieldName: keyof CheckFeedUrlResponseData = 'feedUrl';
+  const request = makeCheckFeedUrlRequest(reqBody);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeCheckFeedUrlRequest.name}`, { reason: request.reason });
+    return makeInputError(request.reason, fieldName);
+  }
+
+  const { blogUrl } = request;
+  const response = await asyncAttempt(() => fetch(blogUrl));
+
+  if (isErr(response)) {
+    logWarning('Could not fetch blog URL', { blogUrl, reason: response.reason });
+    return makeInputError('Could not load that blog. 🤔', fieldName);
+  }
+
+  const contentType = response.headers.get('content-type');
+
+  if (!contentType?.startsWith('text/html')) {
+    logWarning('Invalid blog Content-Type', { contentType });
+    return makeInputError('Your blog seems to have an invalid Content-Type header. 🤔', fieldName);
+  }
+
+  const html = await response.text();
+  const feedHref = getFeedHref(html);
+
+  if (isErr(feedHref)) {
+    logWarning(si`Failed to ${getFeedHref.name}`, { reason: feedHref.reason });
+    return makeInputError(feedHref.reason, fieldName);
+  }
+
+  const baseURL = feedHref.startsWith('/') ? blogUrl : undefined;
+  const feedUrl = makeHttpUrl(feedHref, baseURL, fieldName);
+
+  if (isErr(feedUrl)) {
+    logWarning(si`Failed to ${makeHttpUrl.name}`, { reason: feedUrl.reason, feedHref, baseURL });
+    return makeInputError(feedUrl.reason, fieldName);
+  }
+
+  const logData = {};
+  const responseData: CheckFeedUrlResponseData = { feedUrl: feedUrl.toString() };
+
+  return makeSuccess('OK', logData, responseData);
+};
+
+export function getFeedHref(html: string, parseFn = parse): Result<string> {
+  try {
+    const dom = parseFn(html.toLowerCase());
+
+    const rssLinkTypes = ['application/atom+xml', 'application/rss+xml'];
+    const rssLinkSelectors = rssLinkTypes.map((type) => si`link[type="${type}"]`).join(',');
+    const link = dom.querySelector(rssLinkSelectors);
+
+    if (!link) {
+      return makeErr('Feed <link> not found');
+    }
+
+    const linkHref = link.getAttribute('href')?.trim();
+
+    if (!linkHref) {
+      return makeErr('Feed <link> has no "ref"');
+    }
+
+    return linkHref;
+  } catch (error) {
+    return makeErr(si`Failed to parse HTML: ${getErrorMessage(error)}`);
+  }
+}
+
+function makeCheckFeedUrlRequest(data: unknown): Result<CheckFeedUrlRequest> {
+  return makeValues<CheckFeedUrlRequest>(data, {
+    blogUrl: makeBlogUrl,
+  });
+}
+
+export function makeBlogUrl(value: string, fieldName?: string): Result<URL> {
+  if (!(value.startsWith('http://') || value.startsWith('https://'))) {
+    value = 'https://' + value;
+  }
+
+  const url = makeHttpUrl(value, undefined, fieldName);
+  const isIp = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
+
+  if (isErr(url)) {
+    return url;
+  }
+
+  if (url.hostname === 'localhost' || isIp.test(url.host)) {
+    return makeErr('Please use a domain name');
+  }
+
+  return url;
+}

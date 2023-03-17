@@ -20,6 +20,7 @@ import { deauthentication } from './deauthentication';
 import {
   addFeedSubscribers,
   addNewFeed,
+  checkFeedUrl,
   deleteFeed,
   deleteFeedSubscribers,
   editFeed,
@@ -74,6 +75,7 @@ async function main() {
   router.post(ApiPath.addNewFeed, makeAppRequestHandler(addNewFeed, app));
   router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
+  router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

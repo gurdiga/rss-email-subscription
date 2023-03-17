@@ -27,6 +27,7 @@ export enum ApiPath {
   requestAccountEmailChange = '/account/request-change-email',
   confirmAccountEmailChange = '/account/confirm-change-email',
   requestAccountPasswordChange = '/account/request-change-password',
+  checkFeedUrl = '/check-feed-url',
 }
 
 export function getFullApiPath(path: ApiPath, params: Record<string, string> = {}): string {

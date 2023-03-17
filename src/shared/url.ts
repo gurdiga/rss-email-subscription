@@ -5,6 +5,10 @@ export const maxUrlLength = 256;
 const valuidProtocols = ['http:', 'https:'];
 
 export function makeHttpUrl(value: string, baseURL?: string | URL, fieldName = 'url'): Result<URL> {
+  if (!value) {
+    return makeErr('Missing value', fieldName);
+  }
+
   try {
     const url = new URL(value, baseURL);
 

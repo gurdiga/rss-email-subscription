@@ -1,5 +1,4 @@
-import * as https from 'node:https';
-import * as http from 'node:http';
+import { http, https } from 'follow-redirects';
 
 type MyHeaders = Map<string, string | undefined>;
 

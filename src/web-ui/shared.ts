@@ -377,3 +377,7 @@ export function isAuthenticated(): boolean {
 export function onClick(element: HTMLElement, f: (event: Event) => void) {
   element.addEventListener('click', f);
 }
+
+export function onInput(element: HTMLInputElement, f: (event: Event) => void) {
+  element.addEventListener('input', f);
+}
