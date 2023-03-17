@@ -9,7 +9,7 @@ import {
   feedListBreadcrumbsLink,
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
-import { requireQueryParams, displayInitError, requireUiElements, onClick } from './shared';
+import { displayInitError, requireQueryParams, requireUiElements } from './shared';
 
 function main() {
   const queryStringParams = requireQueryParams<FeedSubscribeFormParams>({
@@ -45,11 +45,6 @@ function main() {
     si`<script res-subscription-form data-feed-id="${feedId.value}"` +
     si` src="${location.origin}/web-ui-scripts/web-ui/subscription-form.js">` +
     si`</script>`;
-
-  onClick(scriptContainer, () => {
-    scriptContainer.select();
-    document.execCommand('copy');
-  });
 
   displayBreadcrumbs(uiElements, [
     feedListBreadcrumbsLink,
