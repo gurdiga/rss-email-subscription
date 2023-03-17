@@ -354,13 +354,16 @@ RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 # cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
-	@SOURCE=$${DATA_DIR_ROOT:-.tmp/docker-data}
+	@SOURCE_DIR=$${DATA_DIR_ROOT:-.tmp/docker-data}
+	ARCHIVE_FILE=./data.tgz
 	DESTINATION="gdrive-res:/RES-backups/`date +%F-%H-%M-%S`"
+
+	tar -czf $$ARCHIVE_FILE $$SOURCE_DIR
 
 	rclone \
 		--stats=0 \
 		--verbose \
-		copy $$SOURCE $$DESTINATION \
+		copy $$ARCHIVE_FILE $$DESTINATION \
 		--exclude=postfix/** \
 		--exclude=sessions/** \
 		2>&1 |
@@ -370,8 +373,12 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		echo ""
 		echo "$$DESTINATION"
 		echo ""
+		du -sh $$SOURCE_DIR $$ARCHIVE_FILE
+		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
+	rm $$ARCHIVE_FILE
 
 backup-purge:
 	@rclone lsf gdrive-res:RES-backups |
