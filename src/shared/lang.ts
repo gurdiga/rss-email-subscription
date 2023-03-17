@@ -75,7 +75,7 @@ export function attempt<F extends AnyFunction>(f: F): Result<ReturnType<F>> {
 /**
  * This is me trying to shoehorn the try/catch construct into railway programming.
  */
-type AnyAsyncFunction = (...args: unknown[]) => Promise<any>;
+export type AnyAsyncFunction = (...args: unknown[]) => Promise<any>;
 
 export async function asyncAttempt<F extends AnyAsyncFunction>(f: F): Promise<Result<ReturnType<F>>> {
   try {
