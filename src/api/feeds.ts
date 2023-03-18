@@ -661,7 +661,11 @@ export function makeBlogUrl(value: string, fieldName?: string): Result<URL> {
     return url;
   }
 
-  if (url.hostname === 'localhost' || isIp.test(url.host)) {
+  if (url.hostname === 'localhost') {
+    return makeErr('No messing around');
+  }
+
+  if (isIp.test(url.host)) {
     return makeErr('Please use a domain name');
   }
 

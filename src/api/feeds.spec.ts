@@ -80,7 +80,7 @@ describe(makeBlogUrl.name, () => {
   });
 
   it('does not accept IPs and localhost', () => {
-    expect(makeBlogUrl('localhost')).to.deep.equal(makeErr('Please use a domain name'));
+    expect(makeBlogUrl('localhost')).to.deep.equal(makeErr('No messing around'));
     expect(makeBlogUrl('https://95.65.96.65')).to.deep.equal(makeErr('Please use a domain name'));
   });
 });
