@@ -578,7 +578,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const request = makeCheckFeedUrlRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning(si`Failed to ${makeCheckFeedUrlRequest.name}`, { reason: request.reason });
+    logWarning(si`Failed to ${makeCheckFeedUrlRequest.name}`, { reason: request.reason, feedUrl: reqBody[fieldName] });
     return makeInputError(request.reason, fieldName);
   }
 
