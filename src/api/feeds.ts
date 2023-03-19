@@ -628,7 +628,7 @@ export function getFeedHref(html: string, parseFn = parse): Result<string> {
     const link = dom.querySelector(rssLinkSelectors);
 
     if (!link) {
-      return makeErr('Feed <link> not found');
+      return makeErr('RSS feed not found');
     }
 
     const linkHref = link.getAttribute('href')?.trim();

@@ -41,7 +41,7 @@ describe(getFeedHref.name, () => {
   it('returns an Err when no <link> found', () => {
     const html = '<html>Valid HTML!</html>';
 
-    expect(getFeedHref(html)).to.deep.equal(makeErr('Feed <link> not found'));
+    expect(getFeedHref(html)).to.deep.equal(makeErr('RSS feed not found'));
   });
 
   it('returns an Err when <link> "ref" is empty or missing', () => {
