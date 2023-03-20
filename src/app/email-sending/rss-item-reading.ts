@@ -50,7 +50,7 @@ export function readStoredRssItems(
   const fileNameFormat = new RegExp(si`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const rssItems = fileNamesResult
     .filter((fileName) => fileNameFormat.test(fileName))
-    // ASSUMPTION: storage.loadItem() never fails here
+    // ASSUMPTION: storage.loadItem() never throws here
     .map((fileName) => [fileName, storage.loadItem(makePath(storageKey, fileName))])
     .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 

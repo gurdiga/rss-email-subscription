@@ -1,4 +1,3 @@
-import { sortBy } from '../shared/array-utils';
 import { getTypeName, hasKey, hasKind, isString, makeErr, makeValues, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
@@ -154,16 +153,13 @@ export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
 type UiEmailList = string[];
 
 export function makeUiEmailList(emails: HashedEmail[]): UiEmailList {
-  return emails
-    .filter((x) => x.isConfirmed)
-    .map((x) => x.emailAddress.value)
-    .sort(byDomainAndThenByLocalPart);
+  return (
+    emails
+      // prettier: keep these stacked
+      .filter((x) => x.isConfirmed)
+      .map((x) => x.emailAddress.value)
+  );
 }
-
-export const byDomainAndThenByLocalPart = sortBy((x: string) => {
-  const [localPart, domain] = x.split('@');
-  return [domain, localPart].join('');
-});
 
 export interface LoadEmailsRequest {
   feedId: FeedId;

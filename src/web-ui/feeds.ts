@@ -2,7 +2,7 @@ import { LoadFeedsResponseData, UiFeedListItem } from '../domain/feed';
 import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiPath } from '../domain/api-path';
 import { isAppError, isInputError } from '../shared/api-response';
-import { isEmpty } from '../shared/array-utils';
+import { isEmpty, sortBy } from '../shared/array-utils';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
@@ -71,7 +71,7 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
     ? { preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!' }
     : {
         preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
-        linkData: feedList.map(makeLinkData).sort((a, b) => (a.text > b.text ? 1 : -1)),
+        linkData: feedList.map(makeLinkData).sort(sortBy((x) => x.text)),
       };
 }
 

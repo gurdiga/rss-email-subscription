@@ -11,3 +11,10 @@ export interface HashedEmail {
   saltedHash: EmailHash;
   isConfirmed: boolean;
 }
+
+export function domainAndLocalPart(email: string | HashedEmail): string {
+  const emailString = typeof email === 'string' ? email : email.emailAddress.value;
+  const [localPart, domain] = emailString.split('@');
+
+  return [domain, localPart].join('');
+}

@@ -1,7 +1,7 @@
 import { FeedHashingSalt } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
 import { getFeedStorageKey } from '../../domain/feed-storage';
-import { filterUniqBy } from '../../shared/array-utils';
+import { filterUniqBy, sortBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../domain/io-isolation';
 import { getErrorMessage, getTypeName, hasKind, isErr, isNonEmptyString, isObject } from '../../shared/lang';
@@ -10,7 +10,7 @@ import { AppStorage } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';
-import { EmailAddress, EmailHash, HashedEmail } from '../../domain/email-address';
+import { domainAndLocalPart, EmailAddress, EmailHash, HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress, isEmailAddress } from '../../domain/email-address-making';
 
 export interface EmailList {
@@ -192,7 +192,7 @@ export function storeEmails(
 ): Result<void> {
   const emailIndex: EmailIndex = {};
 
-  hashedEmails.forEach((e) => {
+  hashedEmails.sort(sortBy(domainAndLocalPart)).forEach((e) => {
     emailIndex[e.saltedHash] = makeEmailInformation(e.emailAddress, e.isConfirmed);
   });
 

@@ -23,7 +23,6 @@ import {
   AddEmailsResponse,
   AddNewFeedRequestData,
   AddNewFeedResponseData,
-  byDomainAndThenByLocalPart,
   DeleteEmailsRequest,
   DeleteEmailsResponse,
   DeleteFeedRequestData,
@@ -51,12 +50,13 @@ import {
 import cookie from 'cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { getFullApiPath, ApiPath } from './src/domain/api-path';
-import { EmailAddress } from './src/domain/email-address';
+import { domainAndLocalPart, EmailAddress } from './src/domain/email-address';
 import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
 import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
 import { sessionCookieMaxage } from './src/api/session';
 import { hash } from './src/shared/crypto';
 import { isErr } from './src/shared/lang';
+import { sortBy } from './src/shared/array-utils';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -317,7 +317,7 @@ describe('API', () => {
             kind: 'Success',
             message: 'Added 3 subscribers',
             responseData: {
-              currentEmails: [...emailsToAdd].sort(byDomainAndThenByLocalPart),
+              currentEmails: [...emailsToAdd].sort(sortBy(domainAndLocalPart)),
               newEmailsCount: emailsToAdd.length,
             },
           };
