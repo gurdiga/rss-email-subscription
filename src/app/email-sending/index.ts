@@ -1,18 +1,19 @@
-import { isEmpty, isNotEmpty } from '../../shared/array-utils';
-import { isErr } from '../../shared/lang';
-import { loadStoredEmails, makeFullEmailAddress } from './emails';
-import { makeEmailAddress } from '../../domain/email-address-making';
-import { readStoredRssItems } from './rss-item-reading';
-import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
-import { makeCustomLoggers } from '../../shared/logging';
-import { deleteItem } from './item-cleanup';
-import { requireEnv } from '../../shared/env';
-import { EmailDeliveryEnv } from './email-delivery';
-import { Feed } from '../../domain/feed';
-import { isFeedNotFound } from '../../domain/feed-storage';
-import { AppStorage } from '../../domain/storage';
 import { AccountId } from '../../domain/account';
+import { makeEmailAddress } from '../../domain/email-address-making';
+import { Feed, SendingReport } from '../../domain/feed';
+import { FeedId } from '../../domain/feed-id';
+import { getFeedLastSendingReportStorageKey, isFeedNotFound } from '../../domain/feed-storage';
+import { AppStorage } from '../../domain/storage';
+import { isEmpty, isNotEmpty } from '../../shared/array-utils';
+import { requireEnv } from '../../shared/env';
+import { isErr } from '../../shared/lang';
+import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
+import { EmailDeliveryEnv } from './email-delivery';
+import { loadStoredEmails, makeFullEmailAddress } from './emails';
+import { deleteItem } from './item-cleanup';
+import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
+import { readStoredRssItems } from './rss-item-reading';
 
 export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'email-sending', feedId: feed.id.value });
@@ -73,7 +74,7 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
   }
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
-  const report = {
+  const report: SendingReport = {
     newItems: validItems.length,
     subscribers: confirmedEmails.length,
     sentExpected: validItems.length * confirmedEmails.length,
@@ -81,7 +82,10 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
     failed: 0,
   };
 
-  logInfo('Sending new items', { itemCount: validItems.length, emailCount: confirmedEmails.length });
+  logInfo('Sending new items', {
+    itemCount: validItems.length,
+    emailCount: confirmedEmails.length,
+  });
 
   for (const storedItem of validItems) {
     for (const hashedEmail of confirmedEmails) {
@@ -113,5 +117,17 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   logInfo('Sending report', { report });
 
+  const storeReportResult = storeSendingReport(storage, report, accountId, feed.id);
+
+  if (isErr(storeReportResult)) {
+    logError(si`Failed to ${storeSendingReport.name}`, { reason: storeReportResult.reason });
+  }
+
   return 0;
+}
+
+function storeSendingReport(storage: AppStorage, report: SendingReport, accountId: AccountId, feedId: FeedId) {
+  const storageKey = getFeedLastSendingReportStorageKey(accountId, feedId);
+
+  return storage.storeItem(storageKey, report);
 }

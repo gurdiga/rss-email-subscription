@@ -194,3 +194,11 @@ export type CheckFeedUrlRequestData = Record<keyof CheckFeedUrlRequest, string>;
 export interface CheckFeedUrlResponseData {
   feedUrl: string;
 }
+
+export interface SendingReport {
+  newItems: number;
+  subscribers: number;
+  sentExpected: number;
+  sent: number;
+  failed: number;
+}
