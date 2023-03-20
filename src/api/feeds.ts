@@ -399,8 +399,6 @@ function loadLastSendingReport(
     return makeErr(si`Failed to ${storage.loadItem.name}: ${data.reason}`);
   }
 
-  console.log({ data });
-
   const report = makeSendingReport(data);
 
   if (isErr(report)) {
