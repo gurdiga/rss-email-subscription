@@ -264,7 +264,6 @@ describe('API', () => {
             url: 'https://api-test.com/rss.xml',
             email: 'api-test-feed@localhost.feedsubscription.com',
             replyTo: 'feed-replyto@api-test.com',
-            subscriberCount: 0,
             status: FeedStatus.AwaitingReview,
           });
 
