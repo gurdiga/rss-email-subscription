@@ -12,7 +12,6 @@ describe(makeUiData.name, () => {
       url: 'https://test.com/just-add-light/feed.xml',
       email: 'just-add-light@test.com',
       replyTo: 'reply-to@test.com',
-      subscriberCount: 42,
       status: FeedStatus.AwaitingReview,
     };
 
@@ -23,7 +22,6 @@ describe(makeUiData.name, () => {
         { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
         { label: 'Status:', value: FeedStatus.AwaitingReview, name: 'status' },
-        { label: 'Subscriber count:', value: '42', name: 'subscriberCount' },
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',
       manageSubscribersLinkHref: '/user/manage-feed-subscribers.html?id=just-add-light',

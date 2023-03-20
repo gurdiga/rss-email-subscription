@@ -1,5 +1,11 @@
 import { ApiPath } from '../domain/api-path';
-import { FeedManageScreenResponse, FeedManageScreenRequestData, DeleteFeedRequestData, UiFeed } from '../domain/feed';
+import {
+  FeedManageScreenResponse,
+  FeedManageScreenRequestData,
+  DeleteFeedRequestData,
+  UiFeed,
+  SendingReport,
+} from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
   FeedEditParams,
@@ -145,28 +151,52 @@ function displayFeedAttributeList(
 ): void {
   const { feedAttributeList, editLink, subscribeFormLink } = uiElements;
   const uiData = makeUiData(response, feedId);
-  const feedAttributeElements = uiData.feedAttributes.flatMap((feedAttribute) => {
-    const [dtElement, ddElement] = makeFeedAttributeElement(feedAttribute);
 
-    if (feedAttribute.name === 'subscriberCount') {
-      addManageSubscribersLink(ddElement, uiData.manageSubscribersLinkHref);
-    }
+  const feedAttributeElements = uiData.feedAttributes.flatMap(makeFeedAttributeElement);
+  const subscriberCountElements = makeSubscriberCountField(response.subscriberCount, uiData.manageSubscribersLinkHref);
+  const sendingReportElements = makeSendingReportField(response.lastSendingReport);
 
-    return [dtElement, ddElement];
-  });
-
-  feedAttributeList.append(...feedAttributeElements);
+  feedAttributeList.append(...feedAttributeElements, ...subscriberCountElements, ...sendingReportElements);
   unhideElement(feedAttributeList);
 
   editLink.href = uiData.editLinkHref;
   subscribeFormLink.href = uiData.subscribeFormLink;
 }
 
-function addManageSubscribersLink(ddElement: HTMLElement, href: string): void {
-  const manageSubscribersLink = createElement('a', 'Manage subscribers', { href });
-  const separator = createElement('span', '•', { class: 'res-subscriber-count-separator' });
+function makeSendingReportField(report?: SendingReport): [HTMLElement, HTMLElement] | [] {
+  if (!report) {
+    return [];
+  }
+
+  const reportDetails = [
+    si`New items: ${report.newItems}`,
+    si`Sent: ${report.sent}`,
+    si`Failed: ${report.failed}`,
+    si`Pending: ${0}`,
+    si`Rejected: ${0}`,
+  ].join(', ');
+
+  const dtElement = createElement('dt', 'Last sending report', { class: 'res-feed-attribute-label' });
+  const ddElement = createElement('dd', reportDetails, { class: 'res-feed-attribute-value' });
+
+  const manageSubscribersLink = createElement('a', 'Reports', { href: '#' });
+  const separator = createElement('hr', '', { class: 'res-subscriber-count-separator' });
 
   ddElement.append(separator, manageSubscribersLink);
+
+  return [dtElement, ddElement];
+}
+
+function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLElement, HTMLElement] {
+  const dtElement = createElement('dt', 'Subscriber count', { class: 'res-feed-attribute-label' });
+  const ddElement = createElement('dd', subscriberCount.toString(), { class: 'res-feed-attribute-value' });
+
+  const manageSubscribersLink = createElement('a', 'Manage subscribers', { href });
+  const separator = createElement('hr', '', { class: 'res-subscriber-count-separator' });
+
+  ddElement.append(separator, manageSubscribersLink);
+
+  return [dtElement, ddElement];
 }
 
 function makeFeedAttributeElement(feedAttribute: FeedAttribute): [HTMLElement, HTMLElement] {
@@ -196,7 +226,6 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Email:', value: uiFeed.email, name: 'email' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
     { label: 'Status:', value: uiFeed.status, name: 'status' },
-    { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
   ];
 
   const editLinkHref = makePagePathWithParams<FeedEditParams>(PagePath.feedEdit, { id: feedId.value });
