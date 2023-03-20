@@ -67,7 +67,6 @@ export interface UiFeed {
   url: string;
   email: string;
   replyTo: string;
-  subscriberCount: number;
   status: FeedStatus;
 }
 
@@ -97,14 +96,13 @@ export function makeFeedStatus(value: unknown, field = 'status'): Result<FeedSta
 
 export type LoadFeedsResponseData = UiFeedListItem[];
 
-export function makeUiFeed(feed: Feed, domain: string, subscriberCount: number): UiFeed {
+export function makeUiFeed(feed: Feed, domain: string): UiFeed {
   return {
     id: feed.id.value,
     displayName: feed.displayName,
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domain}`,
     replyTo: feed.replyTo.value,
-    subscriberCount,
     status: feed.status,
   };
 }
