@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getFeedStorageKey } from '../../domain/feed-storage';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../domain/storage';
 import { makeErr } from '../../shared/lang';
@@ -13,7 +13,7 @@ describe('Last post timestamp', () => {
   const aGuid = 'some-GUID-string';
   const feedId = makeTestFeedId();
   const accountId = makeTestAccountId();
-  const storageKey = makePath(getFeedStorageKey(accountId, feedId), 'lastPostMetadata.json');
+  const storageKey = makePath(getFeedRootStorageKey(accountId, feedId), 'lastPostMetadata.json');
 
   describe(getLastPostMetadata.name, () => {
     it('returns the Date and GUID recorded in lastPostMetadata.json in dataDir', () => {

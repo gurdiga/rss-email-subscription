@@ -33,16 +33,16 @@ export function isFeedNotFound(value: unknown): value is FeedNotFound {
   return hasKind(value, 'FeedNotFound');
 }
 
-export function getFeedRootStorageKey(accountId: AccountId) {
+export function getFeedsRootStorageKey(accountId: AccountId) {
   return makePath(accountsStorageKey, accountId.value, 'feeds');
 }
 
-export function getFeedStorageKey(accountId: AccountId, feedId: FeedId) {
-  return makePath(getFeedRootStorageKey(accountId), feedId.value);
+export function getFeedRootStorageKey(accountId: AccountId, feedId: FeedId) {
+  return makePath(getFeedsRootStorageKey(accountId), feedId.value);
 }
 
 export function getFeedJsonStorageKey(accountId: AccountId, feedId: FeedId) {
-  return makePath(getFeedStorageKey(accountId, feedId), 'feed.json');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'feed.json');
 }
 
 export interface FeedExistsResult {
@@ -184,8 +184,8 @@ export function loadFeedsByAccountId(
     feedNotFoundIds: [],
   };
 
-  const feedRootStorageKey = getFeedRootStorageKey(accountId);
-  const hasAnyFeeds = storage.hasItem(getFeedRootStorageKey(accountId));
+  const feedRootStorageKey = getFeedsRootStorageKey(accountId);
+  const hasAnyFeeds = storage.hasItem(getFeedsRootStorageKey(accountId));
 
   if (isErr(hasAnyFeeds)) {
     return makeErr(si`Failed to check for feeds: ${hasAnyFeeds.reason}`);
@@ -268,8 +268,8 @@ export function applyEditFeedRequest(
     return storeFeedResult;
   }
 
-  const oldStorageKey = getFeedStorageKey(accountId, editFeedRequest.initialId);
-  const newStorageKey = getFeedStorageKey(accountId, editFeedRequest.id);
+  const oldStorageKey = getFeedRootStorageKey(accountId, editFeedRequest.initialId);
+  const newStorageKey = getFeedRootStorageKey(accountId, editFeedRequest.id);
 
   if (oldStorageKey === newStorageKey) {
     return;

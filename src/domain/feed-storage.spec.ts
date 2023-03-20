@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { EditFeedRequest, Feed, FeedStatus } from './feed';
 import { applyEditFeedRequest, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
-import { getFeedStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
+import { getFeedRootStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
 import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
 import { makeFeedId } from './feed-id';
 import { Err, isErr, makeErr } from '../shared/lang';
@@ -328,7 +328,10 @@ describe(applyEditFeedRequest.name, () => {
     expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
 
     expect(renameItem.calls, 'renames the storage item based on the new feed ID').to.deep.equal([
-      [getFeedStorageKey(accountId, editFeedRequest.initialId), getFeedStorageKey(accountId, editFeedRequest.id)],
+      [
+        getFeedRootStorageKey(accountId, editFeedRequest.initialId),
+        getFeedRootStorageKey(accountId, editFeedRequest.id),
+      ],
     ]);
   });
 

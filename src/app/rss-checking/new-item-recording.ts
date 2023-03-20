@@ -3,7 +3,7 @@ import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../domain/storage';
 import { FeedId } from '../../domain/feed-id';
-import { getFeedStorageKey } from '../../domain/feed-storage';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
@@ -45,5 +45,5 @@ export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
 }
 
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedStorageKey(accountId, feedId), 'inbox');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'inbox');
 }

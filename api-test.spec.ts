@@ -35,7 +35,12 @@ import {
 } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import { MakeFeedInput } from './src/domain/feed-making';
-import { FeedStoredData, findFeedAccountId, getFeedJsonStorageKey, getFeedStorageKey } from './src/domain/feed-storage';
+import {
+  FeedStoredData,
+  findFeedAccountId,
+  getFeedJsonStorageKey,
+  getFeedRootStorageKey,
+} from './src/domain/feed-storage';
 import { readFile } from './src/domain/io-isolation';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { makePath } from './src/shared/path-utils';
@@ -493,7 +498,7 @@ describe('API', () => {
     }
 
     function loadStoredFeedSubscriberEmails(accountId: AccountId, feedId: FeedId) {
-      return loadJSON(makePath(getFeedStorageKey(accountId, feedId), 'emails.json'));
+      return loadJSON(makePath(getFeedRootStorageKey(accountId, feedId), 'emails.json'));
     }
   }).timeout(5000);
 

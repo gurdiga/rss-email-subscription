@@ -1,6 +1,6 @@
 import { FeedHashingSalt } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
-import { getFeedStorageKey } from '../../domain/feed-storage';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { filterUniqBy, sortBy } from '../../shared/array-utils';
 import { hash } from '../../shared/crypto';
 import { readFile, ReadFileFn } from '../../domain/io-isolation';
@@ -102,7 +102,7 @@ function isHashedEmail(value: unknown): value is HashedEmail {
 }
 
 export function getEmailsStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedStorageKey(accountId, feedId), 'emails.json');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'emails.json');
 }
 
 export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<StoredEmails> {

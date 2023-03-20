@@ -1,5 +1,5 @@
 import { FeedId } from '../../domain/feed-id';
-import { getFeedStorageKey } from '../../domain/feed-storage';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { isErr, makeErr, Result } from '../../shared/lang';
@@ -67,5 +67,5 @@ export function recordLastPostMetadata(
 }
 
 function getStorageKey(accountId: AccountId, feedId: FeedId) {
-  return makePath(getFeedStorageKey(accountId, feedId), 'lastPostMetadata.json');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'lastPostMetadata.json');
 }

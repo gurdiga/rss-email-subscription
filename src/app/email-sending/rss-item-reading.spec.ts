@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { basename } from 'node:path';
-import { getFeedStorageKey } from '../../domain/feed-storage';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
 import { AppStorage } from '../../domain/storage';
@@ -68,7 +68,7 @@ describe(readStoredRssItems.name, () => {
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
     expect((storage.listItems as Stub).calls).to.deep.equal([
-      [makePath(getFeedStorageKey(accountId, feedId), 'inbox')],
+      [makePath(getFeedRootStorageKey(accountId, feedId), 'inbox')],
     ]);
   });
 
@@ -121,7 +121,7 @@ describe(readStoredRssItems.name, () => {
     const storage = makeTestStorage({ listItems: () => error });
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(
-      makeErr(si`Failed to list files in ${getFeedStorageKey(accountId, feedId)}/inbox: ${error.reason}`)
+      makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/inbox: ${error.reason}`)
     );
   });
 
