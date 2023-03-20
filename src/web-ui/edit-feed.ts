@@ -3,7 +3,7 @@ import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { asyncAttempt, isErr } from '../shared/lang';
+import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   BreadcrumbsUiElements,
@@ -21,7 +21,6 @@ import {
   displayInitError,
   displayValidationError,
   HttpMethod,
-  loadUiFeed,
   navigateTo,
   onSubmit,
   requireQueryParams,
@@ -82,6 +81,26 @@ async function main() {
     makeFeedManageBreadcrumbsLink(uiFeed.displayName, feedId),
     { label: uiElements.pageTitle.textContent! },
   ]);
+}
+
+export async function loadUiFeed<T = UiFeed>(feedId: FeedId): Promise<Result<T>> {
+  const response = await asyncAttempt(() =>
+    sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId: feedId.value })
+  );
+
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed');
+  }
+
+  if (isAppError(response)) {
+    return makeErr(response.message);
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed');
+  }
+
+  return response.responseData!;
 }
 
 function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void {

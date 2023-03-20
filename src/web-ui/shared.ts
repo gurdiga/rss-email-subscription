@@ -1,7 +1,5 @@
 import { navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
-import { UiFeed } from '../domain/feed';
-import { FeedId } from '../domain/feed-id';
 import { PagePath } from '../domain/page-path';
 import {
   ApiResponse,
@@ -11,7 +9,7 @@ import {
   isAppError,
   isInputError,
 } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -324,26 +322,6 @@ export function navigateTo(url: string, delay = 0): void {
   setTimeout(() => {
     location.href = url;
   }, delay);
-}
-
-export async function loadUiFeed<T = UiFeed>(feedId: FeedId): Promise<Result<T>> {
-  const response = await asyncAttempt(() =>
-    sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId: feedId.value })
-  );
-
-  if (isErr(response)) {
-    return makeErr('Failed to load the feed');
-  }
-
-  if (isAppError(response)) {
-    return makeErr(response.message);
-  }
-
-  if (isInputError(response)) {
-    return makeErr('Input error when loading the feed');
-  }
-
-  return response.responseData!;
 }
 
 export interface UiFeedFormFields {
