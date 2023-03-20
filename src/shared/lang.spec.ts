@@ -10,6 +10,7 @@ import {
   isObject,
   makeErr,
   MakeFns,
+  makeNumber,
   makeValues,
   readStringArray,
 } from './lang';
@@ -191,5 +192,39 @@ describe(makeValues.name, () => {
     const result = makeValues<Values>(requestData, makeFns);
 
     expect(result).to.deep.equal(makeErr('Email is syntactically incorrect: "not-an-email"', 'email'));
+  });
+
+  it('accepts 0 as present value', () => {
+    interface InputData {
+      count: unknown;
+    }
+    const requestData: InputData = {
+      count: 0,
+    };
+
+    interface OutputData {
+      count: number;
+    }
+
+    const result = makeValues<OutputData>(requestData, { count: makeNumber });
+
+    expect(result).to.deep.equal({ count: 0 });
+  });
+
+  it('says that "" is missing', () => {
+    interface InputData {
+      text: string;
+    }
+    const requestData: InputData = {
+      text: '',
+    };
+
+    interface OutputData {
+      text: Password;
+    }
+
+    const result = makeValues<OutputData>(requestData, { text: makePassword });
+
+    expect(result).to.deep.equal(makeErr('Missing value', 'text'));
   });
 });

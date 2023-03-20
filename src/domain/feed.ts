@@ -217,4 +217,5 @@ export interface FeedManageScreenResponse {
   replyTo: string;
   status: FeedStatus;
   subscriberCount: number;
+  lastSendingReport: SendingReport | undefined;
 }

@@ -136,7 +136,7 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: MakeFns<T>): 
   for (const keyName in makeFns) {
     const unknownValue = (x as any)[keyName];
 
-    if (!unknownValue) {
+    if (unknownValue === '' || unknownValue === undefined || unknownValue === null) {
       return makeErr(si`Missing value`, keyName);
     }
 
@@ -150,4 +150,16 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: MakeFns<T>): 
   }
 
   return values;
+}
+
+export function makeNumber(value: unknown, field?: string): Result<number> {
+  if (typeof value !== 'number') {
+    return makeErr('Value is not a number', field);
+  }
+
+  if (isNaN(value)) {
+    return makeErr('Value is NaN', field);
+  }
+
+  return value;
 }

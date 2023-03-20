@@ -31,6 +31,7 @@ import {
   makeUiEmailList,
   makeUiFeed,
   makeUiFeedListItem,
+  SendingReport,
 } from '../domain/feed';
 import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 import { FeedId, makeFeedId } from '../domain/feed-id';
@@ -38,6 +39,7 @@ import { makeFeed, MakeFeedInput } from '../domain/feed-making';
 import {
   applyEditFeedRequest,
   feedExists,
+  getFeedLastSendingReportStorageKey,
   isFeedNotFound,
   loadFeed,
   loadFeedsByAccountId,
@@ -54,6 +56,7 @@ import {
   isErr,
   isString,
   makeErr,
+  makeNumber,
   makeValues,
   Result,
 } from '../shared/lang';
@@ -315,7 +318,7 @@ export const handleFeedManageScreen: AppRequestHandler = async function handleFe
   const response = makeFeedManageScreenResponse(request, session.accountId, storage, env);
 
   if (isErr(response)) {
-    logError(si`Faled to ${makeFeedManageScreenResponse.name}`, { reason: response.reason });
+    logError(si`Faled to ${makeFeedManageScreenResponse.name}`, { reason: response.reason, field: response.field });
     return makeAppError();
   }
 
@@ -356,6 +359,12 @@ function makeFeedManageScreenResponse(
   const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
   const domainName = env.DOMAIN_NAME;
 
+  const lastSendingReport = loadLastSendingReport(storage, accountId, feedId);
+
+  if (isErr(lastSendingReport)) {
+    return makeErr(si`Failed to ${loadLastSendingReport.name}: ${lastSendingReport.reason}`, lastSendingReport.field);
+  }
+
   return {
     id: feed.id.value,
     displayName: feed.displayName,
@@ -364,7 +373,51 @@ function makeFeedManageScreenResponse(
     replyTo: feed.replyTo.value,
     status: feed.status,
     subscriberCount,
+    lastSendingReport,
   };
+}
+
+function loadLastSendingReport(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId
+): Result<SendingReport | undefined> {
+  const storageKey = getFeedLastSendingReportStorageKey(accountId, feedId);
+  const dataExists = storage.hasItem(storageKey);
+
+  if (isErr(dataExists)) {
+    return makeErr(si`Failed to check ${storage.hasItem.name}: ${dataExists.reason}`);
+  }
+
+  if (dataExists === false) {
+    return undefined;
+  }
+
+  const data = storage.loadItem(storageKey);
+
+  if (isErr(data)) {
+    return makeErr(si`Failed to ${storage.loadItem.name}: ${data.reason}`);
+  }
+
+  console.log({ data });
+
+  const report = makeSendingReport(data);
+
+  if (isErr(report)) {
+    return makeErr(si`Failed to ${makeSendingReport.name}: ${report.reason}`, report.field);
+  }
+
+  return report;
+}
+
+function makeSendingReport(data: unknown): Result<SendingReport> {
+  return makeValues<SendingReport>(data, {
+    newItems: makeNumber,
+    subscribers: makeNumber,
+    sentExpected: makeNumber,
+    sent: makeNumber,
+    failed: makeNumber,
+  });
 }
 
 export const loadFeedById: AppRequestHandler = async function loadFeedById(
