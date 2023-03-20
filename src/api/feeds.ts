@@ -312,10 +312,10 @@ export const handleFeedManageScreen: AppRequestHandler = async function handleFe
     return makeInputError(request.reason, request.field);
   }
 
-  const response = loadFeedManageScreenResponse(request, session.accountId, storage, env);
+  const response = makeFeedManageScreenResponse(request, session.accountId, storage, env);
 
   if (isErr(response)) {
-    logError(si`Faled to ${loadFeedManageScreenResponse.name}`, { reason: response.reason });
+    logError(si`Faled to ${makeFeedManageScreenResponse.name}`, { reason: response.reason });
     return makeAppError();
   }
 
@@ -330,7 +330,7 @@ function makeFeedManageScreenRequest(data: unknown): Result<FeedManageScreenRequ
   });
 }
 
-function loadFeedManageScreenResponse(
+function makeFeedManageScreenResponse(
   request: FeedManageScreenRequest,
   accountId: AccountId,
   storage: AppStorage,
