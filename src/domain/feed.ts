@@ -202,3 +202,19 @@ export interface SendingReport {
   sent: number;
   failed: number;
 }
+
+export interface FeedManageScreenRequest {
+  feedId: FeedId;
+}
+
+export type FeedManageScreenRequestData = Record<keyof FeedManageScreenRequest, string>;
+
+export interface FeedManageScreenResponse {
+  id: string;
+  displayName: string;
+  url: string;
+  email: string;
+  replyTo: string;
+  status: FeedStatus;
+  subscriberCount: number;
+}

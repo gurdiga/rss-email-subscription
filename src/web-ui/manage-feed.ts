@@ -1,5 +1,5 @@
 import { ApiPath } from '../domain/api-path';
-import { DeleteFeedRequestData, UiFeed } from '../domain/feed';
+import { FeedManageScreenResponse, FeedManageScreenRequestData, DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
   FeedEditParams,
@@ -21,7 +21,6 @@ import { createElement } from './dom-isolation';
 import {
   displayInitError,
   HttpMethod,
-  loadUiFeed,
   navigateTo,
   onClick,
   requireQueryParams,
@@ -64,23 +63,42 @@ async function main() {
     return;
   }
 
-  const uiFeed = await loadUiFeed(feedId);
+  const response = await loadData(feedId);
 
   uiElements.spinner.remove();
 
-  if (isErr(uiFeed)) {
-    displayInitError(uiFeed.reason);
+  if (isErr(response)) {
+    displayInitError(response.reason);
     return;
   }
 
   unhideElement(uiElements.feedActions);
-  displayFeedAttributeList(uiFeed, uiElements, feedId);
-  bindDeleteButton(uiElements.deleteButton, uiFeed.displayName, feedId);
+  displayFeedAttributeList(response, uiElements, feedId);
+  bindDeleteButton(uiElements.deleteButton, response.displayName, feedId);
   displayBreadcrumbs(uiElements, [
     // prettier: keep these stacked
     feedListBreadcrumbsLink,
-    { label: uiFeed.displayName },
+    { label: response.displayName },
   ]);
+}
+
+export async function loadData<T = FeedManageScreenResponse>(feedId: FeedId): Promise<Result<T>> {
+  const request: FeedManageScreenRequestData = { feedId: feedId.value };
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.feedManageScreen, HttpMethod.GET, request));
+
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed');
+  }
+
+  if (isAppError(response)) {
+    return makeErr(response.message);
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed');
+  }
+
+  return response.responseData!;
 }
 
 function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: FeedId): void {
@@ -120,9 +138,13 @@ async function sendDeleteRequest(feedId: FeedId): Promise<Result<Success>> {
   return response;
 }
 
-function displayFeedAttributeList(uiFeed: UiFeed, uiElements: RequiredUiElements, feedId: FeedId): void {
+function displayFeedAttributeList(
+  response: FeedManageScreenResponse,
+  uiElements: RequiredUiElements,
+  feedId: FeedId
+): void {
   const { feedAttributeList, editLink, subscribeFormLink } = uiElements;
-  const uiData = makeUiData(uiFeed, feedId);
+  const uiData = makeUiData(response, feedId);
   const feedAttributeElements = uiData.feedAttributes.flatMap((feedAttribute) => {
     const [dtElement, ddElement] = makeFeedAttributeElement(feedAttribute);
 
@@ -173,8 +195,8 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'Email:', value: uiFeed.email, name: 'email' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
-    { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
     { label: 'Status:', value: uiFeed.status, name: 'status' },
+    { label: 'Subscriber count:', value: uiFeed.subscriberCount.toString(), name: 'subscriberCount' },
   ];
 
   const editLinkHref = makePagePathWithParams<FeedEditParams>(PagePath.feedEdit, { id: feedId.value });

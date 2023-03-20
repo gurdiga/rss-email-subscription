@@ -21,6 +21,8 @@ import {
   DeleteFeedRequest,
   EditFeedResponse,
   Feed,
+  FeedManageScreenRequest,
+  FeedManageScreenResponse,
   FeedStatus,
   isAddNewFeedRequestData,
   LoadEmailsResponse,
@@ -58,6 +60,7 @@ import {
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
+import { AppEnv } from './init-app';
 import { AppRequestHandler } from './request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
@@ -285,6 +288,84 @@ export const loadFeeds: AppRequestHandler = async function listFeeds(reqId, _req
 
   return makeSuccess('Feeds!', logData, responseData);
 };
+
+// TODO: Add api-test
+export const handleFeedManageScreen: AppRequestHandler = async function handleFeedManageScreen(
+  reqId,
+  _reqBody,
+  reqParams,
+  reqSession,
+  { storage, env }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: handleFeedManageScreen.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const request = makeFeedManageScreenRequest(reqParams);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeFeedManageScreenRequest.name}`, { reason: request.reason });
+    return makeInputError(request.reason, request.field);
+  }
+
+  const response = loadFeedManageScreenResponse(request, session.accountId, storage, env);
+
+  if (isErr(response)) {
+    logError(si`Faled to ${loadFeedManageScreenResponse.name}`, { reason: response.reason });
+    return makeAppError();
+  }
+
+  const logData = {};
+
+  return makeSuccess('Success', logData, response);
+};
+
+function makeFeedManageScreenRequest(data: unknown): Result<FeedManageScreenRequest> {
+  return makeValues<FeedManageScreenRequest>(data, {
+    feedId: makeFeedId,
+  });
+}
+
+function loadFeedManageScreenResponse(
+  request: FeedManageScreenRequest,
+  accountId: AccountId,
+  storage: AppStorage,
+  env: AppEnv
+): Result<FeedManageScreenResponse> {
+  const { feedId } = request;
+  const feed = loadFeed(accountId, feedId, storage);
+
+  if (isErr(feed)) {
+    return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
+  }
+
+  if (isFeedNotFound(feed)) {
+    return makeErr(si`Feed not found: ${feedId.value}`);
+  }
+
+  const storedEmails = loadStoredEmails(accountId, feedId, storage);
+
+  if (isErr(storedEmails)) {
+    return makeErr(si`Failed to ${loadStoredEmails.name}: ${storedEmails.reason}`);
+  }
+
+  const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
+  const domainName = env.DOMAIN_NAME;
+
+  return {
+    id: feed.id.value,
+    displayName: feed.displayName,
+    url: feed.url.toString(),
+    email: si`${feed.id.value}@${domainName}`,
+    replyTo: feed.replyTo.value,
+    status: feed.status,
+    subscriberCount,
+  };
+}
 
 export const loadFeedById: AppRequestHandler = async function loadFeedById(
   reqId,
