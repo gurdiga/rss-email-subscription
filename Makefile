@@ -354,31 +354,55 @@ RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 # cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
-	@SOURCE_DIR=$${DATA_DIR_ROOT:-.tmp/docker-data}
-	ARCHIVE_FILE=./data.tgz
-	DESTINATION="gdrive-res:/RES-backups/`date +%F-%H-%M-%S`"
+	@REMOTE="gdrive-res:/RES-backups"
+	DATA_DESTINATION="$$REMOTE/`date +%F-%H-%M-%S`"
+	DATA_ARCHIVE="./data.tgz"
+	DATA_DIR=".tmp/docker-data"
+	LOGS_DIR=".tmp/logs/feedsubscription"
+	LOGS_DESTINATION="$$REMOTE/logs"
 
-	tar -czf $$ARCHIVE_FILE $$SOURCE_DIR
+	function upload_data() {
+		echo ""
+		echo "--- upload_data ---"
+		echo ""
 
-	rclone \
-		--stats=0 \
-		--verbose \
-		copy $$ARCHIVE_FILE $$DESTINATION \
-		--exclude=postfix/** \
-		--exclude=sessions/** \
-		2>&1 |
+		tar -czf $$DATA_ARCHIVE $$DATA_DIR
+		du -sh $$DATA_DIR $$DATA_ARCHIVE
+
+		rclone \
+			--stats=0 \
+			--verbose \
+			copy $$DATA_ARCHIVE $$DATA_DESTINATION \
+			--exclude=postfix/** \
+			--exclude=sessions/**
+	}
+
+	function upload_logs() {
+		echo ""
+		echo "--- upload_logs ---"
+		echo ""
+
+		du -sh $$LOGS_DIR
+
+		rclone \
+			--stats=0 \
+			--verbose \
+			copy --max-age 24h --no-traverse $$LOGS_DIR $$LOGS_DESTINATION
+	}
+
+	{
+		time upload_data
+		time upload_logs
+	} 2>&1 |
 	cat <(
 		echo "Subject: RES backup"
 		echo "From: RES <backup@feedsubscription.com>"
 		echo ""
-		echo "$$DESTINATION"
-		echo ""
-		du -sh $$SOURCE_DIR $$ARCHIVE_FILE
-		echo ""
+		echo "$$DATA_DESTINATION"
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
-	rm $$ARCHIVE_FILE
+	rm $$DATA_ARCHIVE
 
 backup-purge:
 	@rclone lsf gdrive-res:RES-backups |
