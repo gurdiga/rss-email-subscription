@@ -461,8 +461,8 @@ delivery-reports:
 			echo "From: RES <delivery-report@feedsubscription.com>"
 			echo ""
 			cat
-		) \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		) |
+		if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	}
 
 	export -f send_report # to make it available to `ifne` below
@@ -482,12 +482,7 @@ delivery-reports:
 	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
 		generate_last_delivery_report $$account_id $$feed_id
 	done |
-	cat <( \
-		echo "Subject: RES delivery-reports"; \
-		echo "From: RES <delivery-reports@feedsubscription.com>"; \
-		echo; \
-	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	ifne bash -c send_report
 
 # cron @monthly
 prune-docker-images:
