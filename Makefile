@@ -454,10 +454,24 @@ sent-count:
 	jq -s 'map(.data.report.sent) | add' |
 	numfmt --grouping
 
-last-sending-reports:
-	@find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
+delivery-reports:
+	@function generate_last_delivery_report() {
+		local account_id=$$1
+		local feed_id=$$2
+
+		grep -P ".*\"message\":\"Sending report\".*\"feedId\":\"$$feed_id\"" .tmp/logs/feedsubscription/app.log |
+		head -1 |
+		while read -r _1 _2 _3 json; do
+			jq --argjson delivered_count 42 '.data.report | . |= .+ {delivered: $$delivered_count}' <<<"$$json"
+		done
+
+		exit 1
+	}
+
+	find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
 	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
-		echo $$account_id $$feed_id
+		# TODO: Replace the hard-coded feed_id below with $$feed_id
+		generate_last_delivery_report $$account_id justaddlightandstir
 	done
 
 # cron @monthly
