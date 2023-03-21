@@ -470,8 +470,7 @@ delivery-reports:
 
 	find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
 	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
-		# TODO: Replace the hard-coded feed_id below with $$feed_id
-		generate_last_delivery_report $$account_id justaddlightandstir
+		generate_last_delivery_report $$account_id $$feed_id
 	done
 
 # cron @monthly
