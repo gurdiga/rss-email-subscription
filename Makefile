@@ -455,6 +455,12 @@ sent-count:
 	jq -s 'map(.data.report.sent) | add' |
 	numfmt --grouping
 
+last-sending-reports:
+	@find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
+	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
+		echo $$account_id $$feed_id
+	done
+
 # cron @monthly
 prune-docker-images:
 	@docker image prune --force |

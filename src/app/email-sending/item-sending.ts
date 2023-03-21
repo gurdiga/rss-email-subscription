@@ -51,7 +51,11 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
         </p>
 
         <p style="font-size: smaller; text-align: center;">
-          <a href="${unsubscribeUrl.toString()}">Unsubscribe</a>
+          This email was sent with ❤️ by
+          <a href="${unsubscribeUrl.origin}">
+            <b><span stype="color: #0163ee;">Feed</span><span stype="color: black;">Subscription.com</span></b>
+          </a>.
+          If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
         </p>
       </footer>
     </div>`;
