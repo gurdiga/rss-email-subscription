@@ -455,7 +455,19 @@ sent-count:
 	numfmt --grouping
 
 delivery-reports:
-	@function generate_last_delivery_report() {
+	@function send_report() {
+		(
+			echo "Subject: RES delivery report"
+			echo "From: RES <delivery-report@feedsubscription.com>"
+			echo ""
+			cat
+		) \
+		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	}
+
+	export -f send_report
+
+	function generate_last_delivery_report() {
 		local account_id=$$1
 		local feed_id=$$2
 
@@ -464,14 +476,13 @@ delivery-reports:
 		while read -r _1 _2 _3 json; do
 			jq --argjson delivered_count 42 '.data.report | . |= .+ {delivered: $$delivered_count}' <<<"$$json"
 		done
-
-		exit 1
 	}
 
 	find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
 	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
 		generate_last_delivery_report $$account_id $$feed_id
-	done
+	done |
+	ifne bash -c send_report
 
 # cron @monthly
 prune-docker-images:
