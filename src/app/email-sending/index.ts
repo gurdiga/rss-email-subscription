@@ -104,7 +104,11 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
         logError(sendingResult.reason);
       } else {
         report.sent++;
-        logInfo('Delivery info', { itemTitle: storedItem.item.title, ...sendingResult });
+        logInfo('Delivery info', {
+          itemTitle: storedItem.item.title,
+          to: hashedEmail.emailAddress.value,
+          ...sendingResult,
+        });
       }
     }
 
