@@ -455,7 +455,9 @@ sent-count:
 	numfmt --grouping
 
 delivery-reports:
-	@function send_report() {
+	@source .env
+
+	function send_report() {
 		(
 			echo "Subject: RES delivery report"
 			echo "From: RES <delivery-report@feedsubscription.com>"
@@ -470,6 +472,15 @@ delivery-reports:
 	function generate_last_delivery_report() {
 		local account_id=$$1
 		local feed_id=$$2
+
+		echo "++ generate_last_delivery_report: $$account_id $$feed_id"
+
+		# ls -1 .tmp/logs/feedsubscription/app.log-* |
+		# sort -r | head -1 | cat <(echo .tmp/logs/feedsubscription/app.log) - |
+		# xargs zcat -f | grep 'Delivery info' | head -3 |
+		# while read -r _1 _2 _3 json; do jq .data.response <<<"$json"; done
+
+		# TODO: join -j 1 -o 1.1,1.2,1.3,2.3 <(sort -k2 file1) <(sort -k2 file2)
 
 		grep -P ".*\"message\":\"Sending report\".*\"feedId\":\"$$feed_id\"" .tmp/logs/feedsubscription/app.log |
 		head -1 |
