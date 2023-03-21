@@ -150,8 +150,7 @@ start-api: website app
 start-website: website start-api
 
 start-testblog:
-	@#quiet
-	echo 'Run this:'
+	@echo 'Run this:'
 	echo '  cd ~/tmp/testblog'
 	echo '  make start'
 
@@ -353,6 +352,7 @@ website:
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 # cron @daily
+
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@REMOTE="gdrive-res:/RES-backups"
 	DATA_DESTINATION="$$REMOTE/`date +%F-%H-%M-%S`"
@@ -447,8 +447,7 @@ init-data-dir:
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
 sent-count:
-	@quiet=true
-	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
+	@rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
 	gzcat -f .tmp/logs/feedsubscription/app.log* |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
