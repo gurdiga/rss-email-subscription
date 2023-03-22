@@ -50,8 +50,8 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
           Replying with “Hello!” or “Thank you!” works even better. 🙂
         </p>
 
-        <p style="font-size: smaller; text-align: center;">
-          This email was sent with ❤️ by
+        <p style="font-size: smaller;">
+          This email was sent by
           <a href="${unsubscribeUrl.origin}">
             <b><span style="color: #0163ee;">Feed</span><span style="color: black;">Subscription.com</span></b></a>.
           If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
