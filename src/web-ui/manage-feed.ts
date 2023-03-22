@@ -172,8 +172,8 @@ function makeSendingReportField(report?: SendingReport): [HTMLElement, HTMLEleme
     si`New items: ${report.newItems}`,
     si`Sent: ${report.sent}`,
     si`Failed: ${report.failed}`,
-    si`Pending: ${0}`,
-    si`Rejected: ${0}`,
+    si`Pending: (soon)`,
+    si`Rejected: (soon)`,
   ].join(', ');
 
   const dtElement = createElement('dt', 'Last sending report', { class: 'res-feed-attribute-label' });
