@@ -1,4 +1,4 @@
-ARG NODE_VERSION=16.19.0-alpine3.17
+ARG NODE_VERSION=16.19.1-alpine3.17
 
 ### --- build
 FROM node:${NODE_VERSION} as build
