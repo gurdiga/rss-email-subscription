@@ -109,11 +109,19 @@ smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
 app:
+	@function log_to() {
+		local log_file=$$1
+
+		ts '%Y-%m-%dT%T%z' |
+		tee --append "$$log_file"
+	}
+
 	docker buildx build \
 		--progress=plain \
 		--tag app \
 		-f docker-services/app/Dockerfile \
-		.
+		. |&
+	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
 logger:
 	docker buildx build \
