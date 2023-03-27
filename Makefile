@@ -359,8 +359,8 @@ website:
 
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
-# cron @daily
 
+# cron 50 23 * * * cd
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@REMOTE="gdrive-res:/RES-backups"
 	DATA_DESTINATION="$$REMOTE/`date +%F-%H-%M-%S`"
