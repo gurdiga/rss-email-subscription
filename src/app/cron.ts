@@ -26,7 +26,7 @@ function main() {
   }
 
   const dataDirRoot = env.DATA_DIR_ROOT;
-  const feedCheckingJob = startJob('0 * * * *', () => checkFeeds(dataDirRoot));
+  const feedCheckingJob = startJob('2 * * * *', () => checkFeeds(dataDirRoot));
   const errorReportingCheckJob = startJob('0 0 * * *', () => logError('Just checking error reporting'));
 
   process.on('SIGHUP', () => {
