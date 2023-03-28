@@ -131,6 +131,9 @@
     return createElement(
       'button',
       {
+        style: <CSSStyleDeclaration>{
+          margin: '0.25em 0',
+        },
         className: className || '',
       },
       buttonLabel || 'Submit'
