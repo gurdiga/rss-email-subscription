@@ -4,11 +4,14 @@ import { displayInitError, fillUiElements, requireUiElements } from './shared';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
+    freeTitle: '#free-title',
     freeMaxEmailsPerMonth: '#free-max-emails-per-month',
     freeMaxEmailsPerDay: '#free-max-emails-per-day',
+    ppuTitle: '#ppu-title',
     ppuMaxEmailsPerDay: '#ppu-max-emails-per-day',
     ppuMaxEmailsPerMonth: '#ppu-max-emails-per-month',
     ppuPricePerEmailCents: '#ppu-price-per-email-cents',
+    sdeTitle: '#sde-title',
   });
 
   if (isErr(uiElements)) {
@@ -20,6 +23,11 @@ async function main() {
 
   fillUiElements([
     {
+      element: uiElements.freeTitle,
+      propName: 'textContent',
+      value: Plans.free.title,
+    },
+    {
       element: uiElements.freeMaxEmailsPerDay,
       propName: 'textContent',
       value: formatNumber(Plans.free.maxEmailsPerDay),
@@ -28,6 +36,11 @@ async function main() {
       element: uiElements.freeMaxEmailsPerMonth,
       propName: 'textContent',
       value: formatNumber(Plans.free.maxEmailsPerMonth),
+    },
+    {
+      element: uiElements.ppuTitle,
+      propName: 'textContent',
+      value: Plans.ppu.title,
     },
     {
       element: uiElements.ppuPricePerEmailCents,
@@ -44,15 +57,23 @@ async function main() {
       propName: 'textContent',
       value: formatNumber(Plans.ppu.maxEmailsPerMonth),
     },
+    {
+      element: uiElements.sdeTitle,
+      propName: 'textContent',
+      value: Plans.sde.title,
+    },
   ]);
 }
 
 interface RequiredUiElements {
+  freeTitle: HTMLElement;
   freeMaxEmailsPerMonth: HTMLElement;
   freeMaxEmailsPerDay: HTMLElement;
+  ppuTitle: HTMLElement;
   ppuPricePerEmailCents: HTMLElement;
   ppuMaxEmailsPerMonth: HTMLElement;
   ppuMaxEmailsPerDay: HTMLElement;
+  sdeTitle: HTMLElement;
 }
 
 window && main();
