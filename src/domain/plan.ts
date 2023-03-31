@@ -7,10 +7,28 @@ export enum PlanId {
   'SDE' = 'sde',
 }
 
-export const PlanNames: Record<PlanId, string> = {
-  [PlanId.Free]: '❤️ Free',
-  [PlanId.PayPerUse]: '💪 Pay-Per-Use',
-  [PlanId.SDE]: '💙 SDE',
+interface Plan {
+  maxEmailsPerMonth: number;
+  maxEmailsPerDay: number;
+  pricePerEmailCents: number;
+}
+
+export const Plans: Record<PlanId, Plan> = {
+  [PlanId.Free]: {
+    maxEmailsPerMonth: 15_000,
+    maxEmailsPerDay: 2_000,
+    pricePerEmailCents: 0,
+  },
+  [PlanId.PayPerUse]: {
+    maxEmailsPerMonth: 150_000,
+    maxEmailsPerDay: 10_000,
+    pricePerEmailCents: 0.1,
+  },
+  [PlanId.SDE]: {
+    maxEmailsPerMonth: 150_000,
+    maxEmailsPerDay: 10_000,
+    pricePerEmailCents: 0,
+  },
 };
 
 export function isPlanId(planId: unknown): planId is PlanId {
