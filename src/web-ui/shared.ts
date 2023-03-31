@@ -64,11 +64,11 @@ export function requireUiElements<T>(selectors: ElementSelectors<T>, querySelect
 
 export interface UiElementFillSpec<T extends HTMLElement = HTMLElement> {
   element: T;
-  propName: 'textContent' | 'className';
+  propName: 'textContent' | 'className' | 'href';
   value: string;
 }
 
-export function fillUiElements(specs: UiElementFillSpec<HTMLElement>[]): Result<void> {
+export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   for (const spec of specs) {
     if (!spec.element) {
       return makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spec)}`);
@@ -78,7 +78,7 @@ export function fillUiElements(specs: UiElementFillSpec<HTMLElement>[]): Result<
       return makeErr(si`Prop "${String(spec.propName)}" does not exist on ${spec.element.tagName}`);
     }
 
-    spec.element[spec.propName] = spec.value;
+    (spec.element as any)[spec.propName] = spec.value;
   }
 }
 

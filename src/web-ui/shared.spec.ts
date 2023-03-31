@@ -119,11 +119,17 @@ describe(fillUiElements.name, () => {
       propName: 'className',
       value: 'col-md-12',
     };
+    const anchorFillSpec: UiElementFillSpec<HTMLAnchorElement> = {
+      element: { id: 'a-link', href: '#', constructor: { name: 'HTMLAnchorElement' } } as HTMLAnchorElement,
+      propName: 'href',
+      value: '/path/page.html',
+    };
 
-    fillUiElements([spanFillSpec, inputFillSpec]);
+    fillUiElements([spanFillSpec, inputFillSpec, anchorFillSpec]);
 
     expect(spanFillSpec.element.textContent).to.equal(spanFillSpec.value);
     expect(inputFillSpec.element.className).to.equal(inputFillSpec.value);
+    expect(anchorFillSpec.element.href).to.equal(anchorFillSpec.value);
   });
 
   it('returns an Err value wiht message on failure', () => {
@@ -141,6 +147,15 @@ describe(fillUiElements.name, () => {
     spanFillSpec.element = null as any as HTMLSpanElement;
     result = fillUiElements([spanFillSpec]);
     expect(result).to.deep.equal(makeErr(si`UiElementFillSpec element is missing in ${JSON.stringify(spanFillSpec)}`));
+  });
+
+  it('fails when applying href to a non-anchor', () => {
+    const spanFillSpec: UiElementFillSpec<HTMLSpanElement> = {
+      element: { id: 'email-label', tagName: 'SPAN', draggable: true } as HTMLSpanElement,
+      propName: 'href',
+      value: 'abracadabra',
+    };
+    expect(fillUiElements([spanFillSpec])).to.deep.equal(makeErr(si`Prop "href" does not exist on SPAN`));
   });
 });
 
