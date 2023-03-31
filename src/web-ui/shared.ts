@@ -27,14 +27,17 @@ export function requireQueryParams<RequiredParams>(
   const urlSearchParams = new URLSearchParams(locationSearch);
 
   for (const name in paramDictionary) {
-    const paramName = paramDictionary[name];
+    const isOptionalParam = paramDictionary[name].endsWith('?');
+    const paramName = isOptionalParam ? paramDictionary[name].slice(0, -1) : paramDictionary[name];
     const element = urlSearchParams.get(paramName);
 
-    if (!element) {
+    if (!element && !isOptionalParam) {
       return makeErr(si`Query param not found by name: "${paramName}"`);
     }
 
-    params[name] = element as any;
+    if (typeof element === 'string') {
+      params[name] = element as any;
+    }
   }
 
   return params;

@@ -8,10 +8,10 @@ import { UiElementFillSpec } from './shared';
 import { requireQueryParams } from './shared';
 
 describe(requireQueryParams.name, () => {
-  type RequiredParams = {
+  interface RequiredParams {
     one: string;
     two: string;
-  };
+  }
 
   it('returns a dictionary with the required params from the query string', () => {
     const queryString = '?one=1&two=with%20spaces';
@@ -21,6 +21,32 @@ describe(requireQueryParams.name, () => {
       one: '1',
       two: 'with spaces',
     });
+  });
+
+  it('skips optional params that are missing', () => {
+    interface OptionalRequiredParams {
+      a: string;
+      optional?: string;
+    }
+
+    const parse = (queryString: string) =>
+      requireQueryParams<OptionalRequiredParams>({ a: 'a', optional: 'optional?' }, queryString);
+
+    expect(parse('?a=42&optional=1')).to.deep.equal(
+      { a: '42', optional: '1' },
+      'present non-empty optional param is included'
+    );
+
+    expect(parse('?a=42&optional=')).to.deep.equal(
+      { a: '42', optional: '' },
+      'present empty optional param is included'
+    );
+
+    expect(parse('?a=42')).to.deep.equal(
+      // prettier: keep these stacked
+      { a: '42' },
+      'missing optional param is skipped'
+    );
   });
 
   it('returns an Err if any of the params are missing', () => {
