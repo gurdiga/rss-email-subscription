@@ -60,6 +60,7 @@ function main() {
     clearValidationErrors(uiElements);
 
     const request: RegistrationRequestData = {
+      planId: uiElements.planDropdown.value,
       email: uiElements.email.value,
       password: uiElements.password.value,
     };

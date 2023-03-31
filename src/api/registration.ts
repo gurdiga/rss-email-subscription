@@ -18,6 +18,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
+import { makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -165,6 +166,7 @@ export function makeRegistrationConfirmationEmailContent(
 
 export function makeRegistrationRequest(data: unknown): Result<RegistrationRequest> {
   return makeValues<RegistrationRequest>(data, {
+    planId: makePlanId,
     email: makeEmailAddress,
     password: makePassword,
   });
@@ -191,6 +193,7 @@ function initAccount(
 
   const hashedPassword = hash(request.password.value, settings.hashingSalt);
   const account: Account = {
+    planId: request.planId,
     email: request.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,

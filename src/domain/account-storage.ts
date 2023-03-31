@@ -17,6 +17,7 @@ import { getAccountIdByEmail } from './account-crypto';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
 import { makeHashedPassword } from './hashed-password';
+import { makePlanId } from './plan';
 import { AppStorage, StorageKey } from './storage';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
@@ -120,6 +121,12 @@ export function loadAccount(
     return makeErr(si`Failed to load account data: ${item.reason}`);
   }
 
+  const planId = makePlanId(item.planId);
+
+  if (isErr(planId)) {
+    return makeErr(si`Invalid stored data for account ${accountId.value}: ${planId.reason}`, 'planId');
+  }
+
   const email = makeEmailAddress(item.email);
 
   if (isErr(email)) {
@@ -169,6 +176,7 @@ export function loadAccount(
   }
 
   return {
+    planId,
     email,
     hashedPassword,
     creationTimestamp,
@@ -179,6 +187,7 @@ export function loadAccount(
 export function storeAccount(storage: AppStorage, accountId: AccountId, account: Account): Result<void> {
   const storageKey = getAccountStorageKey(accountId);
   const data: AccountData = {
+    planId: account.planId,
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,

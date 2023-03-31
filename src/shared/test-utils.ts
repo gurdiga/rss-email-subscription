@@ -21,6 +21,7 @@ import {
   makeConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
+import { PlanId } from '../domain/plan';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -135,6 +136,7 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
 
 export function makeTestAccount(customAccountData: Partial<AccountData> = {}): Account {
   const accountData: AccountData = {
+    planId: PlanId.Free,
     email: 'test@test.com',
     hashedPassword: 'x'.repeat(hashedPasswordLength),
     creationTimestamp: new Date(),
@@ -142,7 +144,8 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     ...customAccountData,
   };
 
-  const result = {
+  const result: Account = {
+    planId: PlanId.Free,
     email: makeTestEmailAddress(accountData.email),
     hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,

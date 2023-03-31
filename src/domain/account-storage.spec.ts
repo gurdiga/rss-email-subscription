@@ -21,6 +21,7 @@ import {
   storeAccount,
 } from './account-storage';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
+import { PlanId } from './plan';
 import { AppStorage } from './storage';
 
 const creationTimestamp = new Date();
@@ -56,6 +57,7 @@ describe(loadAccount.name, () => {
   it('returns an Account value for the given account ID', () => {
     const storageKey = '/account';
     const accountData: AccountData = {
+      planId: PlanId.Free,
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
@@ -67,6 +69,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId, storageKey);
 
     const expectedResult: Account = {
+      planId: PlanId.Free,
       email: makeTestEmailAddress(accountData.email),
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       creationTimestamp,
@@ -87,6 +90,7 @@ describe(loadAccount.name, () => {
 
   it('returns an Err value when stored email is invalid', () => {
     const accountData: AccountData = {
+      planId: PlanId.Free,
       email: 'not-an-email-really',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
@@ -105,6 +109,7 @@ describe(loadAccount.name, () => {
 
   it('returns an Err value when stored hashed password is invalid', () => {
     const accountData: AccountData = {
+      planId: PlanId.Free,
       email: 'test@test.com',
       hashedPassword: 'la-la-la',
       confirmationTimestamp: undefined,
@@ -125,6 +130,7 @@ describe(loadAccount.name, () => {
 describe(storeAccount.name, () => {
   it('stores the given account data', () => {
     const account: Account = {
+      planId: PlanId.Free,
       email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       confirmationTimestamp: undefined,
@@ -144,6 +150,7 @@ describe(storeAccount.name, () => {
 describe(confirmAccount.name, () => {
   it('sets confirmationTimestamp on the given account', () => {
     const accountData: AccountData = {
+      planId: PlanId.Free,
       email: 'test@test.com',
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
@@ -162,6 +169,7 @@ describe(confirmAccount.name, () => {
     expect(isErr(result), si`result: ${JSON.stringify(result)}`).to.be.false;
 
     const expectedStoredData: AccountData = {
+      planId: accountData.planId,
       email: accountData.email,
       hashedPassword: accountData.hashedPassword,
       confirmationTimestamp,
@@ -198,6 +206,7 @@ describe(setAccountEmail.name, () => {
       [
         getAccountStorageKey(accountId),
         {
+          planId: account.planId,
           email: newEmail.value,
           hashedPassword: account.hashedPassword.value,
           confirmationTimestamp: account.confirmationTimestamp,
@@ -232,6 +241,7 @@ describe(setAccountEmail.name, () => {
 
 function getAccountData(account: Account): AccountData {
   return {
+    planId: account.planId,
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
     confirmationTimestamp: account.confirmationTimestamp,

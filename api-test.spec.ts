@@ -62,6 +62,7 @@ import { sessionCookieMaxage } from './src/api/session';
 import { hash } from './src/shared/crypto';
 import { isErr } from './src/shared/lang';
 import { sortBy } from './src/shared/array-utils';
+import { PlanId } from './src/domain/plan';
 
 const fetch = fetchCookie(nodeFetch);
 
@@ -75,7 +76,7 @@ describe('API', () => {
 
   const userEmail = 'api-test-blogger@feedsubscription.com';
   const userPassword = 'A-long-S3cre7-password';
-  const userPlan = 'standard';
+  const planId = PlanId.Free;
 
   const newUserEmail = 'api-test-new-email@feedsubscription.com';
 
@@ -148,16 +149,17 @@ describe('API', () => {
     before(() => expect(++step).to.equal(2, 'test are expected to run in source order'));
 
     it('flows', async () => {
-      const { responseBody: registrationResponse } = await registrationSend(userPlan, userEmail, userPassword);
+      const { responseBody: registrationResponse } = await registrationSend(planId, userEmail, userPassword);
       const [account, accountId] = loadStoredAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
+      expect(account.planId).to.equal(planId, 'registration email');
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
-      const { responseBody: repeatedRegistration } = await registrationSend(userPlan, userEmail, userPassword);
+      const { responseBody: repeatedRegistration } = await registrationSend(planId, userEmail, userPassword);
       expect(repeatedRegistration).to.deep.equal(makeInputError('Email already taken', 'email'));
 
       const { responseBody: registrationConfirmationResponse } = await registrationConfirmationSend(userEmail);
@@ -672,8 +674,8 @@ describe('API', () => {
     return post(getFullApiPath(ApiPath.authentication), { email, password });
   }
 
-  async function registrationSend(plan: string, email: string, password: string) {
-    return post(getFullApiPath(ApiPath.registration), { plan, email, password });
+  async function registrationSend(planId: PlanId, email: string, password: string) {
+    return post(getFullApiPath(ApiPath.registration), { planId, email, password });
   }
 
   async function registrationConfirmationSend(email: string) {

@@ -4,6 +4,7 @@ import { ConfirmationSecret } from './confirmation-secrets';
 import { EmailAddress } from './email-address';
 import { HashedPassword } from './hashed-password';
 import { Password } from './password';
+import { PlanId } from './plan';
 
 export interface AccountId {
   kind: 'AccountId';
@@ -26,6 +27,7 @@ export function isAccountId(value: unknown): value is AccountId {
 }
 
 export interface Account {
+  planId: PlanId;
   email: EmailAddress;
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
@@ -33,6 +35,7 @@ export interface Account {
 }
 
 export interface AccountData {
+  planId: string;
   email: string;
   hashedPassword: string;
   creationTimestamp: Date;
@@ -61,6 +64,7 @@ export interface AccountIdList {
 }
 
 export interface RegistrationRequest {
+  planId: PlanId;
   email: EmailAddress;
   password: Password;
 }
