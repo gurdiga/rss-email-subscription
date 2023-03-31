@@ -9,6 +9,7 @@ export enum PagePath {
   feedEdit = '/user/edit-feed.html',
   feedSubscribeForm = '/user/feed-subscribe-form.html',
   manageFeedSubscribers = '/user/manage-feed-subscribers.html',
+  registration = '/user/registration.html',
   registrationConfirmation = '/user/registration-confirmation.html',
   emailChangeConfirmation = '/user/email-change-confirmation.html',
 }
