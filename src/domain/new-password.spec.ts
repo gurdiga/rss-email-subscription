@@ -2,21 +2,8 @@ import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeNewPassword, maxPasswordLength, minPasswordLength } from './new-password';
-import { makePlanId } from './plan';
 
 describe(makeNewPassword.name, () => {
-  it('returns an Err value if not one of the valid plan IDs', () => {
-    const planId = 'all-inclusive';
-
-    expect(makePlanId(planId)).to.deep.equal(makeErr(si`Unknown plan ID: ${planId}`));
-  });
-
-  it('trims the input', () => {
-    const planId = ' minimal \t\n';
-
-    expect(makePlanId(planId)).to.deep.equal('minimal');
-  });
-
   const longEnoughPassword = '*'.repeat(minPasswordLength);
 
   it(si`rejects passwords shorter than ${minPasswordLength}`, () => {
