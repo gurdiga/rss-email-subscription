@@ -724,7 +724,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const contentType = response.headers.get('content-type');
 
   if (!contentType?.startsWith('text/html')) {
-    logWarning('Invalid blog Content-Type', { contentType });
+    logWarning('Invalid blog Content-Type', { blogUrl, contentType });
     return makeInputError('Your blog seems to have an invalid Content-Type header. 🤔', fieldName);
   }
 
