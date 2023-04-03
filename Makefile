@@ -280,11 +280,11 @@ watch-website:
 			echo "Subject: RES website error-log"
 			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo ""
+			echo "User-Agent: $$rest"
+			echo "Client IP: $$client_ip"
 			echo "$$referer"
 			echo "$$timestamp"
 			echo "$$url" | url_decode | sed 's/^/    /'
-			echo "User-Agent: $$rest"
-			echo "Client IP: $$client_ip"
 			echo "Whois:"
 			whois $$client_ip | grep -iE '^(Address|StateProv|PostalCode|Country):' | sort -u | head -10 | sed 's/^/    /'
 			echo "https://whois.com/whois/$$client_ip"
