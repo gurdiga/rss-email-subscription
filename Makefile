@@ -243,6 +243,7 @@ watch-app:
 			-e '"message":"Starting (cron|API server)' \
 			-e '"message":"Sending report"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
+			-e '"message":"(New feed added)"' \
 			-e '"message":"(Unsubscribed)"' \
 			-e '"message":"(User registered|User confirmed registration|User logged in)"' \
 		|
