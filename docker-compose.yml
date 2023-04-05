@@ -55,7 +55,7 @@ services:
     restart: always
     volumes:
       - ./.tmp/smtp-in/opendkim-keys:/var/db/dkim/
-      - ./.tmp/certbot/conf/archive/feedsubscription.com:/etc/postfix/cert/
+      - ./.tmp/certbot/conf/archive/feedsubscription.com:/etc/postfix/cert/:ro
     environment:
       SMF_DOMAIN: feedsubscription.com
       SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
