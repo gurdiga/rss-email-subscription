@@ -139,6 +139,14 @@ smtp-out:
 		--tag smtp-out \
 		docker-services/smtp-out
 
+smtp-in:
+	source .env
+	docker buildx build \
+	 	--build-arg SASL_PASSWORD="$${SMTP_IN_SASL_PASSWORD:?envar is missing}"\
+		--progress=plain \
+		--tag smtp-in \
+		docker-services/smtp-in
+
 # cron @reboot
 start:
 	docker-compose --project-name res up --remove-orphans --detach
