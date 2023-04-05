@@ -55,6 +55,7 @@ services:
     restart: always
     volumes:
       - ./.tmp/smtp-in/opendkim-keys:/var/db/dkim/
+      - ./.tmp/certbot/conf/archive/feedsubscription.com:/etc/postfix/cert/
     environment:
       SMF_DOMAIN: feedsubscription.com
       SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
@@ -64,10 +65,14 @@ services:
       SMF_POSTFIXMAIN_recipient_canonical_maps: 'tcp:localhost:10002'
       SMF_POSTFIXMAIN_recipient_canonical_classes: 'envelope_recipient,header_recipient'
 
+      # SASL
       SMF_POSTFIXMAIN_smtpd_relay_restrictions: 'permit_mynetworks permit_sasl_authenticated reject_unauth_destination'
       SMF_POSTFIXMAIN_smtpd_sasl_local_domain: '$$myhostname'
-      # TODO
       # SMF_POSTFIXMAIN_smtpd_tls_auth_only: 'yes'
+
+      # TLS
+      SMF_POSTFIXMAIN_smtpd_tls_cert_file: /etc/postfix/cert/cert.pem
+      SMF_POSTFIXMAIN_smtpd_tls_key_file: /etc/postfix/cert/privkey.pem
     <<: *logging
 
   app:
