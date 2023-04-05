@@ -1,6 +1,5 @@
 import { expect } from 'chai';
 import fetchCookie from 'fetch-cookie';
-import nodeFetch, { Headers } from 'node-fetch';
 import { deleteAccount } from './src/api/delete-account-cli';
 import {
   AccountData,
@@ -64,7 +63,7 @@ import { isErr } from './src/shared/lang';
 import { sortBy } from './src/shared/array-utils';
 import { PlanId } from './src/domain/plan';
 
-const fetch = fetchCookie(nodeFetch);
+const fetch = fetchCookie(globalThis.fetch);
 
 describe('API', () => {
   let step = 0; // NOTE: Test are expected to run in source order AND with the --bail option.
@@ -637,7 +636,10 @@ describe('API', () => {
   });
 
   function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string> | null {
-    const rawCookie = responseHeaders.raw()['set-cookie']?.find((x) => x.startsWith(si`${cookieName}=`));
+    const rawCookie = responseHeaders
+      .get('set-cookie')
+      ?.split(/, [^\d]/)
+      .find((x) => x.startsWith(si`${cookieName}=`));
 
     if (!rawCookie) {
       return null;
