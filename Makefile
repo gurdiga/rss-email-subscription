@@ -142,6 +142,7 @@ smtp-out:
 smtp-in:
 	source .env
 	docker buildx build \
+		--no-cache \
 	 	--build-arg SASL_PASSWORD="$${SMTP_IN_SASL_PASSWORD:?envar is missing}"\
 		--progress=plain \
 		--tag smtp-in \
