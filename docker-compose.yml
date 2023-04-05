@@ -55,7 +55,8 @@ services:
     restart: always
     volumes:
       - ./.tmp/smtp-in/opendkim-keys:/var/db/dkim/
-      - ./.tmp/certbot/conf/archive/feedsubscription.com:/etc/postfix/cert/:ro
+      - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
+      - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
     environment:
       SMF_DOMAIN: feedsubscription.com
       SMF_CONFIG: '@feedsubscription.com:gurdiga@gmail.com'
@@ -67,8 +68,6 @@ services:
 
       # TLS
       SMF_POSTFIXMAIN_smtpd_tls_auth_only: 'yes'
-      SMF_POSTFIXMAIN_smtpd_tls_cert_file: /etc/postfix/cert/fullchain4.pem
-      SMF_POSTFIXMAIN_smtpd_tls_key_file: /etc/postfix/cert/privkey4.pem
     <<: *logging
 
   app:
