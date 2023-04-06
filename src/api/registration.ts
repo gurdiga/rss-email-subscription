@@ -213,7 +213,7 @@ function initAccount(
     return makeErr('Couldn’t store account data');
   }
 
-  logInfo('User registered', account);
+  logInfo('User registered', { email: account.email.value, planId: account.planId });
 
   return accountId;
 }
@@ -299,7 +299,7 @@ function confirmAccountBySecret(
     return makeErr('Application error');
   }
 
-  logInfo('User confirmed registration', { accountId: data.email.value, data: data.email.value });
+  logInfo('User confirmed registration', { accountId: data.accountId.value, data: data.email.value });
 
   return data;
 }
