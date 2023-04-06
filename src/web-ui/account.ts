@@ -113,8 +113,6 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
   } = uiElements;
   const request: DeleteAccountRequestData = { password: deleteAccountPasswordField.value };
   const response = await asyncAttempt(() =>
-    // TODO Consider making sendApiRequest() return Err instead of throwing.
-    // Otherwise I’m bound to always calling it through asyncAttempt().
     sendApiRequest(ApiPath.deleteAccountWithPassword, HttpMethod.POST, request)
   );
 
