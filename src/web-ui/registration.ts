@@ -90,7 +90,7 @@ function main() {
 }
 
 function initPlanDropdown(planDropdown: HTMLSelectElement, selectedPlan: string): void {
-  planDropdown.append(
+  planDropdown.replaceChildren(
     ...Object.entries(Plans).map(([id, { title }]) =>
       createElement('option', title, { value: id, ...(selectedPlan === id ? { selected: 'selected' } : {}) })
     )

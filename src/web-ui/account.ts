@@ -1,8 +1,10 @@
-import { EmailChangeRequestData, PasswordChangeRequestData, UiAccount } from '../domain/account';
+import { EmailChangeRequestData, PasswordChangeRequestData, PlanChangeRequestData, UiAccount } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
+import { PlanId, Plans } from '../domain/plan';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { createElement } from './dom-isolation';
 import {
   clearValidationErrors,
   displayApiResponse,
@@ -29,6 +31,8 @@ async function main() {
     ...changeEmailUiElements,
     ...viewPasswordUiElements,
     ...changePasswordUiElements,
+    ...viewPlanUiElements,
+    ...changePlanUiElements,
   });
 
   if (isErr(uiElements)) {
@@ -54,6 +58,95 @@ async function main() {
 
   addEmailChangeEventHandlers(uiElements);
   addPasswordChangeEventHandlers(uiElements);
+  addPlanChangeEventHandlers(uiElements, uiAccount.planId);
+}
+
+function addPlanChangeEventHandlers(
+  uiElements: ViewPlanUiElements & ChangePlanUiElements,
+  currentPlanId: PlanId
+): void {
+  const {
+    changePlanButton,
+    cancelPlanChangeButton,
+    submitNewPlanButton,
+    viewPlanSection,
+    changePlanForm,
+    planChangeSuccessMessage,
+    plansDropdown,
+  } = uiElements;
+
+  initPlansDropdown(plansDropdown, currentPlanId);
+
+  onClick(changePlanButton, () => {
+    hideElement(viewPlanSection);
+    unhideElement(changePlanForm);
+    plansDropdown.focus();
+  });
+
+  const dismissEditForm = () => {
+    clearValidationErrors(uiElements);
+    hideElement(uiElements.planChangeSuccessMessage);
+    hideElement(uiElements.changePlanForm);
+    unhideElement(uiElements.viewPlanSection);
+  };
+
+  onClick(cancelPlanChangeButton, dismissEditForm);
+  onEscape(plansDropdown, dismissEditForm);
+
+  onSubmit(submitNewPlanButton, async () => {
+    clearValidationErrors(uiElements);
+    hideElement(planChangeSuccessMessage);
+
+    const response = await submitNewPlan(plansDropdown.value);
+
+    handlePlanChangeResponse(uiElements, response, Plans[plansDropdown.value as PlanId].title);
+  });
+}
+
+// TODO: Consider DRYing out this and the other handle*ChangeResponse functions
+function handlePlanChangeResponse(
+  uiElements: ViewPlanUiElements & ChangePlanUiElements,
+  response: Result<ApiResponse<void>>,
+  newPlanTitle: string
+): void {
+  if (isErr(response)) {
+    displayCommunicationError(response, uiElements.planChangeApiResponseMessage);
+    return;
+  }
+
+  if (isAppError(response)) {
+    displayApiResponse(response, uiElements.planChangeApiResponseMessage);
+    return;
+  }
+
+  if (isInputError(response)) {
+    displayValidationError(response, { planId: uiElements.plansDropdown });
+    return;
+  }
+
+  if (isSuccess(response)) {
+    unhideElement(uiElements.planChangeSuccessMessage);
+    uiElements.currentPlanLabel.textContent = newPlanTitle;
+  }
+}
+
+async function submitNewPlan(planId: string) {
+  const request: PlanChangeRequestData = { planId };
+
+  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountPlanChange, HttpMethod.POST, request));
+}
+
+function initPlansDropdown(plansDropdown: HTMLSelectElement, currentPlanId: PlanId) {
+  const planOptions = Object.entries(Plans)
+    .filter(([id]) => id !== PlanId.SDE)
+    .map(([id, { title }]) =>
+      createElement('option', title, {
+        value: id,
+        ...(currentPlanId === id ? { selected: 'selected' } : {}),
+      })
+    );
+
+  plansDropdown.replaceChildren(...planOptions);
 }
 
 function addPasswordChangeEventHandlers(uiElements: ViewPasswordUiElements & ChangePasswordUiElements): void {
@@ -118,6 +211,7 @@ function handlePasswordChangeResponse(
     uiElements.newPasswordField.value = '';
   }
 }
+
 async function submitNewPassword(currentPassword: string, newPassword: string) {
   const request: PasswordChangeRequestData = { currentPassword, newPassword };
 
@@ -208,6 +302,11 @@ function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
       propName: 'textContent',
       value: uiAccount.email,
     },
+    {
+      element: uiElements.currentPlanLabel,
+      propName: 'textContent',
+      value: Plans[uiAccount.planId].title,
+    },
   ]);
 }
 
@@ -242,7 +341,9 @@ interface RequiredUiElements
     ViewEmailUiElements,
     ChangeEmailUiElements,
     ViewPasswordUiElements,
-    ChangePasswordUiElements {}
+    ChangePasswordUiElements,
+    ViewPlanUiElements,
+    ChangePlanUiElements {}
 
 interface ViewEmailUiElements {
   viewEmailSection: HTMLElement;
@@ -304,6 +405,36 @@ const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
   cancelPasswordChangeButton: '#cancel-password-change-button',
   passwordChangeApiResponseMessage: '#password-change-api-response-message',
   passwordChangeSuccessMessage: '#password-change-success-message',
+};
+
+interface ViewPlanUiElements {
+  changePlanButton: HTMLButtonElement;
+  viewPlanSection: HTMLElement;
+  currentPlanLabel: HTMLElement;
+}
+
+const viewPlanUiElements: ElementSelectors<ViewPlanUiElements> = {
+  changePlanButton: '#change-plan',
+  viewPlanSection: '#view-plan-section',
+  currentPlanLabel: '#current-plan-label',
+};
+
+interface ChangePlanUiElements {
+  changePlanForm: HTMLFormElement;
+  plansDropdown: HTMLSelectElement;
+  submitNewPlanButton: HTMLButtonElement;
+  cancelPlanChangeButton: HTMLButtonElement;
+  planChangeApiResponseMessage: HTMLElement;
+  planChangeSuccessMessage: HTMLElement;
+}
+
+const changePlanUiElements: ElementSelectors<ChangePlanUiElements> = {
+  changePlanForm: '#change-plan-section',
+  plansDropdown: '#plans-dropdown',
+  submitNewPlanButton: '#submit-new-plan-button',
+  cancelPlanChangeButton: '#cancel-plan-change-button',
+  planChangeApiResponseMessage: '#plan-change-api-response-message',
+  planChangeSuccessMessage: '#plan-change-success-message',
 };
 
 main();

@@ -27,6 +27,7 @@ export enum ApiPath {
   loadCurrentAccount = '/account',
   requestAccountEmailChange = '/account/request-change-email',
   confirmAccountEmailChange = '/account/confirm-change-email',
+  requestAccountPlanChange = '/account/request-plan-email',
   requestAccountPasswordChange = '/account/request-change-password',
   checkFeedUrl = '/check-feed-url',
 }

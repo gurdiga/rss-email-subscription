@@ -44,6 +44,7 @@ export interface AccountData {
 
 export interface UiAccount {
   email: string;
+  planId: PlanId;
 }
 
 export interface AccountNotFound {
@@ -110,3 +111,9 @@ export type PasswordChangeRequestData = Record<keyof PasswordChangeRequest, stri
 export interface PasswordChangeConfirmationRequest {}
 
 export type PasswordChangeConfirmationRequestData = Record<keyof PasswordChangeConfirmationRequest, string>;
+
+export interface PlanChangeRequest {
+  planId: PlanId;
+}
+
+export type PlanChangeRequestData = Record<keyof PlanChangeRequest, string>;

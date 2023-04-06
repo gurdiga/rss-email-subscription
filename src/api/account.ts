@@ -7,6 +7,8 @@ import {
   isAccountNotFound,
   PasswordChangeRequest,
   PasswordChangeRequestData,
+  PlanChangeRequest,
+  PlanChangeRequestData,
   UiAccount,
 } from '../domain/account';
 import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
@@ -29,6 +31,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
+import { makePlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -71,6 +74,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
   const logData = {};
   const responseData: UiAccount = {
     email: account.email.value,
+    planId: account.planId,
   };
 
   return makeSuccess<UiAccount>('Success', logData, responseData);
@@ -155,7 +159,7 @@ async function sendEmailChangeInformationEmail(
     htmlBody: si`
       <p>Hi there,</p>
 
-      <p>Please note that the account email at <b><font color="#0163ee">Feed</font>Subscription</b>
+      <p>Please note that the account email at ${getFancyName()}
       has been changed from <b>${oldEmail.value}</b> to <b>${newEmail.value}</b>.</p>
 
       <p>Have a nice day.</p>
@@ -226,8 +230,20 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
-  account.hashedPassword = newHashedPassword;
-  storeAccount(storage, accountId, account);
+  const storeAccountResult = storeAccount(storage, accountId, {
+    ...account,
+    hashedPassword: newHashedPassword,
+  });
+
+  if (isErr(storeAccountResult)) {
+    logError(si`Failed to ${storeAccount.name}`, {
+      reason: storeAccountResult.reason,
+      accountId: accountId.value,
+      newHash: newHashedPassword.value,
+    });
+    return makeAppError();
+  }
+
   sendPasswordChangeInformationEmail(account.email, settings, env);
 
   return makeSuccess();
@@ -239,7 +255,7 @@ async function sendPasswordChangeInformationEmail(email: EmailAddress, settings:
     htmlBody: si`
       <p>Hi there,</p>
 
-      <p>Please note that the account password at <b><font color="#0163ee">Feed</font>Subscription</b>
+      <p>Please note that the account password at ${getFancyName()}
       has been changed.</p>
 
       <p>Have a nice day.</p>
@@ -328,7 +344,7 @@ async function sendEmailChangeConfirmationEmail(
     htmlBody: si`
       <p>Hi there,</p>
 
-      <p>Please confirm <b><font color="#0163ee">Feed</font>Subscription</b> email change by clicking the link below:</p>
+      <p>Please confirm ${getFancyName()} email change by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm email change</a>.</p>
 
@@ -362,4 +378,91 @@ function storeEmailChangeRequestSecret(
   const confirmationSecretData = makeEmailChangeRequestSecretData(accountId, newEmail);
 
   return storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
+}
+
+// TODO: Add api test
+export const requestAccountPlanChange: AppRequestHandler = async function requestAccountPlanChange(
+  reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  { storage, settings, env }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: requestAccountPlanChange.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.err.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const { accountId } = session;
+  const request = makePlanChangeRequest(reqBody);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makePlanChangeRequest.name}`, { reason: request.reason, reqBody });
+    return makeInputError(request.reason, request.field);
+  }
+
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logError(si`Account not found`, { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  const oldPlanTitle = Plans[account.planId].title;
+  const newPlanTitle = Plans[request.planId].title;
+  const storeAccountResult = storeAccount(storage, accountId, {
+    ...account,
+    planId: request.planId,
+  });
+
+  if (isErr(storeAccountResult)) {
+    logError(si`Failed to ${storeAccount.name}`, {
+      reason: storeAccountResult.reason,
+      accountId: accountId.value,
+      planId: request.planId,
+    });
+    return makeAppError();
+  }
+
+  sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, account.email, settings, env);
+
+  return makeSuccess('Success');
+};
+
+function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {
+  return makeValues<PlanChangeRequest>(data, { planId: makePlanId });
+}
+
+async function sendPlanChangeInformationEmail(
+  oldPlanTitle: string,
+  newPlanTitle: string,
+  email: EmailAddress,
+  settings: AppSettings,
+  env: AppEnv
+) {
+  const emailContent = {
+    subject: 'Please note FeedSubscription plan change',
+    htmlBody: si`
+      <p>Hi there,</p>
+
+      <p>Just for the record, please note that your plan at ${getFancyName()}
+      has been changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>
+
+      <p>Have a nice day.</p>
+    `,
+  };
+
+  return await sendEmail(settings.fullEmailAddress, email, settings.fullEmailAddress.emailAddress, emailContent, env);
+}
+
+function getFancyName(): string {
+  return si`<b><font color="#0163ee">Feed</font>Subscription</b>`;
 }
