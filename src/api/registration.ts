@@ -188,8 +188,7 @@ function initAccount(
   { storage, settings }: App,
   request: RegistrationRequest
 ): Result<AccountId | AccountAlreadyExists> {
-  const module = si`${registration.name}-${initAccount.name}`;
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ module });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: initAccount.name });
 
   const hashedPassword = hash(request.password.value, settings.hashingSalt);
   const account: Account = {
@@ -262,8 +261,10 @@ function confirmAccountBySecret(
   storage: AppStorage,
   secret: ConfirmationSecret
 ): Result<RegistrationConfirmationSecretData> {
-  const module = si`${registrationConfirmation.name}-${confirmAccountBySecret.name}`;
-  const { logWarning, logError, logInfo } = makeCustomLoggers({ module, secret: secret.value });
+  const { logWarning, logError, logInfo } = makeCustomLoggers({
+    module: confirmAccountBySecret.name,
+    secret: secret.value,
+  });
 
   const data = loadConfirmationSecret<RegistrationConfirmationSecretData>(storage, secret);
 
@@ -298,7 +299,7 @@ function confirmAccountBySecret(
     return makeErr('Application error');
   }
 
-  logInfo('User confirmed registration');
+  logInfo('User confirmed registration', { accountId: data.email.value, data: data.email.value });
 
   return data;
 }
