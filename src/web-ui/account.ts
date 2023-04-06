@@ -99,35 +99,55 @@ function addPlanChangeEventHandlers(
 
     const response = await submitNewPlan(plansDropdown.value);
 
-    handlePlanChangeResponse(uiElements, response, Plans[plansDropdown.value as PlanId].title);
+    handlePlanChangeResponse(uiElements, response);
   });
+}
+
+function handleApiResponse(
+  response: Result<ApiResponse<void>>,
+  apiResponseMessage: HTMLElement,
+  formFields: Record<string, HTMLElement>,
+  onSuccess: () => void
+) {
+  if (isErr(response)) {
+    displayCommunicationError(response, apiResponseMessage);
+    return;
+  }
+
+  if (isAppError(response)) {
+    displayApiResponse(response, apiResponseMessage);
+    return;
+  }
+
+  if (isInputError(response)) {
+    displayValidationError(response, formFields);
+    return;
+  }
+
+  if (isSuccess(response)) {
+    onSuccess();
+  }
 }
 
 // TODO: Consider DRYing out this and the other handle*ChangeResponse functions
 function handlePlanChangeResponse(
   uiElements: ViewPlanUiElements & ChangePlanUiElements,
-  response: Result<ApiResponse<void>>,
-  newPlanTitle: string
+  response: Result<ApiResponse<void>>
 ): void {
-  if (isErr(response)) {
-    displayCommunicationError(response, uiElements.planChangeApiResponseMessage);
-    return;
-  }
+  handleApiResponse(
+    response,
+    uiElements.planChangeApiResponseMessage,
+    {
+      planId: uiElements.plansDropdown,
+    },
+    () => {
+      const newPlanId = uiElements.plansDropdown.value as PlanId;
+      const newPlanTitle = Plans[newPlanId].title;
 
-  if (isAppError(response)) {
-    displayApiResponse(response, uiElements.planChangeApiResponseMessage);
-    return;
-  }
-
-  if (isInputError(response)) {
-    displayValidationError(response, { planId: uiElements.plansDropdown });
-    return;
-  }
-
-  if (isSuccess(response)) {
-    unhideElement(uiElements.planChangeSuccessMessage);
-    uiElements.currentPlanLabel.textContent = newPlanTitle;
-  }
+      unhideElement(uiElements.planChangeSuccessMessage);
+      uiElements.currentPlanLabel.textContent = newPlanTitle;
+    }
+  );
 }
 
 async function submitNewPlan(planId: string) {
@@ -187,29 +207,19 @@ function handlePasswordChangeResponse(
   uiElements: ViewPasswordUiElements & ChangePasswordUiElements,
   response: Result<ApiResponse<void>>
 ): void {
-  if (isErr(response)) {
-    displayCommunicationError(response, uiElements.passwordChangeApiResponseMessage);
-    return;
-  }
-
-  if (isAppError(response)) {
-    displayApiResponse(response, uiElements.passwordChangeApiResponseMessage);
-    return;
-  }
-
-  if (isInputError(response)) {
-    displayValidationError(response, {
+  handleApiResponse(
+    response,
+    uiElements.passwordChangeApiResponseMessage,
+    {
       currentPassword: uiElements.currentPasswordField,
       newPassword: uiElements.newPasswordField,
-    });
-    return;
-  }
-
-  if (isSuccess(response)) {
-    unhideElement(uiElements.passwordChangeSuccessMessage);
-    uiElements.currentPasswordField.value = '';
-    uiElements.newPasswordField.value = '';
-  }
+    },
+    () => {
+      unhideElement(uiElements.passwordChangeSuccessMessage);
+      uiElements.currentPasswordField.value = '';
+      uiElements.newPasswordField.value = '';
+    }
+  );
 }
 
 async function submitNewPassword(currentPassword: string, newPassword: string) {
@@ -266,26 +276,18 @@ function handleEmailChangeResponse(
   response: Result<ApiResponse<void>>,
   newEmail: string
 ): void {
-  if (isErr(response)) {
-    displayCommunicationError(response, uiElements.emailChangeApiResponseMessage);
-    return;
-  }
-
-  if (isAppError(response)) {
-    displayApiResponse(response, uiElements.emailChangeApiResponseMessage);
-    return;
-  }
-
-  if (isInputError(response)) {
-    displayValidationError(response, { newEmail: uiElements.newEmailField });
-    return;
-  }
-
-  if (isSuccess(response)) {
-    unhideElement(uiElements.emailChangeSuccessMessage);
-    uiElements.newEmailLabel.textContent = newEmail;
-    uiElements.newEmailField.value = '';
-  }
+  handleApiResponse(
+    response,
+    uiElements.emailChangeApiResponseMessage,
+    {
+      newEmail: uiElements.newEmailField,
+    },
+    () => {
+      unhideElement(uiElements.emailChangeSuccessMessage);
+      uiElements.newEmailLabel.textContent = newEmail;
+      uiElements.newEmailField.value = '';
+    }
+  );
 }
 
 function dismissChangeEmailForm(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {

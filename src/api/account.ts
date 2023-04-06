@@ -454,7 +454,7 @@ async function sendPlanChangeInformationEmail(
       <p>Hi there,</p>
 
       <p>Just for the record, please note that your plan at ${getFancyName()}
-      has been changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>
+      has been changed from “<b>${oldPlanTitle}</b>” to “<b>${newPlanTitle}</b>.”</p>
 
       <p>Have a nice day.</p>
     `,
