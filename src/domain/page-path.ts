@@ -2,6 +2,7 @@ import { isEmptyObject } from '../shared/lang';
 import { si } from '../shared/string-utils';
 
 export enum PagePath {
+  home = '/',
   userAuthentication = '/user/authentication.html',
   userStart = '/user/feeds.html',
   feedList = '/user/feeds.html',

@@ -1,6 +1,8 @@
 import { sendEmail } from '../app/email-sending/item-sending';
 import {
   AccountId,
+  DeleteAccountRequest,
+  DeleteAccountRequestData,
   EmailChangeConfirmationRequest,
   EmailChangeRequest,
   EmailChangeRequestData,
@@ -12,7 +14,7 @@ import {
   UiAccount,
 } from '../domain/account';
 import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
-import { loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
+import { deleteAccount, loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
@@ -38,6 +40,7 @@ import { hash } from '../shared/crypto';
 import { isErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
+import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppEnv } from './init-app';
 import { AppRequestHandler } from './request-handler';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
@@ -206,21 +209,18 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
   }
 
   if (isAccountNotFound(account)) {
-    logError(si`Account not found`, { accountId: accountId.value });
+    logError('Account not found', { accountId: accountId.value });
     return makeAppError();
   }
 
   const currentHashedPassword = hash(request.currentPassword.value, settings.hashingSalt);
 
   if (currentHashedPassword !== account.hashedPassword.value) {
-    return makeInputError<keyof PasswordChangeRequest>(si`Current password doesn’t match`, 'currentPassword');
+    return makeInputError<keyof PasswordChangeRequest>('Current password doesn’t match', 'currentPassword');
   }
 
   if (request.currentPassword.value === request.newPassword.value) {
-    return makeInputError<keyof PasswordChangeRequest>(
-      si`New password can’t be the same as the old one`,
-      'newPassword'
-    );
+    return makeInputError<keyof PasswordChangeRequest>('New password can’t be the same as the old one', 'newPassword');
   }
 
   const newHashedPassword = makeHashedPassword(hash(request.newPassword.value, settings.hashingSalt));
@@ -381,6 +381,69 @@ function storeEmailChangeRequestSecret(
 }
 
 // TODO: Add api test
+export const deleteAccountWithPassword: AppRequestHandler = async function deleteAccountWithPassword(
+  reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  { storage, settings }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: deleteAccountWithPassword.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.err.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const { accountId } = session;
+  const request = makeDeleteAccountRequest(reqBody);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeDeleteAccountRequest.name}`, { reason: request.reason, reqBody });
+    return makeInputError(request.reason, request.field);
+  }
+
+  // TODO: verify password
+
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account to load not found', { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  const currentHashedPassword = hash(request.password.value, settings.hashingSalt);
+
+  if (currentHashedPassword !== account.hashedPassword.value) {
+    return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
+  }
+
+  const deleteAccountResult = deleteAccount(storage, accountId);
+
+  if (isErr(deleteAccountResult)) {
+    logError(si`Failed to ${deleteAccount.name}`, { reason: deleteAccountResult.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account to delete not found', { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  deinitSession(reqSession);
+
+  const cookies = [disablePrivateNavbarCookie];
+
+  return makeSuccess('Success', {}, {}, cookies);
+};
+
+// TODO: Add api test
 export const requestAccountPlanChange: AppRequestHandler = async function requestAccountPlanChange(
   reqId,
   reqBody,
@@ -417,7 +480,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   }
 
   if (isAccountNotFound(account)) {
-    logError(si`Account not found`, { accountId: accountId.value });
+    logError('Account not found', { accountId: accountId.value });
     return makeAppError();
   }
 
@@ -470,4 +533,8 @@ async function sendPlanChangeInformationEmail(
 
 function getFancyName(): string {
   return si`<b><font color="#0163ee">Feed</font>Subscription</b>`;
+}
+
+function makeDeleteAccountRequest(data: unknown | DeleteAccountRequestData): Result<DeleteAccountRequest> {
+  return makeValues<DeleteAccountRequest>(data, { password: makePassword });
 }

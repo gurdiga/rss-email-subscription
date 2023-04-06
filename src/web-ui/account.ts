@@ -1,5 +1,12 @@
-import { EmailChangeRequestData, PasswordChangeRequestData, PlanChangeRequestData, UiAccount } from '../domain/account';
+import {
+  DeleteAccountRequestData,
+  EmailChangeRequestData,
+  PasswordChangeRequestData,
+  PlanChangeRequestData,
+  UiAccount,
+} from '../domain/account';
 import { ApiPath } from '../domain/api-path';
+import { PagePath } from '../domain/page-path';
 import { PlanId, Plans } from '../domain/plan';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
@@ -7,6 +14,7 @@ import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
 import {
   clearValidationErrors,
+  disableElement,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
@@ -15,6 +23,7 @@ import {
   fillUiElements,
   hideElement,
   HttpMethod,
+  navigateTo,
   onClick,
   onSubmit,
   requireUiElements,
@@ -30,6 +39,7 @@ async function main() {
     ...emailUiElements,
     ...passwordUiElements,
     ...planUiElements,
+    ...deleteAccountUiElements,
   });
 
   if (isErr(uiElements)) {
@@ -56,6 +66,72 @@ async function main() {
   addEmailChangeEventHandlers(uiElements);
   addPasswordChangeEventHandlers(uiElements);
   addPlanChangeEventHandlers(uiElements, uiAccount.planId);
+  addDeleteAccountEventHandlers(uiElements);
+}
+
+function addDeleteAccountEventHandlers(uiElements: DeleteAccountUiElements): void {
+  const {
+    deleteAccountButton,
+    deleteAccountSection,
+    deleteAccountConfirmationSection,
+    deleteAccountPasswordField,
+    deleteAccountSubmitButton,
+    deleteAccountCancelButton,
+    deleteAccountSuccessMessage,
+  } = uiElements;
+
+  onClick(deleteAccountButton, () => {
+    hideElement(deleteAccountSection);
+    unhideElement(deleteAccountConfirmationSection);
+    deleteAccountPasswordField.focus();
+  });
+
+  const dismissEditForm = () => {
+    clearValidationErrors(uiElements);
+    hideElement(deleteAccountSuccessMessage);
+    hideElement(deleteAccountConfirmationSection);
+    unhideElement(deleteAccountSection);
+  };
+
+  onClick(deleteAccountCancelButton, dismissEditForm);
+  onEscape(deleteAccountPasswordField, dismissEditForm);
+
+  onSubmit(deleteAccountSubmitButton, async () => {
+    clearValidationErrors(uiElements);
+    hideElement(deleteAccountSuccessMessage);
+    await submitDeleteAccountRequest(uiElements);
+  });
+}
+
+async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
+  const {
+    deleteAccountPasswordField,
+    deleteAccountApiResponseMessage,
+    deleteAccountSuccessMessage,
+    deleteAccountSubmitButton,
+    deleteAccountCancelButton,
+  } = uiElements;
+  const request: DeleteAccountRequestData = { password: deleteAccountPasswordField.value };
+  const response = await asyncAttempt(() =>
+    // TODO Consider making sendApiRequest() return Err instead of throwing.
+    // Otherwise I’m bound to always calling it through asyncAttempt().
+    sendApiRequest(ApiPath.deleteAccountWithPassword, HttpMethod.POST, request)
+  );
+
+  handleApiResponse(
+    response,
+    deleteAccountApiResponseMessage,
+    {
+      password: deleteAccountPasswordField,
+    },
+    () => {
+      deleteAccountApiResponseMessage.scrollIntoView({ behavior: 'smooth' });
+      unhideElement(deleteAccountSuccessMessage);
+      disableElement(deleteAccountPasswordField, deleteAccountSubmitButton, deleteAccountCancelButton);
+      // TODO: Consider redirecting to a survey page to ask for reasons.
+      navigateTo(PagePath.home, 7000);
+    }
+  );
 }
 
 function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: PlanId): void {
@@ -311,7 +387,12 @@ function onEscape(element: HTMLElement, f: Function) {
   });
 }
 
-interface RequiredUiElements extends SpinnerUiElements, EmailUiElements, PasswordUiElements, PlanUiElements {}
+interface RequiredUiElements
+  extends SpinnerUiElements,
+    EmailUiElements,
+    PasswordUiElements,
+    PlanUiElements,
+    DeleteAccountUiElements {}
 
 interface EmailUiElements {
   viewEmailSection: HTMLElement;
@@ -385,6 +466,28 @@ const planUiElements: ElementSelectors<PlanUiElements> = {
   cancelPlanChangeButton: '#cancel-plan-change-button',
   planChangeApiResponseMessage: '#plan-change-api-response-message',
   planChangeSuccessMessage: '#plan-change-success-message',
+};
+
+interface DeleteAccountUiElements {
+  deleteAccountButton: HTMLButtonElement;
+  deleteAccountSection: HTMLElement;
+  deleteAccountConfirmationSection: HTMLFormElement;
+  deleteAccountPasswordField: HTMLInputElement;
+  deleteAccountSubmitButton: HTMLButtonElement;
+  deleteAccountCancelButton: HTMLButtonElement;
+  deleteAccountApiResponseMessage: HTMLElement;
+  deleteAccountSuccessMessage: HTMLElement;
+}
+
+const deleteAccountUiElements: ElementSelectors<DeleteAccountUiElements> = {
+  deleteAccountSection: '#delete-account-section',
+  deleteAccountConfirmationSection: '#delete-account-confirmation-section',
+  deleteAccountButton: '#delete-account-button',
+  deleteAccountPasswordField: '#delete-account-password-field',
+  deleteAccountSubmitButton: '#delete-account-submit-button',
+  deleteAccountCancelButton: '#delete-account-cancel-button',
+  deleteAccountApiResponseMessage: '#delete-account-api-response-message',
+  deleteAccountSuccessMessage: '#delete-account-success-message',
 };
 
 main();

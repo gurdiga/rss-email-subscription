@@ -117,3 +117,9 @@ export interface PlanChangeRequest {
 }
 
 export type PlanChangeRequestData = Record<keyof PlanChangeRequest, string>;
+
+export interface DeleteAccountRequest {
+  password: Password;
+}
+
+export type DeleteAccountRequestData = Record<keyof DeleteAccountRequest, string>;

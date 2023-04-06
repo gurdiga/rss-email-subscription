@@ -201,6 +201,25 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   }
 }
 
+export function deleteAccount(storage: AppStorage, accountId: AccountId): Result<AccountNotFound | void> {
+  const storageKey = getAccountStorageKey(accountId);
+  const exists = storage.hasItem(storageKey);
+
+  if (isErr(exists)) {
+    return makeErr(si`Failed to check account exists: ${exists.reason}`);
+  }
+
+  if (exists === false) {
+    return makeAccountNotFound();
+  }
+
+  const removeItemResult = storage.removeItem(storageKey);
+
+  if (isErr(removeItemResult)) {
+    return makeErr(si`Couldn’t removeItem: ${removeItemResult.reason}`);
+  }
+}
+
 export const accountsStorageKey = '/accounts';
 
 export function getAccountRootStorageKey(accountId: AccountId): StorageKey {

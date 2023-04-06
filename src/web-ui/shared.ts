@@ -321,6 +321,14 @@ export function unhideElement(element: Element): void {
   element.removeAttribute('hidden');
 }
 
+export function disableElement(...elements: HTMLElement[]): void {
+  elements.forEach((x) => x.setAttribute('disabled', 'disabled'));
+}
+
+export function enableElement(element: Element): void {
+  element.removeAttribute('disabled');
+}
+
 export function navigateTo(url: string, delay = 0): void {
   setTimeout(() => {
     location.href = url;

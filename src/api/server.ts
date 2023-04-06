@@ -15,6 +15,7 @@ import {
   loadCurrentAccount,
   requestAccountPasswordChange,
   requestAccountPlanChange,
+  deleteAccountWithPassword,
 } from './account';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
@@ -70,6 +71,7 @@ async function main() {
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
   router.post(ApiPath.requestAccountPasswordChange, makeAppRequestHandler(requestAccountPasswordChange, app));
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
+  router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
   router.get(ApiPath.feedManageScreen, makeAppRequestHandler(handleFeedManageScreen, app));

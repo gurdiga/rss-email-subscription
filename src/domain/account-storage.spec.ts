@@ -13,6 +13,7 @@ import { Account, AccountData, AccountId, AccountIdList, makeAccountId, makeAcco
 import { getAccountIdByEmail } from './account-crypto';
 import {
   confirmAccount,
+  deleteAccount,
   getAccountIdList,
   getAccountRootStorageKey,
   getAccountStorageKey,
@@ -234,6 +235,34 @@ describe(setAccountEmail.name, () => {
     const storageErr = makeErr('Fails!');
     const storage = makeTestStorage({ hasItem: () => storageErr });
     const result = setAccountEmail(storage, accountId, newEmail, hashingSalt);
+
+    expect(result).to.deep.equal(makeErr(si`Failed to check account exists: ${storageErr.reason}`));
+  });
+});
+
+describe(deleteAccount.name, () => {
+  it('deletes the corresponding account directory', () => {
+    const removeItem = makeSpy<AppStorage['removeItem']>();
+    const storage = makeTestStorage({ hasItem: () => true, removeItem });
+
+    deleteAccount(storage, accountId);
+
+    expect(removeItem.calls).to.deep.equal([
+      ['/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/account.json'],
+    ]);
+  });
+
+  it('returns AccountNotFound when the case', () => {
+    const storage = makeTestStorage({ hasItem: () => false });
+    const result = deleteAccount(storage, accountId);
+
+    expect(result).to.deep.equal(makeAccountNotFound());
+  });
+
+  it('returns the storage Err when any', () => {
+    const storageErr = makeErr('Fails!');
+    const storage = makeTestStorage({ hasItem: () => storageErr });
+    const result = deleteAccount(storage, accountId);
 
     expect(result).to.deep.equal(makeErr(si`Failed to check account exists: ${storageErr.reason}`));
   });
