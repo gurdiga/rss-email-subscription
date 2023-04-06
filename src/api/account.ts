@@ -388,7 +388,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
   reqSession,
   { storage, settings }
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ module: deleteAccountWithPassword.name, reqId });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteAccountWithPassword.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -403,8 +403,6 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     logWarning(si`Failed to ${makeDeleteAccountRequest.name}`, { reason: request.reason, reqBody });
     return makeInputError(request.reason, request.field);
   }
-
-  // TODO: verify password
 
   const account = loadAccount(storage, accountId);
 
@@ -436,6 +434,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
+  logInfo('Account deleted', { account });
   deinitSession(reqSession);
 
   const cookies = [disablePrivateNavbarCookie];

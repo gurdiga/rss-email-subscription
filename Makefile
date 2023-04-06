@@ -254,7 +254,7 @@ watch-app:
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(New feed added)"' \
 			-e '"message":"(Unsubscribed)"' \
-			-e '"message":"(User registered|User confirmed registration|User logged in)"' \
+			-e '"message":"(User registered|User confirmed registration|User logged in|Account deleted)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
 		(
