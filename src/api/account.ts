@@ -31,7 +31,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
-import { makePlanId, Plans } from '../domain/plan';
+import { makePlanId, PlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -402,6 +402,11 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   if (isErr(request)) {
     logWarning(si`Failed to ${makePlanChangeRequest.name}`, { reason: request.reason, reqBody });
     return makeInputError(request.reason, request.field);
+  }
+
+  if (request.planId === PlanId.SDE) {
+    logWarning('Attemtping to change plan to SDE', { accountId: accountId.value });
+    return makeInputError('Switching to SDE Plan is done by hand', 'planId' as keyof PlanChangeRequestData);
   }
 
   const account = loadAccount(storage, accountId);
