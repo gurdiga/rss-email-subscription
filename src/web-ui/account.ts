@@ -27,12 +27,9 @@ import {
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...spinnerUiElements,
-    ...viewEmailUiElements,
-    ...changeEmailUiElements,
-    ...viewPasswordUiElements,
-    ...changePasswordUiElements,
-    ...viewPlanUiElements,
-    ...changePlanUiElements,
+    ...emailUiElements,
+    ...passwordUiElements,
+    ...planUiElements,
   });
 
   if (isErr(uiElements)) {
@@ -61,10 +58,7 @@ async function main() {
   addPlanChangeEventHandlers(uiElements, uiAccount.planId);
 }
 
-function addPlanChangeEventHandlers(
-  uiElements: ViewPlanUiElements & ChangePlanUiElements,
-  currentPlanId: PlanId
-): void {
+function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: PlanId): void {
   const {
     changePlanButton,
     cancelPlanChangeButton,
@@ -85,9 +79,9 @@ function addPlanChangeEventHandlers(
 
   const dismissEditForm = () => {
     clearValidationErrors(uiElements);
-    hideElement(uiElements.planChangeSuccessMessage);
-    hideElement(uiElements.changePlanForm);
-    unhideElement(uiElements.viewPlanSection);
+    hideElement(planChangeSuccessMessage);
+    hideElement(changePlanForm);
+    unhideElement(viewPlanSection);
   };
 
   onClick(cancelPlanChangeButton, dismissEditForm);
@@ -96,10 +90,7 @@ function addPlanChangeEventHandlers(
   onSubmit(submitNewPlanButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(planChangeSuccessMessage);
-
-    const response = await submitNewPlan(plansDropdown.value);
-
-    handlePlanChangeResponse(uiElements, response);
+    await submitNewPlan(uiElements);
   });
 }
 
@@ -129,31 +120,25 @@ function handleApiResponse(
   }
 }
 
-// TODO: Consider DRYing out this and the other handle*ChangeResponse functions
-function handlePlanChangeResponse(
-  uiElements: ViewPlanUiElements & ChangePlanUiElements,
-  response: Result<ApiResponse<void>>
-): void {
+async function submitNewPlan(uiElements: PlanUiElements) {
+  const { currentPlanLabel, plansDropdown, planChangeApiResponseMessage, planChangeSuccessMessage } = uiElements;
+  const newPlanId = plansDropdown.value as PlanId;
+  const request: PlanChangeRequestData = { planId: newPlanId };
+  const response = await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountPlanChange, HttpMethod.POST, request));
+
   handleApiResponse(
     response,
-    uiElements.planChangeApiResponseMessage,
+    planChangeApiResponseMessage,
     {
-      planId: uiElements.plansDropdown,
+      planId: plansDropdown,
     },
     () => {
-      const newPlanId = uiElements.plansDropdown.value as PlanId;
       const newPlanTitle = Plans[newPlanId].title;
 
-      unhideElement(uiElements.planChangeSuccessMessage);
-      uiElements.currentPlanLabel.textContent = newPlanTitle;
+      unhideElement(planChangeSuccessMessage);
+      currentPlanLabel.textContent = newPlanTitle;
     }
   );
-}
-
-async function submitNewPlan(planId: string) {
-  const request: PlanChangeRequestData = { planId };
-
-  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountPlanChange, HttpMethod.POST, request));
 }
 
 function initPlansDropdown(plansDropdown: HTMLSelectElement, currentPlanId: PlanId) {
@@ -169,13 +154,12 @@ function initPlansDropdown(plansDropdown: HTMLSelectElement, currentPlanId: Plan
   plansDropdown.replaceChildren(...planOptions);
 }
 
-function addPasswordChangeEventHandlers(uiElements: ViewPasswordUiElements & ChangePasswordUiElements): void {
+function addPasswordChangeEventHandlers(uiElements: PasswordUiElements): void {
   const {
     changePasswordButton,
     viewPasswordSection,
     changePasswordForm,
     currentPasswordField,
-    newPasswordField,
     submitNewPasswordButton,
     cancelPasswordChangeButton,
     passwordChangeSuccessMessage,
@@ -187,55 +171,50 @@ function addPasswordChangeEventHandlers(uiElements: ViewPasswordUiElements & Cha
     currentPasswordField.focus();
   });
 
-  onClick(cancelPasswordChangeButton, () => {
-    dismissChangePasswordForm(uiElements);
-  });
+  const dismissChangePasswordForm = () => {
+    clearValidationErrors(uiElements);
+    hideElement(passwordChangeSuccessMessage);
+    hideElement(changePasswordForm);
+    unhideElement(viewPasswordSection);
+  };
 
-  onEscape(changePasswordForm, () => dismissChangePasswordForm(uiElements));
+  onClick(cancelPasswordChangeButton, dismissChangePasswordForm);
+  onEscape(changePasswordForm, dismissChangePasswordForm);
 
   onSubmit(submitNewPasswordButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(passwordChangeSuccessMessage);
-
-    const response = await submitNewPassword(currentPasswordField.value, newPasswordField.value);
-
-    handlePasswordChangeResponse(uiElements, response);
+    await submitNewPassword(uiElements);
   });
 }
 
-function handlePasswordChangeResponse(
-  uiElements: ViewPasswordUiElements & ChangePasswordUiElements,
-  response: Result<ApiResponse<void>>
-): void {
+async function submitNewPassword(uiElements: PasswordUiElements) {
+  const { currentPasswordField, newPasswordField, passwordChangeSuccessMessage, passwordChangeApiResponseMessage } =
+    uiElements;
+  const request: PasswordChangeRequestData = {
+    currentPassword: currentPasswordField.value,
+    newPassword: newPasswordField.value,
+  };
+  const response = await asyncAttempt(() =>
+    sendApiRequest(ApiPath.requestAccountPasswordChange, HttpMethod.POST, request)
+  );
+
   handleApiResponse(
     response,
-    uiElements.passwordChangeApiResponseMessage,
+    passwordChangeApiResponseMessage,
     {
-      currentPassword: uiElements.currentPasswordField,
-      newPassword: uiElements.newPasswordField,
+      currentPassword: currentPasswordField,
+      newPassword: newPasswordField,
     },
     () => {
-      unhideElement(uiElements.passwordChangeSuccessMessage);
-      uiElements.currentPasswordField.value = '';
-      uiElements.newPasswordField.value = '';
+      unhideElement(passwordChangeSuccessMessage);
+      currentPasswordField.value = '';
+      newPasswordField.value = '';
     }
   );
 }
 
-async function submitNewPassword(currentPassword: string, newPassword: string) {
-  const request: PasswordChangeRequestData = { currentPassword, newPassword };
-
-  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountPasswordChange, HttpMethod.POST, request));
-}
-
-function dismissChangePasswordForm(uiElements: ViewPasswordUiElements & ChangePasswordUiElements): void {
-  clearValidationErrors(uiElements);
-  hideElement(uiElements.passwordChangeSuccessMessage);
-  hideElement(uiElements.changePasswordForm);
-  unhideElement(uiElements.viewPasswordSection);
-}
-
-function addEmailChangeEventHandlers(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {
+function addEmailChangeEventHandlers(uiElements: EmailUiElements): void {
   const {
     changeEmailButton,
     viewEmailSection,
@@ -252,49 +231,43 @@ function addEmailChangeEventHandlers(uiElements: ViewEmailUiElements & ChangeEma
     newEmailField.focus();
   });
 
-  onClick(cancelEmailChangeButton, () => dismissChangeEmailForm(uiElements));
-  onEscape(newEmailField, () => dismissChangeEmailForm(uiElements));
+  const dismissChangeEmailForm = () => {
+    clearValidationErrors(uiElements);
+    hideElement(emailChangeSuccessMessage);
+    hideElement(changeEmailForm);
+    unhideElement(viewEmailSection);
+  };
+
+  onClick(cancelEmailChangeButton, dismissChangeEmailForm);
+  onEscape(newEmailField, dismissChangeEmailForm);
 
   onSubmit(submitNewEmailButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(emailChangeSuccessMessage);
-
-    const response = await submitNewEmail(newEmailField.value);
-
-    handleEmailChangeResponse(uiElements, response, newEmailField.value);
+    await submitNewEmail(uiElements);
   });
 }
 
-async function submitNewEmail(newEmail: string) {
+async function submitNewEmail(uiElements: EmailUiElements) {
+  const { newEmailField, newEmailLabel, emailChangeSuccessMessage, emailChangeApiResponseMessage } = uiElements;
+  const newEmail = newEmailField.value;
   const request: EmailChangeRequestData = { newEmail };
+  const response = await asyncAttempt(() =>
+    sendApiRequest(ApiPath.requestAccountEmailChange, HttpMethod.POST, request)
+  );
 
-  return await asyncAttempt(() => sendApiRequest(ApiPath.requestAccountEmailChange, HttpMethod.POST, request));
-}
-
-function handleEmailChangeResponse(
-  uiElements: ViewEmailUiElements & ChangeEmailUiElements,
-  response: Result<ApiResponse<void>>,
-  newEmail: string
-): void {
   handleApiResponse(
     response,
-    uiElements.emailChangeApiResponseMessage,
+    emailChangeApiResponseMessage,
     {
-      newEmail: uiElements.newEmailField,
+      newEmail: newEmailField,
     },
     () => {
-      unhideElement(uiElements.emailChangeSuccessMessage);
-      uiElements.newEmailLabel.textContent = newEmail;
-      uiElements.newEmailField.value = '';
+      unhideElement(emailChangeSuccessMessage);
+      newEmailLabel.textContent = newEmail;
+      newEmailField.value = '';
     }
   );
-}
-
-function dismissChangeEmailForm(uiElements: ViewEmailUiElements & ChangeEmailUiElements): void {
-  clearValidationErrors(uiElements);
-  hideElement(uiElements.emailChangeSuccessMessage);
-  hideElement(uiElements.changeEmailForm);
-  unhideElement(uiElements.viewEmailSection);
 }
 
 function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
@@ -338,28 +311,12 @@ function onEscape(element: HTMLElement, f: Function) {
   });
 }
 
-interface RequiredUiElements
-  extends SpinnerUiElements,
-    ViewEmailUiElements,
-    ChangeEmailUiElements,
-    ViewPasswordUiElements,
-    ChangePasswordUiElements,
-    ViewPlanUiElements,
-    ChangePlanUiElements {}
+interface RequiredUiElements extends SpinnerUiElements, EmailUiElements, PasswordUiElements, PlanUiElements {}
 
-interface ViewEmailUiElements {
+interface EmailUiElements {
   viewEmailSection: HTMLElement;
   currentEmailLabel: HTMLElement;
   changeEmailButton: HTMLButtonElement;
-}
-
-const viewEmailUiElements: ElementSelectors<ViewEmailUiElements> = {
-  viewEmailSection: '#view-email-section',
-  currentEmailLabel: '#current-email-label',
-  changeEmailButton: '#change-email-button',
-};
-
-interface ChangeEmailUiElements {
   changeEmailForm: HTMLFormElement;
   newEmailField: HTMLInputElement;
   newEmailLabel: HTMLElement;
@@ -369,7 +326,10 @@ interface ChangeEmailUiElements {
   emailChangeSuccessMessage: HTMLElement;
 }
 
-const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
+const emailUiElements: ElementSelectors<EmailUiElements> = {
+  viewEmailSection: '#view-email-section',
+  currentEmailLabel: '#current-email-label',
+  changeEmailButton: '#change-email-button',
   changeEmailForm: '#change-email-section',
   newEmailField: '#new-email-field',
   newEmailLabel: '#new-email-label',
@@ -379,17 +339,9 @@ const changeEmailUiElements: ElementSelectors<ChangeEmailUiElements> = {
   emailChangeSuccessMessage: '#email-change-success-message',
 };
 
-interface ViewPasswordUiElements {
+interface PasswordUiElements {
   changePasswordButton: HTMLButtonElement;
   viewPasswordSection: HTMLElement;
-}
-
-const viewPasswordUiElements: ElementSelectors<ViewPasswordUiElements> = {
-  changePasswordButton: '#change-password',
-  viewPasswordSection: '#view-password-section',
-};
-
-interface ChangePasswordUiElements {
   changePasswordForm: HTMLFormElement;
   currentPasswordField: HTMLInputElement;
   newPasswordField: HTMLInputElement;
@@ -399,7 +351,9 @@ interface ChangePasswordUiElements {
   passwordChangeSuccessMessage: HTMLElement;
 }
 
-const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
+const passwordUiElements: ElementSelectors<PasswordUiElements> = {
+  changePasswordButton: '#change-password',
+  viewPasswordSection: '#view-password-section',
   changePasswordForm: '#change-password-section',
   currentPasswordField: '#current-password-field',
   newPasswordField: '#new-password-field',
@@ -409,19 +363,10 @@ const changePasswordUiElements: ElementSelectors<ChangePasswordUiElements> = {
   passwordChangeSuccessMessage: '#password-change-success-message',
 };
 
-interface ViewPlanUiElements {
+interface PlanUiElements {
   changePlanButton: HTMLButtonElement;
   viewPlanSection: HTMLElement;
   currentPlanLabel: HTMLElement;
-}
-
-const viewPlanUiElements: ElementSelectors<ViewPlanUiElements> = {
-  changePlanButton: '#change-plan',
-  viewPlanSection: '#view-plan-section',
-  currentPlanLabel: '#current-plan-label',
-};
-
-interface ChangePlanUiElements {
   changePlanForm: HTMLFormElement;
   plansDropdown: HTMLSelectElement;
   submitNewPlanButton: HTMLButtonElement;
@@ -430,7 +375,10 @@ interface ChangePlanUiElements {
   planChangeSuccessMessage: HTMLElement;
 }
 
-const changePlanUiElements: ElementSelectors<ChangePlanUiElements> = {
+const planUiElements: ElementSelectors<PlanUiElements> = {
+  changePlanButton: '#change-plan',
+  viewPlanSection: '#view-plan-section',
+  currentPlanLabel: '#current-plan-label',
   changePlanForm: '#change-plan-section',
   plansDropdown: '#plans-dropdown',
   submitNewPlanButton: '#submit-new-plan-button',
