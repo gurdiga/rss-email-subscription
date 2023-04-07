@@ -574,3 +574,19 @@ deno-notes:
 	#     deno run -A --config tsconfig.json src/api/server.ts # -- failed because session-file-store
 	#
 	# Easy fixes: process.env, process.exit, process.argv, process.on
+
+# cron @daily
+unique-ips-report:
+	@zcat -f .tmp/logs/feedsubscription/website.log* |
+	grep -vF '[error]' | # skip error records
+	grep -vP ' "[^"]+" \d+ \d+ "[^"]+" "[^"]*([Bb]ot|nmap).*"' | # skip bots
+	grep -P ' "GET [^"]+" 200 ' | # only GET 200
+	cut -d' ' -f4 | # ip
+	sort -u |
+	wc -l |
+	cat <( \
+		echo "Subject: RES unique-ips-report"; \
+		echo "From: RES <unique-ips-report@feedsubscription.com>"; \
+		echo; \
+	) - |
+	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
