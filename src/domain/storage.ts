@@ -1,9 +1,26 @@
 import { dirname, join } from 'node:path';
-import { deleteFile, DeleteFileFn, fileExists, FileExistsFn, listFiles, listDirectories } from './io-isolation';
-import { ListFilesFn, renameFile, RenameFileFn } from './io-isolation';
-import { mkdirp, MkdirpFn, readFile, ReadFileFn, writeFile, WriteFileFn, ListDirectoriesFn } from './io-isolation';
-import { attempt, isErr, makeErr, Result } from '../shared/lang';
+import { Result, attempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import {
+  DeleteFileFn,
+  FileExistsFn,
+  ListDirectoriesFn,
+  ListFilesFn,
+  MkdirpFn,
+  ReadFileFn,
+  RenameFileFn,
+  RmdirFn,
+  WriteFileFn,
+  deleteFile,
+  fileExists,
+  listDirectories,
+  listFiles,
+  mkdirp,
+  readFile,
+  renameFile,
+  rmdir,
+  writeFile,
+} from './io-isolation';
 
 export type StorageKey = string; // Something like this: '/accounts/219812984/account.json'
 export type StorageValue = any; // Will get JSONified and stored in the file.
@@ -33,6 +50,7 @@ export interface AppStorage {
     listDirectoriesFn?: ListDirectoriesFn,
     fileExistsFn?: FileExistsFn
   ) => Result<StorageKey[]>;
+  removeTree: (key: StorageKey, rmdirFn?: RmdirFn, fileExistsFn?: FileExistsFn) => Result<void>;
 }
 
 export function makeStorage(dataDirRoot: string): AppStorage {
@@ -192,6 +210,25 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return listDirectoriesResult;
   }
 
+  function removeTree(key: StorageKey, rmdirFn = rmdir, fileExistsFn = fileExists): Result<void> {
+    const dirPath = join(dataDirRoot, key);
+    const dirExistsResult = attempt(() => fileExistsFn(dirPath));
+
+    if (isErr(dirExistsResult)) {
+      return makeErr(si`Failed to check directory exists: ${dirExistsResult.reason}`);
+    }
+
+    if (dirExistsResult === false) {
+      return;
+    }
+
+    const rmdirResult = attempt(() => rmdirFn(dirPath));
+
+    if (isErr(rmdirResult)) {
+      return makeErr(si`Failed to delete directory: ${rmdirResult.reason}`);
+    }
+  }
+
   return {
     storeItem,
     loadItem,
@@ -200,6 +237,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     renameItem,
     listItems,
     listSubdirectories,
+    removeTree,
   };
 }
 

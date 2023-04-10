@@ -1,5 +1,13 @@
 import { expect } from 'chai';
-import { DeleteFileFn, FileExistsFn, ListDirectoriesFn, ListFilesFn, MkdirpFn, RenameFileFn } from './io-isolation';
+import {
+  DeleteFileFn,
+  FileExistsFn,
+  ListDirectoriesFn,
+  ListFilesFn,
+  MkdirpFn,
+  RenameFileFn,
+  RmdirFn,
+} from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from '../shared/lang';
 import { makeStorage } from './storage';
@@ -9,7 +17,7 @@ import { si } from '../shared/string-utils';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = '/data';
-  const { loadItem, storeItem, hasItem, removeItem, renameItem, listItems, listSubdirectories } =
+  const { loadItem, storeItem, hasItem, removeItem, renameItem, listItems, listSubdirectories, removeTree } =
     makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = makePath(dataDirRoot, key);
@@ -246,6 +254,42 @@ describe(makeStorage.name, () => {
       const result = listItems('/key', listDirectoriesFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Failed to list files: Boom on list files!?'));
+    });
+  });
+
+  describe(removeTree.name, () => {
+    it('removes the given directory', () => {
+      const rmdirFn = makeSpy<RmdirFn>();
+      const fileExistsFn = makeStub<FileExistsFn>(() => true);
+
+      removeTree(key, rmdirFn, fileExistsFn);
+
+      expect(fileExistsFn.calls).to.deep.equal([[expectedFilePath]]);
+      expect(rmdirFn.calls).to.deep.equal([[expectedFilePath]]);
+    });
+
+    it('succeedes if the directory does not exist', () => {
+      const rmdirFn = makeSpy<RmdirFn>();
+      const fileExistsFn = makeStub<FileExistsFn>(() => false);
+
+      removeTree(key, rmdirFn, fileExistsFn);
+
+      expect(fileExistsFn.calls).to.deep.equal([[expectedFilePath]]);
+      expect(rmdirFn.calls).to.be.empty;
+    });
+
+    it('returns an Err value when can’t check directory exists or can’t delete it', () => {
+      let rmdirFn = makeSpy<RmdirFn>();
+      let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom on exists!!'));
+      let result = removeTree(key, rmdirFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Failed to check directory exists: Boom on exists!!'));
+
+      fileExistsFn = makeStub<FileExistsFn>(() => true);
+      rmdirFn = makeThrowingStub<RmdirFn>(new Error('Boom on delete!!'));
+      result = removeTree(key, rmdirFn, fileExistsFn);
+
+      expect(result).to.deep.equal(makeErr('Failed to delete directory: Boom on delete!!'));
     });
   });
 });
