@@ -1,5 +1,6 @@
 import { isString, makeErr, Result, hasKind } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { allowedCharacters } from './email-address-making';
 
 export interface FeedId {
   kind: 'FeedId';
@@ -12,6 +13,7 @@ export function isFeedId(value: unknown): value is FeedId {
 
 const minFeedIdLength = 3;
 export const maxFeedIdLength = 64; // See https://www.rfc-editor.org/errata/eid1690
+const feedIdRe = new RegExp(si`^${allowedCharacters}+$`, 'i');
 
 export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
   if (!input) {
@@ -34,6 +36,10 @@ export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
 
   if (value.length > maxFeedIdLength) {
     return makeErr(si`Feed ID needs to be max ${maxFeedIdLength} characters`, field);
+  }
+
+  if (!feedIdRe.test(value)) {
+    return makeErr('Only letters, digits, "-", and "_" are allowed', field);
   }
 
   const feedId: FeedId = {
