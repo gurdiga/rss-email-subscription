@@ -62,6 +62,9 @@ describe(makeEmailAddress.name, () => {
     expect(makeEmailAddress('@test.com')).to.deep.equal(
       makeErr('Email is syntactically incorrect: "@test.com"', field)
     );
+    expect(makeEmailAddress('this is not ok@test.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "this is not ok@test.com"', field)
+    );
     expect(makeEmailAddress('a+@test.com')).to.deep.equal(
       makeErr('Email is syntactically incorrect: "a+@test.com"', field)
     );

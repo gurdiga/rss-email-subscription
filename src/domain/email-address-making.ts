@@ -12,6 +12,9 @@ export function makeOptionalEmailAddress(input: unknown, field = 'email'): Resul
   return makeEmailAddress(input, field);
 }
 
+export const allowedCharacters = '[a-z0-9-_]';
+const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)?${allowedCharacters}+)*$`, 'i');
+
 export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailAddress> {
   if (!input) {
     return makeErr('Email is empty', field);
@@ -43,7 +46,7 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
 
   const parts = email.split('@');
   const [localPart = '', domain = ''] = parts.map((s) => s.trim());
-  const doesLocalPartLookReasonable = localPart.length > 0 && /^[a-z0-9-_]+((\+|\.)?[a-z0-9-_]+)*$/i.test(localPart);
+  const doesLocalPartLookReasonable = localPart.length > 0 && localPartRe.test(localPart);
 
   if (!doesLocalPartLookReasonable) {
     return err;
