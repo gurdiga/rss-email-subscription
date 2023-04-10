@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
-import { listFiles, mkdirp, writeFile } from './io-isolation';
+import { rmdir, listFiles, mkdirp, writeFile } from './io-isolation';
 import { makePath } from '../shared/path-utils';
 
 describe(mkdirp.name, () => {
@@ -13,6 +13,19 @@ describe(mkdirp.name, () => {
     mkdirp(dir);
 
     expect(existsSync(dir)).to.be.true;
+  });
+});
+
+describe(rmdir.name, () => {
+  const tmpWorkDir = mkdtempSync(makePath(os.tmpdir(), 'res-test-rmdir-'));
+
+  it('removes directories recursively', () => {
+    const dir = makePath(tmpWorkDir, 'one/two/three');
+
+    mkdirp(dir);
+    rmdir(dir);
+
+    expect(existsSync(dir)).to.be.false;
   });
 });
 

@@ -1,4 +1,13 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  renameSync,
+  rmdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 
 export type ReadFileFn = (filePath: string) => string;
 
@@ -16,6 +25,12 @@ export type MkdirpFn = (path: string) => void;
 
 export function mkdirp(path: string): void {
   mkdirSync(path, { recursive: true });
+}
+
+export type RmdirFn = typeof rmdir;
+
+export function rmdir(path: string): void {
+  rmdirSync(path);
 }
 
 export type WriteFileFn = (path: string, content: string) => void;
