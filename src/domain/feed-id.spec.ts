@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { makeFeedId, FeedId, maxFeedIdLength } from './feed-id';
+import { si } from '../shared/string-utils';
 
 describe(makeFeedId.name, () => {
   it('returns a FeedId value when looks like an email local part', () => {
@@ -8,17 +9,19 @@ describe(makeFeedId.name, () => {
   });
 
   it('returns an Err value when not OK', () => {
-    expect(makeFeedId('This is not OK')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
-    expect(makeFeedId('`123`')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
-    expect(makeFeedId('+abc')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
-    expect(makeFeedId('<abc>')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
-    expect(makeFeedId('ab}c')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
-    expect(makeFeedId('abc;')).to.deep.equal(makeErr('Only letters, digits, "-", and "_" are allowed', 'id'));
+    expect(makeFeedId(42)).to.deep.equal(makeErr('Feed ID is not a string', 'id'));
     expect(makeFeedId(null)).to.deep.equal(makeErr('Feed ID is missing', 'id'));
     expect(makeFeedId(undefined)).to.deep.equal(makeErr('Feed ID is missing', 'id'));
-    expect(makeFeedId(42)).to.deep.equal(makeErr('Feed ID is not a string', 'id'));
     expect(makeFeedId('')).to.deep.equal(makeErr('Feed ID is missing', 'id'));
     expect(makeFeedId('  ')).to.deep.equal(makeErr('Feed ID is missing', 'id'));
+
+    const badStrings: string[] = ['This is not OK', '+abc', '<abc>', 'ab}c', 'abc;'];
+
+    for (const badString of badStrings) {
+      expect(makeFeedId(badString)).to.deep.equal(
+        makeErr(si`Only letters, digits, "-", and "_" are allowed, but got "${badString}"`, 'id')
+      );
+    }
   });
 
   it('imposes length limits', () => {

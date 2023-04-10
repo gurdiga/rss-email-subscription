@@ -39,7 +39,7 @@ export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
   }
 
   if (!feedIdRe.test(value)) {
-    return makeErr('Only letters, digits, "-", and "_" are allowed', field);
+    return makeErr(si`Only letters, digits, "-", and "_" are allowed, but got "${value}"`, field);
   }
 
   const feedId: FeedId = {
