@@ -248,7 +248,7 @@ describe(deleteAccount.name, () => {
     deleteAccount(storage, accountId);
 
     expect(removeItem.calls).to.deep.equal([
-      ['/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/account.json'],
+      ['/accounts/test-account-id-test-account-id-test-account-id-test-account-id-'],
     ]);
   });
 

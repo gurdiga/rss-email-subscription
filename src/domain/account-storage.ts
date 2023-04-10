@@ -202,7 +202,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
 }
 
 export function deleteAccount(storage: AppStorage, accountId: AccountId): Result<AccountNotFound | void> {
-  const storageKey = getAccountStorageKey(accountId);
+  const storageKey = getAccountRootStorageKey(accountId);
   const exists = storage.hasItem(storageKey);
 
   if (isErr(exists)) {
