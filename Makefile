@@ -315,11 +315,11 @@ watch-smtp-out:
 	while read -r timestamp rest; do
 		(
 			echo "Subject: RES smtp-out $$timestamp"
-			echo "From: RES <watch-smtp-out@feedsubscription.com>";
-			echo
+			echo "From: RES <watch-smtp-out@feedsubscription.com>"
+			echo ""
 			echo "$$rest"
 		) |
-		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi;
+		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi
 	done \
 	& disown
 
