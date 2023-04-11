@@ -254,4 +254,4 @@ interface RequiredParams {
   id: string;
 }
 
-globalThis.window && main();
+typeof window !== 'undefined' && main();

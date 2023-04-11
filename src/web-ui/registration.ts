@@ -115,4 +115,4 @@ interface RequiredParams {
   plan: string;
 }
 
-globalThis.window && main();
+typeof window !== 'undefined' && main();

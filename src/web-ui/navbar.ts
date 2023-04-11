@@ -62,4 +62,4 @@ interface RequiredUiElements {
   signOutLink: HTMLAnchorElement;
 }
 
-globalThis.window && main();
+typeof window !== 'undefined' && main();

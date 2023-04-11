@@ -119,4 +119,4 @@ interface FeedListUiElements {
   feedList: HTMLOListElement;
 }
 
-globalThis.window && main();
+typeof window !== 'undefined' && main();

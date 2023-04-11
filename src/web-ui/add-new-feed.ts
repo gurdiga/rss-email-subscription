@@ -96,4 +96,4 @@ interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, Br
   submitButton: HTMLButtonElement;
 }
 
-globalThis.window && main();
+typeof window !== 'undefined' && main();
