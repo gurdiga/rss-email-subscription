@@ -16,11 +16,12 @@ import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending'
 import { readStoredRssItems } from './rss-item-reading';
 
 export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+  const deliveryId = new Date().toISOString().replace(/[:.]/g, '');
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'email-sending',
     accountId: accountId.value,
     feedId: feed.id.value,
-    deliveryId: new Date().toISOString(),
+    deliveryId,
   });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
