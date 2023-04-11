@@ -1,4 +1,4 @@
-import { makeErr, Result } from '../../shared/lang';
+import { isObject, makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { fetch, FetchFn } from './fetch';
 
@@ -26,6 +26,10 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
       return makeErr(si`Invalid response content-type: ${contentType}`);
     }
   } catch (e) {
-    return makeErr((e as Error).message);
+    if (isObject(e) && 'cause' in e) {
+      return makeErr(e.cause);
+    } else {
+      return makeErr((e as Error).message);
+    }
   }
 }

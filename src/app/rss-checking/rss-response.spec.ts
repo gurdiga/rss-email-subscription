@@ -42,6 +42,17 @@ describe(fetchRss.name, () => {
     expect(response).to.deep.equal(makeErr(mockException.message));
   });
 
+  it('returns an Err value from fetch’s error cause when any', async () => {
+    const errorCause = new Error('DNS is down!');
+    const mockException = new Error('Flaky wifi?!', { cause: errorCause });
+    const mockFetchFn = async () => {
+      throw mockException;
+    };
+    const response = await fetchRss(mockUrl, mockFetchFn);
+
+    expect(response).to.deep.equal(makeErr(errorCause.message));
+  });
+
   describe('content type validation', () => {
     it('returns an Err value when the response is not XML', async () => {
       const mockHeaders = new Headers({ 'content-type': 'text/html; charset=utf-8' });
