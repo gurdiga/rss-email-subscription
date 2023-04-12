@@ -644,3 +644,25 @@ unique-ips-report:
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+
+# brew install goaccess
+# geoip comes from https://www.maxmind.com/en/accounts/852003/geoip/downloads
+access-report:
+	zcat -f .tmp/logs/feedsubscription/website.log* |
+	cut -d ' ' -f 4- |
+	grep -P '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}' | # rows that start with an IP
+	goaccess \
+		-o .goaccess/report.html \
+		--keep-last $${DAYS:-90} \
+		--ignore-crawlers --unknowns-as-crawlers \
+		--hide-referrer *feedsubscription.com \
+		--hide-referrer feedsubscription.com. \
+		--hide-referrer feedsubscription.com:80 \
+		--hide-referrer 207.154.253.211 \
+		--hide-referrer 207.154.253.211:80 \
+		--hide-referrer 207.154.253.211:443 \
+		--ignore-panel HOSTS \
+		--exclude-ip 95.65.96.65 \
+		--geoip-database .goaccess/GeoLite2-Country.mmdb \
+		--log-format=COMBINED -
+	open .goaccess/report.html

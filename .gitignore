@@ -4,3 +4,4 @@ website/html/
 .tmp/
 .env
 dist/
+.goaccess/
