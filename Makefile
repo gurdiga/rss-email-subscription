@@ -662,6 +662,7 @@ access-report:
 		--hide-referrer 207.154.253.211:80 \
 		--hide-referrer 207.154.253.211:443 \
 		--ignore-panel HOSTS \
+		--ignore-panel ASN \
 		--exclude-ip 95.65.96.65 \
 		--geoip-database .goaccess/GeoLite2-Country.mmdb \
 		--log-format=COMBINED -
