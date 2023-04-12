@@ -327,9 +327,9 @@ define delivery-report-defs
 	export delivery_record_regex="^.*\ postfix/smtp.*:\ ([0-9A-F]+):\ to=.*,\ status=([a-z]+)\ \((.*)\).*$$"
 
 	function record_delivery_report() {
-		local id="$$1" status="$$2" message="$$3"
+		local qid="$$1" status="$$2" message="$$3"
 
-		echo -e "so? id: '$$id'\nstatus: '$$status'\nmessage: '$$message'"
+		echo -e "so? qid: '$$qid'\nstatus: '$$status'\nmessage: '$$message'"
 	}
 endef
 
@@ -337,17 +337,17 @@ x: delivery-report-recording-test
 
 delivery-report-recording-test:
 	@$(call delivery-report-defs)
-	record_delivery_report ID ST ME
+	record_delivery_report QID ST ME
 
 delivery-report-regex-test:
 	@$(call delivery-report-defs)
 	line="2023-04-09T02:02:01+00:00 feedsubscription smtp-out[904]: 2023-04-09T02:02:01.852102+00:00 INFO    postfix/smtp[42481]: 5F6B5185B70: to=<gurdiga@gmail.com>, relay=gmail-smtp-in.l.google.com[173.194.76.26]:25, delay=1.5, delays=1.1/0.03/0.15/0.23, dsn=2.0.0, status=sent (250 2.0.0 OK  1681005721 y14-20020a5d470e000000b002f006d6b9e7si684387wrq.824 - gsmtp)"
 
 	if [[ "$$line" =~ $$delivery_record_regex ]]; then
-		id=$${BASH_REMATCH[1]}
+		qid=$${BASH_REMATCH[1]}
 		status=$${BASH_REMATCH[2]}
 		message=$${BASH_REMATCH[3]}
-		echo -e "id: '$$id'\nstatus: '$$status'\nmessage: '$$message'"
+		echo -e "qid: '$$qid'\nstatus: '$$status'\nmessage: '$$message'"
 	else
 		echo NOPE
 	fi
@@ -357,10 +357,10 @@ delivery-report-parse-test:
 	cat .tmp/logs/feedsubscription/smtp-out.log |
 	while read line; do
 		if [[ "$$line" =~ $$delivery_record_regex ]]; then
-			id=$${BASH_REMATCH[1]}
+			qid=$${BASH_REMATCH[1]}
 			status=$${BASH_REMATCH[2]}
 			message=$${BASH_REMATCH[3]}
-			echo -e "id: '$$id'\nstatus: '$$status'\nmessage: '$$message'"
+			echo -e "qid: '$$qid'\nstatus: '$$status'\nmessage: '$$message'"
 		fi
 	done
 
@@ -369,10 +369,10 @@ watch-delivery-report:
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	while read line; do
 		if [[ "$$line" =~ $$delivery_record_regex ]]; then
-			id=$${BASH_REMATCH[1]}
+			qid=$${BASH_REMATCH[1]}
 			status=$${BASH_REMATCH[2]}
 			message=$${BASH_REMATCH[3]}
-			record_delivery_report "$$id" "$$status" "$$message"
+			record_delivery_report "$$qid" "$$status" "$$message"
 		fi
 	done
 
