@@ -8,3 +8,5 @@ const rl = readline.createInterface({
 rl.on('line', (line) => {
   console.log('received report: ', line);
 });
+
+// NOTE: Delivery storage key = QID + timestamp to be able to record multiple delivery attempts.

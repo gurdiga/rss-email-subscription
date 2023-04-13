@@ -417,7 +417,13 @@ watch-delivery-report:
 			message=$${BASH_REMATCH[3]}
 
 			# TODO: How do I know this message is related to a "Delivery info" report?
-			# TODO: Delivery file name: QID + timestamp to be able to record multiple delivery attempts.
+
+			# DUNNO: How can I start watching the status of a message from the
+			# moment of posting it into Postfix?
+
+			# DUNNO: Maybe store the QID list somewhere when posting the
+			# messages into Postfix, and then consult the list here to decide
+			# if the QID is relevant or not?
 
 			(
 				build_delivery_report "$$qid" "$$status" "$$message" |
