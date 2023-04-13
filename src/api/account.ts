@@ -386,7 +386,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
   reqBody,
   _reqParams,
   reqSession,
-  { storage, settings }
+  { storage, settings, env }
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: deleteAccountWithPassword.name, reqId });
   const session = checkSession(reqSession);
@@ -436,11 +436,31 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
 
   logInfo('Account deleted', { account });
   deinitSession(reqSession);
+  sendAccountDeletionConfirmationEmail(account.email, settings, env);
 
   const cookies = [disablePrivateNavbarCookie];
 
   return makeSuccess('Success', {}, {}, cookies);
 };
+
+function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settings: AppSettings, env: AppEnv) {
+  const emailContent = {
+    subject: 'FeedSubscription account deletion confirmation',
+    htmlBody: si`
+      <p>Hi there,</p>
+
+      <p>At your request, your account at ${getFancyName()} has been deleted.</p>
+
+      <p>If you would like to share the reason for deleting the account, we’d really appreciate it.
+      You can reply just to this email, or take a ten-second survey:
+      <a href="https://app.qpointsurvey.com/s/vo2hg1fbueqaj5o0">click here for survey</a>.</p>
+
+      <p>Have a nice day.</p>
+    `,
+  };
+
+  return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
+}
 
 // TODO: Add api test
 export const requestAccountPlanChange: AppRequestHandler = async function requestAccountPlanChange(
