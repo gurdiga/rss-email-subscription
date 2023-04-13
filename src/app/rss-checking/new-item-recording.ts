@@ -34,14 +34,19 @@ export function recordNewRssItems(
   return writtenItemCount;
 }
 
+export function getRssItemId(item: RssItem, hashFn: HashFn = hash): string {
+  const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
+
+  return hashFn(input, RSS_ITEM_HASHING_SALT);
+}
+
+export const RSS_ITEM_HASHING_SALT = 'item-name-salt';
 export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
-  const hashingSalt = 'item-name-salt';
-  const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
-  const hash = hashFn(input, hashingSalt);
+  const itemId = getRssItemId(item, hashFn);
 
-  return si`${RSS_ITEM_FILE_PREFIX}${hash}.json`;
+  return si`${RSS_ITEM_FILE_PREFIX}${itemId}.json`;
 }
 
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {

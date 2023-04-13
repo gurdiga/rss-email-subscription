@@ -1,18 +1,22 @@
 import { AccountId } from '../../domain/account';
+import { HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress } from '../../domain/email-address-making';
 import { Feed, SendingReport } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
-import { getFeedLastSendingReportStorageKey, isFeedNotFound } from '../../domain/feed-storage';
+import { getFeedLastSendingReportStorageKey, getFeedRootStorageKey, isFeedNotFound } from '../../domain/feed-storage';
+import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { requireEnv } from '../../shared/env';
-import { isErr } from '../../shared/lang';
+import { Result, isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
+import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
+import { getRssItemId } from '../rss-checking/new-item-recording';
 import { EmailDeliveryEnv } from './email-delivery';
 import { loadStoredEmails, makeFullEmailAddress } from './emails';
 import { deleteItem } from './item-cleanup';
-import { makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
+import { EmailContent, makeEmailContent, makeUnsubscribeUrl, sendEmail } from './item-sending';
 import { readStoredRssItems } from './rss-item-reading';
 
 export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
@@ -94,6 +98,12 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
   });
 
   for (const storedItem of validItems) {
+    // - Make an item directory to store emails:
+    //  + /feeds/FEED_ID/inbox/rss-item-ITEM_ID.json
+    //  - /feeds/FEED_ID/outbox/rss-item-ITEM_ID/EMAIL_ID.json
+    //  - /feeds/FEED_ID/postfixed/rss-item-ITEM_ID/EMAIL_ID.json
+    //
+    // How do I make this idempotent? — So that if it crashews midcourse, it can safely resume when back up.
     for (const hashedEmail of confirmedEmails) {
       logInfo('Sending item', {
         itemTitle: storedItem.item.title,
@@ -102,12 +112,24 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
       const unsubscribeUrl = makeUnsubscribeUrl(feed.id, hashedEmail, feed.displayName, env.DOMAIN_NAME);
       const emailContent = makeEmailContent(storedItem.item, unsubscribeUrl, fromAddress);
+      const storeResult = storeEmail(storage, accountId, feed.id, storedItem.item, hashedEmail, emailContent);
+
+      if (isErr(storeResult)) {
+        logError(si`Failed to ${storeEmail.name}:`, {
+          reason: storeResult.reason,
+          accountId: accountId.value,
+          feedId: feed.id.value,
+          storedItem: storedItem.item.guid,
+          hashedEmail: hashedEmail.emailAddress.value,
+        });
+      }
+
       const from = makeFullEmailAddress(feed.displayName, fromAddress);
       const sendingResult = await sendEmail(from, hashedEmail.emailAddress, feed.replyTo, emailContent, env);
 
       if (isErr(sendingResult)) {
         report.failed++;
-        logError(sendingResult.reason);
+        logError(si`Failed to ${sendEmail.name}:`, { reason: sendingResult.reason });
       } else {
         report.sent++;
         logInfo('Delivery info', {
@@ -140,4 +162,40 @@ function storeSendingReport(storage: AppStorage, report: SendingReport, accountI
   const storageKey = getFeedLastSendingReportStorageKey(accountId, feedId);
 
   return storage.storeItem(storageKey, report);
+}
+
+function storeEmail(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  item: RssItem,
+  to: HashedEmail,
+  emailContent: EmailContent
+): Result<void> {
+  const storageKey = getStoredEmailStorageKey(accountId, feedId, item, to);
+
+  const storedEmail: StoredEmail = {
+    ...emailContent,
+    to: to.emailAddress.value,
+  };
+
+  return storage.storeItem(storageKey, storedEmail);
+}
+
+interface StoredEmail extends EmailContent {
+  to: string;
+}
+
+function getStoredEmailStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
+  item: RssItem,
+  hashedEmail: HashedEmail
+): string {
+  const itemId = getRssItemId(item);
+  const emailId = hashedEmail.saltedHash;
+  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+
+  // /accounts/ACCOUNT_ID/feeds/FEED_ID/outbox/ITEM_ID/EMAIL_ID.json
+  return makePath(feedRootStorageKey, 'outbox', itemId, si`${emailId}.json`);
 }
