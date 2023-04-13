@@ -9,7 +9,7 @@ import {
   MkdirpFn,
   ReadFileFn,
   RenameFileFn,
-  RmdirFn,
+  RmdirRecursivelyFn,
   WriteFileFn,
   deleteFile,
   fileExists,
@@ -18,7 +18,7 @@ import {
   mkdirp,
   readFile,
   renameFile,
-  rmdir,
+  rmdirRecursively,
   writeFile,
 } from './io-isolation';
 
@@ -50,7 +50,7 @@ export interface AppStorage {
     listDirectoriesFn?: ListDirectoriesFn,
     fileExistsFn?: FileExistsFn
   ) => Result<StorageKey[]>;
-  removeTree: (key: StorageKey, rmdirFn?: RmdirFn, fileExistsFn?: FileExistsFn) => Result<void>;
+  removeTree: (key: StorageKey, rmdirFn?: RmdirRecursivelyFn, fileExistsFn?: FileExistsFn) => Result<void>;
 }
 
 export function makeStorage(dataDirRoot: string): AppStorage {
@@ -210,7 +210,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     return listDirectoriesResult;
   }
 
-  function removeTree(key: StorageKey, rmdirFn = rmdir, fileExistsFn = fileExists): Result<void> {
+  function removeTree(key: StorageKey, rmdirRecursivelyFn = rmdirRecursively, fileExistsFn = fileExists): Result<void> {
     const dirPath = join(dataDirRoot, key);
     const dirExistsResult = attempt(() => fileExistsFn(dirPath));
 
@@ -222,7 +222,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
       return;
     }
 
-    const rmdirResult = attempt(() => rmdirFn(dirPath));
+    const rmdirResult = attempt(() => rmdirRecursivelyFn(dirPath));
 
     if (isErr(rmdirResult)) {
       return makeErr(si`Failed to delete directory: ${rmdirResult.reason}`);

@@ -27,10 +27,10 @@ export function mkdirp(path: string): void {
   mkdirSync(path, { recursive: true });
 }
 
-export type RmdirFn = typeof rmdir;
+export type RmdirRecursivelyFn = typeof rmdirRecursively;
 
-export function rmdir(path: string): void {
-  rmdirSync(path);
+export function rmdirRecursively(path: string): void {
+  rmdirSync(path, { recursive: true });
 }
 
 export type WriteFileFn = (path: string, content: string) => void;

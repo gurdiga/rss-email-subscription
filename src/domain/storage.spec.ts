@@ -6,7 +6,7 @@ import {
   ListFilesFn,
   MkdirpFn,
   RenameFileFn,
-  RmdirFn,
+  RmdirRecursivelyFn,
 } from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from '../shared/lang';
@@ -259,7 +259,7 @@ describe(makeStorage.name, () => {
 
   describe(removeTree.name, () => {
     it('removes the given directory', () => {
-      const rmdirFn = makeSpy<RmdirFn>();
+      const rmdirFn = makeSpy<RmdirRecursivelyFn>();
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
 
       removeTree(key, rmdirFn, fileExistsFn);
@@ -269,7 +269,7 @@ describe(makeStorage.name, () => {
     });
 
     it('succeedes if the directory does not exist', () => {
-      const rmdirFn = makeSpy<RmdirFn>();
+      const rmdirFn = makeSpy<RmdirRecursivelyFn>();
       const fileExistsFn = makeStub<FileExistsFn>(() => false);
 
       removeTree(key, rmdirFn, fileExistsFn);
@@ -279,14 +279,14 @@ describe(makeStorage.name, () => {
     });
 
     it('returns an Err value when can’t check directory exists or can’t delete it', () => {
-      let rmdirFn = makeSpy<RmdirFn>();
+      let rmdirFn = makeSpy<RmdirRecursivelyFn>();
       let fileExistsFn = makeThrowingStub<FileExistsFn>(new Error('Boom on exists!!'));
       let result = removeTree(key, rmdirFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Failed to check directory exists: Boom on exists!!'));
 
       fileExistsFn = makeStub<FileExistsFn>(() => true);
-      rmdirFn = makeThrowingStub<RmdirFn>(new Error('Boom on delete!!'));
+      rmdirFn = makeThrowingStub<RmdirRecursivelyFn>(new Error('Boom on delete!!'));
       result = removeTree(key, rmdirFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Failed to delete directory: Boom on delete!!'));
