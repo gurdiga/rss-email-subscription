@@ -213,10 +213,10 @@ export function deleteAccount(storage: AppStorage, accountId: AccountId): Result
     return makeAccountNotFound();
   }
 
-  const removeItemResult = storage.removeItem(storageKey);
+  const removeTreeResult = storage.removeTree(storageKey);
 
-  if (isErr(removeItemResult)) {
-    return makeErr(si`Couldn’t removeItem: ${removeItemResult.reason}`);
+  if (isErr(removeTreeResult)) {
+    return makeErr(si`Couldn’t removeTree: ${removeTreeResult.reason}`);
   }
 }
 

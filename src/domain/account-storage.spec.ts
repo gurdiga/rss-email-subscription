@@ -242,12 +242,12 @@ describe(setAccountEmail.name, () => {
 
 describe(deleteAccount.name, () => {
   it('deletes the corresponding account directory', () => {
-    const removeItem = makeSpy<AppStorage['removeItem']>();
-    const storage = makeTestStorage({ hasItem: () => true, removeItem });
+    const removeTree = makeSpy<AppStorage['removeTree']>();
+    const storage = makeTestStorage({ hasItem: () => true, removeTree });
 
     deleteAccount(storage, accountId);
 
-    expect(removeItem.calls).to.deep.equal([
+    expect(removeTree.calls).to.deep.equal([
       ['/accounts/test-account-id-test-account-id-test-account-id-test-account-id-'],
     ]);
   });
