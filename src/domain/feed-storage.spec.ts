@@ -23,8 +23,8 @@ import { si } from '../shared/string-utils';
 import { makeUnixCronPattern } from './cron-pattern-making';
 import { AppStorage } from './storage';
 
-export const accountId = makeTestAccountId();
-export const feedId = makeTestFeedId();
+const accountId = makeTestAccountId();
+const feedId = makeTestFeedId();
 
 describe(loadFeed.name, () => {
   const storageKey = getFeedJsonStorageKey(accountId, feedId);
