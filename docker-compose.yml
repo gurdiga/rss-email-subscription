@@ -45,7 +45,7 @@ services:
       # POSTFIX_smtp_destination_concurrency_limit: 1
       # POSTFIX_smtp_destination_rate_delay: 2s
 
-      POSTFIX_transport_maps: 'hash:/etc/postfix/transport'
+      POSTFIX_transport_maps: 'texthash:/etc/postfix/transport'
       # fragile destinations
       POSTFIX_fragile_destination_concurrency_limit: 1
       POSTFIX_fragile_destination_rate_delay: 2s
