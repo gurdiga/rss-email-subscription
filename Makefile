@@ -318,6 +318,14 @@ watch-smtp-out:
 			echo "From: RES <watch-smtp-out@feedsubscription.com>"
 			echo ""
 			echo "$$rest"
+
+			if [ "$$rest" =~ ^.*warning: no MX host for (.*) has a valid address record$ ]; then
+				local domain=$${BASH_REMATCH[1]}
+
+				nslookup google.com
+				nslookup "$$domain"
+				host -t mx "$$domain"
+			fi
 		) |
 		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi
 	done \
