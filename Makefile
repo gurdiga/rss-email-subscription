@@ -574,9 +574,11 @@ init-data-dir:
 	mkdir $$DATA_DIR_ROOT/accounts
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
-sent-count:
-	@rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
-	gzcat -f .tmp/logs/feedsubscription/app.log* |
+rsync-logs:
+	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
+
+sent-count: rsync-logs
+	@gzcat -f .tmp/logs/feedsubscription/app.log* |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add' |
@@ -704,7 +706,7 @@ unique-ips-report:
 
 # brew install goaccess
 # geoip comes from https://www.maxmind.com/en/accounts/852003/geoip/downloads
-access-report:
+access-report: rsync-logs
 	zcat -f .tmp/logs/feedsubscription/website.log* |
 	cut -d ' ' -f 4- |
 	grep -P '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}' | # rows that start with an IP
