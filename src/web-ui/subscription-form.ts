@@ -210,7 +210,7 @@
     const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,
-      href: location.href,
+      source: location.href,
     });
 
     return fetch(url, { method: 'POST', body: formData }).then(handleApiResponse).catch(handleError);

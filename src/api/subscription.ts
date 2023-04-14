@@ -27,7 +27,7 @@ export const subscription: AppRequestHandler = async function subscription(
   const { logWarning, logError, logInfo } = makeCustomLoggers({
     reqId,
     feedId: reqBody.feedId,
-    href: reqBody.href,
+    source: reqBody.source,
     module: subscription.name,
   });
 
