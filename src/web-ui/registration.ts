@@ -1,7 +1,7 @@
 import { RegistrationRequestData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { Plans } from '../domain/plan';
+import { PlanId, Plans } from '../domain/plan';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
@@ -91,9 +91,11 @@ function main() {
 
 function initPlanDropdown(planDropdown: HTMLSelectElement, selectedPlan: string): void {
   planDropdown.replaceChildren(
-    ...Object.entries(Plans).map(([id, { title }]) =>
-      createElement('option', title, { value: id, ...(selectedPlan === id ? { selected: 'selected' } : {}) })
-    )
+    ...Object.entries(Plans)
+      .filter(([id]) => id !== PlanId.SDE)
+      .map(([id, { title }]) =>
+        createElement('option', title, { value: id, ...(selectedPlan === id ? { selected: 'selected' } : {}) })
+      )
   );
 }
 

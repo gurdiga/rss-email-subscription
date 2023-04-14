@@ -18,7 +18,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
-import { makePlanId } from '../domain/plan';
+import { PlanId, makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -43,6 +43,11 @@ export const registration: AppRequestHandler = async function registration(
   if (isErr(request)) {
     logWarning(si`Failed to ${makeRegistrationRequest.name}`, { reason: request.reason, reqBody });
     return makeInputError(request.reason, request.field);
+  }
+
+  if (request.planId === PlanId.SDE) {
+    logWarning('Attemtping to register with the SDE plan');
+    return makeInputError('SDE Plan is assigned by hand', 'planId' as keyof RegistrationRequest);
   }
 
   const accountId = initAccount(app, request);

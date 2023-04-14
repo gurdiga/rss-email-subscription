@@ -15,7 +15,6 @@ async function main() {
     ppuPricePerEmailCents: '#ppu-price-per-email-cents',
     ppuLink: '#ppu-link',
     sdeTitle: '#sde-title',
-    sdeLink: '#sde-link',
   });
 
   if (isErr(uiElements)) {
@@ -77,11 +76,6 @@ async function main() {
       propName: 'textContent',
       value: Plans.sde.title,
     },
-    {
-      element: uiElements.sdeLink,
-      propName: 'href',
-      value: makePagePathWithParams(PagePath.registration, { plan: PlanId.SDE }),
-    },
   ]);
 }
 
@@ -96,7 +90,6 @@ interface RequiredUiElements {
   ppuMaxEmailsPerDay: HTMLElement;
   ppuLink: HTMLAnchorElement;
   sdeTitle: HTMLElement;
-  sdeLink: HTMLAnchorElement;
 }
 
 window && main();
