@@ -179,7 +179,7 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
 };
 
 export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
-  const { logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -204,6 +204,8 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
     logError(si`Failed to ${applyEditFeedRequest.name}`, { reason: result.reason });
     return makeAppError();
   }
+
+  logInfo('Feed updated', { editFeedRequest });
 
   const logData = {};
   const responseData: EditFeedResponse = {
