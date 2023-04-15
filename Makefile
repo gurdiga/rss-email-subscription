@@ -321,6 +321,7 @@ watch-smtp-out:
 
 			if [[ "$$rest" =~ ^.*warning:\ no\ MX\ host\ for\ (.*)\ has\ a\ valid\ address\ record$$ ]]; then
 				local domain=$${BASH_REMATCH[1]}
+				echo "domain: $$domain"
 
 				nslookup google.com
 				nslookup "$$domain"
