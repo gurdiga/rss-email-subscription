@@ -64,6 +64,7 @@ async function main() {
     emailsToAddField: '#emails-to-add-field',
     addEmailsButton: '#add-emails-button',
     addEmailsApiResponseMessage: '#add-emails-api-response-message',
+    downloadLink: '#download-link',
   });
 
   if (isErr(uiElements)) {
@@ -83,6 +84,7 @@ async function main() {
   fillUi(uiElements, data);
   bindDeleteSelectedButton(uiElements, feedId);
   bindAddEmailsButton(uiElements, feedId);
+  setupDownloadLink(uiElements.downloadLink, feedId, data);
   displayBreadcrumbs(uiElements, [
     feedListBreadcrumbsLink,
     makeFeedManageBreadcrumbsLink(data.displayName, feedId),
@@ -90,6 +92,14 @@ async function main() {
       label: uiElements.pageTitle.textContent!,
     },
   ]);
+}
+
+function setupDownloadLink(downloadLink: HTMLAnchorElement, feedId: FeedId, data: LoadEmailsResponse) {
+  const fileName = si`${feedId.value}-subscribers.txt`;
+  const fileContent = encodeURIComponent(data.emails.join('\n') + '\n');
+
+  downloadLink.download = fileName;
+  downloadLink.href = 'data:,' + fileContent;
 }
 
 function bindAddEmailsButton(uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -248,6 +258,7 @@ interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   emailsToAddField: HTMLTextAreaElement;
   addEmailsButton: HTMLButtonElement;
   addEmailsApiResponseMessage: HTMLElement;
+  downloadLink: HTMLAnchorElement;
 }
 
 interface RequiredParams {
