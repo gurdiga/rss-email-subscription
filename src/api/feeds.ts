@@ -168,7 +168,16 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
     return makeAppError('Failed to create feed');
   }
 
-  logInfo('New feed added', { accountId: accountId.value, feed });
+  logInfo('New feed added', {
+    accountId: accountId.value,
+    feed: {
+      id: feed.id.value,
+      displayName: feed.displayName,
+      url: feed.url,
+      replyTo: feed.replyTo.value,
+      status: feed.status,
+    },
+  });
 
   const logData = {};
   const responseData: AddNewFeedResponseData = {
