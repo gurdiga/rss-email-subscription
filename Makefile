@@ -251,6 +251,7 @@ watch-app:
 			-e '"severity":"(error|warning)"' \
 			-e '"message":"Starting (cron|API server)' \
 			-e '"message":"Sending report"' \
+			-e '"message":"Blog RSS check"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(New feed added|Feed updated)"' \
 			-e '"message":"(Unsubscribed)"' \

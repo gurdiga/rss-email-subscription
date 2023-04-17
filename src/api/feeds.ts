@@ -749,6 +749,8 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const logData = {};
   const responseData: CheckFeedUrlResponseData = { feedUrl: feedUrl.toString() };
 
+  logInfo('Blog RSS check', { blogUrl });
+
   return makeSuccess('OK', logData, responseData);
 };
 
