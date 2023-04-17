@@ -706,7 +706,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   _reqSession,
   _app
 ) {
-  const { logWarning } = makeCustomLoggers({ module: checkFeedUrl.name, reqId });
+  const { logInfo, logWarning } = makeCustomLoggers({ module: checkFeedUrl.name, reqId });
   const fieldName: keyof CheckFeedUrlResponseData = 'feedUrl';
   const request = makeCheckFeedUrlRequest(reqBody);
 
