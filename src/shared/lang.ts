@@ -59,7 +59,7 @@ export function getErrorMessage(error: unknown): string {
   return si`[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
 }
 
-type AnyFunction = (...args: unknown[]) => any;
+type AnyFunction = (...args: any[]) => any;
 
 /**
  * This is me trying to shoehorn the try/catch construct into railway programming.
@@ -124,9 +124,23 @@ export function exhaustivenessCheck(_x: never): never {
 }
 
 type MakeFn<T extends unknown> = (input: any, field: string) => Result<T[keyof T]>;
-export type MakeFns<T extends unknown> = Record<keyof T, MakeFn<T>>;
+export type RecordOfMakeFns<T extends unknown> = Record<keyof T, MakeFn<T>>;
 
-export function makeValues<T extends unknown>(x: unknown, makeFns: MakeFns<T>): Result<T> {
+export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>): Result<T>;
+export function makeValues<T extends unknown, MF extends AnyFunction = MakeFn<T>>(
+  values: unknown,
+  makeFn: MF,
+  field: string
+): Result<Array<ReturnType<MF>>>;
+export function makeValues<T extends unknown>(x: unknown, makeDef: MakeFn<T> | RecordOfMakeFns<T>, field?: string) {
+  if (typeof makeDef === 'function') {
+    return makeArrayOfValues(x, makeDef, field!);
+  } else {
+    return makeRecordOfValues(x, makeDef);
+  }
+}
+
+export function makeRecordOfValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>): Result<T> {
   if (!isObject(x)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(x)}]`);
   }
@@ -150,6 +164,20 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: MakeFns<T>): 
   }
 
   return values;
+}
+
+type StringKey<T> = Exclude<keyof T, number | symbol>;
+
+export function makeArrayOfValues<T extends unknown, MF extends AnyFunction = MakeFn<T>>(
+  values: unknown,
+  makeFn: MF,
+  field: StringKey<T>
+): Result<Array<ReturnType<MF>>> {
+  if (!Array.isArray(values)) {
+    return makeErr('Not an array', field);
+  }
+
+  return values.map((value) => makeFn(value, field));
 }
 
 export function makeNumber(value: unknown, field?: string): Result<number> {

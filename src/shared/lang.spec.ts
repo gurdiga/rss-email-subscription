@@ -9,7 +9,7 @@ import {
   isEmptyObject,
   isObject,
   makeErr,
-  MakeFns,
+  RecordOfMakeFns,
   makeNumber,
   makeValues,
   readStringArray,
@@ -151,13 +151,13 @@ describe(makeValues.name, () => {
   }
   type InputData = Record<keyof Values, unknown>;
 
-  const makeFns: MakeFns<Values> = {
+  const makeFns: RecordOfMakeFns<Values> = {
     email: makeEmailAddress,
     accountId: makeAccountId,
     password: makePassword,
   };
 
-  it('makes the values with the given make functions', () => {
+  it('makes the values with the given make functions (record)', () => {
     const requestData: InputData = {
       email: 'test-email@test.com',
       accountId: makeTestAccountId().value,
@@ -180,6 +180,19 @@ describe(makeValues.name, () => {
         value: requestData.password,
       },
     });
+  });
+
+  it('makes the values with the given make functions (array)', () => {
+    const inputData = [1, 'X', 42, 0];
+    const result = makeValues(inputData, makeNumber, 'amounts');
+
+    expect(result).to.deep.equal([
+      // prettier: keep these stacked
+      1,
+      makeErr('Value is not a number', 'amounts'),
+      42,
+      0,
+    ]);
   });
 
   it('returns the first making Err on failure', () => {
