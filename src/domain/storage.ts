@@ -135,8 +135,9 @@ export function makeStorage(dataDirRoot: string): AppStorage {
   function renameItem(
     oldKey: StorageKey,
     newKey: StorageKey,
-    renameFileFn: RenameFileFn = renameFile,
-    fileExistsFn: FileExistsFn = fileExists
+    renameFileFn = renameFile,
+    fileExistsFn = fileExists,
+    dirnameFn = dirname
   ): Result<void> {
     const oldPath = join(dataDirRoot, oldKey);
     const newPath = join(dataDirRoot, newKey);
@@ -159,6 +160,17 @@ export function makeStorage(dataDirRoot: string): AppStorage {
 
     if (newExists === true) {
       return makeErr(si`Item already exists: ${newKey}`);
+    }
+
+    const newDir = dirnameFn(newPath);
+    const newDirExists = attempt(() => fileExistsFn(newDir));
+
+    if (isErr(newDirExists)) {
+      return makeErr(si`Failed to check new dir exists: ${newDir}`);
+    }
+
+    if (newDirExists === false) {
+      mkdirp(newDir);
     }
 
     const result = attempt(() => renameFileFn(oldPath, newPath));

@@ -14,9 +14,10 @@ import { makeStorage } from './storage';
 import { makePath } from '../shared/path-utils';
 import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
+import { tmpdir } from 'os';
 
 describe(makeStorage.name, () => {
-  const dataDirRoot = '/data';
+  const dataDirRoot = tmpdir() + '/data';
   const { loadItem, storeItem, hasItem, removeItem, renameItem, listItems, listSubdirectories, removeTree } =
     makeStorage(dataDirRoot);
   const key = '/path/destination.json';
@@ -32,7 +33,7 @@ describe(makeStorage.name, () => {
     it('stores the given value JSONified in the given file', () => {
       storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
-      expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'creates the necessary directory structure');
+      expect(mkdirpFn.calls[0]).deep.equal([si`${dataDirRoot}/path`], 'creates the necessary directory structure');
       expect(writeFileFn.calls[0]).deep.equal(
         [expectedFilePath, JSON.stringify(value, null, 2)],
         'stores data in the given file'
@@ -46,7 +47,10 @@ describe(makeStorage.name, () => {
       });
       const result = storeItem(key, value, mkdirpFn, writeFileFn, fileExistsFn);
 
-      expect(mkdirpFn.calls[0]).deep.equal(['/data/path'], 'tries to create the necessary directory structure');
+      expect(mkdirpFn.calls[0]).deep.equal(
+        [si`${dataDirRoot}/path`],
+        'tries to create the necessary directory structure'
+      );
       expect(result).to.deep.equal(makeErr('Failed to create storage directory structure: No space left on device!!'));
     });
 
@@ -118,20 +122,22 @@ describe(makeStorage.name, () => {
 
   describe(renameItem.name, () => {
     const oldPath = '/some/path/old-key';
-    const newPath = '/some/path/new-key';
+    const newPath = '/some/new/path/new-key';
 
     const fullOldPath = makePath(dataDirRoot, oldPath);
     const fullNewPath = makePath(dataDirRoot, newPath);
 
     it('renames an existing file', () => {
-      const renameFileFn = makeStub<RenameFileFn>();
-      const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath === fullOldPath);
+      const fileContents = 'the file contents';
+      const storeResult = storeItem(oldPath, fileContents);
 
-      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+      expect(storeResult, si`no store error: ${JSON.stringify(storeResult)}`).to.be.undefined;
 
-      expect(result, si`result: ${JSON.stringify(result)}`).to.be.undefined;
-      expect(renameFileFn.calls).to.deep.equal([[fullOldPath, fullNewPath]]);
-      expect(fileExistsFn.calls).to.deep.equal([[fullOldPath], [fullNewPath]]);
+      const result = renameItem(oldPath, newPath);
+
+      expect(result, si`unexpected result: ${JSON.stringify(result)}`).to.be.undefined;
+      expect(hasItem(oldPath), 'old file is no more').to.be.false;
+      expect(loadItem(newPath), 'new file exists').to.equal(fileContents);
     });
 
     it('returns an Err value when file does not exist', () => {
@@ -150,7 +156,7 @@ describe(makeStorage.name, () => {
 
       const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
 
-      expect(result).to.deep.equal(makeErr('Item already exists: /some/path/new-key'));
+      expect(result).to.deep.equal(makeErr(si`Item already exists: ${newPath}`));
       expect(renameFileFn.calls).to.deep.equal([], 'renameFileFn not called');
     });
 
@@ -164,6 +170,11 @@ describe(makeStorage.name, () => {
 
       expect(result).to.deep.equal(makeErr('Failed to rename file: Boom!'));
       expect(renameFileFn.calls).to.deep.equal([[fullOldPath, fullNewPath]]);
+    });
+
+    afterEach(() => {
+      removeItem(oldPath);
+      removeItem(newPath);
     });
   });
 
