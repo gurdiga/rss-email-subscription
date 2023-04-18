@@ -9,8 +9,8 @@ import { loadFeedsByAccountId } from '../domain/feed-storage';
 import { makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { requireEnv } from '../shared/env';
-import { AnyAsyncFunction, isErr } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
+import { isErr } from '../shared/lang';
+import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 
 function main() {
@@ -111,19 +111,6 @@ async function checkFeeds(dataDirRoot: string): Promise<void> {
       }
     }
   });
-}
-
-async function logDuration(label: string, logData: object, f: AnyAsyncFunction): Promise<void> {
-  let { logInfo } = makeCustomLoggers(logData);
-  const startTimestamp = new Date();
-
-  logInfo(si`Started ${label}`);
-  await f();
-
-  const endTimestamp = new Date();
-  const durationMs = endTimestamp.valueOf() - startTimestamp.valueOf();
-
-  logInfo(si`Finished ${label}`, { durationMs });
 }
 
 function startJob(cronTime: string, onTick: CronCommand): CronJob {
