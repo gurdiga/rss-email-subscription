@@ -76,3 +76,18 @@ export function makeCustomLoggers(
     logInfo: makeCustomLogger(loggers.logInfo, moduleData),
   };
 }
+
+export async function logDuration<R>(label: string, logData: object, f: () => R): Promise<R> {
+  let { logInfo } = makeCustomLoggers(logData);
+  const startTimestamp = new Date();
+
+  logInfo(si`Started ${label}`);
+
+  const result = await f();
+  const endTimestamp = new Date();
+  const durationMs = endTimestamp.valueOf() - startTimestamp.valueOf();
+
+  logInfo(si`Finished ${label}`, { durationMs });
+
+  return result;
+}
