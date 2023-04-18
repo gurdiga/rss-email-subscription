@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmails } from '../email-sending/emails';
+import { addEmail, makeEmailHashFn, readEmailListFromCsvFile, StoredEmailAddresses } from '../email-sending/emails';
 import { storeEmails } from '../email-sending/emails';
 import { makeFeedId } from '../../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../../domain/feed-storage';
@@ -76,7 +76,7 @@ async function main(): Promise<number | undefined> {
     return 1;
   }
 
-  let storedEmails: StoredEmails = {
+  let storedEmails: StoredEmailAddresses = {
     validEmails: [],
     invalidEmails: [],
   };

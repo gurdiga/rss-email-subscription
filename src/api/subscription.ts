@@ -1,4 +1,4 @@
-import { loadStoredEmails, makeEmailHashFn, StoredEmails } from '../app/email-sending/emails';
+import { loadEmailAddresses, makeEmailHashFn, StoredEmailAddresses } from '../app/email-sending/emails';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress, HashedEmail } from '../domain/email-address';
@@ -50,10 +50,10 @@ export const subscription: AppRequestHandler = async function subscription(
     return makeInputError('Feed not found');
   }
 
-  const loadEmailsResult = loadStoredEmails(accountId, feedId, storage);
+  const loadEmailsResult = loadEmailAddresses(accountId, feedId, storage);
 
   if (isErr(loadEmailsResult)) {
-    logError(si`Failed to ${loadStoredEmails.name}`, { reason: loadEmailsResult.reason });
+    logError(si`Failed to ${loadEmailAddresses.name}`, { reason: loadEmailsResult.reason });
     return makeAppError('Database read error');
   }
 
@@ -166,7 +166,7 @@ function processInput(input: Input, storage: AppStorage): ProcessedInput | Input
   };
 }
 
-function doesEmailAlreadyExist(emailAddress: EmailAddress, storedEmails: StoredEmails): boolean {
+function doesEmailAlreadyExist(emailAddress: EmailAddress, storedEmails: StoredEmailAddresses): boolean {
   const { validEmails } = storedEmails;
   const does = validEmails.some((x) => x.emailAddress.value === emailAddress.value);
 

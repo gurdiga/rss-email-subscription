@@ -7,7 +7,7 @@ export enum PlanId {
   'SDE' = 'sde',
 }
 
-interface Plan {
+export interface Plan {
   title: string;
   maxEmailsPerMonth: number;
   maxEmailsPerDay: number;

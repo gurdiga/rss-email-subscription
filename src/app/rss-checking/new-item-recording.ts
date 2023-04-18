@@ -52,3 +52,11 @@ export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
   return makePath(getFeedRootStorageKey(accountId, feedId), 'inbox');
 }
+
+export function getFeedOutboxStorageKey(accountId: AccountId, feedId: FeedId): string {
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'outbox');
+}
+
+export function getFeedPostfixedStorageKey(accountId: AccountId, feedId: FeedId): string {
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'postfixed');
+}

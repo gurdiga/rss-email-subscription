@@ -8,7 +8,7 @@ import { makeTestStorage, makeStub, makeTestAccountId, makeTestFeedId } from '..
 import { makeTestEmailAddress } from '../../shared/test-utils';
 import { makeThrowingStub, Stub } from '../../shared/test-utils';
 import { EmailList, parseEmails, readEmailListFromCsvFile, EmailIndex } from './emails';
-import { StoredEmails, loadStoredEmails, addEmail, EmailHashFn } from './emails';
+import { StoredEmailAddresses, loadEmailAddresses, addEmail, EmailHashFn } from './emails';
 import { HashedEmail } from '../../domain/email-address';
 
 describe(parseEmails.name, () => {
@@ -97,7 +97,7 @@ describe(addEmail.name, () => {
   const emailHashFn: EmailHashFn = (e) => si`#${e.value}#`;
 
   it('adds an email address to a StoredEmails', () => {
-    const storedEmails: StoredEmails = {
+    const storedEmails: StoredEmailAddresses = {
       validEmails: [],
       invalidEmails: [],
     };
@@ -154,7 +154,7 @@ describe(readEmailListFromCsvFile.name, () => {
   });
 });
 
-describe(loadStoredEmails.name, () => {
+describe(loadEmailAddresses.name, () => {
   const accountId = makeTestAccountId();
   const feedId = makeTestFeedId();
   const storageKey = makePath(getFeedRootStorageKey(accountId, feedId), 'emails.json');
@@ -167,7 +167,7 @@ describe(loadStoredEmails.name, () => {
 
   it('returns a list of stored emails with their hashes', () => {
     const storage = makeTestStorage({ loadItem: () => index, hasItem: () => true });
-    const result = loadStoredEmails(accountId, feedId, storage);
+    const result = loadEmailAddresses(accountId, feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
@@ -192,7 +192,7 @@ describe(loadStoredEmails.name, () => {
         },
       ],
       invalidEmails: [],
-    } as StoredEmails);
+    } as StoredEmailAddresses);
   });
 
   it('can parse extended email information', () => {
@@ -204,7 +204,7 @@ describe(loadStoredEmails.name, () => {
     };
 
     const storage = makeTestStorage({ loadItem: () => extendedIndex, hasItem: () => true });
-    const result = loadStoredEmails(accountId, feedId, storage);
+    const result = loadEmailAddresses(accountId, feedId, storage);
 
     expect((storage.loadItem as Stub).calls).to.deep.equal([[storageKey]]);
     expect(result).to.deep.equal({
@@ -235,7 +235,7 @@ describe(loadStoredEmails.name, () => {
         },
       ],
       invalidEmails: [],
-    } as StoredEmails);
+    } as StoredEmailAddresses);
   });
 
   it('also returns index items with invalid emails', () => {
@@ -251,7 +251,7 @@ describe(loadStoredEmails.name, () => {
     };
 
     const storage = makeTestStorage({ loadItem: () => index, hasItem: () => true });
-    const result = loadStoredEmails(accountId, feedId, storage);
+    const result = loadEmailAddresses(accountId, feedId, storage);
 
     expect(result).to.deep.equal({
       validEmails: [
@@ -276,7 +276,7 @@ describe(loadStoredEmails.name, () => {
         'Expected EmailInformation object but got array: "[1,2,3]"',
         'Expected EmailInformation object but got object: "{}"',
       ],
-    } as StoredEmails);
+    } as StoredEmailAddresses);
   });
 
   it('returns an Err value when the loaded value is not an hash', () => {
@@ -284,7 +284,7 @@ describe(loadStoredEmails.name, () => {
 
     for (const storedValue of invalidJsonStrings) {
       const storage = makeTestStorage({ loadItem: () => storedValue, hasItem: () => true });
-      const result = loadStoredEmails(accountId, feedId, storage) as Err;
+      const result = loadEmailAddresses(accountId, feedId, storage) as Err;
 
       expect(isErr(result)).to.be.true;
       expect(result.reason).to.match(
@@ -298,7 +298,7 @@ describe(loadStoredEmails.name, () => {
     const err = makeErr('File access denied?!');
     const storage = makeTestStorage({ loadItem: () => err, hasItem: () => true });
 
-    expect(loadStoredEmails(accountId, feedId, storage)).to.deep.equal(
+    expect(loadEmailAddresses(accountId, feedId, storage)).to.deep.equal(
       makeErr(si`Could not read email list at ${storageKey}: ${err.reason}`)
     );
   });

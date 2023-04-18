@@ -1,6 +1,6 @@
 import { parse } from 'node-html-parser';
 import {
-  loadStoredEmails,
+  loadEmailAddresses,
   makeEmailHashFn,
   makeHashedEmail,
   parseEmails,
@@ -361,10 +361,10 @@ function makeFeedManageScreenResponse(
     return makeErr(si`Feed not found: ${feedId.value}`);
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, storage);
 
   if (isErr(storedEmails)) {
-    return makeErr(si`Failed to ${loadStoredEmails.name}: ${storedEmails.reason}`);
+    return makeErr(si`Failed to ${loadEmailAddresses.name}: ${storedEmails.reason}`);
   }
 
   const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
@@ -464,10 +464,10 @@ export const loadFeedById: AppRequestHandler = async function loadFeedById(
     return makeAppError(si`Feed not found`);
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, app.storage);
 
   if (isErr(storedEmails)) {
-    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logWarning(si`Failed to ${loadEmailAddresses.name}`, { reason: storedEmails.reason });
     return makeAppError(si`Failed to load subscriber list`);
   }
 
@@ -512,10 +512,10 @@ export const loadFeedSubscribers: AppRequestHandler = async function loadFeedSub
     return makeAppError(si`Feed not found`);
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, app.storage);
 
   if (isErr(storedEmails)) {
-    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logWarning(si`Failed to ${loadEmailAddresses.name}`, { reason: storedEmails.reason });
     return makeAppError(si`Failed to load subscriber list`);
   }
 
@@ -581,10 +581,10 @@ export const deleteFeedSubscribers: AppRequestHandler = async function deleteFee
     return makeAppError(si`Feed not found`);
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, app.storage);
 
   if (isErr(storedEmails)) {
-    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logWarning(si`Failed to ${loadEmailAddresses.name}`, { reason: storedEmails.reason });
     return makeAppError(si`Failed to load subscriber list`);
   }
 
@@ -671,10 +671,10 @@ export const addFeedSubscribers: AppRequestHandler = async function addFeedSubsc
     return makeAppError(si`Feed not found`);
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, app.storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, app.storage);
 
   if (isErr(storedEmails)) {
-    logWarning(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logWarning(si`Failed to ${loadEmailAddresses.name}`, { reason: storedEmails.reason });
     return makeAppError(si`Failed to load subscriber list`);
   }
 

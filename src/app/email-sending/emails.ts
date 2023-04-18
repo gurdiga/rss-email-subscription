@@ -75,7 +75,7 @@ export function readEmailListFromCsvFile(filePath: string, readFileFn: ReadFileF
   }
 }
 
-export interface StoredEmails {
+export interface StoredEmailAddresses {
   validEmails: HashedEmail[];
   invalidEmails: string[];
 }
@@ -105,8 +105,12 @@ export function getEmailsStorageKey(accountId: AccountId, feedId: FeedId): strin
   return makePath(getFeedRootStorageKey(accountId, feedId), 'emails.json');
 }
 
-export function loadStoredEmails(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<StoredEmails> {
-  const result: StoredEmails = {
+export function loadEmailAddresses(
+  accountId: AccountId,
+  feedId: FeedId,
+  storage: AppStorage
+): Result<StoredEmailAddresses> {
+  const result: StoredEmailAddresses = {
     validEmails: [],
     invalidEmails: [],
   };
@@ -205,10 +209,10 @@ export function storeEmails(
 }
 
 export function addEmail(
-  storedEmails: StoredEmails,
+  storedEmails: StoredEmailAddresses,
   emailAddress: EmailAddress,
   emailHashFn: EmailHashFn
-): StoredEmails {
+): StoredEmailAddresses {
   const hashedEmail = makeHashedEmail(emailAddress, emailHashFn);
 
   storedEmails.validEmails.push(hashedEmail);

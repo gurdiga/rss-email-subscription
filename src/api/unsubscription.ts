@@ -1,4 +1,4 @@
-import { loadStoredEmails, storeEmails } from '../app/email-sending/emails';
+import { loadEmailAddresses, storeEmails } from '../app/email-sending/emails';
 import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makeSubscriptionId, UnsubscriptionConfirmationRequest } from '../domain/subscription-id';
@@ -36,10 +36,10 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
     return makeInputError('Feed not found');
   }
 
-  const storedEmails = loadStoredEmails(accountId, feedId, storage);
+  const storedEmails = loadEmailAddresses(accountId, feedId, storage);
 
   if (isErr(storedEmails)) {
-    logError(si`Failed to ${loadStoredEmails.name}`, { reason: storedEmails.reason });
+    logError(si`Failed to ${loadEmailAddresses.name}`, { reason: storedEmails.reason });
     return makeAppError();
   }
 
