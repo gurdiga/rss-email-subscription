@@ -163,3 +163,11 @@ export function makeNumber(value: unknown, field?: string): Result<number> {
 
   return value;
 }
+
+export function makeString(value: unknown, field?: string): Result<string> {
+  if (!isString(value)) {
+    return makeErr('Not a string', field);
+  }
+
+  return value;
+}
