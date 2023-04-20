@@ -126,21 +126,7 @@ export function exhaustivenessCheck(_x: never): never {
 type MakeFn<T extends unknown> = (input: any, field: string) => Result<T[keyof T]>;
 export type RecordOfMakeFns<T extends unknown> = Record<keyof T, MakeFn<T>>;
 
-export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>): Result<T>;
-export function makeValues<T extends unknown, MF extends AnyFunction = MakeFn<T>>(
-  values: unknown,
-  makeFn: MF,
-  field: string
-): Result<Array<ReturnType<MF>>>;
-export function makeValues<T extends unknown>(x: unknown, makeDef: MakeFn<T> | RecordOfMakeFns<T>, field?: string) {
-  if (typeof makeDef === 'function') {
-    return makeArrayOfValues(x, makeDef, field!);
-  } else {
-    return makeRecordOfValues(x, makeDef);
-  }
-}
-
-export function makeRecordOfValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>): Result<T> {
+export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>) {
   if (!isObject(x)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(x)}]`);
   }
@@ -149,12 +135,16 @@ export function makeRecordOfValues<T extends unknown>(x: unknown, makeFns: Recor
 
   for (const keyName in makeFns) {
     const unknownValue = (x as any)[keyName];
+    const makeFn = makeFns[keyName];
 
-    if (unknownValue === '' || unknownValue === undefined || unknownValue === null) {
+    if (
+      !makeFn.name.startsWith('makeOptional') &&
+      (unknownValue === '' || unknownValue === undefined || unknownValue === null)
+    ) {
       return makeErr(si`Missing value`, keyName);
     }
 
-    const value = makeFns[keyName](unknownValue, keyName);
+    const value = makeFn(unknownValue, keyName);
 
     if (isErr(value)) {
       return value;
@@ -198,4 +188,12 @@ export function makeString(value: unknown, field?: string): Result<string> {
   }
 
   return value;
+}
+
+export function makeOptionalString(value: unknown, field?: string): Result<string | undefined> {
+  if (value === undefined) {
+    return value;
+  }
+
+  return makeString(value, field);
 }

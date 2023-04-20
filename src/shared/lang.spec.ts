@@ -13,6 +13,7 @@ import {
   makeNumber,
   makeValues,
   readStringArray,
+  makeArrayOfValues,
 } from './lang';
 import { makeTestAccountId } from './test-utils';
 
@@ -157,7 +158,7 @@ describe(makeValues.name, () => {
     password: makePassword,
   };
 
-  it('makes the values with the given make functions (record)', () => {
+  it('makes a record of values with the corresponding make functions', () => {
     const requestData: InputData = {
       email: 'test-email@test.com',
       accountId: makeTestAccountId().value,
@@ -180,19 +181,6 @@ describe(makeValues.name, () => {
         value: requestData.password,
       },
     });
-  });
-
-  it('makes the values with the given make functions (array)', () => {
-    const inputData = [1, 'X', 42, 0];
-    const result = makeValues(inputData, makeNumber, 'amounts');
-
-    expect(result).to.deep.equal([
-      // prettier: keep these stacked
-      1,
-      makeErr('Value is not a number', 'amounts'),
-      42,
-      0,
-    ]);
   });
 
   it('returns the first making Err on failure', () => {
@@ -239,5 +227,20 @@ describe(makeValues.name, () => {
     const result = makeValues<OutputData>(requestData, { text: makePassword });
 
     expect(result).to.deep.equal(makeErr('Missing value', 'text'));
+  });
+});
+
+describe(makeArrayOfValues.name, () => {
+  it('makes an array of values with the given make function', () => {
+    const inputData = [1, 'X', 42, 0];
+    const result = makeArrayOfValues(inputData, makeNumber, 'amounts');
+
+    expect(result).to.deep.equal([
+      // prettier: keep these stacked
+      1,
+      makeErr('Value is not a number', 'amounts'),
+      42,
+      0,
+    ]);
   });
 });

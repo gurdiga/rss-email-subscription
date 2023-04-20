@@ -10,7 +10,7 @@ import {
 } from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from '../shared/lang';
-import { makeStorage } from './storage';
+import { StorageKey, StorageValue, makeStorage } from './storage';
 import { makePath } from '../shared/path-utils';
 import { makeSpy, makeStub, makeThrowingStub } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
@@ -129,9 +129,7 @@ describe(makeStorage.name, () => {
 
     it('renames an existing file', () => {
       const fileContents = 'the file contents';
-      const storeResult = storeItem(oldPath, fileContents);
-
-      expect(storeResult, si`no store error: ${JSON.stringify(storeResult)}`).to.be.undefined;
+      assertStoreItem(oldPath, fileContents);
 
       const result = renameItem(oldPath, newPath);
 
@@ -140,11 +138,22 @@ describe(makeStorage.name, () => {
       expect(loadItem(newPath), 'new file exists').to.equal(fileContents);
     });
 
+    it('can overwrite existing destination', () => {
+      const fileContents = 'the file contents';
+      assertStoreItem(oldPath, fileContents);
+      assertStoreItem(newPath, 'existing file');
+
+      expect(renameItem(oldPath, newPath)).to.deep.equal(makeErr(si`Item already exists: ${newPath}`));
+      expect(renameItem(oldPath, newPath, { overwriteIfExists: true })).to.be.undefined;
+      expect(loadItem(newPath), 'new file exists').to.equal(fileContents);
+      expect(hasItem(oldPath), 'old file is no more').to.be.false;
+    });
+
     it('returns an Err value when file does not exist', () => {
       const renameFileFn = makeStub<RenameFileFn>();
       const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath !== fullOldPath);
 
-      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+      const result = renameItem(oldPath, newPath, { overwriteIfExists: false }, renameFileFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Item not found: /some/path/old-key'));
       expect(renameFileFn.calls).to.deep.equal([], 'renameFileFn not called');
@@ -154,7 +163,7 @@ describe(makeStorage.name, () => {
       const renameFileFn = makeStub<RenameFileFn>();
       const fileExistsFn = makeStub<FileExistsFn>(() => true);
 
-      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+      const result = renameItem(oldPath, newPath, { overwriteIfExists: false }, renameFileFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr(si`Item already exists: ${newPath}`));
       expect(renameFileFn.calls).to.deep.equal([], 'renameFileFn not called');
@@ -166,16 +175,28 @@ describe(makeStorage.name, () => {
       });
       const fileExistsFn = makeStub<FileExistsFn>((filePath) => filePath === fullOldPath);
 
-      const result = renameItem(oldPath, newPath, renameFileFn, fileExistsFn);
+      const result = renameItem(oldPath, newPath, { overwriteIfExists: false }, renameFileFn, fileExistsFn);
 
       expect(result).to.deep.equal(makeErr('Failed to rename file: Boom!'));
       expect(renameFileFn.calls).to.deep.equal([[fullOldPath, fullNewPath]]);
     });
 
     afterEach(() => {
-      removeItem(oldPath);
-      removeItem(newPath);
+      assertRemoveItem(oldPath);
+      assertRemoveItem(newPath);
     });
+
+    function assertStoreItem(key: StorageKey, value: StorageValue) {
+      const result = storeItem(key, value);
+
+      expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
+    }
+
+    function assertRemoveItem(key: StorageKey) {
+      const result = removeItem(key);
+
+      expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
+    }
   });
 
   describe(removeItem.name, () => {

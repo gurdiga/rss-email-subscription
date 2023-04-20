@@ -40,6 +40,7 @@ export interface AppStorage {
   renameItem: (
     oldKey: StorageKey,
     newKey: StorageKey,
+    options?: { overwriteIfExists: boolean },
     renameFileFn?: RenameFileFn,
     fileExistsFn?: FileExistsFn
   ) => Result<void>;
@@ -135,6 +136,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
   function renameItem(
     oldKey: StorageKey,
     newKey: StorageKey,
+    { overwriteIfExists } = { overwriteIfExists: false },
     renameFileFn = renameFile,
     fileExistsFn = fileExists,
     dirnameFn = dirname
@@ -158,8 +160,16 @@ export function makeStorage(dataDirRoot: string): AppStorage {
       return makeErr(si`Failed to check file exists: ${newExists.reason}`);
     }
 
-    if (newExists === true) {
+    if (newExists && !overwriteIfExists) {
       return makeErr(si`Item already exists: ${newKey}`);
+    }
+
+    if (newExists && overwriteIfExists) {
+      const removeResult = removeItem(newPath);
+
+      if (isErr(removeResult)) {
+        return makeErr(si`Failed to overwrite existing file: ${removeResult.reason}`);
+      }
     }
 
     const newDir = dirnameFn(newPath);

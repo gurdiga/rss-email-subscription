@@ -7,12 +7,23 @@ import { FeedId } from '../../domain/feed-id';
 import { getFeedLastSendingReportStorageKey, isFeedNotFound } from '../../domain/feed-storage';
 import { Plan, Plans } from '../../domain/plan';
 import { RssItem } from '../../domain/rss-item';
-import { StorageKey } from '../../domain/storage';
-import { AppStorage } from '../../domain/storage';
+import { AppStorage, StorageKey } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { makeDate } from '../../shared/date-utils';
 import { requireEnv } from '../../shared/env';
-import { Err, Result, isErr, isString, makeErr, makeNumber, makeString, makeValues } from '../../shared/lang';
+import {
+  Err,
+  Result,
+  hasKind,
+  isErr,
+  isString,
+  makeArrayOfValues,
+  makeErr,
+  makeNumber,
+  makeOptionalString,
+  makeString,
+  makeValues,
+} from '../../shared/lang';
 import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
@@ -114,32 +125,24 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
     emailCount: confirmedEmails.length,
   });
 
-  // - Make an item directory to store emails:
-  //  + /feeds/FEED_ID/inbox/rss-item-ITEM_ID.json
-  //  - /feeds/FEED_ID/outbox/rss-item-ITEM_ID/EMAIL_ID.json
-  //  - /feeds/FEED_ID/postfixed/rss-item-ITEM_ID/EMAIL_ID.json
-  //
-  // How do I make this idempotent? — So that if it crashews midcourse, it can safely resume when back up.
   for (const storedItem of validItems) {
     for (const hashedEmail of confirmedEmails) {
-      const storeResult = storeEmailMessage(
-        storage,
-        env,
+      const messageData = makeStoredEmailMessageData(feed, hashedEmail, storedItem.item, fromAddress, plan, env);
+      const messageStorageKey = getStoredEmailMessageStorageKey(
         accountId,
-        feed,
-        storedItem.item,
-        hashedEmail,
-        fromAddress,
-        plan
+        feed.id,
+        getRssItemId(storedItem.item),
+        hashedEmail.saltedHash
       );
+      const storeResult = storage.storeItem(messageStorageKey, messageData);
 
       if (isErr(storeResult)) {
-        logError(si`Failed to ${storeEmailMessage.name}:`, {
+        logError(si`Failed to storeItem:`, {
           reason: storeResult.reason,
           accountId: accountId.value,
           feedId: feed.id.value,
-          storedItem: storedItem.item.guid,
-          hashedEmail: hashedEmail.emailAddress.value,
+          itemGuid: storedItem.item.guid,
+          to: hashedEmail.emailAddress.value,
         });
       }
     }
@@ -174,7 +177,7 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
     }
 
     if (isEmpty(messages)) {
-      logWarning(si`No valid stored email messages during ${loadStoredEmailMessages.name}`);
+      logWarning('No valid stored email messages in outbox');
     }
 
     logInfo(si`Found ${messages.length} messages to postfix`);
@@ -250,18 +253,22 @@ function storeSendingReport(storage: AppStorage, report: SendingReport, accountI
   return storage.storeItem(storageKey, report);
 }
 
-function storeEmailMessage(
-  storage: AppStorage,
-  env: EmailDeliveryEnv,
-  accountId: AccountId,
-  feed: Feed,
-  item: RssItem,
-  to: HashedEmail,
-  fromAddress: EmailAddress,
-  plan: Plan
-): Result<void> {
-  const storageKey = getStoredEmailMessageStorageKey(accountId, feed.id, item, to);
+interface StoredEmailMessageData {
+  subject: string;
+  htmlBody: string;
+  to: string;
+  pricePerEmailCents: number;
+  logRecords: StoredEmailLogRecord[];
+}
 
+function makeStoredEmailMessageData(
+  feed: Feed,
+  to: HashedEmail,
+  item: RssItem,
+  fromAddress: EmailAddress,
+  plan: Plan,
+  env: EmailDeliveryEnv
+): StoredEmailMessageData {
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, env.DOMAIN_NAME);
   const emailContent = makeEmailContent(item, unsubscribeUrl, fromAddress);
 
@@ -274,23 +281,25 @@ function storeEmailMessage(
       {
         status: StoredEmailStatus.Prepared,
         timestamp: new Date(),
-        logMessage: 'Good.',
       },
     ],
   };
 
-  return storage.storeItem(storageKey, message);
+  return message;
 }
 
-interface StoredEmailMessageData {
-  subject: string;
-  htmlBody: string;
-  to: string;
-  pricePerEmailCents: number;
-  logRecords: StoredEmailLogRecord[];
+function extractStoredEmailMessageData(message: StoredEmailMessage): StoredEmailMessageData {
+  return {
+    subject: message.emailContent.subject,
+    htmlBody: message.emailContent.htmlBody,
+    to: message.to.value,
+    pricePerEmailCents: message.pricePerEmailCents,
+    logRecords: message.logRecords,
+  };
 }
 
 interface StoredEmailMessage {
+  kind: 'StoredEmailMessage';
   id: string;
   emailContent: EmailContent;
   pricePerEmailCents: number;
@@ -301,14 +310,14 @@ interface StoredEmailMessage {
 interface StoredEmailLogRecord {
   status: StoredEmailStatus;
   timestamp: Date;
-  logMessage: string;
+  logMessage?: string;
 }
 
 export function makeStoredEmailLogRecord(value: unknown): Result<StoredEmailLogRecord> {
   return makeValues<StoredEmailLogRecord>(value, {
     status: makeStoredEmailStatus,
     timestamp: makeDate,
-    logMessage: makeString,
+    logMessage: makeOptionalString,
   });
 }
 
@@ -339,11 +348,9 @@ export function makeStoredEmailStatus(value: unknown, field = 'status'): Result<
 function getStoredEmailMessageStorageKey(
   accountId: AccountId,
   feedId: FeedId,
-  item: RssItem,
-  hashedEmail: HashedEmail
+  itemId: string,
+  emailId: string
 ): string {
-  const itemId = getRssItemId(item);
-  const emailId = hashedEmail.saltedHash;
   const outboxStorageKey = getFeedOutboxStorageKey(accountId, feedId);
 
   return makePath(outboxStorageKey, itemId, si`${emailId}.json`);
@@ -360,38 +367,44 @@ function loadStoredEmailMessages(
   feedId: FeedId,
   itemId: string
 ): Result<StoredEmailMessages> {
-  const messageKeys = listStoredEmailMessages(storage, accountId, feedId, itemId);
+  const messageIds = listStoredEmailMessages(storage, accountId, feedId, itemId);
 
-  if (isErr(messageKeys)) {
-    return makeErr(si`Failed to list messages for item ${itemId}: ${messageKeys.reason}`);
+  if (isErr(messageIds)) {
+    return makeErr(si`Failed to list messages for item ${itemId}: ${messageIds.reason}`);
   }
 
-  const messages: StoredEmailMessage[] = [];
-  const errs: Err[] = [];
-
-  messageKeys.forEach((messageId) => {
-    const messageStorageKey = getOutboxMessageStorageKey(accountId, feedId, itemId, messageId);
-    const data = storage.loadItem(messageStorageKey);
-
-    if (isErr(data)) {
-      errs.push(makeErr(si`Failed to load message: ${data.reason}`));
-      return;
-    }
-
-    const storedEmailMessage = makeStoredEmailMessage(data, messageId);
-
-    if (isErr(storedEmailMessage)) {
-      errs.push(makeErr(si`Failed to ${makeStoredEmailMessage.name}: ${storedEmailMessage.reason}`));
-      return;
-    }
-
-    messages.push(storedEmailMessage);
-  });
+  const results = messageIds
+    .map(
+      (messageId) => [messageId, getOutboxMessageStorageKey(accountId, feedId, itemId, messageId)] as [string, string]
+    )
+    .map(([messageId, storageKey]) => loadStoredEmailMessage(storage, storageKey, messageId));
+  const messages = results.filter(isStoredEmailMessage);
+  const errs = results.filter(isErr);
 
   return {
     messages,
     errs,
   };
+}
+
+function loadStoredEmailMessage(
+  storage: AppStorage,
+  storageKey: StorageKey,
+  messageId: string
+): Result<StoredEmailMessage> {
+  const data = storage.loadItem(storageKey);
+
+  if (isErr(data)) {
+    return makeErr(si`Failed to load message: ${data.reason}`);
+  }
+
+  const storedEmailMessage = makeStoredEmailMessage(data, messageId);
+
+  if (isErr(storedEmailMessage)) {
+    return makeErr(si`Failed to ${makeStoredEmailMessage.name}: ${storedEmailMessage.reason}`);
+  }
+
+  return storedEmailMessage;
 }
 
 function listStoredEmailMessages(
@@ -403,7 +416,11 @@ function listStoredEmailMessages(
   const itemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
   const messageKeys = storage.listItems(itemStorageKey);
 
-  return messageKeys;
+  if (isErr(messageKeys)) {
+    return makeErr(si`Failed to listItems: ${messageKeys.reason}`);
+  }
+
+  return messageKeys.map((x) => x.replace(/\.json$/, ''));
 }
 
 // TODO: Consider adding unit test
@@ -430,7 +447,7 @@ function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, id: stri
 
   const logRecordsKey = 'logRecords' as keyof StoredEmailMessage;
   const logRecordsValue = (data as any).logRecords;
-  const parsedLogRecords = makeValues(logRecordsValue, makeStoredEmailLogRecord, logRecordsKey);
+  const parsedLogRecords = makeArrayOfValues(logRecordsValue, makeStoredEmailLogRecord, logRecordsKey);
 
   if (isErr(parsedLogRecords)) {
     return makeErr(si`Failed to parse ${logRecordsKey}: ${parsedLogRecords.reason}`);
@@ -440,16 +457,21 @@ function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, id: stri
   const invalidLogRecords = parsedLogRecords.filter(isErr);
 
   if (!isEmpty(invalidLogRecords)) {
-    return makeErr(si`Failed to parse some ${logRecordsKey}: ${JSON.stringify(logRecordsValue)}`);
+    return makeErr(si`Failed to parse some ${logRecordsKey}: ${JSON.stringify(invalidLogRecords)}`);
   }
 
   return {
+    kind: 'StoredEmailMessage',
     id,
     emailContent,
     pricePerEmailCents,
     to,
     logRecords,
   };
+}
+
+function isStoredEmailMessage(value: unknown): value is StoredEmailMessage {
+  return hasKind(value, 'StoredEmailMessage');
 }
 
 function archiveEmailMessage(
@@ -462,15 +484,54 @@ function archiveEmailMessage(
   const outboxMessageStorageKey = getOutboxMessageStorageKey(accountId, feedId, itemId, messageId);
   const postfixedMessageStorageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
 
-  const renameResult = storage.renameItem(outboxMessageStorageKey, postfixedMessageStorageKey);
+  const renameResult = storage.renameItem(
+    // prettier: keep these stacked
+    outboxMessageStorageKey,
+    postfixedMessageStorageKey,
+    { overwriteIfExists: true } // TODO: Review to ensure no data can be lost with this thing
+  );
 
   if (isErr(renameResult)) {
     return makeErr(si`Failed to renameItem: ${renameResult.reason}`);
   }
 
-  // TODO: recordEmailMessageStatus(messageId, StoredEmailStatus.Postfixed);
+  const result = appendPostfixedEmailMessageStatus(
+    storage,
+    accountId,
+    feedId,
+    itemId,
+    messageId,
+    StoredEmailStatus.Postfixed
+  );
 
-  return renameResult;
+  if (isErr(result)) {
+    return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
+  }
+}
+
+function appendPostfixedEmailMessageStatus(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  itemId: string,
+  messageId: string,
+  status: StoredEmailStatus
+): Result<void> {
+  const storageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
+  const message = loadStoredEmailMessage(storage, storageKey, messageId);
+
+  if (isErr(message)) {
+    return makeErr(si`Failed to ${loadStoredEmailMessage.name}: ${message.reason}`);
+  }
+
+  message.logRecords.push({
+    status,
+    timestamp: new Date(),
+  });
+
+  const messageData = extractStoredEmailMessageData(message);
+
+  return storage.storeItem(storageKey, messageData);
 }
 
 function getOutboxItemStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
@@ -493,11 +554,11 @@ function getPostfixedMessageStorageKey(
 ): StorageKey {
   const outboxStorageKey = getPostfixedItemStorageKey(accountId, feedId, itemId);
 
-  return makePath(outboxStorageKey, messageId);
+  return makePath(outboxStorageKey, si`${messageId}.json`);
 }
 
 function getOutboxMessageStorageKey(accountId: AccountId, feedId: FeedId, itemId: string, messageId: string) {
   const outboxItemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
 
-  return makePath(outboxItemStorageKey, messageId);
+  return makePath(outboxItemStorageKey, si`${messageId}.json`);
 }
