@@ -1,4 +1,5 @@
-import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
+import { EmailContent } from '../app/email-sending/email-content';
+import { sendEmail } from '../app/email-sending/email-delivery';
 import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
 import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';

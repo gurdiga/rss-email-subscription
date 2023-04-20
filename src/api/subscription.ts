@@ -3,7 +3,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress, HashedEmail } from '../domain/email-address';
 import { storeEmails, addEmail } from '../app/email-sending/emails';
-import { EmailContent, sendEmail } from '../app/email-sending/item-sending';
+import { EmailContent } from '../app/email-sending/email-content';
 import { Feed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../domain/feed-storage';
@@ -15,6 +15,7 @@ import { AppStorage } from '../domain/storage';
 import { AppRequestHandler } from './request-handler';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
+import { sendEmail } from '../app/email-sending/email-delivery';
 
 export const subscription: AppRequestHandler = async function subscription(
   reqId,

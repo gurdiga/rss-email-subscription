@@ -1,4 +1,4 @@
-import { sendEmail } from '../app/email-sending/item-sending';
+import { sendEmail } from '../app/email-sending/email-delivery';
 import {
   AccountId,
   DeleteAccountRequest,

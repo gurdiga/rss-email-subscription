@@ -2,7 +2,7 @@ import { requireEnv } from '../../shared/env';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailContent } from './item-sending';
+import { makeEmailContent } from './email-content';
 import { RssItem } from '../../domain/rss-item';
 import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
 import { si } from '../../shared/string-utils';

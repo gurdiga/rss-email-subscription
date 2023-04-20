@@ -1,39 +1,12 @@
-import { getErrorMessage, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { deliverEmail, DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv } from './email-delivery';
-import { FullEmailAddress } from './emails';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
-
-export async function sendEmail(
-  from: FullEmailAddress,
-  to: EmailAddress,
-  replyTo: EmailAddress,
-  emailContent: EmailContent,
-  env: EmailDeliveryEnv,
-  deliverEmailFn: DeliverEmailFn = deliverEmail
-): Promise<Result<DeliveryInfo>> {
-  try {
-    return await deliverEmailFn({
-      from,
-      to: to.value,
-      replyTo: replyTo.value,
-      subject: emailContent.subject,
-      htmlBody: emailContent.htmlBody,
-      env,
-    });
-  } catch (error) {
-    return makeErr(si`Could not deliver email to ${to.value}: ${getErrorMessage(error)}`);
-  }
-}
 
 export interface EmailContent {
   subject: string;
   htmlBody: string;
 }
-
-export type MakeEmailContentFn = (item: RssItem) => EmailContent;
 
 export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
   const htmlBody = si`

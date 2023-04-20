@@ -1,32 +1,16 @@
 import { expect } from 'chai';
-import { RssItem } from '../../domain/rss-item';
-import { makeErr } from '../../shared/lang';
+import { HashedEmail } from '../../domain/email-address';
 import { si } from '../../shared/string-utils';
-import { makeTestEmailAddress, makeThrowingStub } from '../../shared/test-utils';
-import { EmailContent } from './email-content';
-import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv, makeReturnPath, sendEmail } from './email-delivery';
-import { FullEmailAddress, makeFullEmailAddress } from './emails';
+import { makeTestEmailAddress, encodeSearchParamValue, makeTestFeedId } from '../../shared/test-utils';
+import { makeEmailContent, makeUnsubscribeUrl } from './email-content';
+import { RssItem } from '../../domain/rss-item';
+import { makeFullEmailAddress } from './emails';
 
-describe(makeReturnPath.name, () => {
-  it('returns SMTP return-path for the given email', () => {
-    const uid = '1234567890';
-    const actualResult = makeReturnPath('a@test.com', 'test.feedsubscription.com', uid);
-    const expectedResult = 'bounced-1234567890-a=test.com@test.feedsubscription.com';
+const feedId = makeTestFeedId();
+const domainName = 'test.feedsubscription.com';
 
-    expect(actualResult).to.equal(expectedResult);
-  });
-});
-
-describe(sendEmail.name, () => {
-  const env: EmailDeliveryEnv = {
-    SMTP_CONNECTION_STRING: 'smtps://login:pass@mx.test.com',
-    DOMAIN_NAME: 'test.feedsubscription.com',
-  };
-
+describe(makeEmailContent.name, () => {
   const from = makeFullEmailAddress('John DOE', makeTestEmailAddress('from@email.com'));
-  const to = makeTestEmailAddress('to@email.com');
-  const replyTo = makeTestEmailAddress('replyTo@email.com');
-
   const item: RssItem = {
     title: 'Welcome to Jekyll!',
     content:
@@ -37,35 +21,49 @@ describe(sendEmail.name, () => {
     guid: '1',
   };
 
-  const messageContent: EmailContent = {
-    subject: item.title,
-    htmlBody: item.content,
+  it('returns an EmailMessage value for the given RssItem', () => {
+    const unsubscribeUrl = new URL('https://example.com');
+    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress);
+
+    expect(emailMessage.subject).to.equal(item.title);
+    expect(emailMessage.htmlBody).to.contain(item.content);
+    expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
+    expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
+    expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
+  });
+});
+
+describe(makeUnsubscribeUrl.name, () => {
+  const displayName = 'Just Add Light and Stir';
+
+  const hashedEmail: HashedEmail = {
+    kind: 'HashedEmail',
+    emailAddress: makeTestEmailAddress('test@test.com'),
+    saltedHash: '#test@test.com#',
+    isConfirmed: true,
   };
 
-  it('delivers an email message with content from the given RssItem', async () => {
-    const deliveryInfo = {} as DeliveryInfo;
-    let [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [{} as FullEmailAddress, '', '', '', ''];
+  it('returns a link containing the feed unique ID and the email salted hash', () => {
+    const result = makeUnsubscribeUrl(feedId, hashedEmail, displayName, domainName);
+    const id = si`${feedId.value}-${hashedEmail.saltedHash}`;
 
-    const deliverEmailFn: DeliverEmailFn = async ({ from, to, replyTo, subject, htmlBody }) => {
-      [actualFrom, actualTo, actualReplyTo, actualSubject, actualHtmlBody] = [from, to, replyTo, subject, htmlBody];
-      return deliveryInfo;
-    };
-
-    const result = await sendEmail(from, to, replyTo, messageContent, env, deliverEmailFn);
-
-    expect(actualTo).to.equal(to.value);
-    expect(actualFrom).to.equal(from);
-    expect(actualReplyTo).to.equal(replyTo.value);
-    expect(actualSubject).to.equal(item.title);
-    expect(actualHtmlBody).to.contain(item.content);
-    expect(result).to.equal(deliveryInfo);
+    expect(result.toString()).to.equal(
+      si`https://test.feedsubscription.com/unsubscribe.html` +
+        si`?id=${encodeSearchParamValue(id)}` +
+        si`&displayName=${encodeSearchParamValue(displayName)}` +
+        si`&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
+    );
   });
 
-  it('returns an Err value when delivery fails', async () => {
-    const error = new Error('Cant!');
-    const deliverEmailFn = makeThrowingStub<DeliverEmailFn>(error);
-    const result = await sendEmail(from, to, replyTo, messageContent, env, deliverEmailFn);
+  it('uses feedId when displayName is empty', () => {
+    const result = makeUnsubscribeUrl(feedId, hashedEmail, '', domainName);
+    const id = si`${feedId.value}-${hashedEmail.saltedHash}`;
 
-    expect(result).to.deep.equal(makeErr(si`Could not deliver email to ${to.value}: ${error.message}`));
+    expect(result.toString()).to.equal(
+      si`https://test.feedsubscription.com/unsubscribe.html` +
+        si`?id=${encodeSearchParamValue(id)}` +
+        si`&displayName=${feedId.value}` +
+        si`&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
+    );
   });
 });
