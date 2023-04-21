@@ -86,7 +86,8 @@ services:
     restart: always
     volumes:
       - ${DATA_DIR_ROOT?}:/data
-    # NOTE: This doesn’t work, and I’m not fixing it now because it’s not worth it.
+    # NOTE: This doesn’t work, and I’m not fixing it now because I don’t
+    # know how, and it’s not worth the effort of further investigation.
     # extra_hosts:
     #   - 'feedsubscription.com:207.154.253.211'
     environment:
