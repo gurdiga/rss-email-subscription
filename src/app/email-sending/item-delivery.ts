@@ -82,6 +82,7 @@ export async function sendOutboxEmails(
 
   logInfo('Sending new items', {
     itemCount: validItems.length,
+    outboxItems: outboxItemIds.length,
     emailCount: confirmedEmails.length,
   });
 
