@@ -25,7 +25,7 @@ import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
 import { getFeedOutboxStorageKey, getFeedPostfixedStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
-import { EmailDeliveryEnv, sendEmail } from './email-delivery';
+import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
 import { deleteItem } from './item-cleanup';
 import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
@@ -110,19 +110,19 @@ export async function sendOutboxEmails(
     for (const message of messages) {
       const { to } = message;
       const logData = { subject: message.emailContent.subject, to: to.value };
-      const sendingResult = await logDuration('Postfixing item', logData, async () => {
+      const deliveryInfo = await logDuration('Postfixing item', logData, async () => {
         return await sendEmail(from, to, feed.replyTo, message.emailContent, env);
       });
 
-      if (isErr(sendingResult)) {
+      if (isErr(deliveryInfo)) {
         report.failed++;
-        logError(si`Failed to ${sendEmail.name}:`, { reason: sendingResult.reason });
+        logError(si`Failed to ${sendEmail.name}:`, { reason: deliveryInfo.reason });
         continue;
       }
 
       report.sent++;
 
-      const archiveResult = archiveEmailMessage(storage, accountId, feed.id, itemId, message.id);
+      const archiveResult = archiveEmailMessage(storage, accountId, feed.id, itemId, message.id, deliveryInfo);
 
       if (isErr(archiveResult)) {
         logError(si`Failed to ${archiveEmailMessage.name}`, { reason: archiveResult.reason });
@@ -475,7 +475,8 @@ function archiveEmailMessage(
   accountId: AccountId,
   feedId: FeedId,
   itemId: string,
-  messageId: string
+  messageId: string,
+  deliveryInfo: DeliveryInfo
 ): Result<void> {
   const outboxMessageStorageKey = getOutboxMessageStorageKey(accountId, feedId, itemId, messageId);
   const postfixedMessageStorageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
@@ -497,7 +498,8 @@ function archiveEmailMessage(
     feedId,
     itemId,
     messageId,
-    StoredEmailStatus.Postfixed
+    StoredEmailStatus.Postfixed,
+    deliveryInfo.response
   );
 
   if (isErr(result)) {
@@ -511,7 +513,8 @@ function appendPostfixedEmailMessageStatus(
   feedId: FeedId,
   itemId: string,
   messageId: string,
-  status: StoredEmailStatus
+  status: StoredEmailStatus,
+  logMessage: string
 ): Result<void> {
   const storageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
   const message = loadStoredEmailMessage(storage, storageKey, messageId);
@@ -523,6 +526,7 @@ function appendPostfixedEmailMessageStatus(
   message.logRecords.push({
     status,
     timestamp: new Date(),
+    logMessage,
   });
 
   const messageData = extractStoredEmailMessageData(message);
