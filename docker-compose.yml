@@ -86,8 +86,9 @@ services:
     restart: always
     volumes:
       - ${DATA_DIR_ROOT?}:/data
-    extra_hosts:
-      - 'feedsubscription.com:172.20.0.3'
+    # NOTE: This doesn’t work, and I’m not fixing it now because it’s not worth it.
+    # extra_hosts:
+    #   - 'feedsubscription.com:207.154.253.211'
     environment:
       <<: *app-env
     command: node dist/app/cron.js
