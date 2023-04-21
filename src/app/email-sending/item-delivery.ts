@@ -37,8 +37,8 @@ export async function deliverItems(
   accountId: AccountId,
   feed: Feed,
   plan: Plan,
-  validItems: import('/Users/vlad/src/rss-email-subscription/src/app/email-sending/rss-item-reading').ValidStoredRssItem[],
-  confirmedEmails: import('/Users/vlad/src/rss-email-subscription/src/domain/email-address').HashedEmail[],
+  validItems: ValidStoredRssItem[],
+  confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
   deliveryId: string,
   from: FullEmailAddress
