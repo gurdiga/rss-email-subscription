@@ -231,6 +231,16 @@ function purgeOutboxItem(storage: AppStorage, accountId: AccountId, feedId: Feed
 function getOutboxItemIds(storage: AppStorage, accountId: AccountId, feedId: FeedId): Result<StorageKey[]> {
   const outboxStorageKey = getFeedOutboxStorageKey(accountId, feedId);
 
+  const existsResult = storage.hasItem(outboxStorageKey);
+
+  if (isErr(existsResult)) {
+    return makeErr(si`Failed to check if exists: ${existsResult.reason}`);
+  }
+
+  if (existsResult === false) {
+    return [];
+  }
+
   return storage.listSubdirectories(outboxStorageKey);
 }
 
