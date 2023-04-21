@@ -97,7 +97,7 @@ export const deleteFeed: AppRequestHandler = async function deleteFeed(reqId, re
     return makeInputError('Feed not found');
   }
 
-  logInfo('Feed deleted', { feedId: feedId.value });
+  logInfo('Feed deleted', { feedId: feedId.value, accountId: accountId.value });
 
   return makeSuccess('Feed deleted');
 };

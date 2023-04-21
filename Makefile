@@ -253,7 +253,7 @@ watch-app:
 			-e '"message":"Sending report"' \
 			-e '"message":"Blog RSS check"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
-			-e '"message":"(New feed added|Feed updated)"' \
+			-e '"message":"(New feed added|Feed updated|Feed deleted)"' \
 			-e '"message":"(Unsubscribed)"' \
 			-e '"message":"(User registered|User confirmed registration|User logged in|Account deleted)"' \
 		|
