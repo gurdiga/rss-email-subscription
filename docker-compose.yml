@@ -87,7 +87,7 @@ services:
     volumes:
       - ${DATA_DIR_ROOT?}:/data
     extra_hosts:
-      - 'feedsubscription.com:207.154.253.211'
+      - 'feedsubscription.com:172.20.0.3'
     environment:
       <<: *app-env
     command: node dist/app/cron.js
