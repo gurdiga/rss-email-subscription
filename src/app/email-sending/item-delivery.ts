@@ -148,9 +148,13 @@ export async function sendOutboxEmails(
     }
   }
 
-  logInfo('Sending report', { report });
+  if (report.sent > 0 || report.failed > 0) {
+    logInfo('Sending report', { report });
+  }
+
   return 0;
 }
+
 export function prepareOutboxEmails(
   storage: AppStorage,
   env: EmailDeliveryEnv,
