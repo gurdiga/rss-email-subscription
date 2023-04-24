@@ -11,6 +11,7 @@ import {
   RenameFileFn,
   RmdirRecursivelyFn,
   WriteFileFn,
+  appendToFile,
   deleteFile,
   fileExists,
   listDirectories,
@@ -33,6 +34,7 @@ export interface AppStorage {
     writeFileFn?: WriteFileFn,
     fileExistsFn?: FileExistsFn
   ) => Result<void>;
+  appendToItem: (key: StorageKey, value: StorageValue) => Result<void>;
 
   loadItem: (key: StorageKey, readFileFn?: ReadFileFn) => Result<StorageValue>;
   hasItem: (key: StorageKey, fileExistsFn?: FileExistsFn) => Result<boolean>;
@@ -63,6 +65,24 @@ export function makeStorage(dataDirRoot: string): AppStorage {
     fileExistsFn: FileExistsFn = fileExists
   ): Result<void> {
     const filePath = join(dataDirRoot, key);
+    const pathPrepResult = prepPath(filePath, mkdirpFn, fileExistsFn);
+
+    if (isErr(pathPrepResult)) {
+      return pathPrepResult;
+    }
+
+    const writeFileResult = attempt(() => writeFileFn(filePath, JSON.stringify(value, null, 2)));
+
+    if (isErr(writeFileResult)) {
+      return makeErr(si`Couldn’t write file: ${writeFileResult.reason}`);
+    }
+  }
+
+  function prepPath(
+    filePath: string,
+    mkdirpFn: MkdirpFn = mkdirp,
+    fileExistsFn: FileExistsFn = fileExists
+  ): Result<void> {
     const dirPath = dirname(filePath);
 
     if (!fileExistsFn(dirPath)) {
@@ -72,11 +92,24 @@ export function makeStorage(dataDirRoot: string): AppStorage {
         return makeErr(si`Failed to create storage directory structure: ${mkdirpResult.reason}`);
       }
     }
+  }
 
-    const writeFileResult = attempt(() => writeFileFn(filePath, JSON.stringify(value, null, 2)));
+  /** NOTE 1: Appends *raw text*, not JSON.
+   *
+   * NOTE 2: This is intended for very special cases, so storeItem()
+   * should be preferred in most cases. */
+  function appendToItem(key: StorageKey, value: StorageValue): Result<void> {
+    const filePath = join(dataDirRoot, key);
+    const pathPrepResult = prepPath(filePath);
 
-    if (isErr(writeFileResult)) {
-      return makeErr(si`Couldn’t write file: ${writeFileResult.reason}`);
+    if (isErr(pathPrepResult)) {
+      return pathPrepResult;
+    }
+
+    const appendToFileResult = attempt(() => appendToFile(filePath, value));
+
+    if (isErr(appendToFileResult)) {
+      return makeErr(si`Couldn’t append to file: ${appendToFileResult.reason}`);
     }
   }
 
@@ -253,6 +286,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
 
   return {
     storeItem,
+    appendToItem,
     loadItem,
     hasItem,
     removeItem,

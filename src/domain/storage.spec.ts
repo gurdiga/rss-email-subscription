@@ -7,6 +7,7 @@ import {
   MkdirpFn,
   RenameFileFn,
   RmdirRecursivelyFn,
+  readFile,
 } from './io-isolation';
 import { ReadFileFn, WriteFileFn } from './io-isolation';
 import { makeErr } from '../shared/lang';
@@ -18,8 +19,17 @@ import { tmpdir } from 'os';
 
 describe(makeStorage.name, () => {
   const dataDirRoot = tmpdir() + '/data';
-  const { loadItem, storeItem, hasItem, removeItem, renameItem, listItems, listSubdirectories, removeTree } =
-    makeStorage(dataDirRoot);
+  const {
+    loadItem,
+    storeItem,
+    appendToItem,
+    hasItem,
+    removeItem,
+    renameItem,
+    listItems,
+    listSubdirectories,
+    removeTree,
+  } = makeStorage(dataDirRoot);
   const key = '/path/destination.json';
   const expectedFilePath = makePath(dataDirRoot, key);
 
@@ -66,6 +76,35 @@ describe(makeStorage.name, () => {
         'stores data in the given file'
       );
       expect(result).to.deep.equal(makeErr('Couldn’t write file: Disk is full!!'));
+    });
+  });
+
+  describe(appendToItem.name, () => {
+    const storageKey = '/a/file.txt';
+    const fullPath = si`${dataDirRoot}${storageKey}`;
+
+    it('creates the file if not exists', () => {
+      const storageValue = 'this is a line';
+      const result = appendToItem(storageKey, storageValue);
+
+      expect(result).to.be.undefined;
+      expect(readFile(fullPath)).to.equal(storageValue);
+    });
+
+    it('appends raw text to an existing file', () => {
+      const existingLine = 'first line\n';
+      const additionalLine = 'second line\n';
+
+      assertAppendToItem(storageKey, existingLine);
+
+      const result = appendToItem(storageKey, additionalLine);
+
+      expect(result).to.be.undefined;
+      expect(readFile(fullPath)).to.equal(existingLine + additionalLine);
+    });
+
+    afterEach(() => {
+      assertRemoveItem(storageKey);
     });
   });
 
@@ -185,18 +224,6 @@ describe(makeStorage.name, () => {
       assertRemoveItem(oldPath);
       assertRemoveItem(newPath);
     });
-
-    function assertStoreItem(key: StorageKey, value: StorageValue) {
-      const result = storeItem(key, value);
-
-      expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
-    }
-
-    function assertRemoveItem(key: StorageKey) {
-      const result = removeItem(key);
-
-      expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
-    }
   });
 
   describe(removeItem.name, () => {
@@ -324,4 +351,22 @@ describe(makeStorage.name, () => {
       expect(result).to.deep.equal(makeErr('Failed to delete directory: Boom on delete!!'));
     });
   });
+
+  function assertStoreItem(key: StorageKey, value: StorageValue) {
+    const result = storeItem(key, value);
+
+    expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
+  }
+
+  function assertAppendToItem(key: StorageKey, value: StorageValue) {
+    const result = appendToItem(key, value);
+
+    expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
+  }
+
+  function assertRemoveItem(key: StorageKey) {
+    const result = removeItem(key);
+
+    expect(result, si`no error: ${JSON.stringify(result)}`).to.be.undefined;
+  }
 });
