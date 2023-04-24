@@ -320,7 +320,7 @@ watch-smtp-out:
 			echo ""
 			echo "$$rest"
 
-			if [[ "$$rest" =~ ^.*warning:\ no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
+			if [[ "$$rest" =~ ^.*no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
 				local domain=$${BASH_REMATCH[1]}
 				echo "domain: $$domain"
 
