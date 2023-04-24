@@ -32,13 +32,14 @@
       const submitButton = createSubmitButton(buttonClassName, buttonLabel);
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
+      const styleSheet = createStyleSheet();
 
       const { origin } = new URL(script.src);
 
       setupFormSending(feedId, submitButton, fieldTextbox, messageContent, new URL(origin));
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
-      uiContainer.append(formArea, messageArea);
+      uiContainer.append(formArea, messageArea, styleSheet);
 
       script.insertAdjacentElement('afterend', uiContainer);
       markAsInitialized(script);
@@ -73,8 +74,11 @@
         emailAddressText: fieldTextbox.value,
       };
 
-      const displayMessage = (message: string) => {
+      type MessageType = 'success' | 'failure' | 'empty';
+
+      const displayMessage = (message: string, type: MessageType) => {
         messageContent.textContent = message;
+        messageContent.setAttribute('type', type);
       };
 
       const clearField = () => {
@@ -145,7 +149,35 @@
   }
 
   function createMessageContent(): HTMLElement {
-    return createElement('span');
+    return createElement('p', { className: 'res-message' });
+  }
+
+  function createStyleSheet(): HTMLStyleElement {
+    return createElement(
+      'style',
+      {},
+      `
+    .res-message:empty {
+      display: none;
+    }
+    .res-message {
+      margin: 0;
+      padding: .25em .5em;
+      border: 1px solid;
+      border-radius: .25em;
+    }
+    .res-message[type="success"] {
+      color: #0f5132;
+      border-color: #badbcc;
+      background-color: #d1e7dd;
+    }
+    .res-message[type="failure"] {
+      color: #842029;
+      border: #f5c2c7;
+      background-color: #f8d7da;
+    }
+    `
+    );
   }
 
   function findScripts(): HTMLScriptElement[] {
@@ -201,10 +233,10 @@
   async function submitEmailToApi(
     origin: URL,
     data: DataToSubmit,
-    displayMessage: (message: string) => void,
+    displayMessage: (message: string, type: 'success' | 'failure' | 'empty') => void,
     clearField: () => void
   ): Promise<void> {
-    displayMessage('' /* empty */);
+    displayMessage('', 'empty');
 
     const url = new URL(`/api/subscription`, origin);
     const formData = new URLSearchParams({
@@ -219,14 +251,14 @@
       try {
         const { message, kind } = await response.json();
 
-        displayMessage(message);
+        displayMessage(message, kind === 'Success' ? 'success' : 'failure');
 
         if (kind === 'Success') {
           clearField();
         }
       } catch (error) {
         console.error(error);
-        displayMessage(`Error: invalid response from the server! Please try again.`);
+        displayMessage('Error: invalid response from the server! Please try again.', 'failure');
       }
     }
 
@@ -237,7 +269,7 @@
         message = 'Failed to connect to the server. Please try again in a few moments.';
       }
 
-      displayMessage(`Error: ${message} 😢`);
+      displayMessage(`Error: ${message} 😢`, 'failure');
     }
   }
 
