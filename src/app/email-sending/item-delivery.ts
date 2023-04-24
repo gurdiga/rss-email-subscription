@@ -122,10 +122,10 @@ export async function sendOutboxEmails(
 
       report.sent++;
 
-      const archiveResult = archiveEmailMessage(storage, accountId, feed.id, itemId, message.id, deliveryInfo);
+      const result = postfixEmailMessage(storage, accountId, feed.id, itemId, message.id, deliveryInfo);
 
-      if (isErr(archiveResult)) {
-        logError(si`Failed to ${archiveEmailMessage.name}`, { reason: archiveResult.reason });
+      if (isErr(result)) {
+        logError(si`Failed to ${postfixEmailMessage.name}`, { reason: result.reason });
         return 1;
       }
     }
@@ -470,7 +470,7 @@ function isStoredEmailMessage(value: unknown): value is StoredEmailMessage {
   return hasKind(value, 'StoredEmailMessage');
 }
 
-function archiveEmailMessage(
+function postfixEmailMessage(
   storage: AppStorage,
   accountId: AccountId,
   feedId: FeedId,
@@ -505,6 +505,50 @@ function archiveEmailMessage(
   if (isErr(result)) {
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
+
+  const recordResult = recordQId(storage, accountId, feedId, itemId, deliveryInfo, postfixedMessageStorageKey);
+
+  if (isErr(recordResult)) {
+    return makeErr(si`Failed to ${recordQId.name}: ${recordResult.reason}`);
+  }
+}
+
+const qIdRe = /^250 2.0.0 Ok: queued as (.+)$/;
+
+export function getQid(deliveryInfoResponse: string): Result<string> {
+  const qIdMatch = deliveryInfoResponse.match(qIdRe);
+  const err = makeErr(si`Response does not match the expected format: "${deliveryInfoResponse}"`);
+
+  if (qIdMatch === null) {
+    return err;
+  }
+
+  const qId = qIdMatch[1];
+
+  if (!qId) {
+    return err;
+  }
+
+  return qId;
+}
+
+export function recordQId(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  itemId: string,
+  deliveryInfo: DeliveryInfo,
+  postfixedMessageStorageKey: StorageKey
+): Result<void> {
+  const qId = getQid(deliveryInfo.response);
+
+  if (isErr(qId)) {
+    return makeErr(si`Failed to ${getQid.name}: ${qId.reason}`);
+  }
+
+  const storageKey = getPostfixedItemQidIndex(accountId, feedId, itemId);
+
+  return storage.appendToItem(storageKey, si`${qId} ${postfixedMessageStorageKey}\n`);
 }
 
 function appendPostfixedEmailMessageStatus(
@@ -546,7 +590,7 @@ function getPostfixedItemStorageKey(accountId: AccountId, feedId: FeedId, itemId
   return makePath(outboxStorageKey, itemId);
 }
 
-function getPostfixedMessageStorageKey(
+export function getPostfixedMessageStorageKey(
   accountId: AccountId,
   feedId: FeedId,
   itemId: string,
@@ -561,4 +605,10 @@ function getOutboxMessageStorageKey(accountId: AccountId, feedId: FeedId, itemId
   const outboxItemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
 
   return makePath(outboxItemStorageKey, si`${messageId}.json`);
+}
+
+export function getPostfixedItemQidIndex(accountId: AccountId, feedId: FeedId, itemId: string) {
+  const outboxItemStorageKey = getPostfixedItemStorageKey(accountId, feedId, itemId);
+
+  return makePath(outboxItemStorageKey, 'qid-index.txt');
 }
