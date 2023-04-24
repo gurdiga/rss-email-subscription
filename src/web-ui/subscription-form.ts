@@ -61,6 +61,8 @@
     script.dataset[dataAttrName] = dataAttrValue;
   }
 
+  type MessageType = 'success' | 'failure' | 'empty';
+
   function setupFormSending(
     feedId: string,
     submitButton: HTMLButtonElement,
@@ -73,8 +75,6 @@
         feedId,
         emailAddressText: fieldTextbox.value,
       };
-
-      type MessageType = 'success' | 'failure' | 'empty';
 
       const displayMessage = (message: string, type: MessageType) => {
         messageContent.textContent = message;
@@ -173,7 +173,7 @@
     }
     .res-message[type="failure"] {
       color: #842029;
-      border: #f5c2c7;
+      border-color: #f5c2c7;
       background-color: #f8d7da;
     }
     `
@@ -233,7 +233,7 @@
   async function submitEmailToApi(
     origin: URL,
     data: DataToSubmit,
-    displayMessage: (message: string, type: 'success' | 'failure' | 'empty') => void,
+    displayMessage: (message: string, type: MessageType) => void,
     clearField: () => void
   ): Promise<void> {
     displayMessage('', 'empty');
