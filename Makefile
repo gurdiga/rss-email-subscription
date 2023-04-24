@@ -306,7 +306,7 @@ watch-website:
 
 # cron @reboot
 watch-smtp-out:
-	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	grep --line-buffered -E \
 			-e '(warning|error|fatal|panic|reject):' \
 			-e ' POSTFIX STARTING UP ' \
