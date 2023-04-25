@@ -39,11 +39,9 @@ export async function deliverItems(
   plan: Plan,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
-  fromAddress: EmailAddress,
   from: FullEmailAddress
 ) {
-  // Make these 2 steps internal functions to avoid passing in this many params
-  prepareOutboxEmails(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress);
+  prepareOutboxEmails(storage, env, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress);
   return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }
 

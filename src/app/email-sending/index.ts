@@ -92,5 +92,5 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
-  return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress, from);
+  return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, from);
 }
