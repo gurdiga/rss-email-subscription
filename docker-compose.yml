@@ -40,11 +40,6 @@ services:
       POSTFIX_virtual_alias_domains: feedsubscription.com
       POSTFIX_virtual_alias_maps: 'texthash:/etc/postfix/virtual'
 
-      # TODO: Delete this if the below section works.
-      # https://wiki.deimos.fr/Postfix:_limit_outgoing_mail_throttling
-      # POSTFIX_smtp_destination_concurrency_limit: 1
-      # POSTFIX_smtp_destination_rate_delay: 2s
-
       POSTFIX_transport_maps: 'texthash:/etc/postfix/transport'
       # fragile destinations
       POSTFIX_fragile_destination_concurrency_limit: 1
