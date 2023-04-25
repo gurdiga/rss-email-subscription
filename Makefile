@@ -321,6 +321,13 @@ watch-smtp-out:
 			echo "$$rest"
 
 			if [[ "$$rest" =~ ^.*no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
+				echo -- DEBUG START --
+				echo "BASH_REMATCH[0] = '$${BASH_REMATCH[0]}'"
+				echo "BASH_REMATCH[1] = '$${BASH_REMATCH[1]}'"
+				echo "SHELL = '$$SHELL'"
+				"$$SHELL" --version
+				echo -- DEBUG END --
+
 				local domain=$${BASH_REMATCH[1]}
 				echo "domain: $$domain"
 
