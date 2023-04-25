@@ -74,7 +74,7 @@ services:
       SMF_POSTFIXMAIN_recipient_canonical_maps: 'tcp:localhost:10002'
       SMF_POSTFIXMAIN_recipient_canonical_classes: 'envelope_recipient,header_recipient'
 
-      # TLS
+      # TLS: No ECDSA certificate in this setup, only RSA
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
     <<: *logging
