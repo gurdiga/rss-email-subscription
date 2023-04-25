@@ -419,7 +419,7 @@ function listStoredEmailMessages(
   return messageKeys.map((x) => x.replace(/\.json$/, ''));
 }
 
-// TODO: Consider adding unit test
+// TODO: Consider adding a happy-path unit test
 function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, id: string): Result<StoredEmailMessage> {
   const emailContent = makeValues<EmailContent>(data, {
     subject: makeString,
