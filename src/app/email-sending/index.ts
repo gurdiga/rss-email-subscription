@@ -16,12 +16,10 @@ import { deliverItems } from './item-delivery';
 import { readStoredRssItems } from './rss-item-reading';
 
 export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
-  const deliveryId = new Date().toISOString().replace(/[:.]/g, '');
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'email-sending',
     accountId: accountId.value,
     feedId: feed.id.value,
-    deliveryId,
   });
 
   const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
@@ -94,5 +92,5 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
-  return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress, deliveryId, from);
+  return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress, from);
 }

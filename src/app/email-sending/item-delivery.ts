@@ -40,12 +40,11 @@ export async function deliverItems(
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
-  deliveryId: string,
   from: FullEmailAddress
 ) {
   // Make these 2 steps internal functions to avoid passing in this many params
-  prepareOutboxEmails(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress, deliveryId);
-  return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from, deliveryId);
+  prepareOutboxEmails(storage, env, accountId, feed, plan, validItems, confirmedEmails, fromAddress);
+  return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }
 
 export async function sendOutboxEmails(
@@ -55,14 +54,12 @@ export async function sendOutboxEmails(
   feed: Feed,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
-  from: FullEmailAddress,
-  deliveryId: string
+  from: FullEmailAddress
 ): Promise<number> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
     accountId: accountId.value,
     feedId: feed.id.value,
-    deliveryId,
   });
 
   const outboxItemIds = getOutboxItemIds(storage, accountId, feed.id);
@@ -164,14 +161,12 @@ export function prepareOutboxEmails(
   plan: Plan,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
-  fromAddress: EmailAddress,
-  deliveryId: string
+  fromAddress: EmailAddress
 ) {
   const { logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
     accountId: accountId.value,
     feedId: feed.id.value,
-    deliveryId,
   });
 
   for (const storedItem of validItems) {
