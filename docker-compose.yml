@@ -1,7 +1,6 @@
 version: '3.9'
 
 x-logging: &logging
-  depends_on: [logger]
   logging:
     driver: syslog
     options:
@@ -19,6 +18,7 @@ x-app-env: &app-env
 
 services:
   smtp-out:
+    depends_on: [app]
     container_name: smtp-out
     hostname: feedsubscription.com
     image: smtp-out
@@ -55,6 +55,7 @@ services:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
   smtp-in:
+    depends_on: [smtp-out]
     container_name: smtp-in
     hostname: smtp-in
     image: smtp-in
@@ -79,6 +80,7 @@ services:
     <<: *logging
 
   app:
+    depends_on: [logger]
     container_name: app
     hostname: app
     image: app
@@ -96,6 +98,7 @@ services:
     <<: *logging
 
   api:
+    depends_on: [logger]
     container_name: api
     hostname: api
     image: app
@@ -113,6 +116,7 @@ services:
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
+    depends_on: [api]
     container_name: website
     hostname: website
     image: nginx:1.23.3-alpine
@@ -129,6 +133,7 @@ services:
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
+    depends_on: [logger]
     container_name: certbot
     hostname: certbot
     image: certbot/certbot:v2.4.0
