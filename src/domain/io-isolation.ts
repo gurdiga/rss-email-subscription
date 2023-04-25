@@ -1,13 +1,4 @@
-import {
-  appendFileSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  renameSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 
 export type ReadFileFn = (filePath: string) => string;
 
@@ -37,12 +28,6 @@ export type WriteFileFn = (path: string, content: string) => void;
 
 export function writeFile(path: string, content: string): void {
   writeFileSync(path, content, { encoding: 'utf8' });
-}
-
-export type AppendToFileFn = (path: string, content: string) => void;
-
-export function appendToFile(path: string, content: string): void {
-  appendFileSync(path, content, { encoding: 'utf8' });
 }
 
 export type DeleteFileFn = (path: string) => void;
