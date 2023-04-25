@@ -343,114 +343,18 @@ watch-smtp-out:
 	done \
 	& disown
 
-define delivery-report-defs
-	export delivery_record_regex="^.*\ postfix/smtp.*:\ ([0-9A-F]+):\ to=.*,\ status=([a-z]+)\ \((.*)\).*$$"
-
-	function get_json_for_qid() {
-		local qid="$$1" app_log_file="$$2"
-
-		zcat -f "$$app_log_file" |
-		grep -F '"response":"250 2.0.0 Ok: queued as '$$qid'"' |
-		cut -d ' ' -f 4-
-	}
-
-	function report_error() {
+# cron @reboot
+delivery-monitor:
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
+	docker exec --interactive app node dist/app/postfix-log-watching |
+	while read line; do
 		(
-			echo "Subject: RES delivery report recording error"
-			echo "From: RES <delivery-report-recording@feedsubscription.com>"
+			echo "Subject: RES delivery-monitor"
+			echo "From: RES <delivery-monitor@feedsubscription.com>"
 			echo ""
-			cat
+			echo "$$line"
 		) |
 		if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
-	}
-
-	export -f report_error
-
-	function build_delivery_report() {
-		local qid="$$1" status="$$2" message="$$3"
-		local json=$$(get_json_for_qid $$qid .tmp/logs/feedsubscription/app.log)
-
-		if [ "$$json" == "" ]; then
-			# app.log probably got rotated, so we’re looking into the most recent log
-			local prev_log_file=$$(ls -1 .tmp/logs/feedsubscription/app.log-* | sort -r | head -1)
-			json=$$(get_json_for_qid $$qid $$prev_log_file)
-		fi
-
-		if [ "$$json" == "" ]; then
-			echo -e "ERROR: Delivery info report not found \n$$@" > /dev/stderr
-			return
-		fi
-
-		jq --compact-output \
-			--arg message "$$message" \
-			--arg status "$$status" \
-			--arg qid "$$qid" \
-			'.data |= .+ {
-				deliveryInfo: {
-					qid: $$qid,
-					message: $$message,
-					status: $$status,
-				}
-			} | .data' \
-			<<<"$$json"
-	}
-endef
-
-x: delivery-report-building-test
-
-delivery-report-building-test:
-	@$(call delivery-report-defs)
-	build_delivery_report "15BB818674D" "sent" "250 2.6.0 <a52e9967-ea58-d91f-48c9-ca1fa8b9ac1b@feedsubscription.com> [InternalId=16119012264064, Hostname=AS8P194MB1534.EURP194.PROD.OUTLOOK.COM] 12881 bytes in 0.193, 64.906 KB/sec Queued mail for delivery"
-
-delivery-report-regex-test:
-	@$(call delivery-report-defs)
-	line="2023-04-12T06:15:47+00:00 feedsubscription smtp-out[904]: 2023-04-12T06:15:47.911488+00:00 INFO    postfix/smtp[1617]: F05D6186CB3: to=<zekiyetosun@yahoo.com>, relay=mta5.am0.yahoodns.net[67.195.228.109]:25, delay=655, delays=0.11/653/1.2/0.92, dsn=2.0.0, status=sent (250 ok dirdel)"
-
-	if [[ "$$line" =~ $$delivery_record_regex ]]; then
-		qid=$${BASH_REMATCH[1]}
-		status=$${BASH_REMATCH[2]}
-		message=$${BASH_REMATCH[3]}
-		echo -e "qid: '$$qid'\nstatus: '$$status'\nmessage: '$$message'"
-	else
-		echo NOPE
-	fi
-
-delivery-report-parse-test:
-	@$(call delivery-report-defs)
-	cat .tmp/logs/feedsubscription/smtp-out.log |
-	while read line; do
-		if [[ "$$line" =~ $$delivery_record_regex ]]; then
-			qid=$${BASH_REMATCH[1]}
-			status=$${BASH_REMATCH[2]}
-			message=$${BASH_REMATCH[3]}
-			echo -e "qid: '$$qid'\nstatus: '$$status'\nmessage: '$$message'"
-		fi
-	done
-
-watch-delivery-report:
-	@$(call delivery-report-defs)
-	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
-	while read line; do
-		if [[ "$$line" =~ $$delivery_record_regex ]]; then
-			qid=$${BASH_REMATCH[1]}
-			status=$${BASH_REMATCH[2]}
-			message=$${BASH_REMATCH[3]}
-
-			# TODO: How do I know this message is related to a "Delivery info" report?
-
-			# DUNNO: How can I start watching the status of a message from the
-			# moment of posting it into Postfix?
-
-			# DUNNO: Maybe store the QID list somewhere when posting the
-			# messages into Postfix, and then consult the list here to decide
-			# if the QID is relevant or not?
-
-			(
-				build_delivery_report "$$qid" "$$status" "$$message" |
-				docker exec -i app node /code/dist/app/delivery-reporting/receive-report.js
-			) |&
-			ifne bash -c report_error
-		fi
 	done
 
 # cron 59 23 * * *
