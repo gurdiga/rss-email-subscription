@@ -1,9 +1,8 @@
 import { tmpdir } from 'os';
 import { expect } from 'chai';
-import { getPostfixedItemQidIndex, getPostfixedMessageStorageKey, getQid, recordQId } from './item-delivery';
+import { getPostfixedMessageStorageKey, getQid, recordQId, getQidIndexEntryStorageKey } from './item-delivery';
 import { makeErr } from '../../shared/lang';
 import { makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
-import { readFile } from '../../domain/io-isolation';
 import { StorageKey } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { DeliveryInfo } from './email-delivery';
@@ -30,23 +29,24 @@ describe(recordQId.name, () => {
   const feedId = makeTestFeedId();
   const itemId = 'item-id-hex';
   const messageId = 'message-id-hex';
-  const queueIndexStoreKey = getPostfixedItemQidIndex(accountId, feedId, itemId);
+
+  const qId = '29DCB17A230';
+  const deliveryInfo = { response: si`250 2.0.0 Ok: queued as ${qId}` } as DeliveryInfo;
+  const qidIndexEntryStorageKey = getQidIndexEntryStorageKey(qId);
 
   it('appends a line with the given Postfix queue ID and the corresponding message file', () => {
-    const deliveryInfo = { response: '250 2.0.0 Ok: queued as 29DCB17A230' } as DeliveryInfo;
     const postfixedMessageStorageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
 
-    const result = recordQId(storage, accountId, feedId, itemId, deliveryInfo, postfixedMessageStorageKey);
+    const result = recordQId(storage, deliveryInfo, postfixedMessageStorageKey);
     expect(result).to.be.undefined;
 
-    const fullPath = dataDirRoot + queueIndexStoreKey;
-    expect(readFile(fullPath)).to.equal(
-      si`29DCB17A230 /accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/postfixed/item-id-hex/message-id-hex.json\n`
+    expect(storage.loadItem(qidIndexEntryStorageKey)).to.equal(
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/postfixed/item-id-hex/message-id-hex.json'
     );
   });
 
   afterEach(() => {
-    assertRemoveItem(queueIndexStoreKey);
+    assertRemoveItem(qidIndexEntryStorageKey);
   });
 
   function assertRemoveItem(key: StorageKey) {

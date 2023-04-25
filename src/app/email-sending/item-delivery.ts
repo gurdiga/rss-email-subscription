@@ -506,7 +506,7 @@ function postfixEmailMessage(
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
 
-  const recordResult = recordQId(storage, accountId, feedId, itemId, deliveryInfo, postfixedMessageStorageKey);
+  const recordResult = recordQId(storage, deliveryInfo, postfixedMessageStorageKey);
 
   if (isErr(recordResult)) {
     return makeErr(si`Failed to ${recordQId.name}: ${recordResult.reason}`);
@@ -532,11 +532,10 @@ export function getQid(deliveryInfoResponse: string): Result<string> {
   return qId;
 }
 
+export const qidIndexRootStorageKey = '/qid-index';
+
 export function recordQId(
   storage: AppStorage,
-  accountId: AccountId,
-  feedId: FeedId,
-  itemId: string,
   deliveryInfo: DeliveryInfo,
   postfixedMessageStorageKey: StorageKey
 ): Result<void> {
@@ -546,9 +545,18 @@ export function recordQId(
     return makeErr(si`Failed to ${getQid.name}: ${qId.reason}`);
   }
 
-  const storageKey = getPostfixedItemQidIndex(accountId, feedId, itemId);
+  const storageKey = getQidIndexEntryStorageKey(qId);
+  const result = storage.storeItem(storageKey, postfixedMessageStorageKey);
 
-  return storage.appendToItem(storageKey, si`${qId} ${postfixedMessageStorageKey}\n`);
+  if (isErr(result)) {
+    return makeErr(si`Failed to record queue ID: ${result.reason}`);
+  }
+
+  return result;
+}
+
+export function getQidIndexEntryStorageKey(qId: string): StorageKey {
+  return makePath(qidIndexRootStorageKey, qId);
 }
 
 function appendPostfixedEmailMessageStatus(
@@ -605,10 +613,4 @@ function getOutboxMessageStorageKey(accountId: AccountId, feedId: FeedId, itemId
   const outboxItemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
 
   return makePath(outboxItemStorageKey, si`${messageId}.json`);
-}
-
-export function getPostfixedItemQidIndex(accountId: AccountId, feedId: FeedId, itemId: string) {
-  const outboxItemStorageKey = getPostfixedItemStorageKey(accountId, feedId, itemId);
-
-  return makePath(outboxItemStorageKey, 'qid-index.txt');
 }
