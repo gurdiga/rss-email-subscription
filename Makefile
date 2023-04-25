@@ -10,6 +10,9 @@ default: pre-commit
 testblog-local-test:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
 
+	# This is necessary when sending through prod smtp-in
+	export DOMAIN_NAME=feedsubscription.com
+
 	rm -v $$DATA_DIR_ROOT/accounts/da772874f7963b4612ec6c59005c7fbe1b0264302a501568cfed1e5035080ef5/feeds/testblog/lastPostMetadata.json
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
