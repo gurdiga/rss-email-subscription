@@ -90,6 +90,16 @@ export function handleDeliveryLine(line: string, storage: AppStorage): Result<vo
   }
 
   const qidIndexEntryStorageKey = getQidIndexEntryStorageKey(details.qid);
+  const isAnIdexedMessage = storage.hasItem(qidIndexEntryStorageKey);
+
+  if (isErr(isAnIdexedMessage)) {
+    return makeErr(si`Failed to check if index entry exists: ${isAnIdexedMessage.reason}`);
+  }
+
+  if (isAnIdexedMessage === false) {
+    return;
+  }
+
   const messageStorageKey = storage.loadItem(qidIndexEntryStorageKey);
 
   if (isErr(messageStorageKey)) {
