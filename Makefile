@@ -329,10 +329,9 @@ watch-smtp-out:
 				echo "BASH_REMATCH[1] = '$${BASH_REMATCH[1]}'"
 				echo "SHELL = '$$SHELL'"
 				"$$SHELL" --version
-				echo -- DEBUG END --
-
-				local domain=$${BASH_REMATCH[1]}
+				domain=$${BASH_REMATCH[1]}
 				echo "domain: $$domain"
+				echo -- DEBUG END --
 
 				nslookup google.com
 				nslookup "$$domain"
