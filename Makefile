@@ -344,7 +344,7 @@ watch-smtp-out:
 
 # cron @reboot
 delivery-monitoring:
-	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
+	@tail --lines=0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	docker exec --interactive app node dist/app/delivery-monitoring |
 	while read line; do
 		(
