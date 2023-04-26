@@ -316,7 +316,7 @@ enum PrePostfixMessageStatus {
 }
 
 export enum PostfixDeliveryStatus {
-  Send = 'sent',
+  Sent = 'sent',
   Bounced = 'bounced',
   Deferred = 'deferred',
 }

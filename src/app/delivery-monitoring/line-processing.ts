@@ -125,7 +125,17 @@ export function handleDeliveryLine(line: string, storage: AppStorage): Result<vo
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
 
-  return result;
+  if (details.status !== PostfixDeliveryStatus.Sent && details.status !== PostfixDeliveryStatus.Bounced) {
+    return;
+  }
+
+  const removeResult = storage.removeItem(qidIndexEntryStorageKey);
+
+  if (isErr(removeResult)) {
+    return makeErr(si`Failed to remove queue index entry: ${removeResult.reason}`);
+  }
+
+  return removeResult;
 }
 
 interface Extraction {

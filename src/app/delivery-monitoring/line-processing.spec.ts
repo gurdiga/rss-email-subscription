@@ -38,7 +38,7 @@ describe(makeDeliveryDetails.name, () => {
     const result = makeDeliveryDetails(validDeliveryLine);
     const expectedResult: DeliveryDetails = {
       timestamp: new Date(timestampString),
-      status: PostfixDeliveryStatus.Send,
+      status: PostfixDeliveryStatus.Sent,
       qid: '889E418C048',
       message: '250 2.0.0 OK  1682229731 h1-20020adff4c1000000b00304779faa61si272393wrp.152 - gsmtp',
     };
