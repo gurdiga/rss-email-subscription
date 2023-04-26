@@ -353,8 +353,13 @@ delivery-monitoring:
 			echo ""
 			echo "$$line"
 		) |
-		if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
-	done
+		if [ -v MAKE_DEBUG ]; then ts "email1> "; else ssmtp gurdiga@gmail.com; fi
+	done 2>&1 |
+	if [ -v MAKE_DEBUG ]; then ts "email2> "; else ssmtp gurdiga@gmail.com; fi \
+	& disown
+
+delivery-monitoring-dev:
+	@DATA_DIR_ROOT=.tmp/docker-data ts-node ./src/app/delivery-monitoring
 
 # cron 59 23 * * *
 delivery-report:
