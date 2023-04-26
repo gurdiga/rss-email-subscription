@@ -169,7 +169,7 @@ export function prepareOutboxEmails(
 
   for (const storedItem of validItems) {
     for (const hashedEmail of confirmedEmails) {
-      const storeResult = prepareOutboxEmail(
+      const storeResult = storeOutboxEmail(
         feed,
         hashedEmail,
         storedItem.item,
@@ -181,7 +181,7 @@ export function prepareOutboxEmails(
       );
 
       if (isErr(storeResult)) {
-        logError(si`Failed to ${prepareOutboxEmail.name}:`, {
+        logError(si`Failed to ${storeOutboxEmail.name}:`, {
           reason: storeResult.reason,
           accountId: accountId.value,
           feedId: feed.id.value,
@@ -199,7 +199,7 @@ export function prepareOutboxEmails(
   }
 }
 
-function prepareOutboxEmail(
+function storeOutboxEmail(
   feed: Feed,
   hashedEmail: HashedEmail,
   item: RssItem,
@@ -268,7 +268,7 @@ function makeStoredEmailMessageData(
     pricePerEmailCents: plan.pricePerEmailCents,
     logRecords: [
       {
-        status: StoredEmailStatus.Prepared,
+        status: PrePostfixMessageStatus.Prepared,
         timestamp: new Date(),
       },
     ],
@@ -310,16 +310,27 @@ export function makeStoredEmailLogRecord(value: unknown): Result<StoredEmailLogR
   });
 }
 
-enum StoredEmailStatus {
+enum PrePostfixMessageStatus {
   Prepared = 'prepared',
   Postfixed = 'postfixed',
+}
+
+export enum PostfixDeliveryStatus {
   Send = 'sent',
   Bounced = 'bounced',
   Deferred = 'deferred',
 }
 
+export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliveryStatus {
+  return Object.values(PostfixDeliveryStatus).includes(value as any);
+}
+
+type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus;
+
 function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
-  return Object.values(StoredEmailStatus).includes(value as any);
+  const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));
+
+  return validValue.includes(value);
 }
 
 export function makeStoredEmailStatus(value: unknown, field = 'status'): Result<StoredEmailStatus> {
@@ -376,7 +387,7 @@ function loadStoredEmailMessages(
   };
 }
 
-function loadStoredEmailMessage(
+export function loadStoredEmailMessage(
   storage: AppStorage,
   storageKey: StorageKey,
   messageId: string
@@ -485,13 +496,12 @@ function postfixEmailMessage(
     return makeErr(si`Failed to renameItem: ${renameResult.reason}`);
   }
 
+  const storageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
   const result = appendPostfixedEmailMessageStatus(
     storage,
-    accountId,
-    feedId,
-    itemId,
+    storageKey,
     messageId,
-    StoredEmailStatus.Postfixed,
+    PrePostfixMessageStatus.Postfixed,
     deliveryInfo.response
   );
 
@@ -552,16 +562,14 @@ export function getQidIndexEntryStorageKey(qId: string): StorageKey {
   return makePath(qidIndexRootStorageKey, qId);
 }
 
-function appendPostfixedEmailMessageStatus(
+export function appendPostfixedEmailMessageStatus(
   storage: AppStorage,
-  accountId: AccountId,
-  feedId: FeedId,
-  itemId: string,
+  storageKey: StorageKey,
   messageId: string,
   status: StoredEmailStatus,
-  logMessage: string
+  logMessage: string,
+  timestamp = new Date()
 ): Result<void> {
-  const storageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
   const message = loadStoredEmailMessage(storage, storageKey, messageId);
 
   if (isErr(message)) {
@@ -570,7 +578,7 @@ function appendPostfixedEmailMessageStatus(
 
   message.logRecords.push({
     status,
-    timestamp: new Date(),
+    timestamp,
     logMessage,
   });
 

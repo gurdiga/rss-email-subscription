@@ -4,11 +4,11 @@ import { AppEnv } from '../../api/init-app';
 import { makeStorage } from '../../domain/storage';
 import { isErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
-import { processData } from './utils';
+import { processData } from './line-processing';
 
 async function main() {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'postfix-log-watching' });
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
 
   if (isErr(env)) {
     logError(si`Failed to ${requireEnv.name}: ${env.reason}`);
@@ -22,7 +22,7 @@ async function main() {
     return;
   }
 
-  process.stdin.on('data', processData);
+  process.stdin.on('data', (data: Buffer) => processData(data, storage));
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
