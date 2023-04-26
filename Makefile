@@ -344,13 +344,13 @@ watch-smtp-out:
 	& disown
 
 # cron @reboot
-delivery-monitor:
+delivery-monitoring:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	docker exec --interactive app node dist/app/postfix-log-watching |
 	while read line; do
 		(
-			echo "Subject: RES delivery-monitor"
-			echo "From: RES <delivery-monitor@feedsubscription.com>"
+			echo "Subject: RES delivery-monitoring"
+			echo "From: RES <delivery-monitoring@feedsubscription.com>"
 			echo ""
 			echo "$$line"
 		) |
