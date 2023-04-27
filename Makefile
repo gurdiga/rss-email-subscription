@@ -366,11 +366,28 @@ watch-delmon:
 # This is to be run when delmon container died for some reason, and
 # there are unprocessed qid-index entries.
 delmon-catch-up:
-	ls -1 .tmp/docker-data/qid-index/ |
+	@source .env
+	require=$${DATA_DIR_ROOT:?envar is missing}
+
+	ls -1 $$DATA_DIR_ROOT/qid-index/ |
 	while read qid; do
 		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
 	docker exec --interactive app node dist/app/delivery-monitoring
+
+# cron 59 23 * * *
+list-qid-index:
+	@source .env
+	require=$${DATA_DIR_ROOT:?envar is missing}
+
+	ls -l $$DATA_DIR_ROOT/qid-index |
+	grep -v "^total " |
+	cat <(
+		echo "Subject: RES list-qid-index"
+		echo "From: RES <list-qid-index@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 delmon-dev:
 	@DATA_DIR_ROOT=.tmp/docker-data ts-node ./src/app/delivery-monitoring
@@ -589,12 +606,13 @@ list-sessions:
 	require=$${DATA_DIR_ROOT:?envar is missing}
 
 	ls -l $$DATA_DIR_ROOT/sessions |
-	cat <( \
-		echo "Subject: RES list-sessions"; \
-		echo "From: RES <list-sessions@feedsubscription.com>"; \
-		echo; \
-	) - \
-	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	grep -v "^total " |
+	cat <(
+		echo "Subject: RES list-sessions"
+		echo "From: RES <list-sessions@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 # cron @daily
 wathc-containers:
