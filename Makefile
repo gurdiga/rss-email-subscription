@@ -355,6 +355,13 @@ delivery-monitoring:
 	if [ -v MAKE_DEBUG ]; then ts "email2> "; else ssmtp gurdiga@gmail.com; fi \
 	& disown
 
+delivery-monitoring-catch-up:
+	ls -1 .tmp/docker-data/qid-index/ |
+	while read qid; do
+		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
+	done |
+	docker exec --interactive app node dist/app/delivery-monitoring
+
 delivery-monitoring-dev:
 	@DATA_DIR_ROOT=.tmp/docker-data ts-node ./src/app/delivery-monitoring
 
