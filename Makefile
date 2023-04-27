@@ -349,6 +349,7 @@ watch-smtp-out:
 	done \
 	& disown
 
+# cron @reboot
 watch-delmon:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
 	while read -r line; do
@@ -362,30 +363,16 @@ watch-delmon:
 	done \
 	& disown
 
-# cron @reboot
-delivery-monitoring-TODO-DELETE:
-	@tail --lines=0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
-	docker exec --interactive app node dist/app/delivery-monitoring |
-	while read line; do
-		(
-			echo "Subject: RES delivery-monitoring"
-			echo "From: RES <delivery-monitoring@feedsubscription.com>"
-			echo ""
-			echo "$$line"
-		) |
-		if [ -v MAKE_DEBUG ]; then ts "email1> "; else ssmtp gurdiga@gmail.com; fi
-	done 2>&1 |
-	if [ -v MAKE_DEBUG ]; then ts "email2> "; else ssmtp gurdiga@gmail.com; fi \
-	& disown
-
-delivery-monitoring-catch-up:
+# This is to be run when delmon container died for some reason, and
+# there are unprocessed qid-index entries.
+delmon-catch-up:
 	ls -1 .tmp/docker-data/qid-index/ |
 	while read qid; do
 		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
 	docker exec --interactive app node dist/app/delivery-monitoring
 
-delivery-monitoring-dev:
+delmon-dev:
 	@DATA_DIR_ROOT=.tmp/docker-data ts-node ./src/app/delivery-monitoring
 
 # cron 59 23 * * *
