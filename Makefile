@@ -126,6 +126,12 @@ app:
 		. |&
 	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
+delmon:
+	docker buildx build \
+		--progress=plain \
+		--tag delmon \
+		docker-services/delmon
+
 logger:
 	docker buildx build \
 		--progress=plain \
@@ -158,6 +164,10 @@ start:
 start-app: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
+
+start-delmon: delmon
+	docker-compose --project-name res up --remove-orphans --detach \
+		-- delmon
 
 start-logger: logger
 	docker-compose --project-name res up --remove-orphans --detach \
@@ -339,8 +349,21 @@ watch-smtp-out:
 	done \
 	& disown
 
+watch-delmon:
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
+	while read -r line; do
+		(
+			echo "Subject: RES delmon"
+			echo "From: RES <watch-delmon@feedsubscription.com>"
+			echo ""
+			echo "$$line"
+		) |
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	done \
+	& disown
+
 # cron @reboot
-delivery-monitoring:
+delivery-monitoring-TODO-DELETE:
 	@tail --lines=0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	docker exec --interactive app node dist/app/delivery-monitoring |
 	while read line; do

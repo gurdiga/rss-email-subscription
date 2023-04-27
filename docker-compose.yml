@@ -25,7 +25,7 @@ x-app-env: &app-env
 
 services:
   smtp-out:
-    depends_on: [app]
+    depends_on: [logger]
     container_name: smtp-out
     hostname: feedsubscription.com
     image: smtp-out
@@ -58,7 +58,7 @@ services:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
   smtp-in:
-    depends_on: [smtp-out]
+    depends_on: [logger]
     container_name: smtp-in
     hostname: smtp-in
     image: smtp-in
@@ -99,6 +99,21 @@ services:
     environment:
       <<: *app-env
     command: node dist/app/cron.js
+    <<: *logging
+    <<: *dns
+
+  delmon:
+    depends_on: [logger]
+    container_name: delmon
+    hostname: delmon
+    image: delmon
+    init: true # This is to tell Node process to stop when the container is asked to stop.
+    restart: always
+    volumes:
+      - .tmp/logs/feedsubscription/smtp-out.log:/smtp-out.log:ro
+      - ${DATA_DIR_ROOT?}:/data
+    environment:
+      <<: *app-env
     <<: *logging
     <<: *dns
 
