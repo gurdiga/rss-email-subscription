@@ -328,18 +328,11 @@ watch-smtp-out:
 			echo "$$rest"
 
 			if [[ "$$rest" =~ ^.*no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
-				echo -- DEBUG START --
-				echo "BASH_REMATCH[0] = '$${BASH_REMATCH[0]}'"
-				echo "BASH_REMATCH[1] = '$${BASH_REMATCH[1]}'"
-				echo "SHELL = '$$SHELL'"
-				"$$SHELL" --version
 				domain=$${BASH_REMATCH[1]}
-				echo "domain: $$domain"
-				echo -- DEBUG END --
 
 				nslookup google.com
 				nslookup "$$domain"
-				host -t mx "$$domain"
+				nslookup -query=mx "$$domain"
 			fi
 		) |
 		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi
