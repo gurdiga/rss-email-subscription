@@ -375,7 +375,7 @@ delmon-catch-up:
 	done |
 	docker exec --interactive app node dist/app/delivery-monitoring
 
-# cron 59 23 * * *
+# cron @daily
 list-qid-index:
 	@source .env
 	require=$${DATA_DIR_ROOT:?envar is missing}
