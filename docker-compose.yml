@@ -8,6 +8,13 @@ x-logging: &logging
       syslog-format: rfc3164
       tag: '{{.Name}}'
 
+x-dns: &dns
+  dns:
+    - 1.1.1.1
+    - 8.8.8.8
+    - 9.9.9.9
+    - 8.8.4.4
+
 x-app-env: &app-env
   TZ: UTC
   DOMAIN_NAME: ${DOMAIN_NAME?}
@@ -46,6 +53,7 @@ services:
       POSTFIX_fragile_destination_rate_delay: 2s
 
     <<: *logging
+    <<: *dns
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
@@ -73,6 +81,7 @@ services:
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
     <<: *logging
+    <<: *dns
 
   app:
     depends_on: [logger]
@@ -91,6 +100,7 @@ services:
       <<: *app-env
     command: node dist/app/cron.js
     <<: *logging
+    <<: *dns
 
   api:
     depends_on: [logger]
@@ -108,6 +118,7 @@ services:
       # TS_NODE_DEBUG: 'true'
       <<: *app-env
     <<: *logging
+    <<: *dns
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -125,6 +136,7 @@ services:
     environment:
       NGINX_HOST: feedsubscription.com
     <<: *logging
+    <<: *dns
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
@@ -138,6 +150,7 @@ services:
       - ./website/html:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do date; certbot renew; sleep 7d & wait $${!}; done;'"
     <<: *logging
+    <<: *dns
 
   logger:
     container_name: logger
