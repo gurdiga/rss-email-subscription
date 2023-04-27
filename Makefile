@@ -447,7 +447,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		rclone \
 			--stats=0 \
 			--verbose \
-			copy --max-age 24h --no-traverse $$LOGS_DIR $$LOGS_DESTINATION
+			copy --no-traverse $$LOGS_DIR $$LOGS_DESTINATION
 	}
 
 	{
