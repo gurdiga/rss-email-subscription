@@ -159,6 +159,10 @@ start-app: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
 
+start-logger: logger
+	docker-compose --project-name res up --remove-orphans --detach \
+		-- logger
+
 start-api: website app
 	export NODE_ENV="production"
 	docker-compose --project-name res up --remove-orphans --force-recreate \
