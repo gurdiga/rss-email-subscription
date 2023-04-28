@@ -126,7 +126,7 @@ app:
 		. |&
 	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
-delmon:
+delmon: app
 	docker buildx build \
 		--progress=plain \
 		--tag delmon \
