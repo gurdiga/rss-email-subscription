@@ -3,6 +3,7 @@ import { makeFeedId } from '../../domain/feed-id';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage, StorageKey } from '../../domain/storage';
 import { Result, isErr, makeErr, makeString, makeValues } from '../../shared/lang';
+import { makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { rawsi, si } from '../../shared/string-utils';
 import {
@@ -18,6 +19,7 @@ import {
 let rest = '';
 
 export function processData(data: Buffer, storage: AppStorage): void {
+  const { logError } = makeCustomLoggers({ module: processData.name });
   const result = extractLines(rest + data.toString());
 
   rest = result.rest;
@@ -26,7 +28,7 @@ export function processData(data: Buffer, storage: AppStorage): void {
     const result = handleLine(line, storage);
 
     if (isErr(result)) {
-      console.log(si`Failed to ${handleLine.name}: "${result.reason}"; line "${line}"`);
+      logError(si`Failed to ${handleLine.name}: "${result.reason}"; line "${line}"`);
     }
   });
 }

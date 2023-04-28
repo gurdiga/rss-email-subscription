@@ -365,7 +365,7 @@ watch-delmon:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
 	while read -r line; do
 		(
-			echo "Subject: RES delmon"
+			echo "Subject: RES watch-delmon"
 			echo "From: RES <watch-delmon@feedsubscription.com>"
 			echo ""
 			echo "$$line"
