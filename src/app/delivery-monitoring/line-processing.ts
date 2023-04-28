@@ -245,5 +245,5 @@ export function getMessageStorageKey(
   const { accountId, feedId, itemId, messageId } = storedMessageDetails;
   const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRootStorageKey, status, itemId, messageId);
+  return makePath(feedRootStorageKey, status, itemId, si`${messageId}.json`);
 }
