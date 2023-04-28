@@ -195,7 +195,7 @@ function moveMessageToStatusFolder(
 ): Result<void> {
   const newStorageKey = getMessageStorageKey(statusDetails, newStatus);
 
-  return storage.renameItem(oldStorageKey, newStorageKey);
+  return storage.renameItem(oldStorageKey, newStorageKey, { overwriteIfExists: true });
 }
 
 interface Extraction {
