@@ -554,48 +554,6 @@ sent-count: rsync-logs
 	jq -s 'map(.data.report.sent) | add' |
 	numfmt --grouping
 
-# TODO: Delete?
-delivery-reports:
-	@source .env
-
-	function send_report() {
-		(
-			echo "Subject: RES delivery report"
-			echo "From: RES <delivery-report@feedsubscription.com>"
-			echo ""
-			cat
-		) |
-		if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
-	}
-
-	export -f send_report # to make it available to `ifne` below
-
-	function generate_last_delivery_report() {
-		local account_id=$$1
-		local feed_id=$$2
-
-		echo "++ generate_last_delivery_report: $$account_id $$feed_id"
-
-		# ls -1 .tmp/logs/feedsubscription/app.log-* |
-		# sort -r | head -1 | cat <(echo .tmp/logs/feedsubscription/app.log) - |
-		# xargs zcat -f | grep 'Delivery info' | head -3 |
-		# while read -r _1 _2 _3 json; do jq .data.response <<<"$json"; done
-
-		# TODO: join -j 1 -o 1.1,1.2,1.3,2.3 <(sort -k2 file1) <(sort -k2 file2)
-
-		grep -P ".*\"message\":\"Sending report\".*\"feedId\":\"$$feed_id\"" .tmp/logs/feedsubscription/app.log |
-		head -1 |
-		while read -r _1 _2 _3 json; do
-			jq --argjson delivered_count 42 '.data.report | . |= .+ {delivered: $$delivered_count}' <<<"$$json"
-		done
-	}
-
-	find $$DATA_DIR_ROOT/accounts/*/feeds -mindepth 1 -maxdepth 1 |
-	while IFS='/' read -r _1 _2 _3 account_id _5 feed_id; do
-		generate_last_delivery_report $$account_id $$feed_id
-	done |
-	ifne bash -c send_report
-
 # cron @monthly
 prune-docker-images:
 	@docker image prune --force |
