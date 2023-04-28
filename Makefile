@@ -368,7 +368,6 @@ watch-delmon:
 			container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
 			severity=$$(jq -r .severity <<<"$$json")
 			message=$$(jq -r .message <<<"$$json")
-			reason=$$(jq -r .data.reason <<<"$$json")
 
 			echo "Subject: RES $$container_name $$severity: $$message"
 			echo "From: RES <watch-delmon@feedsubscription.com>"
