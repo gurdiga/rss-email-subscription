@@ -363,12 +363,18 @@ watch-smtp-out:
 # cron @reboot
 watch-delmon:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
-	while read -r line; do
+	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
 		(
-			echo "Subject: RES watch-delmon"
+			container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
+			severity=$$(jq -r .severity <<<"$$json")
+			message=$$(jq -r .message <<<"$$json")
+			reason=$$(jq -r .data.reason <<<"$$json")
+
+			echo "Subject: RES $$container_name $$severity: $$message"
 			echo "From: RES <watch-delmon@feedsubscription.com>"
-			echo ""
-			echo "$$line"
+			echo
+
+			jq . <<<"$$json"
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 	done \
