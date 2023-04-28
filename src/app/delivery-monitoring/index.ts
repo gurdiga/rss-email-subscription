@@ -7,7 +7,7 @@ import { si } from '../../shared/string-utils';
 import { processData } from './line-processing';
 
 async function main() {
-  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'postfix-log-watching' });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'delivery-monitoring' });
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
 
   if (isErr(env)) {
