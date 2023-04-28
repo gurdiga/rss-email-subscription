@@ -100,6 +100,30 @@ export function handleDeliveryLine(line: string, storage: AppStorage): Result<vo
     return;
   }
 
+  const shelveResult = shelveMessage(storage, qidIndexEntryStorageKey, details);
+
+  if (isErr(shelveResult)) {
+    return makeErr(si`Failed to ${shelveMessage.name}: ${shelveResult.reason}`);
+  }
+
+  if (isFinalStatus(details.status)) {
+    const result = deleteQidIndexEntry(storage, qidIndexEntryStorageKey);
+
+    if (isErr(result)) {
+      return makeErr(si`Failed to ${deleteQidIndexEntry.name}: ${result.reason}`);
+    }
+  }
+}
+
+function deleteQidIndexEntry(storage: AppStorage, storageKey: StorageKey): Result<void> {
+  return storage.removeItem(storageKey);
+}
+
+function shelveMessage(
+  storage: AppStorage,
+  qidIndexEntryStorageKey: StorageKey,
+  details: DeliveryDetails
+): Result<void> {
   const messageStorageKey = storage.loadItem(qidIndexEntryStorageKey);
 
   if (isErr(messageStorageKey)) {
@@ -124,23 +148,17 @@ export function handleDeliveryLine(line: string, storage: AppStorage): Result<vo
   if (isErr(result)) {
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
-
-  if (details.status !== PostfixDeliveryStatus.Sent && details.status !== PostfixDeliveryStatus.Bounced) {
-    return;
-  }
-
-  const removeResult = storage.removeItem(qidIndexEntryStorageKey);
-
-  if (isErr(removeResult)) {
-    return makeErr(si`Failed to remove queue index entry: ${removeResult.reason}`);
-  }
-
-  return removeResult;
 }
 
 interface Extraction {
   wholeLines: string[];
   rest: string;
+}
+
+function isFinalStatus(deliveryStatus: PostfixDeliveryStatus) {
+  const finalStatuses = [PostfixDeliveryStatus.Sent, PostfixDeliveryStatus.Bounced];
+
+  return finalStatuses.includes(deliveryStatus);
 }
 
 export function getMessageIdFromStorageKey(messageStorageKey: StorageKey): Result<string> {
