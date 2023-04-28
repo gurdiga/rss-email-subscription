@@ -340,9 +340,20 @@ watch-smtp-out:
 			if [[ "$$rest" =~ ^.*no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
 				domain=$${BASH_REMATCH[1]}
 
+				echo "--- DEBUG: google.com from host"
 				nslookup google.com
+
+				echo "--- DEBUG: A record from host"
 				nslookup "$$domain"
+
+				echo "--- DEBUG: MX record from host"
 				nslookup -query=mx "$$domain"
+
+				echo "--- DEBUG: A record from inside container"
+				docker exec smtp-out nslookup "$$domain"
+
+				echo "--- DEBUG: MX record from inside container"
+				docker exec smtp-out nslookup -query=mx "$$domain"
 			fi
 		) |
 		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi
