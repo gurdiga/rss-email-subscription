@@ -369,7 +369,7 @@ watch-delmon:
 			severity=$$(jq -r .severity <<<"$$json")
 			message=$$(jq -r .message <<<"$$json")
 
-			echo "Subject: RES $$container_name $$severity: $$message"
+			echo "Subject: RES $$container_name $$severity"
 			echo "From: RES <watch-delmon@feedsubscription.com>"
 			echo
 
