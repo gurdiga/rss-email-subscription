@@ -1,11 +1,18 @@
+import { makeAccountId } from '../../domain/account';
+import { makeFeedId } from '../../domain/feed-id';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage, StorageKey } from '../../domain/storage';
-import { Result, isErr, makeErr } from '../../shared/lang';
+import { Result, isErr, makeErr, makeString, makeValues } from '../../shared/lang';
+import { makePath } from '../../shared/path-utils';
 import { rawsi, si } from '../../shared/string-utils';
 import {
   PostfixDeliveryStatus,
+  StoredEmailStatus,
+  StoredMessageDetails,
   appendPostfixedEmailMessageStatus,
   getQidIndexEntryStorageKey,
   isPostfixDeliveryStatus,
+  makeStoredEmailStatus,
 } from '../email-sending/item-delivery';
 
 let rest = '';
@@ -119,35 +126,74 @@ function deleteQidIndexEntry(storage: AppStorage, storageKey: StorageKey): Resul
   return storage.removeItem(storageKey);
 }
 
-function shelveMessage(
+export function shelveMessage(
   storage: AppStorage,
   qidIndexEntryStorageKey: StorageKey,
-  details: DeliveryDetails
+  deliveryDetails: DeliveryDetails
 ): Result<void> {
-  const messageStorageKey = storage.loadItem(qidIndexEntryStorageKey);
+  const storedMessageDetails = loadStoredMessageDetails(storage, qidIndexEntryStorageKey);
 
-  if (isErr(messageStorageKey)) {
-    return makeErr(si`Failed to load queue index entry: ${messageStorageKey.reason}`);
+  if (isErr(storedMessageDetails)) {
+    return makeErr(si`Failed to ${loadStoredMessageDetails.name}: ${storedMessageDetails.reason}`);
   }
 
-  const messageId = getMessageIdFromStorageKey(messageStorageKey);
-
-  if (isErr(messageId)) {
-    return makeErr(si`Failed to ${getMessageIdFromStorageKey.name}: ${messageId.reason}`);
-  }
+  const storageKey = getMessageStorageKey(storedMessageDetails);
+  const { messageId } = storedMessageDetails;
 
   const result = appendPostfixedEmailMessageStatus(
     storage,
-    messageStorageKey,
+    storageKey,
     messageId,
-    details.status,
-    details.message,
-    details.timestamp
+    deliveryDetails.status,
+    deliveryDetails.message,
+    deliveryDetails.timestamp
   );
 
   if (isErr(result)) {
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
+
+  const oldStatus = storedMessageDetails.status;
+  const newStatus = deliveryDetails.status;
+
+  if (newStatus === oldStatus) {
+    return;
+  }
+
+  const moveResult = moveMessageToStatusFolder(storage, storageKey, storedMessageDetails, deliveryDetails.status);
+
+  if (isErr(moveResult)) {
+    return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
+  }
+
+  return moveResult;
+}
+
+function loadStoredMessageDetails(storage: AppStorage, qIdStorageKey: StorageKey): Result<StoredMessageDetails> {
+  const data = storage.loadItem(qIdStorageKey);
+
+  if (isErr(data)) {
+    return makeErr(si`Failed to load queue ID entry: ${qIdStorageKey}`);
+  }
+
+  return makeValues<StoredMessageDetails>(data, {
+    accountId: makeAccountId,
+    feedId: makeFeedId,
+    itemId: makeString,
+    messageId: makeString,
+    status: makeStoredEmailStatus,
+  });
+}
+
+function moveMessageToStatusFolder(
+  storage: AppStorage,
+  oldStorageKey: StorageKey,
+  statusDetails: StoredMessageDetails,
+  newStatus: PostfixDeliveryStatus
+): Result<void> {
+  const newStorageKey = getMessageStorageKey(statusDetails, newStatus);
+
+  return storage.renameItem(oldStorageKey, newStorageKey);
 }
 
 interface Extraction {
@@ -188,4 +234,14 @@ export function extractLines(s: string): Extraction {
     wholeLines: chunks.slice(0, -1),
     rest: chunks.at(-1) || '',
   };
+}
+
+export function getMessageStorageKey(
+  storedMessageDetails: StoredMessageDetails,
+  status: StoredEmailStatus = storedMessageDetails.status
+) {
+  const { accountId, feedId, itemId, messageId } = storedMessageDetails;
+  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+
+  return makePath(feedRootStorageKey, status, itemId, messageId);
 }

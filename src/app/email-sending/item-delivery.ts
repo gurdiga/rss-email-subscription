@@ -325,7 +325,7 @@ export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliver
   return Object.values(PostfixDeliveryStatus).includes(value as any);
 }
 
-type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus;
+export type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus;
 
 function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
   const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));
@@ -509,7 +509,15 @@ function postfixEmailMessage(
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
 
-  const recordResult = recordQId(storage, deliveryInfo, postfixedMessageStorageKey);
+  const recordResult = recordQId(
+    storage,
+    deliveryInfo,
+    accountId,
+    feedId,
+    itemId,
+    messageId,
+    PrePostfixMessageStatus.Postfixed
+  );
 
   if (isErr(recordResult)) {
     return makeErr(si`Failed to ${recordQId.name}: ${recordResult.reason}`);
@@ -537,10 +545,30 @@ export function getQid(deliveryInfoResponse: string): Result<string> {
 
 export const qidIndexRootStorageKey = '/qid-index';
 
+export interface StoredMessageDetails {
+  accountId: AccountId;
+  feedId: FeedId;
+  itemId: string;
+  messageId: string;
+  status: StoredEmailStatus;
+}
+
+export interface StoredMessageDetailsData {
+  accountId: string;
+  feedId: string;
+  itemId: string;
+  messageId: string;
+  status: StoredEmailStatus;
+}
+
 export function recordQId(
   storage: AppStorage,
   deliveryInfo: DeliveryInfo,
-  postfixedMessageStorageKey: StorageKey
+  accountId: AccountId,
+  feedId: FeedId,
+  itemId: string,
+  messageId: string,
+  status: StoredEmailStatus
 ): Result<void> {
   const qId = getQid(deliveryInfo.response);
 
@@ -549,7 +577,14 @@ export function recordQId(
   }
 
   const storageKey = getQidIndexEntryStorageKey(qId);
-  const result = storage.storeItem(storageKey, postfixedMessageStorageKey);
+  const data: StoredMessageDetailsData = {
+    accountId: accountId.value,
+    feedId: feedId.value,
+    itemId,
+    messageId,
+    status,
+  };
+  const result = storage.storeItem(storageKey, data);
 
   if (isErr(result)) {
     return makeErr(si`Failed to record queue ID: ${result.reason}`);
