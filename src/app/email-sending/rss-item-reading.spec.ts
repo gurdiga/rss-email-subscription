@@ -3,15 +3,17 @@ import { basename } from 'node:path';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
-import { AppStorage } from '../../domain/storage';
+import { AppStorage, StorageKey } from '../../domain/storage';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 import { makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';
 import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
+import { getFeedInboxStorageKey } from '../rss-checking/new-item-recording';
 
 describe(readStoredRssItems.name, () => {
   const accountId = makeTestAccountId();
   const feedId = makeTestFeedId();
+  const inboxStorageKey = getFeedInboxStorageKey(accountId, feedId);
 
   interface MockStorageItem {
     key: string;
@@ -57,6 +59,7 @@ describe(readStoredRssItems.name, () => {
 
   it('returns the list of items in inbox ordered by pubDate', () => {
     const storage = makeTestStorage({
+      hasItem: (storageKey: StorageKey) => storageKey === inboxStorageKey,
       listItems: () => files.map((f) => f.key),
       loadItem: makeLoadItemFnStub(files),
     });
@@ -72,6 +75,18 @@ describe(readStoredRssItems.name, () => {
     ]);
   });
 
+  it('returns empty lists when inbox does not exist', () => {
+    const storage = makeTestStorage({
+      hasItem: () => false,
+    });
+    const expectedResul: RssReadingResult = {
+      kind: 'RssReadingResult',
+      validItems: [],
+      invalidItems: [],
+    };
+    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
+  });
+
   it('also returns the files with invalid data', () => {
     const invalidFile: MockStorageItem = {
       key: 'rss-item-file-with-bad-json-4efce15ee5f6b20599df4.json',
@@ -79,6 +94,7 @@ describe(readStoredRssItems.name, () => {
     };
     const filesWithInvalidItems = [...files, invalidFile];
     const storage = makeTestStorage({
+      hasItem: (storageKey: StorageKey) => storageKey === inboxStorageKey,
       listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     });
@@ -104,6 +120,7 @@ describe(readStoredRssItems.name, () => {
     };
     const filesWithInvalidItems = [...files, invalidFile];
     const storage = makeTestStorage({
+      hasItem: (storageKey: StorageKey) => storageKey === inboxStorageKey,
       listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     });
@@ -118,7 +135,10 @@ describe(readStoredRssItems.name, () => {
 
   it('returns an Err value when can’t list items', () => {
     const error = makeErr('Not there?!');
-    const storage = makeTestStorage({ listItems: () => error });
+    const storage = makeTestStorage({
+      hasItem: (storageKey: StorageKey) => storageKey === inboxStorageKey,
+      listItems: () => error,
+    });
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(
       makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/inbox: ${error.reason}`)

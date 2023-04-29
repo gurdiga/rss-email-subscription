@@ -40,7 +40,23 @@ export function readStoredRssItems(
   feedId: FeedId,
   storage: AppStorage
 ): Result<RssReadingResult> {
+  const result: RssReadingResult = {
+    kind: 'RssReadingResult',
+    validItems: [],
+    invalidItems: [],
+  };
+
   const storageKey = getFeedInboxStorageKey(accountId, feedId);
+  const feedInboxExists = storage.hasItem(storageKey);
+
+  if (isErr(feedInboxExists)) {
+    return makeErr(si`Failed to check inbox exists: ${feedInboxExists.reason}`);
+  }
+
+  if (feedInboxExists === false) {
+    return result;
+  }
+
   const fileNamesResult = storage.listItems(storageKey);
 
   if (isErr(fileNamesResult)) {
@@ -54,14 +70,10 @@ export function readStoredRssItems(
     .map((fileName) => [fileName, storage.loadItem(makePath(storageKey, fileName))])
     .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 
-  const validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
-  const invalidItems = rssItems.filter(isInvalidStoredRssItem);
+  result.validItems = rssItems.filter(isValidStoredRssItem).sort(sortBy(({ item }) => item.pubDate));
+  result.invalidItems = rssItems.filter(isInvalidStoredRssItem);
 
-  return {
-    kind: 'RssReadingResult',
-    validItems,
-    invalidItems,
-  };
+  return result;
 }
 
 export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredRssItem | InvalidStoredRssItem {
