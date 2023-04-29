@@ -55,7 +55,7 @@ export async function sendOutboxEmails(
   from: FullEmailAddress
 ): Promise<number> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
-    module: prepareOutboxEmails.name,
+    module: sendOutboxEmails.name,
     accountId: accountId.value,
     feedId: feed.id.value,
   });
