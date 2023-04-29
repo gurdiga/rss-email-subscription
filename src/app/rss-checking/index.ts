@@ -15,6 +15,7 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'rss-checking',
     feedId: feed.id.value,
+    accountId: accountId.value,
     feedDisplayName,
   });
   const { url } = feed;
