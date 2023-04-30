@@ -135,7 +135,7 @@ services:
     depends_on: [api]
     container_name: website
     hostname: website
-    image: nginx:1.23.3-alpine
+    image: nginx:1.23.4-alpine
     restart: always
     ports: ['80:80', '443:443']
     volumes:
