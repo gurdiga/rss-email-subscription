@@ -81,7 +81,7 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const { validEmails, invalidEmails } = emailAddresses;
 
-  if (isEmpty(validEmails)) {
+  if (isEmpty(validEmails) && invalidEmails.length > 0) {
     logError('No valid emails');
     return 1;
   }
