@@ -365,7 +365,7 @@ watch-smtp-out:
 	& disown
 
 # cron @weekly
-weekly-certbot:
+certbot-report:
 	@(
 		container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
 		severity=$$(jq -r .severity <<<"$$json")
