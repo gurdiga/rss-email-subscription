@@ -14,6 +14,7 @@ import {
   getQidIndexEntryStorageKey,
   isPostfixDeliveryStatus,
   makeStoredEmailStatus,
+  recordQId,
 } from '../email-sending/item-delivery';
 
 let rest = '';
@@ -168,7 +169,21 @@ export function shelveMessage(
     return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
   }
 
-  return moveResult;
+  const updateQIdResult = recordQId(
+    storage,
+    deliveryDetails.qid,
+    storedMessageDetails.accountId,
+    storedMessageDetails.feedId,
+    storedMessageDetails.itemId,
+    storedMessageDetails.messageId,
+    newStatus
+  );
+
+  if (isErr(updateQIdResult)) {
+    return makeErr(si`Failed to ${recordQId.name}: ${updateQIdResult.reason}`);
+  }
+
+  return updateQIdResult;
 }
 
 function loadStoredMessageDetails(storage: AppStorage, qIdStorageKey: StorageKey): Result<StoredMessageDetails> {
