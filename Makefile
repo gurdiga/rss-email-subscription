@@ -557,10 +557,15 @@ rsync-logs:
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
 
 sent-count: rsync-logs
-	@gzcat -f .tmp/logs/feedsubscription/app.log* |
+	@ls -1 .tmp/logs/feedsubscription/app.log-*.gz |
+	sort -r |
+	head -1 |
+	xargs gzcat |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add' |
+	cat - <(grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/footer.njk" | sed 's/,//g' ) |
+	paste -sd+ - | bc |
 	numfmt --grouping
 
 # cron @monthly
