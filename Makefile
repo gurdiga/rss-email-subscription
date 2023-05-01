@@ -598,11 +598,11 @@ list-sessions:
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 # cron @daily
-wathc-containers:
+watch-containers:
 	@docker stats --all --no-stream |
 	cat <( \
-		echo "Subject: RES wathc-containers"; \
-		echo "From: RES <wathc-containers@feedsubscription.com>"; \
+		echo "Subject: RES watch-containers"; \
+		echo "From: RES <watch-containers@feedsubscription.com>"; \
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
