@@ -157,7 +157,7 @@ services:
     volumes:
       - ./.tmp/certbot/conf:/etc/letsencrypt
       - ./website/html:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do date; certbot renew; sleep 7d & wait $${!}; done;'"
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do date; certbot --version; certbot renew; sleep 7d & wait $${!}; done;'"
     <<: [*logging, *dns]
 
   logger:
