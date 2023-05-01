@@ -393,7 +393,7 @@ delmon-catch-up:
 	while read qid; do
 		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
-	docker exec --interactive app node dist/app/delivery-monitoring
+	docker exec --interactive delmon node dist/app/delivery-monitoring
 
 # cron @daily
 list-qid-index:
