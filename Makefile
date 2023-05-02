@@ -307,6 +307,7 @@ watch-website:
 	grep --line-buffered -F \
 			-e 'GET /error?stack=' \
 		|
+	grep -v 'chrome-extension://' |
 	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referer rest; do
 		(
 			echo "Subject: RES website error-log"
