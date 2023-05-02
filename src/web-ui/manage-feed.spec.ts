@@ -26,6 +26,7 @@ describe(makeUiData.name, () => {
       editLinkHref: '/user/edit-feed.html?id=just-add-light',
       manageSubscribersLinkHref: '/user/manage-feed-subscribers.html?id=just-add-light',
       subscribeFormLink: '/user/feed-subscribe-form.html?id=just-add-light&displayName=Just+Add+Light',
+      deliveryReportsLinkHref: '/user/delivery-reports.html?id=just-add-light&displayName=Just+Add+Light',
     };
 
     const result = makeUiData(uiFeed, feedId);

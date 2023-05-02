@@ -9,6 +9,7 @@ export enum PagePath {
   feedManage = '/user/manage-feed.html',
   feedEdit = '/user/edit-feed.html',
   feedSubscribeForm = '/user/feed-subscribe-form.html',
+  deliveryReports = '/user/delivery-reports.html',
   manageFeedSubscribers = '/user/manage-feed-subscribers.html',
   registration = '/user/registration.html',
   registrationConfirmation = '/user/registration-confirmation.html',
@@ -16,6 +17,11 @@ export enum PagePath {
 }
 
 export interface FeedSubscribeFormParams {
+  id: string;
+  displayName: string;
+}
+
+export interface DeliveryReportsParams {
   id: string;
   displayName: string;
 }

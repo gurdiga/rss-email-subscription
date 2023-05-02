@@ -2,6 +2,7 @@ import { ApiPath } from '../domain/api-path';
 import { FeedManageScreenResponse, FeedManageScreenRequestData, DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
+  DeliveryReportsParams,
   FeedEditParams,
   FeedSubscribeFormParams,
   makePagePathWithParams,
@@ -55,6 +56,7 @@ async function main() {
     feedActions: '#feed-actions',
     editLink: '#edit-link',
     subscribeFormLink: '#subscribe-form-link',
+    deliveryReportsLink: '#delivery-reports-link',
     deleteButton: '#delete-button',
   });
 
@@ -143,7 +145,7 @@ function displayFeedAttributeList(
   uiElements: RequiredUiElements,
   feedId: FeedId
 ): void {
-  const { feedAttributeList, editLink, subscribeFormLink } = uiElements;
+  const { feedAttributeList, editLink, subscribeFormLink, deliveryReportsLink } = uiElements;
   const uiData = makeUiData(response, feedId);
 
   const feedAttributeElements = uiData.feedAttributes.flatMap(makeFeedAttributeElement);
@@ -154,6 +156,7 @@ function displayFeedAttributeList(
 
   editLink.href = uiData.editLinkHref;
   subscribeFormLink.href = uiData.subscribeFormLink;
+  deliveryReportsLink.href = uiData.deliveryReportsLinkHref;
 }
 
 function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLElement, HTMLElement] {
@@ -179,6 +182,7 @@ export interface UiData {
   feedAttributes: FeedAttribute[];
   editLinkHref: string;
   subscribeFormLink: string;
+  deliveryReportsLinkHref: string;
   manageSubscribersLinkHref: string;
 }
 
@@ -202,12 +206,22 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     id: feedId.value,
     displayName: uiFeed.displayName,
   });
+  const deliveryRepoersLink = makePagePathWithParams<DeliveryReportsParams>(PagePath.deliveryReports, {
+    id: feedId.value,
+    displayName: uiFeed.displayName,
+  });
   const manageSubscribersLinkHref = makePagePathWithParams<ManageFeedSubscribersParams>(
     PagePath.manageFeedSubscribers,
     { id: feedId.value }
   );
 
-  return { feedAttributes, editLinkHref, subscribeFormLink, manageSubscribersLinkHref };
+  return {
+    feedAttributes,
+    editLinkHref,
+    subscribeFormLink,
+    deliveryReportsLinkHref: deliveryRepoersLink,
+    manageSubscribersLinkHref,
+  };
 }
 
 interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
@@ -215,6 +229,7 @@ interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;
   subscribeFormLink: HTMLAnchorElement;
+  deliveryReportsLink: HTMLAnchorElement;
   deleteButton: HTMLButtonElement;
 }
 
