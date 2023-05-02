@@ -257,8 +257,12 @@ snyk:
 watch-app:
 	@function handle_ENOTFOUND {
 		while read -r _getaddrinfo _ENOTFOUND server_name; do
-			echo -e "\nserver_name: $$server_name\n"
-			echo -e "Trying to resolve...\n"
+			echo "DEBUG: Trying to resolve $$server_name..."
+
+			echo "DEBUG: nslookup from inside container"
+			docker exec app nslookup $$server_name
+
+			echo "DEBUG: nslookup from outside container"
 			nslookup $$server_name
 		done
 	}
