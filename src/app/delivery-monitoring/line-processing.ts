@@ -11,7 +11,7 @@ import {
   StoredEmailStatus,
   StoredMessageDetails,
   appendPostfixedEmailMessageStatus,
-  getQidIndexEntryStorageKey,
+  getQIdIndexEntryStorageKey,
   isPostfixDeliveryStatus,
   makeStoredEmailStatus,
   recordQIdIndexEntry,
@@ -34,45 +34,45 @@ export function processData(data: Buffer, storage: AppStorage): void {
   });
 }
 
-enum DeliveryLineReGroups {
+enum DeliveryAttemptLineReGroups {
   Timestamp = 'timestamp',
   Qid = 'qid',
   Status = 'status',
   Message = 'message',
 }
 
-export const deliveryLineRe = new RegExp(
-  rawsi`(?<${DeliveryLineReGroups.Timestamp}>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}) INFO    postfix/smtp.+ (?<${DeliveryLineReGroups.Qid}>[0-9A-Z]{11}): to=.+ status=(?<${DeliveryLineReGroups.Status}>[a-z]+) \((?<${DeliveryLineReGroups.Message}>.+)\)`
+export const deliveryAttemptLineRe = new RegExp(
+  rawsi`(?<${DeliveryAttemptLineReGroups.Timestamp}>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}) INFO    postfix/smtp.+ (?<${DeliveryAttemptLineReGroups.Qid}>[0-9A-Z]{11}): to=.+ status=(?<${DeliveryAttemptLineReGroups.Status}>[a-z]+) \((?<${DeliveryAttemptLineReGroups.Message}>.+)\)`
 );
 
-export function isDeliveryLine(line: string): boolean {
-  return deliveryLineRe.test(line);
+export function isDeliveryAttemptLine(line: string): boolean {
+  return deliveryAttemptLineRe.test(line);
 }
 
-export interface DeliveryDetails {
+export interface DeliveryAttemptDetails {
   timestamp: Date;
   qid: string;
   status: PostfixDeliveryStatus;
   message: string;
 }
 
-export function makeDeliveryDetails(line: string): Result<DeliveryDetails> {
-  const matches = line.match(deliveryLineRe);
+export function makeDeliveryAttemptDetails(line: string): Result<DeliveryAttemptDetails> {
+  const matches = line.match(deliveryAttemptLineRe);
 
   if (!matches || !matches.groups) {
     return makeErr('Line does not match');
   }
 
-  const timestampString = matches.groups![DeliveryLineReGroups.Timestamp]!;
+  const timestampString = matches.groups![DeliveryAttemptLineReGroups.Timestamp]!;
   const timestamp = new Date(timestampString);
 
   if (timestamp.toString() === 'Invalid Date') {
     return makeErr(si`Invalid timestamp: "${timestampString}"`);
   }
 
-  const qid = matches.groups![DeliveryLineReGroups.Qid]!;
-  const message = matches.groups[DeliveryLineReGroups.Message]!;
-  const status = matches.groups[DeliveryLineReGroups.Status]!;
+  const qid = matches.groups![DeliveryAttemptLineReGroups.Qid]!;
+  const message = matches.groups[DeliveryAttemptLineReGroups.Message]!;
+  const status = matches.groups[DeliveryAttemptLineReGroups.Status]!;
 
   if (!isPostfixDeliveryStatus(status)) {
     return makeErr(si`Invalid status: "${status}"`);
@@ -87,37 +87,37 @@ export function makeDeliveryDetails(line: string): Result<DeliveryDetails> {
 }
 
 export function handleLine(line: string, storage: AppStorage): Result<void> {
-  if (isDeliveryLine(line)) {
-    return handleDeliveryLine(line, storage);
+  if (isDeliveryAttemptLine(line)) {
+    return handleDeliveryAttemptLine(line, storage);
   }
 }
 
-export function handleDeliveryLine(line: string, storage: AppStorage): Result<void> {
-  const details = makeDeliveryDetails(line);
+export function handleDeliveryAttemptLine(line: string, storage: AppStorage): Result<void> {
+  const details = makeDeliveryAttemptDetails(line);
 
   if (isErr(details)) {
-    return makeErr(si`Failed to ${makeDeliveryDetails.name}: ${details.reason}`);
+    return makeErr(si`Failed to ${makeDeliveryAttemptDetails.name}: ${details.reason}`);
   }
 
-  const qidIndexEntryStorageKey = getQidIndexEntryStorageKey(details.qid);
-  const isAnIdexedMessage = storage.hasItem(qidIndexEntryStorageKey);
+  const qIdIndexEntryStorageKey = getQIdIndexEntryStorageKey(details.qid);
+  const hasQIdIndexEntry = storage.hasItem(qIdIndexEntryStorageKey);
 
-  if (isErr(isAnIdexedMessage)) {
-    return makeErr(si`Failed to check if index entry exists: ${isAnIdexedMessage.reason}`);
+  if (isErr(hasQIdIndexEntry)) {
+    return makeErr(si`Failed to check if index entry exists: ${hasQIdIndexEntry.reason}`);
   }
 
-  if (isAnIdexedMessage === false) {
+  if (hasQIdIndexEntry === false) {
     return;
   }
 
-  const shelveResult = shelveMessage(storage, qidIndexEntryStorageKey, details);
+  const shelveResult = shelveMessage(storage, qIdIndexEntryStorageKey, details);
 
   if (isErr(shelveResult)) {
     return makeErr(si`Failed to ${shelveMessage.name}: ${shelveResult.reason}`);
   }
 
   if (isFinalStatus(details.status)) {
-    const result = deleteQidIndexEntry(storage, qidIndexEntryStorageKey);
+    const result = deleteQidIndexEntry(storage, qIdIndexEntryStorageKey);
 
     if (isErr(result)) {
       return makeErr(si`Failed to ${deleteQidIndexEntry.name}: ${result.reason}`);
@@ -131,10 +131,10 @@ function deleteQidIndexEntry(storage: AppStorage, storageKey: StorageKey): Resul
 
 export function shelveMessage(
   storage: AppStorage,
-  qidIndexEntryStorageKey: StorageKey,
-  deliveryDetails: DeliveryDetails
+  qIdIndexEntryStorageKey: StorageKey,
+  deliveryAttemptDetails: DeliveryAttemptDetails
 ): Result<void> {
-  const storedMessageDetails = loadStoredMessageDetails(storage, qidIndexEntryStorageKey);
+  const storedMessageDetails = loadStoredMessageDetails(storage, qIdIndexEntryStorageKey);
 
   if (isErr(storedMessageDetails)) {
     return makeErr(si`Failed to ${loadStoredMessageDetails.name}: ${storedMessageDetails.reason}`);
@@ -147,9 +147,9 @@ export function shelveMessage(
     storage,
     storageKey,
     messageId,
-    deliveryDetails.status,
-    deliveryDetails.message,
-    deliveryDetails.timestamp
+    deliveryAttemptDetails.status,
+    deliveryAttemptDetails.message,
+    deliveryAttemptDetails.timestamp
   );
 
   if (isErr(result)) {
@@ -157,13 +157,18 @@ export function shelveMessage(
   }
 
   const oldStatus = storedMessageDetails.status;
-  const newStatus = deliveryDetails.status;
+  const newStatus = deliveryAttemptDetails.status;
 
   if (newStatus === oldStatus) {
     return;
   }
 
-  const moveResult = moveMessageToStatusFolder(storage, storageKey, storedMessageDetails, deliveryDetails.status);
+  const moveResult = moveMessageToStatusFolder(
+    storage,
+    storageKey,
+    storedMessageDetails,
+    deliveryAttemptDetails.status
+  );
 
   if (isErr(moveResult)) {
     return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
@@ -171,7 +176,7 @@ export function shelveMessage(
 
   const updateQIdResult = recordQIdIndexEntry(
     storage,
-    deliveryDetails.qid,
+    deliveryAttemptDetails.qid,
     storedMessageDetails.accountId,
     storedMessageDetails.feedId,
     storedMessageDetails.itemId,

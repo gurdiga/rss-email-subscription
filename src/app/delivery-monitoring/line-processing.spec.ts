@@ -1,9 +1,9 @@
 import { expect } from 'chai';
 import {
-  DeliveryDetails,
+  DeliveryAttemptDetails,
   extractLines,
-  makeDeliveryDetails,
-  isDeliveryLine,
+  makeDeliveryAttemptDetails,
+  isDeliveryAttemptLine,
   getMessageIdFromStorageKey,
 } from './line-processing';
 import { makeErr } from '../../shared/lang';
@@ -26,17 +26,17 @@ const validDeliveryLine =
   timestampString +
   ' INFO    postfix/smtp[1909]: 889E418C048: to=<blah@gmail.com>, relay=gmail-smtp-in.l.google.com[74.125.133.27]:25, delay=0.69, delays=0.11/0.01/0.14/0.43, dsn=2.0.0, status=sent (250 2.0.0 OK  1682229731 h1-20020adff4c1000000b00304779faa61si272393wrp.152 - gsmtp)';
 
-describe(isDeliveryLine.name, () => {
+describe(isDeliveryAttemptLine.name, () => {
   it('tells if a string is a delivery line', () => {
-    expect(isDeliveryLine(validDeliveryLine)).to.be.true;
-    expect(isDeliveryLine('blah')).to.be.false;
+    expect(isDeliveryAttemptLine(validDeliveryLine)).to.be.true;
+    expect(isDeliveryAttemptLine('blah')).to.be.false;
   });
 });
 
-describe(makeDeliveryDetails.name, () => {
+describe(makeDeliveryAttemptDetails.name, () => {
   it('returns the delivery details of a line when matches', () => {
-    const result = makeDeliveryDetails(validDeliveryLine);
-    const expectedResult: DeliveryDetails = {
+    const result = makeDeliveryAttemptDetails(validDeliveryLine);
+    const expectedResult: DeliveryAttemptDetails = {
       timestamp: new Date(timestampString),
       status: PostfixDeliveryStatus.Sent,
       qid: '889E418C048',
@@ -47,13 +47,13 @@ describe(makeDeliveryDetails.name, () => {
   });
 
   it('reports invalid status', () => {
-    const result = makeDeliveryDetails(validDeliveryLine.replace('status=sent', 'status=parked'));
+    const result = makeDeliveryAttemptDetails(validDeliveryLine.replace('status=sent', 'status=parked'));
 
     expect(result).to.deep.equal(makeErr('Invalid status: "parked"'));
   });
 
   it('reports unmatching line', () => {
-    const result = makeDeliveryDetails('blah');
+    const result = makeDeliveryAttemptDetails('blah');
 
     expect(result).to.deep.equal(makeErr('Line does not match'));
   });

@@ -576,7 +576,7 @@ export function recordQIdIndexEntry(
   messageId: string,
   status: StoredEmailStatus
 ): Result<void> {
-  const storageKey = getQidIndexEntryStorageKey(qId);
+  const storageKey = getQIdIndexEntryStorageKey(qId);
   const data: StoredMessageDetailsData = {
     accountId: accountId.value,
     feedId: feedId.value,
@@ -593,7 +593,7 @@ export function recordQIdIndexEntry(
   return result;
 }
 
-export function getQidIndexEntryStorageKey(qId: string): StorageKey {
+export function getQIdIndexEntryStorageKey(qId: string): StorageKey {
   return makePath(qidIndexRootStorageKey, qId);
 }
 
