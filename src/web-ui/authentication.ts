@@ -65,7 +65,7 @@ function main() {
   });
 }
 
-export interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {}
+interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {}
 
 export interface FormFields {
   email: HTMLInputElement;
