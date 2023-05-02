@@ -515,10 +515,18 @@ function postfixEmailMessage(
     return makeErr(si`Failed to ${getQidFromPostfixResponse.name}: ${qId.reason}`);
   }
 
-  const recordResult = recordQId(storage, qId, accountId, feedId, itemId, messageId, PrePostfixMessageStatus.Postfixed);
+  const recordResult = recordQIdIndexEntry(
+    storage,
+    qId,
+    accountId,
+    feedId,
+    itemId,
+    messageId,
+    PrePostfixMessageStatus.Postfixed
+  );
 
   if (isErr(recordResult)) {
-    return makeErr(si`Failed to ${recordQId.name}: ${recordResult.reason}`);
+    return makeErr(si`Failed to ${recordQIdIndexEntry.name}: ${recordResult.reason}`);
   }
 }
 
@@ -559,7 +567,7 @@ export interface StoredMessageDetailsData {
   status: StoredEmailStatus;
 }
 
-export function recordQId(
+export function recordQIdIndexEntry(
   storage: AppStorage,
   qId: string,
   accountId: AccountId,

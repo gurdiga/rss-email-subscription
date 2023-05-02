@@ -14,7 +14,7 @@ import {
   getQidIndexEntryStorageKey,
   isPostfixDeliveryStatus,
   makeStoredEmailStatus,
-  recordQId,
+  recordQIdIndexEntry,
 } from '../email-sending/item-delivery';
 
 let rest = '';
@@ -169,7 +169,7 @@ export function shelveMessage(
     return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
   }
 
-  const updateQIdResult = recordQId(
+  const updateQIdResult = recordQIdIndexEntry(
     storage,
     deliveryDetails.qid,
     storedMessageDetails.accountId,
@@ -180,7 +180,7 @@ export function shelveMessage(
   );
 
   if (isErr(updateQIdResult)) {
-    return makeErr(si`Failed to ${recordQId.name}: ${updateQIdResult.reason}`);
+    return makeErr(si`Failed to ${recordQIdIndexEntry.name}: ${updateQIdResult.reason}`);
   }
 
   return updateQIdResult;
