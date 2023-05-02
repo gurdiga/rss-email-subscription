@@ -10,9 +10,6 @@
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
-  "[xml]": {
-    "editor.defaultFormatter": "redhat.vscode-xml"
-  },
   "[nginx]": {
     "editor.defaultFormatter": "raynigon.nginx-formatter"
   },
@@ -31,6 +28,7 @@
   },
   "files.exclude": {
     ".tmp/": true,
+    ".goaccess/": true,
     "dist/": true,
     "src/api/web-ui-scripts/**": true
   },
