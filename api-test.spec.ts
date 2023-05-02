@@ -505,6 +505,29 @@ describe('API', () => {
   describe('Account page endpoints', () => {
     before(() => expect(++step).to.equal(5, 'test are expected to run in source order'));
 
+    describe('Load account info', () => {
+      before(authenticate);
+
+      it('loads the account information for the authenticated user', async () => {
+        const { responseBody } = await loadCurrentAccountSend();
+
+        expect(responseBody).to.deep.equal(<Success>{
+          kind: 'Success',
+          message: 'Success',
+          responseData: {
+            email: 'api-test-blogger@feedsubscription.com',
+            planId: 'free',
+          },
+        });
+      });
+
+      async function loadCurrentAccountSend() {
+        const path = getFullApiPath(ApiPath.loadCurrentAccount);
+
+        return await get(path);
+      }
+    });
+
     describe('Email change', () => {
       before(authenticate);
 
