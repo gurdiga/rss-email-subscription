@@ -342,7 +342,10 @@ watch-smtp-out:
 			echo ""
 			echo "$$rest"
 
-			if [[ "$$rest" =~ ^.*no\ MX\ host\ for\ ([-a-z.]+).*$$ ]]; then
+			no_mx_regex="^.*no\ MX\ host\ for\ ([-a-z.]+).*$$"
+			ns_error_regex="^.*Name\ service\ error\ for\ name=([-a-z.]+)\.*$$"
+
+			if [[ $$rest =~ $$no_mx_regex ]] || [[ $$rest =~ $$ns_error_regex ]] ; then
 				domain=$${BASH_REMATCH[1]}
 
 				echo "--- DEBUG: google.com from inside container"
