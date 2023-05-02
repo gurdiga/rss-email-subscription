@@ -509,10 +509,10 @@ function postfixEmailMessage(
     return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
   }
 
-  const qId = getQid(deliveryInfo.response);
+  const qId = getQidFromPostfixResponse(deliveryInfo.response);
 
   if (isErr(qId)) {
-    return makeErr(si`Failed to ${getQid.name}: ${qId.reason}`);
+    return makeErr(si`Failed to ${getQidFromPostfixResponse.name}: ${qId.reason}`);
   }
 
   const recordResult = recordQId(storage, qId, accountId, feedId, itemId, messageId, PrePostfixMessageStatus.Postfixed);
@@ -524,7 +524,7 @@ function postfixEmailMessage(
 
 const qIdRe = /^250 2.0.0 Ok: queued as (.+)$/;
 
-export function getQid(deliveryInfoResponse: string): Result<string> {
+export function getQidFromPostfixResponse(deliveryInfoResponse: string): Result<string> {
   const qIdMatch = deliveryInfoResponse.match(qIdRe);
   const err = makeErr(si`Response does not match the expected format: "${deliveryInfoResponse}"`);
 
