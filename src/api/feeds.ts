@@ -24,22 +24,20 @@ import {
   FeedManageScreenRequest,
   FeedManageScreenResponse,
   FeedStatus,
-  isAddNewFeedRequestData,
   LoadEmailsResponse,
   LoadFeedsResponseData,
+  isAddNewFeedRequestData,
   makeEditFeedRequest,
   makeUiEmailList,
   makeUiFeed,
   makeUiFeedListItem,
-  SendingReport,
 } from '../domain/feed';
 import { makeNewFeedHashingSalt } from '../domain/feed-crypto';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { makeFeed, MakeFeedInput } from '../domain/feed-making';
+import { MakeFeedInput, makeFeed } from '../domain/feed-making';
 import {
   applyEditFeedRequest,
   feedExists,
-  getFeedLastSendingReportStorageKey,
   isFeedNotFound,
   loadFeed,
   loadFeedsByAccountId,
@@ -50,15 +48,14 @@ import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import {
+  Result,
   asyncAttempt,
   getErrorMessage,
   getTypeName,
   isErr,
   isString,
   makeErr,
-  makeNumber,
   makeValues,
-  Result,
 } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -370,12 +367,6 @@ function makeFeedManageScreenResponse(
   const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
   const domainName = env.DOMAIN_NAME;
 
-  const lastSendingReport = loadLastSendingReport(storage, accountId, feedId);
-
-  if (isErr(lastSendingReport)) {
-    return makeErr(si`Failed to ${loadLastSendingReport.name}: ${lastSendingReport.reason}`, lastSendingReport.field);
-  }
-
   return {
     id: feed.id.value,
     displayName: feed.displayName,
@@ -384,49 +375,7 @@ function makeFeedManageScreenResponse(
     replyTo: feed.replyTo.value,
     status: feed.status,
     subscriberCount,
-    lastSendingReport,
   };
-}
-
-function loadLastSendingReport(
-  storage: AppStorage,
-  accountId: AccountId,
-  feedId: FeedId
-): Result<SendingReport | undefined> {
-  const storageKey = getFeedLastSendingReportStorageKey(accountId, feedId);
-  const dataExists = storage.hasItem(storageKey);
-
-  if (isErr(dataExists)) {
-    return makeErr(si`Failed to check ${storage.hasItem.name}: ${dataExists.reason}`);
-  }
-
-  if (dataExists === false) {
-    return undefined;
-  }
-
-  const data = storage.loadItem(storageKey);
-
-  if (isErr(data)) {
-    return makeErr(si`Failed to ${storage.loadItem.name}: ${data.reason}`);
-  }
-
-  const report = makeSendingReport(data);
-
-  if (isErr(report)) {
-    return makeErr(si`Failed to ${makeSendingReport.name}: ${report.reason}`, report.field);
-  }
-
-  return report;
-}
-
-function makeSendingReport(data: unknown): Result<SendingReport> {
-  return makeValues<SendingReport>(data, {
-    newItems: makeNumber,
-    subscribers: makeNumber,
-    sentExpected: makeNumber,
-    sent: makeNumber,
-    failed: makeNumber,
-  });
 }
 
 export const loadFeedById: AppRequestHandler = async function loadFeedById(

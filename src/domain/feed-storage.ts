@@ -45,10 +45,6 @@ export function getFeedJsonStorageKey(accountId: AccountId, feedId: FeedId) {
   return makePath(getFeedRootStorageKey(accountId, feedId), 'feed.json');
 }
 
-export function getFeedLastSendingReportStorageKey(accountId: AccountId, feedId: FeedId) {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'lastSendingReport.json');
-}
-
 export interface FeedExistsResult {
   does: false | AccountId;
   errs: Err[];

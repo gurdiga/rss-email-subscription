@@ -1,11 +1,5 @@
 import { ApiPath } from '../domain/api-path';
-import {
-  FeedManageScreenResponse,
-  FeedManageScreenRequestData,
-  DeleteFeedRequestData,
-  UiFeed,
-  SendingReport,
-} from '../domain/feed';
+import { FeedManageScreenResponse, FeedManageScreenRequestData, DeleteFeedRequestData, UiFeed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
   FeedEditParams,
@@ -154,37 +148,12 @@ function displayFeedAttributeList(
 
   const feedAttributeElements = uiData.feedAttributes.flatMap(makeFeedAttributeElement);
   const subscriberCountElements = makeSubscriberCountField(response.subscriberCount, uiData.manageSubscribersLinkHref);
-  const sendingReportElements = makeSendingReportField(response.lastSendingReport);
 
-  feedAttributeList.append(...feedAttributeElements, ...subscriberCountElements, ...sendingReportElements);
+  feedAttributeList.append(...feedAttributeElements, ...subscriberCountElements);
   unhideElement(feedAttributeList);
 
   editLink.href = uiData.editLinkHref;
   subscribeFormLink.href = uiData.subscribeFormLink;
-}
-
-function makeSendingReportField(report?: SendingReport): [HTMLElement, HTMLElement] | [] {
-  if (!report) {
-    return [];
-  }
-
-  const reportDetails = [
-    si`New items: ${report.newItems}`,
-    si`Sent: ${report.sent}`,
-    si`Failed: ${report.failed}`,
-    si`Pending: (soon)`,
-    si`Rejected: (soon)`,
-  ].join(', ');
-
-  const dtElement = createElement('dt', 'Last sending report', { class: 'res-feed-attribute-label' });
-  const ddElement = createElement('dd', reportDetails, { class: 'res-feed-attribute-value' });
-
-  const manageSubscribersLink = createElement('a', 'Reports', { href: '#' });
-  const separator = createElement('hr', '', { class: 'res-subscriber-count-separator' });
-
-  ddElement.append(separator, manageSubscribersLink);
-
-  return [dtElement, ddElement];
 }
 
 function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLElement, HTMLElement] {
