@@ -3,7 +3,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress, HashedEmail } from '../domain/email-address';
 import { storeEmails, addEmail } from '../app/email-sending/emails';
-import { EmailContent } from '../app/email-sending/email-content';
+import { EmailContent, htmlBody } from '../app/email-sending/email-content';
 import { Feed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../domain/feed-storage';
@@ -179,26 +179,23 @@ export function makeSubscriptionConfirmationEmailContent(
   confirmationLinkUrl: URL,
   listEmailAddress: EmailAddress
 ): EmailContent {
-  const subject = 'Please confirm feed subscription';
-  const htmlBody = si`
-    <p>Hi there,</p>
-
-    <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
-
-    <p><a href="${confirmationLinkUrl.toString()}">Yes, subscribe me</a></p>
-
-    <p style="max-width: 35em">
-      If you asked to be subscribed, add the list email to your contacts
-      so that it’s not considered spam: ${listEmailAddress.value}. If you
-      didn’t ask to subscribe, please ignore this message.
-    </p>
-
-    <p>Have a nice day.</p>
-  `;
-
   return {
-    subject,
-    htmlBody,
+    subject: 'Please confirm feed subscription',
+    htmlBody: htmlBody(si`
+      <p>Hi there,</p>
+
+      <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
+
+      <p><a href="${confirmationLinkUrl.toString()}">Yes, subscribe me</a></p>
+
+      <p style="max-width: 35em">
+        If you asked to be subscribed, add the list email to your contacts
+        so that it’s not considered spam: ${listEmailAddress.value}. If you
+        didn’t ask to subscribe, please ignore this message.
+      </p>
+
+      <p>Have a nice day.</p>
+    `),
   };
 }
 

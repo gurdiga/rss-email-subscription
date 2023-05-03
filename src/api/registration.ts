@@ -1,4 +1,4 @@
-import { EmailContent } from '../app/email-sending/email-content';
+import { EmailContent, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
 import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from '../domain/account-crypto';
@@ -156,17 +156,17 @@ export function makeRegistrationConfirmationEmailContent(
 
   return {
     subject: 'Please confirm FeedSubscription registration',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Please confirm <b><font color="#0163ee">Feed</font>Subscription</b> registration by clicking the link below:</p>
+      <p>Please confirm FeedSubscription.com registration by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
 
       <p>If you did not register, please ignore this message.</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 }
 

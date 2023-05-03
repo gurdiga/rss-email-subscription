@@ -1,3 +1,4 @@
+import { htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import {
   AccountId,
@@ -159,14 +160,14 @@ async function sendEmailChangeInformationEmail(
 ) {
   const emailContent = {
     subject: 'Please note FeedSubscription email change',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Please note that the account email at ${getFancyName()}
+      <p>Please note that the account email at FeedSubscription.com
       has been changed from <b>${oldEmail.value}</b> to <b>${newEmail.value}</b>.</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 
   return await sendEmail(
@@ -252,14 +253,14 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {
   const emailContent = {
     subject: 'Please note FeedSubscription passsword change',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Please note that the account password at ${getFancyName()}
+      <p>Please note that the account password at FeedSubscription.com
       has been changed.</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 
   return await sendEmail(settings.fullEmailAddress, email, settings.fullEmailAddress.emailAddress, emailContent, env);
@@ -341,17 +342,17 @@ async function sendEmailChangeConfirmationEmail(
 
   const emailContent = {
     subject: 'Please confirm FeedSubscription email change',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Please confirm ${getFancyName()} email change by clicking the link below:</p>
+      <p>Please confirm FeedSubscription.com email change by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm email change</a>.</p>
 
       <p>If you did not initiate an account email change, please ignore this message.</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 
   return await sendEmail(
@@ -446,17 +447,17 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
 function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settings: AppSettings, env: AppEnv) {
   const emailContent = {
     subject: 'FeedSubscription account deletion confirmation',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>At your request, your account at ${getFancyName()} has been deleted.</p>
+      <p>At your request, your account at FeedSubscription.com has been deleted.</p>
 
       <p>If you would like to share the reason for deleting the account, we’d really appreciate it.
       You can reply just to this email, or take a ten-second survey:
       <a href="https://app.qpointsurvey.com/s/vo2hg1fbueqaj5o0">click here for survey</a>.</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 
   return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
@@ -537,21 +538,17 @@ async function sendPlanChangeInformationEmail(
 ) {
   const emailContent = {
     subject: 'Please note FeedSubscription plan change',
-    htmlBody: si`
+    htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Just for the record, please note that your plan at ${getFancyName()}
+      <p>Just for the record, please note that your plan at FeedSubscription.com
       has been changed from “<b>${oldPlanTitle}</b>” to “<b>${newPlanTitle}</b>.”</p>
 
       <p>Have a nice day.</p>
-    `,
+    `),
   };
 
   return await sendEmail(settings.fullEmailAddress, email, settings.fullEmailAddress.emailAddress, emailContent, env);
-}
-
-function getFancyName(): string {
-  return si`<b><font color="#0163ee">Feed</font>Subscription</b>`;
 }
 
 function makeDeleteAccountRequest(data: unknown | DeleteAccountRequestData): Result<DeleteAccountRequest> {
