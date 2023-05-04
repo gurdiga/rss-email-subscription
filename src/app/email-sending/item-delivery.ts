@@ -673,7 +673,7 @@ function getStoredItemStorageKey(accountId: AccountId, feedId: FeedId, storedRss
   const itemId = getRssItemId(storedRssItem.item);
   const itemFolderStorageKey = getItemFolderStorageKey(accountId, feedId, itemId);
 
-  return makePath(itemFolderStorageKey, storedRssItem.fileName);
+  return makePath(itemFolderStorageKey, 'item.json');
 }
 
 export function getItemStatusFolderStorageKey(
