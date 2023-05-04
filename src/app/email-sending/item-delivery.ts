@@ -162,7 +162,7 @@ export function prepareOutboxEmails(
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress
-) {
+): Result<number> {
   const { logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
     accountId: accountId.value,
@@ -190,6 +190,7 @@ export function prepareOutboxEmails(
           itemGuid: storedItem.item.guid,
           to: hashedEmail.emailAddress.value,
         });
+        return 1;
       }
     }
 
@@ -197,8 +198,11 @@ export function prepareOutboxEmails(
 
     if (isErr(deletionResult)) {
       logError(deletionResult.reason);
+      return 1;
     }
   }
+
+  return 0;
 }
 
 function storeOutboxEmail(
