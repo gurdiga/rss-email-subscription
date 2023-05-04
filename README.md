@@ -18,8 +18,12 @@ The app stores data in the `DATA_DIR_ROOT` directory:
 ```
 /settings.json
 /accounts/<account_id>/account.json
-/accounts/<account_id>/feeds/<feed_id>/feed.json
-/accounts/<account_id>/feeds/<feed_id>/emails.json
-/accounts/<account_id>/feeds/<feed_id>/lastPostMetadata.json
-/accounts/<account_id>/feeds/<feed_id>/inbox/rss-item-<hash>.json
+/accounts/<account-id>/feeds/<feed-id>/feed.json
+/accounts/<account-id>/feeds/<feed-id>/emails.json
+/accounts/<account-id>/feeds/<feed-id>/items/inbox/<datetime-itehexx>.json
+/accounts/<account-id>/feeds/<feed-id>/items/outbox/<datetime-itehexx>/<msghexx>.json
+/accounts/<account-id>/feeds/<feed-id>/items/<datetime-itehexx>/postfixed/<msghexx>.json
+/accounts/<account-id>/feeds/<feed-id>/items/<datetime-itehexx>/deferred/<msghexx>.json
+/accounts/<account-id>/feeds/<feed-id>/items/<datetime-itehexx>/sent/<msghexx>.json
+/accounts/<account-id>/feeds/<feed-id>/items/<datetime-itehexx>/bounced/<msghexx>.json
 ```
