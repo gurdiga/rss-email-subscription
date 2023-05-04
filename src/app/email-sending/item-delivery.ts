@@ -27,9 +27,8 @@ import { si } from '../../shared/string-utils';
 import { ITEMS_DIR_NAME, getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
-import { deleteItem } from './item-cleanup';
 import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
-import { ValidStoredRssItem } from './rss-item-reading';
+import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { md5 } from '../../shared/crypto';
 
@@ -187,22 +186,39 @@ export function prepareOutboxEmails(
           reason: storeResult.reason,
           accountId: accountId.value,
           feedId: feed.id.value,
-          itemGuid: storedItem.item.guid,
+          fileName: storedItem.fileName,
           to: hashedEmail.emailAddress.value,
         });
         return 1;
       }
     }
 
-    const deletionResult = deleteItem(accountId, feed.id, storage, storedItem);
+    const storeResult = storeOutboxedItem(storage, accountId, feed.id, storedItem);
 
-    if (isErr(deletionResult)) {
-      logError(deletionResult.reason);
+    if (isErr(storeResult)) {
+      logError(si`Failed to ${storeOutboxedItem.name}: ${storeResult.reason}`, {
+        reason: storeResult.reason,
+        accountId: accountId.value,
+        feedId: feed.id.value,
+        fileName: storedItem.fileName,
+      });
       return 1;
     }
   }
 
   return 0;
+}
+
+function storeOutboxedItem(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: ValidStoredRssItem
+): Result<void> {
+  const oldStorageKey = getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName);
+  const newStorageKey = getStoredItemStorageKey(accountId, feedId, storedRssItem);
+
+  return storage.renameItem(oldStorageKey, newStorageKey);
 }
 
 function storeOutboxEmail(
@@ -647,14 +663,27 @@ export function getPostfixedMessageStorageKey(
   });
 }
 
+function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
+  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+
+  return makePath(feedRootStorageKey, ITEMS_DIR_NAME, itemId);
+}
+
+function getStoredItemStorageKey(accountId: AccountId, feedId: FeedId, storedRssItem: ValidStoredRssItem): StorageKey {
+  const itemId = getRssItemId(storedRssItem.item);
+  const itemFolderStorageKey = getItemFolderStorageKey(accountId, feedId, itemId);
+
+  return makePath(itemFolderStorageKey, storedRssItem.fileName);
+}
+
 export function getItemStatusFolderStorageKey(
   storedMessageDetails: StoredMessageDetails,
   status: StoredEmailStatus = storedMessageDetails.status
 ) {
   const { accountId, feedId, itemId } = storedMessageDetails;
-  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+  const itemFolderStorageKey = getItemFolderStorageKey(accountId, feedId, itemId);
 
-  return makePath(feedRootStorageKey, ITEMS_DIR_NAME, itemId, status);
+  return makePath(itemFolderStorageKey, status);
 }
 
 export function getStoredMessageStorageKey(
