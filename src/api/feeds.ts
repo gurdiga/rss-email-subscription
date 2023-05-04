@@ -211,7 +211,7 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
     return makeAppError();
   }
 
-  logInfo('Feed updated', { editFeedRequest });
+  logInfo('Feed updated', { accountId: accountId.value, editFeedRequest });
 
   const logData = {};
   const responseData: EditFeedResponse = {
