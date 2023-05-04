@@ -24,12 +24,14 @@ import {
 import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
-import { getFeedOutboxStorageKey, getFeedPostfixedStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
+import { ITEMS_DIR_NAME, getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
 import { deleteItem } from './item-cleanup';
 import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
 import { ValidStoredRssItem } from './rss-item-reading';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
+import { md5 } from '../../shared/crypto';
 
 export async function deliverItems(
   storage: AppStorage,
@@ -210,14 +212,18 @@ function storeOutboxEmail(
   storage: AppStorage
 ) {
   const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, plan, env);
-  const messageStorageKey = getStoredEmailMessageStorageKey(
+  const messageStorageKey = getOutboxMessageStorageKey(
     accountId,
     feed.id,
     getRssItemId(item),
-    hashedEmail.saltedHash
+    getMessageId(hashedEmail.emailAddress)
   );
 
   return storage.storeItem(messageStorageKey, messageData);
+}
+
+function getMessageId(emailAddress: EmailAddress): string {
+  return md5(emailAddress.value);
 }
 
 function purgeOutboxItem(storage: AppStorage, accountId: AccountId, feedId: FeedId, itemId: string): Result<void> {
@@ -343,17 +349,6 @@ export function makeStoredEmailStatus(value: unknown, field = 'status'): Result<
   }
 
   return value;
-}
-
-function getStoredEmailMessageStorageKey(
-  accountId: AccountId,
-  feedId: FeedId,
-  itemId: string,
-  emailId: string
-): string {
-  const outboxStorageKey = getFeedOutboxStorageKey(accountId, feedId);
-
-  return makePath(outboxStorageKey, itemId, si`${emailId}.json`);
 }
 
 interface StoredEmailMessages {
@@ -489,24 +484,23 @@ function postfixEmailMessage(
     // prettier: keep these stacked
     outboxMessageStorageKey,
     postfixedMessageStorageKey,
-    { overwriteIfExists: true } // TODO: Review to ensure no data can be lost with this thing
+    { overwriteIfExists: true }
   );
 
   if (isErr(renameResult)) {
     return makeErr(si`Failed to renameItem: ${renameResult.reason}`);
   }
 
-  const storageKey = getPostfixedMessageStorageKey(accountId, feedId, itemId, messageId);
-  const result = appendPostfixedEmailMessageStatus(
+  const appendStatusResult = appendStoredEmailMessageStatus(
     storage,
-    storageKey,
+    postfixedMessageStorageKey,
     messageId,
     PrePostfixMessageStatus.Postfixed,
     deliveryInfo.response
   );
 
-  if (isErr(result)) {
-    return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
+  if (isErr(appendStatusResult)) {
+    return makeErr(si`Failed to ${appendStoredEmailMessageStatus.name}: ${appendStatusResult.reason}`);
   }
 
   const qId = getQidFromPostfixResponse(deliveryInfo.response);
@@ -515,7 +509,7 @@ function postfixEmailMessage(
     return makeErr(si`Failed to ${getQidFromPostfixResponse.name}: ${qId.reason}`);
   }
 
-  const recordResult = recordQIdIndexEntry(
+  const recordQIdResult = recordQIdIndexEntry(
     storage,
     qId,
     accountId,
@@ -525,8 +519,8 @@ function postfixEmailMessage(
     PrePostfixMessageStatus.Postfixed
   );
 
-  if (isErr(recordResult)) {
-    return makeErr(si`Failed to ${recordQIdIndexEntry.name}: ${recordResult.reason}`);
+  if (isErr(recordQIdResult)) {
+    return makeErr(si`Failed to ${recordQIdIndexEntry.name}: ${recordQIdResult.reason}`);
   }
 }
 
@@ -597,7 +591,7 @@ export function getQIdIndexEntryStorageKey(qId: string): StorageKey {
   return makePath(qidIndexRootStorageKey, qId);
 }
 
-export function appendPostfixedEmailMessageStatus(
+export function appendStoredEmailMessageStatus(
   storage: AppStorage,
   storageKey: StorageKey,
   messageId: string,
@@ -628,10 +622,10 @@ function getOutboxItemStorageKey(accountId: AccountId, feedId: FeedId, itemId: s
   return makePath(outboxStorageKey, itemId);
 }
 
-function getPostfixedItemStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
-  const outboxStorageKey = getFeedPostfixedStorageKey(accountId, feedId);
+function getOutboxMessageStorageKey(accountId: AccountId, feedId: FeedId, itemId: string, messageId: string) {
+  const outboxItemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
 
-  return makePath(outboxStorageKey, itemId);
+  return makePath(outboxItemStorageKey, si`${messageId}.json`);
 }
 
 export function getPostfixedMessageStorageKey(
@@ -640,13 +634,31 @@ export function getPostfixedMessageStorageKey(
   itemId: string,
   messageId: string
 ): StorageKey {
-  const outboxStorageKey = getPostfixedItemStorageKey(accountId, feedId, itemId);
-
-  return makePath(outboxStorageKey, si`${messageId}.json`);
+  return getStoredMessageStorageKey({
+    accountId,
+    feedId,
+    itemId,
+    messageId,
+    status: PrePostfixMessageStatus.Postfixed,
+  });
 }
 
-function getOutboxMessageStorageKey(accountId: AccountId, feedId: FeedId, itemId: string, messageId: string) {
-  const outboxItemStorageKey = getOutboxItemStorageKey(accountId, feedId, itemId);
+export function getItemStatusFolderStorageKey(
+  storedMessageDetails: StoredMessageDetails,
+  status: StoredEmailStatus = storedMessageDetails.status
+) {
+  const { accountId, feedId, itemId } = storedMessageDetails;
+  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(outboxItemStorageKey, si`${messageId}.json`);
+  return makePath(feedRootStorageKey, ITEMS_DIR_NAME, itemId, status);
+}
+
+export function getStoredMessageStorageKey(
+  storedMessageDetails: StoredMessageDetails,
+  status: StoredEmailStatus = storedMessageDetails.status
+) {
+  const { messageId } = storedMessageDetails;
+  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
+
+  return makePath(itemStatusFolderStorageKey, si`${messageId}.json`);
 }

@@ -1,6 +1,13 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
-import { getQidFromPostfixResponse } from './item-delivery';
+import {
+  PostfixDeliveryStatus,
+  StoredMessageDetails,
+  getItemStatusFolderStorageKey,
+  getQidFromPostfixResponse,
+  getStoredMessageStorageKey,
+} from './item-delivery';
+import { makeTestAccountId, makeTestFeedId } from '../../shared/test-utils';
 
 describe(getQidFromPostfixResponse.name, () => {
   it('extracts Postfix queue ID from the Postfix response', () => {
@@ -17,5 +24,39 @@ describe(getQidFromPostfixResponse.name, () => {
     expect(getQidFromPostfixResponse('250 Ok')).to.deep.equal(
       makeErr('Response does not match the expected format: "250 Ok"')
     );
+  });
+});
+
+describe(getItemStatusFolderStorageKey.name, () => {
+  it('returns the storage key for an item status folder', () => {
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id-IRRELEVANT',
+      status: PostfixDeliveryStatus.Bounced,
+    };
+
+    const expectedResult =
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id/bounced';
+
+    expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
+  });
+});
+
+describe(getStoredMessageStorageKey.name, () => {
+  it('returns the storage key for a stored message', () => {
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id',
+      status: PostfixDeliveryStatus.Bounced,
+    };
+
+    const expectedResult =
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id/bounced/test-message-id.json';
+
+    expect(getStoredMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
 });

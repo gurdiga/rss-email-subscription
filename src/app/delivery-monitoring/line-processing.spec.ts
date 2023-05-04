@@ -5,12 +5,14 @@ import {
   makeDeliveryAttemptDetails,
   isDeliveryAttemptLine,
   getMessageIdFromStorageKey,
-  getMessageStorageKey,
-  getItemStatusFolderStorageKey,
   maybePurgeEmptyItemFolder,
 } from './line-processing';
 import { makeErr } from '../../shared/lang';
-import { PostfixDeliveryStatus, StoredMessageDetails } from '../email-sending/item-delivery';
+import {
+  PostfixDeliveryStatus,
+  StoredMessageDetails,
+  getItemStatusFolderStorageKey,
+} from '../email-sending/item-delivery';
 import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
 import { AppStorage } from '../../domain/storage';
 
@@ -75,40 +77,6 @@ describe(getMessageIdFromStorageKey.name, () => {
     const result = getMessageIdFromStorageKey('/some/path/.json');
 
     expect(result).to.deep.equal(makeErr('Invalid message storage key: "/some/path/.json"'));
-  });
-});
-
-describe(getItemStatusFolderStorageKey.name, () => {
-  it('returns the storage key for an item status folder', () => {
-    const storedMessageDetails: StoredMessageDetails = {
-      accountId: makeTestAccountId(),
-      feedId: makeTestFeedId(),
-      itemId: 'test-item-id',
-      messageId: 'test-message-id-IRRELEVANT',
-      status: PostfixDeliveryStatus.Bounced,
-    };
-
-    const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/bounced/test-item-id';
-
-    expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
-  });
-});
-
-describe(getMessageStorageKey.name, () => {
-  it('returns the storage key for a stored message', () => {
-    const storedMessageDetails: StoredMessageDetails = {
-      accountId: makeTestAccountId(),
-      feedId: makeTestFeedId(),
-      itemId: 'test-item-id',
-      messageId: 'test-message-id',
-      status: PostfixDeliveryStatus.Bounced,
-    };
-
-    const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/bounced/test-item-id/test-message-id.json';
-
-    expect(getMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
 });
 

@@ -1,18 +1,18 @@
 import { makeAccountId } from '../../domain/account';
 import { makeFeedId } from '../../domain/feed-id';
-import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage, StorageKey } from '../../domain/storage';
 import { isEmpty } from '../../shared/array-utils';
 import { Result, isErr, makeErr, makeString, makeValues } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
-import { makePath } from '../../shared/path-utils';
 import { rawsi, si } from '../../shared/string-utils';
 import {
   PostfixDeliveryStatus,
   StoredEmailStatus,
   StoredMessageDetails,
-  appendPostfixedEmailMessageStatus,
+  appendStoredEmailMessageStatus,
+  getItemStatusFolderStorageKey,
   getQIdIndexEntryStorageKey,
+  getStoredMessageStorageKey,
   isPostfixDeliveryStatus,
   makeStoredEmailStatus,
   recordQIdIndexEntry,
@@ -141,10 +141,10 @@ export function shelveMessage(
     return makeErr(si`Failed to ${loadStoredMessageDetails.name}: ${storedMessageDetails.reason}`);
   }
 
-  const storageKey = getMessageStorageKey(storedMessageDetails);
+  const storageKey = getStoredMessageStorageKey(storedMessageDetails);
   const { messageId } = storedMessageDetails;
 
-  const result = appendPostfixedEmailMessageStatus(
+  const result = appendStoredEmailMessageStatus(
     storage,
     storageKey,
     messageId,
@@ -154,7 +154,7 @@ export function shelveMessage(
   );
 
   if (isErr(result)) {
-    return makeErr(si`Failed to ${appendPostfixedEmailMessageStatus.name}: ${result.reason}`);
+    return makeErr(si`Failed to ${appendStoredEmailMessageStatus.name}: ${result.reason}`);
   }
 
   const oldStatus = storedMessageDetails.status;
@@ -241,7 +241,7 @@ function moveMessageToStatusFolder(
   statusDetails: StoredMessageDetails,
   newStatus: PostfixDeliveryStatus
 ): Result<void> {
-  const newStorageKey = getMessageStorageKey(statusDetails, newStatus);
+  const newStorageKey = getStoredMessageStorageKey(statusDetails, newStatus);
 
   return storage.renameItem(oldStorageKey, newStorageKey, { overwriteIfExists: true });
 }
@@ -284,24 +284,4 @@ export function extractLines(s: string): Extraction {
     wholeLines: chunks.slice(0, -1),
     rest: chunks.at(-1) || '',
   };
-}
-
-export function getItemStatusFolderStorageKey(
-  storedMessageDetails: StoredMessageDetails,
-  status: StoredEmailStatus = storedMessageDetails.status
-) {
-  const { accountId, feedId, itemId } = storedMessageDetails;
-  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
-
-  return makePath(feedRootStorageKey, status, itemId);
-}
-
-export function getMessageStorageKey(
-  storedMessageDetails: StoredMessageDetails,
-  status: StoredEmailStatus = storedMessageDetails.status
-) {
-  const { messageId } = storedMessageDetails;
-  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
-
-  return makePath(itemStatusFolderStorageKey, si`${messageId}.json`);
 }
