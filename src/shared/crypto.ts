@@ -9,12 +9,13 @@ export const hash: HashFn = function hash(input: string, salt: string): string {
     .digest('hex');
 };
 
-export const rssItemHash: HashFn = function hash(input: string, salt: string): string {
-  return crypto
-    .createHash('md5')
-    .update(input + salt, 'utf8')
-    .digest('hex');
-};
+export function rssItemHash(input: string): string {
+  return md5(input);
+}
+
+export function md5(input: string): string {
+  return crypto.createHash('md5').update(input, 'utf8').digest('hex');
+}
 
 export function getRandomString(length: number = 16): string {
   // Dividing by 2 because when converting to hex the length doubles
