@@ -73,7 +73,7 @@ describe(recordNewRssItems.name, () => {
         guid: '1',
       };
 
-      expect(itemFileName(item)).to.equal('2020-01-03-601ef6ad5823a18eca719959340bf05e.json');
+      expect(itemFileName(item)).to.equal('20200103-601ef6ad5823a18eca719959340bf05e.json');
     });
   });
 });

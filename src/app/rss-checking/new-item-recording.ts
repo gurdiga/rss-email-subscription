@@ -36,17 +36,19 @@ export function recordNewRssItems(
 
 export function getRssItemId(item: RssItem, hashFn: HashFn = rssItemHash): string {
   const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
+  const hash = hashFn(input, RSS_ITEM_HASHING_SALT);
 
-  return hashFn(input, RSS_ITEM_HASHING_SALT);
+  const isoDate = item.pubDate.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
+
+  return si`${isoDate}-${hash}`;
 }
 
 export const RSS_ITEM_HASHING_SALT = 'item-name-salt';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = rssItemHash): string {
   const itemId = getRssItemId(item, hashFn);
-  const isoDate = item.pubDate.toISOString().substring(0, 10); // '2023-05-04'
 
-  return si`${isoDate}-${itemId}.json`;
+  return si`${itemId}.json`;
 }
 
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
