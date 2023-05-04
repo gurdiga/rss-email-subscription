@@ -5,9 +5,14 @@ import {
   makeDeliveryAttemptDetails,
   isDeliveryAttemptLine,
   getMessageIdFromStorageKey,
+  getMessageStorageKey,
+  getItemStatusFolderStorageKey,
+  maybePurgeEmptyItemFolder,
 } from './line-processing';
 import { makeErr } from '../../shared/lang';
-import { PostfixDeliveryStatus } from '../email-sending/item-delivery';
+import { PostfixDeliveryStatus, StoredMessageDetails } from '../email-sending/item-delivery';
+import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
+import { AppStorage } from '../../domain/storage';
 
 describe(extractLines.name, () => {
   it('returns the whole lines that end with \\n, and the rest', () => {
@@ -70,5 +75,100 @@ describe(getMessageIdFromStorageKey.name, () => {
     const result = getMessageIdFromStorageKey('/some/path/.json');
 
     expect(result).to.deep.equal(makeErr('Invalid message storage key: "/some/path/.json"'));
+  });
+});
+
+describe(getItemStatusFolderStorageKey.name, () => {
+  it('returns the storage key for an item status folder', () => {
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id-IRRELEVANT',
+      status: PostfixDeliveryStatus.Bounced,
+    };
+
+    const expectedResult =
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/bounced/test-item-id';
+
+    expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
+  });
+});
+
+describe(getMessageStorageKey.name, () => {
+  it('returns the storage key for a stored message', () => {
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id',
+      status: PostfixDeliveryStatus.Bounced,
+    };
+
+    const expectedResult =
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/bounced/test-item-id/test-message-id.json';
+
+    expect(getMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
+  });
+});
+
+describe(maybePurgeEmptyItemFolder.name, () => {
+  it('removes the item status folder if empty', () => {
+    const removeItem = makeSpy<AppStorage['removeItem']>();
+    const storage = makeTestStorage({ listItems: () => [], removeItem });
+
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id',
+      status: PostfixDeliveryStatus.Deferred,
+    };
+    const status = PostfixDeliveryStatus.Sent;
+
+    const result = maybePurgeEmptyItemFolder(storage, storedMessageDetails, status);
+
+    expect(result).to.be.undefined;
+    expect(removeItem.calls).to.deep.equal([[getItemStatusFolderStorageKey(storedMessageDetails, status)]]);
+  });
+
+  it('does NOT remove the item status folder when there are messages left', () => {
+    const removeItem = makeSpy<AppStorage['removeItem']>();
+    const storage = makeTestStorage({ listItems: () => ['test-message-id-1', 'test-message-id-2'], removeItem });
+
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id',
+      status: PostfixDeliveryStatus.Deferred,
+    };
+    const status = PostfixDeliveryStatus.Sent;
+
+    const result = maybePurgeEmptyItemFolder(storage, storedMessageDetails, status);
+
+    expect(result).to.be.undefined;
+    expect(removeItem.calls).to.be.empty;
+  });
+
+  it('returns the Err from storage if any', () => {
+    const err = makeErr('Storage boom!!');
+    const removeItem = makeSpy<AppStorage['removeItem']>();
+    const listItems = makeStub<AppStorage['listItems']>(() => err);
+    const storage = makeTestStorage({ listItems, removeItem });
+
+    const storedMessageDetails: StoredMessageDetails = {
+      accountId: makeTestAccountId(),
+      feedId: makeTestFeedId(),
+      itemId: 'test-item-id',
+      messageId: 'test-message-id',
+      status: PostfixDeliveryStatus.Deferred,
+    };
+    const status = PostfixDeliveryStatus.Sent;
+
+    const result = maybePurgeEmptyItemFolder(storage, storedMessageDetails, status);
+
+    expect(result).to.deep.equal(makeErr('Failed to list remained messages: Storage boom!!'));
+    expect(removeItem.calls).to.be.empty;
   });
 });

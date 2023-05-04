@@ -2,6 +2,7 @@ import { makeAccountId } from '../../domain/account';
 import { makeFeedId } from '../../domain/feed-id';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage, StorageKey } from '../../domain/storage';
+import { isEmpty } from '../../shared/array-utils';
 import { Result, isErr, makeErr, makeString, makeValues } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
@@ -174,6 +175,12 @@ export function shelveMessage(
     return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
   }
 
+  const purgeItemResult = maybePurgeEmptyItemFolder(storage, storedMessageDetails, oldStatus);
+
+  if (isErr(purgeItemResult)) {
+    return makeErr(si`Failed to ${maybePurgeEmptyItemFolder.name}: ${purgeItemResult.reason}`);
+  }
+
   const updateQIdResult = recordQIdIndexEntry(
     storage,
     deliveryAttemptDetails.qid,
@@ -189,6 +196,27 @@ export function shelveMessage(
   }
 
   return updateQIdResult;
+}
+
+export function maybePurgeEmptyItemFolder(
+  storage: AppStorage,
+  storedMessageDetails: StoredMessageDetails,
+  status: StoredEmailStatus
+): Result<void> {
+  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
+  const remainedMessages = storage.listItems(itemStatusFolderStorageKey);
+
+  if (isErr(remainedMessages)) {
+    return makeErr(si`Failed to list remained messages: ${remainedMessages.reason}`);
+  }
+
+  const shouldRemoveItemStatusFolder = isEmpty(remainedMessages);
+
+  if (!shouldRemoveItemStatusFolder) {
+    return;
+  }
+
+  storage.removeItem(itemStatusFolderStorageKey);
 }
 
 function loadStoredMessageDetails(storage: AppStorage, qIdStorageKey: StorageKey): Result<StoredMessageDetails> {
@@ -258,12 +286,22 @@ export function extractLines(s: string): Extraction {
   };
 }
 
+export function getItemStatusFolderStorageKey(
+  storedMessageDetails: StoredMessageDetails,
+  status: StoredEmailStatus = storedMessageDetails.status
+) {
+  const { accountId, feedId, itemId } = storedMessageDetails;
+  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+
+  return makePath(feedRootStorageKey, status, itemId);
+}
+
 export function getMessageStorageKey(
   storedMessageDetails: StoredMessageDetails,
   status: StoredEmailStatus = storedMessageDetails.status
 ) {
-  const { accountId, feedId, itemId, messageId } = storedMessageDetails;
-  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+  const { messageId } = storedMessageDetails;
+  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
 
-  return makePath(feedRootStorageKey, status, itemId, si`${messageId}.json`);
+  return makePath(itemStatusFolderStorageKey, si`${messageId}.json`);
 }
