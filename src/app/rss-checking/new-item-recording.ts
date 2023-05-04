@@ -1,4 +1,4 @@
-import { HashFn, hash } from '../../shared/crypto';
+import { HashFn, rssItemHash } from '../../shared/crypto';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../domain/storage';
@@ -34,7 +34,7 @@ export function recordNewRssItems(
   return writtenItemCount;
 }
 
-export function getRssItemId(item: RssItem, hashFn: HashFn = hash): string {
+export function getRssItemId(item: RssItem, hashFn: HashFn = rssItemHash): string {
   const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
 
   return hashFn(input, RSS_ITEM_HASHING_SALT);
@@ -42,7 +42,7 @@ export function getRssItemId(item: RssItem, hashFn: HashFn = hash): string {
 
 export const RSS_ITEM_HASHING_SALT = 'item-name-salt';
 
-export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
+export function itemFileName(item: RssItem, hashFn: HashFn = rssItemHash): string {
   const itemId = getRssItemId(item, hashFn);
   const isoDate = item.pubDate.toISOString().substring(0, 10); // '2023-05-04'
 

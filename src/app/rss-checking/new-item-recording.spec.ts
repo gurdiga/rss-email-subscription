@@ -72,9 +72,8 @@ describe(recordNewRssItems.name, () => {
         link: new URL('https://test.com/item-two'),
         guid: '1',
       };
-      const hashFn = makeStub(() => 'hexhash');
 
-      expect(itemFileName(item, hashFn)).to.equal('2020-01-03-hexhash.json');
+      expect(itemFileName(item)).to.equal('2020-01-03-601ef6ad5823a18eca719959340bf05e.json');
     });
   });
 });
