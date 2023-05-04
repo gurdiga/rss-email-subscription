@@ -71,7 +71,7 @@ describe(readStoredRssItems.name, () => {
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
     expect((storage.listItems as Stub).calls).to.deep.equal([
-      [makePath(getFeedRootStorageKey(accountId, feedId), 'inbox')],
+      [makePath(getFeedRootStorageKey(accountId, feedId), 'items/inbox')],
     ]);
   });
 
@@ -113,26 +113,6 @@ describe(readStoredRssItems.name, () => {
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
   });
 
-  it('ignores files that do not match expected naming convention', () => {
-    const invalidFile: MockStorageItem = {
-      key: 'some-file.json',
-      value: '{"some": "json-data"}',
-    };
-    const filesWithInvalidItems = [...files, invalidFile];
-    const storage = makeTestStorage({
-      hasItem: (storageKey: StorageKey) => storageKey === inboxStorageKey,
-      listItems: () => filesWithInvalidItems.map((f) => f.key),
-      loadItem: makeLoadItemFnStub(filesWithInvalidItems),
-    });
-    const expectedResult: RssReadingResult = {
-      kind: 'RssReadingResult',
-      validItems: makeMockValidItems(files),
-      invalidItems: [],
-    };
-
-    expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResult);
-  });
-
   it('returns an Err value when can’t list items', () => {
     const error = makeErr('Not there?!');
     const storage = makeTestStorage({
@@ -141,7 +121,7 @@ describe(readStoredRssItems.name, () => {
     });
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(
-      makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/inbox: ${error.reason}`)
+      makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/items/inbox: ${error.reason}`)
     );
   });
 

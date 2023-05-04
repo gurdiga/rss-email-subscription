@@ -5,7 +5,7 @@ import { makeErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
-import { itemFileName, recordNewRssItems, RSS_ITEM_FILE_PREFIX } from './new-item-recording';
+import { itemFileName, recordNewRssItems } from './new-item-recording';
 
 describe(recordNewRssItems.name, () => {
   const accountId = makeTestAccountId();
@@ -38,7 +38,7 @@ describe(recordNewRssItems.name, () => {
     },
   ];
 
-  it('saves every RSS item in a JSON file in the ./feeds/<feedId>/inbox directory', () => {
+  it('saves every RSS item in a JSON file in the inbox directory', () => {
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const storage = makeTestStorage({ storeItem });
     const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
@@ -63,7 +63,7 @@ describe(recordNewRssItems.name, () => {
   });
 
   describe(itemFileName.name, () => {
-    it('consists of RSS_ITEM_FILE_PREFIX+hash(title,content,pubDate)+.json', () => {
+    it('returns ISO_DATE+hash(title,content,pubDate)+.json', () => {
       const item: RssItem = {
         title: 'Item two',
         content: 'The content of item two.',
@@ -72,9 +72,9 @@ describe(recordNewRssItems.name, () => {
         link: new URL('https://test.com/item-two'),
         guid: '1',
       };
-      const hashFn = makeStub((_s: string) => '-42');
+      const hashFn = makeStub(() => 'hexhash');
 
-      expect(itemFileName(item, hashFn)).to.equal(si`${RSS_ITEM_FILE_PREFIX}-42.json`);
+      expect(itemFileName(item, hashFn)).to.equal('2020-01-03-hexhash.json');
     });
   });
 });

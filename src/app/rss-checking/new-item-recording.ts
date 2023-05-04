@@ -14,12 +14,12 @@ export function recordNewRssItems(
   feedId: FeedId,
   storage: AppStorage,
   rssItems: RssItem[],
-  nameFileFn = itemFileName
+  itemFileNameFn = itemFileName
 ): Result<number> {
   let writtenItemCount = 0;
 
   for (const item of rssItems) {
-    const fileName = nameFileFn(item);
+    const fileName = itemFileNameFn(item);
     const storageKey = getStoredRssItemStorageKey(accountId, feedId, fileName);
 
     const storeItemResult = storage.storeItem(storageKey, item);
@@ -41,16 +41,16 @@ export function getRssItemId(item: RssItem, hashFn: HashFn = hash): string {
 }
 
 export const RSS_ITEM_HASHING_SALT = 'item-name-salt';
-export const RSS_ITEM_FILE_PREFIX = 'rss-item-';
 
 export function itemFileName(item: RssItem, hashFn: HashFn = hash): string {
   const itemId = getRssItemId(item, hashFn);
+  const isoDate = item.pubDate.toISOString().substring(0, 10); // '2023-05-04'
 
-  return si`${RSS_ITEM_FILE_PREFIX}${itemId}.json`;
+  return si`${isoDate}-${itemId}.json`;
 }
 
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'inbox');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'items/inbox');
 }
 
 export function getFeedOutboxStorageKey(accountId: AccountId, feedId: FeedId): string {

@@ -1,4 +1,4 @@
-import { getFeedInboxStorageKey, RSS_ITEM_FILE_PREFIX } from '../rss-checking/new-item-recording';
+import { getFeedInboxStorageKey } from '../rss-checking/new-item-recording';
 import { sortBy } from '../../shared/array-utils';
 import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
@@ -63,10 +63,8 @@ export function readStoredRssItems(
     return makeErr(si`Failed to list files in ${storageKey}: ${fileNamesResult.reason}`);
   }
 
-  const fileNameFormat = new RegExp(si`^${RSS_ITEM_FILE_PREFIX}.+\.json$`, 'i');
   const rssItems = fileNamesResult
-    .filter((fileName) => fileNameFormat.test(fileName))
-    // ASSUMPTION: storage.loadItem() never throws here
+    // ASSUMPTION: storage.loadItem() never errs here
     .map((fileName) => [fileName, storage.loadItem(makePath(storageKey, fileName))])
     .map(([fileName, data]) => makeStoredRssItem(fileName, data));
 
