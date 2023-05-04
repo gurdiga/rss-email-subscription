@@ -54,7 +54,7 @@ export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): st
 }
 
 export function getFeedOutboxStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'outbox');
+  return makePath(getFeedRootStorageKey(accountId, feedId), 'items/outbox');
 }
 
 export function getFeedPostfixedStorageKey(accountId: AccountId, feedId: FeedId): string {
