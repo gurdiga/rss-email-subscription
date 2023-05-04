@@ -51,14 +51,12 @@ export function itemFileName(item: RssItem, hashFn: HashFn = rssItemHash): strin
   return si`${itemId}.json`;
 }
 
+export const ITEMS_DIR_NAME = 'items';
+
 export function getFeedInboxStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'items/inbox');
+  return makePath(getFeedRootStorageKey(accountId, feedId), ITEMS_DIR_NAME, 'inbox');
 }
 
 export function getFeedOutboxStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'items/outbox');
-}
-
-export function getFeedPostfixedStorageKey(accountId: AccountId, feedId: FeedId): string {
-  return makePath(getFeedRootStorageKey(accountId, feedId), 'postfixed');
+  return makePath(getFeedRootStorageKey(accountId, feedId), ITEMS_DIR_NAME, 'outbox');
 }
