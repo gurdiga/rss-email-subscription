@@ -75,7 +75,7 @@ async function checkFeeds(dataDirRoot: string): Promise<void> {
       }
 
       if (isAccountNotFound(account)) {
-        logError('Account not found', { accountId: accountId.value });
+        logError('Account file not found', { accountId: accountId.value });
         continue;
       }
 
@@ -101,7 +101,7 @@ async function checkFeeds(dataDirRoot: string): Promise<void> {
 
       const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
 
-      logInfo('Counting feeds', { ...logData, feedCount: approvedFeeds.length });
+      logInfo('Counting approved feeds', { ...logData, feedCount: approvedFeeds.length });
 
       for (const feed of approvedFeeds) {
         const feedLogData = { ...logData, displayName: feed.displayName, feedId: feed.id.value };
