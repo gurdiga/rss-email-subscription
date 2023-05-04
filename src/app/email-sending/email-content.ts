@@ -20,13 +20,13 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
         <p>You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.</p>
 
         <p>
-          PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
-          Replying with “Hello!” or “Thank you!” works even better. 🙂
+          <small>PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
+          Replying with “Hello!” or “Thank you!” works even better. 🙂<small>
         </p>
 
         <p>
-          This email was sent with <a href="https://FeedSubscription.com">FeedSubscription.com</a>.
-          If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
+          <small>This email was sent with <a href="https://FeedSubscription.com">FeedSubscription.com</a>.
+          If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.<small>
         </p>
       </footer>`),
   };
@@ -52,7 +52,7 @@ export function htmlBody(contents: string): string {
   <div style="max-width: 42em; margin-bottom: 3em">
     ${contents}
 
-    <hr style="clear: both; margin-top: 4em;" />
+    <hr />
 
     <footer>
       <p><small>FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709</small></p>
