@@ -9,6 +9,7 @@ import {
   PostfixDeliveryStatus,
   StoredEmailStatus,
   StoredMessageDetails,
+  SyntheticDeliveryStatus,
   appendStoredEmailMessageStatus,
   getItemStatusFolderStorageKey,
   getQIdIndexEntryStorageKey,
@@ -133,7 +134,7 @@ function deleteQidIndexEntry(storage: AppStorage, storageKey: StorageKey): Resul
 export function shelveMessage(
   storage: AppStorage,
   qIdIndexEntryStorageKey: StorageKey,
-  deliveryAttemptDetails: DeliveryAttemptDetails
+  { qid, status, message, timestamp }: DeliveryAttemptDetails
 ): Result<void> {
   const storedMessageDetails = loadStoredMessageDetails(storage, qIdIndexEntryStorageKey);
 
@@ -143,33 +144,21 @@ export function shelveMessage(
 
   const storageKey = getStoredMessageStorageKey(storedMessageDetails);
   const { messageId } = storedMessageDetails;
+  const newStatus = getAdjustedStatus(status, message);
 
-  const result = appendStoredEmailMessageStatus(
-    storage,
-    storageKey,
-    messageId,
-    deliveryAttemptDetails.status,
-    deliveryAttemptDetails.message,
-    deliveryAttemptDetails.timestamp
-  );
+  const result = appendStoredEmailMessageStatus(storage, storageKey, messageId, newStatus, message, timestamp);
 
   if (isErr(result)) {
     return makeErr(si`Failed to ${appendStoredEmailMessageStatus.name}: ${result.reason}`);
   }
 
   const oldStatus = storedMessageDetails.status;
-  const newStatus = deliveryAttemptDetails.status;
 
   if (newStatus === oldStatus) {
     return;
   }
 
-  const moveResult = moveMessageToStatusFolder(
-    storage,
-    storageKey,
-    storedMessageDetails,
-    deliveryAttemptDetails.status
-  );
+  const moveResult = moveMessageToStatusFolder(storage, storageKey, storedMessageDetails, newStatus);
 
   if (isErr(moveResult)) {
     return makeErr(si`Failed to ${moveMessageToStatusFolder.name}: ${moveResult.reason}`);
@@ -183,7 +172,7 @@ export function shelveMessage(
 
   const updateQIdResult = recordQIdIndexEntry(
     storage,
-    deliveryAttemptDetails.qid,
+    qid,
     storedMessageDetails.accountId,
     storedMessageDetails.feedId,
     storedMessageDetails.itemId,
@@ -196,6 +185,24 @@ export function shelveMessage(
   }
 
   return updateQIdResult;
+}
+
+export function getAdjustedStatus(
+  status: PostfixDeliveryStatus,
+  message: string
+): PostfixDeliveryStatus | SyntheticDeliveryStatus {
+  const mailboxFullAnchors = [
+    // prettier: keep these stacked
+    'The email account that you tried to reach is over quota.',
+    'user over quota',
+    // We’ll add more here as we find them
+  ];
+
+  if (mailboxFullAnchors.some((x) => message.includes(x))) {
+    return SyntheticDeliveryStatus.MailboxFull;
+  }
+
+  return status;
 }
 
 export function maybePurgeEmptyItemFolder(
@@ -239,7 +246,7 @@ function moveMessageToStatusFolder(
   storage: AppStorage,
   oldStorageKey: StorageKey,
   statusDetails: StoredMessageDetails,
-  newStatus: PostfixDeliveryStatus
+  newStatus: PostfixDeliveryStatus | SyntheticDeliveryStatus
 ): Result<void> {
   const newStorageKey = getStoredMessageStorageKey(statusDetails, newStatus);
 

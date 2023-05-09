@@ -347,11 +347,15 @@ export enum PostfixDeliveryStatus {
   Deferred = 'deferred',
 }
 
+export enum SyntheticDeliveryStatus {
+  MailboxFull = 'mailbox-full',
+}
+
 export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliveryStatus {
   return Object.values(PostfixDeliveryStatus).includes(value as any);
 }
 
-export type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus;
+export type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus | SyntheticDeliveryStatus;
 
 function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
   const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));

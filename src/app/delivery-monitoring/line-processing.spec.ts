@@ -6,11 +6,13 @@ import {
   isDeliveryAttemptLine,
   getMessageIdFromStorageKey,
   maybePurgeEmptyItemFolder,
+  getAdjustedStatus,
 } from './line-processing';
 import { makeErr } from '../../shared/lang';
 import {
   PostfixDeliveryStatus,
   StoredMessageDetails,
+  SyntheticDeliveryStatus,
   getItemStatusFolderStorageKey,
 } from '../email-sending/item-delivery';
 import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
@@ -138,5 +140,20 @@ describe(maybePurgeEmptyItemFolder.name, () => {
 
     expect(result).to.deep.equal(makeErr('Failed to list remained messages: Storage boom!!'));
     expect(removeItem.calls).to.be.empty;
+  });
+});
+
+describe(getAdjustedStatus.name, () => {
+  it('returns a synthetic status when the case', () => {
+    const mailboxFullMessage =
+      'host alt1.gmail-smtp-in.l.google.com[142.250.153.26] said: 452-4.2.2 The email account that you tried to reach is over quota. Please direct 452-4.2.2 the recipient to 452 4.2.2  https://support.google.com/mail/?p=OverQuotaTemp h7-20020aa7c607000000b0050be1d05c73si7675270edq.40 - gsmtp (in reply to RCPT TO command)';
+
+    expect(getAdjustedStatus(PostfixDeliveryStatus.Deferred, mailboxFullMessage)).to.equal(
+      SyntheticDeliveryStatus.MailboxFull
+    );
+
+    const timeOutMessage = 'connect to hotmail.com[204.79.197.212]:25: Operation timed out';
+
+    expect(getAdjustedStatus(PostfixDeliveryStatus.Deferred, timeOutMessage)).to.equal(PostfixDeliveryStatus.Deferred);
   });
 });
