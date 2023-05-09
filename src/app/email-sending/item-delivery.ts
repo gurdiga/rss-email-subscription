@@ -218,7 +218,7 @@ function storeOutboxedItem(
   const oldStorageKey = getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName);
   const newStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, storedRssItem);
 
-  return storage.renameItem(oldStorageKey, newStorageKey);
+  return storage.renameItem(oldStorageKey, newStorageKey, { overwriteIfExists: true });
 }
 
 function storeOutboxEmail(
