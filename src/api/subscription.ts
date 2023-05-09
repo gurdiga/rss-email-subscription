@@ -12,7 +12,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { ConfirmationLinkUrlParams } from '../web-ui/shared';
 import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { AppStorage } from '../domain/storage';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 import { sendEmail } from '../app/email-sending/email-delivery';

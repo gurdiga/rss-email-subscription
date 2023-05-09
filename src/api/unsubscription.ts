@@ -3,7 +3,7 @@ import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makeSubscriptionId, UnsubscriptionConfirmationRequest } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { findFeedAccountId } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';

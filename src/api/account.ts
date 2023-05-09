@@ -43,7 +43,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppEnv } from './init-app';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(

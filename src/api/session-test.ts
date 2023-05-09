@@ -1,5 +1,5 @@
 import { makeSuccess } from '../shared/api-response';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { storeSessionValue } from './session';
 
 export const sessionTest: AppRequestHandler = async function sessionTest(

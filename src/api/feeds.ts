@@ -61,7 +61,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
 import { AppEnv } from './init-app';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
 export const deleteFeed: AppRequestHandler = async function deleteFeed(reqId, reqBody, _reqParams, reqSession, app) {

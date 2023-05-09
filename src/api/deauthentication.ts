@@ -1,6 +1,6 @@
 import { makeSuccess } from '../shared/api-response';
 import { disablePrivateNavbarCookie } from './app-cookie';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { deinitSession } from './session';
 
 export const deauthentication: AppRequestHandler = async function deauthentication(

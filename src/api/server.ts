@@ -33,7 +33,7 @@ import {
 } from './feeds';
 import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
-import { makeAppRequestHandler } from './request-handler';
+import { makeAppRequestHandler } from './app-request-handler';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import { subscription } from './subscription';

@@ -28,7 +28,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
 import { App, AppEnv } from './init-app';
-import { AppRequestHandler } from './request-handler';
+import { AppRequestHandler } from './app-request-handler';
 import { initSession } from './session';
 
 export const registration: AppRequestHandler = async function registration(
