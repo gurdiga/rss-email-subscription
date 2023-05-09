@@ -24,7 +24,7 @@ import {
 import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
-import { ITEMS_DIR_NAME, getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
+import { getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
 import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
@@ -666,7 +666,7 @@ export function getPostfixedMessageStorageKey(
 export function getItemsRootFolderStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
   const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRootStorageKey, ITEMS_DIR_NAME);
+  return makePath(feedRootStorageKey, 'items');
 }
 
 export function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {

@@ -70,9 +70,7 @@ describe(readStoredRssItems.name, () => {
     };
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(expectedResul);
-    expect((storage.listItems as Stub).calls).to.deep.equal([
-      [makePath(getFeedRootStorageKey(accountId, feedId), 'items/inbox')],
-    ]);
+    expect((storage.listItems as Stub).calls).to.deep.equal([[makePath(getFeedInboxStorageKey(accountId, feedId))]]);
   });
 
   it('returns empty lists when inbox does not exist', () => {
@@ -121,7 +119,7 @@ describe(readStoredRssItems.name, () => {
     });
 
     expect(readStoredRssItems(accountId, feedId, storage)).to.deep.equal(
-      makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/items/inbox: ${error.reason}`)
+      makeErr(si`Failed to list files in ${getFeedRootStorageKey(accountId, feedId)}/inbox: ${error.reason}`)
     );
   });
 
