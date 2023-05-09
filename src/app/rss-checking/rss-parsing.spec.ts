@@ -265,7 +265,7 @@ describe(parseRssItems.name, () => {
         },
         {
           title: 'Post title',
-          content: 'Post body',
+          content: '\n\t\n',
           isoDate: new Date().toJSON(),
           link: '/the/path/to/file.html',
           guid: '3',
@@ -277,7 +277,7 @@ describe(parseRssItems.name, () => {
           kind: 'ValidRssItem',
           value: {
             title: inputItem.title!,
-            content: inputItem.content!,
+            content: inputItem.content?.trim()! || 'Post content is missing',
             author: inputItem.author! || inputItem.creator! || 'Anonymous Coward',
             pubDate: new Date(inputItem.isoDate!),
             link: new URL(inputItem.link!, baseURL),
@@ -303,13 +303,6 @@ describe(parseRssItems.name, () => {
         kind: 'InvalidRssItem',
         item: invalidInput,
         reason: 'Post title is missing',
-      });
-
-      invalidInput = { ...item, content: undefined };
-      expect(makeRssItem(invalidInput, baseURL)).to.deep.equal({
-        kind: 'InvalidRssItem',
-        item: invalidInput,
-        reason: 'Post content is missing',
       });
 
       invalidInput = { ...item, isoDate: undefined };
