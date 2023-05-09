@@ -39,8 +39,7 @@ describe(getItemStatusFolderStorageKey.name, () => {
       status: PostfixDeliveryStatus.Bounced,
     };
 
-    const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id/bounced';
+    const expectedResult = '/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id/bounced';
 
     expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -57,7 +56,7 @@ describe(getStoredMessageStorageKey.name, () => {
     };
 
     const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id/bounced/test-message-id.json';
+      '/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id/bounced/test-message-id.json';
 
     expect(getStoredMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -67,9 +66,7 @@ describe(getItemFolderStorageKey.name, () => {
   it('returns storage key for a shelved item', () => {
     const storageKey = getItemFolderStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
-    expect(storageKey).to.equal(
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id'
-    );
+    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id');
   });
 });
 
@@ -77,8 +74,6 @@ describe(getDeliveryReportsRootStorageKey.name, () => {
   it('returns storage key for root folder feed’s shelved items', () => {
     const storageKey = getDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
-    expect(storageKey).to.equal(
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports'
-    );
+    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports');
   });
 });

@@ -247,9 +247,7 @@ describe(deleteAccount.name, () => {
 
     deleteAccount(storage, accountId);
 
-    expect(removeTree.calls).to.deep.equal([
-      ['/accounts/test-account-id-test-account-id-test-account-id-test-account-id-'],
-    ]);
+    expect(removeTree.calls).to.deep.equal([['/accounts/test-account-id']]);
   });
 
   it('returns AccountNotFound when the case', () => {

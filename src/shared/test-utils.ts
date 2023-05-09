@@ -155,7 +155,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
   return result;
 }
 
-export function makeTestAccountId(idString = 'test-account-id-'.repeat(4)): AccountId {
+export function makeTestAccountId(idString = 'test-account-id'): AccountId {
   const result = makeAccountId(idString);
 
   assert(isAccountId(result), si`${makeAccountId.name} did not return a valid AccountId: ${JSON.stringify(result)}`);
