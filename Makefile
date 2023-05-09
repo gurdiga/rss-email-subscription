@@ -420,6 +420,7 @@ delmon-catch-up:
 	while read qid; do
 		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
+	tee /dev/stderr | # so that I can see that something is happening
 	docker exec --interactive delmon node dist/app/delivery-monitoring
 
 # cron @daily
