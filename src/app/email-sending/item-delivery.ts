@@ -663,10 +663,16 @@ export function getPostfixedMessageStorageKey(
   });
 }
 
-function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
+export function getItemsRootFolderStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
   const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRootStorageKey, ITEMS_DIR_NAME, itemId);
+  return makePath(feedRootStorageKey, ITEMS_DIR_NAME);
+}
+
+export function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
+  const itemsRootFolderStorageKey = getItemsRootFolderStorageKey(accountId, feedId);
+
+  return makePath(itemsRootFolderStorageKey, itemId);
 }
 
 function getStoredItemStorageKey(accountId: AccountId, feedId: FeedId, storedRssItem: ValidStoredRssItem): StorageKey {

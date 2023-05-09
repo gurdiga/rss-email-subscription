@@ -3,7 +3,9 @@ import { makeErr } from '../../shared/lang';
 import {
   PostfixDeliveryStatus,
   StoredMessageDetails,
+  getItemFolderStorageKey,
   getItemStatusFolderStorageKey,
+  getItemsRootFolderStorageKey,
   getQidFromPostfixResponse,
   getStoredMessageStorageKey,
 } from './item-delivery';
@@ -58,5 +60,25 @@ describe(getStoredMessageStorageKey.name, () => {
       '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id/bounced/test-message-id.json';
 
     expect(getStoredMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
+  });
+});
+
+describe(getItemFolderStorageKey.name, () => {
+  it('returns storage key for a shelved item', () => {
+    const storageKey = getItemFolderStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
+
+    expect(storageKey).to.equal(
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id'
+    );
+  });
+});
+
+describe(getItemsRootFolderStorageKey.name, () => {
+  it('returns storage key for root folder feed’s shelved items', () => {
+    const storageKey = getItemsRootFolderStorageKey(makeTestAccountId(), makeTestFeedId());
+
+    expect(storageKey).to.equal(
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items'
+    );
   });
 });
