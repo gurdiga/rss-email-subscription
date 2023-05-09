@@ -30,6 +30,7 @@ export enum ApiPath {
   requestAccountPlanChange = '/account/request-plan-email',
   deleteAccountWithPassword = '/account/delete',
   requestAccountPasswordChange = '/account/request-change-password',
+  deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
 }
 

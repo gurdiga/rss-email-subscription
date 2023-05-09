@@ -39,6 +39,7 @@ import { sessionTest } from './session-test';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
+import { deliveryReports } from './delivery-reports';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -76,6 +77,7 @@ async function main() {
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
   router.get(ApiPath.feedManageScreen, makeAppRequestHandler(handleFeedManageScreen, app));
   router.get(ApiPath.loadFeedSubscribers, makeAppRequestHandler(loadFeedSubscribers, app));
+  router.get(ApiPath.deliveryReports, makeAppRequestHandler(deliveryReports, app));
   router.post(ApiPath.deleteFeedSubscribers, makeAppRequestHandler(deleteFeedSubscribers, app));
   router.post(ApiPath.addFeedSubscribers, makeAppRequestHandler(addFeedSubscribers, app));
   router.post(ApiPath.addNewFeed, makeAppRequestHandler(addNewFeed, app));
