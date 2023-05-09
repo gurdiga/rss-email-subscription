@@ -3,7 +3,7 @@ import { makeErr } from '../../shared/lang';
 import {
   PostfixDeliveryStatus,
   StoredMessageDetails,
-  getItemFolderStorageKey,
+  getItemDeliveryReportRootStorageKey,
   getItemStatusFolderStorageKey,
   getDeliveryReportsRootStorageKey,
   getQidFromPostfixResponse,
@@ -62,16 +62,16 @@ describe(getStoredMessageStorageKey.name, () => {
   });
 });
 
-describe(getItemFolderStorageKey.name, () => {
-  it('returns storage key for a shelved item', () => {
-    const storageKey = getItemFolderStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
+describe(getItemDeliveryReportRootStorageKey.name, () => {
+  it('returns storage key for a item’s delivery report', () => {
+    const storageKey = getItemDeliveryReportRootStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id');
   });
 });
 
 describe(getDeliveryReportsRootStorageKey.name, () => {
-  it('returns storage key for root folder feed’s shelved items', () => {
+  it('returns storage key for delivery reports root', () => {
     const storageKey = getDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports');

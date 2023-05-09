@@ -216,7 +216,7 @@ function storeOutboxedItem(
   storedRssItem: ValidStoredRssItem
 ): Result<void> {
   const oldStorageKey = getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName);
-  const newStorageKey = getStoredItemStorageKey(accountId, feedId, storedRssItem);
+  const newStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, storedRssItem);
 
   return storage.renameItem(oldStorageKey, newStorageKey);
 }
@@ -664,22 +664,26 @@ export function getPostfixedMessageStorageKey(
 }
 
 export function getDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
-  const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
+  const feedRoot = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRootStorageKey, 'delivery-reports');
+  return makePath(feedRoot, 'delivery-reports');
 }
 
-export function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
-  const itemsRootFolderStorageKey = getDeliveryReportsRootStorageKey(accountId, feedId);
+export function getItemDeliveryReportRootStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
+  const deliveryReportsRoot = getDeliveryReportsRootStorageKey(accountId, feedId);
 
-  return makePath(itemsRootFolderStorageKey, itemId);
+  return makePath(deliveryReportsRoot, itemId);
 }
 
-function getStoredItemStorageKey(accountId: AccountId, feedId: FeedId, storedRssItem: ValidStoredRssItem): StorageKey {
+function getDeliveredItemDataStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: ValidStoredRssItem
+): StorageKey {
   const itemId = getRssItemId(storedRssItem.item);
-  const itemFolderStorageKey = getItemFolderStorageKey(accountId, feedId, itemId);
+  const itemDeliveryReportRoot = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
 
-  return makePath(itemFolderStorageKey, 'item.json');
+  return makePath(itemDeliveryReportRoot, 'item.json');
 }
 
 export function getItemStatusFolderStorageKey(
@@ -687,7 +691,7 @@ export function getItemStatusFolderStorageKey(
   status: StoredEmailStatus = storedMessageDetails.status
 ) {
   const { accountId, feedId, itemId } = storedMessageDetails;
-  const itemFolderStorageKey = getItemFolderStorageKey(accountId, feedId, itemId);
+  const itemFolderStorageKey = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
 
   return makePath(itemFolderStorageKey, status);
 }
