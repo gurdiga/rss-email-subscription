@@ -5,7 +5,7 @@ import {
   StoredMessageDetails,
   getItemFolderStorageKey,
   getItemStatusFolderStorageKey,
-  getItemsRootFolderStorageKey,
+  getDeliveryReportsRootStorageKey,
   getQidFromPostfixResponse,
   getStoredMessageStorageKey,
 } from './item-delivery';
@@ -40,7 +40,7 @@ describe(getItemStatusFolderStorageKey.name, () => {
     };
 
     const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id/bounced';
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id/bounced';
 
     expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -57,7 +57,7 @@ describe(getStoredMessageStorageKey.name, () => {
     };
 
     const expectedResult =
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id/bounced/test-message-id.json';
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id/bounced/test-message-id.json';
 
     expect(getStoredMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -68,17 +68,17 @@ describe(getItemFolderStorageKey.name, () => {
     const storageKey = getItemFolderStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
     expect(storageKey).to.equal(
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items/test-item-id'
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports/test-item-id'
     );
   });
 });
 
-describe(getItemsRootFolderStorageKey.name, () => {
+describe(getDeliveryReportsRootStorageKey.name, () => {
   it('returns storage key for root folder feed’s shelved items', () => {
-    const storageKey = getItemsRootFolderStorageKey(makeTestAccountId(), makeTestFeedId());
+    const storageKey = getDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
     expect(storageKey).to.equal(
-      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/items'
+      '/accounts/test-account-id-test-account-id-test-account-id-test-account-id-/feeds/test-feed-id/delivery-reports'
     );
   });
 });

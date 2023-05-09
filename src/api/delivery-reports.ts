@@ -8,7 +8,7 @@ import { checkSession, isAuthenticatedSession } from './session';
 import { FeedId } from '../domain/feed-id';
 import { AccountId } from '../domain/account';
 import { AppStorage } from '../domain/storage';
-import { getItemsRootFolderStorageKey } from '../app/email-sending/item-delivery';
+import { getDeliveryReportsRootStorageKey } from '../app/email-sending/item-delivery';
 import { FeedNotFound, getFeedRootStorageKey, makeFeedNotFound } from '../domain/feed-storage';
 
 export const deliveryReports: AppRequestHandler = async function deliveryReports(
@@ -59,7 +59,7 @@ function makeDeliveryReports(
     return makeFeedNotFound(feedId);
   }
 
-  const storageKey = getItemsRootFolderStorageKey(accountId, feedId);
+  const storageKey = getDeliveryReportsRootStorageKey(accountId, feedId);
   const itemsRootExists = storage.hasItem(storageKey);
 
   if (isErr(itemsRootExists)) {

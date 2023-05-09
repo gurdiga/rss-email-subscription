@@ -663,14 +663,14 @@ export function getPostfixedMessageStorageKey(
   });
 }
 
-export function getItemsRootFolderStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
+export function getDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
   const feedRootStorageKey = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRootStorageKey, 'items');
+  return makePath(feedRootStorageKey, 'delivery-reports');
 }
 
 export function getItemFolderStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
-  const itemsRootFolderStorageKey = getItemsRootFolderStorageKey(accountId, feedId);
+  const itemsRootFolderStorageKey = getDeliveryReportsRootStorageKey(accountId, feedId);
 
   return makePath(itemsRootFolderStorageKey, itemId);
 }
