@@ -700,3 +700,16 @@ access-report: rsync-logs
 
 log-in-report:
 	ls -1 .tmp/logs/feedsubscription/api.log-20230{5,4}* | xargs gzcat | grep 'User logged in' | grep -v 'gurdiga.*@gmail.com'
+
+# cron 59 23 * * *
+tracking-report-report:
+	@function url_decode {
+		sed 's@+@ @g;s@%@\\x@g' |
+		xargs -0 printf "%b"
+	}
+
+	cat .tmp/logs/feedsubscription/website.log |
+	grep -P "^`date +%F`" |
+	grep -Po "(?<=GET /track\?data=)\S+" |
+	url_decode |
+	jq .
