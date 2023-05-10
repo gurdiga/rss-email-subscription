@@ -355,7 +355,8 @@ export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliver
   return Object.values(PostfixDeliveryStatus).includes(value as any);
 }
 
-export type StoredEmailStatus = PrePostfixMessageStatus | PostfixDeliveryStatus | SyntheticDeliveryStatus;
+export type DeliveryStatus = PostfixDeliveryStatus | SyntheticDeliveryStatus;
+export type StoredEmailStatus = PrePostfixMessageStatus | DeliveryStatus;
 
 function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
   const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));
@@ -679,12 +680,19 @@ export function getItemDeliveryReportRootStorageKey(accountId: AccountId, feedId
   return makePath(deliveryReportsRoot, itemId);
 }
 
-function getDeliveredItemDataStorageKey(
+export function getDeliveredItemDataStorageKey(accountId: AccountId, feedId: FeedId, itemDirName: string): StorageKey;
+export function getDeliveredItemDataStorageKey(
   accountId: AccountId,
   feedId: FeedId,
   storedRssItem: ValidStoredRssItem
+): StorageKey;
+
+export function getDeliveredItemDataStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: ValidStoredRssItem | string
 ): StorageKey {
-  const itemId = getRssItemId(storedRssItem.item);
+  const itemId = typeof storedRssItem === 'string' ? storedRssItem : getRssItemId(storedRssItem.item);
   const itemDeliveryReportRoot = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
 
   return makePath(itemDeliveryReportRoot, 'item.json');
@@ -693,7 +701,7 @@ function getDeliveredItemDataStorageKey(
 export function getItemStatusFolderStorageKey(
   storedMessageDetails: StoredMessageDetails,
   status: StoredEmailStatus = storedMessageDetails.status
-) {
+): StorageKey {
   const { accountId, feedId, itemId } = storedMessageDetails;
   const itemFolderStorageKey = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
 

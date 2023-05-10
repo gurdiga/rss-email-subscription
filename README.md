@@ -27,4 +27,5 @@ The app stores data in the `DATA_DIR_ROOT` directory:
 /accounts/<account-id>/feeds/<feed-id>/delivery-reports/<datetime-itehexx>/deferred/<msghexx>.json
 /accounts/<account-id>/feeds/<feed-id>/delivery-reports/<datetime-itehexx>/sent/<msghexx>.json
 /accounts/<account-id>/feeds/<feed-id>/delivery-reports/<datetime-itehexx>/bounced/<msghexx>.json
+/accounts/<account-id>/feeds/<feed-id>/delivery-reports/<datetime-itehexx>/<synthetic-status>/<msghexx>.json
 ```

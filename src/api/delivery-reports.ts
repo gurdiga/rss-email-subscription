@@ -1,15 +1,29 @@
-import { makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { Result, isErr, makeErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
-import { makeDeliveryReportsRequest, DeliveryReportsRequestData, DeliveryReports } from '../domain/delivery-reports.ts';
+import {
+  makeDeliveryReportsRequest,
+  DeliveryReportsRequestData,
+  DeliveryReports,
+  isDeliveryReport,
+  makeDeliveryReport,
+} from '../domain/delivery-reports';
 import { checkSession, isAuthenticatedSession } from './session';
 import { FeedId } from '../domain/feed-id';
 import { AccountId } from '../domain/account';
-import { AppStorage } from '../domain/storage';
-import { getDeliveryReportsRootStorageKey } from '../app/email-sending/item-delivery';
-import { FeedNotFound, getFeedRootStorageKey, makeFeedNotFound } from '../domain/feed-storage';
+import { AppStorage, StorageKey } from '../domain/storage';
+import {
+  DeliveryStatus,
+  PostfixDeliveryStatus,
+  SyntheticDeliveryStatus,
+  getDeliveredItemDataStorageKey,
+  getDeliveryReportsRootStorageKey,
+} from '../app/email-sending/item-delivery';
+import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound } from '../domain/feed-storage';
+import { isEmpty } from '../shared/array-utils';
+import { makePath } from '../shared/path-utils';
 
 export const deliveryReports: AppRequestHandler = async function deliveryReports(
   reqId,
@@ -18,7 +32,7 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   reqSession,
   { storage }
 ) {
-  const { logWarning } = makeCustomLoggers({ module: deliveryReports.name, reqId });
+  const { logWarning, logError } = makeCustomLoggers({ module: deliveryReports.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -38,9 +52,32 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   }
 
   const { accountId } = session;
-  const reports = makeDeliveryReports(storage, accountId, request.feedId);
+  const results = makeDeliveryReports(storage, accountId, request.feedId);
 
-  return makeSuccess('OK', {}, { reports });
+  if (isErr(results)) {
+    logError(si`Failed to ${makeDeliveryReports.name}: ${results.reason}`, {
+      feedId: request.feedId.value,
+      accountId: accountId.value,
+    });
+    return makeAppError();
+  }
+
+  if (isFeedNotFound(results)) {
+    logWarning('Feed for delivery reports not found', {
+      feedId: request.feedId.value,
+      accountId: accountId.value,
+    });
+    return makeInputError('Feed not found');
+  }
+
+  const reports = results.filter(isDeliveryReport);
+  const errs = results.filter(isErr);
+
+  if (!isEmpty(errs)) {
+    logWarning(si`Got some Errs from ${makeDeliveryReports.name}`, { errs: errs.map((x) => x.reason) });
+  }
+
+  return makeSuccess('OK', {}, { reports, results });
 };
 
 function makeDeliveryReports(
@@ -76,5 +113,27 @@ function makeDeliveryReports(
     return makeErr(si`Failed to list reports: ${dirNames.reason}`);
   }
 
-  return dirNames;
+  return dirNames.map((itemId) => {
+    const itemDataStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, itemId);
+    const itemData = storage.loadItem(itemDataStorageKey);
+    const messageCounts = getMessageCounts(storage, itemDataStorageKey);
+
+    return makeDeliveryReport({ itemId, itemData, messageCounts });
+  });
+}
+
+function getMessageCounts(storage: AppStorage, itemDataStorageKey: StorageKey): Record<DeliveryStatus, Result<number>> {
+  const getMessageCount = (deliveryStatus: DeliveryStatus) => {
+    const statusDirStoragKey = makePath(itemDataStorageKey, deliveryStatus);
+    const items = storage.listItems(statusDirStoragKey);
+
+    return isErr(items) ? items : items.length;
+  };
+
+  return {
+    [PostfixDeliveryStatus.Sent]: getMessageCount(PostfixDeliveryStatus.Sent),
+    [PostfixDeliveryStatus.Deferred]: getMessageCount(PostfixDeliveryStatus.Deferred),
+    [PostfixDeliveryStatus.Bounced]: getMessageCount(PostfixDeliveryStatus.Bounced),
+    [SyntheticDeliveryStatus.MailboxFull]: getMessageCount(SyntheticDeliveryStatus.MailboxFull),
+  };
 }
