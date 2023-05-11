@@ -1,20 +1,20 @@
-import { HashFn, rssItemHash } from '../../shared/crypto';
-import { isErr, makeErr, Result } from '../../shared/lang';
-import { RssItem } from '../../domain/rss-item';
-import { AppStorage } from '../../domain/storage';
+import { AccountId } from '../../domain/account';
 import { FeedId } from '../../domain/feed-id';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
-import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
-import { si } from '../../shared/string-utils';
+import { RssItem } from '../../domain/rss-item';
+import { AppStorage } from '../../domain/storage';
+import { rssItemHash } from '../../shared/crypto';
+import { Result, isErr, makeErr } from '../../shared/lang';
 import { makePath } from '../../shared/path-utils';
-import { AccountId } from '../../domain/account';
+import { si } from '../../shared/string-utils';
+import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
 
 export function recordNewRssItems(
   accountId: AccountId,
   feedId: FeedId,
   storage: AppStorage,
   rssItems: RssItem[],
-  itemFileNameFn = itemFileName
+  itemFileNameFn = getItemFileName
 ): Result<number> {
   let writtenItemCount = 0;
 
@@ -34,19 +34,16 @@ export function recordNewRssItems(
   return writtenItemCount;
 }
 
-export function getRssItemId(item: RssItem, hashFn: HashFn = rssItemHash): string {
+export function getRssItemId(item: RssItem): string {
   const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
-  const hash = hashFn(input, RSS_ITEM_HASHING_SALT);
+  const hash = rssItemHash(input);
+  const unixTimestamp = Date.now();
 
-  const isoDate = item.pubDate.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
-
-  return si`${isoDate}-${hash}`;
+  return si`${unixTimestamp}-${hash}`;
 }
 
-export const RSS_ITEM_HASHING_SALT = 'item-name-salt';
-
-export function itemFileName(item: RssItem, hashFn: HashFn = rssItemHash): string {
-  const itemId = getRssItemId(item, hashFn);
+export function getItemFileName(item: RssItem): string {
+  const itemId = getRssItemId(item);
 
   return si`${itemId}.json`;
 }

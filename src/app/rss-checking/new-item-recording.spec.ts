@@ -5,7 +5,7 @@ import { makeErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
 import { getStoredRssItemStorageKey } from '../email-sending/rss-item-reading';
-import { itemFileName, recordNewRssItems } from './new-item-recording';
+import { getItemFileName, recordNewRssItems } from './new-item-recording';
 
 describe(recordNewRssItems.name, () => {
   const accountId = makeTestAccountId();
@@ -41,7 +41,7 @@ describe(recordNewRssItems.name, () => {
   it('saves every RSS item in a JSON file in the inbox directory', () => {
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const storage = makeTestStorage({ storeItem });
-    const nameFile = makeStub<typeof itemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
+    const nameFile = makeStub<typeof getItemFileName>((item) => si`${item.pubDate.toJSON()}.json`);
     const result = recordNewRssItems(accountId, feedId, storage, rssItems, nameFile);
 
     expect(storeItem.calls).to.deep.equal([
@@ -60,20 +60,5 @@ describe(recordNewRssItems.name, () => {
     expect(result).to.deep.equal(
       makeErr(si`Cant write RSS item file to inbox: ${err.reason}, item: ${JSON.stringify(rssItems[0])}`)
     );
-  });
-
-  describe(itemFileName.name, () => {
-    it('returns ISO_DATE+hash(title,content,pubDate)+.json', () => {
-      const item: RssItem = {
-        title: 'Item two',
-        content: 'The content of item two.',
-        author: 'John DOE',
-        pubDate: new Date('2020-01-03T10:50:16-06:00'),
-        link: new URL('https://test.com/item-two'),
-        guid: '1',
-      };
-
-      expect(itemFileName(item)).to.equal('20200103-9fe683551a977f12af90b996cca8f87e.json');
-    });
   });
 });
