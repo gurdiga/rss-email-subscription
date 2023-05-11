@@ -152,7 +152,7 @@ services:
     depends_on: [logger]
     container_name: certbot
     hostname: certbot
-    image: certbot/certbot:v2.5.0
+    image: certbot/certbot:v2.6.0
     restart: always
     volumes:
       - ./.tmp/certbot/conf:/etc/letsencrypt
