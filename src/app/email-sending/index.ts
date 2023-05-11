@@ -42,23 +42,6 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
   }
 
   const plan = Plans[account.planId];
-  const storedRssItems = readStoredRssItems(accountId, feed.id, storage);
-
-  if (isErr(storedRssItems)) {
-    logError('Failed to read RSS items', { reason: storedRssItems.reason });
-    return 1;
-  }
-
-  const { validItems, invalidItems } = storedRssItems;
-
-  if (isNotEmpty(invalidItems)) {
-    logWarning('Invalid RSS items', { invalidItems });
-  }
-
-  if (isEmpty(validItems)) {
-    logInfo('No new RSS items');
-  }
-
   const fromAddress = makeEmailAddress(si`${feed.id.value}@${env.DOMAIN_NAME}`);
 
   if (isErr(fromAddress)) {
@@ -77,6 +60,23 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
   if (isFeedNotFound(emailAddresses)) {
     logError('Feed not found');
     return 1;
+  }
+
+  const storedRssItems = readStoredRssItems(accountId, feed.id, storage);
+
+  if (isErr(storedRssItems)) {
+    logError('Failed to read RSS items', { reason: storedRssItems.reason });
+    return 1;
+  }
+
+  const { validItems, invalidItems } = storedRssItems;
+
+  if (isNotEmpty(invalidItems)) {
+    logWarning('Invalid RSS items', { invalidItems });
+  }
+
+  if (isEmpty(validItems)) {
+    logInfo('No new RSS items');
   }
 
   const { validEmails, invalidEmails } = emailAddresses;
