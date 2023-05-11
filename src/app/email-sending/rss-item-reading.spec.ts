@@ -1,14 +1,21 @@
 import { expect } from 'chai';
 import { basename } from 'node:path';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
+import { RssItem, RssItemData } from '../../domain/rss-item';
+import { AppStorage, StorageKey } from '../../domain/storage';
 import { sortBy } from '../../shared/array-utils';
 import { makeErr } from '../../shared/lang';
-import { AppStorage, StorageKey } from '../../domain/storage';
-import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
-import { makeTestStorage, makeTestAccountId, makeTestFeedId, Stub } from '../../shared/test-utils';
-import { readStoredRssItems, makeStoredRssItem, RssReadingResult, ValidStoredRssItem } from './rss-item-reading';
+import { si } from '../../shared/string-utils';
+import { Stub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
 import { getFeedInboxStorageKey } from '../rss-checking/new-item-recording';
+import {
+  RssReadingResult,
+  ValidStoredRssItem,
+  makeRssItem,
+  makeStoredRssItem,
+  readStoredRssItems,
+} from './rss-item-reading';
 
 describe(readStoredRssItems.name, () => {
   const accountId = makeTestAccountId();
@@ -189,5 +196,44 @@ describe(readStoredRssItems.name, () => {
       invalidInput = { ...data, link: 'not-an-url' };
       expect(result(invalidInput)).to.deep.equal(err(invalidInput, 'The "link" property is not a valid URL'));
     });
+  });
+});
+
+describe(makeRssItem.name, () => {
+  const data: RssItemData = {
+    title: 'My simple meditation routine',
+    content: '<p>My current meditation practice is a sort of mindfulness meditation.</p>',
+    author: 'Vlad GURDIGA',
+    pubDate: '2023-01-26T18:16:00.000Z',
+    link: 'https://gurdiga.com/blog/2023/01/26/my-simple-meditation-routine/',
+    guid: '/blog/2023/01/26/my-simple-meditation-routine',
+  };
+
+  it('makes an RssItem value from input', () => {
+    const expectedResult: RssItem = {
+      title: data.title,
+      content: data.content,
+      author: data.author,
+      pubDate: new Date(data.pubDate),
+      link: new URL(data.link),
+      guid: data.guid,
+    };
+
+    expect(makeRssItem(data)).to.deep.equal(expectedResult);
+  });
+
+  it('requires non-empty string fields', () => {
+    expect(makeRssItem({ ...data, title: '' })).to.deep.equal(makeErr('Missing value', 'title'));
+    expect(makeRssItem({ ...data, content: '' })).to.deep.equal(makeErr('Missing value', 'content'));
+    expect(makeRssItem({ ...data, author: '' })).to.deep.equal(makeErr('Missing value', 'author'));
+    expect(makeRssItem({ ...data, guid: '' })).to.deep.equal(makeErr('Missing value', 'guid'));
+  });
+
+  it('validates pubDate', () => {
+    expect(makeRssItem({ ...data, pubDate: 'not-a-date' })).to.deep.equal(makeErr('Not a date string', 'pubDate'));
+  });
+
+  it('validates link', () => {
+    expect(makeRssItem({ ...data, link: 'not-a-link' })).to.deep.equal(makeErr('Invalid URL: not-a-link', 'link'));
   });
 });

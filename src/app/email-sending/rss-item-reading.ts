@@ -1,13 +1,14 @@
-import { getFeedInboxStorageKey } from '../rss-checking/new-item-recording';
-import { sortBy } from '../../shared/array-utils';
-import { hasKind, isErr, makeErr, Result } from '../../shared/lang';
-import { RssItem } from '../../domain/rss-item';
-import { makeHttpUrl } from '../../shared/url';
-import { AppStorage } from '../../domain/storage';
-import { FeedId } from '../../domain/feed-id';
-import { si } from '../../shared/string-utils';
-import { makePath } from '../../shared/path-utils';
 import { AccountId } from '../../domain/account';
+import { FeedId } from '../../domain/feed-id';
+import { RssItem } from '../../domain/rss-item';
+import { AppStorage } from '../../domain/storage';
+import { sortBy } from '../../shared/array-utils';
+import { makeDate } from '../../shared/date-utils';
+import { hasKind, isErr, makeErr, makeNonEmptyString, makeValues, Result } from '../../shared/lang';
+import { makePath } from '../../shared/path-utils';
+import { si } from '../../shared/string-utils';
+import { makeAbsoluteHttpUrl, makeHttpUrl } from '../../shared/url';
+import { getFeedInboxStorageKey } from '../rss-checking/new-item-recording';
 
 export interface RssReadingResult {
   kind: 'RssReadingResult';
@@ -19,6 +20,17 @@ export interface ValidStoredRssItem {
   kind: 'ValidStoredRssItem';
   item: RssItem;
   fileName: string;
+}
+
+export function makeRssItem(data: unknown): Result<RssItem> {
+  return makeValues<RssItem>(data, {
+    title: makeNonEmptyString,
+    content: makeNonEmptyString,
+    author: makeNonEmptyString,
+    pubDate: makeDate,
+    link: makeAbsoluteHttpUrl,
+    guid: makeNonEmptyString,
+  });
 }
 
 function isValidStoredRssItem(value: unknown): value is ValidStoredRssItem {
