@@ -631,7 +631,7 @@ export function getPostfixedMessageStorageKey(
 export function getDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
   const feedRoot = getFeedRootStorageKey(accountId, feedId);
 
-  return makePath(feedRoot, 'delivery-reports');
+  return makePath(feedRoot, 'deliveries');
 }
 
 export function getItemDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {

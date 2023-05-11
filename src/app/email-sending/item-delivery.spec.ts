@@ -39,7 +39,7 @@ describe(getItemStatusFolderStorageKey.name, () => {
       status: PostfixDeliveryStatus.Bounced,
     };
 
-    const expectedResult = '/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id/bounced';
+    const expectedResult = '/accounts/test-account-id/feeds/test-feed-id/deliveries/test-item-id/bounced';
 
     expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -56,7 +56,7 @@ describe(getStoredMessageStorageKey.name, () => {
     };
 
     const expectedResult =
-      '/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id/bounced/test-message-id.json';
+      '/accounts/test-account-id/feeds/test-feed-id/deliveries/test-item-id/bounced/test-message-id.json';
 
     expect(getStoredMessageStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
@@ -66,7 +66,7 @@ describe(getItemDeliveryReportsRootStorageKey.name, () => {
   it('returns storage key for a item’s delivery report', () => {
     const storageKey = getItemDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
-    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id');
+    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/deliveries/test-item-id');
   });
 });
 
@@ -74,6 +74,6 @@ describe(getDeliveryReportsRootStorageKey.name, () => {
   it('returns storage key for delivery reports root', () => {
     const storageKey = getDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
-    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports');
+    expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/deliveries');
   });
 });
