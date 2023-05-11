@@ -197,3 +197,19 @@ export function makeOptionalString(value: unknown, field?: string): Result<strin
 
   return makeString(value, field);
 }
+
+export function makeNonEmptyString(value: unknown, field?: string): Result<string> {
+  const string = makeString(value, field);
+
+  if (isErr(string)) {
+    return string;
+  }
+
+  const trimmedString = string.trim();
+
+  if (trimmedString.length === 0) {
+    return makeErr('Must not be empty', field);
+  }
+
+  return string;
+}

@@ -14,6 +14,7 @@ import {
   makeValues,
   readStringArray,
   makeArrayOfValues,
+  makeNonEmptyString,
 } from './lang';
 import { makeTestAccountId } from './test-utils';
 
@@ -242,5 +243,25 @@ describe(makeArrayOfValues.name, () => {
       42,
       0,
     ]);
+  });
+});
+
+describe(makeNonEmptyString.name, () => {
+  const field = 'firstName';
+
+  it('ensures input is non-empty string', () => {
+    expect(makeNonEmptyString('good', field)).to.equal('good');
+  });
+
+  it('returns an Err when input is not a string', () => {
+    expect(makeNonEmptyString(42, field)).to.deep.equal(makeErr('Not a string', field));
+  });
+
+  it('returns an Err when input has the length of zero', () => {
+    expect(makeNonEmptyString('', field)).to.deep.equal(makeErr('Must not be empty', field));
+  });
+
+  it('returns an Err when input only contain white space', () => {
+    expect(makeNonEmptyString('\n\t', field)).to.deep.equal(makeErr('Must not be empty', field));
   });
 });
