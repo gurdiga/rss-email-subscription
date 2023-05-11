@@ -1,10 +1,10 @@
 import { makeErr, Result } from './lang';
 
-export function makeDate(dateString: string): Result<Date> {
+export function makeDate(dateString: string, field = 'date'): Result<Date> {
   const date = new Date(dateString);
 
   if (date.toString() === 'Invalid Date') {
-    return makeErr('Input string not recognized as a date string');
+    return makeErr('Not a date string', field);
   }
 
   return date;
