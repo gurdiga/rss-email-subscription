@@ -193,10 +193,10 @@ export function prepareOutboxEmails(
       }
     }
 
-    const storeResult = storeOutboxedItem(storage, accountId, feed.id, storedItem);
+    const storeResult = storeDeliveryItem(storage, accountId, feed.id, storedItem);
 
     if (isErr(storeResult)) {
-      logError(si`Failed to ${storeOutboxedItem.name}: ${storeResult.reason}`, {
+      logError(si`Failed to ${storeDeliveryItem.name}: ${storeResult.reason}`, {
         reason: storeResult.reason,
         accountId: accountId.value,
         feedId: feed.id.value,
@@ -209,14 +209,14 @@ export function prepareOutboxEmails(
   return 0;
 }
 
-function storeOutboxedItem(
+function storeDeliveryItem(
   storage: AppStorage,
   accountId: AccountId,
   feedId: FeedId,
   storedRssItem: ValidStoredRssItem
 ): Result<void> {
   const oldStorageKey = getStoredRssItemStorageKey(accountId, feedId, storedRssItem.fileName);
-  const newStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, storedRssItem);
+  const newStorageKey = getDeliveryItemStorageKey(accountId, feedId, storedRssItem);
 
   return storage.renameItem(oldStorageKey, newStorageKey, { overwriteIfExists: true });
 }
@@ -628,42 +628,42 @@ export function getPostfixedMessageStorageKey(
   });
 }
 
-export function getDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
+export function getDeliveriesRootStorageKey(accountId: AccountId, feedId: FeedId): StorageKey {
   const feedRoot = getFeedRootStorageKey(accountId, feedId);
 
   return makePath(feedRoot, 'deliveries');
 }
 
-export function getItemDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
-  const deliveryReportsRoot = getDeliveryReportsRootStorageKey(accountId, feedId);
+export function getDeliveryStorageKey(accountId: AccountId, feedId: FeedId, deliveryId: string): StorageKey {
+  const deliveriesRoot = getDeliveriesRootStorageKey(accountId, feedId);
 
-  return makePath(deliveryReportsRoot, itemId);
+  return makePath(deliveriesRoot, deliveryId);
 }
 
-export function getDeliveredItemDataStorageKey(accountId: AccountId, feedId: FeedId, itemDirName: string): StorageKey;
-export function getDeliveredItemDataStorageKey(
+export function getDeliveryItemStorageKey(accountId: AccountId, feedId: FeedId, deliveryDirName: string): StorageKey;
+export function getDeliveryItemStorageKey(
   accountId: AccountId,
   feedId: FeedId,
   storedRssItem: ValidStoredRssItem
 ): StorageKey;
 
-export function getDeliveredItemDataStorageKey(
+export function getDeliveryItemStorageKey(
   accountId: AccountId,
   feedId: FeedId,
   storedRssItem: ValidStoredRssItem | string
 ): StorageKey {
-  const itemId = typeof storedRssItem === 'string' ? storedRssItem : getRssItemId(storedRssItem.item);
-  const itemDeliveryReportRoot = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
+  const deliveryId = typeof storedRssItem === 'string' ? storedRssItem : getRssItemId(storedRssItem.item);
+  const deliveryRoot = getDeliveryStorageKey(accountId, feedId, deliveryId);
 
-  return makePath(itemDeliveryReportRoot, 'item.json');
+  return makePath(deliveryRoot, 'item.json');
 }
 
-export function getItemStatusFolderStorageKey(
+export function getDeliveryStatusFolderStorageKey(
   storedMessageDetails: StoredMessageDetails,
   status: StoredEmailStatus = storedMessageDetails.status
 ): StorageKey {
   const { accountId, feedId, itemId } = storedMessageDetails;
-  const itemFolderStorageKey = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
+  const itemFolderStorageKey = getDeliveryStorageKey(accountId, feedId, itemId);
 
   return makePath(itemFolderStorageKey, status);
 }
@@ -673,7 +673,7 @@ export function getStoredMessageStorageKey(
   status: StoredEmailStatus = storedMessageDetails.status
 ) {
   const { messageId } = storedMessageDetails;
-  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
+  const itemStatusFolderStorageKey = getDeliveryStatusFolderStorageKey(storedMessageDetails, status);
 
   return makePath(itemStatusFolderStorageKey, si`${messageId}.json`);
 }

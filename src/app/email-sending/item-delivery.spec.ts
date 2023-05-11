@@ -2,9 +2,9 @@ import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
 import {
   StoredMessageDetails,
-  getItemDeliveryReportsRootStorageKey,
-  getItemStatusFolderStorageKey,
-  getDeliveryReportsRootStorageKey,
+  getDeliveryStorageKey,
+  getDeliveryStatusFolderStorageKey,
+  getDeliveriesRootStorageKey,
   getQidFromPostfixResponse,
   getStoredMessageStorageKey,
 } from './item-delivery';
@@ -29,7 +29,7 @@ describe(getQidFromPostfixResponse.name, () => {
   });
 });
 
-describe(getItemStatusFolderStorageKey.name, () => {
+describe(getDeliveryStatusFolderStorageKey.name, () => {
   it('returns the storage key for an item status folder', () => {
     const storedMessageDetails: StoredMessageDetails = {
       accountId: makeTestAccountId(),
@@ -41,7 +41,7 @@ describe(getItemStatusFolderStorageKey.name, () => {
 
     const expectedResult = '/accounts/test-account-id/feeds/test-feed-id/deliveries/test-item-id/bounced';
 
-    expect(getItemStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
+    expect(getDeliveryStatusFolderStorageKey(storedMessageDetails)).to.equal(expectedResult);
   });
 });
 
@@ -62,17 +62,17 @@ describe(getStoredMessageStorageKey.name, () => {
   });
 });
 
-describe(getItemDeliveryReportsRootStorageKey.name, () => {
-  it('returns storage key for a item’s delivery report', () => {
-    const storageKey = getItemDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
+describe(getDeliveryStorageKey.name, () => {
+  it('returns storage key for a item’s delivery directory', () => {
+    const storageKey = getDeliveryStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/deliveries/test-item-id');
   });
 });
 
-describe(getDeliveryReportsRootStorageKey.name, () => {
-  it('returns storage key for delivery reports root', () => {
-    const storageKey = getDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId());
+describe(getDeliveriesRootStorageKey.name, () => {
+  it('returns storage key for feed deliveries root', () => {
+    const storageKey = getDeliveriesRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/deliveries');
   });

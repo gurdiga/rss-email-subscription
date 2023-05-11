@@ -3,7 +3,7 @@ import { PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../../domain/del
 import { AppStorage } from '../../domain/storage';
 import { makeErr } from '../../shared/lang';
 import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
-import { StoredMessageDetails, getItemStatusFolderStorageKey } from '../email-sending/item-delivery';
+import { StoredMessageDetails, getDeliveryStatusFolderStorageKey } from '../email-sending/item-delivery';
 import {
   DeliveryAttemptDetails,
   extractLines,
@@ -95,7 +95,7 @@ describe(maybePurgeEmptyItemFolder.name, () => {
     const result = maybePurgeEmptyItemFolder(storage, storedMessageDetails, status);
 
     expect(result).to.be.undefined;
-    expect(removeItem.calls).to.deep.equal([[getItemStatusFolderStorageKey(storedMessageDetails, status)]]);
+    expect(removeItem.calls).to.deep.equal([[getDeliveryStatusFolderStorageKey(storedMessageDetails, status)]]);
   });
 
   it('does NOT remove the item status folder when there are messages left', () => {

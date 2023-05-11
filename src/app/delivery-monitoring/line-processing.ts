@@ -8,7 +8,7 @@ import { rawsi, si } from '../../shared/string-utils';
 import {
   StoredMessageDetails,
   appendStoredEmailMessageStatus,
-  getItemStatusFolderStorageKey,
+  getDeliveryStatusFolderStorageKey,
   getQIdIndexEntryStorageKey,
   getStoredMessageStorageKey,
   recordQIdIndexEntry,
@@ -212,7 +212,7 @@ export function maybePurgeEmptyItemFolder(
   storedMessageDetails: StoredMessageDetails,
   status: StoredEmailStatus
 ): Result<void> {
-  const itemStatusFolderStorageKey = getItemStatusFolderStorageKey(storedMessageDetails, status);
+  const itemStatusFolderStorageKey = getDeliveryStatusFolderStorageKey(storedMessageDetails, status);
   const remainedMessages = storage.listItems(itemStatusFolderStorageKey);
 
   if (isErr(remainedMessages)) {

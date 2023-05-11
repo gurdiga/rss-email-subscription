@@ -1,7 +1,7 @@
 import {
-  getDeliveredItemDataStorageKey,
-  getDeliveryReportsRootStorageKey,
-  getItemDeliveryReportsRootStorageKey,
+  getDeliveryItemStorageKey,
+  getDeliveriesRootStorageKey,
+  getDeliveryStorageKey,
 } from '../app/email-sending/item-delivery';
 import { makeRssItem } from '../app/email-sending/rss-item-reading';
 import { AccountId } from '../domain/account';
@@ -100,7 +100,7 @@ function makeDeliveryReports(
     return makeFeedNotFound(feedId);
   }
 
-  const storageKey = getDeliveryReportsRootStorageKey(accountId, feedId);
+  const storageKey = getDeliveriesRootStorageKey(accountId, feedId);
   const itemsRootExists = storage.hasItem(storageKey);
 
   if (isErr(itemsRootExists)) {
@@ -111,15 +111,15 @@ function makeDeliveryReports(
     return [];
   }
 
-  const dirNames = storage.listSubdirectories(storageKey);
+  const deliveryIds = storage.listSubdirectories(storageKey);
 
-  if (isErr(dirNames)) {
-    return makeErr(si`Failed to list reports: ${dirNames.reason}`);
+  if (isErr(deliveryIds)) {
+    return makeErr(si`Failed to list reports: ${deliveryIds.reason}`);
   }
 
-  return dirNames.map((itemId) => {
-    const itemDataStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, itemId);
-    const itemData = storage.loadItem(itemDataStorageKey);
+  return deliveryIds.map((deliveryId) => {
+    const deliveryStorageKey = getDeliveryItemStorageKey(accountId, feedId, deliveryId);
+    const itemData = storage.loadItem(deliveryStorageKey);
 
     if (isErr(itemData)) {
       return makeErr(si`Failed to load item data: ${itemData.reason}`);
@@ -131,7 +131,7 @@ function makeDeliveryReports(
       return makeErr(si`Failed to ${makeRssItem.name}: ${rssItem.reason}`);
     }
 
-    const messageCounts = getMessageCounts(storage, accountId, feedId, itemId);
+    const messageCounts = getMessageCounts(storage, accountId, feedId, deliveryId);
 
     if (isErr(messageCounts)) {
       return makeErr(si`Failed to ${getMessageCounts.name}: ${messageCounts.reason}`);
@@ -153,9 +153,9 @@ function getMessageCounts(
   storage: AppStorage,
   accountId: AccountId,
   feedId: FeedId,
-  itemId: string
+  deliveryId: string
 ): Result<MessageCounts> {
-  const itemDeliveryReportsRoot = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
+  const itemDeliveryReportsRoot = getDeliveryStorageKey(accountId, feedId, deliveryId);
   const deliveryStates: DeliveryStatus[] = [
     PostfixDeliveryStatus.Sent,
     PostfixDeliveryStatus.Deferred,
