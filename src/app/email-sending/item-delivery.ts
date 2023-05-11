@@ -42,7 +42,7 @@ export async function deliverItems(
   confirmedEmails: HashedEmail[],
   from: FullEmailAddress
 ) {
-  prepareOutboxEmails(storage, env, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress);
+  prepareOutboxEmails(storage, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
   return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }
 
@@ -154,13 +154,13 @@ export async function sendOutboxEmails(
 
 export function prepareOutboxEmails(
   storage: AppStorage,
-  env: EmailDeliveryEnv,
   accountId: AccountId,
   feed: Feed,
   plan: Plan,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
-  fromAddress: EmailAddress
+  fromAddress: EmailAddress,
+  domainName: string
 ): Result<number> {
   const { logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
@@ -178,7 +178,7 @@ export function prepareOutboxEmails(
         hashedEmail,
         fromAddress,
         plan,
-        env.DOMAIN_NAME
+        domainName
       );
 
       if (isErr(storeResult)) {
