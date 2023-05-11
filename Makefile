@@ -640,6 +640,7 @@ watch-containers:
 	@grep -P "^`date +%F`.+\" 404 \d+ \"https://feedsubscription.com/" .tmp/logs/feedsubscription/website.log |
 	sed -E -e 's/^\S+ \S+ \S+ //' |
 	grep -v -E -s 'GET /(robots.txt|favicon.ico|.git|.env|.well-known|.vscode|info.php|sitemap.xml)' |
+	grep -v -E -s 'Googlebot' |
 	cat <( \
 		echo "Subject: RES 404-report"; \
 		echo "From: RES <404-report@feedsubscription.com>"; \
