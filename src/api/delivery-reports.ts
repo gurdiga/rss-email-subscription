@@ -117,7 +117,7 @@ function makeDeliveryReports(
     return makeErr(si`Failed to list reports: ${deliveryIds.reason}`);
   }
 
-  return deliveryIds.map((deliveryId) => {
+  return deliveryIds.sort().map((deliveryId) => {
     const deliveryStorageKey = getDeliveryItemStorageKey(accountId, feedId, deliveryId);
     const itemData = storage.loadItem(deliveryStorageKey);
 
