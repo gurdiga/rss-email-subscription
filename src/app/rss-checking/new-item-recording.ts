@@ -37,9 +37,9 @@ export function recordNewRssItems(
 export function getRssItemId(item: RssItem): string {
   const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
   const hash = rssItemHash(input);
-  const unixTimestamp = Date.now();
+  const isoDate = item.pubDate.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
 
-  return si`${unixTimestamp}-${hash}`;
+  return si`${isoDate}-${hash}`;
 }
 
 export function getItemFileName(item: RssItem): string {
