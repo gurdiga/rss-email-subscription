@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from './lang';
 import { si } from './string-utils';
-import { makeHttpUrl, maxUrlLength } from './url';
+import { makeAbsoluteHttpUrl, makeHttpUrl, maxUrlLength } from './url';
 
 describe(makeHttpUrl.name, () => {
   it('returns an URL value from a valid URL string', () => {
@@ -32,5 +32,17 @@ describe(makeHttpUrl.name, () => {
     expect(makeHttpUrl(urlString)).to.deep.equal(
       makeErr(si`The URL needs to have less than ${maxUrlLength} characters`, 'url')
     );
+  });
+});
+
+describe(makeAbsoluteHttpUrl.name, () => {
+  it('makes an absolute HTTP URL with no base', () => {
+    expect(makeAbsoluteHttpUrl('https://test.com/path/file.html')).to.deep.equal(
+      new URL('https://test.com/path/file.html')
+    );
+  });
+
+  it('returns an Err if the URL is not absolute', () => {
+    expect(makeAbsoluteHttpUrl('/path/file.html')).to.deep.equal(makeErr('Invalid URL: /path/file.html', 'url'));
   });
 });

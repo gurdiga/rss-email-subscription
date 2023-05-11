@@ -25,3 +25,7 @@ export function makeHttpUrl(value: string, baseURL?: string | URL, fieldName = '
     return makeErr(si`Invalid URL: ${value}`, fieldName);
   }
 }
+
+export function makeAbsoluteHttpUrl(input: string, field?: string): Result<URL> {
+  return makeHttpUrl(input, undefined, field);
+}
