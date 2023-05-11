@@ -171,14 +171,14 @@ export function prepareOutboxEmails(
   for (const storedItem of validItems) {
     for (const hashedEmail of confirmedEmails) {
       const storeResult = storeOutboxEmail(
+        storage,
+        accountId,
         feed,
-        hashedEmail,
         storedItem.item,
+        hashedEmail,
         fromAddress,
         plan,
-        env,
-        accountId,
-        storage
+        env.DOMAIN_NAME
       );
 
       if (isErr(storeResult)) {
@@ -222,16 +222,16 @@ function storeDeliveryItem(
 }
 
 function storeOutboxEmail(
+  storage: AppStorage,
+  accountId: AccountId,
   feed: Feed,
-  hashedEmail: HashedEmail,
   item: RssItem,
+  hashedEmail: HashedEmail,
   fromAddress: EmailAddress,
   plan: Plan,
-  env: EmailDeliveryEnv,
-  accountId: AccountId,
-  storage: AppStorage
+  domainName: string
 ) {
-  const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, plan, env);
+  const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, plan, domainName);
   const messageStorageKey = getOutboxMessageStorageKey(
     accountId,
     feed.id,
@@ -282,9 +282,9 @@ function makeStoredEmailMessageData(
   item: RssItem,
   fromAddress: EmailAddress,
   plan: Plan,
-  env: EmailDeliveryEnv
+  domainName: string
 ): StoredEmailMessageData {
-  const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, env.DOMAIN_NAME);
+  const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, domainName);
   const emailContent = makeEmailContent(item, unsubscribeUrl, fromAddress);
 
   const message: StoredEmailMessageData = {
