@@ -315,7 +315,7 @@ watch-website:
 			echo ""
 			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
-			echo "$$referer"
+			echo "$$referer"x
 			echo "$$timestamp"
 			echo "$$url" | url_decode | sed 's/^/    /'
 			echo "Whois:"
@@ -712,7 +712,6 @@ tracking-report:
 	grep -P "^`date +%F`" |
 	grep -Po "(?<=GET /track\?data=)\S+" |
 	url_decode |
-	jq . |
 	cat <( \
 		echo "Subject: RES tracking-report"; \
 		echo "From: RES <system@feedsubscription.com>"; \
