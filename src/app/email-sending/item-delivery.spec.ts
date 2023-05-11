@@ -1,14 +1,14 @@
 import { expect } from 'chai';
 import { makeErr } from '../../shared/lang';
 import {
-  PostfixDeliveryStatus,
   StoredMessageDetails,
-  getItemDeliveryReportRootStorageKey,
+  getItemDeliveryReportsRootStorageKey,
   getItemStatusFolderStorageKey,
   getDeliveryReportsRootStorageKey,
   getQidFromPostfixResponse,
   getStoredMessageStorageKey,
 } from './item-delivery';
+import { PostfixDeliveryStatus } from '../../domain/delivery-status';
 import { makeTestAccountId, makeTestFeedId } from '../../shared/test-utils';
 
 describe(getQidFromPostfixResponse.name, () => {
@@ -62,9 +62,9 @@ describe(getStoredMessageStorageKey.name, () => {
   });
 });
 
-describe(getItemDeliveryReportRootStorageKey.name, () => {
+describe(getItemDeliveryReportsRootStorageKey.name, () => {
   it('returns storage key for a item’s delivery report', () => {
-    const storageKey = getItemDeliveryReportRootStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
+    const storageKey = getItemDeliveryReportsRootStorageKey(makeTestAccountId(), makeTestFeedId(), 'test-item-id');
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/delivery-reports/test-item-id');
   });

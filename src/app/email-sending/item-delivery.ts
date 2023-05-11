@@ -13,7 +13,6 @@ import {
   Result,
   hasKind,
   isErr,
-  isString,
   makeArrayOfValues,
   makeErr,
   makeNumber,
@@ -31,6 +30,7 @@ import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-cont
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { md5 } from '../../shared/crypto';
+import { PrePostfixMessageStatus, StoredEmailStatus, makeStoredEmailStatus } from '../../domain/delivery-status';
 
 export async function deliverItems(
   storage: AppStorage,
@@ -336,46 +336,6 @@ export function makeStoredEmailLogRecord(value: unknown): Result<StoredEmailLogR
   });
 }
 
-enum PrePostfixMessageStatus {
-  Prepared = 'prepared',
-  Postfixed = 'postfixed',
-}
-
-export enum PostfixDeliveryStatus {
-  Sent = 'sent',
-  Bounced = 'bounced',
-  Deferred = 'deferred',
-}
-
-export enum SyntheticDeliveryStatus {
-  MailboxFull = 'mailbox-full',
-}
-
-export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliveryStatus {
-  return Object.values(PostfixDeliveryStatus).includes(value as any);
-}
-
-export type DeliveryStatus = PostfixDeliveryStatus | SyntheticDeliveryStatus;
-export type StoredEmailStatus = PrePostfixMessageStatus | DeliveryStatus;
-
-function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
-  const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));
-
-  return validValue.includes(value);
-}
-
-export function makeStoredEmailStatus(value: unknown, field = 'status'): Result<StoredEmailStatus> {
-  if (!isString(value)) {
-    return makeErr('Not a string', field);
-  }
-
-  if (!isStoredEmailStatus(value)) {
-    return makeErr('Invalid status', field);
-  }
-
-  return value;
-}
-
 interface StoredEmailMessages {
   messages: StoredEmailMessage[];
   errs: Err[];
@@ -674,7 +634,7 @@ export function getDeliveryReportsRootStorageKey(accountId: AccountId, feedId: F
   return makePath(feedRoot, 'delivery-reports');
 }
 
-export function getItemDeliveryReportRootStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
+export function getItemDeliveryReportsRootStorageKey(accountId: AccountId, feedId: FeedId, itemId: string): StorageKey {
   const deliveryReportsRoot = getDeliveryReportsRootStorageKey(accountId, feedId);
 
   return makePath(deliveryReportsRoot, itemId);
@@ -693,7 +653,7 @@ export function getDeliveredItemDataStorageKey(
   storedRssItem: ValidStoredRssItem | string
 ): StorageKey {
   const itemId = typeof storedRssItem === 'string' ? storedRssItem : getRssItemId(storedRssItem.item);
-  const itemDeliveryReportRoot = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
+  const itemDeliveryReportRoot = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
 
   return makePath(itemDeliveryReportRoot, 'item.json');
 }
@@ -703,7 +663,7 @@ export function getItemStatusFolderStorageKey(
   status: StoredEmailStatus = storedMessageDetails.status
 ): StorageKey {
   const { accountId, feedId, itemId } = storedMessageDetails;
-  const itemFolderStorageKey = getItemDeliveryReportRootStorageKey(accountId, feedId, itemId);
+  const itemFolderStorageKey = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
 
   return makePath(itemFolderStorageKey, status);
 }

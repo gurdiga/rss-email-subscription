@@ -1,29 +1,30 @@
-import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { Result, isErr, makeErr } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
-import { si } from '../shared/string-utils';
-import { AppRequestHandler } from './app-request-handler';
 import {
-  makeDeliveryReportsRequest,
-  DeliveryReportsRequestData,
-  DeliveryReports,
-  isDeliveryReport,
-  makeDeliveryReport,
-} from '../domain/delivery-reports';
-import { checkSession, isAuthenticatedSession } from './session';
-import { FeedId } from '../domain/feed-id';
-import { AccountId } from '../domain/account';
-import { AppStorage, StorageKey } from '../domain/storage';
-import {
-  DeliveryStatus,
-  PostfixDeliveryStatus,
-  SyntheticDeliveryStatus,
   getDeliveredItemDataStorageKey,
   getDeliveryReportsRootStorageKey,
+  getItemDeliveryReportsRootStorageKey,
 } from '../app/email-sending/item-delivery';
+import { makeRssItem } from '../app/email-sending/rss-item-reading';
+import { AccountId } from '../domain/account';
+import {
+  DeliveryReport,
+  DeliveryReports,
+  DeliveryReportsRequestData,
+  MessageCounts,
+  isDeliveryReport,
+  makeDeliveryReportsRequest,
+} from '../domain/delivery-reports';
+import { DeliveryStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../domain/delivery-status';
+import { FeedId } from '../domain/feed-id';
 import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound } from '../domain/feed-storage';
+import { AppStorage, StorageKey } from '../domain/storage';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
+import { Result, isErr, makeErr } from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
+import { si } from '../shared/string-utils';
+import { AppRequestHandler } from './app-request-handler';
+import { checkSession, isAuthenticatedSession } from './session';
 
 export const deliveryReports: AppRequestHandler = async function deliveryReports(
   reqId,
@@ -77,7 +78,10 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
     logWarning(si`Got some Errs from ${makeDeliveryReports.name}`, { errs: errs.map((x) => x.reason) });
   }
 
-  return makeSuccess('OK', {}, { reports, results });
+  const logData = {};
+  const responseData = { reports };
+
+  return makeSuccess('OK', logData, responseData);
 };
 
 function makeDeliveryReports(
@@ -116,24 +120,84 @@ function makeDeliveryReports(
   return dirNames.map((itemId) => {
     const itemDataStorageKey = getDeliveredItemDataStorageKey(accountId, feedId, itemId);
     const itemData = storage.loadItem(itemDataStorageKey);
-    const messageCounts = getMessageCounts(storage, itemDataStorageKey);
 
-    return makeDeliveryReport({ itemId, itemData, messageCounts });
+    if (isErr(itemData)) {
+      return makeErr(si`Failed to load item data: ${itemData.reason}`);
+    }
+
+    const rssItem = makeRssItem(itemData);
+
+    if (isErr(rssItem)) {
+      return makeErr(si`Failed to ${makeRssItem.name}: ${rssItem.reason}`);
+    }
+
+    const messageCounts = getMessageCounts(storage, accountId, feedId, itemId);
+
+    if (isErr(messageCounts)) {
+      return makeErr(si`Failed to ${getMessageCounts.name}: ${messageCounts.reason}`);
+    }
+
+    const report: DeliveryReport = {
+      kind: 'DeliveryReport',
+      deliveryStart: new Date(), // TODO: Figure out ho to get the deliveryStart
+      postTitle: rssItem.title,
+      postURL: rssItem.link,
+      messageCounts,
+    };
+
+    return report;
   });
 }
 
-function getMessageCounts(storage: AppStorage, itemDataStorageKey: StorageKey): Record<DeliveryStatus, Result<number>> {
-  const getMessageCount = (deliveryStatus: DeliveryStatus) => {
-    const statusDirStoragKey = makePath(itemDataStorageKey, deliveryStatus);
-    const items = storage.listItems(statusDirStoragKey);
+function getMessageCounts(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  itemId: string
+): Result<MessageCounts> {
+  const itemDeliveryReportsRoot = getItemDeliveryReportsRootStorageKey(accountId, feedId, itemId);
+  const deliveryStates: DeliveryStatus[] = [
+    PostfixDeliveryStatus.Sent,
+    PostfixDeliveryStatus.Deferred,
+    PostfixDeliveryStatus.Bounced,
+    SyntheticDeliveryStatus.MailboxFull,
+  ];
+  let counts: Partial<MessageCounts> = {};
 
-    return isErr(items) ? items : items.length;
-  };
+  for (const status of deliveryStates) {
+    const count = getMessageCount(storage, itemDeliveryReportsRoot, status);
 
-  return {
-    [PostfixDeliveryStatus.Sent]: getMessageCount(PostfixDeliveryStatus.Sent),
-    [PostfixDeliveryStatus.Deferred]: getMessageCount(PostfixDeliveryStatus.Deferred),
-    [PostfixDeliveryStatus.Bounced]: getMessageCount(PostfixDeliveryStatus.Bounced),
-    [SyntheticDeliveryStatus.MailboxFull]: getMessageCount(SyntheticDeliveryStatus.MailboxFull),
-  };
+    if (isErr(count)) {
+      return makeErr(si`Failed to ${getMessageCount.name} fror ${status}: ${count.reason}`);
+    }
+
+    counts[status] = count;
+  }
+
+  return counts as MessageCounts;
+}
+
+function getMessageCount(
+  storage: AppStorage,
+  itemDataStorageKey: StorageKey,
+  deliveryStatus: DeliveryStatus
+): Result<number> {
+  const statusDirStoragKey = makePath(itemDataStorageKey, deliveryStatus);
+  const dirExists = storage.hasItem(statusDirStoragKey);
+
+  if (isErr(dirExists)) {
+    return makeErr(si`Failed to check if directory exists: ${dirExists.reason}`, deliveryStatus);
+  }
+
+  if (dirExists === false) {
+    return 0;
+  }
+
+  const items = storage.listItems(statusDirStoragKey);
+
+  if (isErr(items)) {
+    return makeErr(si`Failed to list items: ${items.reason}`, deliveryStatus);
+  }
+
+  return items.length;
 }

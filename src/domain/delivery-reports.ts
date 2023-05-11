@@ -1,5 +1,6 @@
+import { Result, hasKind, makeValues } from '../shared/lang';
+import { DeliveryStatus } from './delivery-status';
 import { FeedId, makeFeedId } from './feed-id';
-import { Err, Result, hasKind, makeErr, makeValues } from '../shared/lang';
 
 export interface DeliveryReportsRequestData {
   feedId: string;
@@ -15,17 +16,17 @@ export function makeDeliveryReportsRequest(data: unknown): Result<DeliveryReport
   });
 }
 
-export type DeliveryReports = Array<DeliveryReport | Err>;
+export type DeliveryReports = Result<DeliveryReport>[];
 export interface DeliveryReport {
   kind: 'DeliveryReport';
-  date: Date;
+  deliveryStart: Date;
+  postTitle: string;
+  postURL: URL;
+  messageCounts: MessageCounts;
 }
+
+export type MessageCounts = Record<DeliveryStatus, number>;
 
 export function isDeliveryReport(value: unknown): value is DeliveryReport {
   return hasKind(value, 'DeliveryReport');
-}
-
-export function makeDeliveryReport(_data: unknown): Result<DeliveryReport> {
-  // TODO
-  return makeErr('Not implemented');
 }

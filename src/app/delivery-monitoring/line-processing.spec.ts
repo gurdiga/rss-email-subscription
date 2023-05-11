@@ -1,22 +1,18 @@
 import { expect } from 'chai';
+import { PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../../domain/delivery-status';
+import { AppStorage } from '../../domain/storage';
+import { makeErr } from '../../shared/lang';
+import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
+import { StoredMessageDetails, getItemStatusFolderStorageKey } from '../email-sending/item-delivery';
 import {
   DeliveryAttemptDetails,
   extractLines,
-  makeDeliveryAttemptDetails,
-  isDeliveryAttemptLine,
-  getMessageIdFromStorageKey,
-  maybePurgeEmptyItemFolder,
   getAdjustedStatus,
+  getMessageIdFromStorageKey,
+  isDeliveryAttemptLine,
+  makeDeliveryAttemptDetails,
+  maybePurgeEmptyItemFolder,
 } from './line-processing';
-import { makeErr } from '../../shared/lang';
-import {
-  PostfixDeliveryStatus,
-  StoredMessageDetails,
-  SyntheticDeliveryStatus,
-  getItemStatusFolderStorageKey,
-} from '../email-sending/item-delivery';
-import { makeSpy, makeStub, makeTestAccountId, makeTestFeedId, makeTestStorage } from '../../shared/test-utils';
-import { AppStorage } from '../../domain/storage';
 
 describe(extractLines.name, () => {
   it('returns the whole lines that end with \\n, and the rest', () => {

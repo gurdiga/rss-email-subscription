@@ -6,18 +6,20 @@ import { Result, isErr, makeErr, makeString, makeValues } from '../../shared/lan
 import { makeCustomLoggers } from '../../shared/logging';
 import { rawsi, si } from '../../shared/string-utils';
 import {
-  PostfixDeliveryStatus,
-  StoredEmailStatus,
   StoredMessageDetails,
-  SyntheticDeliveryStatus,
   appendStoredEmailMessageStatus,
   getItemStatusFolderStorageKey,
   getQIdIndexEntryStorageKey,
   getStoredMessageStorageKey,
-  isPostfixDeliveryStatus,
-  makeStoredEmailStatus,
   recordQIdIndexEntry,
 } from '../email-sending/item-delivery';
+import {
+  PostfixDeliveryStatus,
+  StoredEmailStatus,
+  SyntheticDeliveryStatus,
+  isPostfixDeliveryStatus,
+  makeStoredEmailStatus,
+} from '../../domain/delivery-status';
 
 let rest = '';
 
