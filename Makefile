@@ -714,9 +714,9 @@ tracking-report:
 	grep -P "^`date +%F`" |
 	grep -Po "(?<=GET /track\?data=)\S+" |
 	url_decode |
-	cat <( \
-		echo "Subject: RES tracking-report"; \
-		echo "From: RES <system@feedsubscription.com>"; \
-		echo; \
+	cat <(
+		echo "Subject: RES tracking-report"
+		echo "From: RES <system@feedsubscription.com>"
+		echo
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
