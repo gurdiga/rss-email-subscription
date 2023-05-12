@@ -92,8 +92,8 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
-  if (isEmpty(confirmedEmails)) {
-    logWarning('No emails', {
+  if (!isEmpty(validItems) && isEmpty(confirmedEmails)) {
+    logWarning('Not sendding new items because no subscribers', {
       accountEmail: account.email.value,
       accountId: accountId.value,
       feedId: feed.id.value,
