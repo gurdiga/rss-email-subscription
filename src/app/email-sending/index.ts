@@ -92,5 +92,16 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
+  if (isEmpty(confirmedEmails)) {
+    logWarning('No emails', {
+      accountEmail: account.email.value,
+      accountId: accountId.value,
+      feedId: feed.id.value,
+      validItems: validItems.length,
+      plan: plan.title,
+    });
+    return 0;
+  }
+
   return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, from);
 }
