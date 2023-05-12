@@ -715,6 +715,9 @@ tracking-report:
 	grep -Po "(?<=GET /track\?data=)\S+" |
 	url_decode |
 	grep -vE '"vid":"(vlad|1683194754745)"' |
+	(
+		tee /dev/stderr 2> >( grep -Po '(?<="vid":")\d+' | sort | uniq -c > /dev/stderr )
+	) 2>&1 |
 	cat <(
 		echo "Subject: RES tracking-report"
 		echo "From: RES <system@feedsubscription.com>"
