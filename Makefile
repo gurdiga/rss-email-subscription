@@ -714,6 +714,7 @@ tracking-report:
 	grep -P "^`date +%F`" |
 	grep -Po "(?<=GET /track\?data=)\S+" |
 	url_decode |
+	grep -vE '"vid":"(vlad|1683194754745)"' |
 	cat <(
 		echo "Subject: RES tracking-report"
 		echo "From: RES <system@feedsubscription.com>"
