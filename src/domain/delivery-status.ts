@@ -23,7 +23,9 @@ export function isPostfixDeliveryStatus(value: unknown): value is PostfixDeliver
 
 export type StoredEmailStatus = PrePostfixMessageStatus | DeliveryStatus;
 function isStoredEmailStatus(value: unknown): value is StoredEmailStatus {
-  const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus].flatMap((x) => Object.values(x));
+  const validValue = [PrePostfixMessageStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus].flatMap((x) =>
+    Object.values(x)
+  );
 
   return validValue.includes(value);
 }
