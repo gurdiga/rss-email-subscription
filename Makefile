@@ -304,6 +304,7 @@ watch-website:
 	}
 
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/website.log |
+	grep -v -E '(bingbot|Googlebot)' |
 	grep --line-buffered -F \
 			-e 'GET /error?stack=' \
 		|
