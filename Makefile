@@ -204,7 +204,7 @@ reload-website:
 	@docker kill --signal=SIGHUP website | \
 	cat <( \
 		echo "Subject: RES reload-website"; \
-		echo "From: RES <reload-website@feedsubscription.com>"; \
+		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -286,7 +286,7 @@ watch-app:
 			reason=$$(jq -r .data.reason <<<"$$json")
 
 			echo "Subject: RES $$container_name $$severity: $$message"
-			echo "From: RES <watch-app@feedsubscription.com>"
+			echo "From: RES <system@feedsubscription.com>"
 			echo
 			jq . <<<"$$json"
 
@@ -339,7 +339,7 @@ watch-smtp-out:
 	while read -r timestamp rest; do
 		(
 			echo "Subject: RES smtp-out $$timestamp"
-			echo "From: RES <watch-smtp-out@feedsubscription.com>"
+			echo "From: RES <system@feedsubscription.com>"
 			echo ""
 			echo "$$rest"
 
@@ -381,7 +381,7 @@ certbot-report:
 		message=$$(jq -r .message <<<"$$json")
 
 		echo "Subject: RES weekly-certbot"
-		echo "From: RES <weekly-certbot@feedsubscription.com>"
+		echo "From: RES <system@feedsubscription.com>"
 		echo
 
 		ls -1 .tmp/logs/feedsubscription/certbot.log-*.gz | # find last log archive
@@ -402,7 +402,7 @@ watch-delmon:
 			message=$$(jq -r .message <<<"$$json")
 
 			echo "Subject: RES $$container_name $$severity"
-			echo "From: RES <watch-delmon@feedsubscription.com>"
+			echo "From: RES <system@feedsubscription.com>"
 			echo
 
 			jq . <<<"$$json"
@@ -433,7 +433,7 @@ list-qid-index:
 	grep -v "^total " |
 	cat <(
 		echo "Subject: RES list-qid-index"
-		echo "From: RES <list-qid-index@feedsubscription.com>"
+		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -446,7 +446,7 @@ delivery-report:
 	@function send_report() {
 		(
 			echo "Subject: RES delivery report"
-			echo "From: RES <delivery-report@feedsubscription.com>"
+			echo "From: RES <system@feedsubscription.com>"
 			echo ""
 			cat
 		) \
@@ -468,7 +468,7 @@ mailq-report:
 	@function send_report() {
 		(
 			echo "Subject: RES mailq report"
-			echo "From: RES <mailq-report@feedsubscription.com>"
+			echo "From: RES <system@feedsubscription.com>"
 			echo ""
 			cat
 		) \
@@ -532,7 +532,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	} 2>&1 |
 	cat <(
 		echo "Subject: RES backup"
-		echo "From: RES <backup@feedsubscription.com>"
+		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 		echo "$$DATA_DESTINATION"
 	) - |
@@ -547,7 +547,7 @@ backup-purge:
 	xargs -I {} sh -c "echo {}; rclone purge gdrive-res:RES-backups/{} 2>&1" |
 	cat <(
 		echo "Subject: RES backup-purge"
-		echo "From: RES <backup-purge@feedsubscription.com>"
+		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -602,7 +602,7 @@ prune-docker-images:
 	@docker image prune --force |
 	cat <( \
 		echo "Subject: RES prune-docker-images"; \
-		echo "From: RES <prune-docker-images@feedsubscription.com>"; \
+		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -621,7 +621,7 @@ list-sessions:
 	grep -v "^total " |
 	cat <(
 		echo "Subject: RES list-sessions"
-		echo "From: RES <list-sessions@feedsubscription.com>"
+		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -631,7 +631,7 @@ watch-containers:
 	@docker stats --all --no-stream |
 	cat <( \
 		echo "Subject: RES watch-containers"; \
-		echo "From: RES <watch-containers@feedsubscription.com>"; \
+		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -644,7 +644,7 @@ watch-containers:
 	grep -v -E -s 'Googlebot' |
 	cat <( \
 		echo "Subject: RES 404-report"; \
-		echo "From: RES <404-report@feedsubscription.com>"; \
+		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
@@ -672,7 +672,7 @@ unique-ips-report:
 	wc -l |
 	cat <( \
 		echo "Subject: RES unique-ips-report"; \
-		echo "From: RES <unique-ips-report@feedsubscription.com>"; \
+		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
