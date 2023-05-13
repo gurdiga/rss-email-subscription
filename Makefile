@@ -716,7 +716,11 @@ tracking-report:
 	url_decode |
 	grep -vE '"vid":"(vlad|1683194754745)"' |
 	(
-		tee /dev/stderr 2> >( grep -Po '(?<="vid":")\d+' | sort | uniq -c > /dev/stderr )
+		tee \
+			>( grep -Po '(?<="vid":")\d+' | sort | uniq -c > /dev/stderr ) \
+			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c > /dev/stderr ) \
+			>( grep -Po '(?<="tid":")(b-homepage-create-account|l-(free|ppu)-link)' | sort | ts "click" | uniq -c > /dev/stderr ) \
+			>( grep -Po '(?<="event":")\w+' | sort | uniq -c > /dev/stderr )
 	) 2>&1 |
 	cat <(
 		echo "Subject: RES tracking-report"
