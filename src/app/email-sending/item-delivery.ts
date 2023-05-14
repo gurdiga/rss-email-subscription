@@ -42,7 +42,9 @@ export async function deliverItems(
   confirmedEmails: HashedEmail[],
   from: FullEmailAddress
 ) {
-  confirmedEmails.push(getCatchAllEmail()); // Temporary hack to keep an eye on what’s going out.
+  if (confirmedEmails.length > 0) {
+    confirmedEmails.push(getCatchAllEmail()); // Temporary hack to keep an eye on what’s going out.
+  }
 
   prepareOutboxEmails(storage, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
   return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
