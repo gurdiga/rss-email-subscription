@@ -316,7 +316,7 @@ watch-website:
 			echo ""
 			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
-			echo "$$referer"x
+			echo "$$referer"
 			echo "$$timestamp"
 			echo "$$url" | url_decode | sed 's/^/    /'
 			echo "Whois:"
