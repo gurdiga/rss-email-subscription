@@ -48,7 +48,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   const isEmailSubscribed = !!existingEmail;
 
   if (!isEmailSubscribed) {
-    logWarning('Email not found by hash', { emailHash });
+    logWarning('Email not found by hash', { feedId: feedId.value, emailHash });
     return makeSuccess('Solidly unsubscribed.');
   }
 
