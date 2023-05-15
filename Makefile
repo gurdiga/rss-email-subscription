@@ -628,11 +628,27 @@ list-sessions:
 
 # cron @daily
 watch-containers:
-	@docker stats --all --no-stream |
-	cat <( \
-		echo "Subject: RES watch-containers"; \
-		echo "From: RES <system@feedsubscription.com>"; \
-		echo; \
+	@docker stats \
+		--all \
+		--no-stream \
+		--format "table
+			<tr>
+			<td style='white-space: nowrap'>{{.ID}}
+			<td style='white-space: nowrap'>{{.Name}}
+			<td style='white-space: nowrap'>{{.CPUPerc}}
+			<td style='white-space: nowrap'>{{.MemUsage}}
+			<td style='white-space: nowrap'>{{.MemPerc}}
+			<td style='white-space: nowrap'>{{.NetIO}}
+			<td style='white-space: nowrap'>{{.BlockIO}}
+			<td style='white-space: nowrap'>{{.PIDs}}
+		" |
+	cat <(
+		echo "Subject: RES watch-containers"
+		echo "From: RES <system@feedsubscription.com>"
+		echo "Content-Type: text/html"
+		echo ""
+		echo "<table>"
+
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
