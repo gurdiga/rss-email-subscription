@@ -309,16 +309,16 @@ watch-website:
 			-e 'GET /error?stack=' \
 		|
 	grep -v 'chrome-extension' |
-	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referer rest; do
+	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referrer rest; do
 		(
 			echo "Subject: RES website error-log"
 			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo ""
 			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
-			echo "$$referer"
-			echo "$$timestamp"
-			echo "$$url" | url_decode | sed 's/^/    /'
+			echo "Referrer: $$referrer"
+			echo "Timestamp: $$timestamp"
+			echo "URL: $$url" | url_decode
 			echo "Whois:"
 			whois $$client_ip | grep -iE '^(Address|StateProv|PostalCode|Country):' | sort -u | head -10 | sed 's/^/    /'
 			echo "https://whois.com/whois/$$client_ip"
