@@ -124,7 +124,7 @@ function processInput(input: Input, storage: AppStorage): ProcessedInput | Input
   const emailAddress = makeEmailAddress(email);
 
   if (isErr(emailAddress)) {
-    logWarning('Invalid subscriber email', { email });
+    logWarning('Invalid subscriber email', { email, feedId: input.feedId });
     return makeInputError('Invalid email');
   }
 
