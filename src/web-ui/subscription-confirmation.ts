@@ -1,5 +1,6 @@
 import { ApiPath } from '../domain/api-path';
 import { SubscriptionConfirmationRequestData } from '../domain/subscription-id';
+import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
@@ -8,6 +9,7 @@ import {
   displayCommunicationError,
   displayInitError,
   fillUiElements,
+  hideElement,
   HttpMethod,
   onClick,
   requireQueryParams,
@@ -74,6 +76,10 @@ function main() {
     if (isErr(response)) {
       displayCommunicationError(response, uiElements.apiResponseMessage);
       return;
+    }
+
+    if (isSuccess(response)) {
+      hideElement(uiElements.confirmButton);
     }
 
     displayApiResponse(response, uiElements.apiResponseMessage);
