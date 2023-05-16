@@ -235,8 +235,8 @@ WEB_UI_DEST_DIR=$(DOCUMENT_ROOT)/../src/web-ui-scripts/
 web-ui-systemjs:
 	mkdir -p $(WEB_UI_DEST_DIR)
 	cp --target-directory=$(WEB_UI_DEST_DIR) \
-		./node_modules/systemjs/dist/system.min.js* \
-		./src/web-ui/systemjs-resolve-patch.js
+		./node_modules/systemjs/dist/system.min.js*
+	cat ./src/web-ui/systemjs-resolve-patch.js >> $(WEB_UI_DEST_DIR)/system.min.js
 
 web-ui:
 	node_modules/.bin/tsc --project src/web-ui/tsconfig.json

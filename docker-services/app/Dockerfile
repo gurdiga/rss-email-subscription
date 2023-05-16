@@ -17,8 +17,8 @@ COPY .git/refs/heads/main ./dist/api/version.txt
 RUN ./node_modules/.bin/tsc -p tsconfig.json
 RUN ./node_modules/.bin/tsc -p src/web-ui/tsconfig.json
 RUN cp --target-directory=dist/api/web-ui-scripts \
-  ./node_modules/systemjs/dist/system.min.js* \
-  ./src/web-ui/systemjs-resolve-patch.js
+  ./node_modules/systemjs/dist/system.min.js*
+RUN cat ./src/web-ui/systemjs-resolve-patch.js >> dist/api/web-ui-scripts/system.min.js
 
 ### --- run
 FROM node:${NODE_VERSION}
