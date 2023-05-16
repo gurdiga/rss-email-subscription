@@ -729,7 +729,7 @@ tracking-report:
 	cat .tmp/logs/feedsubscription/website.log |
 	grep -P "^`date +%F`" |
 	grep -P "(?<=GET /track\?data=)\S+" |
-	cut --delimiter=' ' --fields=1,10,14 | # select: timestamp, request, source URL
+	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, source URL
 	sed -e 's|/track?data=||' -e 's|+00:00||' -e 's|https://feedsubscription.com||' | # cleanup
 	url_decode |
 	grep -vE '"vid":"(vlad|1683194754745)"' | # exclude myself
