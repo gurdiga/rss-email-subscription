@@ -700,9 +700,20 @@ export function getDeliveryItemStorageKey(
 export function getDeliveryTimestampStorageKey(
   accountId: AccountId,
   feedId: FeedId,
+  deliveryDirName: string
+): StorageKey;
+export function getDeliveryTimestampStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
   storedRssItem: ValidStoredRssItem
+): StorageKey;
+
+export function getDeliveryTimestampStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: string | ValidStoredRssItem
 ): StorageKey {
-  const deliveryId = getRssItemId(storedRssItem.item);
+  const deliveryId = typeof storedRssItem === 'string' ? storedRssItem : getRssItemId(storedRssItem.item);
   const deliveryRoot = getDeliveryStorageKey(accountId, feedId, deliveryId);
 
   return makePath(deliveryRoot, 'timestamp.json');

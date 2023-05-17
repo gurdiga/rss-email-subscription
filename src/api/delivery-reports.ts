@@ -2,6 +2,7 @@ import {
   getDeliveryItemStorageKey,
   getDeliveriesRootStorageKey,
   getDeliveryStorageKey,
+  getDeliveryTimestampStorageKey,
 } from '../app/email-sending/item-delivery';
 import { makeRssItem } from '../app/email-sending/rss-item-reading';
 import { AccountId } from '../domain/account';
@@ -19,6 +20,7 @@ import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound }
 import { AppStorage, StorageKey } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
+import { makeDate } from '../shared/date-utils';
 import { Result, isErr, makeErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
@@ -137,9 +139,15 @@ function makeDeliveryReports(
       return makeErr(si`Failed to ${getMessageCounts.name}: ${messageCounts.reason}`);
     }
 
+    const deliveryStart = loadDeliveryTimestamp(storage, accountId, feedId, deliveryId);
+
+    if (isErr(deliveryStart)) {
+      return makeErr(si`Failed to ${loadDeliveryTimestamp.name}: ${deliveryStart.reason}`);
+    }
+
     const report: DeliveryReport = {
       kind: 'DeliveryReport',
-      deliveryStart: new Date(), // TODO: Figure out ho to get the deliveryStart
+      deliveryStart,
       postTitle: rssItem.title,
       postURL: rssItem.link,
       messageCounts,
@@ -147,6 +155,22 @@ function makeDeliveryReports(
 
     return report;
   });
+}
+
+function loadDeliveryTimestamp(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  deliveryId: string
+): Result<Date> {
+  const storageKey = getDeliveryTimestampStorageKey(accountId, feedId, deliveryId);
+  const dateString = storage.loadItem(storageKey);
+
+  if (isErr(dateString)) {
+    return makeErr(si`Failed to load item data: ${dateString.reason}`);
+  }
+
+  return makeDate(dateString);
 }
 
 function getMessageCounts(
