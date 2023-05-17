@@ -211,14 +211,23 @@ export function prepareOutboxEmails(
       }
     }
 
-    const storeResult = storeDeliveryItem(storage, accountId, feed.id, storedItem);
+    const storeItemResult = storeDeliveryItem(storage, accountId, feed.id, storedItem);
+    const logData = { accountId: accountId.value, feedId: feed.id.value, fileName: storedItem.fileName };
 
-    if (isErr(storeResult)) {
-      logError(si`Failed to ${storeDeliveryItem.name}: ${storeResult.reason}`, {
-        reason: storeResult.reason,
-        accountId: accountId.value,
-        feedId: feed.id.value,
-        fileName: storedItem.fileName,
+    if (isErr(storeItemResult)) {
+      logError(si`Failed to ${storeDeliveryItem.name}: ${storeItemResult.reason}`, {
+        reason: storeItemResult.reason,
+        ...logData,
+      });
+      return 1;
+    }
+
+    const storeTimestampResult = storeDeliveryTimestamp(storage, accountId, feed.id, storedItem);
+
+    if (isErr(storeTimestampResult)) {
+      logError(si`Failed to ${storeDeliveryTimestamp.name}: ${storeTimestampResult.reason}`, {
+        reason: storeTimestampResult.reason,
+        ...logData,
       });
       return 1;
     }
@@ -237,6 +246,18 @@ function storeDeliveryItem(
   const newStorageKey = getDeliveryItemStorageKey(accountId, feedId, storedRssItem);
 
   return storage.renameItem(oldStorageKey, newStorageKey, { overwriteIfExists: true });
+}
+
+function storeDeliveryTimestamp(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: ValidStoredRssItem
+): Result<void> {
+  const storageKey = getDeliveryTimestampStorageKey(accountId, feedId, storedRssItem);
+  const timestamp = new Date();
+
+  return storage.storeItem(storageKey, timestamp);
 }
 
 function storeOutboxEmail(
@@ -674,6 +695,17 @@ export function getDeliveryItemStorageKey(
   const deliveryRoot = getDeliveryStorageKey(accountId, feedId, deliveryId);
 
   return makePath(deliveryRoot, 'item.json');
+}
+
+export function getDeliveryTimestampStorageKey(
+  accountId: AccountId,
+  feedId: FeedId,
+  storedRssItem: ValidStoredRssItem
+): StorageKey {
+  const deliveryId = getRssItemId(storedRssItem.item);
+  const deliveryRoot = getDeliveryStorageKey(accountId, feedId, deliveryId);
+
+  return makePath(deliveryRoot, 'timestamp.json');
 }
 
 export function getDeliveryStatusFolderStorageKey(

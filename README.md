@@ -23,6 +23,7 @@ The app stores data in the `DATA_DIR_ROOT` directory:
 /accounts/<account-id>/feeds/<feed-id>/inbox/<delivery-id>.json
 /accounts/<account-id>/feeds/<feed-id>/outbox/<delivery-id>/<msghexx>.json
 /accounts/<account-id>/feeds/<feed-id>/deliveries/<delivery-id>/item.json
+/accounts/<account-id>/feeds/<feed-id>/deliveries/<delivery-id>/timestamp.json
 /accounts/<account-id>/feeds/<feed-id>/deliveries/<delivery-id>/postfixed/<msghexx>.json
 /accounts/<account-id>/feeds/<feed-id>/deliveries/<delivery-id>/deferred/<msghexx>.json
 /accounts/<account-id>/feeds/<feed-id>/deliveries/<delivery-id>/sent/<msghexx>.json
