@@ -30,6 +30,7 @@ describe(makeEmailContent.name, () => {
     expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
     expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
     expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
+    expect(emailMessage.htmlBody).to.contain('FeedSubscription.com?from=email-footer', 'trackable link');
   });
 });
 
