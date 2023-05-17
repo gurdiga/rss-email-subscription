@@ -732,7 +732,7 @@ tracking-report:
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, source URL
 	sed -e 's|/track?data=||' -e 's|+00:00||' -e 's|https://feedsubscription.com||' | # cleanup
 	url_decode |
-	grep -vE '"vid":"(vlad|1683194754745)"' | # exclude myself
+	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w)"' | # exclude myself
 	(
 		tee \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
