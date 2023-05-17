@@ -17,6 +17,7 @@ import {
 import { DeliveryStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../domain/delivery-status';
 import { FeedId } from '../domain/feed-id';
 import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound } from '../domain/feed-storage';
+import { RssItem } from '../domain/rss-item';
 import { AppStorage, StorageKey } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
@@ -120,23 +121,16 @@ function makeDeliveryReports(
   }
 
   return deliveryIds.sort().map((deliveryId) => {
-    const deliveryStorageKey = getDeliveryItemStorageKey(accountId, feedId, deliveryId);
-    const itemData = storage.loadItem(deliveryStorageKey);
-
-    if (isErr(itemData)) {
-      return makeErr(si`Failed to load item data: ${itemData.reason}`);
-    }
-
-    const rssItem = makeRssItem(itemData);
+    const rssItem = loadDeliveryItem(storage, accountId, feedId, deliveryId);
 
     if (isErr(rssItem)) {
       return makeErr(si`Failed to ${makeRssItem.name}: ${rssItem.reason}`);
     }
 
-    const messageCounts = getMessageCounts(storage, accountId, feedId, deliveryId);
+    const messageCounts = loadMessageCounts(storage, accountId, feedId, deliveryId);
 
     if (isErr(messageCounts)) {
-      return makeErr(si`Failed to ${getMessageCounts.name}: ${messageCounts.reason}`);
+      return makeErr(si`Failed to ${loadMessageCounts.name}: ${messageCounts.reason}`);
     }
 
     const deliveryStart = loadDeliveryTimestamp(storage, accountId, feedId, deliveryId);
@@ -157,6 +151,22 @@ function makeDeliveryReports(
   });
 }
 
+function loadDeliveryItem(
+  storage: AppStorage,
+  accountId: AccountId,
+  feedId: FeedId,
+  deliveryId: string
+): Result<RssItem> {
+  const deliveryStorageKey = getDeliveryItemStorageKey(accountId, feedId, deliveryId);
+  const itemData = storage.loadItem(deliveryStorageKey);
+
+  if (isErr(itemData)) {
+    return makeErr(si`Failed to load item data: ${itemData.reason}`);
+  }
+
+  return makeRssItem(itemData);
+}
+
 function loadDeliveryTimestamp(
   storage: AppStorage,
   accountId: AccountId,
@@ -173,7 +183,7 @@ function loadDeliveryTimestamp(
   return makeDate(dateString);
 }
 
-function getMessageCounts(
+function loadMessageCounts(
   storage: AppStorage,
   accountId: AccountId,
   feedId: FeedId,
