@@ -735,10 +735,10 @@ tracking-report:
 	grep -vE '"vid":"(vlad|1683194754745)"' | # exclude myself
 	(
 		tee \
-			>( grep -Po '(?<="vid":")\d+' | sort | uniq -c ) \
+			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
 			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c ) \
 			>( grep -Po '(?<="tid":")(b-homepage-create-account|l-(free|ppu)-link)' | sort | ts "click" | uniq -c ) \
-			>( grep -Po '(?<="event":")\w+' | sort | uniq -c )
+			>( grep -Po '(?<="event":")[^"]+' | sort | uniq -c )
 	) 2>&1 |
 	cat <(
 		echo "Subject: RES tracking-report"
