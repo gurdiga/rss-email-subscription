@@ -647,8 +647,7 @@ watch-containers:
 		echo "From: RES <system@feedsubscription.com>"
 		echo "Content-Type: text/html"
 		echo ""
-		echo "<table>"
-
+		echo "<table border="1" cellspacing="0" cellpadding="3">"
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
