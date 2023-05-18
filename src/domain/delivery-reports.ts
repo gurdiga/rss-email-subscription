@@ -2,12 +2,14 @@ import { Result, hasKind, makeValues } from '../shared/lang';
 import { DeliveryStatus } from './delivery-status';
 import { FeedId, makeFeedId } from './feed-id';
 
-export interface DeliveryReportsRequestData {
-  feedId: string;
-}
+export type DeliveryReportsRequestData = Record<'feedId', string>;
 
 interface DeliveryReportsRequest {
   feedId: FeedId;
+}
+
+export interface DeliveryReportResponse {
+  reports: DeliveryReportData[];
 }
 
 export function makeDeliveryReportsRequest(data: unknown): Result<DeliveryReportsRequest> {
@@ -23,6 +25,22 @@ export interface DeliveryReport {
   postTitle: string;
   postURL: URL;
   messageCounts: MessageCounts;
+}
+
+export interface DeliveryReportData {
+  deliveryStart: string;
+  postTitle: string;
+  postURL: string;
+  messageCounts: MessageCounts;
+}
+
+export function makeDeliveryReportData(report: DeliveryReport): DeliveryReportData {
+  return {
+    deliveryStart: report.deliveryStart.toJSON(),
+    postTitle: report.postTitle,
+    postURL: report.postURL.toString(),
+    messageCounts: report.messageCounts,
+  };
 }
 
 export type MessageCounts = Record<DeliveryStatus, number>;

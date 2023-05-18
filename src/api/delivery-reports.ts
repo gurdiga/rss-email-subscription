@@ -8,10 +8,12 @@ import { makeRssItem } from '../app/email-sending/rss-item-reading';
 import { AccountId } from '../domain/account';
 import {
   DeliveryReport,
+  DeliveryReportResponse,
   DeliveryReports,
   DeliveryReportsRequestData,
   MessageCounts,
   isDeliveryReport,
+  makeDeliveryReportData,
   makeDeliveryReportsRequest,
 } from '../domain/delivery-reports';
 import { DeliveryStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../domain/delivery-status';
@@ -82,7 +84,7 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   }
 
   const logData = {};
-  const responseData = { reports };
+  const responseData: DeliveryReportResponse = { reports: reports.map(makeDeliveryReportData) };
 
   return makeSuccess('OK', logData, responseData);
 };
