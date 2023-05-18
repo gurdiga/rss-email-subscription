@@ -39,8 +39,8 @@ export function processData(data: Buffer, storage: AppStorage): void {
 
     lineCount++;
 
-    if (lineCount % 50 === 0) {
-      logInfo('Lines processed', { lineCount });
+    if (lineCount % 500 === 0) {
+      logInfo('Lines processed', { lineCount, memoryUsage: process.memoryUsage() });
     }
   });
 }
