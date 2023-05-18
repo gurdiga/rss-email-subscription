@@ -22,9 +22,10 @@ import {
 } from '../../domain/delivery-status';
 
 let rest = '';
+let lineCount = 0;
 
 export function processData(data: Buffer, storage: AppStorage): void {
-  const { logError } = makeCustomLoggers({ module: processData.name });
+  const { logError, logInfo } = makeCustomLoggers({ module: processData.name });
   const result = extractLines(rest + data.toString());
 
   rest = result.rest;
@@ -34,6 +35,12 @@ export function processData(data: Buffer, storage: AppStorage): void {
 
     if (isErr(result)) {
       logError(si`Failed to ${handleLine.name}: "${result.reason}"; line "${line}"`);
+    }
+
+    lineCount++;
+
+    if (lineCount % 50 === 0) {
+      logInfo('Lines processed', { lineCount });
     }
   });
 }

@@ -5,6 +5,7 @@ import { makeStorage } from '../../domain/storage';
 import { isErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { processData } from './line-processing';
+import { CronJob } from 'cron';
 
 async function main() {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'delivery-monitoring' });
@@ -26,6 +27,7 @@ async function main() {
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
+  return new CronJob('0 0 * * *', () => logError('delmon is alive')).start();
 }
 
 main();
