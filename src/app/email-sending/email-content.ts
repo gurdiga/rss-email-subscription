@@ -25,7 +25,7 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
         </p>
 
         <p>
-          <small>This email was sent with <a href="https://FeedSubscription.com?from=email-footer">FeedSubscription.com</a>.
+          <small>This email was sent with ❤️ by <a href="https://FeedSubscription.com?from=email-footer">FeedSubscription.com</a>.
           If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.<small>
         </p>
       </footer>`),
