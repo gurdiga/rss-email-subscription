@@ -7,7 +7,6 @@ import {
 } from '../domain/delivery-reports';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { isAppError, isInputError } from '../shared/api-response';
-import { sortBy } from '../shared/array-utils';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
@@ -79,9 +78,7 @@ async function main() {
 }
 
 function displayReport(tbody: HTMLTableSectionElement, response: DeliveryReportResponse) {
-  response.reports
-    .sort(sortBy(({ deliveryStart }) => deliveryStart))
-    .forEach((report) => tbody.append(makeTrForReport(report)));
+  response.reports.forEach((report) => tbody.append(makeTrForReport(report)));
 }
 
 function makeTrForReport(report: DeliveryReportData): HTMLTableRowElement {

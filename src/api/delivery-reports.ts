@@ -22,7 +22,7 @@ import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound }
 import { RssItem } from '../domain/rss-item';
 import { AppStorage, StorageKey } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isEmpty } from '../shared/array-utils';
+import { SortDirection, isEmpty, sortBy } from '../shared/array-utils';
 import { makeDate } from '../shared/date-utils';
 import { Result, isErr, makeErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -84,7 +84,9 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   }
 
   const logData = {};
-  const responseData: DeliveryReportResponse = { reports: reports.map(makeDeliveryReportData) };
+  const responseData: DeliveryReportResponse = {
+    reports: reports.sort(sortBy(({ deliveryStart }) => deliveryStart, SortDirection.Desc)).map(makeDeliveryReportData),
+  };
 
   return makeSuccess('OK', logData, responseData);
 };
