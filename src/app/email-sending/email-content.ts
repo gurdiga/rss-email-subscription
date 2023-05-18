@@ -54,7 +54,7 @@ export function htmlBody(contents: string): string {
 
     <hr />
 
-    <footer>
+    <footer style="color:GrayText">
       <p><small>FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709</small></p>
     </footer>
 
