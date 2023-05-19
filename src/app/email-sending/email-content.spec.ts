@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
 import { si } from '../../shared/string-utils';
 import { makeTestEmailAddress, encodeSearchParamValue, makeTestFeedId } from '../../shared/test-utils';
-import { makeEmailContent, makeUnsubscribeUrl } from './email-content';
+import { makeEmailContent, makeUnsubscribeUrl, setImageMaxWidth } from './email-content';
 import { RssItem } from '../../domain/rss-item';
 import { makeFullEmailAddress } from './emails';
 
@@ -31,6 +31,15 @@ describe(makeEmailContent.name, () => {
     expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
     expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
     expect(emailMessage.htmlBody).to.contain('FeedSubscription.com?from=email-footer', 'trackable link');
+  });
+});
+
+describe(setImageMaxWidth.name, () => {
+  it('forces image size into 100%', () => {
+    const html = '<img id="the-image" />';
+    const result = setImageMaxWidth(html);
+
+    expect(result).to.equal('<img id="the-image" style=";max-width:100% !important">');
   });
 });
 

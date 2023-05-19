@@ -2,6 +2,7 @@ import { RssItem } from '../../domain/rss-item';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
+import { parse } from 'node-html-parser';
 
 export interface EmailContent {
   subject: string;
@@ -9,10 +10,12 @@ export interface EmailContent {
 }
 
 export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
+  const itemHtml = setImageMaxWidth(item.content);
+
   return {
     subject: item.title,
     htmlBody: htmlBody(si`
-      <article>${item.content}</article>
+      <article>${itemHtml}</article>
 
       <hr style="clear: both; margin-top: 4em;" />
 
@@ -30,6 +33,20 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
         </p>
       </footer>`),
   };
+}
+
+const maxWidthStyle = 'max-width:100% !important';
+
+export function setImageMaxWidth(html: string) {
+  const dom = parse(html);
+
+  dom.querySelectorAll('img').forEach((x) => {
+    const existingStyle = x.getAttribute('style') || '';
+
+    x.setAttribute('style', existingStyle + ';' + maxWidthStyle);
+  });
+
+  return dom.toString();
 }
 
 export function makeUnsubscribeUrl(
