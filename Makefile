@@ -692,20 +692,15 @@ access-report: rsync-logs
 	zcat -f .tmp/logs/feedsubscription/website.log* |
 	cut -d ' ' -f 4- |
 	grep -P '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}' | # rows that start with an IP
-	grep '" 200 ' | # only successful requests
+	grep -P '"GET /web-ui-scripts/web-ui/navbar.js HTTP/(1.1|2.0)" 200 \d+ "https://feedsubscription.com' | # greater probability of being a REAL user browser
 	goaccess \
 		-o .goaccess/report.html \
 		--keep-last $${DAYS:-90} \
 		--ignore-crawlers --unknowns-as-crawlers \
-		--hide-referrer *feedsubscription.com \
-		--hide-referrer feedsubscription.com. \
-		--hide-referrer feedsubscription.com:80 \
-		--hide-referrer 207.154.253.211 \
-		--hide-referrer 207.154.253.211:80 \
-		--hide-referrer 207.154.253.211:443 \
 		--ignore-panel HOSTS \
 		--ignore-panel ASN \
 		--exclude-ip 95.65.96.65 \
+		--exclude-ip 212.56.195.182 \
 		--geoip-database .goaccess/GeoLite2-Country.mmdb \
 		--log-format=COMBINED -
 	open .goaccess/report.html
