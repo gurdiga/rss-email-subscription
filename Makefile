@@ -725,7 +725,7 @@ tracking-report:
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
 	url_decode |
-	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w|1683194754745)"' | # exclude myself
+	grep -v '"vid":"vlad"' | # exclude myself
 	(
 		tee \
 			>( grep -Po '(?<="vid":")[^"]+' | sort -u | wc -l | ts "uniq vids" ) \
