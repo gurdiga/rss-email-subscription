@@ -729,7 +729,7 @@ tracking-report:
 	cat .tmp/logs/feedsubscription/website.log |
 	grep -P "^2023-05-18" |
 	grep -P "(?<=GET /track\?data=)\S+" |
-	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, source URL
+	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
 	url_decode |
 	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w|1683194754745)"' | # exclude myself
 	(
