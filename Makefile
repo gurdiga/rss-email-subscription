@@ -716,6 +716,7 @@ tracking-report:
 	}
 
 	cat .tmp/logs/feedsubscription/website.log |
+	grep -vP '(Chrome-Lighthouse|crawler|bingbot)' | # exclude some bots
 	grep -P "^`date +%F`" |
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
@@ -735,3 +736,10 @@ tracking-report:
 		echo
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+
+bot-list.txt: .tmp/logs/feedsubscription/website.log*
+	zcat -f $^ |
+	grep -Po '" \d+ \d+ ".*\w*bot\w*' | # only lines with something-BOT-something in the UA string (or referrer)
+	grep -Po '\w*bot\w*' |
+	cat <(echo "Chrome-Lighthouse") - |
+	sort -u > $@
