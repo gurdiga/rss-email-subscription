@@ -718,7 +718,7 @@ tracking-report: bot-list.txt
 	bot_list_re=$$(paste -sd '|' bot-list.txt)
 
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -vP '($$bot_list_re)' | # exclude some bots
+	grep -vP '" \d+ \d+ ".*($$bot_list_re)' | # exclude some bots
 	grep -P "^`date +%F`" |
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
