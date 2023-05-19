@@ -698,6 +698,7 @@ access-report: rsync-logs
 	zcat -f .tmp/logs/feedsubscription/website.log* |
 	cut -d ' ' -f 4- |
 	grep -P '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}' | # rows that start with an IP
+	grep '" 200 ' | # only successful requests
 	goaccess \
 		-o .goaccess/report.html \
 		--keep-last $${DAYS:-90} \
@@ -726,12 +727,11 @@ tracking-report:
 	}
 
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -P "^`date +%F`" |
+	grep -P "^2023-05-18" |
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, source URL
-	sed -e 's|/track?data=||' -e 's|+00:00||' -e 's|https://feedsubscription.com||' | # cleanup
 	url_decode |
-	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w)"' | # exclude myself
+	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w|1683194754745)"' | # exclude myself
 	(
 		tee \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
