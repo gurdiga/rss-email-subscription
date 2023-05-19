@@ -728,6 +728,7 @@ tracking-report:
 	grep -vE '"vid":"(vlad|lhqikgwj0.adealxpdd0w|1683194754745)"' | # exclude myself
 	(
 		tee \
+			>( grep -Po '(?<="vid":")[^"]+' | sort -u | wc -l | ts "uniq vids" ) \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
 			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c ) \
 			>( grep -Po '(?<="tid":")(b-homepage-create-account|l-(free|ppu)-link)' | sort | ts "click" | uniq -c ) \
