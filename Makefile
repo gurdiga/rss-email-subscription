@@ -709,14 +709,16 @@ log-in-report:
 	ls -1 .tmp/logs/feedsubscription/api.log-20230{5,4}* | xargs gzcat | grep 'User logged in' | grep -v 'gurdiga.*@gmail.com'
 
 # cron 59 23 * * *
-tracking-report:
+tracking-report: bot-list.txt
 	@function url_decode {
 		sed 's@+@ @g;s@%@\\x@g' |
 		xargs -0 printf "%b"
 	}
 
+	bot_list_re=$$(paste -sd '|' bot-list.txt)
+
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -vP '(Chrome-Lighthouse|crawler|bingbot)' | # exclude some bots
+	grep -vP '($$bot_list_re)' | # exclude some bots
 	grep -P "^`date +%F`" |
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
@@ -738,7 +740,7 @@ tracking-report:
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
-	zcat -f $^ |
+	@zcat -f $^ |
 	grep -Po '" \d+ \d+ ".*\w*bot\w*' | # only lines with something-BOT-something in the UA string (or referrer)
 	grep -Po '\w*bot\w*' |
 	cat <(echo "Chrome-Lighthouse") - |
