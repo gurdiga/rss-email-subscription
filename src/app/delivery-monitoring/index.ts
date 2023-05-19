@@ -27,7 +27,19 @@ async function main() {
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
-  return new CronJob('0 0 * * *', () => logError('delmon is alive')).start();
+  keepPulse(logWarning);
+}
+
+function keepPulse(logWarning: ReturnType<typeof makeCustomLoggers>['logWarning']): void {
+  let prevCpuUsage: NodeJS.CpuUsage;
+
+  new CronJob('0 0 * * *', () =>
+    logWarning('delmon is alive', {
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+      cpuUsage: process.cpuUsage(prevCpuUsage),
+    })
+  ).start();
 }
 
 main();
