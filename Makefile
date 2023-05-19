@@ -349,17 +349,11 @@ watch-smtp-out:
 			if [[ $$rest =~ $$no_mx_regex ]] || [[ $$rest =~ $$ns_error_regex ]] ; then
 				domain=$${BASH_REMATCH[1]}
 
-				echo "--- DEBUG: google.com from inside container"
-				docker exec smtp-out nslookup google.com
-
 				echo "--- DEBUG: A record from inside container"
 				docker exec smtp-out nslookup "$$domain"
 
 				echo "--- DEBUG: MX record from inside container"
 				docker exec smtp-out nslookup -query=mx "$$domain"
-
-				echo "--- DEBUG: google.com from host"
-				nslookup google.com
 
 				echo "--- DEBUG: A record from host"
 				nslookup "$$domain"
