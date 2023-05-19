@@ -9,13 +9,10 @@ export interface EmailContent {
 }
 
 export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
-  const contentsId = 'res-email-contents';
-
   return {
     subject: item.title,
     htmlBody: htmlBody(si`
-      <style>#${contentsId} img {max-width: 100%}</style>
-      <article id="${contentsId}">${item.content}</article>
+      <article>${item.content}</article>
 
       <hr style="clear: both; margin-top: 4em;" />
 
