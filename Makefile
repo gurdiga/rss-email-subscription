@@ -721,7 +721,7 @@ tracking-report:
 	}
 
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -P "^2023-05-18" |
+	grep -P "^`date +%F`" |
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
 	url_decode |
