@@ -17,7 +17,7 @@ describe('subscription', () => {
 
       const emailContent = makeSubscriptionConfirmationEmailContent(feedDisplayName, confirmationUrl, listEmailAddress);
 
-      expect(emailContent.subject).to.equal('Please confirm feed subscription');
+      expect(emailContent.subject).to.equal('Please confirm subscription');
       expect(emailContent.htmlBody).to.include(si`<a href="${confirmationUrl.toString()}">`);
       expect(emailContent.htmlBody).to.include(feedDisplayName);
       expect(emailContent.htmlBody).to.include(listEmailAddress.value);

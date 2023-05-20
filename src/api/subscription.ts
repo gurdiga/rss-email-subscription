@@ -180,7 +180,7 @@ export function makeSubscriptionConfirmationEmailContent(
   listEmailAddress: EmailAddress
 ): EmailContent {
   return {
-    subject: 'Please confirm feed subscription',
+    subject: 'Please confirm subscription',
     htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
@@ -189,10 +189,12 @@ export function makeSubscriptionConfirmationEmailContent(
       <p><a href="${confirmationLinkUrl.toString()}">Yes, subscribe me</a></p>
 
       <p style="max-width: 35em">
-        If you asked to be subscribed, add the list email to your contacts
-        so that it’s not considered spam: ${listEmailAddress.value}. If you
-        didn’t ask to subscribe, please ignore this message.
+        If you subscribed, add this email address to your contacts
+        so that it’s not considered spam:<br/>
+        ${listEmailAddress.value}
       </p>
+
+      <p>If you didn’t subscribe, please ignore this message.</p>
 
       <p>Have a nice day.</p>
     `),
