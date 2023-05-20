@@ -718,10 +718,12 @@ tracking-report: bot-list.txt
 	bot_list_re=$$(paste -sd '|' bot-list.txt)
 
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -vP '" \d+ \d+ ".*($$bot_list_re)' | # exclude some bots
 	grep -P "^`date +%F`" |
+	grep -vP ".*($$bot_list_re).*" | # exclude some bots
+	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
+	sed -e 's|/track?data=||' -e 's|https://feedsubscription.com||' | # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
 	(
@@ -742,6 +744,6 @@ tracking-report: bot-list.txt
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	@zcat -f $^ |
 	grep -Po '" \d+ \d+ ".*\w*bot\w*' | # only lines with something-BOT-something in the UA string (or referrer)
-	grep -Po '\w*bot\w*' |
+	grep -Poi '\w*bot\w*' |
 	cat <(echo "Chrome-Lighthouse") - |
 	sort -u > $@
