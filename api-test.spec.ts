@@ -1,6 +1,9 @@
 import { expect } from 'chai';
+import cookie from 'cookie';
 import fetchCookie from 'fetch-cookie';
+import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
+import { sessionCookieMaxage } from './src/api/session';
 import {
   AccountData,
   AccountId,
@@ -15,8 +18,12 @@ import {
   makeRegistrationConfirmationSecretHash,
 } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
+import { ApiPath, getFullApiPath } from './src/domain/api-path';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
+import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
+import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
 import { defaultFeedPattern } from './src/domain/cron-pattern';
+import { domainAndLocalPart, EmailAddress } from './src/domain/email-address';
 import {
   AddEmailsRequest,
   AddEmailsResponse,
@@ -41,7 +48,11 @@ import {
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
 import { readFile } from './src/domain/io-isolation';
-import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
+import { PlanId } from './src/domain/plan';
+import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
+import { sortBy } from './src/shared/array-utils';
+import { hash } from './src/shared/crypto';
+import { isErr } from './src/shared/lang';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
 import {
@@ -51,17 +62,6 @@ import {
   makeTestFeedId,
   makeTestStorage,
 } from './src/shared/test-utils';
-import cookie from 'cookie';
-import { navbarCookieName } from './src/api/app-cookie';
-import { getFullApiPath, ApiPath } from './src/domain/api-path';
-import { domainAndLocalPart, EmailAddress } from './src/domain/email-address';
-import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
-import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
-import { sessionCookieMaxage } from './src/api/session';
-import { hash } from './src/shared/crypto';
-import { isErr } from './src/shared/lang';
-import { sortBy } from './src/shared/array-utils';
-import { PlanId } from './src/domain/plan';
 
 const fetch = fetchCookie(globalThis.fetch);
 
@@ -446,7 +446,7 @@ describe('API', () => {
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
-        <InputError>{ kind: 'InputError', message: 'Email is already subscribed' },
+        <Success>{ kind: 'Success', message: 'Email is already subscribed! 👍' },
         'repeated subscription result'
       );
 
