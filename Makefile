@@ -715,11 +715,20 @@ tracking-report: bot-list.txt
 		xargs -0 printf "%b"
 	}
 
-	bot_list_re=$$(paste -sd '|' bot-list.txt)
+	function debug_piepeline {
+		if [ -v DEBUG ]; then
+			tee /dev/stderr
+		else
+			cat
+		fi
+	}
+
+	bot_list_re="($$(paste -sd '|' bot-list.txt))"
+	date=$${DATE:-`date +%F`}
 
 	cat .tmp/logs/feedsubscription/website.log |
-	grep -P "^`date +%F`" |
-	grep -vP ".*($$bot_list_re).*" | # exclude some bots
+	grep -P "^$$date" |
+	grep -vP ".*$$bot_list_re.*" | # exclude some bots
 	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
@@ -742,7 +751,8 @@ tracking-report: bot-list.txt
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
-	@zcat -f $^ |
+	@Updating $@...
+	zcat -f $^ |
 	grep -Po '" \d+ \d+ ".*\w*bot\w*' | # only lines with something-BOT-something in the UA string (or referrer)
 	grep -Poi '\w*bot\w*' |
 	cat <(echo "Chrome-Lighthouse") - |
