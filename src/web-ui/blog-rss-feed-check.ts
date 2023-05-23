@@ -3,13 +3,11 @@ import { CheckFeedUrlRequestData, CheckFeedUrlResponseData } from '../domain/fee
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { createElement } from './dom-isolation';
 import {
   HttpMethod,
   clearValidationErrors,
   displayValidationError,
   hideElement,
-  onClick,
   onInput,
   onSubmit,
   reportError,
@@ -35,7 +33,6 @@ function main() {
   const { form, blogUrlField, submitButton, rssUrlContainer, successMessage } = uiElements;
 
   unhideElement(form);
-  addCopyButton(rssUrlContainer);
   onInput(blogUrlField, () => {
     hideElement(successMessage);
     unhideElement(submitButton);
@@ -72,23 +69,6 @@ async function submitForm(formFields: UiElements) {
   return await asyncAttempt(() =>
     sendApiRequest<CheckFeedUrlResponseData>(ApiPath.checkFeedUrl, HttpMethod.POST, makeFeedRequest)
   );
-}
-
-function addCopyButton(sourceElement: HTMLElement): void {
-  const initialButtonLabel = 'Copy';
-  const button = createElement('button', initialButtonLabel, { type: 'button' });
-
-  sourceElement.insertAdjacentElement('afterend', button);
-
-  onClick(button, async () => {
-    const type = 'text/plain';
-    const blob = new Blob([sourceElement.textContent!], { type });
-    const data = [new ClipboardItem({ [type]: blob })];
-
-    await navigator.clipboard.write(data);
-    button.textContent = 'Copied!';
-    setTimeout(() => (button.textContent = initialButtonLabel), 500);
-  });
 }
 
 interface UiElements {
