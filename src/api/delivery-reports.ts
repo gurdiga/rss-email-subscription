@@ -5,7 +5,8 @@ import {
   getDeliveryTimestampStorageKey,
 } from '../app/email-sending/item-delivery';
 import { makeRssItem } from '../app/email-sending/rss-item-reading';
-import { AccountId } from '../domain/account';
+import { AccountId, isAccountNotFound } from '../domain/account';
+import { loadAccount } from '../domain/account-storage';
 import {
   DeliveryReport,
   DeliveryReportResponse,
@@ -19,6 +20,7 @@ import {
 import { DeliveryStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../domain/delivery-status';
 import { FeedId } from '../domain/feed-id';
 import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound } from '../domain/feed-storage';
+import { PlanId } from '../domain/plan';
 import { RssItem } from '../domain/rss-item';
 import { AppStorage, StorageKey } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
@@ -58,6 +60,22 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   }
 
   const { accountId } = session;
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}: ${account.reason}`);
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logError('Account not found for delivery reports');
+    return makeAppError();
+  }
+
+  if (account.planId !== PlanId.PayPerUse) {
+    return makeSuccess('Only for accounts with a paid plan', {}, { isNotPaidPlan: true, reports: [] });
+  }
+
   const results = makeDeliveryReports(storage, accountId, request.feedId);
 
   if (isErr(results)) {

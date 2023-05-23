@@ -10,6 +10,7 @@ interface DeliveryReportsRequest {
 
 export interface DeliveryReportResponse {
   reports: DeliveryReportData[];
+  isNotPaidPlan?: boolean;
 }
 
 export function makeDeliveryReportsRequest(data: unknown): Result<DeliveryReportsRequest> {

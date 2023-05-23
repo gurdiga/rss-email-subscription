@@ -14,6 +14,7 @@ export enum PagePath {
   registration = '/user/registration.html',
   registrationConfirmation = '/user/registration-confirmation.html',
   emailChangeConfirmation = '/user/email-change-confirmation.html',
+  accountPage = '/user/account.html',
 }
 
 export interface FeedSubscribeFormParams {

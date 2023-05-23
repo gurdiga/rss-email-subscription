@@ -6,6 +6,7 @@ import {
   MessageCounts,
 } from '../domain/delivery-reports';
 import { FeedId, makeFeedId } from '../domain/feed-id';
+import { PagePath } from '../domain/page-path';
 import { isAppError, isInputError } from '../shared/api-response';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -52,6 +53,8 @@ async function main() {
     noDeliveriesMessage: '#no-deliveries-message',
     report: '#report',
     tbody: '#tbody',
+    paidOnlyMessage: '#paid-only-message',
+    upgdrageLink: '#upgrade-link',
   });
 
   if (isErr(uiElements)) {
@@ -71,6 +74,12 @@ async function main() {
 
   if (isErr(response)) {
     displayInitError(response.reason);
+    return;
+  }
+
+  if (response.isNotPaidPlan) {
+    uiElements.upgdrageLink.href = PagePath.accountPage + '#view-plan-section';
+    unhideElement(uiElements.paidOnlyMessage);
     return;
   }
 
@@ -165,6 +174,8 @@ interface RequiredUiElements extends SpinnerUiElements, BreadcrumbsUiElements {
   noDeliveriesMessage: HTMLElement;
   report: HTMLElement;
   tbody: HTMLTableSectionElement;
+  paidOnlyMessage: HTMLElement;
+  upgdrageLink: HTMLAnchorElement;
 }
 
 main();
