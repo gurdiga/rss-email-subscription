@@ -751,9 +751,12 @@ tracking-report: bot-list.txt
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
-	@Updating $@...
+	@echo Updating $@...
+
+	base_re='\w*(bot|crawler)\w*'
+
 	zcat -f $^ |
-	grep -Po '" \d+ \d+ ".*\w*bot\w*' | # only lines with something-BOT-something in the UA string (or referrer)
-	grep -Poi '\w*bot\w*' |
+	grep -Eo '" [0-9]+ [0-9]+ ".*'"$$base_re" | # only lines with something-BOT-something in the UA string (or referrer)
+	grep -Eoi "$$base_re" |
 	cat <(echo "Chrome-Lighthouse") - |
 	sort -u > $@
