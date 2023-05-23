@@ -49,6 +49,7 @@ async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...breadcrumbsUiElements,
     ...spinnerUiElements,
+    noDeliveriesMessage: '#no-deliveries-message',
     report: '#report',
     tbody: '#tbody',
   });
@@ -70,6 +71,11 @@ async function main() {
 
   if (isErr(response)) {
     displayInitError(response.reason);
+    return;
+  }
+
+  if (response.reports.length === 0) {
+    unhideElement(uiElements.noDeliveriesMessage);
     return;
   }
 
@@ -156,6 +162,7 @@ interface RequiredParams {
 }
 
 interface RequiredUiElements extends SpinnerUiElements, BreadcrumbsUiElements {
+  noDeliveriesMessage: HTMLElement;
   report: HTMLElement;
   tbody: HTMLTableSectionElement;
 }
