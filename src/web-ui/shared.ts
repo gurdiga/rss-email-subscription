@@ -329,6 +329,10 @@ export function enableElement(element: Element): void {
   element.removeAttribute('disabled');
 }
 
+export function scrollIntoView(element: HTMLElement) {
+  element.scrollIntoView({ behavior: 'smooth' });
+}
+
 export function navigateTo(url: string, delay = 0): void {
   setTimeout(() => {
     location.href = url;

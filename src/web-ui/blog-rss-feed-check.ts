@@ -12,6 +12,7 @@ import {
   onSubmit,
   reportError,
   requireUiElements,
+  scrollIntoView,
   sendApiRequest,
   unhideElement,
 } from './shared';
@@ -52,8 +53,9 @@ function main() {
 
     if (isSuccess(response)) {
       rssUrlContainer.textContent = response.responseData?.feedUrl!;
-      unhideElement(successMessage);
       hideElement(submitButton);
+      unhideElement(successMessage);
+      scrollIntoView(successMessage);
       return;
     }
 
