@@ -86,10 +86,12 @@ export async function sendOutboxEmails(
     return 1;
   }
 
+  const subscriberCount = confirmedEmails.length - 1; // exclude catch-all
+
   const report: SendingReport = {
     newItems: validItems.length,
-    subscribers: confirmedEmails.length,
-    sentExpected: validItems.length * confirmedEmails.length,
+    subscribers: subscriberCount,
+    sentExpected: validItems.length * subscriberCount,
     sent: 0,
     failed: 0,
   };
@@ -97,7 +99,7 @@ export async function sendOutboxEmails(
   logInfo('Sending new items', {
     itemCount: validItems.length,
     outboxItems: outboxItemIds.length,
-    emailCount: confirmedEmails.length,
+    emailCount: subscriberCount,
   });
 
   for (const itemId of outboxItemIds) {
