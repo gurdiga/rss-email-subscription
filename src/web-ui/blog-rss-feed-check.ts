@@ -5,10 +5,10 @@ import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
 import {
+  HttpMethod,
   clearValidationErrors,
   displayValidationError,
   hideElement,
-  HttpMethod,
   onClick,
   onInput,
   onSubmit,
@@ -36,7 +36,10 @@ function main() {
 
   unhideElement(form);
   addCopyButton(rssUrlContainer);
-  onInput(blogUrlField, () => hideElement(successMessage));
+  onInput(blogUrlField, () => {
+    hideElement(successMessage);
+    unhideElement(submitButton);
+  });
   onSubmit(submitButton, async () => {
     clearValidationErrors(uiElements);
 
@@ -53,6 +56,7 @@ function main() {
     if (isSuccess(response)) {
       rssUrlContainer.textContent = response.responseData?.feedUrl!;
       unhideElement(successMessage);
+      hideElement(submitButton);
       return;
     }
 
