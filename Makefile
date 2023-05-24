@@ -723,8 +723,19 @@ tracking-report: bot-list.txt
 		fi
 	}
 
-	bot_list_re="($$(paste -sd '|' bot-list.txt))"
+	function debug_log() {
+		local message=$$1
+
+		if [ -v DEBUG ]; then
+			echo "++ DEBUG $$message" > /dev/stderr
+		fi
+	}
+
+	bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
+	debug_log "bot_list_re: $$bot_list_re"
+
 	date=$${DATE:-`date +%F`}
+	debug_log "date: $$date"
 
 	cat .tmp/logs/feedsubscription/website.log |
 	grep -P "^$$date" |
