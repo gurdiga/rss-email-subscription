@@ -93,9 +93,15 @@ function initPlanDropdown(planDropdown: HTMLSelectElement, selectedPlan: string)
   planDropdown.replaceChildren(
     ...Object.entries(Plans)
       .filter(([id]) => id !== PlanId.SDE)
-      .map(([id, { title }]) =>
-        createElement('option', title, { value: id, ...(selectedPlan === id ? { selected: 'selected' } : {}) })
-      )
+      .map(([id, { title }]) => {
+        const option = createElement('option', title, { value: id });
+
+        if (id === selectedPlan) {
+          option.selected = true;
+        }
+
+        return option;
+      })
   );
 }
 
