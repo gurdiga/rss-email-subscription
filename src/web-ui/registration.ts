@@ -22,6 +22,7 @@ import {
   sendApiRequest,
   unhideElement,
 } from './shared';
+import { getStripe } from './stripe-elements';
 
 function main() {
   if (isAuthenticated()) {
@@ -52,6 +53,15 @@ function main() {
     displayInitError(uiElements.reason);
     return;
   }
+
+  const stripe = getStripe();
+
+  if (isErr(stripe)) {
+    displayInitError(stripe.reason);
+    return;
+  }
+
+  console.log({ stripe });
 
   initPlanDropdown(uiElements.planDropdown, queryStringParams.plan);
 

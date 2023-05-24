@@ -1,0 +1,4 @@
+export enum StripeKeys {
+  PublishableTest = 'pk_test_51MvdmxFR3kYE4CA0Lt5kD0JPFPL9ddsNVQW0zG4T9Ni90Rc5Uxt3iQIjMxHzA5IXAUqULCSL22pHkYIYuKdM9O8900PN3Z38S7',
+  PublishableLive = 'pk_live_51MvdmxFR3kYE4CA0tWqey4CQLbu5swCFi55fXYha1z6TXyqkQX21zV0knPChTfPCylYJNyRE37KANv3SN6P6OefY00l4YHt9sG',
+}
