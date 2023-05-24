@@ -751,9 +751,7 @@ tracking-report: bot-list.txt
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
-	@echo Updating $@...
-
-	base_re='\w*(bot|crawler)\w*'
+	@base_re='\w*(bot|crawler)\w*'
 
 	zcat -f $^ |
 	grep -Eo '" [0-9]+ [0-9]+ ".*'"$$base_re" | # only lines with something-BOT-something in the UA string (or referrer)
