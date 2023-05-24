@@ -1,14 +1,14 @@
-export function createElement(
-  tagName: keyof HTMLElementTagNameMap,
+export function createElement<T extends keyof HTMLElementTagNameMap>(
+  tagName: T,
   textContent: string,
   attributes?: Record<string, string>
-): HTMLElement;
-export function createElement(tagName: keyof HTMLElementTagNameMap): HTMLElement;
-export function createElement(
-  tagName: keyof HTMLElementTagNameMap,
+): HTMLElementTagNameMap[T];
+export function createElement<T extends keyof HTMLElementTagNameMap>(tagName: T): HTMLElementTagNameMap[T];
+export function createElement<T extends keyof HTMLElementTagNameMap>(
+  tagName: T,
   textContent?: string,
   attributes?: Record<string, string>
-): HTMLElement {
+) {
   const element = document.createElement(tagName);
 
   if (textContent) {

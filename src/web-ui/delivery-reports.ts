@@ -97,7 +97,7 @@ function displayReport(tbody: HTMLTableSectionElement, response: DeliveryReportR
 }
 
 function makeTrForReport(report: DeliveryReportData): HTMLTableRowElement {
-  const tr = createElement('tr') as HTMLTableRowElement;
+  const tr = createElement('tr');
 
   tr.append(
     createDeliveryStartCell(report.deliveryStart),
@@ -110,17 +110,17 @@ function makeTrForReport(report: DeliveryReportData): HTMLTableRowElement {
 }
 
 function createSentCountCell(count: number): HTMLTableCellElement {
-  return createElement('td', count.toString(), { class: 'text-end' }) as HTMLTableCellElement;
+  return createElement('td', count.toString(), { class: 'text-end' });
 }
 
 function createFailedCountCell(messageCounts: MessageCounts): HTMLTableCellElement {
   const failed = messageCounts['mailbox-full'] + messageCounts.bounced;
 
-  return createElement('td', failed.toString(), { class: 'text-end' }) as HTMLTableCellElement;
+  return createElement('td', failed.toString(), { class: 'text-end' });
 }
 
 function createDeliveryStartCell(dateString: string): HTMLTableCellElement {
-  return createElement('td', formatDeliveryStart(dateString)) as HTMLTableCellElement;
+  return createElement('td', formatDeliveryStart(dateString));
 }
 
 export function formatDeliveryStart(dateString: string): string {
@@ -135,7 +135,7 @@ export function formatDeliveryStart(dateString: string): string {
 }
 
 function createPostTitleCell(title: string, urlString: string): HTMLTableCellElement {
-  const td = createElement('td') as HTMLTableCellElement;
+  const td = createElement('td');
   const postTitleLink = createElement('a', title, {
     href: urlString,
     target: '_blank',

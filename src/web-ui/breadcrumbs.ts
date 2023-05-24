@@ -49,7 +49,7 @@ function displayMobileBreadcrumbs(uiElements: BreadcrumbsUiElements, segments: B
 }
 
 function createBreadcrumbElement(segment: BreadcrumbsSegment): HTMLLIElement {
-  const li = createElement('li', '', { class: 'breadcrumb-item' }) as HTMLLIElement;
+  const li = createElement('li', '', { class: 'breadcrumb-item' });
 
   if ('href' in segment) {
     li.appendChild(createElement('a', segment.label, { href: segment.href }));
