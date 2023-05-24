@@ -767,5 +767,12 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	zcat -f $^ |
 	grep -Eo '" [0-9]+ [0-9]+ ".*'"$$base_re" | # only lines with something-BOT-something in the UA string (or referrer)
 	grep -Eoi "$$base_re" |
-	cat <(echo "Chrome-Lighthouse"; echo "scaninfo@paloaltonetworks.com") - |
+	cat <(
+		# Known non-humans
+		echo "Chrome-Lighthouse"
+		echo "scaninfo@paloaltonetworks.com"
+		echo "Feedly"
+		echo "Go-http-client"
+		echo "Nmap Scripting Engine"
+	) - |
 	sort -u > $@
