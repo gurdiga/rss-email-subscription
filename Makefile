@@ -776,3 +776,12 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		echo "Nmap Scripting Engine"
 	) - |
 	sort -u > $@
+
+# cron @reboot
+ufw-config:
+	# This is necessary for the app and api containers to be able to
+	# access host’s external IP, which is needed when checking our own RSS
+	# feed.
+
+	ufw allow 80/tcp
+	ufw allow 443/tcp
