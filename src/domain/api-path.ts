@@ -32,6 +32,9 @@ export enum ApiPath {
   requestAccountPasswordChange = '/account/request-change-password',
   deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
+  stripeKeys = '/stripe-keys',
+  createSubscription = '/create-subscription',
+  createCustomer = '/create-customer',
 }
 
 export function getFullApiPath(path: ApiPath, params: Record<string, string> = {}): string {

@@ -1,20 +1,20 @@
 import { RegistrationRequestData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans } from '../domain/plan';
-import { isAppError, isInputError, isSuccess } from '../shared/api-response';
+import { PlanId, Plans, makePlanId } from '../domain/plan';
+import { InputError, isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
 import {
-  apiResponseUiElements,
   AppStatusUiElements,
+  HttpMethod,
+  apiResponseUiElements,
   clearValidationErrors,
   displayAppError,
   displayCommunicationError,
   displayInitError,
   displayValidationError,
   hideElement,
-  HttpMethod,
   isAuthenticated,
   onSubmit,
   requireQueryParams,
@@ -22,9 +22,9 @@ import {
   sendApiRequest,
   unhideElement,
 } from './shared';
-import { getStripe } from './stripe-elements';
+import { PaymentSubformHandle, initPaymentSubform, submitPaymentSubform } from './stripe-integration';
 
-function main() {
+async function main() {
   if (isAuthenticated()) {
     location.href = PagePath.feedList;
     return;
@@ -41,12 +41,16 @@ function main() {
 
   const uiElements = requireUiElements<RequiredUiElements>({
     ...apiResponseUiElements,
+    form: '#registration-form',
     planDropdown: '#plan',
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
     appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
+    paymentSubform: '#payment-subform',
+    paymentSubformContainer: '#payment-subform-container',
+    additionalActionsSection: '#additional-actions-section',
   });
 
   if (isErr(uiElements)) {
@@ -54,36 +58,48 @@ function main() {
     return;
   }
 
-  const stripe = getStripe();
+  const paymentSubformHandle = await initPaymentSubform(uiElements.paymentSubform);
 
-  if (isErr(stripe)) {
-    displayInitError(stripe.reason);
+  if (isErr(paymentSubformHandle)) {
+    displayInitError(paymentSubformHandle.reason);
     return;
   }
 
-  console.log({ stripe });
+  initPlanDropdown(uiElements, queryStringParams.plan);
+  initSubmitButton(uiElements, paymentSubformHandle);
+}
 
-  initPlanDropdown(uiElements.planDropdown, queryStringParams.plan);
+function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: PaymentSubformHandle): void {
+  const { planDropdown, email, password, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
+  const { form, confirmationMessage, additionalActionsSection } = uiElements;
 
-  onSubmit(uiElements.submitButton, async (event: Event) => {
+  onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
+    const paymentFormResult = maybeValidatePaymentSubform(paymentSubformHandle, uiElements);
+
+    if (isInputError(paymentFormResult)) {
+      displayValidationError(paymentFormResult, uiElements);
+      paymentSubformHandle.focus();
+      return;
+    }
+
     const request: RegistrationRequestData = {
-      planId: uiElements.planDropdown.value,
-      email: uiElements.email.value,
-      password: uiElements.password.value,
+      planId: planDropdown.value,
+      email: email.value,
+      password: password.value,
     };
 
     const response = await asyncAttempt(() => sendApiRequest(ApiPath.registration, HttpMethod.POST, request));
 
     if (isErr(response)) {
-      displayCommunicationError(response, uiElements.apiResponseMessage);
+      displayCommunicationError(response, apiResponseMessage);
       return;
     }
 
     if (isAppError(response)) {
-      displayAppError(response, uiElements.appErrorMessage);
+      displayAppError(response, appErrorMessage);
       return;
     }
 
@@ -93,13 +109,16 @@ function main() {
     }
 
     if (isSuccess(response)) {
-      unhideElement(uiElements.confirmationMessage);
-      hideElement(uiElements.email.form!);
+      unhideElement(confirmationMessage);
+      hideElement(form);
+      hideElement(additionalActionsSection);
     }
   });
 }
 
-function initPlanDropdown(planDropdown: HTMLSelectElement, selectedPlan: string): void {
+function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string): void {
+  const { planDropdown, paymentSubformContainer } = uiElements;
+
   planDropdown.replaceChildren(
     ...Object.entries(Plans)
       .filter(([id]) => id !== PlanId.SDE)
@@ -113,10 +132,51 @@ function initPlanDropdown(planDropdown: HTMLSelectElement, selectedPlan: string)
         return option;
       })
   );
+
+  planDropdown.addEventListener('change', () => {
+    clearValidationErrors(uiElements);
+
+    if (isPaymentRequired(planDropdown.value)) {
+      unhideElement(paymentSubformContainer);
+    } else {
+      hideElement(paymentSubformContainer);
+    }
+  });
+}
+
+function maybeValidatePaymentSubform(
+  paymentSubformHandle: PaymentSubformHandle,
+  uiElements: RequiredUiElements
+): InputError | void {
+  if (!isPaymentRequired(uiElements.planDropdown.value)) {
+    return;
+  }
+
+  const paymentSubformError = submitPaymentSubform(paymentSubformHandle);
+
+  if (isErr(paymentSubformError)) {
+    const fieldName: keyof RequiredUiElements = 'paymentSubform';
+    const inputError = makeInputError(paymentSubformError.reason, fieldName);
+
+    return inputError;
+  }
+}
+
+function isPaymentRequired(planIdString: string): boolean {
+  const planId = makePlanId(planIdString);
+
+  if (isErr(planId)) {
+    return false;
+  }
+
+  return planId === PlanId.PayPerUse;
 }
 
 interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
   confirmationMessage: HTMLElement;
+  paymentSubform: HTMLElement;
+  paymentSubformContainer: HTMLElement;
+  additionalActionsSection: HTMLElement;
 }
 
 interface FormFields {
@@ -126,6 +186,7 @@ interface FormFields {
 }
 
 interface FormUiElements extends FormFields {
+  form: HTMLFormElement;
   submitButton: HTMLButtonElement;
 }
 

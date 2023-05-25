@@ -40,6 +40,7 @@ import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
 import { deliveryReports } from './delivery-reports';
+import { createCustomer, createSubscription, stripeKeys } from './stripe-integration';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -84,6 +85,9 @@ async function main() {
   router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
+  router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
+  router.post(ApiPath.createSubscription, makeAppRequestHandler(createSubscription, app));
+  router.post(ApiPath.createCustomer, makeAppRequestHandler(createCustomer, app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

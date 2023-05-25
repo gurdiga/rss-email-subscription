@@ -15,11 +15,19 @@ export interface AppEnv {
   DATA_DIR_ROOT: string;
   DOMAIN_NAME: string;
   SMTP_CONNECTION_STRING: string;
+  STRIPE_PUBLISHABLE_KEY: string;
+  STRIPE_SECRET_KEY: string;
 }
 
 export function initApp(): App {
   const { logError } = makeCustomLoggers({ module: initApp.name });
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
+  const env = requireEnv<AppEnv>([
+    'DATA_DIR_ROOT',
+    'DOMAIN_NAME',
+    'SMTP_CONNECTION_STRING',
+    'STRIPE_PUBLISHABLE_KEY',
+    'STRIPE_SECRET_KEY',
+  ]);
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
