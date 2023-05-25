@@ -144,6 +144,10 @@ export function displayAppError(error: AppError, messageElement: Element): void 
   messageElement.setAttribute('role', 'alert');
 }
 
+export function reportUnexpectedEmptyResponseData(path: ApiPath): void {
+  reportUnexpectedApiResponse('Unexpected empty response data', path);
+}
+
 export function reportUnexpectedApiResponse(message: string, path: ApiPath): void {
   const apiPath = getFullApiPath(path);
 
