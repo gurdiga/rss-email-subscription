@@ -144,6 +144,12 @@ export function displayAppError(error: AppError, messageElement: Element): void 
   messageElement.setAttribute('role', 'alert');
 }
 
+export function reportUnexpectedApiResponse(message: string, path: ApiPath): void {
+  const apiPath = getFullApiPath(path);
+
+  reportError(si`${message}, received from: ${apiPath}`);
+}
+
 export function reportError(error: Error | string): void {
   if (typeof error === 'string') {
     error = new Error(error);
