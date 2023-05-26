@@ -54,7 +54,7 @@ async function main() {
     {
       element: uiElements.ppuPricePerEmailCents,
       propName: 'textContent',
-      value: formatNumber(Plans.ppu.pricePerEmailCents),
+      value: formatNumber(Plans.ppu.centsPerEmail),
     },
     {
       element: uiElements.ppuMaxEmailsPerDay,

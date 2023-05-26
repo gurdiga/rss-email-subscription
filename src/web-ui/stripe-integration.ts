@@ -1,22 +1,21 @@
-import {
-  Appearance,
-  Stripe,
-  StripeConstructor,
-  StripeElementsOptionsMode,
-  StripePaymentElementOptions,
-} from '@stripe/stripe-js';
+import { Appearance, SetupIntentResult, Stripe, StripeConstructor, StripeElements } from '@stripe/stripe-js';
 import { ApiPath } from '../domain/api-path';
-import { StripeConfigResponseData } from '../domain/stripe-integration';
+import { StripeKeysResponseData, stripePaymentMethodTypes } from '../domain/stripe-integration';
 import { isAppError, isInputError } from '../shared/api-response';
-import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
-import { clearValidationErrors, sendApiRequest } from './shared';
+import { AnyAsyncFunction, Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
+import { reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
-  isComplete: boolean;
-  focus: () => void;
+  validate(): Promise<Result<Awaited<ReturnType<StripeElements['submit']>>>>;
+  confirmSetup(clientSecret: string): Promise<Result<SetupIntentResult>>;
+  focus(): void;
 }
 
-export async function initPaymentSubform(paymentSubform: HTMLElement): Promise<Result<PaymentSubformHandle>> {
+export async function initPaymentSubform(
+  paymentSubform: HTMLElement,
+  clearValidationState: () => void
+): Promise<Result<PaymentSubformHandle>> {
   const stripeKeys = await loadStripeKeys();
 
   if (isErr(stripeKeys)) {
@@ -47,36 +46,72 @@ export async function initPaymentSubform(paymentSubform: HTMLElement): Promise<R
     },
   };
 
-  const elementsOptions: StripeElementsOptionsMode = {
+  const elements = stripe.elements({
     mode: 'setup',
     currency: 'usd',
     appearance,
-    paymentMethodTypes: ['card'],
-  };
-  const elements = stripe.elements(elementsOptions);
-
-  const createOptions: StripePaymentElementOptions = {
-    wallets: {
-      applePay: 'auto',
-      googlePay: 'auto',
-    },
-  };
-
-  const paymentElement = elements.create('payment', createOptions);
-  const paymentSubformStatus: PaymentSubformHandle = { isComplete: false, focus: () => paymentElement.focus() };
-
-  paymentElement.on('change', (event) => {
-    clearValidationErrors({ paymentSubform });
-    paymentSubformStatus.isComplete = event.complete;
+    paymentMethodTypes: stripePaymentMethodTypes,
   });
 
-  paymentElement.mount(paymentSubform);
+  const paymentElement = elements.create('payment');
 
-  return paymentSubformStatus;
+  paymentElement.mount(paymentSubform);
+  paymentElement.on('change', clearValidationState);
+
+  const paymentSubformHandle: PaymentSubformHandle = {
+    focus: () => paymentElement.focus(),
+
+    validate: async () =>
+      await attemptStripeCall(
+        // prettier: keep these stacked
+        () => elements.submit(),
+        'elements.submit',
+        'validate payment information'
+      ),
+
+    confirmSetup: async (clientSecret: string) =>
+      await attemptStripeCall(
+        () => stripe.confirmSetup({ elements, clientSecret, redirect: 'if_required' }),
+        'stripe.confirmSetup',
+        'set up payment'
+      ),
+  };
+
+  return paymentSubformHandle;
 }
 
-async function loadStripeKeys(): Promise<Result<StripeConfigResponseData>> {
-  const response = await asyncAttempt(() => sendApiRequest<StripeConfigResponseData>(ApiPath.stripeKeys));
+export async function attemptStripeCall<F extends AnyAsyncFunction>(
+  f: F,
+  callName: string,
+  description: string
+): Promise<Result<ReturnType<F>>> {
+  const result = await asyncAttempt(f);
+
+  if (isErr(result)) {
+    reportError(si`Got error from ${callName}: ${result.reason}`);
+    return makeErr(description);
+  }
+
+  const error = result.error;
+
+  if (!error) {
+    // Success
+    return result;
+  }
+
+  const errorMessage = error.message;
+
+  if (!errorMessage) {
+    reportError(si`Got StripeError with empty "message" from ${callName}`);
+    return makeErr(description);
+  }
+
+  return makeErr(errorMessage);
+}
+
+async function loadStripeKeys(): Promise<Result<StripeKeysResponseData>> {
+  const apiPath = ApiPath.stripeKeys;
+  const response = await asyncAttempt(() => sendApiRequest<StripeKeysResponseData>(apiPath));
 
   if (isErr(response)) {
     return response;
@@ -87,7 +122,8 @@ async function loadStripeKeys(): Promise<Result<StripeConfigResponseData>> {
   }
 
   if (!response.responseData) {
-    return makeErr('Error: Empty response');
+    reportUnexpectedEmptyResponseData(apiPath);
+    return makeErr('Empty response');
   }
 
   return response.responseData;
@@ -102,14 +138,4 @@ function getStripe(publishableKey: string): Result<Stripe> {
   const stripe = Stripe(publishableKey);
 
   return stripe;
-}
-
-export function submitPaymentSubform(paymentSubformHandle: PaymentSubformHandle): Result<void> {
-  if (!paymentSubformHandle.isComplete) {
-    return makeErr('Please fill in the payment details');
-  }
-
-  // TODO:
-  // - create Stripe customer
-  // - create Stripe subscription
 }

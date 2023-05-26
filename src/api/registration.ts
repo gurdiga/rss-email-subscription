@@ -1,6 +1,12 @@
 import { EmailContent, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
-import { Account, AccountId, RegistrationConfirmationRequest, RegistrationRequest } from '../domain/account';
+import {
+  Account,
+  AccountId,
+  RegistrationConfirmationRequest,
+  RegistrationRequest,
+  RegistrationResponseData,
+} from '../domain/account';
 import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
@@ -23,20 +29,21 @@ import { PlanId, makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
-import { hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
+import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie } from './app-cookie';
-import { App, AppEnv } from './init-app';
 import { AppRequestHandler } from './app-request-handler';
+import { AppEnv } from './init-app';
 import { initSession } from './session';
+import { createStripeRecords } from './stripe-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,
   reqBody,
   _reqParams,
   _reqSession,
-  app
+  { env, storage, settings }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
   const request = makeRegistrationRequest(reqBody);
@@ -51,7 +58,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError('SDE Plan is assigned by hand', 'planId' as keyof RegistrationRequest);
   }
 
-  const accountId = initAccount(app, request);
+  const accountId = initAccount(storage, settings, request);
 
   if (isErr(accountId)) {
     logError(si`Failed to ${initAccount.name}`, { reason: accountId.reason, request });
@@ -63,15 +70,16 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError('Email already taken', 'email' as keyof RegistrationRequest);
   }
 
-  const { email } = request;
-  const sendResult = await sendConfirmationEmail(email, app.settings, app.env);
+  const { email, planId } = request;
+  const sendResult = await sendConfirmationEmail(email, settings, env);
 
   if (isErr(sendResult)) {
     logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendResult.reason, email: email.value });
     return makeAppError(sendResult.reason);
   }
 
-  const result = storeRegistrationConfirmationSecret(app, email, accountId);
+  const confirmationSecret = makeRegistrationConfirmationSecretHash(email, settings.hashingSalt);
+  const result = storeRegistrationConfirmationSecret(storage, email, accountId, confirmationSecret);
 
   if (isErr(result)) {
     logError(si`Failed to ${storeRegistrationConfirmationSecret.name}`, {
@@ -81,15 +89,25 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  return makeSuccess('Account created. Welcome aboard! 🙂');
+  const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, email, planId);
+
+  if (isErr(clientSecret)) {
+    logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });
+    return makeAppError();
+  }
+
+  const logData = {};
+  const responseData: RegistrationResponseData = { clientSecret };
+
+  return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
 };
 
 function storeRegistrationConfirmationSecret(
-  { settings, storage }: App,
+  storage: AppStorage,
   email: EmailAddress,
-  accountId: AccountId
+  accountId: AccountId,
+  secret: string
 ): Result<void> {
-  const secret = makeRegistrationConfirmationSecretHash(email, settings.hashingSalt);
   const confirmationSecret = makeConfirmationSecret(secret);
 
   if (isErr(confirmationSecret)) {
@@ -191,7 +209,8 @@ export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
 }
 
 function initAccount(
-  { storage, settings }: App,
+  storage: AppStorage,
+  settings: AppSettings,
   request: RegistrationRequest
 ): Result<AccountId | AccountAlreadyExists> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: initAccount.name });

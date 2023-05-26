@@ -332,7 +332,7 @@ function makeStoredEmailMessageData(
     to: to.emailAddress.value,
     subject: emailContent.subject,
     htmlBody: emailContent.htmlBody,
-    pricePerEmailCents: plan.pricePerEmailCents,
+    pricePerEmailCents: plan.centsPerEmail,
     logRecords: [
       {
         status: PrePostfixMessageStatus.Prepared,

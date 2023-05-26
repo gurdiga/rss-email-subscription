@@ -1,9 +1,9 @@
-import { RegistrationRequestData } from '../domain/account';
+import { RegistrationRequest, RegistrationRequestData, RegistrationResponseData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans, makePlanId } from '../domain/plan';
+import { PlanId, Plans, isPaidPlan } from '../domain/plan';
 import { InputError, isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
-import { asyncAttempt, isErr } from '../shared/lang';
+import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
 import {
   AppStatusUiElements,
@@ -17,12 +17,13 @@ import {
   hideElement,
   isAuthenticated,
   onSubmit,
+  reportUnexpectedEmptyResponseData,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
   unhideElement,
 } from './shared';
-import { PaymentSubformHandle, initPaymentSubform, submitPaymentSubform } from './stripe-integration';
+import { PaymentSubformHandle, initPaymentSubform } from './stripe-integration';
 
 async function main() {
   if (isAuthenticated()) {
@@ -43,8 +44,8 @@ async function main() {
     ...apiResponseUiElements,
     form: '#registration-form',
     planDropdown: '#plan',
-    email: '#email',
-    password: '#password',
+    emailField: '#email',
+    passwordField: '#password',
     submitButton: '#submit-button',
     appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
@@ -58,7 +59,9 @@ async function main() {
     return;
   }
 
-  const paymentSubformHandle = await initPaymentSubform(uiElements.paymentSubform);
+  const paymentSubformHandle = await initPaymentSubform(uiElements.paymentSubform, () =>
+    clearValidationErrors(uiElements)
+  );
 
   if (isErr(paymentSubformHandle)) {
     displayInitError(paymentSubformHandle.reason);
@@ -70,28 +73,30 @@ async function main() {
 }
 
 function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: PaymentSubformHandle): void {
-  const { planDropdown, email, password, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
+  const { planDropdown, emailField, passwordField, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
   const { form, confirmationMessage, additionalActionsSection } = uiElements;
 
   onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    const paymentFormResult = maybeValidatePaymentSubform(paymentSubformHandle, uiElements);
+    const planId = planDropdown.value;
+    const paymentSubformResult = await maybeValidatePaymentSubform(paymentSubformHandle, planId);
 
-    if (isInputError(paymentFormResult)) {
-      displayValidationError(paymentFormResult, uiElements);
+    if (isInputError(paymentSubformResult)) {
+      displayValidationError(paymentSubformResult, uiElements);
       paymentSubformHandle.focus();
       return;
     }
 
     const request: RegistrationRequestData = {
-      planId: planDropdown.value,
-      email: email.value,
-      password: password.value,
+      planId: planId,
+      email: emailField.value,
+      password: passwordField.value,
     };
 
-    const response = await asyncAttempt(() => sendApiRequest(ApiPath.registration, HttpMethod.POST, request));
+    const path = ApiPath.registration;
+    const response = await asyncAttempt(() => sendApiRequest<RegistrationResponseData>(path, HttpMethod.POST, request));
 
     if (isErr(response)) {
       displayCommunicationError(response, apiResponseMessage);
@@ -104,16 +109,55 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     }
 
     if (isInputError(response)) {
-      displayValidationError(response, uiElements);
+      const formFields: Record<keyof RegistrationRequest, HTMLElement> = {
+        planId: uiElements.planDropdown,
+        password: uiElements.passwordField,
+        email: uiElements.emailField,
+      };
+      displayValidationError(response, formFields);
       return;
     }
 
-    if (isSuccess(response)) {
-      unhideElement(confirmationMessage);
-      hideElement(form);
-      hideElement(additionalActionsSection);
+    if (!response.responseData) {
+      const inputError = makeInputError('Error: Empty response');
+      displayValidationError(inputError, uiElements);
+      reportUnexpectedEmptyResponseData(path);
+      return;
     }
+
+    if (!isSuccess(response)) {
+      exhaustivenessCheck(response);
+    }
+
+    const { clientSecret } = response.responseData;
+    const finishPaymentResult = await maybeConfirmPayment(paymentSubformHandle, planId, clientSecret);
+
+    if (isInputError(finishPaymentResult)) {
+      displayValidationError(finishPaymentResult, uiElements);
+      paymentSubformHandle.focus();
+      return;
+    }
+
+    unhideElement(confirmationMessage);
+    hideElement(form);
+    hideElement(additionalActionsSection);
   });
+}
+
+async function maybeConfirmPayment(
+  paymentSubformHandle: PaymentSubformHandle,
+  planId: string,
+  clientSecret: string
+): Promise<InputError | void> {
+  if (!isPaidPlan(planId)) {
+    return;
+  }
+
+  const result = await paymentSubformHandle.confirmSetup(clientSecret);
+
+  if (isErr(result)) {
+    return makeInputError<keyof RequiredUiElements>(result.reason, 'paymentSubform');
+  }
 }
 
 function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string): void {
@@ -136,7 +180,7 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
   planDropdown.addEventListener('change', () => {
     clearValidationErrors(uiElements);
 
-    if (isPaymentRequired(planDropdown.value)) {
+    if (isPaidPlan(planDropdown.value)) {
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);
@@ -144,32 +188,21 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
   });
 }
 
-function maybeValidatePaymentSubform(
+async function maybeValidatePaymentSubform(
   paymentSubformHandle: PaymentSubformHandle,
-  uiElements: RequiredUiElements
-): InputError | void {
-  if (!isPaymentRequired(uiElements.planDropdown.value)) {
+  planId: string
+): Promise<InputError | void> {
+  if (!isPaidPlan(planId)) {
     return;
   }
 
-  const paymentSubformError = submitPaymentSubform(paymentSubformHandle);
+  const validateResult = await paymentSubformHandle.validate();
 
-  if (isErr(paymentSubformError)) {
-    const fieldName: keyof RequiredUiElements = 'paymentSubform';
-    const inputError = makeInputError(paymentSubformError.reason, fieldName);
+  console.log({ validateResult });
 
-    return inputError;
+  if (isErr(validateResult)) {
+    return makeInputError<keyof RequiredUiElements>(validateResult.reason, 'paymentSubform');
   }
-}
-
-function isPaymentRequired(planIdString: string): boolean {
-  const planId = makePlanId(planIdString);
-
-  if (isErr(planId)) {
-    return false;
-  }
-
-  return planId === PlanId.PayPerUse;
 }
 
 interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
@@ -181,8 +214,8 @@ interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
 
 interface FormFields {
   planDropdown: HTMLSelectElement;
-  email: HTMLInputElement;
-  password: HTMLInputElement;
+  emailField: HTMLInputElement;
+  passwordField: HTMLInputElement;
 }
 
 interface FormUiElements extends FormFields {

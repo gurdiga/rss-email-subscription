@@ -72,6 +72,10 @@ export interface RegistrationRequest {
 
 export type RegistrationRequestData = Record<keyof RegistrationRequest, string>;
 
+export interface RegistrationResponseData {
+  clientSecret: string;
+}
+
 export interface AuthenticationRequest {
   email: EmailAddress;
   password: Password;

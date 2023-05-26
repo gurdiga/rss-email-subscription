@@ -10,15 +10,17 @@ import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import {
-  requestAccountEmailChange,
   confirmAccountEmailChange,
+  deleteAccountWithPassword,
   loadCurrentAccount,
+  requestAccountEmailChange,
   requestAccountPasswordChange,
   requestAccountPlanChange,
-  deleteAccountWithPassword,
 } from './account';
+import { makeAppRequestHandler } from './app-request-handler';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
+import { deliveryReports } from './delivery-reports';
 import {
   addFeedSubscribers,
   addNewFeed,
@@ -33,14 +35,12 @@ import {
 } from './feeds';
 import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
-import { makeAppRequestHandler } from './app-request-handler';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
+import { stripeKeys } from './stripe-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
-import { deliveryReports } from './delivery-reports';
-import { createCustomer, createSubscription, stripeKeys } from './stripe-integration';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -86,8 +86,6 @@ async function main() {
   router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
-  router.post(ApiPath.createSubscription, makeAppRequestHandler(createSubscription, app));
-  router.post(ApiPath.createCustomer, makeAppRequestHandler(createCustomer, app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 
