@@ -177,15 +177,20 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
       })
   );
 
-  planDropdown.addEventListener('change', () => {
-    clearValidationErrors(uiElements);
-
-    if (isPaidPlan(planDropdown.value)) {
+  const togglePaymentSubform = (planId: string) => {
+    if (isPaidPlan(planId)) {
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);
     }
+  };
+
+  planDropdown.addEventListener('change', () => {
+    clearValidationErrors(uiElements);
+    togglePaymentSubform(planDropdown.value);
   });
+
+  togglePaymentSubform(planDropdown.value);
 }
 
 async function maybeValidatePaymentSubform(
