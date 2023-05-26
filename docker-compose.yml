@@ -22,6 +22,8 @@ x-app-env: &app-env
   NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
   # DEBUG: '*' # Useful for debuggind Express.js routing
   SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
+  STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY?}
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY?}
 
 services:
   smtp-out:
