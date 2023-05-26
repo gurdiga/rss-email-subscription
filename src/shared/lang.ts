@@ -119,6 +119,7 @@ export function readStringArray(stringArray: unknown): Result<string[]> {
   return makeErr('Not an array of strings');
 }
 
+/** This function is used to denote a point in the program it should never reach. */
 export function exhaustivenessCheck(_x: never): never {
   throw new Error('Exhaustiveness check failed');
 }
