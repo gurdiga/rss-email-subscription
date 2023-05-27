@@ -69,7 +69,7 @@ export const feedListBreadcrumbsLink: BreadcrumbsLink = {
 export function makeFeedManageBreadcrumbsLink(displayName: string, feedId: FeedId): BreadcrumbsLink {
   const link: BreadcrumbsLink = {
     label: displayName,
-    href: makePagePathWithParams<FeedManageParams>(PagePath.feedManage, { id: feedId.value }),
+    href: makePagePathWithParams<FeedManageParams>(PagePath.feedManage, { id: feedId.value, idChanged: 'false' }),
   };
 
   return link;

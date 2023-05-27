@@ -70,7 +70,7 @@ async function main() {
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       setTimeout(() => {
-        const nextPageParams: FeedManageParams = { id: response.responseData?.feedId! };
+        const nextPageParams: FeedManageParams = { id: response.responseData?.feedId!, idChanged: 'false' };
         const nextPage = makePagePathWithParams(PagePath.feedManage, nextPageParams);
 
         navigateTo(nextPage);

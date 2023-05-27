@@ -29,6 +29,7 @@ export interface DeliveryReportsParams {
 
 export interface FeedManageParams {
   id: string;
+  idChanged: 'true' | 'false';
 }
 
 export interface FeedEditParams {

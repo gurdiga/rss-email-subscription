@@ -35,6 +35,7 @@ import {
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({
     id: 'id',
+    idChanged: 'idChanged',
   });
 
   if (isErr(queryStringParams)) {
@@ -58,6 +59,8 @@ async function main() {
     subscribeFormLink: '#subscribe-form-link',
     deliveryReportsLink: '#delivery-reports-link',
     deleteButton: '#delete-button',
+    idChangedMessage: '#id-changed-message',
+    newFeedId: '#new-feed-id',
   });
 
   if (isErr(uiElements)) {
@@ -72,6 +75,11 @@ async function main() {
   if (isErr(response)) {
     displayInitError(response.reason);
     return;
+  }
+
+  if (queryStringParams.idChanged === 'true') {
+    uiElements.newFeedId.textContent = queryStringParams.id;
+    unhideElement(uiElements.idChangedMessage);
   }
 
   unhideElement(uiElements.feedActions);
@@ -231,10 +239,13 @@ interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   subscribeFormLink: HTMLAnchorElement;
   deliveryReportsLink: HTMLAnchorElement;
   deleteButton: HTMLButtonElement;
+  idChangedMessage: HTMLButtonElement;
+  newFeedId: HTMLButtonElement;
 }
 
 interface RequiredParams {
   id: string;
+  idChanged: string;
 }
 
 typeof window !== 'undefined' && main();

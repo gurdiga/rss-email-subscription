@@ -129,7 +129,14 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
       displayApiResponse(response, uiElements.apiResponseMessage);
 
       setTimeout(() => {
-        const nextPageParams = { id: response.responseData?.feedId! };
+        const newFeedId = response.responseData?.feedId!;
+        const oldFeedId = feedId.value;
+
+        const nextPageParams: FeedManageParams = {
+          id: newFeedId,
+          idChanged: newFeedId !== oldFeedId ? 'true' : 'false',
+        };
+
         const nextPage = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, nextPageParams);
 
         navigateTo(nextPage);

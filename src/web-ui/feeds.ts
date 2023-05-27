@@ -77,7 +77,10 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
 
 function makeLinkData(item: UiFeedListItem): FeedLinkData {
   const text = item.displayName;
-  const href = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, { id: item.feedId.value });
+  const href = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, {
+    id: item.feedId.value,
+    idChanged: 'false',
+  });
 
   return { text, href };
 }
