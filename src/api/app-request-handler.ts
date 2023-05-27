@@ -27,6 +27,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
       module: 'api',
       referer: req.get('Referer'),
       userAgent: req.get('User-Agent'),
+      ip: req.headers['x-real-ip'] || 'EMPTY_x-real-ip',
     });
 
     logInfo(action, { reqId, reqBody, reqParams });
