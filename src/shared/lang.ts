@@ -136,12 +136,12 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeF
 
   for (const keyName in makeFns) {
     const unknownValue = (x as any)[keyName];
-    const makeFn = makeFns[keyName];
+    const valueIsFalsy = unknownValue === '' || unknownValue === undefined || unknownValue === null;
 
-    if (
-      !makeFn.name.startsWith('makeOptional') &&
-      (unknownValue === '' || unknownValue === undefined || unknownValue === null)
-    ) {
+    const makeFn = makeFns[keyName];
+    const valueIsRequired = !makeFn.name.startsWith('makeOptional');
+
+    if (valueIsRequired && valueIsFalsy) {
       return makeErr(si`Missing value`, keyName);
     }
 
