@@ -270,7 +270,10 @@ async function sendPasswordChangeInformationEmail(email: EmailAddress, settings:
 }
 
 function makePasswordChangeRequest(data: unknown | PasswordChangeRequestData): Result<PasswordChangeRequest> {
-  return makeValues<PasswordChangeRequest>(data, { currentPassword: makePassword, newPassword: makePassword });
+  return makeValues<PasswordChangeRequest>(data, {
+    currentPassword: makePassword,
+    newPassword: makePassword,
+  });
 }
 
 export const requestAccountEmailChange: AppRequestHandler = async function requestAccountEmailChange(
