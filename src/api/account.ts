@@ -197,7 +197,11 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
   const request = makePasswordChangeRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning(si`Failed to ${makePasswordChangeRequest.name}`, { reason: request.reason, reqBody });
+    logWarning(si`Failed to ${makePasswordChangeRequest.name}`, {
+      field: request.field,
+      reason: request.reason,
+      reqBody,
+    });
     return makeInputError(request.reason, request.field);
   }
 
