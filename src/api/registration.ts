@@ -49,7 +49,11 @@ export const registration: AppRequestHandler = async function registration(
   const request = makeRegistrationRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning(si`Failed to ${makeRegistrationRequest.name}`, { reason: request.reason, reqBody });
+    logWarning(si`Failed to ${makeRegistrationRequest.name}`, {
+      field: request.field,
+      reason: request.reason,
+      reqBody,
+    });
     return makeInputError(request.reason, request.field);
   }
 
