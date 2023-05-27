@@ -774,6 +774,8 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		echo "Feedly"
 		echo "Go-http-client"
 		echo "Nmap Scripting Engine"
+		echo "facebookexternalhit"
+		echo "facebookcatalog"
 	) - |
 	sort -u > $@
 
