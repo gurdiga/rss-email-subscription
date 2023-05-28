@@ -17,6 +17,7 @@ import {
   makeNonEmptyString,
 } from './lang';
 import { makeTestAccountId } from './test-utils';
+import { si } from './string-utils';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -239,7 +240,7 @@ describe(makeArrayOfValues.name, () => {
     expect(result).to.deep.equal([
       // prettier: keep these stacked
       1,
-      makeErr('Value is not a number', 'amounts'),
+      makeErr(si`Value is not a number at index ${1}`, 'amounts'),
       42,
       0,
     ]);

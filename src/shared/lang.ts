@@ -168,7 +168,15 @@ export function makeArrayOfValues<T extends unknown, MF extends AnyFunction = Ma
     return makeErr('Not an array', field);
   }
 
-  return values.map((value) => makeFn(value, field));
+  return values.map((value, index) => {
+    const result = makeFn(value, field);
+
+    if (isErr(result)) {
+      result.reason += ` at index ${index}`;
+    }
+
+    return result;
+  });
 }
 
 export function makeNumber(value: unknown, field?: string): Result<number> {
