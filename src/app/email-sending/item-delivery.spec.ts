@@ -7,6 +7,7 @@ import {
   getDeliveriesRootStorageKey,
   getQidFromPostfixResponse,
   getStoredMessageStorageKey,
+  makeStoredEmailMessage,
 } from './item-delivery';
 import { PostfixDeliveryStatus } from '../../domain/delivery-status';
 import { makeTestAccountId, makeTestFeedId } from '../../shared/test-utils';
@@ -75,5 +76,82 @@ describe(getDeliveriesRootStorageKey.name, () => {
     const storageKey = getDeliveriesRootStorageKey(makeTestAccountId(), makeTestFeedId());
 
     expect(storageKey).to.equal('/accounts/test-account-id/feeds/test-feed-id/deliveries');
+  });
+});
+
+describe(makeStoredEmailMessage.name, () => {
+  const timestamp = '2023-05-28T18:30:14.675Z';
+  const validData = {
+    subject: 'Hello unit testing',
+    htmlBody: '<h1>Yes, please</h1>',
+    to: 'makeStoredEmailMessage@test.com',
+    pricePerEmailCents: 10,
+    logRecords: [
+      {
+        status: 'postfixed',
+        timestamp,
+        logMessage: 'Roger that',
+      },
+      {
+        status: 'sent',
+        timestamp,
+        logMessage: 'Yay!!',
+      },
+    ],
+  };
+
+  it('returns a StoredEmailMessage when it can', () => {
+    const expectedResult = {
+      emailContent: {
+        htmlBody: '<h1>Yes, please</h1>',
+        subject: 'Hello unit testing',
+      },
+      id: 'test-message-id',
+      kind: 'StoredEmailMessage',
+      logRecords: [
+        {
+          status: 'postfixed',
+          timestamp: new Date(timestamp),
+          logMessage: 'Roger that',
+        },
+        {
+          status: 'sent',
+          timestamp: new Date(timestamp),
+          logMessage: 'Yay!!',
+        },
+      ],
+      pricePerEmailCents: 10,
+      to: {
+        kind: 'EmailAddress',
+        value: 'makestoredemailmessage@test.com',
+      },
+    };
+
+    expect(makeStoredEmailMessage(validData, 'test-message-id')).to.deep.equal(expectedResult);
+  });
+
+  it('returns an Err when invalid input type', () => {
+    expect(makeStoredEmailMessage(42, 'test-message-id')).to.deep.equal(
+      makeErr('Invalid input type: expected [object] but got [number]')
+    );
+  });
+
+  it('returns a clear Err when some log records are invalid', () => {
+    expect(
+      makeStoredEmailMessage(
+        {
+          ...validData,
+          logRecords: [
+            ...validData.logRecords,
+            {
+              sos: 'somethn brokkk',
+            },
+          ],
+        },
+        'test-message-id'
+      )
+    ).to.deep.equal(
+      makeErr('Failed to parse some logRecords: [{"kind":"Err","reason":"Missing value at index 2","field":"status"}]')
+    );
   });
 });
