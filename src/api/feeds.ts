@@ -1,5 +1,6 @@
 import { parse } from 'node-html-parser';
 import {
+  StoredEmailAddresses,
   loadEmailAddresses,
   makeEmailHashFn,
   makeHashedEmail,
@@ -60,7 +61,6 @@ import {
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
-import { AppEnv } from './init-app';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
@@ -323,7 +323,31 @@ export const handleFeedManageScreen: AppRequestHandler = async function handleFe
     return makeInputError(request.reason, request.field);
   }
 
-  const response = makeFeedManageScreenResponse(request, session.accountId, storage, env);
+  const { accountId } = session;
+  const { feedId } = request;
+  const feed = loadFeed(accountId, feedId, storage);
+
+  if (isErr(feed)) {
+    logError(si`Failed to ${loadFeed.name}: ${feed.reason}`, { feedId: feedId.value });
+    return makeAppError();
+  }
+
+  if (isFeedNotFound(feed)) {
+    logError('Feed to manage not found', { feedId: feedId.value });
+    return makeAppError('Feed not found');
+  }
+
+  const storedEmails = loadEmailAddresses(accountId, feedId, storage);
+
+  if (isErr(storedEmails)) {
+    logError(si`Failed to ${loadEmailAddresses.name}: ${storedEmails.reason}`, {
+      accountId: accountId.value,
+      feedId: feedId.value,
+    });
+    return makeAppError();
+  }
+
+  const response = makeFeedManageScreenResponse(feed, storedEmails, env.DOMAIN_NAME);
 
   if (isErr(response)) {
     logError(si`Faled to ${makeFeedManageScreenResponse.name}`, { reason: response.reason, field: response.field });
@@ -342,30 +366,11 @@ function makeFeedManageScreenRequest(data: unknown): Result<FeedManageScreenRequ
 }
 
 function makeFeedManageScreenResponse(
-  request: FeedManageScreenRequest,
-  accountId: AccountId,
-  storage: AppStorage,
-  env: AppEnv
+  feed: Feed,
+  storedEmails: StoredEmailAddresses,
+  domainName: string
 ): Result<FeedManageScreenResponse> {
-  const { feedId } = request;
-  const feed = loadFeed(accountId, feedId, storage);
-
-  if (isErr(feed)) {
-    return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
-  }
-
-  if (isFeedNotFound(feed)) {
-    return makeErr(si`Feed not found: ${feedId.value}`);
-  }
-
-  const storedEmails = loadEmailAddresses(accountId, feedId, storage);
-
-  if (isErr(storedEmails)) {
-    return makeErr(si`Failed to ${loadEmailAddresses.name}: ${storedEmails.reason}`);
-  }
-
   const subscriberCount = storedEmails.validEmails.filter((x) => x.isConfirmed).length;
-  const domainName = env.DOMAIN_NAME;
 
   return {
     id: feed.id.value,
