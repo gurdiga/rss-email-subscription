@@ -1,16 +1,16 @@
-import { LoadFeedsResponseData, UiFeedListItem } from '../domain/feed';
-import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
 import { ApiPath } from '../domain/api-path';
+import { LoadFeedsResponseData, UiFeedListItem } from '../domain/feed';
+import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError } from '../shared/api-response';
-import { isEmpty, sortBy } from '../shared/array-utils';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { isEmpty } from '../shared/array-utils';
+import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
-  displayInitError,
   HttpMethod,
+  SpinnerUiElements,
+  displayInitError,
   requireUiElements,
   sendApiRequest,
-  SpinnerUiElements,
   spinnerUiElements,
   unhideElement,
 } from './shared';
@@ -71,7 +71,7 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
     ? { preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!' }
     : {
         preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
-        linkData: feedList.map(makeLinkData).sort(sortBy((x) => x.text)),
+        linkData: feedList.map(makeLinkData),
       };
 }
 

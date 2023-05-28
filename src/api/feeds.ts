@@ -48,7 +48,7 @@ import {
 } from '../domain/feed-storage';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isEmpty, isNotEmpty } from '../shared/array-utils';
+import { isEmpty, isNotEmpty, sortBy } from '../shared/array-utils';
 import {
   Result,
   asyncAttempt,
@@ -296,7 +296,9 @@ export const loadFeeds: AppRequestHandler = async function listFeeds(reqId, _req
   }
 
   const logData = {};
-  const responseData: LoadFeedsResponseData = result.validFeeds.map(makeUiFeedListItem);
+  const responseData: LoadFeedsResponseData = result.validFeeds
+    .map(makeUiFeedListItem)
+    .sort(sortBy((x) => x.displayName.toLowerCase()));
 
   return makeSuccess('Feeds!', logData, responseData);
 };
