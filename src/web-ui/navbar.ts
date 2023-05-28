@@ -32,16 +32,18 @@ function main() {
 }
 
 function displayPublicNavbar(uiElements: RequiredUiElements): void {
-  unhideElement(uiElements.publicNav);
-  hideElement(uiElements.privateNav);
+  const { privateNav, publicNav, haSignInLink } = uiElements;
+
+  unhideElement(publicNav);
+  unhideElement(haSignInLink);
+  hideElement(privateNav);
 }
 
 function displayPrivateNavbar(uiElements: RequiredUiElements): void {
-  const { privateNav, publicNav, signOutLink, haSignInLink } = uiElements;
+  const { privateNav, publicNav, signOutLink } = uiElements;
 
   unhideElement(privateNav);
   hideElement(publicNav);
-  hideElement(haSignInLink);
 
   onClick(signOutLink, async (e: Event) => {
     e.preventDefault();
