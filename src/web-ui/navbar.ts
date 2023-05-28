@@ -16,6 +16,7 @@ function main() {
     publicNav: '#right-navbar-nav-public',
     privateNav: '#right-navbar-nav-private',
     signOutLink: '#sign-out-link',
+    haSignInLink: '#ha-sign-in',
   });
 
   if (isErr(uiElements)) {
@@ -36,10 +37,11 @@ function displayPublicNavbar(uiElements: RequiredUiElements): void {
 }
 
 function displayPrivateNavbar(uiElements: RequiredUiElements): void {
-  const { privateNav, publicNav, signOutLink } = uiElements;
+  const { privateNav, publicNav, signOutLink, haSignInLink } = uiElements;
 
   unhideElement(privateNav);
   hideElement(publicNav);
+  hideElement(haSignInLink);
 
   onClick(signOutLink, async (e: Event) => {
     e.preventDefault();
@@ -60,6 +62,7 @@ interface RequiredUiElements {
   publicNav: HTMLElement;
   privateNav: HTMLElement;
   signOutLink: HTMLAnchorElement;
+  haSignInLink: HTMLAnchorElement;
 }
 
 typeof window !== 'undefined' && main();
