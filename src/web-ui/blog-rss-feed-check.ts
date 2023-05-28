@@ -38,16 +38,23 @@ function main() {
     hideElement(successMessage);
     unhideElement(submitButton);
   });
+
   onSubmit(submitButton, async () => {
     clearValidationErrors(uiElements);
 
-    const response = await submitForm(uiElements);
-    const formFields: Record<keyof CheckFeedUrlResponseData, HTMLElement> = {
-      feedUrl: blogUrlField,
+    const requestData: CheckFeedUrlRequestData = {
+      blogUrl: uiElements.blogUrlField.value,
     };
 
+    const formFieldName: keyof FormFields = 'blogUrlField';
+    const responseFieldName: keyof CheckFeedUrlResponseData = 'feedUrl';
+
+    const response = await asyncAttempt(() =>
+      sendApiRequest<CheckFeedUrlResponseData>(ApiPath.checkFeedUrl, HttpMethod.POST, requestData)
+    );
+
     if (isInputError(response)) {
-      displayValidationError(response, formFields);
+      displayValidationError(response, { [responseFieldName]: formFieldName });
       return;
     }
 
@@ -63,22 +70,15 @@ function main() {
   });
 }
 
-async function submitForm(formFields: UiElements) {
-  const makeFeedRequest: CheckFeedUrlRequestData = {
-    blogUrl: formFields.blogUrlField.value,
-  };
-
-  return await asyncAttempt(() =>
-    sendApiRequest<CheckFeedUrlResponseData>(ApiPath.checkFeedUrl, HttpMethod.POST, makeFeedRequest)
-  );
-}
-
-interface UiElements {
+interface UiElements extends FormFields {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
-  blogUrlField: HTMLInputElement;
   successMessage: HTMLElement;
   rssUrlContainer: HTMLElement;
+}
+
+interface FormFields {
+  blogUrlField: HTMLInputElement;
 }
 
 main();

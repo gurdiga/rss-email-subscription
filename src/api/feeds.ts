@@ -8,6 +8,7 @@ import {
   storeEmails,
 } from '../app/email-sending/emails';
 import { fetch } from '../app/rss-checking/fetch';
+import { isValidFeedContentType } from '../app/rss-checking/rss-response';
 import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../domain/account';
 import { getAccountIdList } from '../domain/account-storage';
 import { defaultFeedPattern } from '../domain/cron-pattern';
@@ -686,11 +687,15 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     return makeInputError('Could not load that blog. 🤔', fieldName);
   }
 
-  const contentType = response.headers.get('content-type');
+  const contentType = response.headers.get('content-type') || '';
 
-  if (!contentType?.startsWith('text/html')) {
+  if (isValidFeedContentType(contentType)) {
+    return makeSuccess('OK', {}, { feedUrl: blogUrl.toString() });
+  }
+
+  if (!contentType.startsWith('text/html')) {
     logWarning('Invalid blog Content-Type', { blogUrl, contentType });
-    return makeInputError('Your blog seems to have an invalid Content-Type header. 🤔', fieldName);
+    return makeInputError('This seems not to be a blog. 🤔', fieldName);
   }
 
   const html = await response.text();

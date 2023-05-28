@@ -8,15 +8,18 @@ export interface RssResponse {
   baseURL: URL;
 }
 
-export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
-  const supportedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml', 'application/rss+xml'];
+export function isValidFeedContentType(s: string): boolean {
+  const supportedFeedConentTypes = ['text/xml', 'application/xml', 'application/atom+xml', 'application/rss+xml'];
 
+  return supportedFeedConentTypes.some((t) => s.startsWith(t));
+}
+
+export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
   try {
     const response = await fetchFn(url);
     const contentType = response.headers.get('content-type')?.toLowerCase() || '';
-    const isValidContentType = (s: string) => supportedConentTypes.some((t) => s.startsWith(t));
 
-    if (isValidContentType(contentType)) {
+    if (isValidFeedContentType(contentType)) {
       return {
         kind: 'RssResponse',
         xml: await response.text(),
