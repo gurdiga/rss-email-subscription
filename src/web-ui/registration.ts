@@ -20,7 +20,7 @@ import {
   reportUnexpectedEmptyResponseData,
   requireQueryParams,
   requireUiElements,
-  scrollIntoView,
+  scrollToTop,
   sendApiRequest,
   unhideElement,
 } from './shared';
@@ -143,7 +143,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     hideElement(additionalActionsSection);
 
     unhideElement(confirmationMessage);
-    scrollIntoView(confirmationMessage);
+    scrollToTop();
   });
 }
 
