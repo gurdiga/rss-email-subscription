@@ -92,7 +92,7 @@ export async function sendOutboxEmails(
     newItems: validItems.length,
     subscribers: subscriberCount,
     sentExpected: validItems.length * subscriberCount,
-    sent: -1, // exclude catch-all
+    sent: -1 * validItems.length, // exclude catch-all
     failed: 0,
   };
 
