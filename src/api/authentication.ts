@@ -81,7 +81,7 @@ function checkCredentials({ settings, storage }: App, request: AuthenticationReq
   const storedHashedPassword = account.hashedPassword.value;
 
   if (inputHashedPassword !== storedHashedPassword) {
-    logWarning('Icorrect password', { inputHashedPassword, storedHashedPassword });
+    logWarning('Incorrect password', { inputHashedPassword, storedHashedPassword });
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
 
