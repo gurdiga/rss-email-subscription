@@ -20,6 +20,7 @@ import {
   reportUnexpectedEmptyResponseData,
   requireQueryParams,
   requireUiElements,
+  scrollIntoView,
   sendApiRequest,
   unhideElement,
 } from './shared';
@@ -138,9 +139,11 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
       return;
     }
 
-    unhideElement(confirmationMessage);
     hideElement(form);
     hideElement(additionalActionsSection);
+
+    unhideElement(confirmationMessage);
+    scrollIntoView(confirmationMessage);
   });
 }
 
@@ -202,8 +205,6 @@ async function maybeValidatePaymentSubform(
   }
 
   const validateResult = await paymentSubformHandle.validate();
-
-  console.log({ validateResult });
 
   if (isErr(validateResult)) {
     return makeInputError<keyof RequiredUiElements>(validateResult.reason, 'paymentSubform');
