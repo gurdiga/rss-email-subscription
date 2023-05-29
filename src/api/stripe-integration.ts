@@ -1,4 +1,6 @@
 import Stripe from 'stripe';
+import { AccountId } from '../domain/account';
+import { getAccountRootStorageKey } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
 import { PlanId, isPaidPlan } from '../domain/plan';
 import { AppStorage, StorageKey } from '../domain/storage';
@@ -28,6 +30,7 @@ export async function createStripeRecords(
   storage: AppStorage,
   secretKey: string,
   priceId: string,
+  accountId: AccountId,
   email: EmailAddress,
   planId: PlanId
 ): Promise<Result<string | 'NOT_A_PAID_PLAN'>> {
@@ -42,7 +45,7 @@ export async function createStripeRecords(
     return makeErr(si`Failed to stripe.customers.create: ${customer.reason}`);
   }
 
-  const storeCustomerResult = storeStripeCustomer(storage, customer);
+  const storeCustomerResult = storeStripeCustomer(storage, accountId, customer);
 
   if (isErr(storeCustomerResult)) {
     return makeErr(si`Failed to ${storeStripeCustomer.name}: ${storeCustomerResult.reason}`);
@@ -59,6 +62,12 @@ export async function createStripeRecords(
     return makeErr(si`Failed to stripe.setupIntents.create: ${setupIntent.reason}`);
   }
 
+  const clientSecret = setupIntent.client_secret;
+
+  if (!clientSecret) {
+    return makeErr(si`stripe.setupIntents.create returned empty "client_secret"`);
+  }
+
   const subscription = await asyncAttempt(() =>
     stripe.subscriptions.create({
       customer: customer.id,
@@ -70,26 +79,43 @@ export async function createStripeRecords(
     return makeErr(si`Failed to stripe.subscriptions.create: ${subscription.reason}`);
   }
 
-  const clientSecret = setupIntent.client_secret;
+  const subscriptionItem = subscription.items.data[0];
 
-  if (!clientSecret) {
-    return makeErr(si`Failed to stripe.setupIntents.create returned empty "client_secret"`);
+  if (!subscriptionItem) {
+    return makeErr(si`Subscription has no items`);
+  }
+
+  if (!subscriptionItem.id) {
+    return makeErr(si`Subscription’s item has no ID`);
+  }
+
+  const storeScubscriptionItemResult = storeSubscriptionItemId(storage, accountId, subscriptionItem.id);
+
+  if (isErr(storeScubscriptionItemResult)) {
+    return makeErr(si`Failed to ${storeSubscriptionItemId.name}: ${storeScubscriptionItemResult.reason}`);
   }
 
   return clientSecret;
 }
 
-function storeStripeCustomer(storage: AppStorage, customer: Stripe.Customer) {
-  const storageKey = getStripeCustomerStorageKey(customer.id);
+function storeStripeCustomer(storage: AppStorage, accountId: AccountId, customer: Stripe.Customer): Result<void> {
+  const storageKey = getStripeCustomerStorageKey(accountId);
 
-  storage.storeItem(storageKey, customer);
+  return storage.storeItem(storageKey, customer);
 }
 
-/**
- * @param stripeCustomerId a string like this: "cus_NsjqlMycxxfyMg"
- */
-function getStripeCustomerStorageKey(stripeCustomerId: string): StorageKey {
-  return makePath('/stripe-customers', stripeCustomerId);
+function storeSubscriptionItemId(storage: AppStorage, accountId: AccountId, subscriptionItemId: string): Result<void> {
+  const storageKey = getStripeSubscriptionItemStorageKey(accountId);
+
+  return storage.storeItem(storageKey, subscriptionItemId);
+}
+
+function getStripeCustomerStorageKey(accountId: AccountId): StorageKey {
+  return makePath(getAccountRootStorageKey(accountId), 'stripe-customer.json');
+}
+
+function getStripeSubscriptionItemStorageKey(accountId: AccountId): StorageKey {
+  return makePath(getAccountRootStorageKey(accountId), 'stripe-subscription-item-id.json');
 }
 
 function makeStripe(secretKey: string): Stripe {
