@@ -20,11 +20,11 @@ import {
   isPostfixDeliveryStatus,
   makeStoredEmailStatus,
 } from '../../domain/delivery-status';
+import { DelmonStatus } from './delmon-status';
 
 let rest = '';
-let lineCount = 0;
 
-export function processData(data: Buffer, storage: AppStorage): void {
+export function processData(data: Buffer, status: DelmonStatus, storage: AppStorage): void {
   const { logError, logInfo } = makeCustomLoggers({ module: processData.name });
   const result = extractLines(rest + data.toString());
 
@@ -37,10 +37,13 @@ export function processData(data: Buffer, storage: AppStorage): void {
       logError(si`Failed to ${handleLine.name}: "${result.reason}"; line "${line}"`);
     }
 
-    lineCount++;
+    status.lineCount++;
 
-    if (lineCount % 500 === 0) {
-      logInfo('Lines processed', { lineCount, memoryUsage: process.memoryUsage() });
+    if (status.lineCount % 500 === 0) {
+      logInfo('Lines processed', {
+        lineCount: status.lineCount,
+        memoryUsage: process.memoryUsage(),
+      });
     }
   });
 }

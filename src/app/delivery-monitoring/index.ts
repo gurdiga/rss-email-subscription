@@ -6,10 +6,12 @@ import { isErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { processData } from './line-processing';
 import { CronJob } from 'cron';
+import { DelmonStatus } from './delmon-status';
 
 async function main() {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'delivery-monitoring' });
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT']);
+  const status: DelmonStatus = { lineCount: 0 };
 
   if (isErr(env)) {
     logError(si`Failed to ${requireEnv.name}: ${env.reason}`);
@@ -23,23 +25,25 @@ async function main() {
     return;
   }
 
-  process.stdin.on('data', (data: Buffer) => processData(data, storage));
+  process.stdin.on('data', (data: Buffer) => processData(data, status, storage));
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
-  keepPulse(logWarning);
+  startPulseWatcher(logWarning, status);
 }
 
-function keepPulse(logWarning: ReturnType<typeof makeCustomLoggers>['logWarning']): void {
-  let prevCpuUsage: NodeJS.CpuUsage;
+type LoggerFn = ReturnType<typeof makeCustomLoggers>['logWarning'];
 
-  new CronJob('0 0 * * *', () =>
-    logWarning('delmon is alive', {
-      uptime: process.uptime(),
-      memoryUsage: process.memoryUsage(),
-      cpuUsage: process.cpuUsage(prevCpuUsage),
-    })
-  ).start();
+function startPulseWatcher(loggerFn: LoggerFn, status: DelmonStatus): void {
+  new CronJob('*/20 * * * *', () => recordPulse(loggerFn, status.lineCount)).start();
+}
+
+function recordPulse(loggerFn: LoggerFn, lineCount: number): void {
+  loggerFn('delmon is alive', {
+    lineCount,
+    uptime: process.uptime(),
+    memoryUsage: process.memoryUsage(),
+  });
 }
 
 main();
