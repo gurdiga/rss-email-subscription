@@ -132,6 +132,16 @@ delmon: app
 		--tag delmon \
 		docker-services/delmon
 
+# This seems to be needed after log rotation
+delmon-restart:
+	@docker restart delmon |
+	cat <(
+		echo "Subject: RES delmon-restart"
+		echo "From: RES <system@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 logger:
 	docker buildx build \
 		--progress=plain \
