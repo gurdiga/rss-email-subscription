@@ -93,7 +93,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, email, planId);
+  const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, env.STRIPE_PRICE_ID, email, planId);
 
   if (isErr(clientSecret)) {
     logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });

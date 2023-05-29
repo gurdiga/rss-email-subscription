@@ -27,6 +27,7 @@ export const stripeKeys: AppRequestHandler = async function stripeConfig(
 export async function createStripeRecords(
   storage: AppStorage,
   secretKey: string,
+  priceId: string,
   email: EmailAddress,
   planId: PlanId
 ): Promise<Result<string | 'NOT_A_PAID_PLAN'>> {
@@ -35,8 +36,7 @@ export async function createStripeRecords(
   }
 
   const stripe = makeStripe(secretKey);
-  const customerData = { email: email.value };
-  const customer = await asyncAttempt(() => stripe.customers.create(customerData));
+  const customer = await asyncAttempt(() => stripe.customers.create({ email: email.value }));
 
   if (isErr(customer)) {
     return makeErr(si`Failed to stripe.customers.create: ${customer.reason}`);
@@ -48,15 +48,26 @@ export async function createStripeRecords(
     return makeErr(si`Failed to ${storeStripeCustomer.name}: ${storeCustomerResult.reason}`);
   }
 
-  const setupIntentData: Stripe.SetupIntentCreateParams = {
-    customer: customer.id,
-    payment_method_types: stripePaymentMethodTypes,
-  };
-
-  const setupIntent = await asyncAttempt(() => stripe.setupIntents.create(setupIntentData));
+  const setupIntent = await asyncAttempt(() =>
+    stripe.setupIntents.create({
+      customer: customer.id,
+      payment_method_types: stripePaymentMethodTypes,
+    })
+  );
 
   if (isErr(setupIntent)) {
     return makeErr(si`Failed to stripe.setupIntents.create: ${setupIntent.reason}`);
+  }
+
+  const subscription = await asyncAttempt(() =>
+    stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+    })
+  );
+
+  if (isErr(subscription)) {
+    return makeErr(si`Failed to stripe.subscriptions.create: ${subscription.reason}`);
   }
 
   const clientSecret = setupIntent.client_secret;
