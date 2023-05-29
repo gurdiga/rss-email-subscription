@@ -27,13 +27,13 @@ function main() {
     return;
   }
 
-  maybeInitMobileToggle(uiElements.navToggle);
-
   if (isAuthenticated()) {
     displayPrivateNavbar(uiElements);
   } else {
     displayPublicNavbar(uiElements);
   }
+
+  maybeInitMobileToggle(uiElements.navToggle);
 }
 
 function maybeInitMobileToggle(button: HTMLButtonElement): void {
