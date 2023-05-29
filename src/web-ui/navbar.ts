@@ -1,5 +1,7 @@
 import { ApiPath } from '../domain/api-path';
 import { asyncAttempt, isErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
+import { querySelector } from './dom-isolation';
 import {
   displayInitError,
   hideElement,
@@ -17,6 +19,7 @@ function main() {
     privateNav: '#right-navbar-nav-private',
     signOutLink: '#sign-out-link',
     haSignInLink: '#ha-sign-in',
+    navToggle: 'button[data-bs-toggle="collapse"]',
   });
 
   if (isErr(uiElements)) {
@@ -24,11 +27,52 @@ function main() {
     return;
   }
 
+  maybeInitMobileToggle(uiElements.navToggle);
+
   if (isAuthenticated()) {
     displayPrivateNavbar(uiElements);
   } else {
     displayPublicNavbar(uiElements);
   }
+}
+
+function maybeInitMobileToggle(button: HTMLButtonElement): void {
+  const isMobile = button.clientHeight > 0;
+
+  if (!isMobile) {
+    // NOTE: This is not bullet-proof, but should work in most relevant
+    // cases.
+    return;
+  }
+
+  const menuSelector = button.dataset['bsTarget'];
+
+  if (!menuSelector) {
+    displayInitError('Menu toggle has an empty menu selector');
+    return;
+  }
+
+  const menu = querySelector(menuSelector) as HTMLElement;
+
+  if (!menu) {
+    displayInitError(si`Menu not found by selector: "${menuSelector}"`);
+    return;
+  }
+
+  menu.classList.remove('collapse');
+
+  const menuActualHeight = menu.clientHeight;
+
+  menu.style.height = '0';
+  menu.style.overflow = 'hidden';
+  menu.style.transition = 'height 0.3s ease-in-out';
+
+  let isHidden = true;
+
+  onClick(button, () => {
+    isHidden = !isHidden;
+    menu.style.height = isHidden ? '0' : menuActualHeight + 'px';
+  });
 }
 
 function displayPublicNavbar(uiElements: RequiredUiElements): void {
@@ -65,6 +109,7 @@ interface RequiredUiElements {
   privateNav: HTMLElement;
   signOutLink: HTMLAnchorElement;
   haSignInLink: HTMLAnchorElement;
+  navToggle: HTMLButtonElement;
 }
 
 typeof window !== 'undefined' && main();
