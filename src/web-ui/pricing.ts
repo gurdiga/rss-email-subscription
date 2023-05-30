@@ -11,6 +11,7 @@ import {
   reportUnexpectedEmptyResponseData,
   requireUiElements,
   sendApiRequest,
+  unhideElement,
 } from './shared';
 
 async function main() {
@@ -123,7 +124,7 @@ async function main() {
     },
   ]);
 
-  uiElements.setupServiceCard.classList.add('opacity-100');
+  unhideElement(uiElements.setupServiceCard);
 }
 
 async function loadAccountSupportProduct(): Promise<Result<AccountSupportProductResponseData>> {
