@@ -57,7 +57,7 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
     const accountIds = getAllAccountIds(storage);
 
     if (isErr(accountIds)) {
-      logError('Failed to list all account IDs', { reason: accountIds.reason });
+      logError(si`Failed to ${getAllAccountIds.name}`, { reason: accountIds.reason });
       return;
     }
 
@@ -154,7 +154,7 @@ async function checkFeeds(storage: AppStorage): Promise<void> {
     const accountIds = getAllAccountIds(storage);
 
     if (isErr(accountIds)) {
-      logError('Failed to list all account IDs', { reason: accountIds.reason });
+      logError(si`Failed to ${getAllAccountIds.name}`, { reason: accountIds.reason });
       return;
     }
 
