@@ -33,6 +33,7 @@ export enum ApiPath {
   deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
   stripeKeys = '/stripe-keys',
+  accountSupportProduct = '/account-support-product',
 }
 
 export function getFullApiPath(path: ApiPath, params: Record<string, string> = {}): string {

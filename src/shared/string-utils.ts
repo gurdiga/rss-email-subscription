@@ -23,3 +23,9 @@ export function rawsi(strings: TemplateStringsArray, ...values: AllowedIterpolat
 function interpolate(values: AllowedIterpolatedValueType[]) {
   return (result: string, string: string, index: number) => result + string + (values[index] ?? '');
 }
+
+export function formatMoney(cents: number): string {
+  const options = { style: 'currency', currency: 'usd', maximumSignificantDigits: 2 };
+
+  return new Intl.NumberFormat('en-US', options).format(cents / 100);
+}

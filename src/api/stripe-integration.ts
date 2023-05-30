@@ -4,9 +4,14 @@ import { getAccountRootStorageKey } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
 import { PlanId, isPaidPlan } from '../domain/plan';
 import { AppStorage, StorageKey } from '../domain/storage';
-import { StripeKeysResponseData, stripePaymentMethodTypes } from '../domain/stripe-integration';
-import { makeSuccess } from '../shared/api-response';
-import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
+import {
+  AccountSupportProductResponseData,
+  StripeKeysResponseData,
+  stripePaymentMethodTypes,
+} from '../domain/stripe-integration';
+import { makeAppError, makeSuccess } from '../shared/api-response';
+import { Result, asyncAttempt, isErr, makeErr, makeNumber, makeString, makeValues } from '../shared/lang';
+import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
@@ -25,6 +30,68 @@ export const stripeKeys: AppRequestHandler = async function stripeConfig(
 
   return makeSuccess('Stripe keys', logData, responseData);
 };
+
+export const accountSupportProduct: AppRequestHandler = async function accountSupportProduct(
+  reqId,
+  _reqBody,
+  _reqParams,
+  _reqSession,
+  { env }
+) {
+  const { logError } = makeCustomLoggers({ module: accountSupportProduct.name, reqId });
+
+  const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+  const stripeApiProductList = await asyncAttempt(() => stripe.products.list({ expand: ['data.default_price'] }));
+
+  if (isErr(stripeApiProductList)) {
+    logError(si`Failed to stripe.products.list: ${stripeApiProductList.reason}`);
+    return makeAppError();
+  }
+
+  const product = stripeApiProductList.data.find((x) => x.metadata['res_code'] === 'account_setup');
+
+  if (!product) {
+    makeErr('Account support product not found in product list from Stripe');
+    return makeAppError();
+  }
+
+  const paymentLinks = await asyncAttempt(() => stripe.paymentLinks.list());
+
+  if (isErr(paymentLinks)) {
+    logError(si`Failed to stripe.paymentLinks.list: ${paymentLinks.reason}`);
+    return makeAppError();
+  }
+
+  const priceInCents = (product.default_price as Stripe.Price)?.unit_amount;
+  const paymentLinkUrl = paymentLinks.data?.find((x) => x.metadata?.['res_code'] === 'account_setup_payment_link')?.url;
+
+  const accountSupportProductData: Record<keyof AccountSupportProductResponseData, unknown> = {
+    name: product.name,
+    description: product.description,
+    priceInCents,
+    paymentLinkUrl,
+  };
+
+  const responseData = makeAccountSupportProductResponseData(accountSupportProductData);
+
+  if (isErr(responseData)) {
+    logError(si`Some information is missing in the Stripe product: ${responseData.reason}`, { product });
+    return makeAppError();
+  }
+
+  const logData = {};
+
+  return makeSuccess('Account Support product', logData, responseData);
+};
+
+function makeAccountSupportProductResponseData(data: unknown): Result<AccountSupportProductResponseData> {
+  return makeValues<AccountSupportProductResponseData>(data, {
+    name: makeString,
+    description: makeString,
+    priceInCents: makeNumber,
+    paymentLinkUrl: makeString,
+  });
+}
 
 export async function createStripeRecords(
   storage: AppStorage,
