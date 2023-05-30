@@ -229,3 +229,20 @@ export function getAccountRootStorageKey(accountId: AccountId): StorageKey {
 export function getAccountStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'account.json');
 }
+
+export function getAllAccountIds(storage: AppStorage): Result<AccountId[]> {
+  const accountDirs = storage.listSubdirectories(accountsStorageKey);
+
+  if (isErr(accountDirs)) {
+    return makeErr(si`Failed to list account subdirectories: ${accountDirs.reason}`);
+  }
+
+  const results = accountDirs.map((x) => makeAccountId(x));
+  const err = results.find(isErr);
+
+  if (err) {
+    return makeErr(si`Failed to ${makeAccountId.name} from subdir name: ${err.reason}`);
+  }
+
+  return results.filter(isAccountId);
+}
