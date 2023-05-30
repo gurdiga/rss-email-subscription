@@ -209,12 +209,11 @@ export function sendApiRequest<R extends any = any>(
   data: Record<string, string> = {}
 ): Promise<AuthenticatedApiResponse<R>> {
   const urlEncodedData = new URLSearchParams(data);
-  const apiFullPath = getFullApiPath(relativePath);
 
   const [url, body] =
     method === HttpMethod.POST
-      ? [si`${apiFullPath}`, urlEncodedData]
-      : [si`${apiFullPath}?${urlEncodedData.toString()}`, null];
+      ? [getFullApiPath(relativePath), urlEncodedData]
+      : [getFullApiPath(relativePath, data), null];
 
   return fetch(url, { method, body })
     .then(assertFound)
