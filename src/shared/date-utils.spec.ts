@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeDate } from './date-utils';
+import { getDateBefore, makeDate } from './date-utils';
 import { makeErr } from './lang';
 
 describe(makeDate.name, () => {
@@ -17,5 +17,14 @@ describe(makeDate.name, () => {
 
   it('defaults Err field to "date"', () => {
     expect(makeDate('not-a-date')).to.deep.equal(makeErr('Not a date string', 'date'));
+  });
+});
+
+describe(getDateBefore.name, () => {
+  it('returns the date before the given date (ignoring time)', () => {
+    const date = new Date('2023-05-30');
+    const resultDate = getDateBefore(date).toISOString().substring(0, 10);
+
+    expect(resultDate).to.deep.equal('2023-05-29');
   });
 });
