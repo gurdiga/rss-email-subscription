@@ -15,6 +15,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
+import { getUuid } from '../shared/crypto';
 
 export const stripeKeys: AppRequestHandler = async function stripeConfig(
   _reqId,
@@ -177,6 +178,12 @@ function storeSubscriptionItemId(storage: AppStorage, accountId: AccountId, subs
   return storage.storeItem(storageKey, subscriptionItemId);
 }
 
+function loadSubscriptionItemId(storage: AppStorage, accountId: AccountId): Result<string> {
+  const storageKey = getStripeSubscriptionItemStorageKey(accountId);
+
+  return storage.loadItem(storageKey);
+}
+
 function getStripeCustomerStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'stripe-customer.json');
 }
@@ -192,4 +199,33 @@ function makeStripe(secretKey: string): Stripe {
   };
 
   return new Stripe(secretKey, config);
+}
+
+export async function reportUsageToStripe(
+  storage: AppStorage,
+  secretKey: string,
+  accountId: AccountId,
+  quantity: number
+): Promise<Result<void>> {
+  const stripe = makeStripe(secretKey);
+
+  const subscriptionItemId = loadSubscriptionItemId(storage, accountId);
+
+  if (isErr(subscriptionItemId)) {
+    return makeErr(si`Failed to ${loadSubscriptionItemId.name}: ${subscriptionItemId.reason}`);
+  }
+
+  const idempotencyKey = getUuid();
+  const result = asyncAttempt(() =>
+    stripe.subscriptionItems.createUsageRecord(
+      // prettier: keep these stacked
+      subscriptionItemId,
+      { action: 'set', quantity },
+      { idempotencyKey }
+    )
+  );
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to stripe.subscriptionItems.createUsageRecord: ${result.reason}`);
+  }
 }
