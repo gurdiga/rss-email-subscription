@@ -17,6 +17,7 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { getDeliveriesRootStorageKey } from './email-sending/item-delivery';
 import { isPaidPlan } from '../domain/plan';
+import { reportUsageToStripe } from '../api/stripe-integration';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -34,8 +35,7 @@ function main() {
   const storage = makeStorage(dataDirRoot);
 
   const feedCheckingJob = startJob('2 * * * *', () => checkFeeds(storage));
-  // TODO: Change schedule from hourly to midnight when dev done.
-  const usageReportingJob = startJob('1 * * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
+  const usageReportingJob = startJob('1 0 * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
   const errorReportingCheckJob = startJob('0 0 * * *', () => logError('Just checking error reporting'));
 
   process.on('SIGHUP', () => {
@@ -52,7 +52,7 @@ function main() {
   });
 }
 
-function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
+function reportUsage(storage: AppStorage, stripeSecretKey: string): void {
   const logData = { module: reportUsage.name };
 
   logDuration('Usage reporting', logData, async () => {
@@ -123,9 +123,17 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
         continue;
       }
 
-      logInfo('Reporting usage to Stripe', { date: yesterday, accountId: accountId.value, totalItems });
-      // TODO: Uncomment this after a test run
-      // reportUsageToStripe(storage, stripeSecretKey, accountId, quantity);
+      logDuration(
+        'Reporting usage to Stripe',
+        { ...logData, date: yesterday, accountId: accountId.value, totalItems },
+        async () => {
+          const response = await reportUsageToStripe(storage, stripeSecretKey, accountId, totalItems);
+
+          if (isErr(response)) {
+            logError(si`Failed to ${reportUsageToStripe.name}: ${response.reason}`);
+          }
+        }
+      );
     }
   });
 }

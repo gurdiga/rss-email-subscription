@@ -228,4 +228,6 @@ export async function reportUsageToStripe(
   if (isErr(result)) {
     return makeErr(si`Failed to stripe.subscriptionItems.createUsageRecord: ${result.reason}`);
   }
+
+  // TODO: Store to delivery dir
 }
