@@ -343,7 +343,7 @@ export function scrollIntoView(element: HTMLElement) {
 }
 
 export function scrollToTop() {
-  document.body.scrollTo({ top: 0, behavior: 'smooth' });
+  document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 export function navigateTo(url: string, delay = 0): void {
