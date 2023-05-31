@@ -33,6 +33,7 @@ function main() {
   const storage = makeStorage(dataDirRoot);
 
   const feedCheckingJob = startJob('2 * * * *', () => checkFeeds(storage));
+  // TODO: Change schedule from hourly to midnight when dev done.
   const usageReportingJob = startJob('1 * * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
   const errorReportingCheckJob = startJob('0 0 * * *', () => logError('Just checking error reporting'));
 
@@ -217,11 +218,11 @@ async function checkFeeds(storage: AppStorage): Promise<void> {
   });
 }
 
-function startJob(cronTime: string, onTick: CronCommand): CronJob {
+function startJob(cronTime: string, workerFn: CronCommand): CronJob {
   const startNow = true;
   const onComplete = null;
 
-  return new CronJob(cronTime, onTick, onComplete, startNow);
+  return new CronJob(cronTime, workerFn, onComplete, startNow);
 }
 
 main();
