@@ -16,6 +16,7 @@ import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { getDeliveriesRootStorageKey } from './email-sending/item-delivery';
+import { isPaidPlan } from '../domain/plan';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -64,6 +65,22 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
     }
 
     for (const accountId of accountIds) {
+      const account = loadAccount(storage, accountId);
+
+      if (isErr(account)) {
+        logError(si`Failed to ${loadAccount.name}: ${account.reason}`, { ...logData, accountId: accountId.value });
+        continue;
+      }
+
+      if (isAccountNotFound(account)) {
+        logError(si`Account not found when reporting usage`, { ...logData, accountId: accountId.value });
+        continue;
+      }
+
+      if (!isPaidPlan(account.planId)) {
+        continue;
+      }
+
       const feeds = loadFeedsByAccountId(accountId, storage);
 
       if (isErr(feeds)) {
