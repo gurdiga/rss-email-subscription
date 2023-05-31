@@ -10,7 +10,7 @@ import {
   hideElement,
   onInput,
   onSubmit,
-  reportError,
+  reportAppError,
   requireUiElements,
   scrollIntoView,
   sendApiRequest,
@@ -27,7 +27,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    reportError(uiElements.reason);
+    reportAppError(uiElements.reason);
     return;
   }
 
@@ -66,7 +66,7 @@ function main() {
       return;
     }
 
-    reportError(si`Unhandled response type: ${JSON.stringify(response)}`);
+    reportAppError(si`Unhandled response type: ${JSON.stringify(response)}`);
   });
 }
 

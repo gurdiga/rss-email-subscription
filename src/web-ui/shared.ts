@@ -87,14 +87,14 @@ export function displayInitError(message: string) {
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
-    reportError(si`Element is missing: ${errorMessageSelector}`);
+    reportAppError(si`Element is missing: ${errorMessageSelector}`);
     return;
   }
 
   errorMessageElement.textContent = message;
   unhideElement(errorMessageElement);
 
-  reportError(message);
+  reportAppError(message);
 }
 
 export type AppStatusUiElements = ApiResponseUiElements & AppErrorUiElements;
@@ -130,7 +130,7 @@ export function displayApiResponse(apiResponse: ApiResponse, messageElement: Ele
 }
 
 export function displayCommunicationError(error: unknown, messageElement: Element): void {
-  reportError(error as Error);
+  reportAppError(error as Error);
 
   messageElement.textContent = 'Failed to connect to the server. Please try again in a few moments.';
   messageElement.classList.add('alert', 'alert-danger');
@@ -151,10 +151,10 @@ export function reportUnexpectedEmptyResponseData(path: ApiPath): void {
 export function reportUnexpectedApiResponse(message: string, path: ApiPath): void {
   const apiPath = getFullApiPath(path);
 
-  reportError(si`${message}, received from: ${apiPath}`);
+  reportAppError(si`${message}, received from: ${apiPath}`);
 }
 
-export function reportError(error: Error | string): void {
+export function reportAppError(error: Error | string): void {
   if (typeof error === 'string') {
     error = new Error(error);
   }
@@ -252,14 +252,14 @@ export function displayValidationError<FF>(
   const field = response.field as keyof FF;
 
   if (!field) {
-    reportError('No "field" prop in InputError from API.');
+    reportAppError('No "field" prop in InputError from API.');
     return;
   }
 
   const fieldElement = formFields[field] as HTMLElement;
 
   if (!fieldElement) {
-    reportError(si`Form field not found by "field" prop in InputError from API: ${String(field)}`);
+    reportAppError(si`Form field not found by "field" prop in InputError from API: ${String(field)}`);
     return;
   }
 
