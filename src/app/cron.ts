@@ -39,6 +39,7 @@ function main() {
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will check feeds now.');
     checkFeeds(storage);
+    reportUsage(storage, env.STRIPE_SECRET_KEY);
   });
 
   process.on('SIGTERM', () => {
