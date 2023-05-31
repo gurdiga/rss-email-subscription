@@ -86,15 +86,15 @@ function addDeleteAccountEventHandlers(uiElements: DeleteAccountUiElements): voi
     deleteAccountPasswordField.focus();
   });
 
-  const dismissEditForm = () => {
+  const dismissChangeForm = () => {
     clearValidationErrors(uiElements);
     hideElement(deleteAccountSuccessMessage);
     hideElement(deleteAccountConfirmationSection);
     unhideElement(deleteAccountSection);
   };
 
-  onClick(deleteAccountCancelButton, dismissEditForm);
-  onEscape(deleteAccountPasswordField, dismissEditForm);
+  onClick(deleteAccountCancelButton, dismissChangeForm);
+  onEscape(deleteAccountPasswordField, dismissChangeForm);
 
   onSubmit(deleteAccountSubmitButton, async () => {
     clearValidationErrors(uiElements);
@@ -126,7 +126,6 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
       deleteAccountApiResponseMessage.scrollIntoView({ behavior: 'smooth' });
       unhideElement(deleteAccountSuccessMessage);
       disableElement(deleteAccountPasswordField, deleteAccountSubmitButton, deleteAccountCancelButton);
-      // TODO: Consider redirecting to a survey page to ask for reasons.
       navigateTo(PagePath.home, 7000);
     }
   );
@@ -151,15 +150,15 @@ function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: P
     plansDropdown.focus();
   });
 
-  const dismissEditForm = () => {
+  const dismissChangeForm = () => {
     clearValidationErrors(uiElements);
     hideElement(planChangeSuccessMessage);
     hideElement(changePlanForm);
     unhideElement(viewPlanSection);
   };
 
-  onClick(cancelPlanChangeButton, dismissEditForm);
-  onEscape(plansDropdown, dismissEditForm);
+  onClick(cancelPlanChangeButton, dismissChangeForm);
+  onEscape(plansDropdown, dismissChangeForm);
 
   onSubmit(submitNewPlanButton, async () => {
     clearValidationErrors(uiElements);
@@ -452,6 +451,8 @@ interface PlanUiElements {
   cancelPlanChangeButton: HTMLButtonElement;
   planChangeApiResponseMessage: HTMLElement;
   planChangeSuccessMessage: HTMLElement;
+  paymentSubformContainer: HTMLElement;
+  paymentSubform: HTMLElement;
 }
 
 const planUiElements: ElementSelectors<PlanUiElements> = {
@@ -464,6 +465,8 @@ const planUiElements: ElementSelectors<PlanUiElements> = {
   cancelPlanChangeButton: '#cancel-plan-change-button',
   planChangeApiResponseMessage: '#plan-change-api-response-message',
   planChangeSuccessMessage: '#plan-change-success-message',
+  paymentSubformContainer: '#payment-subform-container',
+  paymentSubform: '#payment-subform',
 };
 
 interface DeleteAccountUiElements {
