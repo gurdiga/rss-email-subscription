@@ -94,7 +94,6 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
       }
 
       if (isEmpty(feeds.validFeeds)) {
-        logInfo('No feeds for account', { ...logData, accountId: accountId.value });
         continue;
       }
 
