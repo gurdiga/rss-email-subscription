@@ -9,7 +9,7 @@ import { FeedId } from '../domain/feed-id';
 import { loadFeedsByAccountId } from '../domain/feed-storage';
 import { AppStorage, makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
-import { getYestedayAsIsoString } from '../shared/date-utils';
+import { getYestedayAsIsoString as getYesterdayAsIsoString } from '../shared/date-utils';
 import { requireEnv } from '../shared/env';
 import { Result, isErr, makeErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
@@ -81,7 +81,7 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
       }
 
       const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
-      const yesterday = getYestedayAsIsoString();
+      const yesterday = getYesterdayAsIsoString();
       const quantity = approvedFeeds.reduce((total, feed) => {
         const itemCount = getItemCountRecursively(storage, accountId, feed.id, yesterday);
 
