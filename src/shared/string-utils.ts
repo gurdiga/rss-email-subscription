@@ -29,3 +29,10 @@ export function formatMoney(cents: number): string {
 
   return new Intl.NumberFormat('en-US', options).format(cents / 100);
 }
+
+export function capitalize(s: string): string {
+  const firstLetter = s.substring(0, 1);
+  const rest = s.substring(1);
+
+  return firstLetter.toUpperCase() + rest;
+}

@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { rawsi, si } from './string-utils';
+import { capitalize, rawsi, si } from './string-utils';
 
 describe(si.name, () => {
   it('typechecks to only allows number and string values to be interpolated', () => {
@@ -21,5 +21,11 @@ describe(rawsi.name, () => {
 
   it('typechecks to only allows number and string values to be interpolated', () => {
     expect(rawsi`one: ${1}\ntwo: ${'doi'}`).to.equal('one: 1\\ntwo: doi');
+  });
+});
+
+describe(capitalize.name, () => {
+  it('returns the string with the first letter capitalized', () => {
+    expect(capitalize('abc')).to.deep.equal('Abc');
   });
 });
