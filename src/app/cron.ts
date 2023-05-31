@@ -63,26 +63,26 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
     }
 
     for (const accountId of accountIds) {
-      const feedsByAccountId = loadFeedsByAccountId(accountId, storage);
+      const feeds = loadFeedsByAccountId(accountId, storage);
 
-      if (isErr(feedsByAccountId)) {
-        logError(si`Failed to ${loadFeedsByAccountId.name}`, { ...logData, reason: feedsByAccountId.reason });
+      if (isErr(feeds)) {
+        logError(si`Failed to ${loadFeedsByAccountId.name}`, { ...logData, reason: feeds.reason });
         continue;
       }
 
-      if (isNotEmpty(feedsByAccountId.errs)) {
-        const errs = feedsByAccountId.errs.map((x) => x.reason);
+      if (isNotEmpty(feeds.errs)) {
+        const errs = feeds.errs.map((x) => x.reason);
         logError(si`Errors on ${loadFeedsByAccountId.name}`, { ...logData, errs });
       }
 
-      if (isEmpty(feedsByAccountId.validFeeds)) {
+      if (isEmpty(feeds.validFeeds)) {
         logInfo('No feeds for account', { ...logData, accountId: accountId.value });
         continue;
       }
 
-      const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
+      const approvedFeeds = feeds.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
       const yesterday = getYesterdayAsIsoString();
-      const quantity = approvedFeeds.reduce((total, feed) => {
+      const totalItems = approvedFeeds.reduce((total, feed) => {
         const itemCount = getItemCountRecursively(storage, accountId, feed.id, yesterday);
 
         if (isErr(itemCount)) {
@@ -93,11 +93,11 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
         return total + itemCount;
       }, 0);
 
-      if (quantity === 0) {
+      if (totalItems === 0) {
         continue;
       }
 
-      logInfo('Reporting usage to Stripe', { accountId: accountId.value, yesterday, quantity });
+      logInfo('Reporting usage to Stripe', { accountId: accountId.value, yesterday, quantity: totalItems });
       // TODO: Uncomment this after a test run
       // reportUsageToStripe(storage, stripeSecretKey, accountId, quantity);
     }
