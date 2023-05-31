@@ -41,7 +41,6 @@ function main() {
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will check feeds now.');
     checkFeeds(storage);
-    reportUsage(storage, env.STRIPE_SECRET_KEY);
   });
 
   process.on('SIGTERM', () => {
@@ -123,11 +122,11 @@ function reportUsage(storage: AppStorage, stripeSecretKey: string): void {
         continue;
       }
 
-      logDuration(
+      await logDuration(
         'Reporting usage to Stripe',
         { ...logData, date: yesterday, accountId: accountId.value, totalItems },
         async () => {
-          const response = await reportUsageToStripe(storage, stripeSecretKey, accountId, totalItems);
+          const response = await reportUsageToStripe(storage, stripeSecretKey, accountId, totalItems, yesterday);
 
           if (isErr(response)) {
             logError(si`Failed to ${reportUsageToStripe.name}: ${response.reason}`);

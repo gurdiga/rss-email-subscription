@@ -15,7 +15,6 @@ import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
-import { getUuid } from '../shared/crypto';
 
 export const stripeKeys: AppRequestHandler = async function stripeConfig(
   _reqId,
@@ -205,18 +204,20 @@ export async function reportUsageToStripe(
   storage: AppStorage,
   secretKey: string,
   accountId: AccountId,
-  quantity: number
+  quantity: number,
+  usageDate: Date
 ): Promise<Result<void>> {
   const stripe = makeStripe(secretKey);
-
   const subscriptionItemId = loadSubscriptionItemId(storage, accountId);
 
   if (isErr(subscriptionItemId)) {
     return makeErr(si`Failed to ${loadSubscriptionItemId.name}: ${subscriptionItemId.reason}`);
   }
 
-  const idempotencyKey = getUuid();
-  const result = asyncAttempt(() =>
+  const dateOnly = usageDate.toISOString().substring(0, 10);
+  const idempotencyKey = accountId.value + '-' + dateOnly;
+
+  const result = await asyncAttempt(() =>
     stripe.subscriptionItems.createUsageRecord(
       // prettier: keep these stacked
       subscriptionItemId,
@@ -228,6 +229,4 @@ export async function reportUsageToStripe(
   if (isErr(result)) {
     return makeErr(si`Failed to stripe.subscriptionItems.createUsageRecord: ${result.reason}`);
   }
-
-  // TODO: Store to delivery dir
 }
