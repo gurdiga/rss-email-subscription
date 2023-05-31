@@ -4,6 +4,7 @@ import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage } from '../../domain/storage';
 import { rssItemHash } from '../../shared/crypto';
+import { getDeliveryDirPrefix } from '../../shared/date-utils';
 import { Result, isErr, makeErr } from '../../shared/lang';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
@@ -37,9 +38,9 @@ export function recordNewRssItems(
 export function getRssItemId(item: RssItem): string {
   const input = si`${item.title}${item.content}${item.pubDate.toJSON()}`;
   const hash = rssItemHash(input);
-  const isoDate = item.pubDate.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
+  const deliveryDirPrefix = getDeliveryDirPrefix(item.pubDate);
 
-  return si`${isoDate}-${hash}`;
+  return si`${deliveryDirPrefix}-${hash}`;
 }
 
 export function getItemFileName(item: RssItem): string {

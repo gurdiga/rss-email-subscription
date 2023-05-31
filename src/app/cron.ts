@@ -9,7 +9,7 @@ import { FeedId } from '../domain/feed-id';
 import { loadFeedsByAccountId } from '../domain/feed-storage';
 import { AppStorage, makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
-import { getYestedayAsIsoString as getYesterdayAsIsoString } from '../shared/date-utils';
+import { getDeliveryDirPrefix, getYesterday } from '../shared/date-utils';
 import { requireEnv } from '../shared/env';
 import { Result, isErr, makeErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
@@ -81,7 +81,7 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
       }
 
       const approvedFeeds = feeds.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
-      const yesterday = getYesterdayAsIsoString();
+      const yesterday = getYesterday();
       const totalItems = approvedFeeds.reduce((total, feed) => {
         const itemCount = getItemCountRecursively(storage, accountId, feed.id, yesterday);
 
@@ -108,7 +108,7 @@ function getItemCountRecursively(
   storage: AppStorage,
   accountId: AccountId,
   feedId: FeedId,
-  deliveryDate: string
+  date: Date
 ): Result<number> {
   const deliveriesStorageKey = getDeliveriesRootStorageKey(accountId, feedId);
   const deliveriesDirExists = storage.hasItem(deliveriesStorageKey);
@@ -121,34 +121,33 @@ function getItemCountRecursively(
     return 0;
   }
 
-  const statusSubdirs = storage.listSubdirectories(deliveriesStorageKey);
+  const deliveryDirs = storage.listSubdirectories(deliveriesStorageKey);
 
-  if (isErr(statusSubdirs)) {
-    return makeErr(si`Failed to list delivery status subdirs for feed ${feedId.value}: ${statusSubdirs.reason}`);
+  if (isErr(deliveryDirs)) {
+    return makeErr(si`Failed to list delivery subdirs for feed ${feedId.value}: ${deliveryDirs.reason}`);
   }
+
+  const deliveryDirPrefix = getDeliveryDirPrefix(date);
+  const dateDeliveryDirs = deliveryDirs.filter((x) => x.startsWith(deliveryDirPrefix));
 
   let total = 0;
 
-  for (const statusSubdir of statusSubdirs) {
-    const statusSubdirStorageKey = makePath(deliveriesStorageKey, statusSubdir);
-    const deliverySubdirs = storage.listSubdirectories(statusSubdirStorageKey);
+  for (const deliveryDir of dateDeliveryDirs) {
+    const deliveryRootStorageKey = makePath(deliveriesStorageKey, deliveryDir);
+    const statusDirs = storage.listSubdirectories(deliveryRootStorageKey);
 
-    if (isErr(deliverySubdirs)) {
+    if (isErr(statusDirs)) {
       return makeErr(
-        si`Failed to list delivery status subdir "${statusSubdir}" for feed ${feedId.value}: ${deliverySubdirs.reason}`
+        si`Failed to list status subdirs for delivery ${feedId.value}/${deliveryDir}: ${statusDirs.reason}`
       );
     }
 
-    const dateDeliveriesSubdirs = deliverySubdirs.filter((x) => x.startsWith(deliveryDate));
-
-    for (const deliverySubdir of dateDeliveriesSubdirs) {
-      const deliveryStorageKey = makePath(statusSubdirStorageKey, deliverySubdir);
+    for (const statusDir of statusDirs) {
+      const deliveryStorageKey = makePath(deliveryRootStorageKey, statusDir);
       const items = storage.listItems(deliveryStorageKey);
 
       if (isErr(items)) {
-        return makeErr(
-          si`Failed to list delivery items in ${feedId.value}/${statusSubdir}/${deliverySubdir}: ${items.reason}`
-        );
+        return makeErr(si`Failed to list items in ${feedId.value}/${deliveryDir}/${statusDir}: ${items.reason}`);
       }
 
       total += items.length;

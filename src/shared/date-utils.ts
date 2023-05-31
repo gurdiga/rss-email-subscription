@@ -24,8 +24,12 @@ export function getDateBefore(date: Date): Date {
   return new Date(date.getTime() - oneDay);
 }
 
-export function getYestedayAsIsoString(): string {
+export function getYesterday(): Date {
   const today = new Date();
 
-  return getDateBefore(today).toISOString().substring(0, 10);
+  return getDateBefore(today);
+}
+
+export function getDeliveryDirPrefix(date: Date): string {
+  return date.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
 }
