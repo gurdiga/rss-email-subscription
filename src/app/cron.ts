@@ -33,7 +33,7 @@ function main() {
   const storage = makeStorage(dataDirRoot);
 
   const feedCheckingJob = startJob('2 * * * *', () => checkFeeds(storage));
-  const usageReportingJob = startJob('1 0 * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
+  const usageReportingJob = startJob('1 * * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
   const errorReportingCheckJob = startJob('0 0 * * *', () => logError('Just checking error reporting'));
 
   process.on('SIGHUP', () => {
