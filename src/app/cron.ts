@@ -201,6 +201,7 @@ async function checkFeeds(storage: AppStorage): Promise<void> {
 
       if (isEmpty(feedsByAccountId.validFeeds)) {
         logInfo('No feeds for account', { ...logData, accountId: accountId.value });
+        continue;
       }
 
       const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
