@@ -12,6 +12,7 @@ import {
   PasswordChangeRequestData,
   PlanChangeRequest,
   PlanChangeRequestData,
+  PlanChangeResponseData,
   UiAccount,
 } from '../domain/account';
 import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
@@ -34,7 +35,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
-import { makePlanId, PlanId, Plans } from '../domain/plan';
+import { isPaidPlan, makePlanId, PlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -45,13 +46,14 @@ import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppEnv } from './init-app';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
+import { createStripeRecords, loadCardDescription } from './stripe-integration';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,
   _reqBody,
   _reqParams,
   reqSession,
-  app
+  { storage }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: loadCurrentAccount.name, reqId });
   const session = checkSession(reqSession);
@@ -62,7 +64,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
   }
 
   const { accountId } = session;
-  const account = loadAccount(app.storage, accountId);
+  const account = loadAccount(storage, accountId);
 
   if (isAccountNotFound(account)) {
     logWarning('Account not found', { accountId: accountId.value });
@@ -74,11 +76,30 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
     return makeAppError();
   }
 
+  let cardDescription = '';
+
+  if (isPaidPlan(account.planId)) {
+    const loadedDescription = loadCardDescription(storage, accountId);
+
+    if (isErr(loadedDescription)) {
+      logError(si`Failed to ${loadCardDescription.name}`, { reason: loadedDescription.reason });
+      return makeAppError();
+    }
+
+    if (!loadedDescription) {
+      logError(si`Empty card description`);
+      return makeAppError();
+    }
+
+    cardDescription = loadedDescription;
+  }
+
   const logData = {};
   const responseData: UiAccount = {
     email: account.email.value,
     planId: account.planId,
     isAdmin: !!account.isAdmin,
+    cardDescription,
   };
 
   return makeSuccess<UiAccount>('Success', logData, responseData);
@@ -511,6 +532,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeAppError();
   }
 
+  const { email } = account;
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
   const storeAccountResult = storeAccount(storage, accountId, {
@@ -527,9 +549,30 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeAppError();
   }
 
-  sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, account.email, settings, env);
+  sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
-  return makeSuccess('Success');
+  const logData = {};
+  const responseData: PlanChangeResponseData = { clientSecret: '' };
+
+  if (isPaidPlan(request.planId)) {
+    const clientSecret = await createStripeRecords(
+      storage,
+      env.STRIPE_SECRET_KEY,
+      env.STRIPE_PRICE_ID,
+      accountId,
+      email,
+      request.planId
+    );
+
+    if (isErr(clientSecret)) {
+      logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });
+      return makeAppError();
+    }
+
+    responseData.clientSecret = clientSecret;
+  }
+
+  return makeSuccess('Success', logData, responseData);
 };
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {

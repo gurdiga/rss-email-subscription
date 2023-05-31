@@ -2,7 +2,7 @@ import { RegistrationRequest, RegistrationRequestData, RegistrationResponseData 
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { PlanId, Plans, isPaidPlan } from '../domain/plan';
-import { InputError, isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
+import { isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
 import {
@@ -24,7 +24,12 @@ import {
   sendApiRequest,
   unhideElement,
 } from './shared';
-import { PaymentSubformHandle, initPaymentSubform } from './stripe-integration';
+import {
+  PaymentSubformHandle,
+  initPaymentSubform,
+  maybeConfirmPayment,
+  maybeValidatePaymentSubform,
+} from './stripe-integration';
 
 async function main() {
   if (isAuthenticated()) {
@@ -82,7 +87,11 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     clearValidationErrors(uiElements);
 
     const planId = planDropdown.value;
-    const paymentSubformResult = await maybeValidatePaymentSubform(paymentSubformHandle, planId);
+    const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
+      paymentSubformHandle,
+      planId,
+      'paymentSubform'
+    );
 
     if (isInputError(paymentSubformResult)) {
       displayValidationError(paymentSubformResult, uiElements);
@@ -131,7 +140,12 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     }
 
     const { clientSecret } = response.responseData;
-    const finishPaymentResult = await maybeConfirmPayment(paymentSubformHandle, planId, clientSecret);
+    const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
+      paymentSubformHandle,
+      planId,
+      clientSecret,
+      'paymentSubform'
+    );
 
     if (isInputError(finishPaymentResult)) {
       displayValidationError(finishPaymentResult, uiElements);
@@ -145,22 +159,6 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     unhideElement(confirmationMessage);
     scrollToTop();
   });
-}
-
-async function maybeConfirmPayment(
-  paymentSubformHandle: PaymentSubformHandle,
-  planId: string,
-  clientSecret: string
-): Promise<InputError | void> {
-  if (!isPaidPlan(planId)) {
-    return;
-  }
-
-  const result = await paymentSubformHandle.confirmSetup(clientSecret);
-
-  if (isErr(result)) {
-    return makeInputError<keyof RequiredUiElements>(result.reason, 'paymentSubform');
-  }
 }
 
 function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string): void {
@@ -194,21 +192,6 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
   });
 
   togglePaymentSubform(planDropdown.value);
-}
-
-async function maybeValidatePaymentSubform(
-  paymentSubformHandle: PaymentSubformHandle,
-  planId: string
-): Promise<InputError | void> {
-  if (!isPaidPlan(planId)) {
-    return;
-  }
-
-  const validateResult = await paymentSubformHandle.validate();
-
-  if (isErr(validateResult)) {
-    return makeInputError<keyof RequiredUiElements>(validateResult.reason, 'paymentSubform');
-  }
 }
 
 interface RequiredUiElements extends FormUiElements, AppStatusUiElements {

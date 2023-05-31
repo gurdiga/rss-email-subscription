@@ -1,10 +1,23 @@
-import { Appearance, SetupIntentResult, Stripe, StripeConstructor, StripeElements } from '@stripe/stripe-js';
+import {
+  Appearance,
+  PaymentMethod,
+  SetupIntentResult,
+  Stripe,
+  StripeConstructor,
+  StripeElements,
+} from '@stripe/stripe-js';
 import { ApiPath } from '../domain/api-path';
-import { StripeKeysResponseData, stripePaymentMethodTypes } from '../domain/stripe-integration';
-import { isAppError, isInputError } from '../shared/api-response';
+import { isPaidPlan } from '../domain/plan';
+import {
+  Card,
+  StoreCardRequestData,
+  StripeKeysResponseData,
+  stripePaymentMethodTypes,
+} from '../domain/stripe-integration';
+import { InputError, isAppError, isInputError, makeInputError } from '../shared/api-response';
 import { AnyAsyncFunction, Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
+import { HttpMethod, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
   validate(): Promise<Result<Awaited<ReturnType<StripeElements['submit']>>>>;
@@ -71,7 +84,13 @@ export async function initPaymentSubform(
 
     confirmSetup: async (clientSecret: string) =>
       await attemptStripeCall(
-        () => stripe.confirmSetup({ elements, clientSecret, redirect: 'if_required' }),
+        () =>
+          stripe.confirmSetup({
+            elements,
+            clientSecret,
+            confirmParams: { expand: ['payment_method'] },
+            redirect: 'if_required',
+          }),
         'stripe.confirmSetup',
         'set up payment'
       ),
@@ -138,4 +157,85 @@ function getStripe(publishableKey: string): Result<Stripe> {
   const stripe = Stripe(publishableKey);
 
   return stripe;
+}
+
+export async function maybeValidatePaymentSubform<FIELD extends string>(
+  paymentSubformHandle: PaymentSubformHandle,
+  planId: string,
+  fieldName: FIELD
+): Promise<InputError | void> {
+  if (!isPaidPlan(planId)) {
+    return;
+  }
+
+  const validateResult = await paymentSubformHandle.validate();
+
+  if (isErr(validateResult)) {
+    return makeInputError<FIELD>(validateResult.reason, fieldName);
+  }
+}
+
+export async function maybeConfirmPayment<FIELD extends string>(
+  paymentSubformHandle: PaymentSubformHandle,
+  planId: string,
+  clientSecret: string,
+  fieldName: FIELD
+): Promise<InputError | PaymentMethod.Card | void> {
+  if (!isPaidPlan(planId)) {
+    return;
+  }
+
+  const err = (message: string) => makeInputError<FIELD>(message, fieldName);
+  const result = await paymentSubformHandle.confirmSetup(clientSecret);
+
+  if (isErr(result)) {
+    return err(result.reason);
+  }
+
+  const paymentMethod = result?.setupIntent?.payment_method;
+
+  if (!paymentMethod) {
+    return err('Invalid response from Stripe: No payment method');
+  }
+
+  const isNotPaymentMethodObject = typeof paymentMethod === 'string';
+
+  if (isNotPaymentMethodObject) {
+    return err('Invalid response from Stripe: String payment method');
+  }
+
+  const { card } = paymentMethod;
+
+  if (!card) {
+    return err('Invalid response from Stripe: No card data');
+  }
+
+  const storeResult = await storeCardDescription(card);
+
+  if (isErr(storeResult)) {
+    return err('Failed to store card description');
+  }
+
+  return card;
+}
+
+async function storeCardDescription(card: Card): Promise<Result<void>> {
+  const request: StoreCardRequestData = {
+    brand: card.brand,
+    last4: card.last4,
+    exp_month: card.exp_month.toString(),
+    exp_year: card.exp_year.toString(),
+  };
+
+  const response = await asyncAttempt(() =>
+    sendApiRequest<StripeKeysResponseData>(ApiPath.storeStripeCardDescription, HttpMethod.POST, request)
+  );
+
+  if (isErr(response)) {
+    return response;
+  }
+
+  if (isAppError(response) || isInputError(response)) {
+    return makeErr(response.message);
+  }
 }

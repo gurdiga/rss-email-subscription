@@ -6,17 +6,29 @@ import { PlanId, isPaidPlan } from '../domain/plan';
 import { AppStorage, StorageKey } from '../domain/storage';
 import {
   AccountSupportProductResponseData,
+  StoreCardRequest,
   StripeKeysResponseData,
+  makeCardDescription,
   stripePaymentMethodTypes,
 } from '../domain/stripe-integration';
-import { makeAppError, makeSuccess } from '../shared/api-response';
-import { Result, asyncAttempt, isErr, makeErr, makeNumber, makeString, makeValues } from '../shared/lang';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
+import {
+  Result,
+  asyncAttempt,
+  isErr,
+  makeErr,
+  makeNonEmptyString,
+  makeNumber,
+  makeString,
+  makeValues,
+} from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
+import { checkSession, isAuthenticatedSession } from './session';
 
-export const stripeKeys: AppRequestHandler = async function stripeConfig(
+export const stripeKeys: AppRequestHandler = async function stripeKeys(
   _reqId,
   _reqBody,
   _reqParams,
@@ -30,6 +42,81 @@ export const stripeKeys: AppRequestHandler = async function stripeConfig(
 
   return makeSuccess('Stripe keys', logData, responseData);
 };
+
+export const storeStripeCardDescription: AppRequestHandler = async function storeStripeCardDescription(
+  reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  { env, storage }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: storeStripeCardDescription.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.err.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const request = makeStoreCardRequest(reqBody);
+
+  if (isErr(request)) {
+    logError(si`Failed to ${makeStoreCardRequest.name}: ${request.reason}`);
+    return makeInputError('Invalid request');
+  }
+
+  const cardDescription = makeCardDescription(request);
+
+  const { accountId } = session;
+  const storeResult = storeCardDescription(storage, accountId, cardDescription);
+
+  if (isErr(storeResult)) {
+    logError(si`Failed to ${storeCardDescription.name}: ${storeResult.reason}`);
+    return makeAppError();
+  }
+
+  const logData = {};
+  const responseData: StripeKeysResponseData = {
+    publishableKey: env.STRIPE_PUBLISHABLE_KEY,
+  };
+
+  return makeSuccess('Stripe keys', logData, responseData);
+};
+
+function storeCardDescription(storage: AppStorage, accountId: AccountId, cardDescription: string): Result<void> {
+  const storageKey = getStripeCardDescriptionStorageKey(accountId);
+
+  return storage.storeItem(storageKey, cardDescription);
+}
+
+export function loadCardDescription(storage: AppStorage, accountId: AccountId): Result<string | undefined> {
+  const storageKey = getStripeCardDescriptionStorageKey(accountId);
+
+  const exists = storage.hasItem(storageKey);
+
+  if (isErr(exists)) {
+    return makeErr(si`Failed to check if item exists: ${exists.reason}`);
+  }
+
+  if (exists === false) {
+    return;
+  }
+
+  return storage.loadItem(storageKey);
+}
+
+function getStripeCardDescriptionStorageKey(accountId: AccountId): StorageKey {
+  return makePath(getAccountRootStorageKey(accountId), 'card-description.json');
+}
+
+function makeStoreCardRequest(data: unknown): Result<StoreCardRequest> {
+  return makeValues<StoreCardRequest>(data, {
+    brand: makeNonEmptyString,
+    exp_month: makeNumber,
+    exp_year: makeNumber,
+    last4: makeNonEmptyString,
+  });
+}
 
 export const accountSupportProduct: AppRequestHandler = async function accountSupportProduct(
   reqId,

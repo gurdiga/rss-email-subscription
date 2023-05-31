@@ -48,6 +48,7 @@ export interface UiAccount {
   email: string;
   planId: PlanId;
   isAdmin: boolean;
+  cardDescription: string;
 }
 
 export interface AccountNotFound {
@@ -124,6 +125,10 @@ export interface PlanChangeRequest {
 }
 
 export type PlanChangeRequestData = Record<keyof PlanChangeRequest, string>;
+
+export interface PlanChangeResponseData {
+  clientSecret: string;
+}
 
 export interface DeleteAccountRequest {
   password: Password;

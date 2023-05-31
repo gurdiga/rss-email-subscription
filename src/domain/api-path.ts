@@ -27,12 +27,13 @@ export enum ApiPath {
   loadCurrentAccount = '/account',
   requestAccountEmailChange = '/account/request-change-email',
   confirmAccountEmailChange = '/account/confirm-change-email',
-  requestAccountPlanChange = '/account/request-plan-email',
+  requestAccountPlanChange = '/account/request-plan-change',
   deleteAccountWithPassword = '/account/delete',
   requestAccountPasswordChange = '/account/request-change-password',
   deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
   stripeKeys = '/stripe-keys',
+  storeStripeCardDescription = '/store-stripe-card-description',
   accountSupportProduct = '/account-support-product',
 }
 
