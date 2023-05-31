@@ -266,3 +266,14 @@ describe(makeNonEmptyString.name, () => {
     expect(makeNonEmptyString('\n\t', field)).to.deep.equal(makeErr('Must not be empty', field));
   });
 });
+
+describe(makeNumber.name, () => {
+  it('tries to make a number from the given value', () => {
+    expect(makeNumber('')).to.deep.equal(makeErr('Value is missing'));
+    expect(makeNumber(42)).to.equal(42);
+    expect(makeNumber('+0')).to.equal(0);
+    expect(makeNumber('42')).to.equal(42);
+    expect(makeNumber('42.2')).to.equal(42.2);
+    expect(makeNumber('-42')).to.equal(-42);
+  });
+});

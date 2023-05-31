@@ -180,6 +180,18 @@ export function makeArrayOfValues<T extends unknown, MF extends AnyFunction = Ma
 }
 
 export function makeNumber(value: unknown, field?: string): Result<number> {
+  if (typeof value === 'string') {
+    if (!value) {
+      return makeErr('Value is missing', field);
+    }
+
+    value = Number(value);
+
+    if (typeof value === 'number' && isNaN(value)) {
+      return makeErr('Value is not a number', field);
+    }
+  }
+
   if (typeof value !== 'number') {
     return makeErr('Value is not a number', field);
   }
