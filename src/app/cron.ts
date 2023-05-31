@@ -109,6 +109,16 @@ function getItemCountRecursively(
   deliveryDate: string
 ): Result<number> {
   const deliveriesStorageKey = getDeliveriesRootStorageKey(accountId, feedId);
+  const deliveriesDirExists = storage.hasItem(deliveriesStorageKey);
+
+  if (isErr(deliveriesDirExists)) {
+    return makeErr(si`Failed to check if deliveries dir exists: ${deliveriesDirExists.reason}`);
+  }
+
+  if (deliveriesDirExists === false) {
+    return 0;
+  }
+
   const statusSubdirs = storage.listSubdirectories(deliveriesStorageKey);
 
   if (isErr(statusSubdirs)) {
