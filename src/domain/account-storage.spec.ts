@@ -63,6 +63,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
+      isAdmin: false,
     };
     const hasItem = makeStub(() => true);
     const loadItem = makeStub(() => accountData);
@@ -75,6 +76,7 @@ describe(loadAccount.name, () => {
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       creationTimestamp,
       confirmationTimestamp: undefined,
+      isAdmin: false,
     };
 
     expect(hasItem.calls).to.deep.equal([[storageKey]]);
@@ -96,6 +98,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
+      isAdmin: false,
     };
     const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
@@ -115,6 +118,7 @@ describe(loadAccount.name, () => {
       hashedPassword: 'la-la-la',
       confirmationTimestamp: undefined,
       creationTimestamp,
+      isAdmin: false,
     };
     const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
@@ -136,6 +140,7 @@ describe(storeAccount.name, () => {
       hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
       confirmationTimestamp: undefined,
       creationTimestamp,
+      isAdmin: false,
     };
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const loadItem = makeStub(() => getAccountData(account));
@@ -156,6 +161,7 @@ describe(confirmAccount.name, () => {
       hashedPassword: 'x'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
+      isAdmin: true,
     };
 
     const loadItem = makeStub(() => accountData);
@@ -175,6 +181,7 @@ describe(confirmAccount.name, () => {
       hashedPassword: accountData.hashedPassword,
       confirmationTimestamp,
       creationTimestamp,
+      isAdmin: true,
     };
 
     expect(hasItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
@@ -212,6 +219,7 @@ describe(setAccountEmail.name, () => {
           hashedPassword: account.hashedPassword.value,
           confirmationTimestamp: account.confirmationTimestamp,
           creationTimestamp: account.creationTimestamp,
+          isAdmin: account.isAdmin,
         },
       ],
     ]);
@@ -273,5 +281,6 @@ function getAccountData(account: Account): AccountData {
     hashedPassword: account.hashedPassword.value,
     confirmationTimestamp: account.confirmationTimestamp,
     creationTimestamp: account.creationTimestamp,
+    isAdmin: account.isAdmin,
   };
 }

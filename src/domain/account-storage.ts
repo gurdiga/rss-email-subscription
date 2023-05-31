@@ -175,12 +175,15 @@ export function loadAccount(
     );
   }
 
+  const isAdmin = !!item.isAdmin;
+
   return {
     planId,
     email,
     hashedPassword,
     creationTimestamp,
     confirmationTimestamp,
+    isAdmin,
   };
 }
 
@@ -192,6 +195,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
+    isAdmin: account.isAdmin,
   };
 
   const storeItemResult = storage.storeItem(storageKey, data);

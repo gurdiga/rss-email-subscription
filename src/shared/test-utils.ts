@@ -141,6 +141,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     hashedPassword: 'x'.repeat(hashedPasswordLength),
     creationTimestamp: new Date(),
     confirmationTimestamp: undefined,
+    isAdmin: false,
     ...customAccountData,
   };
 
@@ -150,6 +151,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: accountData.creationTimestamp,
+    isAdmin: false,
   };
 
   return result;

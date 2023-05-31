@@ -233,6 +233,7 @@ function initAccount(
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
+    isAdmin: false,
   };
 
   const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);

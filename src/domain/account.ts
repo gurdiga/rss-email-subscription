@@ -32,6 +32,7 @@ export interface Account {
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
+  isAdmin: boolean;
 }
 
 export interface AccountData {
@@ -40,11 +41,13 @@ export interface AccountData {
   hashedPassword: string;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
+  isAdmin: boolean | undefined;
 }
 
 export interface UiAccount {
   email: string;
   planId: PlanId;
+  isAdmin: boolean;
 }
 
 export interface AccountNotFound {

@@ -78,6 +78,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
   const responseData: UiAccount = {
     email: account.email.value,
     planId: account.planId,
+    isAdmin: !!account.isAdmin,
   };
 
   return makeSuccess<UiAccount>('Success', logData, responseData);
