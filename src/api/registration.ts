@@ -42,7 +42,7 @@ export const registration: AppRequestHandler = async function registration(
   reqId,
   reqBody,
   _reqParams,
-  _reqSession,
+  reqSession,
   { env, storage, settings }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
@@ -106,6 +106,8 @@ export const registration: AppRequestHandler = async function registration(
     logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });
     return makeAppError();
   }
+
+  initSession(reqSession, accountId, request.email);
 
   const logData = {};
   const responseData: RegistrationResponseData = { clientSecret };
