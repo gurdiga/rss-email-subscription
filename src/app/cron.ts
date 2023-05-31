@@ -91,12 +91,14 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
           return total;
         }
 
-        logInfo('Items delivered on date', {
-          date: yesterday,
-          accountId: accountId.value,
-          feedId: feed.id.value,
-          itemCount,
-        });
+        if (itemCount > 0) {
+          logInfo('Items delivered on date', {
+            date: yesterday,
+            accountId: accountId.value,
+            feedId: feed.id.value,
+            itemCount,
+          });
+        }
 
         return total + itemCount;
       }, 0);
