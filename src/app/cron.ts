@@ -91,6 +91,13 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
           return total;
         }
 
+        logInfo('Items delivered on date', {
+          date: yesterday,
+          accountId: accountId.value,
+          feedId: feed.id.value,
+          itemCount,
+        });
+
         return total + itemCount;
       }, 0);
 
@@ -98,7 +105,7 @@ function reportUsage(storage: AppStorage, _stripeSecretKey: string): void {
         continue;
       }
 
-      logInfo('Reporting usage to Stripe', { accountId: accountId.value, yesterday, quantity: totalItems });
+      logInfo('Reporting usage to Stripe', { accountId: accountId.value, yesterday, totalItems });
       // TODO: Uncomment this after a test run
       // reportUsageToStripe(storage, stripeSecretKey, accountId, quantity);
     }
