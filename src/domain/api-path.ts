@@ -10,7 +10,7 @@ export enum ApiPath {
   sessionTest = '/session-test',
   loadFeeds = '/feeds',
   loadFeedById = '/feeds/load-by-id',
-  feedManageScreen = '/feeds/manage-screen',
+  manageFeed = '/feeds/manage-feed',
   loadFeedSubscribers = '/feeds/subscribers',
   deleteFeedSubscribers = '/feeds/delete-subscribers',
   addFeedSubscribers = '/feeds/add-subscribers',

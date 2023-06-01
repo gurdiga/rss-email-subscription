@@ -133,7 +133,7 @@ async function sendShowSampleEmailRequest(feedId: FeedId) {
 export async function loadData(feedId: FeedId) {
   const request: FeedManageScreenRequestData = { feedId: feedId.value };
   const response = await asyncAttempt(() =>
-    sendApiRequest<FeedManageScreenResponse>(ApiPath.feedManageScreen, HttpMethod.GET, request)
+    sendApiRequest<FeedManageScreenResponse>(ApiPath.manageFeed, HttpMethod.GET, request)
   );
 
   if (isErr(response)) {

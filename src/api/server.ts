@@ -21,18 +21,12 @@ import { makeAppRequestHandler } from './app-request-handler';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
 import { deliveryReports } from './delivery-reports';
-import {
-  addFeedSubscribers,
-  addNewFeed,
-  checkFeedUrl,
-  deleteFeed,
-  deleteFeedSubscribers,
-  editFeed,
-  handleFeedManageScreen,
-  loadFeedById,
-  loadFeeds,
-  loadFeedSubscribers,
-} from './feeds';
+import { addFeedSubscribers, checkFeedUrl, deleteFeedSubscribers, loadFeedById, loadFeedSubscribers } from './feeds';
+import { manageFeed } from './feeds/manage-feed';
+import { loadFeeds } from './feeds/load-feeds';
+import { editFeed } from './feeds/edit-feed';
+import { addNewFeed } from './feeds/add-new-feed';
+import { deleteFeed } from './feeds/delete-feed';
 import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
@@ -77,7 +71,7 @@ async function main() {
   router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
-  router.get(ApiPath.feedManageScreen, makeAppRequestHandler(handleFeedManageScreen, app));
+  router.get(ApiPath.manageFeed, makeAppRequestHandler(manageFeed, app));
   router.get(ApiPath.loadFeedSubscribers, makeAppRequestHandler(loadFeedSubscribers, app));
   router.get(ApiPath.deliveryReports, makeAppRequestHandler(deliveryReports, app));
   router.post(ApiPath.deleteFeedSubscribers, makeAppRequestHandler(deleteFeedSubscribers, app));
