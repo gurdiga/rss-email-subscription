@@ -400,13 +400,12 @@ certbot-report:
 # cron @reboot
 watch-delmon:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
-	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
+	while read -r _skip_timestamp _skip_namespace _skip_container_name_and_id json; do
 		(
-			container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
 			severity=$$(jq -r .severity <<<"$$json")
 			message=$$(jq -r .message <<<"$$json")
 
-			echo "Subject: RES $$container_name $$severity"
+			echo "Subject: RES delmon $$severity: $$message"
 			echo "From: RES <system@feedsubscription.com>"
 			echo
 
