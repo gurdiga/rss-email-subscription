@@ -317,7 +317,7 @@ interface StoredEmailMessageData {
   logRecords: StoredEmailLogRecord[];
 }
 
-function makeStoredEmailMessageData(
+export function makeStoredEmailMessageData(
   feed: Feed,
   to: HashedEmail,
   item: RssItem,

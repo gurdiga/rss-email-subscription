@@ -34,6 +34,7 @@ import {
   displayInitError,
   navigateTo,
   onClick,
+  preventDoubleClick,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -109,10 +110,12 @@ async function main() {
 function bindShowSampleEmailButton(uiElements: RequiredUiElements, feedId: FeedId): void {
   const { showSampleEmailButton } = uiElements;
 
-  onClick(showSampleEmailButton, async () => {
-    const response = await sendShowSampleEmailRequest(feedId);
+  onClick(showSampleEmailButton, () => {
+    preventDoubleClick(showSampleEmailButton, async () => {
+      const response = await sendShowSampleEmailRequest(feedId);
 
-    displayApiResponse(response, uiElements.apiResponseMessage);
+      displayApiResponse(response, uiElements.apiResponseMessage);
+    });
   });
 }
 

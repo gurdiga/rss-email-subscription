@@ -1,6 +1,7 @@
 import { hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { EmailAddress } from './email-address';
+import { FeedId } from './feed-id';
 
 export const maxEmailAddressLength = 100;
 
@@ -67,4 +68,13 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
 
 export function isEmailAddress(value: unknown): value is EmailAddress {
   return hasKind(value, 'EmailAddress');
+}
+
+export function makeEmailAddressFromFeedId(feedId: FeedId, domainName: string): EmailAddress {
+  const emailAddress: EmailAddress = {
+    kind: 'EmailAddress',
+    value: feedId.value + '@' + domainName,
+  };
+
+  return emailAddress;
 }

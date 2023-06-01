@@ -32,7 +32,6 @@ import {
   loadFeedById,
   loadFeeds,
   loadFeedSubscribers,
-  showSampleEmail,
 } from './feeds';
 import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
@@ -42,6 +41,7 @@ import { accountSupportProduct, storeStripeCardDescription, stripeKeys } from '.
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
+import { showSampleEmail } from './feeds/show-sample-email';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
