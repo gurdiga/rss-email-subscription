@@ -37,6 +37,7 @@ import {
   preventDoubleClick,
   requireQueryParams,
   requireUiElements,
+  scrollIntoView,
   sendApiRequest,
   spinnerUiElements,
   unhideElement,
@@ -115,6 +116,7 @@ function bindShowSampleEmailButton(uiElements: RequiredUiElements, feedId: FeedI
       const response = await sendShowSampleEmailRequest(feedId);
 
       displayApiResponse(response, uiElements.apiResponseMessage);
+      scrollIntoView(uiElements.apiResponseMessage);
     });
   });
 }
