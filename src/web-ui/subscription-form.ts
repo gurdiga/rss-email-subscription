@@ -140,7 +140,7 @@
         },
         className: className || '',
       },
-      buttonLabel || 'Submit'
+      buttonLabel || 'Subscribe'
     );
   }
 
