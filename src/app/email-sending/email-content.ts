@@ -73,7 +73,13 @@ export function htmlBody(contents: string): string {
     <hr />
 
     <footer style="color:GrayText">
-      <p><small>FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709</small></p>
+      <center>
+        <p><small>FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709</small></p>
+
+        <a href="https://feedsubscription.com/?from=email-footer-logo">
+          <img src="https://feedsubscription.com/assets/img/favicon.png" width="40">
+        </a>
+      </center>
     </footer>
 
   </div>`;
