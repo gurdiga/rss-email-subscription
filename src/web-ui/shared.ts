@@ -127,6 +127,7 @@ export function displayApiResponse(apiResponse: ApiResponse, messageElement: Ele
   messageElement.classList.toggle('alert-danger', isDanger);
   messageElement.classList.toggle('alert-success', !isDanger);
   messageElement.setAttribute('role', 'alert');
+  unhideElement(messageElement);
 }
 
 export function displayCommunicationError(error: unknown, messageElement: Element): void {
