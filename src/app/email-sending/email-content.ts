@@ -17,20 +17,20 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
     htmlBody: htmlBody(si`
       <article>${itemHtml}</article>
 
-      <hr style="clear: both; margin-top: 4em;" />
+      <hr style="clear: both; margin-top: 3em;" />
 
       <footer>
-        <p>You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.</p>
+        <small>
+          <p>
+            You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.
+            If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
+          </p>
 
-        <p>
-          <small>PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
-          Replying with “Hello!” or “Thank you!” works even better. 🙂<small>
-        </p>
-
-        <p>
-          <small>This email was sent with ❤️ by <a href="https://FeedSubscription.com?from=email-footer">FeedSubscription.com</a>.
-          If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.<small>
-        </p>
+          <p>
+            PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
+            Replying with “Hello!” or “Thank you!” works even better. 🙂
+          </p>
+        </small>
       </footer>`),
   };
 }
@@ -72,14 +72,21 @@ export function htmlBody(contents: string): string {
 
     <hr />
 
-    <footer style="color:GrayText">
-      <center>
-        <p><small>FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709</small></p>
+    <footer style="color: GrayText; text-align: center">
+      <small>
+        <p style="margin: 0">
+          This email was sent with ❤️ by
+          <a href="https://FeedSubscription.com?from=email-footer">FeedSubscription.com</a>
+        </p>
 
-        <a href="https://feedsubscription.com/?from=email-footer-logo">
-          <img src="https://feedsubscription.com/assets/img/favicon.png" width="40">
-        </a>
-      </center>
+        <address style="font-style: normal">
+          FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709
+        </address>
+      </small>
+
+      <a href="https://feedsubscription.com/?from=email-footer-logo" alt="FeedSubscription.com logo">
+        <img src="https://feedsubscription.com/assets/img/favicon.png" width="40">
+      </a>
     </footer>
 
   </div>`;
