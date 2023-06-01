@@ -44,6 +44,7 @@ export function setImageMaxWidth(html: string) {
     const existingStyle = x.getAttribute('style') || '';
 
     x.setAttribute('style', existingStyle + ';' + maxWidthStyle);
+    x.removeAttribute('height'); // To prevent skewing
   });
 
   return dom.toString();
