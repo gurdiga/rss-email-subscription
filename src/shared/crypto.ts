@@ -23,7 +23,3 @@ export function getRandomString(length: number = 16): string {
 
   return crypto.randomBytes(byteCount).toString('hex').substring(0, length);
 }
-
-export function getUuid(): string {
-  return crypto.randomUUID();
-}
