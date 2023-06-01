@@ -29,21 +29,14 @@ async function main() {
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
-  startPulseWatcher(logWarning, status);
-}
 
-type LoggerFn = ReturnType<typeof makeCustomLoggers>['logWarning'];
-
-function startPulseWatcher(loggerFn: LoggerFn, status: DelmonStatus): void {
-  new CronJob('*/20 * * * *', () => recordPulse(loggerFn, status.lineCount)).start();
-}
-
-function recordPulse(loggerFn: LoggerFn, lineCount: number): void {
-  loggerFn('delmon is alive', {
-    lineCount,
-    uptime: process.uptime(),
-    memoryUsage: process.memoryUsage(),
-  });
+  new CronJob('0 * * * *', () => {
+    logInfo('delmon hourly heartbeat', {
+      lineCount: status.lineCount,
+      uptime: process.uptime(),
+      memoryUsage: process.memoryUsage(),
+    });
+  }).start();
 }
 
 main();
