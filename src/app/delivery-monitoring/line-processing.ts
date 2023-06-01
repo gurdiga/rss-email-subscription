@@ -25,7 +25,7 @@ import { DelmonStatus } from './delmon-status';
 let rest = '';
 
 export function processData(data: Buffer, status: DelmonStatus, storage: AppStorage): void {
-  const { logError, logInfo } = makeCustomLoggers({ module: processData.name });
+  const { logError } = makeCustomLoggers({ module: processData.name });
   const result = extractLines(rest + data.toString());
 
   rest = result.rest;
@@ -38,13 +38,6 @@ export function processData(data: Buffer, status: DelmonStatus, storage: AppStor
     }
 
     status.lineCount++;
-
-    if (status.lineCount % 500 === 0) {
-      logInfo('Lines processed', {
-        lineCount: status.lineCount,
-        memoryUsage: process.memoryUsage(),
-      });
-    }
   });
 }
 
