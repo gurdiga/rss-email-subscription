@@ -32,6 +32,7 @@ import {
   loadFeedById,
   loadFeeds,
   loadFeedSubscribers,
+  showSampleEmail,
 } from './feeds';
 import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
@@ -84,6 +85,7 @@ async function main() {
   router.post(ApiPath.addNewFeed, makeAppRequestHandler(addNewFeed, app));
   router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
+  router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
   router.post(ApiPath.storeStripeCardDescription, makeAppRequestHandler(storeStripeCardDescription, app));

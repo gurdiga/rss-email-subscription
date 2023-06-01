@@ -216,3 +216,9 @@ export interface FeedManageScreenResponse {
   status: FeedStatus;
   subscriberCount: number;
 }
+
+export interface ShowSampleEmailRequest {
+  feedId: FeedId;
+}
+
+export type ShowSampleEmailRequestData = Record<keyof ShowSampleEmailRequest, string>;

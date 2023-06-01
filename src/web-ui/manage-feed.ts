@@ -1,16 +1,22 @@
 import { ApiPath } from '../domain/api-path';
-import { FeedManageScreenResponse, FeedManageScreenRequestData, DeleteFeedRequestData, UiFeed } from '../domain/feed';
+import {
+  DeleteFeedRequestData,
+  FeedManageScreenRequestData,
+  FeedManageScreenResponse,
+  ShowSampleEmailRequestData,
+  UiFeed,
+} from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
   DeliveryReportsParams,
   FeedEditParams,
   FeedSubscribeFormParams,
-  makePagePathWithParams,
   ManageFeedSubscribersParams,
   PagePath,
+  makePagePathWithParams,
 } from '../domain/page-path';
-import { isAppError, isInputError, isSuccess, Success } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { isAppError, isInputError, isSuccess, makeAppError } from '../shared/api-response';
+import { asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   BreadcrumbsUiElements,
@@ -20,14 +26,17 @@ import {
 } from './breadcrumbs';
 import { createElement } from './dom-isolation';
 import {
-  displayInitError,
+  ApiResponseUiElements,
   HttpMethod,
+  SpinnerUiElements,
+  apiResponseUiElements,
+  displayApiResponse,
+  displayInitError,
   navigateTo,
   onClick,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
-  SpinnerUiElements,
   spinnerUiElements,
   unhideElement,
 } from './shared';
@@ -53,12 +62,14 @@ async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...breadcrumbsUiElements,
     ...spinnerUiElements,
+    ...apiResponseUiElements,
     feedAttributeList: '#feed-attribute-list',
     feedActions: '#feed-actions',
     editLink: '#edit-link',
     subscribeFormLink: '#subscribe-form-link',
     deliveryReportsLink: '#delivery-reports-link',
     deleteButton: '#delete-button',
+    showSampleEmailButton: '#show-sample-email-button',
     idChangedMessage: '#id-changed-message',
     newFeedId: '#new-feed-id',
   });
@@ -82,19 +93,45 @@ async function main() {
     unhideElement(uiElements.idChangedMessage);
   }
 
+  const { displayName } = response;
+
   unhideElement(uiElements.feedActions);
   displayFeedAttributeList(response, uiElements, feedId);
-  bindDeleteButton(uiElements.deleteButton, response.displayName, feedId);
+  bindDeleteButton(uiElements, displayName, feedId);
+  bindShowSampleEmailButton(uiElements, feedId);
   displayBreadcrumbs(uiElements, [
     // prettier: keep these stacked
     feedListBreadcrumbsLink,
-    { label: response.displayName },
+    { label: displayName },
   ]);
 }
 
-export async function loadData<T = FeedManageScreenResponse>(feedId: FeedId): Promise<Result<T>> {
+function bindShowSampleEmailButton(uiElements: RequiredUiElements, feedId: FeedId): void {
+  const { showSampleEmailButton } = uiElements;
+
+  onClick(showSampleEmailButton, async () => {
+    const response = await sendShowSampleEmailRequest(feedId);
+
+    displayApiResponse(response, uiElements.apiResponseMessage);
+  });
+}
+
+async function sendShowSampleEmailRequest(feedId: FeedId) {
+  const data: ShowSampleEmailRequestData = { feedId: feedId.value };
+  const result = await asyncAttempt(() => sendApiRequest<string>(ApiPath.showSampleEmail, HttpMethod.POST, data));
+
+  if (isErr(result)) {
+    return makeAppError('Failed to connect to server, please try again in a few moments');
+  }
+
+  return result;
+}
+
+export async function loadData(feedId: FeedId) {
   const request: FeedManageScreenRequestData = { feedId: feedId.value };
-  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.feedManageScreen, HttpMethod.GET, request));
+  const response = await asyncAttempt(() =>
+    sendApiRequest<FeedManageScreenResponse>(ApiPath.feedManageScreen, HttpMethod.GET, request)
+  );
 
   if (isErr(response)) {
     return makeErr('Failed to load the feed');
@@ -108,44 +145,41 @@ export async function loadData<T = FeedManageScreenResponse>(feedId: FeedId): Pr
     return makeErr('Input error when loading the feed');
   }
 
-  return response.responseData!;
+  if (!response.responseData) {
+    return makeErr('Unexpected empty server response');
+  }
+
+  return response.responseData;
 }
 
-function bindDeleteButton(button: HTMLButtonElement, feedName: string, feedId: FeedId): void {
-  onClick(button, async () => {
+function bindDeleteButton(uiElements: RequiredUiElements, feedName: string, feedId: FeedId): void {
+  const { deleteButton } = uiElements;
+
+  onClick(deleteButton, async () => {
     if (!confirm(si`Do you really want to delete the feed “${feedName}”?`)) {
       return;
     }
 
-    const result = await sendDeleteRequest(feedId);
+    const response = await sendDeleteFeedRequest(feedId);
 
-    if (isErr(result)) {
-      // TODO: Display the error
-    }
+    displayApiResponse(response, uiElements.apiResponseMessage);
 
-    if (isSuccess(result)) {
-      navigateTo(PagePath.feedList);
+    if (isSuccess(response)) {
+      navigateTo(PagePath.feedList, 2000);
     }
   });
 }
 
-async function sendDeleteRequest(feedId: FeedId): Promise<Result<Success>> {
+async function sendDeleteFeedRequest(feedId: FeedId) {
   const data: DeleteFeedRequestData = { feedId: feedId.value };
-  const response = await asyncAttempt(() => sendApiRequest(ApiPath.deleteFeed, HttpMethod.POST, data));
 
-  if (isErr(response)) {
-    return makeErr('Failed to load the feed');
+  const result = await asyncAttempt(() => sendApiRequest(ApiPath.deleteFeed, HttpMethod.POST, data));
+
+  if (isErr(result)) {
+    return makeAppError('Failed to connect to server, please try again in a few moments');
   }
 
-  if (isAppError(response)) {
-    return makeErr(si`Application error when loading the feed: ${response.message}`);
-  }
-
-  if (isInputError(response)) {
-    return makeErr('Input error when loading the feed');
-  }
-
-  return response;
+  return result;
 }
 
 function displayFeedAttributeList(
@@ -232,13 +266,14 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   };
 }
 
-interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
+interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements, ApiResponseUiElements {
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;
   subscribeFormLink: HTMLAnchorElement;
   deliveryReportsLink: HTMLAnchorElement;
   deleteButton: HTMLButtonElement;
+  showSampleEmailButton: HTMLButtonElement;
   idChangedMessage: HTMLButtonElement;
   newFeedId: HTMLButtonElement;
 }

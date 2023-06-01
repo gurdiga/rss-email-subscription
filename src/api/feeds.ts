@@ -28,6 +28,7 @@ import {
   FeedStatus,
   LoadEmailsResponse,
   LoadFeedsResponseData,
+  ShowSampleEmailRequest,
   isAddNewFeedRequestData,
   makeEditFeedRequest,
   makeUiEmailList,
@@ -775,4 +776,40 @@ export function makeBlogUrl(value: string, fieldName?: string): Result<URL> {
   }
 
   return url;
+}
+
+export const showSampleEmail: AppRequestHandler = async function showSampleEmail(
+  reqId,
+  reqBody,
+  _reqParams,
+  reqSession,
+  _app
+) {
+  const { logWarning } = makeCustomLoggers({ module: showSampleEmail.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.err.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  const request = makeShowSampleEmailReques(reqBody);
+
+  if (isErr(request)) {
+    logWarning(si`Failed to ${makeShowSampleEmailReques.name}`, { reason: request.reason });
+    return makeInputError(request.reason, request.field);
+  }
+
+  const { feedId } = request;
+  const { accountId } = session;
+
+  console.log({ feedId, accountId });
+
+  return makeSuccess('TODO: Write a nice informative messages');
+};
+
+function makeShowSampleEmailReques(data: unknown) {
+  return makeValues<ShowSampleEmailRequest>(data, {
+    feedId: makeFeedId,
+  });
 }
