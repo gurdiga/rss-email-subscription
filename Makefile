@@ -751,6 +751,7 @@ tracking-report: bot-list.txt
 	cat .tmp/logs/feedsubscription/website.log |
 	grep -P "^$$date" |
 	grep -vP ".*$$bot_list_re.*" | # exclude some bots
+	grep -vF "/dW5zdWJzY3?id=" | # exclude obfuscated requests from M$
 	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
