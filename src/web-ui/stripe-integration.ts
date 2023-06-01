@@ -15,7 +15,7 @@ import {
   stripePaymentMethodTypes,
 } from '../domain/stripe-integration';
 import { InputError, isAppError, isInputError, makeInputError } from '../shared/api-response';
-import { AnyAsyncFunction, Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
+import { AnyAsyncFunction, Result, asyncAttempt, getErrorMessage, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { HttpMethod, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
@@ -36,7 +36,7 @@ export async function initPaymentSubform(
   }
 
   const { publishableKey } = stripeKeys;
-  const stripe = getStripe(publishableKey);
+  const stripe = await getStripe(publishableKey);
 
   if (isErr(stripe)) {
     return stripe;
@@ -148,15 +148,29 @@ async function loadStripeKeys(): Promise<Result<StripeKeysResponseData>> {
   return response.responseData;
 }
 
-function getStripe(publishableKey: string): Result<Stripe> {
-  if (!('Stripe' in window)) {
-    return makeErr('Stripe global not found');
-  }
+async function getStripe(publishableKey: string): Promise<Result<Stripe>> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
 
-  const Stripe = window.Stripe as StripeConstructor;
-  const stripe = Stripe(publishableKey);
+    script.src = 'https://js.stripe.com/v3/';
 
-  return stripe;
+    script.onload = () => {
+      if ('Stripe' in window) {
+        const Stripe = window.Stripe as StripeConstructor;
+        const stripe = Stripe(publishableKey);
+
+        resolve(stripe);
+      } else {
+        reject(makeErr('Stripe global not found'));
+      }
+    };
+
+    script.onerror = (error) => {
+      reject(makeErr(getErrorMessage(error)));
+    };
+
+    document.body.appendChild(script);
+  });
 }
 
 export async function maybeValidatePaymentSubform<FIELD extends string>(
