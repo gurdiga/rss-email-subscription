@@ -210,7 +210,8 @@ function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLE
   const dtElement = createElement('dt', 'Subscriber count', { class: 'res-feed-attribute-label' });
   const ddElement = createElement('dd', subscriberCount.toString(), { class: 'res-feed-attribute-value' });
 
-  const manageSubscribersLink = createElement('a', 'Manage subscribers', { href });
+  const linkText = subscriberCount === 0 ? 'Add subscribers' : 'Manage subscribers';
+  const manageSubscribersLink = createElement('a', linkText, { href });
   const separator = createElement('hr', '', { class: 'res-subscriber-count-separator' });
 
   ddElement.append(separator, manageSubscribersLink);
