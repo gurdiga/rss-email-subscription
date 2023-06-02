@@ -17,20 +17,20 @@ export interface Plan {
 export const Plans: Record<PlanId, Plan> = {
   [PlanId.Free]: {
     title: '❤️ Free Plan',
-    maxEmailsPerMonth: 15_000,
-    maxEmailsPerDay: 2_000,
+    maxEmailsPerMonth: 10_000,
+    maxEmailsPerDay: 1_000,
     centsPerEmail: 0,
   },
   [PlanId.PayPerUse]: {
     title: '💪 Pay-Per-Use Plan',
-    maxEmailsPerMonth: 150_000,
-    maxEmailsPerDay: 10_000,
+    maxEmailsPerMonth: 500_000,
+    maxEmailsPerDay: 25_000,
     centsPerEmail: 0.1,
   },
   [PlanId.SDE]: {
     title: '💙 SDE Plan',
-    maxEmailsPerMonth: 150_000,
-    maxEmailsPerDay: 10_000,
+    maxEmailsPerMonth: 500_000,
+    maxEmailsPerDay: 25_000,
     centsPerEmail: 0,
   },
 };
