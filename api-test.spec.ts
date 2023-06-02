@@ -517,6 +517,8 @@ describe('API', () => {
           responseData: {
             email: 'api-test-blogger@feedsubscription.com',
             planId: 'free',
+            cardDescription: '',
+            isAdmin: false,
           },
         });
       });
