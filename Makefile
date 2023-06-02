@@ -74,7 +74,16 @@ lint-quiet:
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # plus, comment out irrelevant pieces
 # sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
 lint-nginx-config:
-	nginx -q -t -c `pwd`/website/nginx/nginx.conf
+	@nginx_image=`yq -r .services.website.image docker-compose.yml`
+
+	docker run --rm \
+		-v $$PWD/website/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
+		-v $$PWD/website/nginx/conf.d/website.conf:/etc/nginx/conf.d/website.conf:ro \
+		-v $$PWD/.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/letsencrypt/live/feedsubscription.com/fullchain.pem:ro \
+		-v $$PWD/.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/letsencrypt/live/feedsubscription.com/privkey.pem:ro \
+		-e NGINX_ENTRYPOINT_QUIET_LOGS=1 \
+		"$$nginx_image" \
+		nginx -q -t -c /etc/nginx/nginx.conf
 
 lint-docker-compose:
 	docker-compose --file docker-compose.yml config
