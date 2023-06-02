@@ -799,3 +799,16 @@ ufw-config:
 
 	ufw allow 80/tcp
 	ufw allow 443/tcp
+
+delivery-duration:
+	@echo $${DELIVERY_DIR:?Missing envar}
+
+	ls -1 "$$DELIVERY_DIR"/*/*.json | wc -l | ts 'items:'
+
+	jq -r '.logRecords[].timestamp' "$$DELIVERY_DIR"/*/*.json |
+	sort -u |
+	(
+		tee \
+			>( head -1 | ts 'begin:' > /dev/stderr ) \
+			>( tail -1 | ts 'end:  ' > /dev/stderr )
+	) > /dev/null
