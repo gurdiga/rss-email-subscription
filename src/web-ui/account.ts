@@ -123,8 +123,9 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
       password: deleteAccountPasswordField,
     },
     () => {
-      deleteAccountApiResponseMessage.scrollIntoView({ behavior: 'smooth' });
+      hideElement(deleteAccountApiResponseMessage);
       unhideElement(deleteAccountSuccessMessage);
+      deleteAccountSuccessMessage.scrollIntoView({ behavior: 'smooth' });
       disableElement(deleteAccountPasswordField, deleteAccountSubmitButton, deleteAccountCancelButton);
       navigateTo(PagePath.home, 7000);
     }
