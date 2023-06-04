@@ -790,6 +790,7 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	cat <(
 		# Known non-humans
 		echo "Chrome-Lighthouse"
+		echo "Google-InspectionTool"
 		echo "HeadlessChrome"
 		echo "scaninfo@paloaltonetworks.com"
 		echo "Feedly"
