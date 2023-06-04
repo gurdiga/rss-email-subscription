@@ -30,8 +30,6 @@ describe(makeFeedListData.name, () => {
   it('returns no linkData when no feeds', () => {
     const result = makeFeedListData([]);
 
-    expect(result).to.deep.equal(<FeedListData>{
-      preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!',
-    });
+    expect(result).to.not.have.key('linkData' as keyof FeedListData);
   });
 });

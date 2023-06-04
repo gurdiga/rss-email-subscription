@@ -68,7 +68,13 @@ export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
   const pluralSuffix = feedList.length === 1 ? '' : 's';
 
   return isEmpty(feedList)
-    ? { preambleMessage: 'You don’t have any blog feeds yet. Go ahead and add one!' }
+    ? {
+        preambleMessage: si`
+          First things first! Register your blog feed.
+          This will allow you to set up your Subscribe Form, and also register
+          your current subscriber list if you already have one.
+        `,
+      }
     : {
         preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
         linkData: feedList.map(makeLinkData),
