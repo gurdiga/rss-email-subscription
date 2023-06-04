@@ -3,6 +3,7 @@ import {
   DeleteFeedRequestData,
   FeedManageScreenRequestData,
   FeedManageScreenResponse,
+  FeedStatus,
   ShowSampleEmailRequestData,
   UiFeed,
 } from '../domain/feed';
@@ -196,14 +197,32 @@ function displayFeedAttributeList(
   const uiData = makeUiData(response, feedId);
 
   const feedAttributeElements = uiData.feedAttributes.flatMap(makeFeedAttributeElement);
+
+  const feedStatusElements = makeStatusField(response.status);
   const subscriberCountElements = makeSubscriberCountField(response.subscriberCount, uiData.manageSubscribersLinkHref);
 
-  feedAttributeList.append(...feedAttributeElements, ...subscriberCountElements);
+  feedAttributeList.append(...feedAttributeElements, ...feedStatusElements, ...subscriberCountElements);
   unhideElement(feedAttributeList);
 
   editLink.href = uiData.editLinkHref;
   subscribeFormLink.href = uiData.subscribeFormLink;
   deliveryReportsLink.href = uiData.deliveryReportsLinkHref;
+}
+
+function makeStatusField(status: FeedStatus): HTMLElement[] {
+  const dtElement = createElement('dt', 'Status', { class: 'res-feed-attribute-label' });
+  const ddElement = createElement('dd', status, { class: 'res-feed-attribute-value' });
+
+  if (status === FeedStatus.AwaitingReview) {
+    const approvalInfo = createElement('p', 'It should take under 24 hours to review and approve your feed.', {
+      class: 'form-text m-0 text-success',
+    });
+    const infoIcon = createElement('i', '', { class: 'fa-solid fa-circle-info me-1 ' });
+    approvalInfo.prepend(infoIcon);
+    ddElement.append(approvalInfo);
+  }
+
+  return [dtElement, ddElement];
 }
 
 function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLElement, HTMLElement] {
@@ -246,7 +265,6 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'Email:', value: uiFeed.email, name: 'email' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
-    { label: 'Status:', value: uiFeed.status, name: 'status' },
   ];
 
   const editLinkHref = makePagePathWithParams<FeedEditParams>(PagePath.feedEdit, { id: feedId.value });

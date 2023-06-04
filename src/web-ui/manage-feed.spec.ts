@@ -21,7 +21,6 @@ describe(makeUiData.name, () => {
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
         { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
-        { label: 'Status:', value: FeedStatus.AwaitingReview, name: 'status' },
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',
       manageSubscribersLinkHref: '/user/manage-feed-subscribers.html?id=just-add-light',
