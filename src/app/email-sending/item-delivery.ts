@@ -42,15 +42,18 @@ export async function deliverItems(
   confirmedEmails: HashedEmail[],
   from: FullEmailAddress
 ) {
-  if (confirmedEmails.length > 0) {
-    confirmedEmails.push(getCatchAllEmail()); // Temporary hack to keep an eye on what’s going out.
+  if (confirmedEmails.length === 0) {
+    return;
   }
+
+  confirmedEmails.push(getCatchAllEmail());
 
   prepareOutboxEmails(storage, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
   return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }
 
 const catchAllEmailAddress = 'catch-all@feedsubscription.com';
+export const catchAllItemCount = 1;
 
 function getCatchAllEmail(): HashedEmail {
   return {
@@ -86,13 +89,13 @@ export async function sendOutboxEmails(
     return 1;
   }
 
-  const subscriberCount = confirmedEmails.length - 1; // exclude catch-all
+  const subscriberCount = confirmedEmails.length - catchAllItemCount;
 
   const report: SendingReport = {
     newItems: validItems.length,
     subscribers: subscriberCount,
     sentExpected: validItems.length * subscriberCount,
-    sent: -1 * validItems.length, // exclude catch-all
+    sent: validItems.length * -catchAllItemCount,
     failed: 0,
   };
 

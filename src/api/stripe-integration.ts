@@ -264,56 +264,19 @@ function storeSubscriptionItemId(storage: AppStorage, accountId: AccountId, subs
   return storage.storeItem(storageKey, subscriptionItemId);
 }
 
-function loadSubscriptionItemId(storage: AppStorage, accountId: AccountId): Result<string> {
-  const storageKey = getStripeSubscriptionItemStorageKey(accountId);
-
-  return storage.loadItem(storageKey);
-}
-
 function getStripeCustomerStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'stripe-customer.json');
 }
 
-function getStripeSubscriptionItemStorageKey(accountId: AccountId): StorageKey {
+export function getStripeSubscriptionItemStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'stripe-subscription-item-id.json');
 }
 
-function makeStripe(secretKey: string): Stripe {
+export function makeStripe(secretKey: string): Stripe {
   const config: Stripe.StripeConfig = {
     apiVersion: '2022-11-15',
     maxNetworkRetries: 5,
   };
 
   return new Stripe(secretKey, config);
-}
-
-export async function reportUsageToStripe(
-  storage: AppStorage,
-  secretKey: string,
-  accountId: AccountId,
-  quantity: number,
-  usageDate: Date
-): Promise<Result<void>> {
-  const stripe = makeStripe(secretKey);
-  const subscriptionItemId = loadSubscriptionItemId(storage, accountId);
-
-  if (isErr(subscriptionItemId)) {
-    return makeErr(si`Failed to ${loadSubscriptionItemId.name}: ${subscriptionItemId.reason}`);
-  }
-
-  const dateOnly = usageDate.toISOString().substring(0, 10);
-  const idempotencyKey = accountId.value + '-' + dateOnly;
-
-  const result = await asyncAttempt(() =>
-    stripe.subscriptionItems.createUsageRecord(
-      // prettier: keep these stacked
-      subscriptionItemId,
-      { action: 'set', quantity },
-      { idempotencyKey }
-    )
-  );
-
-  if (isErr(result)) {
-    return makeErr(si`Failed to stripe.subscriptionItems.createUsageRecord: ${result.reason}`);
-  }
 }
