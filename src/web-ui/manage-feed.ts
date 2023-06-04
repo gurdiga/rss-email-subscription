@@ -209,6 +209,7 @@ function displayFeedAttributeList(
   deliveryReportsLink.href = uiData.deliveryReportsLinkHref;
 }
 
+// TODO: Add unit test?
 function makeStatusField(status: FeedStatus): HTMLElement[] {
   const dtElement = createElement('dt', 'Status', { class: 'res-feed-attribute-label' });
   const ddElement = createElement('dd', status, { class: 'res-feed-attribute-value' });
@@ -220,6 +221,11 @@ function makeStatusField(status: FeedStatus): HTMLElement[] {
     const infoIcon = createElement('i', '', { class: 'fa-solid fa-circle-info me-1 ' });
     approvalInfo.prepend(infoIcon);
     ddElement.append(approvalInfo);
+  }
+
+  if (status === FeedStatus.Approved) {
+    const successIcon = createElement('i', '', { class: 'fa-solid fa-circle-check ms-1 text-success' });
+    ddElement.append(successIcon);
   }
 
   return [dtElement, ddElement];
