@@ -18,6 +18,7 @@ import {
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...spinnerUiElements,
+    blankSlateMessage: '#blank-slate-message',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
   });
@@ -36,7 +37,11 @@ async function main() {
     return;
   }
 
-  displayFeedList(uiFeedList, uiElements);
+  if (isEmpty(uiFeedList)) {
+    unhideElement(uiElements.blankSlateMessage);
+  } else {
+    displayFeedList(uiFeedList, uiElements);
+  }
 }
 
 function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
@@ -56,7 +61,7 @@ function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiEle
 
 export interface FeedListData {
   preambleMessage: string;
-  linkData?: FeedLinkData[];
+  linkData: FeedLinkData[];
 }
 
 interface FeedLinkData {
@@ -67,18 +72,10 @@ interface FeedLinkData {
 export function makeFeedListData(feedList: UiFeedListItem[]): FeedListData {
   const pluralSuffix = feedList.length === 1 ? '' : 's';
 
-  return isEmpty(feedList)
-    ? {
-        preambleMessage: si`
-          First things first! Register your blog feed.
-          This will allow you to set up your Subscribe Form, and also register
-          your current subscriber list if you already have one.
-        `,
-      }
-    : {
-        preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
-        linkData: feedList.map(makeLinkData),
-      };
+  return {
+    preambleMessage: si`You have ${feedList.length} blog feed${pluralSuffix} registered at the moment.`,
+    linkData: feedList.map(makeLinkData),
+  };
 }
 
 function makeLinkData(item: UiFeedListItem): FeedLinkData {
@@ -124,6 +121,7 @@ async function loadUiFeedList(): Promise<Result<UiFeedListItem[]>> {
 interface RequiredUiElements extends FeedListUiElements, SpinnerUiElements {}
 
 interface FeedListUiElements {
+  blankSlateMessage: HTMLElement;
   feedListPreamble: HTMLElement;
   feedList: HTMLOListElement;
 }

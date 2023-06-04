@@ -26,10 +26,4 @@ describe(makeFeedListData.name, () => {
       ],
     });
   });
-
-  it('returns no linkData when no feeds', () => {
-    const result = makeFeedListData([]);
-
-    expect(result).to.not.have.key('linkData' as keyof FeedListData);
-  });
 });
