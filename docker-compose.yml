@@ -8,13 +8,6 @@ x-logging: &logging
       syslog-format: rfc3164
       tag: '{{.Name}}'
 
-x-dns: &dns
-  dns:
-    - 1.1.1.1
-    - 8.8.8.8
-    - 9.9.9.9
-    - 8.8.4.4
-
 x-app-env: &app-env
   TZ: UTC
   DOMAIN_NAME: ${DOMAIN_NAME?}
@@ -55,7 +48,7 @@ services:
       POSTFIX_fragile_destination_concurrency_limit: 1
       POSTFIX_fragile_destination_rate_delay: 2s
 
-    <<: [*logging, *dns]
+    <<: [*logging]
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
 
@@ -82,7 +75,7 @@ services:
       # TLS: No ECDSA certificate in this setup, only RSA
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   app:
     depends_on: [logger]
@@ -100,7 +93,7 @@ services:
     environment:
       <<: *app-env
     command: node dist/app/cron.js
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   delmon:
     depends_on: [logger]
@@ -114,7 +107,7 @@ services:
       - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   api:
     depends_on: [logger]
@@ -131,7 +124,7 @@ services:
       # DEBUG: 'express:*'
       # TS_NODE_DEBUG: 'true'
       <<: *app-env
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -148,7 +141,7 @@ services:
       - ./.tmp/certbot/www:/var/www/certbot
     environment:
       NGINX_HOST: feedsubscription.com
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
@@ -171,7 +164,7 @@ services:
           sleep 7d & wait $${!};
         done;
       '
-    <<: [*logging, *dns]
+    <<: [*logging]
 
   logger:
     container_name: logger
