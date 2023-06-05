@@ -22,6 +22,7 @@ import {
   onSubmit,
   requireUiElements,
   sendApiRequest,
+  UiElementsBase,
   uiFeedFormFields,
   UiFeedFormFields,
 } from './shared';
@@ -92,7 +93,7 @@ async function submitForm(formFields: UiFeedFormFields) {
   );
 }
 
-interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {
+interface RequiredUiElements extends UiElementsBase, UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {
   submitButton: HTMLButtonElement;
 }
 

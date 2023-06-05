@@ -5,6 +5,7 @@ import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   HttpMethod,
+  UiElementsBase,
   clearValidationErrors,
   displayValidationError,
   hideElement,
@@ -70,7 +71,7 @@ function main() {
   });
 }
 
-interface UiElements extends FormFields {
+interface UiElements extends UiElementsBase, FormFields {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
   successMessage: HTMLElement;

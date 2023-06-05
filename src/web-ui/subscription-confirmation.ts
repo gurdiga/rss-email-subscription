@@ -16,6 +16,7 @@ import {
   requireUiElements,
   sendApiRequest,
   UiElementFillSpec,
+  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -94,7 +95,7 @@ interface RequiredParams {
   email: string;
 }
 
-interface RequiredUiElements extends InputUiElements, FormUiElements, ApiResponseUiElements {}
+interface RequiredUiElements extends UiElementsBase, InputUiElements, FormUiElements, ApiResponseUiElements {}
 
 interface InputUiElements {
   inputUiContainer: HTMLElement;

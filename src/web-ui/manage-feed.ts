@@ -30,6 +30,7 @@ import {
   ApiResponseUiElements,
   HttpMethod,
   SpinnerUiElements,
+  UiElementsBase,
   apiResponseUiElements,
   displayApiResponse,
   displayInitError,
@@ -296,7 +297,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   };
 }
 
-interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements, ApiResponseUiElements {
+interface RequiredUiElements extends UiElementsBase, BreadcrumbsUiElements, SpinnerUiElements, ApiResponseUiElements {
   feedAttributeList: HTMLElement;
   feedActions: HTMLElement;
   editLink: HTMLAnchorElement;

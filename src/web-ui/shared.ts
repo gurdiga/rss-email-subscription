@@ -43,9 +43,13 @@ export function requireQueryParams<RequiredParams>(
   return params;
 }
 
+export type UiElementsBase = Record<string, HTMLElement>;
 export type ElementSelectors<T> = Record<keyof T, string>;
 
-export function requireUiElements<T>(selectors: ElementSelectors<T>, querySelectorFn = querySelector): Result<T> {
+export function requireUiElements<T extends UiElementsBase>(
+  selectors: ElementSelectors<T>,
+  querySelectorFn = querySelector
+): Result<T> {
   const uiElements = {} as T;
 
   for (const name in selectors) {
@@ -245,7 +249,7 @@ export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<v
   });
 }
 
-export function displayValidationError<FF>(
+export function displayValidationError<FF extends UiElementsBase>(
   response: InputError,
   formFields: FF,
   getOrCreateValidationMessageFn = getOrCreateValidationMessage

@@ -31,6 +31,7 @@ import {
   sendApiRequest,
   spinnerUiElements,
   SpinnerUiElements,
+  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -247,7 +248,7 @@ async function loadFeedSubscribersData<T = LoadEmailsResponse>(feedId: FeedId): 
   return response.responseData!;
 }
 
-interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
+interface RequiredUiElements extends UiElementsBase, BreadcrumbsUiElements, SpinnerUiElements {
   feedNameContainer: HTMLElement;
   feedName: HTMLElement;
   forms: HTMLElement;

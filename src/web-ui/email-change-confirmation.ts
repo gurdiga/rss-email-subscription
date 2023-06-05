@@ -17,6 +17,7 @@ import {
   sendApiRequest,
   SpinnerUiElements,
   spinnerUiElements,
+  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -80,7 +81,7 @@ interface RequiredParams {
   secret: string;
 }
 
-interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {
+interface RequiredUiElements extends UiElementsBase, ApiResponseUiElements, SpinnerUiElements {
   successMessage: HTMLElement;
   redirectTimeout: HTMLElement;
 }

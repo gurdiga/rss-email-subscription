@@ -21,6 +21,7 @@ import { createElement } from './dom-isolation';
 import {
   HttpMethod,
   SpinnerUiElements,
+  UiElementsBase,
   displayInitError,
   requireQueryParams,
   requireUiElements,
@@ -170,7 +171,7 @@ interface RequiredParams {
   displayName: string;
 }
 
-interface RequiredUiElements extends SpinnerUiElements, BreadcrumbsUiElements {
+interface RequiredUiElements extends UiElementsBase, SpinnerUiElements, BreadcrumbsUiElements {
   noDeliveriesMessage: HTMLElement;
   report: HTMLElement;
   tbody: HTMLTableSectionElement;

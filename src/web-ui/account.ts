@@ -11,13 +11,14 @@ import { PagePath } from '../domain/page-path';
 import { PlanId, Plans, isPaidPlan } from '../domain/plan';
 import { Card, makeCardDescription } from '../domain/stripe-integration';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
+import { Result, StringKey, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
 import {
   ElementSelectors,
   HttpMethod,
   SpinnerUiElements,
+  UiElementsBase,
   clearValidationErrors,
   disableElement,
   displayApiResponse,
@@ -201,7 +202,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
   const { changePlanSection, paymentSubformContainer, currentCardField } = uiElements;
 
   const newPlanId = planDropdown.value as PlanId;
-  const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
+  const paymentSubformResult = await maybeValidatePaymentSubform<StringKey<RequiredUiElements>>(
     paymentSubformHandle,
     newPlanId,
     'paymentSubform'
@@ -229,7 +230,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
       }
 
       const { clientSecret } = responseData as PlanChangeResponseData;
-      const card = await maybeConfirmPayment<keyof RequiredUiElements>(
+      const card = await maybeConfirmPayment<StringKey<RequiredUiElements>>(
         paymentSubformHandle,
         newPlanId,
         clientSecret,
@@ -455,7 +456,8 @@ function onEscape(element: HTMLElement, f: Function) {
 }
 
 interface RequiredUiElements
-  extends SpinnerUiElements,
+  extends UiElementsBase,
+    SpinnerUiElements,
     EmailUiElements,
     PasswordUiElements,
     PlanUiElements,
@@ -511,7 +513,7 @@ const passwordUiElements: ElementSelectors<PasswordUiElements> = {
   passwordChangeSuccessMessage: '#password-change-success-message',
 };
 
-interface PlanUiElements {
+interface PlanUiElements extends UiElementsBase {
   changePlanButton: HTMLButtonElement;
   viewPlanSection: HTMLElement;
   currentPlanLabel: HTMLElement;

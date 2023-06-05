@@ -9,7 +9,7 @@ import {
   feedListBreadcrumbsLink,
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
-import { displayInitError, requireQueryParams, requireUiElements } from './shared';
+import { displayInitError, requireQueryParams, requireUiElements, UiElementsBase } from './shared';
 
 function main() {
   const queryStringParams = requireQueryParams<FeedSubscribeFormParams>({
@@ -55,7 +55,7 @@ function main() {
   ]);
 }
 
-interface RequiredUiElements extends BreadcrumbsUiElements {
+interface RequiredUiElements extends UiElementsBase, BreadcrumbsUiElements {
   scriptContainer: HTMLTextAreaElement;
 }
 
