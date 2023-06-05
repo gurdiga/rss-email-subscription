@@ -54,7 +54,7 @@ function main() {
     );
 
     if (isInputError(response)) {
-      displayValidationError(response, { [responseFieldName]: formFieldName });
+      displayValidationError(response, { [responseFieldName]: uiElements[formFieldName] });
       return;
     }
 
