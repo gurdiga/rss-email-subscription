@@ -763,7 +763,7 @@ tracking-report: bot-list.txt
 	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
-	sed -e 's|/track?data=||' -e 's|https://feedsubscription.com||' | # remove noise
+	sed -e 's|/track?data=||' -e 's|https://feedsubscription.com||' -e 's/00:00/UTC/' -e 's/T/ /' | # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
 	(
