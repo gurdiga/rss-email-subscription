@@ -774,6 +774,7 @@ tracking-report: bot-list.txt
 	grep -v '"vid":"vlad"' | # exclude myself
 	(
 		tee \
+			>( grep -Po '(?<="referrer":")[^"]+' | grep -vP '^[/]' | sort | uniq -c | ts "referrer") \
 			>( grep -Po '(?<="vid":")[^"]+' | sort -u | wc -l | ts "uniq vids" ) \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
 			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c ) \
