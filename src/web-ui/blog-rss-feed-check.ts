@@ -1,5 +1,5 @@
 import { ApiPath } from '../domain/api-path';
-import { CheckFeedUrlRequestData, CheckFeedUrlResponseData } from '../domain/feed';
+import { CheckFeedUrlRequest, CheckFeedUrlRequestData, CheckFeedUrlResponseData } from '../domain/feed';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -47,7 +47,7 @@ function main() {
     };
 
     const formFieldName: keyof FormFields = 'blogUrlField';
-    const responseFieldName: keyof CheckFeedUrlResponseData = 'feedUrl';
+    const responseFieldName: keyof CheckFeedUrlRequest = 'blogUrl';
 
     const response = await asyncAttempt(() =>
       sendApiRequest<CheckFeedUrlResponseData>(ApiPath.checkFeedUrl, HttpMethod.POST, requestData)
