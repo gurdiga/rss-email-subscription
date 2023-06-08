@@ -20,7 +20,6 @@ import {
   SpinnerUiElements,
   UiElementsBase,
   clearValidationErrors,
-  disableElement,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
@@ -110,7 +109,7 @@ function addDeleteAccountEventHandlers(uiElements: DeleteAccountUiElements): voi
 
 async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
   const { deleteAccountPasswordField, deleteAccountApiResponseMessage } = uiElements;
-  const { deleteAccountSuccessMessage, deleteAccountSubmitButton, deleteAccountCancelButton } = uiElements;
+  const { deleteAccountSuccessMessage, deleteAccountConfirmationSection } = uiElements;
 
   const request: DeleteAccountRequestData = { password: deleteAccountPasswordField.value };
   const response = await asyncAttempt(() =>
@@ -125,9 +124,9 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
     },
     () => {
       hideElement(deleteAccountApiResponseMessage);
+      hideElement(deleteAccountConfirmationSection);
       unhideElement(deleteAccountSuccessMessage);
-      deleteAccountSuccessMessage.scrollIntoView({ behavior: 'smooth' });
-      disableElement(deleteAccountPasswordField, deleteAccountSubmitButton, deleteAccountCancelButton);
+      scrollIntoView(deleteAccountSuccessMessage);
       navigateTo(PagePath.home, 7000);
     }
   );
