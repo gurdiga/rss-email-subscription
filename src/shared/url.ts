@@ -1,7 +1,7 @@
 import { makeErr, Result } from './lang';
 import { si } from './string-utils';
 
-export const maxUrlLength = 256;
+export const maxUrlLength = 1024;
 const valuidProtocols = ['http:', 'https:'];
 
 export function makeHttpUrl(value: string, baseURL?: string | URL, fieldName = 'url'): Result<URL> {
