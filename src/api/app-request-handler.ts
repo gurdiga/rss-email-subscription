@@ -4,7 +4,7 @@ import { exhaustivenessCheck } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
-import { ReqSession } from './session';
+import { ReqSession, SessionFieldName } from './session';
 
 export type AppRequestHandler = (
   reqId: number,
@@ -22,12 +22,16 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqSession = req.session || {};
     const action = handler.name;
 
+    const emailSessionField: SessionFieldName = 'email';
+    const email = (reqSession as any)[emailSessionField] || undefined;
+
     const { logInfo, logError, logWarning } = makeCustomLoggers({
       reqId,
       module: 'api',
       referer: req.get('Referer'),
       userAgent: req.get('User-Agent'),
       ip: req.headers['x-real-ip'] || 'EMPTY_x-real-ip',
+      email,
     });
 
     logInfo(action, { reqId, reqBody, reqParams });
