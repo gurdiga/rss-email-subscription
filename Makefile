@@ -319,8 +319,7 @@ watch-app:
 # cron @reboot
 watch-website:
 	@function url_decode {
-		sed 's@+@ @g;s@%@\\x@g' |
-		xargs -0 printf "%b"
+		while read line; do echo -e $${line//%/\\x}; done
 	}
 
 	tail -n0 --follow=name --retry .tmp/logs/feedsubscription/website.log |
@@ -730,8 +729,7 @@ log-in-report:
 # cron 59 23 * * *
 tracking-report: bot-list.txt
 	@function url_decode {
-		sed 's@+@ @g;s@%@\\x@g' |
-		xargs -0 printf "%b"
+		while read line; do echo -e $${line//%/\\x}; done
 	}
 
 	function debug_piepeline {
