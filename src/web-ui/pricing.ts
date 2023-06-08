@@ -11,7 +11,6 @@ import {
   reportUnexpectedEmptyResponseData,
   requireUiElements,
   sendApiRequest,
-  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -148,7 +147,7 @@ async function loadAccountSupportProduct(): Promise<Result<AccountSupportProduct
   return response.responseData;
 }
 
-interface RequiredUiElements extends UiElementsBase {
+interface RequiredUiElements {
   freeTitle: HTMLElement;
   freeMaxEmailsPerMonth: HTMLElement;
   freeMaxEmailsPerDay: HTMLElement;

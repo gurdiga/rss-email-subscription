@@ -8,7 +8,6 @@ import { si } from '../shared/string-utils';
 import {
   HttpMethod,
   SpinnerUiElements,
-  UiElementsBase,
   displayInitError,
   requireUiElements,
   sendApiRequest,
@@ -119,7 +118,7 @@ async function loadUiFeedList(): Promise<Result<UiFeedListItem[]>> {
   return response.responseData!;
 }
 
-interface RequiredUiElements extends UiElementsBase, FeedListUiElements, SpinnerUiElements {}
+interface RequiredUiElements extends FeedListUiElements, SpinnerUiElements {}
 
 interface FeedListUiElements {
   blankSlateMessage: HTMLElement;

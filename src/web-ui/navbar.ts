@@ -10,7 +10,6 @@ import {
   onClick,
   requireUiElements,
   sendApiRequest,
-  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -105,7 +104,7 @@ function displayPrivateNavbar(uiElements: RequiredUiElements): void {
   });
 }
 
-interface RequiredUiElements extends UiElementsBase {
+interface RequiredUiElements {
   publicNav: HTMLElement;
   privateNav: HTMLElement;
   signOutLink: HTMLAnchorElement;

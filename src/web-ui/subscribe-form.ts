@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { requireUiElements, displayInitError, isAuthenticated, unhideElement, UiElementsBase } from './shared';
+import { requireUiElements, displayInitError, isAuthenticated, unhideElement } from './shared';
 
 function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
@@ -16,7 +16,7 @@ function main() {
   }
 }
 
-interface RequiredUiElements extends UiElementsBase {
+interface RequiredUiElements {
   cta: HTMLElement;
 }
 

@@ -17,7 +17,6 @@ import {
   sendApiRequest,
   SpinnerUiElements,
   spinnerUiElements,
-  UiElementsBase,
   unhideElement,
 } from './shared';
 
@@ -69,6 +68,6 @@ interface RequiredParams {
   secret: string;
 }
 
-interface RequiredUiElements extends UiElementsBase, ApiResponseUiElements, SpinnerUiElements {}
+interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {}
 
 main();

@@ -157,7 +157,7 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeF
   return values;
 }
 
-export type StringKey<T> = Exclude<keyof T, number | symbol>;
+type StringKey<T> = Exclude<keyof T, number | symbol>;
 
 export function makeArrayOfValues<T extends unknown, MF extends AnyFunction = MakeFn<T>>(
   values: unknown,

@@ -28,7 +28,6 @@ import {
   sendApiRequest,
   SpinnerUiElements,
   spinnerUiElements,
-  UiElementsBase,
   UiFeedFormFields,
   uiFeedFormFields,
   unhideElement,
@@ -165,12 +164,7 @@ async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
   return await asyncAttempt(() => sendApiRequest<EditFeedResponse>(ApiPath.editFeed, HttpMethod.POST, editFeedRequest));
 }
 
-interface RequiredUiElements
-  extends UiElementsBase,
-    UiFeedFormFields,
-    ApiResponseUiElements,
-    BreadcrumbsUiElements,
-    SpinnerUiElements {
+interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements, SpinnerUiElements {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
 }

@@ -3,12 +3,11 @@ import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { PlanId, Plans, isPaidPlan } from '../domain/plan';
 import { isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
-import { StringKey, asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
+import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
 import {
   AppStatusUiElements,
   HttpMethod,
-  UiElementsBase,
   apiResponseUiElements,
   clearValidationErrors,
   displayAppError,
@@ -88,7 +87,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     clearValidationErrors(uiElements);
 
     const planId = planDropdown.value;
-    const paymentSubformResult = await maybeValidatePaymentSubform<StringKey<RequiredUiElements>>(
+    const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
       paymentSubformHandle,
       planId,
       'paymentSubform'
@@ -141,7 +140,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     }
 
     const { clientSecret } = response.responseData;
-    const finishPaymentResult = await maybeConfirmPayment<StringKey<RequiredUiElements>>(
+    const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
       paymentSubformHandle,
       planId,
       clientSecret,
@@ -195,7 +194,7 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
   togglePaymentSubform(planDropdown.value);
 }
 
-interface RequiredUiElements extends UiElementsBase, FormUiElements, AppStatusUiElements {
+interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
   confirmationMessage: HTMLElement;
   paymentSubform: HTMLElement;
   paymentSubformContainer: HTMLElement;

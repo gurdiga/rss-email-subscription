@@ -17,7 +17,6 @@ import {
   onSubmit,
   requireUiElements,
   sendApiRequest,
-  UiElementsBase,
 } from './shared';
 
 function main() {
@@ -66,7 +65,7 @@ function main() {
   });
 }
 
-interface RequiredUiElements extends UiElementsBase, FormUiElements, ApiResponseUiElements {}
+interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {}
 
 export interface FormFields {
   email: HTMLInputElement;
