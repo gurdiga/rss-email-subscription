@@ -59,7 +59,8 @@ check-no-node-in-web-ui:
 
 c: compile
 cw:
-	node_modules/.bin/tsc --project tsconfig.json --watch
+	node_modules/.bin/tsc --watch --project tsconfig.json &
+	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json
 
 pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
@@ -764,7 +765,7 @@ tracking-report: bot-list.txt
 
 	cat .tmp/logs/feedsubscription/website.log |
 	grep -P "^$$date" |
-	grep -vP ".*$$bot_list_re.*" | # exclude some bots
+	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	grep -vF "/dW5zdWJzY3?id=" | # exclude obfuscated requests from M$
 	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
@@ -774,7 +775,8 @@ tracking-report: bot-list.txt
 	grep -v '"vid":"vlad"' | # exclude myself
 	(
 		tee \
-			>( grep -Po '(?<="referrer":")[^"]+' | grep -vP '^[/]' | sort | uniq -c | ts "referrer") \
+			>( grep -Po '"referrer":""' | uniq -c) \
+			>( grep -Po '(?<="referrer":")[^"]+' | grep -vE '^/' | sort | uniq -c | ts "referrer") \
 			>( grep -Po '(?<="vid":")[^"]+' | sort -u | wc -l | ts "uniq vids" ) \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
 			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c ) \
@@ -792,7 +794,7 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	@base_re='\w*(bot|crawler)\w*'
 
 	zcat -f $^ |
-	grep -Eo '" [0-9]+ [0-9]+ ".*'"$$base_re" | # only lines with something-BOT-something in the UA string (or referrer)
+	grep -Eoi '" [0-9]+ [0-9]+ ".*'"$$base_re" | # only lines with something-BOT-something in the UA string (or referrer)
 	grep -Eoi "$$base_re" |
 	cat <(
 		# Known non-humans
@@ -806,7 +808,7 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		echo "facebookexternalhit"
 		echo "facebookcatalog"
 	) - |
-	sort -u > $@
+	sort --unique --ignore-case > $@
 
 # cron @reboot
 ufw-config:
