@@ -345,7 +345,8 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const contentType = response.headers.get('content-type') || '';
 
   if (isValidFeedContentType(contentType)) {
-    return makeSuccess('OK', {}, { feedUrl: blogUrl.toString() });
+    const responseData: CheckFeedUrlResponseData = { feedUrl: blogUrl.toString() };
+    return makeSuccess('OK', {}, responseData);
   }
 
   if (!contentType.startsWith('text/html')) {
@@ -357,7 +358,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const feedHref = getFeedHref(html);
 
   if (isErr(feedHref)) {
-    logWarning(si`Failed to ${getFeedHref.name}`, { reason: feedHref.reason });
+    logWarning(si`Failed to ${getFeedHref.name}`, { reason: feedHref.reason, blogUrl });
     return makeInputError(feedHref.reason, fieldName);
   }
 
