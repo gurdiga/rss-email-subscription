@@ -29,3 +29,7 @@ export function makeHttpUrl(value: string, baseURL?: string | URL, fieldName = '
 export function makeAbsoluteHttpUrl(input: string, field?: string): Result<URL> {
   return makeHttpUrl(input, undefined, field);
 }
+
+export function isUrl(value: unknown): value is URL {
+  return value instanceof URL;
+}

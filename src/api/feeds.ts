@@ -29,13 +29,14 @@ import {
   getErrorMessage,
   getTypeName,
   isErr,
+  isNonEmptyString,
   isString,
   makeErr,
   makeValues,
 } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { makeHttpUrl } from '../shared/url';
+import { isUrl, makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 
@@ -345,7 +346,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const contentType = response.headers.get('content-type') || '';
 
   if (isValidFeedContentType(contentType)) {
-    const responseData: CheckFeedUrlResponseData = { feedUrl: blogUrl.toString() };
+    const responseData: CheckFeedUrlResponseData = { feedUrls: blogUrl.toString() };
     return makeSuccess('OK', {}, responseData);
   }
 
@@ -355,48 +356,62 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   }
 
   const html = await response.text();
-  const feedHref = getFeedHref(html);
+  const feedHrefs = getFeedHrefs(html);
 
-  if (isErr(feedHref)) {
-    logWarning(si`Failed to ${getFeedHref.name}`, { reason: feedHref.reason, blogUrl });
-    return makeInputError(feedHref.reason, fieldName);
+  if (isErr(feedHrefs)) {
+    logWarning(si`Failed to ${getFeedHrefs.name}`, { reason: feedHrefs.reason, blogUrl });
+    return makeInputError(feedHrefs.reason, fieldName);
   }
 
-  const baseURL = feedHref.startsWith('/') ? blogUrl : undefined;
-  const feedUrl = makeHttpUrl(feedHref, baseURL, fieldName);
+  const feedUrls = feedHrefs.map((href) => {
+    const baseURL = href.startsWith('/') ? blogUrl : undefined;
 
-  if (isErr(feedUrl)) {
-    logWarning(si`Failed to ${makeHttpUrl.name}`, { reason: feedUrl.reason, feedHref, baseURL });
-    return makeInputError(feedUrl.reason, fieldName);
+    return makeHttpUrl(href, baseURL, fieldName);
+  });
+
+  const errs = feedUrls.filter(isErr);
+
+  if (!isEmpty(errs)) {
+    logWarning(si`Failed to ${makeHttpUrl.name} from some of the feed hrefs`, { errs, feedUrls, blogUrl });
+  }
+
+  const validFeedUrls = feedUrls.filter(isUrl);
+
+  if (isEmpty(validFeedUrls)) {
+    logWarning(si`No valid feed URL found`, { feedUrls, blogUrl });
+    return makeInputError('No valid feed URL found', fieldName);
   }
 
   const logData = {};
-  const responseData: CheckFeedUrlResponseData = { feedUrl: feedUrl.toString() };
+  const responseData: CheckFeedUrlResponseData = { feedUrls: validFeedUrls.toString() };
 
   logInfo('Blog RSS check', { blogUrl });
 
   return makeSuccess('OK', logData, responseData);
 };
 
-export function getFeedHref(html: string, parseFn = parse): Result<string> {
+export function getFeedHrefs(html: string, parseFn = parse): Result<string[]> {
   try {
     const dom = parseFn(html.toLowerCase());
 
     const rssLinkTypes = ['application/atom+xml', 'application/rss+xml'];
     const rssLinkSelectors = rssLinkTypes.map((type) => si`link[type="${type}"]`).join(',');
-    const link = dom.querySelector(rssLinkSelectors);
+    const links = dom.querySelectorAll(rssLinkSelectors);
 
-    if (!link) {
-      return makeErr('RSS feed not found');
+    if (isEmpty(links)) {
+      return makeErr('No RSS feeds were found');
     }
 
-    const linkHref = link.getAttribute('href')?.trim();
+    const linkHrefs = links
+      // prettier: keep these stacked
+      .map((link) => link.getAttribute('href')?.trim())
+      .filter(isNonEmptyString);
 
-    if (!linkHref) {
-      return makeErr('Feed <link> has no "ref"');
+    if (isEmpty(linkHrefs)) {
+      return makeErr('No feed <link> has "ref"');
     }
 
-    return linkHref;
+    return linkHrefs;
   } catch (error) {
     return makeErr(si`Failed to parse HTML: ${getErrorMessage(error)}`);
   }

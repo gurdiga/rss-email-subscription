@@ -190,7 +190,7 @@ export interface CheckFeedUrlRequest {
 export type CheckFeedUrlRequestData = Record<keyof CheckFeedUrlRequest, string>;
 
 export interface CheckFeedUrlResponseData {
-  feedUrl: string;
+  feedUrls: string;
 }
 
 export interface SendingReport {

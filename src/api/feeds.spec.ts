@@ -1,10 +1,10 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { getFeedHref, makeBlogUrl } from './feeds';
+import { getFeedHrefs, makeBlogUrl } from './feeds';
 
-describe(getFeedHref.name, () => {
-  it('returns "href" of the first feed <link> from HTML', () => {
+describe(getFeedHrefs.name, () => {
+  it('returns "href"s from all the feed <link>s in HTML', () => {
     const html = si`
     <html lang="en">
       <head>
@@ -18,14 +18,14 @@ describe(getFeedHref.name, () => {
     </html>
     `;
 
-    expect(getFeedHref(html)).to.equal('/feed.xml');
+    expect(getFeedHrefs(html)).to.deep.equal(['/feed.xml', '/feed-2.xml']);
   });
 
   it('trims the "href"', () => {
     const html = si`<link type="application/atom+XML" rel="alternate" href="
     /feed.xml " />`;
 
-    expect(getFeedHref(html)).to.deep.equal('/feed.xml');
+    expect(getFeedHrefs(html)).to.deep.equal(['/feed.xml']);
   });
 
   it('returns an Err when can’t pase HTML', () => {
@@ -35,40 +35,40 @@ describe(getFeedHref.name, () => {
       throw error;
     };
 
-    expect(getFeedHref(html, badParseFn as any)).to.deep.equal(makeErr(si`Failed to parse HTML: ${error.message}`));
+    expect(getFeedHrefs(html, badParseFn as any)).to.deep.equal(makeErr(si`Failed to parse HTML: ${error.message}`));
   });
 
   it('returns an Err when no <link> found', () => {
     const html = '<html>Valid HTML!</html>';
 
-    expect(getFeedHref(html)).to.deep.equal(makeErr('RSS feed not found'));
+    expect(getFeedHrefs(html)).to.deep.equal(makeErr('No RSS feeds were found'));
   });
 
   it('returns an Err when <link> "ref" is empty or missing', () => {
     expect(
-      getFeedHref(si`
+      getFeedHrefs(si`
         <html>
           Valid HTML!
           <link type="application/atom+xml" rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('Feed <link> has no "ref"'));
+    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
 
     expect(
-      getFeedHref(si`
+      getFeedHrefs(si`
         <html>
           Valid HTML!
           <link type="application/atom+xml" ref="" rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('Feed <link> has no "ref"'));
+    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
 
     expect(
-      getFeedHref(si`
+      getFeedHrefs(si`
         <html>
           Valid HTML!
           <link type="application/atom+xml" ref="
           " rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('Feed <link> has no "ref"'));
+    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
   });
 });
 

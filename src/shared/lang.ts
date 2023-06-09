@@ -32,8 +32,8 @@ export function makeTypeMismatchErr(value: unknown, expectedType: string): Err {
   return makeErr(si`Expected ${expectedType} but got ${actualType}: "${jsonValue}"`);
 }
 
-export function isNonEmptyString(value: string): boolean {
-  return value.trim().length > 0;
+export function isNonEmptyString(value: unknown): value is string {
+  return typeof value === 'string' && value.trim().length > 0;
 }
 
 export function getTypeName(value: unknown): string {

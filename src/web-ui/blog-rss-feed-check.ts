@@ -11,6 +11,7 @@ import {
   onInput,
   onSubmit,
   reportAppError,
+  reportUnexpectedEmptyResponseData,
   requireUiElements,
   scrollIntoView,
   sendApiRequest,
@@ -23,6 +24,7 @@ function main() {
     blogUrlField: '#feed-checker-field',
     submitButton: '#feed-checker-button',
     successMessage: '#feed-checker-success-message',
+    feedCountWording: '#feed-count-wording',
     rssUrlContainer: '#feed-checker-rss-url-container',
   });
 
@@ -31,7 +33,7 @@ function main() {
     return;
   }
 
-  const { form, blogUrlField, submitButton, rssUrlContainer, successMessage } = uiElements;
+  const { form, blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage } = uiElements;
 
   unhideElement(form);
   onInput(blogUrlField, () => {
@@ -49,8 +51,9 @@ function main() {
     const formFieldName: keyof FormFields = 'blogUrlField';
     const responseFieldName: keyof CheckFeedUrlRequest = 'blogUrl';
 
+    const path = ApiPath.checkFeedUrl;
     const response = await asyncAttempt(() =>
-      sendApiRequest<CheckFeedUrlResponseData>(ApiPath.checkFeedUrl, HttpMethod.POST, requestData)
+      sendApiRequest<CheckFeedUrlResponseData>(path, HttpMethod.POST, requestData)
     );
 
     if (isInputError(response)) {
@@ -59,7 +62,16 @@ function main() {
     }
 
     if (isSuccess(response)) {
-      rssUrlContainer.textContent = response.responseData?.feedUrl!;
+      if (!response.responseData) {
+        reportUnexpectedEmptyResponseData(path);
+        return;
+      }
+
+      const feedUrls = response.responseData.feedUrls.split(',');
+      const feedCount = feedUrls.length;
+
+      feedCountWording.textContent = feedCount == 1 ? 'is the feed' : si`are the ${feedCount} feeds`;
+      rssUrlContainer.textContent = feedUrls.join('\n');
       hideElement(submitButton);
       unhideElement(successMessage);
       scrollIntoView(successMessage);
@@ -74,6 +86,7 @@ interface UiElements extends FormFields {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
   successMessage: HTMLElement;
+  feedCountWording: HTMLElement;
   rssUrlContainer: HTMLElement;
 }
 
