@@ -5,6 +5,8 @@ export enum PagePath {
   home = '/',
   userAuthentication = '/user/authentication.html',
   userStart = '/user/feeds.html',
+  forgotPassword = '/user/forgot-password.html',
+  resetPassword = '/user/reset-password.html',
   feedList = '/user/feeds.html',
   feedManage = '/user/manage-feed.html',
   feedEdit = '/user/edit-feed.html',

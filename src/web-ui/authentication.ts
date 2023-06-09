@@ -1,6 +1,6 @@
 import { AuthenticationRequestData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
-import { PagePath } from '../domain/page-path';
+import { PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
@@ -30,6 +30,7 @@ function main() {
     email: '#email',
     password: '#password',
     submitButton: '#submit-button',
+    forgotPasswordLink: '#forgot-password-link',
   });
 
   if (isErr(uiElements)) {
@@ -37,18 +38,25 @@ function main() {
     return;
   }
 
-  onSubmit(uiElements.submitButton, async (event: Event) => {
+  initForm(uiElements);
+  initForgotPasswordLink(uiElements);
+}
+
+function initForm(uiElements: RequiredUiElements): void {
+  const { submitButton, email, password, apiResponseMessage } = uiElements;
+
+  onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
     const request: AuthenticationRequestData = {
-      email: uiElements.email.value,
-      password: uiElements.password.value,
+      email: email.value,
+      password: password.value,
     };
     const response = await asyncAttempt(() => sendApiRequest(ApiPath.authentication, HttpMethod.POST, request));
 
     if (isErr(response)) {
-      displayCommunicationError(response, uiElements.apiResponseMessage);
+      displayCommunicationError(response, apiResponseMessage);
       return;
     }
 
@@ -57,7 +65,7 @@ function main() {
       return;
     }
 
-    displayApiResponse(response, uiElements.apiResponseMessage);
+    displayApiResponse(response, apiResponseMessage);
 
     if (isSuccess(response)) {
       navigateTo(PagePath.userStart, 1000);
@@ -65,7 +73,17 @@ function main() {
   });
 }
 
-interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {}
+function initForgotPasswordLink(uiElements: RequiredUiElements): void {
+  const { forgotPasswordLink, email } = uiElements;
+
+  email.addEventListener('input', () => {
+    forgotPasswordLink.href = makePagePathWithParams(PagePath.forgotPassword, { email: email.value });
+  });
+}
+
+interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {
+  forgotPasswordLink: HTMLAnchorElement;
+}
 
 export interface FormFields {
   email: HTMLInputElement;
