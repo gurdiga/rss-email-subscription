@@ -399,7 +399,7 @@ export function getFeedHrefs(html: string, parseFn = parse): Result<string[]> {
     const links = dom.querySelectorAll(rssLinkSelectors);
 
     if (isEmpty(links)) {
-      return makeErr('No RSS feeds were found');
+      return makeErr('This blog doesn’t seem to have a feed published');
     }
 
     const linkHrefs = links
