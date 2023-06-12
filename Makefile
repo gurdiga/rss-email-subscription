@@ -831,3 +831,16 @@ delivery-duration:
 			>( head -1 | ts 'begin:' > /dev/stderr ) \
 			>( tail -1 | ts 'end:  ' > /dev/stderr )
 	) > /dev/null
+
+logins-in-last-month:
+	@from_date="$$(date '+%F' --date='1 month ago')T00:00:00+00:00"
+
+	zcat -f .tmp/logs/feedsubscription/api.log* |
+	grep '"User logged in"' |
+	while read timestamp _1 _2 json; do
+		if [[ "$$timestamp" > '2023-05-12T00:00:00+00:00' ]]; then
+			jq -r .data.email <<<"$$json";
+		fi;
+	done |
+	sort -u |
+	tee >( wc -l | ts "total:")
