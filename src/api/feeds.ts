@@ -382,7 +382,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     return makeInputError('No valid feed URL found', fieldName);
   }
 
-  const logData = {};
+  const logData = { feedUrls: validFeedUrls.toString() };
   const responseData: CheckFeedUrlResponseData = { feedUrls: validFeedUrls.toString() };
 
   logInfo('Blog RSS check', { blogUrl });
