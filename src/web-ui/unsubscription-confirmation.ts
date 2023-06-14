@@ -1,5 +1,6 @@
 import { ApiPath } from '../domain/api-path';
 import { UnsubscriptionConfirmationRequestData } from '../domain/subscription-id';
+import { isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
   apiResponseUiElements,
@@ -8,6 +9,7 @@ import {
   displayCommunicationError,
   displayInitError,
   fillUiElements,
+  hideElement,
   HttpMethod,
   onClick,
   requireQueryParams,
@@ -76,6 +78,10 @@ function main() {
     }
 
     displayApiResponse(response, uiElements.apiResponseMessage);
+
+    if (isSuccess(response)) {
+      hideElement(uiElements.formUiContainer);
+    }
   });
 }
 
