@@ -36,6 +36,7 @@ import {
   navigateTo,
   onClick,
   preventDoubleClick,
+  reportAppError,
   requireQueryParams,
   requireUiElements,
   scrollIntoView,
@@ -140,6 +141,7 @@ export async function loadData(feedId: FeedId) {
   );
 
   if (isErr(response)) {
+    reportAppError(response.reason);
     return makeErr('Failed to load the feed');
   }
 
