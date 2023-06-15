@@ -102,7 +102,7 @@ async function sendConfirmationEmail(
 }
 
 function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: string): EmailContent {
-  const confirmationLink = new URL(si`https://${domainName}${PagePath.resetPassword}`);
+  const confirmationLink = new URL(si`https://${domainName}${PagePath.confirmPasswordReset}`);
 
   confirmationLink.searchParams.set('secret', secret.value);
 

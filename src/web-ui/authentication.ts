@@ -77,7 +77,7 @@ function initForgotPasswordLink(uiElements: RequiredUiElements): void {
   const { forgotPasswordLink, email } = uiElements;
 
   email.addEventListener('input', () => {
-    forgotPasswordLink.href = makePagePathWithParams(PagePath.forgotPassword, { email: email.value });
+    forgotPasswordLink.href = makePagePathWithParams(PagePath.requestPasswordReset, { email: email.value });
   });
 }
 
