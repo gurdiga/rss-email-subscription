@@ -16,3 +16,7 @@ export function makeRegistrationConfirmationSecretHash(email: EmailAddress, hash
 export function makeEmailChangeConfirmationSecretHash(email: EmailAddress, hashingSalt: string): string {
   return hash(email.value, si`email-change-confirmation-secret-${hashingSalt}`);
 }
+
+export function makePasswordResetConfirmationSecretHash(email: EmailAddress, hashingSalt: string): string {
+  return hash(email.value, si`password-reset-confirmation-secret-${hashingSalt}`);
+}

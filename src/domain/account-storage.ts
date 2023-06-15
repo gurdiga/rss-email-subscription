@@ -16,7 +16,7 @@ import {
 import { getAccountIdByEmail } from './account-crypto';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
-import { makeHashedPassword } from './hashed-password';
+import { HashedPassword, makeHashedPassword } from './hashed-password';
 import { makePlanId } from './plan';
 import { AppStorage, StorageKey } from './storage';
 
@@ -221,6 +221,31 @@ export function deleteAccount(storage: AppStorage, accountId: AccountId): Result
 
   if (isErr(removeTreeResult)) {
     return makeErr(si`Couldn’t removeTree: ${removeTreeResult.reason}`);
+  }
+}
+
+export function resetAccountPassword(
+  storage: AppStorage,
+  accountId: AccountId,
+  newHashedPassword: HashedPassword
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
+  }
+
+  if (isAccountNotFound(account)) {
+    return makeErr('Account not found');
+  }
+
+  const storeResult = storeAccount(storage, accountId, {
+    ...account,
+    hashedPassword: newHashedPassword,
+  });
+
+  if (isErr(storeResult)) {
+    return makeErr(si`Failed to ${storeAccount.name}: ${storeResult.reason}`);
   }
 }
 

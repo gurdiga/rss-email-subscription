@@ -36,6 +36,7 @@ import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
 import { showSampleEmail } from './feeds/show-sample-email';
+import { requestPasswordReset, confirmPasswordReset } from './password-reset';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -62,6 +63,8 @@ async function main() {
   router.post(ApiPath.registration, makeAppRequestHandler(registration, app));
   router.post(ApiPath.registrationConfirmation, makeAppRequestHandler(registrationConfirmation, app));
   router.post(ApiPath.authentication, makeAppRequestHandler(authentication, app));
+  router.post(ApiPath.requestPasswordReset, makeAppRequestHandler(requestPasswordReset, app));
+  router.post(ApiPath.confirmPasswordReset, makeAppRequestHandler(confirmPasswordReset, app));
   router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app));
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
   router.post(ApiPath.requestAccountEmailChange, makeAppRequestHandler(requestAccountEmailChange, app));

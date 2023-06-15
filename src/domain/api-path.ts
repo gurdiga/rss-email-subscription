@@ -24,6 +24,8 @@ export enum ApiPath {
   registration = '/registration',
   registrationConfirmation = '/registration-confirmation',
   authentication = '/authentication',
+  requestPasswordReset = '/request-password-reset',
+  confirmPasswordReset = '/confirm-password-reset',
   deauthentication = '/deauthentication',
   loadCurrentAccount = '/account',
   requestAccountEmailChange = '/account/request-change-email',
