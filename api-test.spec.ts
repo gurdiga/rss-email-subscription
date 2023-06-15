@@ -15,6 +15,7 @@ import {
 import {
   getAccountIdByEmail,
   makeEmailChangeConfirmationSecretHash,
+  makePasswordResetConfirmationSecretHash,
   makeRegistrationConfirmationSecretHash,
 } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
@@ -47,7 +48,12 @@ import {
   getFeedJsonStorageKey,
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
-import { readFile } from './src/domain/io-isolation';
+import { fileExists, readFile } from './src/domain/io-isolation';
+import {
+  PasswordResetConfirmationData,
+  PasswordResetConfirmationSecretData,
+  PasswordResetRequestData,
+} from './src/domain/password-reset';
 import { PlanId } from './src/domain/plan';
 import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
@@ -655,6 +661,61 @@ describe('API', () => {
     });
   });
 
+  describe('Forgot password', () => {
+    const emailAddress = makeTestEmailAddress(userEmail);
+    let confirmationSecret: ConfirmationSecret;
+
+    it('stores the confirmation secret (and sends an email)', async () => {
+      const { responseBody } = await requestPasswordReset(userEmail);
+
+      const expectedResponse: Success<void> = {
+        kind: 'Success',
+        message: 'OK',
+      };
+      expect(responseBody).to.deep.equal(expectedResponse);
+
+      const [secret, secretData] = loadPasswordResetConfirmationSecret(emailAddress);
+      const expectedSecretData: PasswordResetConfirmationSecretData = {
+        accountId: getAccountIdByEmail(emailAddress, appSettings.hashingSalt).value,
+      };
+      expect(secretData, JSON.stringify(secretData)).to.deep.equal(expectedSecretData);
+      confirmationSecret = secret;
+    });
+
+    it('updates the account password hash and deletes the confirmation secret', async () => {
+      const newPassword = 'the-new-53cret-p455w0rd';
+      const { responseBody } = await confirmPasswordReset(confirmationSecret, newPassword);
+
+      const expectedResponse: Success<{}> = {
+        kind: 'Success',
+        message: 'OK',
+        responseData: {},
+      };
+      expect(responseBody).to.deep.equal(expectedResponse);
+
+      const [storedAccount] = loadStoredAccountByEmail(emailAddress.value);
+      const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
+      expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+
+      const result = doesConfirmationSecretExist(confirmationSecret);
+      expect(result, 'confirmation secred has been deleted').to.be.false;
+    });
+
+    async function requestPasswordReset(email: string) {
+      const request: PasswordResetRequestData = { email };
+      const path = getFullApiPath(ApiPath.requestPasswordReset);
+
+      return await post(path, request);
+    }
+
+    async function confirmPasswordReset(secret: ConfirmationSecret, newPassword: string) {
+      const request: PasswordResetConfirmationData = { secret: secret.value, newPassword };
+      const path = getFullApiPath(ApiPath.confirmPasswordReset);
+
+      return await post(path, request);
+    }
+  });
+
   after(() => {
     const cleanup = deleteAccount(makeTestEmailAddress(userEmail));
     expect(isErr(cleanup), si`cleanup deleteAccount failed: ${JSON.stringify(cleanup)}`).to.be.false;
@@ -724,9 +785,27 @@ describe('API', () => {
   ): [ConfirmationSecret, EmailChangeRequestSecretData] {
     const hashingSalt = appSettings.hashingSalt;
     const hash = makeEmailChangeConfirmationSecretHash(email, hashingSalt);
+
+    return loadConfirmationSecret<EmailChangeRequestSecretData>(hash);
+  }
+
+  function loadPasswordResetConfirmationSecret(
+    email: EmailAddress
+  ): [ConfirmationSecret, PasswordResetConfirmationSecretData] {
+    const hashingSalt = appSettings.hashingSalt;
+    const hash = makePasswordResetConfirmationSecretHash(email, hashingSalt);
+
+    return loadConfirmationSecret<PasswordResetConfirmationSecretData>(hash);
+  }
+
+  function loadConfirmationSecret<T>(hash: string): [ConfirmationSecret, T] {
     const secret = makeTestConfirmationSecret(hash);
 
-    return [secret, loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as EmailChangeRequestSecretData];
+    return [secret, loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as T];
+  }
+
+  function doesConfirmationSecretExist(secret: ConfirmationSecret): boolean {
+    return fileExists(makePath(dataDirRoot, getConfirmationSecretStorageKey(secret)));
   }
 
   function loadAppSettings(): AppSettings {

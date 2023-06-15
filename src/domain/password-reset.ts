@@ -16,8 +16,8 @@ export interface PasswordResetConfirmation {
 
 export type PasswordResetConfirmationData = Record<keyof PasswordResetConfirmation, string>;
 
-export interface PasswordResetSecret {
+export interface PasswordResetConfirmationSecret {
   accountId: AccountId;
 }
 
-export type PasswordResetSecretData = Record<keyof PasswordResetSecret, string>;
+export type PasswordResetConfirmationSecretData = Record<keyof PasswordResetConfirmationSecret, string>;

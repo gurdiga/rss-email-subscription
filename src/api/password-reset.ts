@@ -15,8 +15,8 @@ import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import {
   PasswordResetRequest,
-  PasswordResetSecret,
-  PasswordResetSecretData,
+  PasswordResetConfirmationSecret,
+  PasswordResetConfirmationSecretData,
   PasswordResetConfirmation,
 } from '../domain/password-reset';
 import { makeHashedPassword } from '../domain/hashed-password';
@@ -33,7 +33,6 @@ import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
 
-// TODO: Add api-test
 export const requestPasswordReset: AppRequestHandler = async function forgotPassword(
   reqId,
   reqBody,
@@ -127,7 +126,7 @@ function storeForgotPasswordConfirmationSecret(
   secret: ConfirmationSecret,
   accountId: AccountId
 ): Result<void> {
-  const secretData: PasswordResetSecretData = {
+  const secretData: PasswordResetConfirmationSecretData = {
     accountId: accountId.value,
   };
   const result = storeConfirmationSecret(storage, secret, secretData);
@@ -143,7 +142,6 @@ function makePasswordResetRequest(data: unknown): Result<PasswordResetRequest> {
   });
 }
 
-// TODO: Add api-test
 export const confirmPasswordReset: AppRequestHandler = async function resetPassword(
   reqId,
   reqBody,
@@ -232,8 +230,8 @@ function sendPasswordResetConfirmationEmail(accountEmail: EmailAddress, settings
   return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
-function makeForgotPasswordSecret(data: unknown): Result<PasswordResetSecret> {
-  return makeValues<PasswordResetSecret>(data, {
+function makeForgotPasswordSecret(data: unknown): Result<PasswordResetConfirmationSecret> {
+  return makeValues<PasswordResetConfirmationSecret>(data, {
     accountId: makeAccountId,
   });
 }
