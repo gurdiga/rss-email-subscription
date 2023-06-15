@@ -661,7 +661,7 @@ describe('API', () => {
     });
   });
 
-  describe('Forgot password', () => {
+  describe('Forgot password endpoints', () => {
     const emailAddress = makeTestEmailAddress(userEmail);
     let confirmationSecret: ConfirmationSecret;
 
