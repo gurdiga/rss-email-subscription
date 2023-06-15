@@ -14,17 +14,17 @@ export function isConfirmationSecret(value: unknown): value is ConfirmationSecre
   return hasKind(value, 'ConfirmationSecret');
 }
 
-export function makeConfirmationSecret(input: unknown): Result<ConfirmationSecret> {
+export function makeConfirmationSecret(input: unknown, field = 'secret'): Result<ConfirmationSecret> {
   if (!input) {
-    return makeErr('Empty input');
+    return makeErr('Empty input', field);
   }
 
   if (typeof input !== 'string') {
-    return makeErr(si`Input of invalid type: ${getTypeName(input)}`);
+    return makeErr(si`Input of invalid type: ${getTypeName(input)}`, field);
   }
 
   if (input.length !== confirmationSecretLength) {
-    return makeErr(si`Input of invalid length; expected ${confirmationSecretLength}`);
+    return makeErr(si`Input of invalid length; expected ${confirmationSecretLength}`, field);
   }
 
   return {
