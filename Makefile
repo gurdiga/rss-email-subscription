@@ -845,7 +845,7 @@ logins-in-last-month:
 	sort -u |
 	tee >( wc -l | ts "total:")
 
-# cron @reboot
+# run weekly in dev env
 docker-image-check:
 	@yq -r '.services[].image' docker-compose.yml |
 	xargs -I{} docker scout cves {}
