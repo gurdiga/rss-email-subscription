@@ -41,7 +41,7 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
   _reqSession,
   { env, storage, settings }
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ module: forgotPassword.name, reqId });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: forgotPassword.name, reqId });
   const request = makePasswordResetRequest(reqBody);
 
   if (isErr(request)) {
@@ -80,6 +80,8 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
     logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendResult.reason, email: account.email.value });
     return makeAppError(sendResult.reason);
   }
+
+  logInfo('User requested password change', { email: account.email.value, accountId: accountId.value });
 
   return makeSuccess('OK');
 };
@@ -149,7 +151,7 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   reqSession,
   { settings, storage, env }
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ module: resetPassword.name, reqId });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: resetPassword.name, reqId });
   const request = makePasswordResetConfirmation(reqBody);
 
   if (isErr(request)) {
@@ -206,6 +208,8 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   const logData = {};
   const responseData = {};
   const cookies = [enablePrivateNavbarCookie];
+
+  logInfo('User confirmed password change', { email: account.email.value, accountId: accountId.value });
 
   return makeSuccess('OK', logData, responseData, cookies);
 };
