@@ -8,17 +8,17 @@ export interface HashedPassword {
 
 export const hashedPasswordLength = 64;
 
-export function makeHashedPassword(hashedPassword: unknown): Result<HashedPassword> {
-  if (typeof hashedPassword !== 'string') {
-    return makeErr(si`Invalid hashed password: expected string got ${getTypeName(hashedPassword)}`);
+export function makeHashedPassword(hashedPasswordString: unknown): Result<HashedPassword> {
+  if (typeof hashedPasswordString !== 'string') {
+    return makeErr(si`Invalid hashed password: expected string, got ${getTypeName(hashedPasswordString)}`);
   }
 
-  if (hashedPassword.length !== hashedPasswordLength) {
-    return makeErr(si`Invalid hashed password length: ${hashedPassword.length}`);
+  if (hashedPasswordString.length !== hashedPasswordLength) {
+    return makeErr(si`Invalid hashed password length: ${hashedPasswordString.length}`);
   }
 
   return {
     kind: 'HashedPassword',
-    value: hashedPassword,
+    value: hashedPasswordString,
   };
 }
