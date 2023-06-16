@@ -883,6 +883,10 @@ docker-image-check:
 		fi
 	done
 
+all-images: app certbot delmon logger smtp-in smtp-out website
+
+# Helper functions
+
 define include_log_to
 	function log_to() {
 		local log_file=$$1
