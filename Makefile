@@ -122,12 +122,7 @@ smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
 app:
-	@function log_to() {
-		local log_file=$$1
-
-		ts '%Y-%m-%dT%T%z' |
-		tee --append "$$log_file"
-	}
+	@$(call include_log_to)
 
 	docker buildx build \
 		--progress=plain \
@@ -193,7 +188,7 @@ start-logger: logger
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- logger
 
-start-api: website app
+start-api: build-website app
 	export NODE_ENV="production"
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- logger website api > /dev/null &
@@ -201,7 +196,7 @@ start-api: website app
 	docker-compose --project-name res logs --follow --since 10s --timestamps &
 	wait
 
-start-website: website start-api
+start-website: build-website start-api
 
 start-testblog:
 	@echo 'Run this:'
@@ -231,6 +226,20 @@ reload-website:
 
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
+
+certbot:
+	@$(call include_log_to)
+
+	docker buildx build \
+		--progress=plain \
+		--tag certbot \
+		-f docker-services/certbot/Dockerfile \
+		. |&
+	log_to .tmp/logs/feedsubscription/docker-build-certbot.log
+
+start-certbot: certbot
+	docker-compose --project-name res up --remove-orphans --detach \
+		-- certbot
 
 # NOTE: When changing certificate domains, rm -rf ll ./.tmp/certbot/conf/ first.
 ssl:
@@ -501,6 +510,16 @@ mailq-report:
 
 .PHONY: website
 website:
+	@$(call include_log_to)
+
+	docker buildx build \
+		--progress=plain \
+		--tag website \
+		-f docker-services/website/Dockerfile \
+		. |&
+	log_to .tmp/logs/feedsubscription/docker-build-website.log
+
+build-website:
 	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build )
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
 
@@ -857,3 +876,14 @@ docker-image-check:
 			break
 		fi
 	done
+
+define include_log_to
+	function log_to() {
+		local log_file=$$1
+
+		ts '%Y-%m-%dT%T%z' |
+		tee --append "$$log_file"
+	}
+
+	export -f log_to
+endef
