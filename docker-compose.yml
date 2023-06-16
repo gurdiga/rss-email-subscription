@@ -131,7 +131,7 @@ services:
     depends_on: [api]
     container_name: website
     hostname: website
-    image: nginx:1.25.0-alpine
+    image: website
     restart: always
     ports: ['80:80', '443:443']
     volumes:
@@ -148,7 +148,7 @@ services:
     depends_on: [logger]
     container_name: certbot
     hostname: certbot
-    image: certbot/certbot:v2.6.0
+    image: certbot
     restart: always
     volumes:
       - ./.tmp/certbot/conf:/etc/letsencrypt
