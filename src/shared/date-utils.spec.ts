@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getDateBefore, getHoursFromMs, makeDate } from './date-utils';
+import { getDateBefore, getDeliveryDirPrefix, getHoursFromMs, makeDate } from './date-utils';
 import { makeErr } from './lang';
 import { confirmationSecretLifetimeMs } from '../domain/confirmation-secrets';
 
@@ -33,5 +33,13 @@ describe(getDateBefore.name, () => {
 describe(getHoursFromMs.name, () => {
   it('transforms ms to hours', () => {
     expect(getHoursFromMs(confirmationSecretLifetimeMs)).to.equal(48);
+  });
+});
+
+describe(getDeliveryDirPrefix.name, () => {
+  it('returns the prefix of delivery directory', () => {
+    const date = new Date('2023-06-16');
+
+    expect(getDeliveryDirPrefix(date)).to.equal('20230616');
   });
 });

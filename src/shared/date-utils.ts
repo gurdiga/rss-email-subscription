@@ -31,7 +31,7 @@ export function getYesterday(): Date {
 }
 
 export function getDeliveryDirPrefix(date: Date): string {
-  return date.toISOString().substring(0, 10).replaceAll('-', ''); // 'YYYYMMDD'
+  return date.toISOString().substring(0, 10).replace(/-/g, ''); // 'YYYYMMDD'
 }
 
 export function getHoursFromMs(ms: number): number {
