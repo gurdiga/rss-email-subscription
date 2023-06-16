@@ -13,6 +13,7 @@ import { isErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { reportUsage } from './usage-reporting';
+import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -29,9 +30,12 @@ function main() {
   const dataDirRoot = env.DATA_DIR_ROOT;
   const storage = makeStorage(dataDirRoot);
 
-  const feedCheckingJob = startJob('2 * * * *', () => checkFeeds(storage));
-  const usageReportingJob = startJob('1 0 * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY));
-  const errorReportingCheckJob = startJob('0 0 * * *', () => logError('Just checking error reporting'));
+  const jobs = [
+    startJob('2 * * * *', () => checkFeeds(storage)),
+    startJob('1 0 * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY)),
+    startJob('42 * * * *', () => expireConfirmationSecrets(storage)),
+    startJob('0 0 * * *', () => logError('Just checking error reporting')),
+  ];
 
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will check feeds now.');
@@ -40,9 +44,7 @@ function main() {
 
   process.on('SIGTERM', () => {
     logWarning('Received SIGTERM. Will stop the cron job and exit.');
-    feedCheckingJob.stop();
-    usageReportingJob.stop();
-    errorReportingCheckJob.stop();
+    jobs.forEach((job) => job.stop());
   });
 }
 

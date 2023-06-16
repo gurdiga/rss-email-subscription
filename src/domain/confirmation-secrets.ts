@@ -8,6 +8,7 @@ export interface ConfirmationSecret {
   value: string;
 }
 
+export const confirmationSecretLifetimeMs = 48 * 3600 * 1000;
 export const confirmationSecretLength = 64;
 
 export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {

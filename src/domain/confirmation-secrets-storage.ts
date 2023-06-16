@@ -34,6 +34,8 @@ export function deleteConfirmationSecret(storage: AppStorage, secret: Confirmati
   return storage.removeItem(storageKey);
 }
 
+export const confirmationSecretsStorageKey = '/confirmation-secrets';
+
 export function getConfirmationSecretStorageKey(secret: ConfirmationSecret): StorageKey {
-  return makePath('/confirmation-secrets', si`${secret.value}.json`);
+  return makePath(confirmationSecretsStorageKey, si`${secret.value}.json`);
 }
