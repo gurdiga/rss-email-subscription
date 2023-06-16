@@ -850,4 +850,10 @@ logins-in-last-month:
 # run weekly in dev env
 docker-image-check:
 	@yq -r '.services[].image' docker-compose.yml |
-	xargs -I{} docker scout cves {}
+	while read image; do
+		echo "====================== $$image ======================"
+
+		if ! docker scout cves --exit-code "$$image"; then
+			break
+		fi
+	done
