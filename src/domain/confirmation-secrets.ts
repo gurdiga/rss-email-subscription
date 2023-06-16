@@ -1,3 +1,4 @@
+import { getHoursFromMs } from '../shared/date-utils';
 import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { AccountId } from './account';
@@ -9,6 +10,8 @@ export interface ConfirmationSecret {
 }
 
 export const confirmationSecretLifetimeMs = 48 * 3600 * 1000;
+export const humanConfirmationSecretLifetime = si`${getHoursFromMs(confirmationSecretLifetimeMs)} hours`;
+
 export const confirmationSecretLength = 64;
 
 export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {

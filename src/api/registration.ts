@@ -12,6 +12,7 @@ import { accountExists, confirmAccount, storeAccount } from '../domain/account-s
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
+  humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
 } from '../domain/confirmation-secrets';
@@ -193,6 +194,8 @@ export function makeRegistrationConfirmationEmailContent(
       <p>Please confirm FeedSubscription.com registration by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
+
+      <p>NOTE: This link ☝️ expires in ${humanConfirmationSecretLifetime}.</p>
 
       <p>If you did not register, please ignore this message.</p>
 

@@ -5,7 +5,11 @@ import { AccountId, isAccountNotFound, makeAccountId } from '../domain/account';
 import { getAccountIdByEmail, makePasswordResetConfirmationSecretHash } from '../domain/account-crypto';
 import { loadAccount, resetAccountPassword } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
-import { ConfirmationSecret, makeConfirmationSecret } from '../domain/confirmation-secrets';
+import {
+  ConfirmationSecret,
+  humanConfirmationSecretLifetime,
+  makeConfirmationSecret,
+} from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
   loadConfirmationSecret,
@@ -13,15 +17,15 @@ import {
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import {
-  PasswordResetRequest,
-  PasswordResetConfirmationSecret,
-  PasswordResetConfirmationSecretData,
-  PasswordResetConfirmation,
-} from '../domain/password-reset';
 import { makeHashedPassword } from '../domain/hashed-password';
 import { makeNewPassword } from '../domain/new-password';
 import { PagePath } from '../domain/page-path';
+import {
+  PasswordResetConfirmation,
+  PasswordResetConfirmationSecret,
+  PasswordResetConfirmationSecretData,
+  PasswordResetRequest,
+} from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -113,6 +117,8 @@ function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: st
       <p>Here is the link to reset your password at FeedSubscription.com:</p>
 
       <b><a href="${confirmationLink.toString()}">Take me to the password reset form</a></b>
+
+      <p>NOTE: This link ☝️ expires in ${humanConfirmationSecretLifetime}.</p>
 
       <p>If you did not ask to reset password, please ignore this message.</p>
 

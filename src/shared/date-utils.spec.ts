@@ -1,6 +1,7 @@
 import { expect } from 'chai';
-import { getDateBefore, makeDate } from './date-utils';
+import { getDateBefore, getHoursFromMs, makeDate } from './date-utils';
 import { makeErr } from './lang';
+import { confirmationSecretLifetimeMs } from '../domain/confirmation-secrets';
 
 describe(makeDate.name, () => {
   const field = 'dob';
@@ -26,5 +27,11 @@ describe(getDateBefore.name, () => {
     const resultDate = getDateBefore(date).toISOString().substring(0, 10);
 
     expect(resultDate).to.deep.equal('2023-05-29');
+  });
+});
+
+describe(getHoursFromMs.name, () => {
+  it('transforms ms to hours', () => {
+    expect(getHoursFromMs(confirmationSecretLifetimeMs)).to.equal(48);
   });
 });

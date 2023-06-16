@@ -21,6 +21,7 @@ import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
   EmailChangeRequestSecretData,
+  humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeEmailChangeRequestSecretData,
@@ -43,8 +44,8 @@ import { isErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie } from './app-cookie';
-import { AppEnv } from './init-app';
 import { AppRequestHandler } from './app-request-handler';
+import { AppEnv } from './init-app';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 import { createStripeRecords, loadCardDescription } from './stripe-integration';
 
@@ -376,6 +377,8 @@ async function sendEmailChangeConfirmationEmail(
       <p>Please confirm FeedSubscription.com email change by clicking the link below:</p>
 
       <p><a href="${confirmationLink.toString()}">Yes, I confirm email change</a>.</p>
+
+      <p>NOTE: This link ☝️ expires in ${humanConfirmationSecretLifetime}.</p>
 
       <p>If you did not initiate an account email change, please ignore this message.</p>
 
