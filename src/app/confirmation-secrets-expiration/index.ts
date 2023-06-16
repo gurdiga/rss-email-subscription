@@ -73,7 +73,9 @@ export function expireConfirmationSecrets(storage: AppStorage) {
       expiredSecretsCount++;
     }
 
-    logInfo(si`Deleted confirmation secrets: ${expiredSecretsCount}`);
+    if (expiredSecretsCount > 0) {
+      logInfo(si`Deleted confirmation secrets: ${expiredSecretsCount}`);
+    }
   });
 }
 

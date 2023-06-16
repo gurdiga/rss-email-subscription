@@ -297,7 +297,8 @@ watch-app:
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(New feed added|Feed updated|Feed deleted)"' \
 			-e '"message":"(Unsubscribed)"' \
-			-e '"message":"(Confirmation secrets expiration|Deleted confirmation secrets)' \
+			-e '"message":"Finished Confirmation secrets expiration"' \
+			-e '"message":"Deleted confirmation secrets' \
 			-e '"message":"(User registered|User confirmed registration|User (requested|confirmed) password change|User logged in|Account deleted)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
