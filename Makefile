@@ -869,6 +869,12 @@ logins-in-last-month:
 # run weekly in dev env
 docker-image-check:
 	@yq -r '.services[].image' docker-compose.yml |
+	sort -u |
+	if [ -v SKIP ]; then
+		grep -vE "$${SKIP}";
+	else
+		cat;
+	fi |
 	while read image; do
 		echo "====================== $$image ======================"
 
