@@ -3,6 +3,7 @@ FROM app:latest
 
 VOLUME "/smtp-out.log"
 
+RUN apk update && apk upgrade --no-cache
 RUN apk add --no-cache \
   coreutils=9.1-r0
 
