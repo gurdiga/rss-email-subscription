@@ -14,6 +14,7 @@ import {
   unhideElement,
 } from './shared';
 
+// TODO: Delete because it’s not used any more?
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     freeTitle: '#free-title',
