@@ -85,7 +85,8 @@ export async function asyncAttempt<F extends AnyAsyncFunction>(f: F): Promise<Re
   }
 }
 
-export function isObject(value: unknown): value is Object {
+// https://mariusschulz.com/blog/the-object-type-in-typescript
+export function isObject(value: unknown): value is object {
   // As per https://nodejs.org/api/util.html#utilisobjectobject
   return value !== null && typeof value === 'object';
 }
