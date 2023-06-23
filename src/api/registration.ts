@@ -60,7 +60,7 @@ export const registration: AppRequestHandler = async function registration(
 
   if (request.planId === PlanId.SDE) {
     logWarning('Attemtping to register with the SDE plan');
-    return makeInputError('SDE Plan is assigned by hand', 'planId' as keyof RegistrationRequest);
+    return makeInputError<keyof RegistrationRequest>('Please select one of the subscription plans', 'planId');
   }
 
   const accountId = initAccount(storage, settings, request);
@@ -72,7 +72,7 @@ export const registration: AppRequestHandler = async function registration(
 
   if (isAccountAlreadyExists(accountId)) {
     logWarning('Account to register already exists', { request });
-    return makeInputError('Email already taken', 'email' as keyof RegistrationRequest);
+    return makeInputError<keyof RegistrationRequest>('Email already taken', 'email');
   }
 
   const { email, planId } = request;
@@ -94,14 +94,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  const clientSecret = await createStripeRecords(
-    storage,
-    env.STRIPE_SECRET_KEY,
-    env.STRIPE_PRICE_ID,
-    accountId,
-    email,
-    planId
-  );
+  const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, accountId, email, planId);
 
   if (isErr(clientSecret)) {
     logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });

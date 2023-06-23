@@ -2,20 +2,20 @@ import Stripe from 'stripe';
 import { AccountId } from '../domain/account';
 import { getAccountRootStorageKey } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
-import { PlanId, isPaidPlan } from '../domain/plan';
+import { PlanId, isSubscriptionPlan } from '../domain/plan';
 import { AppStorage, StorageKey } from '../domain/storage';
 import {
   AccountSupportProductResponseData,
   StoreCardRequest,
   StripeKeysResponseData,
   makeCardDescription,
-  stripePaymentMethodTypes,
 } from '../domain/stripe-integration';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import {
   Result,
   asyncAttempt,
   isErr,
+  isObject,
   makeErr,
   makeNonEmptyString,
   makeNumber,
@@ -180,15 +180,16 @@ function makeAccountSupportProductResponseData(data: unknown): Result<AccountSup
   });
 }
 
+type ClientSecret = string;
+
 export async function createStripeRecords(
   storage: AppStorage,
   secretKey: string,
-  priceId: string,
   accountId: AccountId,
   email: EmailAddress,
   planId: PlanId
-): Promise<Result<string | 'NOT_A_PAID_PLAN'>> {
-  if (!isPaidPlan(planId)) {
+): Promise<Result<ClientSecret | 'NOT_A_PAID_PLAN'>> {
+  if (!isSubscriptionPlan(planId)) {
     return 'NOT_A_PAID_PLAN';
   }
 
@@ -205,27 +206,26 @@ export async function createStripeRecords(
     return makeErr(si`Failed to ${storeStripeCustomer.name}: ${storeCustomerResult.reason}`);
   }
 
-  const setupIntent = await asyncAttempt(() =>
-    stripe.setupIntents.create({
-      customer: customer.id,
-      payment_method_types: stripePaymentMethodTypes,
-    })
-  );
+  const query = si`metadata['res_plan_id']:'${planId}'`;
+  const prices = await asyncAttempt(() => stripe.prices.search({ query }));
 
-  if (isErr(setupIntent)) {
-    return makeErr(si`Failed to stripe.setupIntents.create: ${setupIntent.reason}`);
+  if (isErr(prices)) {
+    return makeErr(si`Failed to stripe.prices.search: ${prices.reason}`);
   }
 
-  const clientSecret = setupIntent.client_secret;
+  const price = prices.data[0];
 
-  if (!clientSecret) {
-    return makeErr(si`stripe.setupIntents.create returned empty "client_secret"`);
+  if (!price) {
+    return makeErr(si`Price not found with stripe.prices.search: query=${query}`);
   }
 
   const subscription = await asyncAttempt(() =>
     stripe.subscriptions.create({
       customer: customer.id,
-      items: [{ price: priceId }],
+      items: [{ price: price.id }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
     })
   );
 
@@ -243,10 +243,38 @@ export async function createStripeRecords(
     return makeErr(si`Subscription’s item has no ID`);
   }
 
-  const storeScubscriptionItemResult = storeSubscriptionItemId(storage, accountId, subscriptionItem.id);
+  const storeSubscriptionItemResult = storeSubscriptionItemId(storage, accountId, subscriptionItem.id);
 
-  if (isErr(storeScubscriptionItemResult)) {
-    return makeErr(si`Failed to ${storeSubscriptionItemId.name}: ${storeScubscriptionItemResult.reason}`);
+  if (isErr(storeSubscriptionItemResult)) {
+    return makeErr(si`Failed to ${storeSubscriptionItemId.name}: ${storeSubscriptionItemResult.reason}`);
+  }
+
+  const clientSecret = makeClientSecret(subscription);
+
+  if (isErr(clientSecret)) {
+    return makeErr(si`Failed to ${makeClientSecret.name}: ${clientSecret.reason}`);
+  }
+
+  return clientSecret;
+}
+
+function makeClientSecret(subscription: Stripe.Subscription): Result<ClientSecret> {
+  const latestInvoice = subscription.latest_invoice;
+
+  if (!isObject(latestInvoice)) {
+    return makeErr(si`Non-object subscription.latest_invoice: ${JSON.stringify(latestInvoice)}`);
+  }
+
+  const paymentIntent = latestInvoice.payment_intent;
+
+  if (!isObject(paymentIntent)) {
+    return makeErr(si`Non-object subscription.latest_invoice.payment_intent: ${JSON.stringify(paymentIntent)}`);
+  }
+
+  const clientSecret = paymentIntent.client_secret;
+
+  if (clientSecret === null) {
+    return makeErr(si`Null subscription.latest_invoice.payment_intent.client_secret`);
   }
 
   return clientSecret;

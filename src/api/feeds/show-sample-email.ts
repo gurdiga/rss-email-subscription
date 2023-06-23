@@ -1,26 +1,25 @@
-import { AppRequestHandler } from '../app-request-handler';
-import { AppEnv } from '../init-app';
-import { checkSession, isAuthenticatedSession } from '../session';
 import { EmailContent } from '../../app/email-sending/email-content';
 import { sendEmail } from '../../app/email-sending/email-delivery';
 import { makeFullEmailAddress } from '../../app/email-sending/emails';
 import { makeStoredEmailMessageData } from '../../app/email-sending/item-delivery';
 import { parseRssItems } from '../../app/rss-checking/rss-parsing';
 import { fetchRss } from '../../app/rss-checking/rss-response';
-import { makeNotAuthenticatedError, makeInputError, makeAppError, makeSuccess } from '../../shared/api-response';
-import { isEmpty } from '../../shared/array-utils';
-import { isErr, Result, makeErr, makeValues } from '../../shared/lang';
-import { makeCustomLoggers } from '../../shared/logging';
-import { si } from '../../shared/string-utils';
-import { isAccountNotFound, Account } from '../../domain/account';
+import { Account, isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
 import { HashedEmail } from '../../domain/email-address';
 import { makeEmailAddressFromFeedId } from '../../domain/email-address-making';
 import { Feed, ShowSampleEmailRequest } from '../../domain/feed';
 import { FeedId, makeFeedId } from '../../domain/feed-id';
-import { loadFeed, isFeedNotFound } from '../../domain/feed-storage';
-import { Plans } from '../../domain/plan';
+import { isFeedNotFound, loadFeed } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
+import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
+import { isEmpty } from '../../shared/array-utils';
+import { Result, isErr, makeErr, makeValues } from '../../shared/lang';
+import { makeCustomLoggers } from '../../shared/logging';
+import { si } from '../../shared/string-utils';
+import { AppRequestHandler } from '../app-request-handler';
+import { AppEnv } from '../init-app';
+import { checkSession, isAuthenticatedSession } from '../session';
 
 export const showSampleEmail: AppRequestHandler = async function showSampleEmail(
   reqId,
@@ -124,14 +123,7 @@ async function sendSampleEmail(env: AppEnv, account: Account, feedId: FeedId, fe
   const fromAddress = makeEmailAddressFromFeedId(feedId, domainName);
   const from = makeFullEmailAddress(feed.displayName, fromAddress);
 
-  const messageData = makeStoredEmailMessageData(
-    feed,
-    recipient,
-    mostRecentPost,
-    fromAddress,
-    Plans[account.planId],
-    domainName
-  );
+  const messageData = makeStoredEmailMessageData(feed, recipient, mostRecentPost, fromAddress, domainName);
 
   const emailContent: EmailContent = {
     subject: messageData.subject,

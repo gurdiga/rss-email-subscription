@@ -1,47 +1,112 @@
 import {
   Appearance,
+  PaymentIntentResult,
   PaymentMethod,
-  SetupIntentResult,
   Stripe,
   StripeConstructor,
   StripeElements,
+  StripePaymentElement,
 } from '@stripe/stripe-js';
 import { ApiPath } from '../domain/api-path';
-import { isPaidPlan } from '../domain/plan';
-import {
-  Card,
-  StoreCardRequestData,
-  StripeKeysResponseData,
-  stripePaymentMethodTypes,
-} from '../domain/stripe-integration';
+import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
+import { Card, StoreCardRequestData, StripeKeysResponseData } from '../domain/stripe-integration';
 import { InputError, isAppError, isInputError, makeInputError } from '../shared/api-response';
-import { AnyAsyncFunction, Result, asyncAttempt, getErrorMessage, isErr, makeErr } from '../shared/lang';
+import {
+  AnyAsyncFunction,
+  Result,
+  asyncAttempt,
+  getErrorMessage,
+  isErr,
+  isObject,
+  makeErr,
+  makeNumber,
+  makeValues,
+} from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { HttpMethod, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
+  setPlanId(planId: PlanId): Promise<Result<void>>;
   validate(): Promise<Result<Awaited<ReturnType<StripeElements['submit']>>>>;
-  confirmSetup(clientSecret: string): Promise<Result<SetupIntentResult>>;
+  confirmPayment(clientSecret: string): Promise<Result<PaymentIntentResult>>;
   focus(): void;
 }
 
-export async function initPaymentSubform(
+export async function makePaymentSubformHandle(
+  planId: PlanId,
   paymentSubform: HTMLElement,
   clearValidationState: () => void
 ): Promise<Result<PaymentSubformHandle>> {
-  const stripeKeys = await loadStripeKeys();
+  let stripe: Stripe;
+  let paymentElement: StripePaymentElement;
+  let elements: StripeElements;
 
-  if (isErr(stripeKeys)) {
-    return stripeKeys;
+  const paymentSubformHandle: PaymentSubformHandle = {
+    setPlanId: async (planId) => {
+      if (!stripe) {
+        const stripeResult = await getStripe();
+
+        if (isErr(stripeResult)) {
+          return makeErr(si`Failed to ${getStripe.name}: ${stripeResult.reason}`);
+        }
+
+        stripe = stripeResult;
+      }
+
+      const buildResult = await buildPaymentElement(stripe, planId, paymentSubform, clearValidationState);
+
+      if (isErr(buildResult)) {
+        return buildResult;
+      }
+
+      [paymentElement, elements] = buildResult;
+
+      return;
+    },
+
+    focus: () => paymentElement.focus(),
+
+    validate: async () =>
+      await attemptStripeCall(
+        // prettier: keep these stacked
+        () => elements.submit(),
+        'elements.submit',
+        'validate payment information'
+      ),
+
+    confirmPayment: async (clientSecret: string) =>
+      await attemptStripeCall(
+        () =>
+          stripe.confirmPayment({
+            elements,
+            clientSecret,
+            confirmParams: { expand: ['payment_method'] },
+            redirect: 'if_required',
+          }),
+        'stripe.confirmPayment',
+        'set up payment'
+      ),
+  };
+
+  if (!isSubscriptionPlan(planId)) {
+    return paymentSubformHandle;
   }
 
-  const { publishableKey } = stripeKeys;
-  const stripe = await getStripe(publishableKey);
+  const result = paymentSubformHandle.setPlanId(planId);
 
-  if (isErr(stripe)) {
-    return stripe;
+  if (isErr(result)) {
+    return makeErr(si`Failed to ${paymentSubformHandle.setPlanId.name}: ${result.reason}`);
   }
 
+  return paymentSubformHandle;
+}
+
+async function buildPaymentElement(
+  stripe: Stripe,
+  planId: PlanId,
+  domElement: HTMLElement,
+  onChange: () => void
+): Promise<Result<[StripePaymentElement, StripeElements]>> {
   const getCssVariable = (name: string) => getComputedStyle(document.documentElement).getPropertyValue(name);
 
   const appearance: Appearance = {
@@ -59,44 +124,42 @@ export async function initPaymentSubform(
     },
   };
 
+  const amount = await getAmountForPlan(planId);
+
+  if (isErr(amount)) {
+    return makeErr(si`Failed to ${getAmountForPlan.name}: ${amount.reason}`);
+  }
+
   const elements = stripe.elements({
-    mode: 'setup',
+    mode: 'subscription',
+    amount,
     currency: 'usd',
     appearance,
-    paymentMethodTypes: stripePaymentMethodTypes,
+    paymentMethodTypes: ['card'],
   });
 
   const paymentElement = elements.create('payment');
 
-  paymentElement.mount(paymentSubform);
-  paymentElement.on('change', clearValidationState);
+  paymentElement.mount(domElement);
+  paymentElement.on('change', onChange);
 
-  const paymentSubformHandle: PaymentSubformHandle = {
-    focus: () => paymentElement.focus(),
+  return [paymentElement, elements];
+}
 
-    validate: async () =>
-      await attemptStripeCall(
-        // prettier: keep these stacked
-        () => elements.submit(),
-        'elements.submit',
-        'validate payment information'
-      ),
+async function getAmountForPlan(planId: PlanId): Promise<Result<number>> {
+  const planPrices = await loadPlanPrices();
 
-    confirmSetup: async (clientSecret: string) =>
-      await attemptStripeCall(
-        () =>
-          stripe.confirmSetup({
-            elements,
-            clientSecret,
-            confirmParams: { expand: ['payment_method'] },
-            redirect: 'if_required',
-          }),
-        'stripe.confirmSetup',
-        'set up payment'
-      ),
-  };
+  if (isErr(planPrices)) {
+    return planPrices;
+  }
 
-  return paymentSubformHandle;
+  const planPrice = planPrices.find((x) => x.planId === planId);
+
+  if (!planPrice) {
+    return makeErr(si`No price for plan ${planId}`);
+  }
+
+  return planPrice.amount;
 }
 
 export async function attemptStripeCall<F extends AnyAsyncFunction>(
@@ -128,6 +191,54 @@ export async function attemptStripeCall<F extends AnyAsyncFunction>(
   return makeErr(errorMessage);
 }
 
+interface PlanPriceData {
+  planId: PlanId;
+  priceInDollars: number;
+}
+
+interface PlanPrice {
+  planId: PlanId;
+  amount: number;
+}
+
+async function loadPlanPrices(): Promise<Result<PlanPrice[]>> {
+  const path = '/plans.json';
+  const response = await asyncAttempt(() => fetch(path));
+
+  if (isErr(response)) {
+    return response;
+  }
+
+  const list = await response.json();
+
+  if (!Array.isArray(list)) {
+    return makeErr(si`Prices from ${path} is not an array`);
+  }
+
+  const planPrices: PlanPrice[] = [];
+
+  for (const item of list) {
+    const planPriceData = makeValues<PlanPriceData>(item, {
+      planId: makePlanId,
+      priceInDollars: makeNumber,
+    });
+
+    if (isErr(planPriceData)) {
+      return planPriceData;
+    }
+
+    const { planId: planId, priceInDollars } = planPriceData;
+
+    if (priceInDollars <= 0) {
+      return makeErr(si`Invalid plan price: planId=${planId} priceInDollars=${priceInDollars}`);
+    }
+
+    planPrices.push({ planId, amount: priceInDollars * 100 });
+  }
+
+  return planPrices;
+}
+
 async function loadStripeKeys(): Promise<Result<StripeKeysResponseData>> {
   const apiPath = ApiPath.stripeKeys;
   const response = await asyncAttempt(() => sendApiRequest<StripeKeysResponseData>(apiPath));
@@ -148,7 +259,15 @@ async function loadStripeKeys(): Promise<Result<StripeKeysResponseData>> {
   return response.responseData;
 }
 
-async function getStripe(publishableKey: string): Promise<Result<Stripe>> {
+async function getStripe(): Promise<Result<Stripe>> {
+  const stripeKeys = await loadStripeKeys();
+
+  if (isErr(stripeKeys)) {
+    return makeErr(si`Failed to ${loadStripeKeys.name}: ${stripeKeys.reason}`);
+  }
+
+  const { publishableKey } = stripeKeys;
+
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
 
@@ -178,7 +297,7 @@ export async function maybeValidatePaymentSubform<FIELD extends string>(
   planId: string,
   fieldName: FIELD
 ): Promise<InputError | void> {
-  if (!isPaidPlan(planId)) {
+  if (!isSubscriptionPlan(planId)) {
     return;
   }
 
@@ -195,27 +314,21 @@ export async function maybeConfirmPayment<FIELD extends string>(
   clientSecret: string,
   fieldName: FIELD
 ): Promise<InputError | PaymentMethod.Card | void> {
-  if (!isPaidPlan(planId)) {
+  if (!isSubscriptionPlan(planId)) {
     return;
   }
 
   const err = (message: string) => makeInputError<FIELD>(message, fieldName);
-  const result = await paymentSubformHandle.confirmSetup(clientSecret);
+  const result = await paymentSubformHandle.confirmPayment(clientSecret);
 
   if (isErr(result)) {
     return err(result.reason);
   }
 
-  const paymentMethod = result?.setupIntent?.payment_method;
+  const paymentMethod = result?.paymentIntent?.payment_method;
 
-  if (!paymentMethod) {
-    return err('Invalid response from Stripe: No payment method');
-  }
-
-  const isNotPaymentMethodObject = typeof paymentMethod === 'string';
-
-  if (isNotPaymentMethodObject) {
-    return err('Invalid response from Stripe: String payment method');
+  if (!isObject(paymentMethod)) {
+    return err('Invalid response from Stripe: non-object paymentIntent.payment_method');
   }
 
   const { card } = paymentMethod;

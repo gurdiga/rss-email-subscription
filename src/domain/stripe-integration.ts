@@ -1,7 +1,5 @@
 import { capitalize, si } from '../shared/string-utils';
 
-export const stripePaymentMethodTypes = ['card'];
-
 export interface StripeKeysResponseData {
   publishableKey: string;
 }

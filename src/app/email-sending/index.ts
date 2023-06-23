@@ -3,7 +3,6 @@ import { loadAccount } from '../../domain/account-storage';
 import { makeEmailAddress } from '../../domain/email-address-making';
 import { Feed } from '../../domain/feed';
 import { isFeedNotFound } from '../../domain/feed-storage';
-import { Plans } from '../../domain/plan';
 import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { requireEnv } from '../../shared/env';
@@ -41,7 +40,6 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
     return 1;
   }
 
-  const plan = Plans[account.planId];
   const fromAddress = makeEmailAddress(si`${feed.id.value}@${env.DOMAIN_NAME}`);
 
   if (isErr(fromAddress)) {
@@ -92,5 +90,5 @@ export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppS
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
-  return deliverItems(storage, env, accountId, feed, plan, validItems, confirmedEmails, from);
+  return deliverItems(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }

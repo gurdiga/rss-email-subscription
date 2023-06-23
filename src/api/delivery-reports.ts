@@ -1,6 +1,6 @@
 import {
-  getDeliveryItemStorageKey,
   getDeliveriesRootStorageKey,
+  getDeliveryItemStorageKey,
   getDeliveryStorageKey,
   getDeliveryTimestampStorageKey,
 } from '../app/email-sending/item-delivery';
@@ -20,7 +20,6 @@ import {
 import { DeliveryStatus, PostfixDeliveryStatus, SyntheticDeliveryStatus } from '../domain/delivery-status';
 import { FeedId } from '../domain/feed-id';
 import { FeedNotFound, getFeedRootStorageKey, isFeedNotFound, makeFeedNotFound } from '../domain/feed-storage';
-import { PlanId } from '../domain/plan';
 import { RssItem } from '../domain/rss-item';
 import { AppStorage, StorageKey } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
@@ -70,10 +69,6 @@ export const deliveryReports: AppRequestHandler = async function deliveryReports
   if (isAccountNotFound(account)) {
     logError('Account not found for delivery reports');
     return makeAppError();
-  }
-
-  if (account.planId !== PlanId.PayPerUse) {
-    return makeSuccess('Only for accounts with a paid plan', {}, { isNotPaidPlan: true, reports: [] });
   }
 
   const results = makeDeliveryReports(storage, accountId, request.feedId);

@@ -12,7 +12,6 @@ import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { reportUsage } from './usage-reporting';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
 
 function main() {
@@ -32,7 +31,6 @@ function main() {
 
   const jobs = [
     startJob('2 * * * *', () => checkFeeds(storage)),
-    startJob('1 0 * * *', () => reportUsage(storage, env.STRIPE_SECRET_KEY)),
     startJob('42 * * * *', () => expireConfirmationSecrets(storage)),
     startJob('0 0 * * *', () => logError('Just checking error reporting')),
   ];

@@ -36,7 +36,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
-import { isPaidPlan, makePlanId, PlanId, Plans } from '../domain/plan';
+import { isSubscriptionPlan, makePlanId, PlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -79,7 +79,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
 
   let cardDescription = '';
 
-  if (isPaidPlan(account.planId)) {
+  if (isSubscriptionPlan(account.planId)) {
     const loadedDescription = loadCardDescription(storage, accountId);
 
     if (isErr(loadedDescription)) {
@@ -557,15 +557,8 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   const logData = {};
   const responseData: PlanChangeResponseData = { clientSecret: '' };
 
-  if (isPaidPlan(request.planId)) {
-    const clientSecret = await createStripeRecords(
-      storage,
-      env.STRIPE_SECRET_KEY,
-      env.STRIPE_PRICE_ID,
-      accountId,
-      email,
-      request.planId
-    );
+  if (isSubscriptionPlan(request.planId)) {
+    const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, accountId, email, request.planId);
 
     if (isErr(clientSecret)) {
       logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });

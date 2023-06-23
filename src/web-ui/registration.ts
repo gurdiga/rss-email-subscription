@@ -1,7 +1,7 @@
 import { RegistrationRequest, RegistrationRequestData, RegistrationResponseData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans, isPaidPlan } from '../domain/plan';
+import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { createElement } from './dom-isolation';
@@ -26,7 +26,7 @@ import {
 } from './shared';
 import {
   PaymentSubformHandle,
-  initPaymentSubform,
+  makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
 } from './stripe-integration';
@@ -65,7 +65,14 @@ async function main() {
     return;
   }
 
-  const paymentSubformHandle = await initPaymentSubform(uiElements.paymentSubform, () =>
+  let planId = makePlanId(queryStringParams.plan);
+
+  if (isErr(planId)) {
+    displayInitError(planId.reason);
+    return;
+  }
+
+  const paymentSubformHandle = await makePaymentSubformHandle(planId, uiElements.paymentSubform, () =>
     clearValidationErrors(uiElements)
   );
 
@@ -74,7 +81,7 @@ async function main() {
     return;
   }
 
-  initPlanDropdown(uiElements, queryStringParams.plan);
+  initPlanDropdown(uiElements, paymentSubformHandle, planId);
   initSubmitButton(uiElements, paymentSubformHandle);
 }
 
@@ -161,7 +168,11 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
   });
 }
 
-function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string): void {
+function initPlanDropdown(
+  uiElements: RequiredUiElements,
+  paymentSubformHandle: PaymentSubformHandle,
+  selectedPlanId: string
+): void {
   const { planDropdown, paymentSubformContainer } = uiElements;
 
   planDropdown.replaceChildren(
@@ -170,7 +181,7 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
       .map(([id, { title }]) => {
         const option = createElement('option', title, { value: id });
 
-        if (id === selectedPlan) {
+        if (id === selectedPlanId) {
           option.selected = true;
         }
 
@@ -178,8 +189,22 @@ function initPlanDropdown(uiElements: RequiredUiElements, selectedPlan: string):
       })
   );
 
-  const togglePaymentSubform = (planId: string) => {
-    if (isPaidPlan(planId)) {
+  const togglePaymentSubform = async (planIdString: string) => {
+    const planId = makePlanId(planIdString);
+
+    if (isErr(planId)) {
+      displayInitError(planId.reason);
+      return;
+    }
+
+    if (isSubscriptionPlan(planId)) {
+      const updateResult = await paymentSubformHandle.setPlanId(planId);
+
+      if (isErr(updateResult)) {
+        displayInitError(updateResult.reason);
+        return;
+      }
+
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);

@@ -1,12 +1,14 @@
 import { AccountId } from '../../domain/account';
+import { PrePostfixMessageStatus, StoredEmailStatus, makeStoredEmailStatus } from '../../domain/delivery-status';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress } from '../../domain/email-address-making';
 import { Feed, SendingReport } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
-import { Plan } from '../../domain/plan';
+import { getFeedRootStorageKey } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { AppStorage, StorageKey } from '../../domain/storage';
 import { isEmpty } from '../../shared/array-utils';
+import { md5 } from '../../shared/crypto';
 import { makeDate } from '../../shared/date-utils';
 import {
   Err,
@@ -24,20 +26,16 @@ import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
 import { getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
+import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
-import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
-import { getFeedRootStorageKey } from '../../domain/feed-storage';
-import { md5 } from '../../shared/crypto';
-import { PrePostfixMessageStatus, StoredEmailStatus, makeStoredEmailStatus } from '../../domain/delivery-status';
 
 export async function deliverItems(
   storage: AppStorage,
   env: EmailDeliveryEnv,
   accountId: AccountId,
   feed: Feed,
-  plan: Plan,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
   from: FullEmailAddress
@@ -48,7 +46,7 @@ export async function deliverItems(
 
   confirmedEmails.push(getCatchAllEmail());
 
-  prepareOutboxEmails(storage, accountId, feed, plan, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
+  prepareOutboxEmails(storage, accountId, feed, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
   return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
 }
 
@@ -179,7 +177,6 @@ export function prepareOutboxEmails(
   storage: AppStorage,
   accountId: AccountId,
   feed: Feed,
-  plan: Plan,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
@@ -200,7 +197,6 @@ export function prepareOutboxEmails(
         storedItem.item,
         hashedEmail,
         fromAddress,
-        plan,
         domainName
       );
 
@@ -272,10 +268,9 @@ function storeOutboxEmail(
   item: RssItem,
   hashedEmail: HashedEmail,
   fromAddress: EmailAddress,
-  plan: Plan,
   domainName: string
 ) {
-  const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, plan, domainName);
+  const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, domainName);
   const messageStorageKey = getOutboxMessageStorageKey(
     accountId,
     feed.id,
@@ -316,7 +311,6 @@ interface StoredEmailMessageData {
   subject: string;
   htmlBody: string;
   to: string;
-  pricePerEmailCents: number;
   logRecords: StoredEmailLogRecord[];
 }
 
@@ -325,7 +319,6 @@ export function makeStoredEmailMessageData(
   to: HashedEmail,
   item: RssItem,
   fromAddress: EmailAddress,
-  plan: Plan,
   domainName: string
 ): StoredEmailMessageData {
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, domainName);
@@ -335,7 +328,6 @@ export function makeStoredEmailMessageData(
     to: to.emailAddress.value,
     subject: emailContent.subject,
     htmlBody: emailContent.htmlBody,
-    pricePerEmailCents: plan.centsPerEmail,
     logRecords: [
       {
         status: PrePostfixMessageStatus.Prepared,
@@ -352,7 +344,6 @@ function extractStoredEmailMessageData(message: StoredEmailMessage): StoredEmail
     subject: message.emailContent.subject,
     htmlBody: message.emailContent.htmlBody,
     to: message.to.value,
-    pricePerEmailCents: message.pricePerEmailCents,
     logRecords: message.logRecords,
   };
 }

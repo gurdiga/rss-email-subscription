@@ -8,7 +8,7 @@ import {
 } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans, isPaidPlan } from '../domain/plan';
+import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { Card, makeCardDescription } from '../domain/stripe-integration';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
@@ -37,7 +37,7 @@ import {
 } from './shared';
 import {
   PaymentSubformHandle,
-  initPaymentSubform,
+  makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
 } from './stripe-integration';
@@ -135,9 +135,7 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
   const { changePlanButton, cancelPlanChangeButton, submitNewPlanButton } = uiElements;
   const { viewPlanSection, changePlanSection, planChangeSuccessMessage, planDropdown } = uiElements;
 
-  initlansDropdown(uiElements, currentPlanId);
-
-  const paymentSubformHandle = await initPaymentSubform(uiElements.paymentSubform, () =>
+  const paymentSubformHandle = await makePaymentSubformHandle(currentPlanId, uiElements.paymentSubform, () =>
     clearValidationErrors(uiElements)
   );
 
@@ -145,6 +143,8 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     displayInitError(paymentSubformHandle.reason);
     return;
   }
+
+  initPlansDropdown(uiElements, currentPlanId, paymentSubformHandle);
 
   onClick(changePlanButton, () => {
     hideElement(viewPlanSection);
@@ -222,7 +222,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
     planChangeApiResponseMessage,
     { planId: planDropdown },
     async (responseData) => {
-      if (!responseData && isPaidPlan(newPlanId)) {
+      if (!responseData && isSubscriptionPlan(newPlanId)) {
         reportUnexpectedEmptyResponseData(apiPath);
         return;
       }
@@ -260,7 +260,11 @@ function displayCard(uiElements: PlanUiElements, card: Card): void {
   unhideElement(uiElements.currentCardField);
 }
 
-function initlansDropdown(uiElements: PlanUiElements, currentPlanId: PlanId) {
+function initPlansDropdown(
+  uiElements: PlanUiElements,
+  currentPlanId: PlanId,
+  paymentSubformHandle: PaymentSubformHandle
+) {
   const { planDropdown, paymentSubformContainer } = uiElements;
 
   const planOptions = Object.entries(Plans)
@@ -274,8 +278,22 @@ function initlansDropdown(uiElements: PlanUiElements, currentPlanId: PlanId) {
 
   planDropdown.replaceChildren(...planOptions);
 
-  const togglePaymentSubform = (planId: string) => {
-    if (isPaidPlan(planId)) {
+  const togglePaymentSubform = async (planIdString: string) => {
+    const planId = makePlanId(planIdString);
+
+    if (isErr(planId)) {
+      displayInitError(planId.reason);
+      return;
+    }
+
+    if (isSubscriptionPlan(planId)) {
+      const updateResult = await paymentSubformHandle.setPlanId(planId);
+
+      if (isErr(updateResult)) {
+        displayInitError(updateResult.reason);
+        return;
+      }
+
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);
@@ -412,7 +430,7 @@ function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
     return result;
   }
 
-  if (isPaidPlan(uiAccount.planId)) {
+  if (isSubscriptionPlan(uiAccount.planId)) {
     result = fillUiElements([
       {
         element: uiElements.currentCardDescription,
