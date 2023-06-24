@@ -120,7 +120,6 @@ describe(makeStoredEmailMessage.name, () => {
           logMessage: 'Yay!!',
         },
       ],
-      pricePerEmailCents: 10,
       to: {
         kind: 'EmailAddress',
         value: 'makestoredemailmessage@test.com',

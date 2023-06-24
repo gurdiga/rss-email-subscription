@@ -17,7 +17,6 @@ import {
   isErr,
   makeArrayOfValues,
   makeErr,
-  makeNumber,
   makeOptionalString,
   makeString,
   makeValues,
@@ -352,7 +351,6 @@ interface StoredEmailMessage {
   kind: 'StoredEmailMessage';
   id: string;
   emailContent: EmailContent;
-  pricePerEmailCents: number;
   to: EmailAddress;
   logRecords: StoredEmailLogRecord[];
 }
@@ -448,8 +446,7 @@ export function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, i
     return emailContent;
   }
 
-  const values = makeValues<Pick<StoredEmailMessage, 'pricePerEmailCents' | 'to'>>(data, {
-    pricePerEmailCents: makeNumber,
+  const values = makeValues<Pick<StoredEmailMessage, 'to'>>(data, {
     to: makeEmailAddress,
   });
 
@@ -457,7 +454,7 @@ export function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, i
     return values;
   }
 
-  const { pricePerEmailCents, to } = values;
+  const { to } = values;
 
   const logRecordsKey = 'logRecords' as keyof StoredEmailMessage;
   const logRecordsValue = (data as any).logRecords;
@@ -478,7 +475,6 @@ export function makeStoredEmailMessage(data: unknown | StoredEmailMessageData, i
     kind: 'StoredEmailMessage',
     id,
     emailContent,
-    pricePerEmailCents,
     to,
     logRecords,
   };
