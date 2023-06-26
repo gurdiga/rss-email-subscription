@@ -233,20 +233,10 @@ export async function createStripeRecords(
     return makeErr(si`Failed to stripe.subscriptions.create: ${subscription.reason}`);
   }
 
-  const subscriptionItem = subscription.items.data[0];
+  const storeSubscriptionResult = storeSubscription(storage, accountId, subscription);
 
-  if (!subscriptionItem) {
-    return makeErr(si`Subscription has no items`);
-  }
-
-  if (!subscriptionItem.id) {
-    return makeErr(si`Subscription’s item has no ID`);
-  }
-
-  const storeSubscriptionItemResult = storeSubscriptionItemId(storage, accountId, subscriptionItem.id);
-
-  if (isErr(storeSubscriptionItemResult)) {
-    return makeErr(si`Failed to ${storeSubscriptionItemId.name}: ${storeSubscriptionItemResult.reason}`);
+  if (isErr(storeSubscriptionResult)) {
+    return makeErr(si`Failed to ${storeSubscription.name}: ${storeSubscriptionResult.reason}`);
   }
 
   const clientSecret = makeClientSecret(subscription);
@@ -286,18 +276,18 @@ function storeStripeCustomer(storage: AppStorage, accountId: AccountId, customer
   return storage.storeItem(storageKey, customer);
 }
 
-function storeSubscriptionItemId(storage: AppStorage, accountId: AccountId, subscriptionItemId: string): Result<void> {
-  const storageKey = getStripeSubscriptionItemStorageKey(accountId);
+function storeSubscription(storage: AppStorage, accountId: AccountId, subscription: Stripe.Subscription): Result<void> {
+  const storageKey = getStripeSubscriptionStorageKey(accountId);
 
-  return storage.storeItem(storageKey, subscriptionItemId);
+  return storage.storeItem(storageKey, subscription);
 }
 
 function getStripeCustomerStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'stripe-customer.json');
 }
 
-export function getStripeSubscriptionItemStorageKey(accountId: AccountId): StorageKey {
-  return makePath(getAccountRootStorageKey(accountId), 'stripe-subscription-item-id.json');
+export function getStripeSubscriptionStorageKey(accountId: AccountId): StorageKey {
+  return makePath(getAccountRootStorageKey(accountId), 'stripe-subscription.json');
 }
 
 export function makeStripe(secretKey: string): Stripe {
