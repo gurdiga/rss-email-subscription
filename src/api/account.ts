@@ -535,6 +535,14 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeAppError();
   }
 
+  const oldPlanId = account.planId;
+  const newPlanId = request.planId;
+
+  if (newPlanId === oldPlanId) {
+    logWarning('Plan did not change', { oldPlanId, newPlanId });
+    return makeInputError('Plan did not change');
+  }
+
   const { email } = account;
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
