@@ -31,7 +31,7 @@ function main() {
 
   const jobs = [
     startJob('2 * * * *', () => checkFeeds(storage)),
-    startJob('42 * * * *', () => expireConfirmationSecrets(storage)),
+    startJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
     startJob('0 0 * * *', () => logError('Just checking error reporting')),
   ];
 
