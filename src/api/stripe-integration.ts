@@ -248,6 +248,53 @@ export async function createStripeRecords(
   return clientSecret;
 }
 
+export async function cancelStripeSubscription(
+  storage: AppStorage,
+  secretKey: string,
+  accountId: AccountId
+): Promise<Result<void>> {
+  const stripe = makeStripe(secretKey);
+  const subscriptionId = getStoredStripeSubscriptionId(storage, accountId);
+
+  if (isErr(subscriptionId)) {
+    return makeErr(si`Failed to ${getStoredStripeSubscriptionId.name}: ${subscriptionId.reason}`);
+  }
+
+  const subscription = await asyncAttempt(() =>
+    stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
+    })
+  );
+
+  if (isErr(subscription)) {
+    return makeErr(si`Failed to stripe.subscriptions.update: ${subscription.reason}`);
+  }
+
+  if (subscription.status !== 'canceled') {
+    return makeErr(si`Subscription has not been canceled by stripe.subscriptions.update: it is ${subscription.status}`);
+  }
+}
+
+interface StoredStripeSubscription {
+  id: string;
+  // there are others, but those are not relevant at the moment
+}
+
+function getStoredStripeSubscriptionId(storage: AppStorage, accountId: AccountId): Result<string> {
+  const storageKey = getStripeSubscriptionStorageKey(accountId);
+
+  const data = storage.loadItem(storageKey);
+  const storedSubscription = makeValues<StoredStripeSubscription>(data, {
+    id: makeNonEmptyString,
+  });
+
+  if (isErr(storedSubscription)) {
+    return makeErr(si`Failed to read stored subscription data: ${storedSubscription.reason}`);
+  }
+
+  return storedSubscription.id;
+}
+
 function makeClientSecret(subscription: Stripe.Subscription): Result<ClientSecret> {
   const latestInvoice = subscription.latest_invoice;
 

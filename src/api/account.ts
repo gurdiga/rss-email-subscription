@@ -47,7 +47,7 @@ import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
-import { createStripeRecords, loadCardDescription } from './stripe-integration';
+import { cancelStripeSubscription, createStripeRecords, loadCardDescription } from './stripe-integration';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,
@@ -535,6 +535,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeAppError();
   }
 
+  const { email } = account;
   const oldPlanId = account.planId;
   const newPlanId = request.planId;
 
@@ -543,7 +544,15 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeInputError('Plan did not change');
   }
 
-  const { email } = account;
+  if (oldPlanId !== PlanId.Free) {
+    const result = cancelStripeSubscription(storage, env.STRIPE_SECRET_KEY, accountId);
+
+    if (isErr(result)) {
+      logError(si`Failed to ${cancelStripeSubscription.name}`, { reason: result.reason, accountId: accountId.value });
+      return makeAppError();
+    }
+  }
+
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
   const storeAccountResult = storeAccount(storage, accountId, {
