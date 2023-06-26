@@ -137,7 +137,7 @@ delmon: app
 		--tag delmon \
 		docker-services/delmon
 
-# This seems to be needed after log rotation
+# This is targeted after the log rotation in logger, which happens around 01:02, but sometimes later
 delmon-restart:
 	@docker restart delmon |
 	cat <(
