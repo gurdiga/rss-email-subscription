@@ -194,7 +194,9 @@ export async function createStripeRecords(
   }
 
   const stripe = makeStripe(secretKey);
-  const customer = await asyncAttempt(() => stripe.customers.create({ email: email.value }));
+  const customer = await asyncAttempt(() =>
+    stripe.customers.create({ email: email.value, metadata: { res_id: accountId.value } })
+  );
 
   if (isErr(customer)) {
     return makeErr(si`Failed to stripe.customers.create: ${customer.reason}`);
