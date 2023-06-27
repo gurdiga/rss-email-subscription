@@ -12,7 +12,6 @@ import {
   PasswordChangeRequestData,
   PlanChangeRequest,
   PlanChangeRequestData,
-  PlanChangeResponseData,
   UiAccount,
 } from '../domain/account';
 import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
@@ -47,7 +46,13 @@ import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { checkSession, deinitSession, isAuthenticatedSession } from './session';
-import { cancelStripeSubscription, createStripeRecords, loadCardDescription } from './stripe-integration';
+import {
+  cancelCustomerSubscriptions,
+  changeCustomerSubscription,
+  createCustomerWithSubscription,
+  loadCardDescription,
+  makeStripe,
+} from './stripe-integration';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,
@@ -454,6 +459,17 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
+  if (isSubscriptionPlan(account.planId)) {
+    const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+    const { email } = account;
+    const result = await cancelCustomerSubscriptions(stripe, email);
+
+    if (isErr(result)) {
+      logError(si`Failed to ${cancelCustomerSubscriptions.name}`, { reason: result.reason, email: email.value });
+      return makeAppError();
+    }
+  }
+
   const deleteAccountResult = deleteAccount(storage, accountId);
 
   if (isErr(deleteAccountResult)) {
@@ -541,16 +557,53 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   if (newPlanId === oldPlanId) {
     logWarning('Plan did not change', { oldPlanId, newPlanId });
-    return makeInputError('Plan did not change');
+    return makeInputError<keyof PlanChangeRequest>('Plan did not change', 'planId');
   }
 
-  if (oldPlanId !== PlanId.Free) {
-    const result = cancelStripeSubscription(storage, env.STRIPE_SECRET_KEY, accountId);
+  const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+  const changingFromPaidPlanToFree = request.planId === PlanId.Free;
+  const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
+  let clientSecret: string;
 
-    if (isErr(result)) {
-      logError(si`Failed to ${cancelStripeSubscription.name}`, { reason: result.reason, accountId: accountId.value });
+  if (changingFromPaidPlanToFree) {
+    const cancelResult = await cancelCustomerSubscriptions(stripe, email);
+
+    if (isErr(cancelResult)) {
+      logError(si`Failed to ${cancelCustomerSubscriptions.name}`, {
+        reason: cancelResult.reason,
+        email: email.value,
+      });
       return makeAppError();
     }
+
+    clientSecret = '';
+  } else if (changingFromOnePaidPlanToAnother) {
+    const changeResult = await changeCustomerSubscription(stripe, email, request.planId);
+
+    if (isErr(changeResult)) {
+      logError(si`Failed to ${changeCustomerSubscription.name}`, {
+        reason: changeResult.reason,
+        email: email.value,
+        planId: request.planId,
+      });
+      return makeAppError();
+    }
+
+    clientSecret = changeResult.value;
+  } else {
+    // changing from Free to a paid plan
+    const createResult = await createCustomerWithSubscription(stripe, email, request.planId);
+
+    if (isErr(createResult)) {
+      logError(si`Failed to ${createCustomerWithSubscription.name}`, {
+        reason: createResult.reason,
+        accountId: accountId.value,
+        planId: request.planId,
+      });
+      return makeAppError();
+    }
+
+    clientSecret = createResult.value;
   }
 
   const oldPlanTitle = Plans[account.planId].title;
@@ -572,18 +625,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
   const logData = {};
-  const responseData: PlanChangeResponseData = { clientSecret: '' };
-
-  if (isSubscriptionPlan(request.planId)) {
-    const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, accountId, email, request.planId);
-
-    if (isErr(clientSecret)) {
-      logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });
-      return makeAppError();
-    }
-
-    responseData.clientSecret = clientSecret;
-  }
+  const responseData = { clientSecret };
 
   return makeSuccess('Success', logData, responseData);
 };
@@ -604,8 +646,8 @@ async function sendPlanChangeInformationEmail(
     htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
-      <p>Just for the record, please note that your plan at FeedSubscription.com
-      has been changed from “<b>${oldPlanTitle}</b>” to “<b>${newPlanTitle}</b>.”</p>
+      <p>Please note that your plan at FeedSubscription.com has been
+      changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>
 
       <p>Have a nice day.</p>
     `),

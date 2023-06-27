@@ -26,7 +26,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
-import { PlanId, makePlanId } from '../domain/plan';
+import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { hash } from '../shared/crypto';
@@ -37,7 +37,7 @@ import { enablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
-import { createStripeRecords } from './stripe-integration';
+import { createCustomerWithSubscription, makeStripe } from './stripe-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,
@@ -94,11 +94,18 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  const clientSecret = await createStripeRecords(storage, env.STRIPE_SECRET_KEY, accountId, email, planId);
+  let clientSecret = '';
 
-  if (isErr(clientSecret)) {
-    logError(si`Failed to ${createStripeRecords.name}: ${clientSecret.reason}`, { email: email.value });
-    return makeAppError();
+  if (isSubscriptionPlan(request.planId)) {
+    const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+    const result = await createCustomerWithSubscription(stripe, email, planId);
+
+    if (isErr(result)) {
+      logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`, { email: email.value });
+      return makeAppError();
+    }
+
+    clientSecret = result.value;
   }
 
   initSession(reqSession, accountId, request.email);

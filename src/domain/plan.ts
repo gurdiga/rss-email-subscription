@@ -1,4 +1,4 @@
-import { isErr, makeErr, Result } from '../shared/lang';
+import { Err, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 
 export enum PlanId {
@@ -77,4 +77,8 @@ export function isSubscriptionPlan(planIdString: string): boolean {
   }
 
   return Plans[planId].isSubscription;
+}
+
+export function makeNotASubscriptionPlanErr(planId: PlanId): Err {
+  return makeErr(si`Not a subscription plan: "${planId}"`);
 }

@@ -2,7 +2,7 @@ import Stripe from 'stripe';
 import { AccountId } from '../domain/account';
 import { getAccountRootStorageKey } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
-import { PlanId, isSubscriptionPlan } from '../domain/plan';
+import { PlanId, isSubscriptionPlan, makeNotASubscriptionPlanErr } from '../domain/plan';
 import { AppStorage, StorageKey } from '../domain/storage';
 import {
   AccountSupportProductResponseData,
@@ -14,6 +14,7 @@ import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } 
 import {
   Result,
   asyncAttempt,
+  hasKind,
   isErr,
   isObject,
   makeErr,
@@ -27,6 +28,7 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
+import { isEmpty } from '../shared/array-utils';
 
 export const stripeKeys: AppRequestHandler = async function stripeKeys(
   _reqId,
@@ -180,32 +182,208 @@ function makeAccountSupportProductResponseData(data: unknown): Result<AccountSup
   });
 }
 
-type ClientSecret = string;
+export interface StripeClientSecret {
+  kind: 'StripeClientSecret';
+  value: string;
+}
 
-export async function createStripeRecords(
-  storage: AppStorage,
-  secretKey: string,
-  accountId: AccountId,
+function makeStripeClientSecret(value: string): StripeClientSecret {
+  return {
+    kind: 'StripeClientSecret',
+    value,
+  };
+}
+
+export async function createCustomerWithSubscription(
+  stripe: Stripe,
   email: EmailAddress,
   planId: PlanId
-): Promise<Result<ClientSecret | 'NOT_A_PAID_PLAN'>> {
+): Promise<Result<StripeClientSecret>> {
   if (!isSubscriptionPlan(planId)) {
-    return 'NOT_A_PAID_PLAN';
+    return makeNotASubscriptionPlanErr(planId);
   }
 
-  const stripe = makeStripe(secretKey);
-  const customer = await asyncAttempt(() =>
-    stripe.customers.create({ email: email.value, metadata: { res_id: accountId.value } })
-  );
+  const customer = await getOrCreateStripeCustomer(stripe, email);
 
   if (isErr(customer)) {
-    return makeErr(si`Failed to stripe.customers.create: ${customer.reason}`);
+    return makeErr(si`Failed to ${getOrCreateStripeCustomer.name}: ${customer.reason}`);
   }
 
-  const storeCustomerResult = storeStripeCustomer(storage, accountId, customer);
+  const clientSecret = await createStripeSubscription(stripe, customer, planId);
 
-  if (isErr(storeCustomerResult)) {
-    return makeErr(si`Failed to ${storeStripeCustomer.name}: ${storeCustomerResult.reason}`);
+  if (isErr(clientSecret)) {
+    return makeErr(si`Failed to ${createStripeSubscription.name}: ${clientSecret.reason}`);
+  }
+
+  return clientSecret;
+}
+
+async function getOrCreateStripeCustomer(stripe: Stripe, email: EmailAddress): Promise<Result<Stripe.Customer>> {
+  const existingCustomer = await findStripeCustomerByEmail(stripe, email);
+
+  if (isErr(existingCustomer)) {
+    return makeErr(si`Failed to ${findStripeCustomerByEmail.name}: ${existingCustomer.reason}`);
+  }
+
+  if (!isCustomerNotFound(existingCustomer)) {
+    return existingCustomer;
+  }
+
+  const newCustomer = await asyncAttempt(() => stripe.customers.create({ email: email.value }));
+
+  if (isErr(newCustomer)) {
+    return makeErr(si`Failed to stripe.customers.create: ${newCustomer.reason}`);
+  }
+
+  return newCustomer;
+}
+
+interface CustomerNotFound {
+  kind: 'CustomerNotFound';
+}
+
+function makeCustomerNotFound(): CustomerNotFound {
+  return { kind: 'CustomerNotFound' };
+}
+
+function isCustomerNotFound(value: unknown): value is CustomerNotFound {
+  return hasKind(value, 'CustomerNotFound');
+}
+
+async function getStripeCustomerByEmail(stripe: Stripe, email: EmailAddress): Promise<Result<Stripe.Customer>> {
+  const customer = await findStripeCustomerByEmail(stripe, email);
+
+  if (isCustomerNotFound(customer)) {
+    return makeErr(si`Customer not found by email "${email.value}"`);
+  }
+
+  return customer;
+}
+
+async function findStripeCustomerByEmail(
+  stripe: Stripe,
+  email: EmailAddress
+): Promise<Result<Stripe.Customer | CustomerNotFound>> {
+  const searchResults = await asyncAttempt(() =>
+    stripe.customers.search({
+      query: si`email:"${email.value}"`,
+      expand: ['data.subscriptions'],
+    })
+  );
+
+  if (isErr(searchResults)) {
+    return makeErr(si`Failed to stripe.customers.search: ${searchResults.reason}`);
+  }
+
+  const firstExistingCustomer = searchResults.data[0];
+
+  if (!firstExistingCustomer) {
+    return makeCustomerNotFound();
+  }
+
+  return firstExistingCustomer;
+}
+
+export async function changeCustomerSubscription(stripe: Stripe, email: EmailAddress, planId: PlanId) {
+  if (!isSubscriptionPlan(planId)) {
+    return makeNotASubscriptionPlanErr(planId);
+  }
+
+  const customer = await getStripeCustomerByEmail(stripe, email);
+
+  if (isErr(customer)) {
+    return makeErr(si`Failed to ${findStripeCustomerByEmail.name}: ${customer.reason}`);
+  }
+
+  const activeSubscriptions = getCustomerActiveSubscriptions(customer);
+
+  if (isErr(activeSubscriptions)) {
+    return makeErr(si`Failed to ${getCustomerActiveSubscriptions.name}: ${activeSubscriptions.reason}`);
+  }
+
+  for (const { id } of activeSubscriptions) {
+    const result = await asyncAttempt(() => stripe.subscriptions.cancel(id));
+
+    if (isErr(result)) {
+      return makeErr(si`Failed to stripe.subscriptions.cancel("${id}"): ${result.reason}`);
+    }
+  }
+
+  const result = await createStripeSubscription(stripe, customer, planId);
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to ${createStripeSubscription.name}: ${result.reason}`);
+  }
+
+  return result;
+}
+
+function getCustomerActiveSubscriptions(customer: Stripe.Customer): Result<Stripe.Subscription[]> {
+  const subscriptions = customer.subscriptions?.data;
+
+  if (!subscriptions) {
+    return makeErr('Customer without expanded subscriptions');
+  }
+
+  if (isEmpty(subscriptions)) {
+    return makeErr('Customer to change subscription has none');
+  }
+
+  const activeSubscriptions = subscriptions.filter((x) => x.status === 'active');
+
+  if (isEmpty(activeSubscriptions)) {
+    return makeErr('Customer to change subscription has none active');
+  }
+
+  return activeSubscriptions;
+}
+
+export async function createStripeSubscription(
+  stripe: Stripe,
+  customer: Stripe.Customer,
+  planId: PlanId
+): Promise<Result<StripeClientSecret>> {
+  if (!isSubscriptionPlan(planId)) {
+    return makeNotASubscriptionPlanErr(planId);
+  }
+
+  const priceId = await getStripePriceIdForPlan(stripe, planId);
+
+  if (isErr(priceId)) {
+    return makeErr(si`Failed to ${getStripePriceIdForPlan.name}: ${priceId.reason}`);
+  }
+
+  const subscription = await asyncAttempt(() =>
+    stripe.subscriptions.create({
+      customer: customer.id,
+      items: [{ price: priceId }],
+      payment_behavior: 'default_incomplete',
+      payment_settings: { save_default_payment_method: 'on_subscription' },
+      expand: ['latest_invoice.payment_intent'],
+      metadata: { res_customer_email: customer.email },
+    })
+  );
+
+  if (isErr(subscription)) {
+    return makeErr(
+      si`Failed to stripe.subscriptions.create(customerId: "${customer.id}", priceId: "${priceId}"): ${subscription.reason}`
+    );
+  }
+
+  const clientSecret = getClientSecretFromSubscription(subscription);
+
+  if (isErr(clientSecret)) {
+    return makeErr(si`Failed to ${getClientSecretFromSubscription.name}: ${clientSecret.reason}`);
+  }
+
+  return clientSecret;
+}
+
+type StripePriceId = string;
+
+async function getStripePriceIdForPlan(stripe: Stripe, planId: PlanId): Promise<Result<StripePriceId>> {
+  if (!isSubscriptionPlan(planId)) {
+    return makeNotASubscriptionPlanErr(planId);
   }
 
   const query = si`metadata['res_plan_id']:'${planId}'`;
@@ -221,83 +399,33 @@ export async function createStripeRecords(
     return makeErr(si`Price not found with stripe.prices.search: query=${query}`);
   }
 
-  const subscription = await asyncAttempt(() =>
-    stripe.subscriptions.create({
-      customer: customer.id,
-      items: [{ price: price.id }],
-      payment_behavior: 'default_incomplete',
-      payment_settings: { save_default_payment_method: 'on_subscription' },
-      expand: ['latest_invoice.payment_intent'],
-    })
-  );
-
-  if (isErr(subscription)) {
-    return makeErr(si`Failed to stripe.subscriptions.create: ${subscription.reason}`);
-  }
-
-  const storeSubscriptionResult = storeSubscription(storage, accountId, subscription);
-
-  if (isErr(storeSubscriptionResult)) {
-    return makeErr(si`Failed to ${storeSubscription.name}: ${storeSubscriptionResult.reason}`);
-  }
-
-  const clientSecret = makeClientSecret(subscription);
-
-  if (isErr(clientSecret)) {
-    return makeErr(si`Failed to ${makeClientSecret.name}: ${clientSecret.reason}`);
-  }
-
-  return clientSecret;
+  return price.id;
 }
 
-export async function cancelStripeSubscription(
-  storage: AppStorage,
-  secretKey: string,
-  accountId: AccountId
-): Promise<Result<void>> {
-  const stripe = makeStripe(secretKey);
-  const subscriptionId = getStoredStripeSubscriptionId(storage, accountId);
+export async function cancelCustomerSubscriptions(stripe: Stripe, customerEmail: EmailAddress): Promise<Result<void>> {
+  const query = si`status:"active" AND metadata["res_customer_email"]:"${customerEmail.value}"`;
+  const searchResults = await asyncAttempt(() => stripe.subscriptions.search({ query }));
 
-  if (isErr(subscriptionId)) {
-    return makeErr(si`Failed to ${getStoredStripeSubscriptionId.name}: ${subscriptionId.reason}`);
+  if (isErr(searchResults)) {
+    return makeErr(si`Failed to stripe.subscriptions.search({query: "${query}"}): "${searchResults.reason}"`);
   }
 
-  const subscription = await asyncAttempt(() =>
-    stripe.subscriptions.update(subscriptionId, {
-      cancel_at_period_end: true,
-    })
-  );
+  const subscriptions = searchResults.data;
 
-  if (isErr(subscription)) {
-    return makeErr(si`Failed to stripe.subscriptions.update: ${subscription.reason}`);
-  }
+  for (const { id } of subscriptions) {
+    const subscription = await asyncAttempt(() => stripe.subscriptions.cancel(id));
 
-  if (subscription.status !== 'canceled') {
-    return makeErr(si`Subscription has not been canceled by stripe.subscriptions.update: it is ${subscription.status}`);
+    if (isErr(subscription)) {
+      return makeErr(si`Failed to stripe.subscriptions.cancel("${id}"): ${subscription.reason}`);
+    }
+
+    if (subscription.status !== 'canceled') {
+      return makeErr(si`Subscription status for "${id}" is "${subscription.status}" instead of "canceled"`);
+    }
   }
 }
 
-interface StoredStripeSubscription {
-  id: string;
-  // there are others, but those are not relevant at the moment
-}
-
-function getStoredStripeSubscriptionId(storage: AppStorage, accountId: AccountId): Result<string> {
-  const storageKey = getStripeSubscriptionStorageKey(accountId);
-
-  const data = storage.loadItem(storageKey);
-  const storedSubscription = makeValues<StoredStripeSubscription>(data, {
-    id: makeNonEmptyString,
-  });
-
-  if (isErr(storedSubscription)) {
-    return makeErr(si`Failed to read stored subscription data: ${storedSubscription.reason}`);
-  }
-
-  return storedSubscription.id;
-}
-
-function makeClientSecret(subscription: Stripe.Subscription): Result<ClientSecret> {
+function getClientSecretFromSubscription(subscription: Stripe.Subscription): Result<StripeClientSecret> {
   const latestInvoice = subscription.latest_invoice;
 
   if (!isObject(latestInvoice)) {
@@ -316,27 +444,7 @@ function makeClientSecret(subscription: Stripe.Subscription): Result<ClientSecre
     return makeErr(si`Null subscription.latest_invoice.payment_intent.client_secret`);
   }
 
-  return clientSecret;
-}
-
-function storeStripeCustomer(storage: AppStorage, accountId: AccountId, customer: Stripe.Customer): Result<void> {
-  const storageKey = getStripeCustomerStorageKey(accountId);
-
-  return storage.storeItem(storageKey, customer);
-}
-
-function storeSubscription(storage: AppStorage, accountId: AccountId, subscription: Stripe.Subscription): Result<void> {
-  const storageKey = getStripeSubscriptionStorageKey(accountId);
-
-  return storage.storeItem(storageKey, subscription);
-}
-
-function getStripeCustomerStorageKey(accountId: AccountId): StorageKey {
-  return makePath(getAccountRootStorageKey(accountId), 'stripe-customer.json');
-}
-
-export function getStripeSubscriptionStorageKey(accountId: AccountId): StorageKey {
-  return makePath(getAccountRootStorageKey(accountId), 'stripe-subscription.json');
+  return makeStripeClientSecret(clientSecret);
 }
 
 export function makeStripe(secretKey: string): Stripe {
