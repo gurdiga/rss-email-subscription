@@ -820,6 +820,7 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		# Known non-humans
 		echo "Chrome-Lighthouse"
 		echo "Google-InspectionTool"
+		echo "GoogleImageProxy"
 		echo "HeadlessChrome"
 		echo "scaninfo@paloaltonetworks.com"
 		echo "Feedly"
@@ -827,6 +828,9 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		echo "Nmap Scripting Engine"
 		echo "facebookexternalhit"
 		echo "facebookcatalog"
+		echo "YahooMailProxy"
+		echo "InternetMeasurement"
+		echo "zgrab"
 	) - |
 	sort --unique --ignore-case > $@
 
