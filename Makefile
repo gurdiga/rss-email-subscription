@@ -793,6 +793,7 @@ tracking-report: bot-list.txt
 	sed -e 's|/track?data=||' -e 's|https://feedsubscription.com||' -e 's/00:00/UTC/' -e 's/T/ /' | # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
+	grep -v '"referrer":"http://baidu.com/"' | # exclude myself
 	(
 		tee \
 			>( grep -Po '"referrer":""' | uniq -c) \
