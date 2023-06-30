@@ -358,13 +358,13 @@ describe('API', () => {
         });
 
         function loadStoredFeed(email: string, feedId: FeedId) {
-          const [_, accountId] = loadStoredAccountByEmail(email);
+          const accountId = getAccountId(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
         }
 
         function storedFeedExists(email: string, feedId: FeedId) {
-          const [_, accountId] = loadStoredAccountByEmail(email);
+          const accountId = getAccountId(email);
 
           return fileExists(makePath(dataDirRoot, getFeedRootStorageKey(accountId, feedId)));
         }
@@ -779,9 +779,14 @@ describe('API', () => {
     return post(getFullApiPath(ApiPath.registrationConfirmation), { secret });
   }
 
-  function loadStoredAccountByEmail(email: string): [AccountData, AccountId] {
+  function getAccountId(email: string): AccountId {
     const hashingSalt = appSettings.hashingSalt;
-    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    return getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+  }
+
+  function loadStoredAccountByEmail(email: string): [AccountData, AccountId] {
+    const accountId = getAccountId(email);
 
     return [loadJSON(makePath(getAccountStorageKey(accountId))), accountId] as [AccountData, AccountId];
   }
