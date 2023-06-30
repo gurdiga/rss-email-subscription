@@ -1,26 +1,39 @@
 import { expect } from 'chai';
-import { EditFeedRequest, Feed, FeedStatus } from './feed';
-import { applyEditFeedRequest, feedExists, FeedExistsResult, FeedsByAccountId } from './feed-storage';
-import { getFeedRootStorageKey, markFeedAsDeleted, FeedStoredData, findFeedAccountId } from './feed-storage';
-import { getFeedJsonStorageKey, loadFeed, loadFeedsByAccountId, makeFeedNotFound, storeFeed } from './feed-storage';
-import { makeFeedId } from './feed-id';
-import { Err, isErr, makeErr } from '../shared/lang';
+import { isErr, makeErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import {
-  makeTestStorage,
-  makeStub,
-  makeTestAccountId,
-  makeTestFeedId,
   Stub,
   deepClone,
-  makeSpy,
+  makeStub,
+  makeTestAccountId,
+  makeTestEmailAddress,
+  makeTestFeed,
+  makeTestFeedHashingSalt,
+  makeTestFeedId,
+  makeTestStorage,
+  makeTestStorageFromSnapshot,
+  makeTestUnixCronPattern,
+  purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
-import { makeTestFeedHashingSalt, makeTestFeed, makeTestEmailAddress } from '../shared/test-utils';
-import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
-import { makeTestUnixCronPattern } from '../shared/test-utils';
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
-import { si } from '../shared/string-utils';
 import { makeUnixCronPattern } from './cron-pattern-making';
+import { EditFeedRequest, Feed, FeedStatus } from './feed';
+import { makeFeedId } from './feed-id';
+import {
+  FeedExistsResult,
+  FeedStoredData,
+  FeedsByAccountId,
+  applyEditFeedRequest,
+  feedExists,
+  findFeedAccountId,
+  getFeedJsonStorageKey,
+  getFeedRootStorageKey,
+  loadFeed,
+  loadFeedsByAccountId,
+  makeFeedNotFound,
+  storeFeed,
+} from './feed-storage';
 import { AppStorage } from './storage';
 
 const accountId = makeTestAccountId();
@@ -264,35 +277,6 @@ describe(feedExists.name, () => {
       does: false,
       errs: [err],
     });
-  });
-});
-
-describe(markFeedAsDeleted.name, () => {
-  const feed = makeTestFeed({ isDeleted: false });
-
-  it('sets feed’s isDeleted to true', () => {
-    const loadFeed = makeStub(() => feed);
-    const storeItem = makeSpy<AppStorage['storeItem']>();
-    const storage = makeTestStorage({ storeItem });
-
-    const result = markFeedAsDeleted(accountId, feed.id, storage, loadFeed);
-    expect(result).to.be.undefined;
-
-    const storedData = storeItem.calls[0]![1] as FeedStoredData;
-    expect(storedData.isDeleted).to.be.true;
-  });
-
-  it('returns the errs from {load,store}Feed if any', () => {
-    const storage = makeTestStorage({});
-
-    const erringLoadFeedFn = makeStub(() => makeErr('Storage reading failed!'));
-    const result1 = markFeedAsDeleted(accountId, feed.id, storage, erringLoadFeedFn) as Err;
-    expect(result1.reason).to.match(/Failed to loadFeed: Storage reading failed!/);
-
-    const loadFeedFn = makeStub(() => feed);
-    const erringStoreFeedFn = makeStub(() => makeErr('Storage writing failed!'));
-    const result = markFeedAsDeleted(accountId, feed.id, storage, loadFeedFn, erringStoreFeedFn) as Err;
-    expect(result.reason).to.match(/Failed to storeFeed: Storage writing failed!/);
   });
 });
 

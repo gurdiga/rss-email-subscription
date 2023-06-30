@@ -83,30 +83,10 @@ export function accountHasFeed(accountId: AccountId, feedId: FeedId, storage: Ap
   return storage.hasItem(key);
 }
 
-export function markFeedAsDeleted(
-  accountId: AccountId,
-  feedId: FeedId,
-  storage: AppStorage,
-  loadFeedFn = loadFeed,
-  storeFeedFn = storeFeed
-): Result<FeedNotFound | void> {
-  const feed = loadFeedFn(accountId, feedId, storage);
+export function deleteFeed(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<void> {
+  const storageKey = getFeedRootStorageKey(accountId, feedId);
 
-  if (isErr(feed)) {
-    return makeErr(si`Failed to ${loadFeed.name}: ${feed.reason}`);
-  }
-
-  if (isFeedNotFound(feed)) {
-    return feed;
-  }
-
-  feed.isDeleted = true;
-
-  const result = storeFeedFn(accountId, feed, storage);
-
-  if (isErr(result)) {
-    return makeErr(si`Failed to ${storeFeed.name}: ${result.reason}`);
-  }
+  return storage.removeTree(storageKey);
 }
 
 export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage): Result<void> {

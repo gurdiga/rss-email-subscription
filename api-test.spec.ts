@@ -349,8 +349,8 @@ describe('API', () => {
           const { responseBody: deleteResponse } = await deleteFeedSend(newFeedId);
           expect(deleteResponse).to.deep.equal({ kind: 'Success', message: 'Feed deleted' });
 
-          const deletedFeed = loadStoredFeed(userEmail, newFeedId);
-          expect(deletedFeed.isDeleted).be.true;
+          const feedExists = storedFeedExists(userEmail, newFeedId);
+          expect(feedExists).be.false;
 
           const finalFeedList = await loadFeedsSend();
           const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<LoadFeedsResponseData>;
@@ -361,6 +361,12 @@ describe('API', () => {
           const [_, accountId] = loadStoredAccountByEmail(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
+        }
+
+        function storedFeedExists(email: string, feedId: FeedId) {
+          const [_, accountId] = loadStoredAccountByEmail(email);
+
+          return fileExists(makePath(dataDirRoot, getFeedRootStorageKey(accountId, feedId)));
         }
       });
 
