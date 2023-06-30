@@ -52,7 +52,6 @@ async function main() {
     noDeliveriesMessage: '#no-deliveries-message',
     report: '#report',
     tbody: '#tbody',
-    upgdrageLink: '#upgrade-link',
   });
 
   if (isErr(uiElements)) {
@@ -166,7 +165,6 @@ interface RequiredUiElements extends SpinnerUiElements, BreadcrumbsUiElements {
   noDeliveriesMessage: HTMLElement;
   report: HTMLElement;
   tbody: HTMLTableSectionElement;
-  upgdrageLink: HTMLAnchorElement;
 }
 
 main();
