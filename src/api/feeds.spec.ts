@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { getFeedHrefs, makeBlogUrl } from './feeds';
+import { getFeedHrefs, makeBlogUrl, makeBlogFeedHttpUrl } from './feeds';
 
 describe(getFeedHrefs.name, () => {
   it('returns "href"s from all the feed <link>s in HTML', () => {
@@ -69,6 +69,25 @@ describe(getFeedHrefs.name, () => {
           " rel="alternate" />
         </html>`)
     ).to.deep.equal(makeErr('No feed <link> has "ref"'));
+  });
+});
+
+describe(makeBlogFeedHttpUrl.name, () => {
+  it('fails', () => {
+    const blogUrl = new URL('http://test.com');
+    const fieldName = 'url';
+
+    let result = makeBlogFeedHttpUrl('feed.xml', blogUrl, fieldName);
+    expect(result, JSON.stringify(result)).to.deep.equal(new URL('http://test.com/feed.xml'));
+
+    result = makeBlogFeedHttpUrl('/feed.xml', blogUrl, fieldName);
+    expect(result, JSON.stringify(result)).to.deep.equal(new URL('http://test.com/feed.xml'));
+
+    result = makeBlogFeedHttpUrl('//test.com/feed.xml', blogUrl, fieldName);
+    expect(result, JSON.stringify(result)).to.deep.equal(new URL('http://test.com/feed.xml'));
+
+    result = makeBlogFeedHttpUrl('http://test.com/feed.xml', blogUrl, fieldName);
+    expect(result, JSON.stringify(result)).to.deep.equal(new URL('http://test.com/feed.xml'));
   });
 });
 

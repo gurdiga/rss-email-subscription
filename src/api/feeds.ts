@@ -363,11 +363,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     return makeInputError(feedHrefs.reason, fieldName);
   }
 
-  const feedUrls = feedHrefs.map((href) => {
-    const baseURL = href.startsWith('/') ? blogUrl : undefined;
-
-    return makeHttpUrl(href, baseURL, fieldName);
-  });
+  const feedUrls = feedHrefs.map((x) => makeBlogFeedHttpUrl(x, blogUrl, fieldName));
 
   const errs = feedUrls.filter(isErr);
 
@@ -389,6 +385,17 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
 
   return makeSuccess('OK', logData, responseData);
 };
+
+export function makeBlogFeedHttpUrl(href: string, blogUrl: URL, fieldName: string) {
+  if (href.startsWith('//')) {
+    href = blogUrl.protocol + href;
+  }
+
+  const isAbsoluteUrl = href.startsWith('http://') || href.startsWith('https://');
+  const baseURL = isAbsoluteUrl ? undefined : blogUrl;
+
+  return makeHttpUrl(href, baseURL, fieldName);
+}
 
 export function getFeedHrefs(html: string, parseFn = parse): Result<string[]> {
   try {
