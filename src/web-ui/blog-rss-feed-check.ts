@@ -6,6 +6,7 @@ import { si } from '../shared/string-utils';
 import {
   HttpMethod,
   clearValidationErrors,
+  displayInitError,
   displayValidationError,
   hideElement,
   onInput,
@@ -29,7 +30,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    reportAppError(uiElements.reason);
+    displayInitError(uiElements.reason);
     return;
   }
 
@@ -55,6 +56,11 @@ function main() {
     const response = await asyncAttempt(() =>
       sendApiRequest<CheckFeedUrlResponseData>(path, HttpMethod.POST, requestData)
     );
+
+    if (isErr(response)) {
+      displayInitError(response.reason);
+      return;
+    }
 
     if (isInputError(response)) {
       displayValidationError(response, { [responseFieldName]: uiElements[formFieldName] });
