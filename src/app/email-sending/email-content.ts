@@ -2,7 +2,7 @@ import { RssItem } from '../../domain/rss-item';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedId } from '../../domain/feed-id';
 import { si } from '../../shared/string-utils';
-import { parse } from 'node-html-parser';
+import { parse, HTMLElement } from 'node-html-parser';
 
 export interface EmailContent {
   subject: string;
@@ -10,7 +10,7 @@ export interface EmailContent {
 }
 
 export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
-  const itemHtml = setImageMaxWidth(item.content);
+  const itemHtml = adjustImages(item.content, item.link);
 
   return {
     subject: item.title,
@@ -35,19 +35,32 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
   };
 }
 
-const maxWidthStyle = 'max-width:100% !important';
-
-export function setImageMaxWidth(html: string) {
+export function adjustImages(html: string, itemLink: URL) {
   const dom = parse(html);
 
-  dom.querySelectorAll('img').forEach((x) => {
-    const existingStyle = x.getAttribute('style') || '';
-
-    x.setAttribute('style', existingStyle + ';' + maxWidthStyle);
-    x.removeAttribute('height'); // To prevent skewing
+  dom.querySelectorAll('img').forEach((image) => {
+    setMaxWidth(image);
+    ensureSrcProtocol(image, itemLink);
   });
 
   return dom.toString();
+}
+
+const maxWidthStyle = 'max-width:100% !important';
+
+function setMaxWidth(image: HTMLElement): void {
+  const existingStyle = image.getAttribute('style') || '';
+
+  image.setAttribute('style', existingStyle + ';' + maxWidthStyle);
+  image.removeAttribute('height'); // To prevent skewing
+}
+
+function ensureSrcProtocol(image: HTMLElement, itemLink: URL): void {
+  const src = image.getAttribute('src');
+
+  if (src?.startsWith('//')) {
+    image.setAttribute('src', itemLink.protocol + src);
+  }
 }
 
 export function makeUnsubscribeUrl(

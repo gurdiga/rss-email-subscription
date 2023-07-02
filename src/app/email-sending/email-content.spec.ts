@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
 import { si } from '../../shared/string-utils';
 import { makeTestEmailAddress, encodeSearchParamValue, makeTestFeedId } from '../../shared/test-utils';
-import { makeEmailContent, makeUnsubscribeUrl, setImageMaxWidth } from './email-content';
+import { makeEmailContent, makeUnsubscribeUrl, adjustImages } from './email-content';
 import { RssItem } from '../../domain/rss-item';
 import { makeFullEmailAddress } from './emails';
 
@@ -34,12 +34,21 @@ describe(makeEmailContent.name, () => {
   });
 });
 
-describe(setImageMaxWidth.name, () => {
+describe(adjustImages.name, () => {
+  const itemLink = new URL('https://test.com/post.html');
+
   it('forces image size into 100%', () => {
     const html = '<img id="the-image" />';
-    const result = setImageMaxWidth(html);
+    const result = adjustImages(html, itemLink);
 
     expect(result).to.equal('<img id="the-image" style=";max-width:100% !important">');
+  });
+
+  it('ensures src protocol', () => {
+    const html = '<img src="//example.com/image.png" />';
+    const result = adjustImages(html, itemLink);
+
+    expect(result).to.equal('<img src="https://example.com/image.png" style=";max-width:100% !important">');
   });
 });
 
