@@ -102,7 +102,7 @@ services:
     init: true # This is to tell Node process to stop when the container is asked to stop.
     restart: always
     volumes:
-      - .tmp/logs/feedsubscription/smtp-out.log:/smtp-out.log:ro
+      - .tmp/logs/feedsubscription:/logs:ro
       - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
