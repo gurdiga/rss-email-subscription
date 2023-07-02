@@ -225,6 +225,7 @@ export function sendApiRequest<R extends any = any>(
 
 export function onSubmit(submitButton: HTMLButtonElement, handler: (event: Event) => Promise<void>) {
   onClick(submitButton, (event: Event) => {
+    event.preventDefault();
     preventDoubleClick(submitButton, async () => {
       await handler(event);
     });
