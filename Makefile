@@ -630,7 +630,7 @@ sent-count: rsync-logs
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add' |
-	cat - <(grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/footer.njk" | sed 's/,//g' ) |
+	cat - <(grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/my-footer.njk" | sed 's/,//g' ) |
 	paste -sd+ - | bc |
 	numfmt --grouping
 
