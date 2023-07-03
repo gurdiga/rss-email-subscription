@@ -41,14 +41,14 @@ describe(adjustImages.name, () => {
     const html = '<img id="the-image" />';
     const result = adjustImages(html, itemLink);
 
-    expect(result).to.equal('<img id="the-image" style=";max-width:100% !important">');
+    expect(result).to.equal('<img id="the-image" style="max-width:100% !important">');
   });
 
   it('ensures src protocol', () => {
     const html = '<img src="//example.com/image.png" />';
     const result = adjustImages(html, itemLink);
 
-    expect(result).to.equal('<img src="https://example.com/image.png" style=";max-width:100% !important">');
+    expect(result).to.equal('<img src="https://example.com/image.png" style="max-width:100% !important">');
   });
 });
 

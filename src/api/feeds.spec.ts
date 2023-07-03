@@ -28,16 +28,6 @@ describe(getFeedHrefs.name, () => {
     expect(getFeedHrefs(html)).to.deep.equal(['/feed.xml']);
   });
 
-  it('returns an Err when can’t pase HTML', () => {
-    const html = '<<<html lang';
-    const error = new Error('I don’t like this HTML!');
-    const badParseFn = () => {
-      throw error;
-    };
-
-    expect(getFeedHrefs(html, badParseFn as any)).to.deep.equal(makeErr(si`Failed to parse HTML: ${error.message}`));
-  });
-
   it('returns an Err when no <link> found', () => {
     const html = '<html>Valid HTML!</html>';
 

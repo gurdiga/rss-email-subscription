@@ -1,4 +1,4 @@
-import { parse } from 'node-html-parser';
+import * as cheerio from 'cheerio';
 import {
   loadEmailAddresses,
   makeEmailHashFn,
@@ -397,21 +397,21 @@ export function makeBlogFeedHttpUrl(href: string, blogUrl: URL, fieldName: strin
   return makeHttpUrl(href, baseURL, fieldName);
 }
 
-export function getFeedHrefs(html: string, parseFn = parse): Result<string[]> {
+export function getFeedHrefs(html: string): Result<string[]> {
   try {
-    const dom = parseFn(html.toLowerCase());
+    const $ = cheerio.load(html.toLowerCase());
 
     const rssLinkTypes = ['application/atom+xml', 'application/rss+xml'];
     const rssLinkSelectors = rssLinkTypes.map((type) => si`link[type="${type}"]`).join(',');
-    const links = dom.querySelectorAll(rssLinkSelectors);
+    const links = $(rssLinkSelectors);
 
-    if (isEmpty(links)) {
+    if (links.length === 0) {
       return makeErr('This blog doesn’t seem to have a published feed');
     }
 
     const linkHrefs = links
-      // prettier: keep these stacked
-      .map((link) => link.getAttribute('href')?.trim())
+      .map((_index, link) => $(link).attr('href')?.trim())
+      .toArray()
       .filter(isNonEmptyString);
 
     if (isEmpty(linkHrefs)) {

@@ -1,8 +1,8 @@
-import { RssItem } from '../../domain/rss-item';
+import * as cheerio from 'cheerio';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedId } from '../../domain/feed-id';
+import { RssItem } from '../../domain/rss-item';
 import { si } from '../../shared/string-utils';
-import { parse, HTMLElement } from 'node-html-parser';
 
 export interface EmailContent {
   subject: string;
@@ -36,30 +36,30 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
 }
 
 export function adjustImages(html: string, itemLink: URL) {
-  const dom = parse(html);
+  const $ = cheerio.load(html);
 
-  dom.querySelectorAll('img').forEach((image) => {
+  $('img').each((_index, image) => {
     setMaxWidth(image);
     ensureSrcProtocol(image, itemLink);
   });
 
-  return dom.toString();
+  return $('body').html() || '';
 }
 
 const maxWidthStyle = 'max-width:100% !important';
 
-function setMaxWidth(image: HTMLElement): void {
-  const existingStyle = image.getAttribute('style') || '';
+function setMaxWidth(image: cheerio.Element): void {
+  const existingStyle = image.attribs['style'];
 
-  image.setAttribute('style', existingStyle + ';' + maxWidthStyle);
-  image.removeAttribute('height'); // To prevent skewing
+  image.attribs['style'] = existingStyle ? existingStyle + ';' + maxWidthStyle : maxWidthStyle;
+  delete image.attribs['height']; // To prevent skewing after forcing the width
 }
 
-function ensureSrcProtocol(image: HTMLElement, itemLink: URL): void {
-  const src = image.getAttribute('src');
+function ensureSrcProtocol(image: cheerio.Element, itemLink: URL): void {
+  const src = image.attribs['src'];
 
   if (src?.startsWith('//')) {
-    image.setAttribute('src', itemLink.protocol + src);
+    image.attribs['src'] = itemLink.protocol + src;
   }
 }
 
