@@ -5,6 +5,7 @@ import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   HttpMethod,
+  clearInitError,
   clearValidationErrors,
   displayInitError,
   displayValidationError,
@@ -44,6 +45,7 @@ function main() {
 
   onSubmit(submitButton, async () => {
     clearValidationErrors(uiElements);
+    clearInitError();
 
     const requestData: CheckFeedUrlRequestData = {
       blogUrl: uiElements.blogUrlField.value,

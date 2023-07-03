@@ -82,8 +82,20 @@ export function fillUiElements(specs: UiElementFillSpec[]): Result<void> {
   }
 }
 
+const errorMessageSelector = '#init-error-message';
+
+export function clearInitError() {
+  const errorMessageElement = document.querySelector(errorMessageSelector);
+
+  if (!errorMessageElement) {
+    reportAppError('Called clearInitError without #init-error-message');
+    return;
+  }
+
+  hideElement(errorMessageElement);
+}
+
 export function displayInitError(message: string) {
-  const errorMessageSelector = '#init-error-message';
   const errorMessageElement = document.querySelector(errorMessageSelector);
 
   if (!errorMessageElement) {
@@ -324,7 +336,7 @@ export function clearValidationErrors<FF>(formFields: FF): void {
   }
 }
 
-export function hideElement(element: HTMLElement): void {
+export function hideElement(element: Element): void {
   element.setAttribute('hidden', 'hidden');
 }
 
