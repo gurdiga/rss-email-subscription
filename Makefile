@@ -6,16 +6,16 @@ TIME=gtime -f '%e'
 
 default: pre-commit
 
-# make start-testblog first
-testblog-local-test:
+local-test:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
+	feed_id=$${FEED_ID:-testblog}
 
 	# This is necessary when sending through prod smtp-in
 	export DOMAIN_NAME=feedsubscription.com
 
-	rm -v $$DATA_DIR_ROOT/accounts/da772874f7963b4612ec6c59005c7fbe1b0264302a501568cfed1e5035080ef5/feeds/testblog/lastPostMetadata.json
-	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking testblog
-	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
+	rm -v $$DATA_DIR_ROOT/accounts/da772874f7963b4612ec6c59005c7fbe1b0264302a501568cfed1e5035080ef5/feeds/$${feed_id}/lastPostMetadata.json
+	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking $${feed_id}
+	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending $${feed_id}
 
 email-sending:
 	node_modules/.bin/ts-node src/app/cron-cli.ts email-sending testblog
