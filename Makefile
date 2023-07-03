@@ -456,7 +456,7 @@ list-qid-index:
 	@source .env
 	require=$${DATA_DIR_ROOT:?envar is missing}
 
-	ls -l $$DATA_DIR_ROOT/qid-index |
+	ls -la $$DATA_DIR_ROOT/qid-index |
 	grep -v "^total " |
 	cat <(
 		echo "Subject: RES list-qid-index"
