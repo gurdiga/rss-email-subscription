@@ -868,7 +868,11 @@ logins-in-last-month:
 		fi;
 	done |
 	sort -u |
-	tee >( wc -l | ts "total:")
+	grep -vE '(gurdiga|woffca)' |
+	tee >(
+		wc -l | ts "
+		total:"
+	)
 
 # run weekly in dev env
 docker-image-check:
