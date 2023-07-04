@@ -19,7 +19,7 @@ function main() {
 
   logInfo(si`Starting cron in ${process.env['NODE_ENV']!} environment`);
 
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'STRIPE_SECRET_KEY', 'SMTP_CONNECTION_STRING']);
+  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
