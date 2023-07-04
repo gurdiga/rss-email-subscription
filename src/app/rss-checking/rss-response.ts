@@ -17,13 +17,12 @@ export function isValidFeedContentType(s: string): boolean {
 export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Result<RssResponse>> {
   try {
     const response = await fetchFn(url);
-    const contentType = response.headers.get('content-type')?.toLowerCase() || '';
 
     if (response.statusText !== 'OK') {
-      const details = si`${response.status} ${response.statusText}\n${await response.text()}`;
-
-      return makeErr(si`Non-OK response from the feed URL. Here is the server response:\n\n${details}`);
+      return makeErr(si`${response.status} ${response.statusText}\n${await response.text()}`);
     }
+
+    const contentType = response.headers.get('content-type')?.toLowerCase() || '';
 
     if (isValidFeedContentType(contentType)) {
       return {
