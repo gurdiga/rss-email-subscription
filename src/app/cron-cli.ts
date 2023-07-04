@@ -67,7 +67,7 @@ if (feed.kind === 'FeedNotFound') {
   process.exit(1);
 }
 
-main(accountId, feed, storage).then((exitCode) => process.exit(exitCode));
+main(accountId, feed, storage, env).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {
   logError(si`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);

@@ -1,3 +1,4 @@
+import { AppEnv } from '../../api/init-app';
 import { AccountId, isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
 import { makeEmailAddress } from '../../domain/email-address-making';
@@ -5,28 +6,24 @@ import { Feed } from '../../domain/feed';
 import { isFeedNotFound } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
-import { requireEnv } from '../../shared/env';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
-import { EmailDeliveryEnv } from './email-delivery';
 import { loadEmailAddresses, makeFullEmailAddress } from './emails';
 import { deliverItems } from './item-delivery';
 import { readStoredRssItems } from './rss-item-reading';
 
-export async function sendEmails(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+export async function sendEmails(
+  accountId: AccountId,
+  feed: Feed,
+  storage: AppStorage,
+  env: AppEnv
+): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'email-sending',
     accountId: accountId.value,
     feedId: feed.id.value,
   });
-
-  const env = requireEnv<EmailDeliveryEnv>(['SMTP_CONNECTION_STRING', 'DOMAIN_NAME']);
-
-  if (isErr(env)) {
-    logError('Invalid environment variables', { reason: env.reason });
-    return 1;
-  }
 
   const account = loadAccount(storage, accountId);
 
