@@ -12,7 +12,7 @@ import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
-const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME']);
+const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
 
 if (isErr(env)) {
   logError('Invalid environment', { reason: env.reason });
