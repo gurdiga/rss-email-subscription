@@ -92,7 +92,7 @@ async function checkFeeds(storage: AppStorage): Promise<void> {
         continue;
       }
 
-      const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved && !x.isDeleted);
+      const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved);
 
       logInfo('Counting approved feeds', { ...logData, feedCount: approvedFeeds.length });
 

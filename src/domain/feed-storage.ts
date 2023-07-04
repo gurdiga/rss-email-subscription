@@ -16,7 +16,6 @@ export interface FeedStoredData {
   hashingSalt: string;
   cronPattern: string;
   replyTo: string;
-  isDeleted?: boolean;
   status: FeedStatus;
 }
 
@@ -98,7 +97,6 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
     status: feed.status,
-    isDeleted: feed.isDeleted,
   };
 
   const result = storage.storeItem(storageKey, data);
@@ -138,7 +136,6 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     url: loadedData.url,
     id: feedId.value,
     replyTo: loadedData.replyTo,
-    isDeleted: !!loadedData.isDeleted,
     status: loadedData.status,
   };
 
@@ -185,7 +182,7 @@ export function loadFeedsByAccountId(
   const feedIds = feedIdResults.filter(isFeedId);
   const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
 
-  result.validFeeds = feeds.filter(isFeed).filter((x) => !x.isDeleted);
+  result.validFeeds = feeds.filter(isFeed);
   result.errs = feeds.filter(isErr);
   result.feedIdErrs = feedIdResults.filter(isErr);
   result.feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);

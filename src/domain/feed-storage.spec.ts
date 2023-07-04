@@ -66,7 +66,6 @@ describe(loadFeed.name, () => {
       hashingSalt: makeTestFeedHashingSalt(data.hashingSalt),
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeTestUnixCronPattern(data.cronPattern),
-      isDeleted: false,
       status: data.status,
     };
 
@@ -211,7 +210,6 @@ describe(storeFeed.name, () => {
       url: 'https://test.com/rss.xml',
       replyTo: feed.replyTo.value,
       status: feed.status,
-      isDeleted: false,
     };
 
     expect(isErr(result)).be.false;

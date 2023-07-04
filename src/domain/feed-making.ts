@@ -46,7 +46,6 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
     return replyTo;
   }
 
-  const isDeleted = Boolean(makeFeedInput.isDeleted);
   const status = makeFeedStatus(makeFeedInput.status);
 
   if (isErr(status)) {
@@ -61,7 +60,6 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
     hashingSalt,
     replyTo,
     cronPattern,
-    isDeleted,
     status,
   };
 

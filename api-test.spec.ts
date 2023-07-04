@@ -260,7 +260,6 @@ describe('API', () => {
           expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
           expect(storedFeed.cronPattern).to.equal(defaultFeedPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
-          expect(storedFeed.isDeleted).to.equal(false);
 
           const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId);
           const { responseData: loadedFeed } = loadFeedByIdResponse.responseBody as Success<Feed>;
@@ -308,7 +307,6 @@ describe('API', () => {
           const editedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(editedFeed.displayName).to.equal(displayNameUpdated);
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
-          expect(editedFeed.isDeleted).be.false;
 
           let expectedResponse: Success<LoadEmailsResponse> = {
             kind: 'Success',

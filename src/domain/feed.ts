@@ -13,7 +13,6 @@ export interface Feed {
   hashingSalt: FeedHashingSalt;
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
-  isDeleted: boolean;
   status: FeedStatus;
 }
 

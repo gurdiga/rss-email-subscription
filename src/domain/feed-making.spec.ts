@@ -28,7 +28,6 @@ describe(makeFeed.name, () => {
       hashingSalt: hashingSalt,
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern,
-      isDeleted: input.isDeleted!,
       status: input.status!,
     };
 
