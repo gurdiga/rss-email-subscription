@@ -35,9 +35,8 @@ function main() {
     return;
   }
 
-  const { form, blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage } = uiElements;
+  const { blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage } = uiElements;
 
-  unhideElement(form);
   onInput(blogUrlField, () => {
     hideElement(successMessage);
     unhideElement(submitButton);
