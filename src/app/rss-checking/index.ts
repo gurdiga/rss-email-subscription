@@ -1,16 +1,28 @@
-import { isEmpty, isNotEmpty } from '../../shared/array-utils';
+import { AppEnv } from '../../api/init-app';
+import { AccountId } from '../../domain/account';
+import { AppSettings } from '../../domain/app-settings';
 import { Feed } from '../../domain/feed';
+import { AppStorage } from '../../domain/storage';
+import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
-import { AppStorage } from '../../domain/storage';
+import { si } from '../../shared/string-utils';
+import { EmailContent, htmlBody } from '../email-sending/email-content';
+import { sendEmail } from '../email-sending/email-delivery';
+import { FullEmailAddress } from '../email-sending/emails';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
-import { AccountId } from '../../domain/account';
 
-export async function checkRss(accountId: AccountId, feed: Feed, storage: AppStorage): Promise<number | undefined> {
+export async function checkRss(
+  accountId: AccountId,
+  feed: Feed,
+  storage: AppStorage,
+  env: AppEnv,
+  settings: AppSettings
+): Promise<number | undefined> {
   const feedDisplayName = feed.displayName;
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'rss-checking',
@@ -23,6 +35,7 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
 
   if (isErr(rssResponse)) {
     logError('Failed fetching RSS', { url, reason: rssResponse.reason });
+    await sendAlertEmail(feed, rssResponse.reason, env, settings.fullEmailAddress);
     return 1;
   }
 
@@ -30,6 +43,7 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
 
   if (isErr(rssParsingResult)) {
     logError('Failed parsing RSS items', { reason: rssParsingResult.reason });
+    await sendAlertEmail(feed, rssParsingResult.reason, env, settings.fullEmailAddress);
     return 1;
   }
 
@@ -89,4 +103,29 @@ export async function checkRss(accountId: AccountId, feed: Feed, storage: AppSto
   }
 
   return 0;
+}
+
+async function sendAlertEmail(feed: Feed, errorMessage: string, env: AppEnv, from: FullEmailAddress) {
+  const to = feed.replyTo;
+  const replyTo = to;
+
+  const emailContent: EmailContent = {
+    subject: 'Alert: failed to check your feed',
+    htmlBody: htmlBody(si`
+      <p>Hi there,</p>
+
+      <p>
+        Please note that we could not to check your feed for new items.
+        Here is the response that we received:
+      </p>
+
+      <pre>${errorMessage}</pre>
+
+      <p>We’ll keep on trying, but you should probably inform your technical staff about this.</p>
+
+      <p>Have a nice day.</p>
+    `),
+  };
+
+  return await sendEmail(from, to, replyTo, emailContent, env);
 }

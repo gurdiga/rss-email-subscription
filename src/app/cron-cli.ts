@@ -10,6 +10,7 @@ import { requireEnv } from '../shared/env';
 import { AppEnv } from '../api/init-app';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
+import { loadAppSettings } from '../domain/app-settings';
 
 const { logError } = makeCustomLoggers({ module: 'cron-cli' });
 const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
@@ -20,6 +21,13 @@ if (isErr(env)) {
 }
 
 const storage = makeStorage(env.DATA_DIR_ROOT);
+const settings = loadAppSettings(storage);
+
+if (isErr(settings)) {
+  logError(si`Failed to ${loadAppSettings.name}`, { reason: settings.reason });
+  process.exit(1);
+}
+
 const command = getFirstCliArg(process) || '[missing-command]';
 
 if (!['rss-checking', 'email-sending'].includes(command)) {
@@ -67,7 +75,7 @@ if (feed.kind === 'FeedNotFound') {
   process.exit(1);
 }
 
-main(accountId, feed, storage, env).then((exitCode) => process.exit(exitCode));
+main(accountId, feed, storage, env, settings).then((exitCode) => process.exit(exitCode));
 
 function displayUsage(): void {
   logError(si`USAGE: ${programFilePath(process)} [rss-checking | email-sending] <feedId>`);

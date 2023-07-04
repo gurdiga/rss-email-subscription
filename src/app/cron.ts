@@ -13,6 +13,7 @@ import { isErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
+import { AppSettings, loadAppSettings } from '../domain/app-settings';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -28,16 +29,22 @@ function main() {
 
   const dataDirRoot = env.DATA_DIR_ROOT;
   const storage = makeStorage(dataDirRoot);
+  const settings = loadAppSettings(storage);
+
+  if (isErr(settings)) {
+    logError(si`Failed to ${loadAppSettings.name}`, { reason: settings.reason });
+    return;
+  }
 
   const jobs = [
-    startJob('2 * * * *', () => checkFeeds(storage, env)),
+    startJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
     startJob('0 0 * * *', () => logError('Just checking error reporting')),
   ];
 
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will check feeds now.');
-    checkFeeds(storage, env);
+    checkFeeds(storage, env, settings);
   });
 
   process.on('SIGTERM', () => {
@@ -46,7 +53,7 @@ function main() {
   });
 }
 
-async function checkFeeds(storage: AppStorage, env: AppEnv): Promise<void> {
+async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSettings): Promise<void> {
   const logData = { module: checkFeeds.name };
 
   logDuration('Feed checking', logData, async () => {
@@ -99,7 +106,7 @@ async function checkFeeds(storage: AppStorage, env: AppEnv): Promise<void> {
       for (const feed of approvedFeeds) {
         const feedLogData = { ...logData, displayName: feed.displayName, feedId: feed.id.value };
 
-        await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage));
+        await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage, env, settings));
         await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage, env));
       }
     }
