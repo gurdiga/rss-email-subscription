@@ -8,9 +8,10 @@ describe(fetchRss.name, () => {
   const mockHeaders = new Headers({ 'content-type': 'application/xml; charset=utf-8' });
   const mockXmlResponse = '<xml>some response</xml>';
   const mockText = async () => mockXmlResponse;
+  const okStatus = { statusText: 'OK', status: 200 };
 
   it('returns a RssResponse value containing the XML response from the given URL', async () => {
-    const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText } as any as Response);
+    const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText, ...okStatus } as any as Response);
     const response = await fetchRss(mockUrl, mockFetchFn);
 
     expect(response).to.deep.equal({
@@ -25,7 +26,8 @@ describe(fetchRss.name, () => {
 
     for (const type of contentTypes) {
       const mockHeaders = new Headers({ 'content-type': type });
-      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText } as any as Response);
+      const mockFetchFn = async (_url: URL) =>
+        ({ headers: mockHeaders, text: mockText, ...okStatus } as any as Response);
       const response = await fetchRss(mockUrl, mockFetchFn);
 
       expect(response.kind).to.equal('RssResponse', (response as Err).reason);
@@ -56,7 +58,8 @@ describe(fetchRss.name, () => {
   describe('content type validation', () => {
     it('returns an Err value when the response is not XML', async () => {
       const mockHeaders = new Headers({ 'content-type': 'text/html; charset=utf-8' });
-      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText } as any as Response);
+      const mockFetchFn = async (_url: URL) =>
+        ({ headers: mockHeaders, text: mockText, ...okStatus } as any as Response);
       const response = await fetchRss(mockUrl, mockFetchFn);
       const contentType = mockHeaders.get('content-type')!;
 
@@ -65,7 +68,8 @@ describe(fetchRss.name, () => {
 
     it('disregards header casing', async () => {
       const mockHeaders = new Headers({ 'content-type': 'application/xml; charSET=UTF-8' });
-      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText } as any as Response);
+      const mockFetchFn = async (_url: URL) =>
+        ({ headers: mockHeaders, text: mockText, ...okStatus } as any as Response);
       const response = await fetchRss(mockUrl, mockFetchFn);
 
       expect(response).to.deep.equal({
@@ -77,7 +81,8 @@ describe(fetchRss.name, () => {
 
     it('ignores content-type header attributes', async () => {
       const mockHeaders = new Headers({ 'content-type': 'application/xml' });
-      const mockFetchFn = async (_url: URL) => ({ headers: mockHeaders, text: mockText } as any as Response);
+      const mockFetchFn = async (_url: URL) =>
+        ({ headers: mockHeaders, text: mockText, ...okStatus } as any as Response);
       const response = await fetchRss(mockUrl, mockFetchFn);
 
       expect(response).to.deep.equal({
