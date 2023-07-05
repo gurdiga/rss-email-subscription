@@ -16,6 +16,8 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssItems } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
+const myIssues = [/getaddrinfo ENOTFOUND/];
+
 export async function checkRss(
   accountId: AccountId,
   feed: Feed,
@@ -35,7 +37,13 @@ export async function checkRss(
 
   if (isErr(rssResponse)) {
     logError('Failed fetching RSS', { url, reason: rssResponse.reason });
-    await sendAlertEmail(feed, rssResponse.reason, env, settings.fullEmailAddress);
+
+    const isNotMyIssue = !myIssues.some((x) => x.test(rssResponse.reason));
+
+    if (isNotMyIssue) {
+      await sendAlertEmail(feed, rssResponse.reason, env, settings.fullEmailAddress);
+    }
+
     return 1;
   }
 
