@@ -217,7 +217,11 @@ function makeStatusField(status: FeedStatus): HTMLElement[] {
   const ddElement = createElement('dd', status, { class: 'res-feed-attribute-value' });
 
   if (status === FeedStatus.AwaitingReview) {
-    const approvalInfo = createElement('p', 'It should take less than 24 hours to review and approve your feed.', {
+    const message = `
+      It should take less than 24 hours to review and approve your feed.
+      We’ll send you a notification at the account email.
+    `;
+    const approvalInfo = createElement('p', message, {
       class: 'form-text m-0 text-success',
     });
     const infoIcon = createElement('i', '', { class: 'fa-solid fa-circle-info me-1 ' });
