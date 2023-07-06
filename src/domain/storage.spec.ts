@@ -70,7 +70,7 @@ describe(makeStorage.name, () => {
   });
 
   describe(loadItem.name, () => {
-    const value = { number: 1, string: 'string', date: new Date() };
+    const value = { number: 1, string: 'string' };
 
     const readFileFn = makeStub<ReadFileFn>(() => JSON.stringify(value));
 
@@ -79,6 +79,23 @@ describe(makeStorage.name, () => {
 
       expect(readFileFn.calls).to.deep.equal([[expectedFilePath]]);
       expect(result).to.deep.equal(value);
+    });
+
+    it('parses properties containing only an ISO date string into a Date value', () => {
+      const value = {
+        dateField: '2023-07-06T09:25:16.415Z',
+        textFieldWithADateStringInside:
+          'This is a random text containing an ISO date string here 2023-07-06T09:25:16.415Z',
+      };
+      const readFileFn = makeStub<ReadFileFn>(() => JSON.stringify(value));
+
+      const result = loadItem(key, readFileFn);
+      const expectedResult = {
+        dateField: new Date(value.dateField),
+        textFieldWithADateStringInside: value.textFieldWithADateStringInside,
+      };
+
+      expect(result).to.deep.equal(expectedResult);
     });
 
     it('returns an Err value when can’t read file', () => {

@@ -263,7 +263,7 @@ export function makeStorage(dataDirRoot: string): AppStorage {
   };
 }
 
-const dateRegExp = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
+const dateRegExp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;
 
 function jsonParseFilter(_k: string, v: unknown) {
   return typeof v === 'string' && dateRegExp.test(v) ? new Date(v) : v;
