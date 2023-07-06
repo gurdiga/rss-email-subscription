@@ -30,7 +30,7 @@ async function main() {
 
   logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
 
-  new CronJob('0 */3 * * *', () => {
+  new CronJob('0 */8 * * *', () => {
     logInfo('delmon heartbeat', {
       lineCount: status.lineCount,
       uptime: process.uptime(),
