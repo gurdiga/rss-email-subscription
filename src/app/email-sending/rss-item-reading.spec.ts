@@ -103,13 +103,14 @@ describe(readStoredRssItems.name, () => {
       listItems: () => filesWithInvalidItems.map((f) => f.key),
       loadItem: makeLoadItemFnStub(filesWithInvalidItems),
     });
+
     const expectedResul: RssReadingResult = {
       kind: 'RssReadingResult',
       validItems: makeMockValidItems(files),
       invalidItems: [
         {
           kind: 'InvalidStoredRssItem',
-          reason: 'The "title" property is not a present string',
+          reason: si`The "title" property is not a present string in ${invalidFile.key}`,
           json: invalidFile.value,
         },
       ],
@@ -172,7 +173,7 @@ describe(readStoredRssItems.name, () => {
       const result = (data: object) => makeStoredRssItem(fileName, data);
       const err = (data: object, reason: string) => ({
         kind: 'InvalidStoredRssItem',
-        reason,
+        reason: si`${reason} in ${fileName}`,
         json: data,
       });
 

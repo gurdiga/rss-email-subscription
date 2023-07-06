@@ -87,7 +87,11 @@ export function readStoredRssItems(
 }
 
 export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredRssItem | InvalidStoredRssItem {
-  const invalid = (reason: string) => ({ kind: 'InvalidStoredRssItem' as const, reason, json });
+  const invalid = (reason: string) => ({
+    kind: 'InvalidStoredRssItem' as const,
+    reason: si`${reason} in ${fileName}`,
+    json,
+  });
 
   let { title, content, author, pubDate, link, guid } = json as any;
 
