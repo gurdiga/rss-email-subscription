@@ -67,7 +67,7 @@ export async function sendEmails(
   const { validItems, invalidItems } = storedRssItems;
 
   if (isNotEmpty(invalidItems)) {
-    logWarning('Invalid RSS items', { invalidItems });
+    logWarning('Invalid stored RSS items', { invalidItems });
   }
 
   if (isEmpty(validItems)) {
