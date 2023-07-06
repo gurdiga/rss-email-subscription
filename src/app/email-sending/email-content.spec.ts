@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
 import { si } from '../../shared/string-utils';
 import { makeTestEmailAddress, encodeSearchParamValue, makeTestFeedId } from '../../shared/test-utils';
-import { makeEmailContent, makeUnsubscribeUrl, adjustImages } from './email-content';
+import { makeEmailContent, makeUnsubscribeUrl, massageContent } from './email-content';
 import { RssItem } from '../../domain/rss-item';
 import { makeFullEmailAddress } from './emails';
 
@@ -34,21 +34,28 @@ describe(makeEmailContent.name, () => {
   });
 });
 
-describe(adjustImages.name, () => {
+describe(massageContent.name, () => {
   const itemLink = new URL('https://test.com/post.html');
 
   it('forces image size into 100%', () => {
     const html = '<img id="the-image" />';
-    const result = adjustImages(html, itemLink);
+    const result = massageContent(html, itemLink);
 
     expect(result).to.equal('<img id="the-image" style="max-width:100% !important">');
   });
 
   it('ensures src protocol', () => {
     const html = '<img src="//example.com/image.png" />';
-    const result = adjustImages(html, itemLink);
+    const result = massageContent(html, itemLink);
 
     expect(result).to.equal('<img src="https://example.com/image.png" style="max-width:100% !important">');
+  });
+
+  it('removes .MsoNormal from <p>s', () => {
+    const html = '<p class="MsoNormal ok-class">Some text</p>';
+    const result = massageContent(html, itemLink);
+
+    expect(result).to.equal('<p class="ok-class">Some text</p>');
   });
 });
 

@@ -10,7 +10,7 @@ export interface EmailContent {
 }
 
 export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
-  const itemHtml = adjustImages(item.content, item.link);
+  const itemHtml = massageContent(item.content, item.link);
 
   return {
     subject: item.title,
@@ -35,12 +35,18 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
   };
 }
 
-export function adjustImages(html: string, itemLink: URL) {
+export function massageContent(html: string, itemLink: URL) {
   const $ = cheerio.load(html);
 
   $('img').each((_index, image) => {
     setMaxWidth(image);
     ensureSrcProtocol(image, itemLink);
+  });
+
+  $('p.MsoNormal').each((_index, p) => {
+    // Because Gmail defines .MsoNormal { margin: 0 }, which makes the
+    // entire email look like a blob.
+    $(p).removeClass('MsoNormal');
   });
 
   return $('body').html() || '';
