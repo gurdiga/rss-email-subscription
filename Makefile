@@ -305,7 +305,6 @@ watch-app:
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(New feed added|Feed updated|Feed deleted)"' \
 			-e '"message":"(Unsubscribed)"' \
-			-e '"message":"Finished Confirmation secrets expiration"' \
 			-e '"message":"Deleted confirmation secrets' \
 			-e '"message":"(User registered|User confirmed registration|User (requested|confirmed) password change|User logged in|Account deleted)"' \
 		|
