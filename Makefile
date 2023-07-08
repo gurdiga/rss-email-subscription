@@ -785,7 +785,8 @@ tracking-report: bot-list.txt
 	date=$${DATE:-`date +%F`}
 	debug_log "date: $$date"
 
-	cat .tmp/logs/feedsubscription/website.log |
+	ls -t1r .tmp/logs/feedsubscription/website.log* |
+	xargs zcat -f |
 	grep -P "^$$date" |
 	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	grep -vF "/dW5zdWJzY3?id=" | # exclude obfuscated requests from M$
@@ -811,7 +812,7 @@ tracking-report: bot-list.txt
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 	) - |
-	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	if [ -t 1 ] || [ -v MAKE_DEBUG ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	@base_re='\w*(bot|crawler|spider)\w*'
