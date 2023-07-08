@@ -19,7 +19,7 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
     const response = await fetchFn(url);
 
     if (response.statusText !== 'OK') {
-      return makeErr(si`${response.status} ${response.statusText}\n${await response.text()}`);
+      return makeErr(si`${response.status} ${response.statusText}`);
     }
 
     const contentType = response.headers.get('content-type')?.toLowerCase() || '';
