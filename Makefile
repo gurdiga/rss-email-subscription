@@ -834,6 +834,8 @@ bot-list.txt: .tmp/logs/feedsubscription/website.log*
 		echo "YahooMailProxy"
 		echo "InternetMeasurement"
 		echo "zgrab"
+		echo "baidu.com"
+		echo "CFNetwork"
 	) - |
 	sort --unique --ignore-case > $@
 
