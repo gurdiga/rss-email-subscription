@@ -730,8 +730,11 @@ unique-ips-report:
 
 # brew install goaccess
 # geoip comes from https://www.maxmind.com/en/accounts/852003/geoip/downloads
-access-report: rsync-logs
+access-report: rsync-logs bot-list.txt
+	bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
+
 	zcat -f .tmp/logs/feedsubscription/website.log* |
+	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	cut -d ' ' -f 4- |
 	grep -P '^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}' | # rows that start with an IP
 	grep -P '"GET /web-ui-scripts/web-ui/navbar.js HTTP/(1.1|2.0)" 200 \d+ "https://feedsubscription.com' | # greater probability of being a REAL user browser
