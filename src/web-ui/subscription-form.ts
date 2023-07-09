@@ -30,6 +30,7 @@
       const fieldLabel = createFieldLabel(index, fieldLabelText, fieldLabelClassName);
       const fieldTextbox = createFieldTextbox(index, fieldPlaceholder, fieldTextboxClassName);
       const submitButton = createSubmitButton(buttonClassName, buttonLabel);
+      const poweredBy = createPoweredBy(feedId);
       const messageArea = createMessageArea();
       const messageContent = createMessageContent();
       const styleSheet = createStyleSheet();
@@ -39,7 +40,7 @@
       setupFormSending(feedId, submitButton, fieldTextbox, messageContent, new URL(origin));
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
-      uiContainer.append(formArea, messageArea, styleSheet);
+      uiContainer.append(formArea, messageArea, poweredBy, styleSheet);
 
       script.insertAdjacentElement('afterend', uiContainer);
       markAsInitialized(script);
@@ -148,6 +149,18 @@
     return createElement('div', { className: 'res-message-area' });
   }
 
+  function createPoweredBy(feedId: string): HTMLDivElement {
+    const div = createElement('div', { className: 'res-powered-by' }, 'Powered by ');
+    const link = createElement(
+      'a',
+      { href: 'https://feedsubscription.com?from=powered-by-' + feedId },
+      'FeedSubscription.com'
+    );
+
+    div.append(link);
+    return div;
+  }
+
   function createMessageContent(): HTMLElement {
     return createElement('p', { className: 'res-message' });
   }
@@ -157,6 +170,9 @@
       'style',
       {},
       `
+    .res-ui-containter {
+      position: relative;
+    }
     .res-message:empty {
       display: none;
     }
@@ -175,6 +191,15 @@
       color: #842029;
       border-color: #f5c2c7;
       background-color: #f8d7da;
+    }
+    .res-powered-by {
+      font-size: max(0.5em, 10px);
+      opacity: 0;
+      transition: opacity 0.75s ease-in-out;
+      position: absolute;
+    }
+    .res-ui-containter:hover .res-powered-by {
+      opacity: 1;
     }
     `
     );
