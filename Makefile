@@ -403,19 +403,13 @@ watch-smtp-out:
 # cron @weekly
 certbot-report:
 	@(
-		container_name=$$(grep -Po '^[^[]+' <<<"$$container_name_and_id")
-		severity=$$(jq -r .severity <<<"$$json")
-		message=$$(jq -r .message <<<"$$json")
-
 		echo "Subject: RES weekly-certbot"
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 
-		ls -1 .tmp/logs/feedsubscription/certbot.log-*.gz | # find last log archive
-		sort -r |
+		ls -1t .tmp/logs/feedsubscription/certbot.log-*.gz | # find last log archive
 		head -1 |
-		xargs cat |
-		gunzip
+		xargs gzcat
 	) 2>&1 |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
