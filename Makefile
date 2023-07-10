@@ -892,6 +892,41 @@ docker-image-check:
 
 all-images: app certbot delmon logger smtp-in smtp-out website
 
+user-list:
+	@ls -1t .tmp/docker-data/accounts/*/account.json |
+	while read account_json; do
+		if ! jq --exit-status .confirmationTimestamp $$account_json > /dev/null; then
+			continue
+		fi
+
+		dir=$$(dirname $$account_json)
+
+		if ! ls $$dir/feeds/*/deliveries/* &> /dev/null; then continue; fi;
+
+		account_id=$$(basename $$dir)
+
+		skip_accounts="
+			5a7c0ad6adc03c53b13a5903535c79df8aa0d3706bb9a60a1408331bab7abd30 gurdiga@gmail.com
+		"
+
+		if grep -F "$$account_id" <<<"$$skip_accounts" > /dev/null; then continue; fi
+
+		jq -r --arg account_id "$$account_id" '. | [.confirmationTimestamp, .email, $$account_id] | @tsv' $$account_json
+
+		ls -1 $$dir/feeds |
+		while read feed; do
+			if ! ls $$dir/feeds/$$feed/deliveries/* &> /dev/null; then continue; fi
+
+			delivery_count=$$(ls -1 $$dir/feeds/$$feed/deliveries | wc -l)
+			last_delivery_date=$$(ls -1t $$dir/feeds/$$feed/deliveries | head -1 | cut -d'-' -f1)
+			last_delivery_date_pretty=$$(/bin/date -jf '%Y%m%d' '+%Y-%m-%d' $$last_delivery_date)
+
+			echo "$$feed: $$delivery_count $$last_delivery_date_pretty"
+		done
+
+		echo
+	done
+
 # Helper functions
 
 define include_log_to
