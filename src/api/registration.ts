@@ -187,19 +187,38 @@ export function makeRegistrationConfirmationEmailContent(
   confirmationLink.searchParams.set('secret', secret);
 
   return {
-    subject: 'Please confirm FeedSubscription registration',
+    subject: 'Please confirm FeedSubscription.com registration',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
-      <p>Please confirm FeedSubscription.com registration by clicking the link below:</p>
+      <p>
+        Please confirm the registration at
+        <a href="https://FeedSubscription.com">FeedSubscription.com</a>
+        by clicking the link below:
+      </p>
 
-      <p><a href="${confirmationLink.toString()}">Yes, I confirm registration</a>.</p>
+      <a href="${confirmationLink.toString()}">
+        ${confirmationLink.toString()}
+      </a>
 
-      <p>NOTE: This link ☝️ expires in ${humanConfirmationSecretLifetime}.</p>
+      <p>
+        Once you have clicked on the link above, you will have completed the
+        registration process and will be able to register your blog feed and
+        embed the Subscribe Form. Please note that this registration link expires
+        in ${humanConfirmationSecretLifetime}.
+      </p>
 
-      <p>If you did not register, please ignore this message.</p>
+      <p>
+        If you did not register, please ignore this message.
+      </p>
 
-      <p>Have a nice day.</p>
+      <p>
+        Warmly,<br/>
+        FeedSubscription.com
+      </p>
+
+      <br/>
+      <br/>
     `),
   };
 }
