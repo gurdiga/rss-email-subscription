@@ -39,7 +39,6 @@ function main() {
   const jobs = [
     startJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
-    startJob('0 0 * * *', () => logError('Just checking error reporting')),
   ];
 
   process.on('SIGHUP', () => {
