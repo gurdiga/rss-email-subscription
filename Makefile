@@ -793,9 +793,8 @@ tracking-report: bot-list.txt
 	grep -v '"referrer":"http://baidu.com/"' | # exclude myself
 	(
 		tee \
-			>( grep -Po '"referrer":""' | uniq -c) \
-			>( grep -Po '(?<="referrer":")[^"]+' | grep -vE '^/' | sort | uniq -c | ts "referrer") \
 			>( grep -Po '(?<="vid":")[^"]+' | sort -u | wc -l | ts "uniq vids" ) \
+			>( grep -Po '(?<="referrer":)".*?"' | grep -vE '^"/' | sort | uniq -c | ts "referrer") \
 			>( grep -Po '(?<="vid":")[^"]+' | sort | uniq -c ) \
 			>( grep -Po '(?<="tid":")[^"]+' | sort | ts "click" | uniq -c ) \
 			>( grep -Po '(?<="tid":")(b-homepage-create-account|l-(free|ppu)-link)' | sort | ts "click" | uniq -c ) \
