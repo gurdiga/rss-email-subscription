@@ -932,6 +932,9 @@ user-list:
 docker-registry:
 	docker run --detach -p 127.0.0.1:5000:5000 --restart=always --name registry registry:2
 
+update-docker-scout:
+	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+
 # Helper functions
 
 define include_log_to
