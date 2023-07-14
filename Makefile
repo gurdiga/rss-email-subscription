@@ -877,7 +877,9 @@ logins-in-last-month:
 docker-image-check:
 	@yq -r '.services[].image' docker-compose.yml |
 	sort -u |
-	if [ -v SKIP ]; then
+	if [ -v ONLY ]; then
+		grep -E "$${ONLY}";
+	elif [ -v SKIP ]; then
 		grep -vE "$${SKIP}";
 	else
 		cat;
