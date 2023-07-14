@@ -2,7 +2,7 @@
 .ONESHELL:
 
 SHELL = bash
-TIME=gtime -f '%e'
+TIME=gtime -f '%es'
 
 default: pre-commit
 
