@@ -64,7 +64,7 @@ export const subscription: AppRequestHandler = async function subscription(
 
   if (doesEmailAlreadyExist(emailAddress, loadEmailsResult)) {
     logWarning('Already registered', { email: emailAddress.value });
-    return makeSuccess('Email is already subscribed! 👍');
+    return makeSuccess('This email is already subscribed! 👍');
   }
 
   const emailHashFn = makeEmailHashFn(feed.hashingSalt);

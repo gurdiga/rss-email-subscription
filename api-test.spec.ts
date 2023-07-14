@@ -456,7 +456,7 @@ describe('API', () => {
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
-        <Success>{ kind: 'Success', message: 'Email is already subscribed! 👍' },
+        <Success>{ kind: 'Success', message: 'This email is already subscribed! 👍' },
         'repeated subscription result'
       );
 
