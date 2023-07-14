@@ -933,7 +933,10 @@ docker-registry:
 	docker run --detach -p 127.0.0.1:5000:5000 --restart=always --name registry registry:2
 
 update-docker-scout:
-	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/main/install.sh | sh -s --
+	@latest_tag=$$(curl --silent https://api.github.com/repos/docker/scout-cli/tags | jq -r '.[].name' | sort | tail -1)
+	echo "latest_tag: $$latest_tag"
+
+	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/$$latest_tag/install.sh | sh -s --
 
 # Helper functions
 
