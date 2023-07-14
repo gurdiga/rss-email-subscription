@@ -102,7 +102,9 @@ export const subscription: AppRequestHandler = async function subscription(
 
   logInfo('New unconfirmed subscriber', { email: emailAddress.value });
 
-  return makeSuccess('Thank you for subscribing. Please check your email to confirm. 🤓 Also, check the Spam folder!');
+  return makeSuccess(
+    'Thank you for subscribing. Please check your email to confirm. 🤓 PS: Also, check the Spam folder!'
+  );
 };
 
 interface Input {
