@@ -15,7 +15,6 @@ import {
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
-  unhideElement,
 } from './shared';
 
 async function main() {
@@ -41,7 +40,6 @@ async function main() {
     return;
   }
 
-  unhideElement(uiElements.form);
   uiElements.ctaTextFeedName.textContent = queryParams.displayName;
   uiElements.emailField.focus();
 
