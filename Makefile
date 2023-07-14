@@ -927,6 +927,9 @@ user-list:
 		echo
 	done
 
+docker-registry:
+	docker run --detach -p 127.0.0.1:5000:5000 --restart=always --name registry registry:2
+
 # Helper functions
 
 define include_log_to
