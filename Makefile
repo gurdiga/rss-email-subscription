@@ -589,7 +589,7 @@ ${RCLONE_CONFIG}:
 	rclone config
 
 npm-update:
-	@npm outdated && echo "Yay!! Everything is up-to-date. 😎"
+	@npm outdated && echo -e "✅ Everything is up-to-date.\n"
 
 format-check:
 	prettier --check 'src/**/*.ts'
