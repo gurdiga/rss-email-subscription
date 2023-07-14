@@ -122,14 +122,20 @@ async function sendAlertEmail(feed: Feed, errorMessage: string, env: AppEnv, fro
     htmlBody: htmlBody(si`
       <p>Hi there,</p>
 
+      <p>This is a notification message from FeedSubscription.com.</p>
+
       <p>
-        Please note that we could not to check your feed for new items.
+        Please note that we could not to check your feed
+        <b>${feed.displayName}</b> for new items.
         Here is the response that we received:
       </p>
 
       <pre>${errorMessage}</pre>
 
       <p>We’ll keep on trying, but you should probably inform your technical staff about this.</p>
+
+      <p>Just for reference, this is the feed URL:</p>
+      <pre>${feed.url.toString()}</pre>
 
       <p>Have a nice day.</p>
     `),
