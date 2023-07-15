@@ -1,5 +1,5 @@
 import { isErr } from '../shared/lang';
-import { requireUiElements, displayInitError, isAuthenticated, unhideElement } from './shared';
+import { displayInitError, hideElement, isAuthenticated, requireUiElements } from './shared';
 
 function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
@@ -11,8 +11,8 @@ function main() {
     return;
   }
 
-  if (!isAuthenticated()) {
-    unhideElement(uiElements.cta);
+  if (isAuthenticated()) {
+    hideElement(uiElements.cta);
   }
 }
 
