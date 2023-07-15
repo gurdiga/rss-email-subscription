@@ -894,7 +894,8 @@ docker-image-check:
 all-images: app certbot delmon logger smtp-in smtp-out website
 
 user-list:
-	@ls -1t .tmp/docker-data/accounts/*/account.json |
+	@counter=1
+	ls -1t .tmp/docker-data/accounts/*/account.json |
 	while read account_json; do
 		if ! jq --exit-status .confirmationTimestamp $$account_json > /dev/null; then
 			continue
@@ -912,7 +913,11 @@ user-list:
 
 		if grep -F "$$account_id" <<<"$$skip_accounts" > /dev/null; then continue; fi
 
-		jq -r --arg account_id "$$account_id" '. | [.confirmationTimestamp, .email, $$account_id] | @tsv' $$account_json
+		jq -r \
+			--arg counter "$$counter" \
+			--arg account_id "$$account_id" \
+			'. | [$$counter, .confirmationTimestamp, .email, $$account_id] | @tsv' \
+			$$account_json
 
 		ls -1 $$dir/feeds |
 		while read feed; do
@@ -924,6 +929,8 @@ user-list:
 
 			echo "$$feed: $$delivery_count $$last_delivery_date_pretty"
 		done
+
+		counter=$$((counter+1))
 
 		echo
 	done
