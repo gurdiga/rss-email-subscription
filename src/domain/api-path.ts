@@ -9,7 +9,7 @@ export enum ApiPath {
   corsTest = '/cors-test',
   sessionTest = '/session-test',
   loadFeeds = '/feeds',
-  getFeedDisplayName = '/feeds/get-display-name-by-id',
+  loadFeedDisplayName = '/feeds/get-display-name-by-id',
   loadFeedById = '/feeds/load-by-id',
   manageFeed = '/feeds/manage-feed',
   loadFeedSubscribers = '/feeds/subscribers',

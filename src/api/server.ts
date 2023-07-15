@@ -25,7 +25,7 @@ import {
   addFeedSubscribers,
   checkFeedUrl,
   deleteFeedSubscribers,
-  getFeedDisplayName,
+  loadFeedDisplayName,
   loadFeedById,
   loadFeedSubscribers,
 } from './feeds';
@@ -81,7 +81,7 @@ async function main() {
   router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
-  router.get(ApiPath.getFeedDisplayName, makeAppRequestHandler(getFeedDisplayName, app));
+  router.get(ApiPath.loadFeedDisplayName, makeAppRequestHandler(loadFeedDisplayName, app));
   router.get(ApiPath.manageFeed, makeAppRequestHandler(manageFeed, app));
   router.get(ApiPath.loadFeedSubscribers, makeAppRequestHandler(loadFeedSubscribers, app));
   router.get(ApiPath.deliveryReports, makeAppRequestHandler(deliveryReports, app));

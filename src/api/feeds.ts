@@ -16,6 +16,7 @@ import {
   DeleteEmailsRequest,
   DeleteEmailsResponse,
   LoadEmailsResponse,
+  LoadFeedDisplayNameResponseData,
   makeUiEmailList,
   makeUiFeed,
 } from '../domain/feed';
@@ -41,14 +42,14 @@ import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
 import { isAccountNotFound } from '../domain/account';
 
-export const getFeedDisplayName: AppRequestHandler = async function getFeedDisplayName(
+export const loadFeedDisplayName: AppRequestHandler = async function loadFeedDisplayName(
   reqId,
   _reqBody,
   reqParams,
   _reqSession,
   app
 ) {
-  const { logWarning } = makeCustomLoggers({ module: getFeedDisplayName.name, reqId });
+  const { logWarning } = makeCustomLoggers({ module: loadFeedDisplayName.name, reqId });
   const feedId = makeFeedId(reqParams['feedId']);
 
   if (isErr(feedId)) {
@@ -80,7 +81,7 @@ export const getFeedDisplayName: AppRequestHandler = async function getFeedDispl
     return makeAppError();
   }
 
-  const responseData = { displayName: feed.displayName };
+  const responseData: LoadFeedDisplayNameResponseData = { displayName: feed.displayName };
   const logData = {};
 
   return makeSuccess('Success', logData, responseData);

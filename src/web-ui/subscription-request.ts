@@ -1,7 +1,8 @@
 import { ApiPath } from '../domain/api-path';
-import { UiFeed } from '../domain/feed';
+import { LoadFeedDisplayNameResponseData } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, exhaustivenessCheck, isErr, makeErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import {
   ApiResponseUiElements,
   HttpMethod,
@@ -45,26 +46,26 @@ async function main() {
     return;
   }
 
-  const feed = await loadFeed(queryParams.feedId);
+  const response = await loadFeedDisplayName(queryParams.feedId);
 
   hideElement(uiElements.spinner);
   unhideElement(uiElements.form);
 
-  if (isErr(feed)) {
+  if (isErr(response)) {
     return;
   }
 
-  uiElements.ctaTextFeedName.textContent = feed.displayName;
+  uiElements.ctaTextFeedName.textContent = response.displayName;
   uiElements.emailField.focus();
 
   initForm(uiElements, queryParams.feedId);
 }
 
-async function loadFeed<T = UiFeed>(feedId: string): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId }));
+async function loadFeedDisplayName<T = LoadFeedDisplayNameResponseData>(feedId: string): Promise<Result<T>> {
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedDisplayName, HttpMethod.GET, { feedId }));
 
   if (isErr(response)) {
-    return makeErr('Failed to load the feed');
+    return makeErr(si`Failed to GET ${ApiPath.loadFeedDisplayName}`);
   }
 
   if (isAppError(response)) {
@@ -72,7 +73,7 @@ async function loadFeed<T = UiFeed>(feedId: string): Promise<Result<T>> {
   }
 
   if (isInputError(response)) {
-    return makeErr('Input error when loading the feed');
+    return makeErr('Input error when loading the feed display name');
   }
 
   return response.responseData!; // TODO: Avoid banging

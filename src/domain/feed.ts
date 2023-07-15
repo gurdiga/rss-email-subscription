@@ -221,3 +221,7 @@ export interface ShowSampleEmailRequest {
 }
 
 export type ShowSampleEmailRequestData = Record<keyof ShowSampleEmailRequest, string>;
+
+export interface LoadFeedDisplayNameResponseData {
+  displayName: string;
+}
