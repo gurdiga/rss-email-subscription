@@ -1,9 +1,11 @@
 import { ApiPath } from '../domain/api-path';
+import { UiFeed } from '../domain/feed';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
+import { Result, asyncAttempt, exhaustivenessCheck, isErr, makeErr } from '../shared/lang';
 import {
   ApiResponseUiElements,
   HttpMethod,
+  SpinnerUiElements,
   apiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
@@ -15,20 +17,23 @@ import {
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
+  spinnerUiElements,
+  unhideElement,
 } from './shared';
 
 async function main() {
   const queryParams = requireQueryParams<RequiredParams>({
     feedId: 'feedId',
-    displayName: 'displayName',
   });
 
   if (isErr(queryParams)) {
     displayInitError('Invalid subscription link');
     return;
   }
+
   const uiElements = requireUiElements<RequiredUiElements>({
     ...apiResponseUiElements,
+    ...spinnerUiElements,
     ctaTextFeedName: '#cta-text-feed-name',
     form: '#form',
     emailField: '#email-field',
@@ -40,10 +45,37 @@ async function main() {
     return;
   }
 
-  uiElements.ctaTextFeedName.textContent = queryParams.displayName;
+  const feed = await loadFeed(queryParams.feedId);
+
+  hideElement(uiElements.spinner);
+  unhideElement(uiElements.form);
+
+  if (isErr(feed)) {
+    return;
+  }
+
+  uiElements.ctaTextFeedName.textContent = feed.displayName;
   uiElements.emailField.focus();
 
   initForm(uiElements, queryParams.feedId);
+}
+
+async function loadFeed<T = UiFeed>(feedId: string): Promise<Result<T>> {
+  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedById, HttpMethod.GET, { feedId }));
+
+  if (isErr(response)) {
+    return makeErr('Failed to load the feed');
+  }
+
+  if (isAppError(response)) {
+    return makeErr(response.message);
+  }
+
+  if (isInputError(response)) {
+    return makeErr('Input error when loading the feed');
+  }
+
+  return response.responseData!; // TODO: Avoid banging
 }
 
 function initForm(uiElements: RequiredUiElements, feedId: string): void {
@@ -88,10 +120,9 @@ function initForm(uiElements: RequiredUiElements, feedId: string): void {
 
 interface RequiredParams {
   feedId: string;
-  displayName: string;
 }
 
-interface RequiredUiElements extends ApiResponseUiElements {
+interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {
   ctaTextFeedName: HTMLElement;
   form: HTMLFormElement;
   emailField: HTMLInputElement;
