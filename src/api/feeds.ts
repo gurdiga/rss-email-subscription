@@ -20,7 +20,7 @@ import {
   makeUiFeed,
 } from '../domain/feed';
 import { makeFeedId } from '../domain/feed-id';
-import { isFeedNotFound, loadFeed } from '../domain/feed-storage';
+import { findFeedAccountId, isFeedNotFound, loadFeed } from '../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
 import { isEmpty } from '../shared/array-utils';
 import {
@@ -39,6 +39,52 @@ import { si } from '../shared/string-utils';
 import { isUrl, makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
+import { isAccountNotFound } from '../domain/account';
+
+export const getFeedDisplayName: AppRequestHandler = async function getFeedDisplayName(
+  reqId,
+  _reqBody,
+  reqParams,
+  _reqSession,
+  app
+) {
+  const { logWarning } = makeCustomLoggers({ module: getFeedDisplayName.name, reqId });
+  const feedId = makeFeedId(reqParams['feedId']);
+
+  if (isErr(feedId)) {
+    logWarning(si`Failed to ${makeFeedId.name}`, { reason: feedId.reason });
+    return makeInputError('Invalid feedId');
+  }
+
+  const accountId = findFeedAccountId(feedId, app.storage);
+
+  if (isErr(accountId)) {
+    logWarning(si`Failed to ${findFeedAccountId.name}`, { reason: accountId.reason });
+    return makeInputError('Feed not found');
+  }
+
+  if (isAccountNotFound(accountId)) {
+    logWarning(si`Account not found for feed ID ${feedId.value}`);
+    return makeInputError('Feed not found');
+  }
+
+  const feed = loadFeed(accountId, feedId, app.storage);
+
+  if (isErr(feed)) {
+    logWarning(si`Failed to ${loadFeed.name}`, { reason: feed.reason, field: feed.field });
+    return makeAppError();
+  }
+
+  if (isFeedNotFound(feed)) {
+    logWarning(si`Feed not found`, { feedId: feed.feedId, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  const responseData = { displayName: feed.displayName };
+  const logData = {};
+
+  return makeSuccess('Success', logData, responseData);
+};
 
 export const loadFeedById: AppRequestHandler = async function loadFeedById(
   reqId,
