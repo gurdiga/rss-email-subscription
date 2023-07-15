@@ -10,6 +10,7 @@ import {
   displayInitError,
   displayValidationError,
   hideElement,
+  isAuthenticated,
   onInput,
   onSubmit,
   reportAppError,
@@ -26,6 +27,7 @@ function main() {
     blogUrlField: '#feed-checker-field',
     submitButton: '#feed-checker-button',
     successMessage: '#feed-checker-success-message',
+    successMessageCta: '#rss-check-success-cta',
     feedCountWording: '#feed-count-wording',
     rssUrlContainer: '#feed-checker-rss-url-container',
   });
@@ -35,7 +37,8 @@ function main() {
     return;
   }
 
-  const { blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage } = uiElements;
+  const { blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage, successMessageCta } =
+    uiElements;
 
   onInput(blogUrlField, () => {
     hideElement(successMessage);
@@ -82,6 +85,11 @@ function main() {
       hideElement(submitButton);
       unhideElement(successMessage);
       scrollIntoView(successMessage);
+
+      if (!isAuthenticated()) {
+        unhideElement(successMessageCta);
+      }
+
       return;
     }
 
@@ -93,6 +101,7 @@ interface UiElements extends FormFields {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
   successMessage: HTMLElement;
+  successMessageCta: HTMLElement;
   feedCountWording: HTMLElement;
   rssUrlContainer: HTMLElement;
 }
