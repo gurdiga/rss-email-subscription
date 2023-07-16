@@ -425,6 +425,7 @@ watch-delmon:
 			echo "From: RES <system@feedsubscription.com>"
 			echo
 
+			wc --bytes <<<"$$json" | ts "JSON bytes:"
 			jq . <<<"$$json"
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
