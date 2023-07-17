@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^1.54.1",
+    "@types/ua-parser-js": "^0.7.36",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
     "cron": "^2.3.1",
@@ -47,6 +48,7 @@
     "nodemailer": "^6.9.3",
     "rss-parser": "^3.13.0",
     "session-file-store": "^1.5.0",
-    "stripe": "^12.13.0"
+    "stripe": "^12.13.0",
+    "ua-parser-js": "^1.0.35"
   }
 }

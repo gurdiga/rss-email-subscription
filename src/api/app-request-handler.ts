@@ -5,6 +5,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
 import { ReqSession, SessionFieldName } from './session';
+import uaParser from 'ua-parser-js';
 
 export type AppRequestHandler = (
   reqId: number,
@@ -29,7 +30,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
       reqId,
       module: 'api',
       referer: req.get('Referer'),
-      userAgent: req.get('User-Agent'),
+      ua: uaParser(req.get('User-Agent')),
       ip: req.headers['x-real-ip'] || 'EMPTY_x-real-ip',
       email,
     });
