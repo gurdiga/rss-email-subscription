@@ -23,6 +23,8 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqSession = req.session || {};
     const action = handler.name;
 
+    const ua = getUaInfo(req.get('User-Agent'));
+
     const emailSessionField: SessionFieldName = 'email';
     const email = (reqSession as any)[emailSessionField] || undefined;
 
@@ -30,7 +32,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
       reqId,
       module: 'api',
       referer: req.get('Referer'),
-      ua: uaParser(req.get('User-Agent')),
+      ua,
       ip: req.headers['x-real-ip'] || 'EMPTY_x-real-ip',
       email,
     });
@@ -66,6 +68,16 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
       default:
         exhaustivenessCheck(result);
     }
+  };
+}
+
+function getUaInfo(uaString: string | undefined) {
+  const uaData = uaParser(uaString);
+
+  return {
+    device: si`${uaData.device.type || ''} ${uaData.device.vendor || ''} ${uaData.device.vendor || ''}`,
+    browser: si`${uaData.browser.name || ''} ${uaData.browser.version || ''}`,
+    os: si`${uaData.os.name || ''} ${uaData.os.version || ''}`,
   };
 }
 
