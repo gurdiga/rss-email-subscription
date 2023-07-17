@@ -3,6 +3,7 @@ import { CheckFeedUrlRequest, CheckFeedUrlRequestData, CheckFeedUrlResponseData 
 import { isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { createElement } from './dom-isolation';
 import {
   HttpMethod,
   clearInitError,
@@ -81,7 +82,7 @@ function main() {
       const feedCount = feedUrls.length;
 
       feedCountWording.textContent = feedCount == 1 ? 'is the feed' : si`are the ${feedCount} feeds`;
-      rssUrlContainer.textContent = feedUrls.join('\n');
+      renderFeedUrls(rssUrlContainer, feedUrls);
       hideElement(submitButton);
       unhideElement(successMessage);
       scrollIntoView(successMessage);
@@ -94,6 +95,12 @@ function main() {
     }
 
     reportAppError(si`Unhandled response type: ${JSON.stringify(response)}`);
+  });
+}
+
+function renderFeedUrls(rssUrlContainer: HTMLElement, feedUrls: string[]): void {
+  feedUrls.forEach((url) => {
+    rssUrlContainer.append(createElement('div', url, { class: 'my-2' }));
   });
 }
 
