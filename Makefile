@@ -862,7 +862,7 @@ logins-in-last-month:
 	zcat -f .tmp/logs/feedsubscription/api.log* |
 	grep '"User logged in"' |
 	while read timestamp _1 _2 json; do
-		if [[ "$$timestamp" > '2023-05-12T00:00:00+00:00' ]]; then
+		if [[ "$$timestamp" > "$$from_date" ]]; then
 			jq -r .data.email <<<"$$json";
 		fi;
 	done |
