@@ -409,7 +409,7 @@ certbot-report:
 
 		ls -1t .tmp/logs/feedsubscription/certbot.log-*.gz | # find last log archive
 		head -1 |
-		xargs gzcat
+		xargs zcat -f
 	) 2>&1 |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
@@ -620,7 +620,7 @@ sent-count: rsync-logs
 	@ls -1 .tmp/logs/feedsubscription/app.log-*.gz |
 	sort -r |
 	head -1 |
-	xargs gzcat |
+	xargs zcat -f |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add' |
@@ -746,7 +746,7 @@ access-report: rsync-logs bot-list.txt
 	open .goaccess/report.html
 
 log-in-report:
-	ls -1 .tmp/logs/feedsubscription/api.log-20230{5,4}* | xargs gzcat | grep 'User logged in' | grep -v 'gurdiga.*@gmail.com'
+	ls -1 .tmp/logs/feedsubscription/api.log-20230{5,4}* | xargs zcat -f | grep 'User logged in' | grep -v 'gurdiga.*@gmail.com'
 
 # cron 59 23 * * *
 tracking-report: bot-list.txt
