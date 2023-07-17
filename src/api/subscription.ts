@@ -108,7 +108,7 @@ export const subscription: AppRequestHandler = async function subscription(
 };
 
 interface Input {
-  reqId: number;
+  reqId: string;
   email: string;
   feedId: string;
 }

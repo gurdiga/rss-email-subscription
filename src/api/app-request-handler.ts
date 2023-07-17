@@ -8,7 +8,7 @@ import { ReqSession, SessionFieldName } from './session';
 import uaParser from 'ua-parser-js';
 
 export type AppRequestHandler = (
-  reqId: number,
+  reqId: string,
   reqBody: Request['body'],
   reqParams: Request['query'],
   reqSession: ReqSession,
@@ -17,7 +17,7 @@ export type AppRequestHandler = (
 
 export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
   return async (req, res) => {
-    const reqId = new Date().getTime();
+    const reqId = req.get('X-Request-ID') || 'EMPTY_X-Request-ID';
     const reqBody = (req.body || {}) as unknown;
     const reqParams = req.query || {};
     const reqSession = req.session || {};

@@ -96,7 +96,7 @@ function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
 export function getFeedAccountId(
   feedId: FeedId,
   storage: AppStorage,
-  reqId: number
+  reqId: string
 ): Result<AccountId | AccountNotFound> {
   const { logWarning, logError } = makeCustomLoggers({ module: getFeedAccountId.name, feedId: feedId.value, reqId });
   const accountIdList = getAccountIdList(storage);
