@@ -99,6 +99,8 @@ function main() {
 }
 
 function renderFeedUrls(rssUrlContainer: HTMLElement, feedUrls: string[]): void {
+  rssUrlContainer.innerHTML = '';
+
   feedUrls.forEach((url) => {
     rssUrlContainer.append(createElement('div', url, { class: 'my-2' }));
   });
