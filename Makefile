@@ -745,9 +745,6 @@ access-report: rsync-logs bot-list.txt
 		--log-format=COMBINED -
 	open .goaccess/report.html
 
-log-in-report:
-	ls -1 .tmp/logs/feedsubscription/api.log-20230{5,4}* | xargs zcat -f | grep 'User logged in' | grep -v 'gurdiga.*@gmail.com'
-
 # cron 59 23 * * *
 tracking-report: bot-list.txt
 	@function url_decode {
