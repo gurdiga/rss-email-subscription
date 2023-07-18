@@ -353,7 +353,7 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
   const storeResult = storeEmailChangeRequestSecret(accountId, newEmail, confirmationSecret, storage);
 
   if (isErr(storeResult)) {
-    logError(si`Failed to ${storeConfirmationSecret.name}`, { reason: storeResult.reason });
+    logError(si`Failed to ${storeEmailChangeRequestSecret.name}`, { reason: storeResult.reason });
     return makeAppError();
   }
 
