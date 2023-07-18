@@ -9,7 +9,7 @@ import {
   isAppError,
   isInputError,
 } from '../shared/api-response';
-import { makeErr, Result } from '../shared/lang';
+import { Result, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -336,12 +336,12 @@ export function clearValidationErrors<FF>(formFields: FF): void {
   }
 }
 
-export function hideElement(element: Element): void {
-  element.setAttribute('hidden', 'hidden');
+export function hideElement(...elements: Element[]): void {
+  elements.forEach((x) => x.setAttribute('hidden', 'hidden'));
 }
 
-export function unhideElement(element: Element): void {
-  element.removeAttribute('hidden');
+export function unhideElement(...elements: Element[]): void {
+  elements.forEach((x) => x.removeAttribute('hidden'));
 }
 
 export function disableElement(...elements: HTMLElement[]): void {
@@ -366,11 +366,18 @@ export function navigateTo(url: string, delay = 0): void {
   }, delay);
 }
 
-export interface UiFeedFormFields {
+export interface UiFeedFormFields extends FeedEmailBodyFields {
   displayName: HTMLInputElement;
   url: HTMLInputElement;
   id: HTMLInputElement;
   replyTo: HTMLInputElement;
+}
+
+export interface FeedEmailBodyFields {
+  emailBodyFieldContainer: HTMLElement;
+  emailBodyFullPost: HTMLInputElement;
+  emailBodyExcerptOnly: HTMLInputElement;
+  emailBodyExcerptWordCount: HTMLInputElement;
 }
 
 export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
@@ -378,6 +385,10 @@ export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
   url: '#feed-url-field',
   id: '#feed-id-field',
   replyTo: '#feed-reply-to-field',
+  emailBodyFieldContainer: '#email-body-field-container',
+  emailBodyFullPost: '#email-body-full-post',
+  emailBodyExcerptOnly: '#email-body-excerpt-only',
+  emailBodyExcerptWordCount: '#email-body-excerpt-word-count',
 };
 
 export function getCookieByName(name: string, documentCookie = document.cookie): string {
