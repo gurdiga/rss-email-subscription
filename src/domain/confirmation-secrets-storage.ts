@@ -22,10 +22,15 @@ export function loadConfirmationSecret<T>(
   return storage.loadItem(storageKey);
 }
 
-export function storeConfirmationSecret<D>(storage: AppStorage, secret: ConfirmationSecret, data: D): Result<void> {
+export function storeConfirmationSecret<D>(
+  storage: AppStorage,
+  secret: ConfirmationSecret,
+  data: D,
+  timestamp = new Date()
+): Result<void> {
   const storageKey = getConfirmationSecretStorageKey(secret);
 
-  return storage.storeItem(storageKey, data);
+  return storage.storeItem(storageKey, { ...data, timestamp });
 }
 
 export function deleteConfirmationSecret(storage: AppStorage, secret: ConfirmationSecret): Result<void> {

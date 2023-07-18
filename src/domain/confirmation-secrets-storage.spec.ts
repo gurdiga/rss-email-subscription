@@ -21,13 +21,16 @@ const accountId = makeTestAccountId();
 const storageErr = makeErr('Boom!');
 
 describe(storeConfirmationSecret.name, () => {
-  it('stores the given confirmation secret', () => {
+  it('stores the given confirmation secret with a timestamp', () => {
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const storage = makeTestStorage({ storeItem });
+    const timestamp = new Date('2023-07-18');
 
-    storeConfirmationSecret(storage, secret, accountId);
+    storeConfirmationSecret(storage, secret, accountId, timestamp);
 
-    expect(storeItem.calls).to.deep.equal([[si`/confirmation-secrets/${secret.value}.json`, accountId]]);
+    expect(storeItem.calls).to.deep.equal([
+      [si`/confirmation-secrets/${secret.value}.json`, { ...accountId, timestamp }],
+    ]);
   });
 
   it('returns an Err value when storage fails', () => {

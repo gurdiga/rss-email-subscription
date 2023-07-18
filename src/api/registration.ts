@@ -140,7 +140,6 @@ interface RegistrationConfirmationSecretData {
   kind: 'RegistrationConfirmationSecretData'; // for inspectability
   accountId: AccountId;
   email: EmailAddress;
-  timestamp: Date;
 }
 
 function makeRegistrationConfirmationSecretData(
@@ -151,7 +150,6 @@ function makeRegistrationConfirmationSecretData(
     kind: 'RegistrationConfirmationSecretData',
     accountId,
     email,
-    timestamp: new Date(),
   };
 }
 
