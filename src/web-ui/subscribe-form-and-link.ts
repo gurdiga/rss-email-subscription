@@ -3,7 +3,8 @@ import { displayInitError, hideElement, isAuthenticated, requireUiElements } fro
 
 function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
-    cta: '#cta',
+    ctaForm: '#cta-form',
+    ctaLink: '#cta-link',
   });
 
   if (isErr(uiElements)) {
@@ -11,13 +12,16 @@ function main() {
     return;
   }
 
+  const { ctaForm, ctaLink } = uiElements;
+
   if (isAuthenticated()) {
-    hideElement(uiElements.cta);
+    hideElement(ctaForm, ctaLink);
   }
 }
 
 interface RequiredUiElements {
-  cta: HTMLElement;
+  ctaForm: HTMLElement;
+  ctaLink: HTMLElement;
 }
 
 main();
