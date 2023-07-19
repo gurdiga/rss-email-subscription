@@ -27,13 +27,13 @@ export interface FeedHashingSalt {
 
 export const feedHashingSaltLength = 16;
 
-export function makeFeedHashingSalt(input: unknown): Result<FeedHashingSalt> {
+export function makeFeedHashingSalt(input: unknown, field = 'hashingSalt'): Result<FeedHashingSalt> {
   if (!isString(input)) {
-    return makeErr(si`Must be a string: ${getTypeName(input)} ${JSON.stringify(input)}`);
+    return makeErr(si`Must be a string: ${getTypeName(input)} ${JSON.stringify(input)}`, field);
   }
 
   if (input.length !== feedHashingSaltLength) {
-    return makeErr(si`Must have the length of ${feedHashingSaltLength}`);
+    return makeErr(si`Must have the length of ${feedHashingSaltLength}`, field);
   }
 
   const salt: FeedHashingSalt = {

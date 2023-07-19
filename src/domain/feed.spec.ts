@@ -19,7 +19,7 @@ describe(makeFeedHashingSalt.name, () => {
   it('returns an Err value when input invalid', () => {
     const input = 'too-short';
 
-    expect(makeFeedHashingSalt(input)).to.deep.equal(makeErr('Must have the length of 16'));
+    expect(makeFeedHashingSalt(input)).to.deep.equal(makeErr('Must have the length of 16', 'hashingSalt'));
   });
 });
 
