@@ -56,16 +56,16 @@ describe(makeFeed.name, () => {
       ],
       [42 as any as MakeFeedInput, makeErr('Invalid input type: expected [object] but got [number]'), 'input3'],
       [{ url: ' \t\r\n   ' /* white-space */ }, makeErr('Feed URL is missing', 'url'), 'url0'],
-      [{}, makeErr('Feed URL is missing', 'url'), 'url1'],
+      [{}, makeErr('Missing value', 'url'), 'url1'],
       [{ url: 'not-an-url' }, makeErr('Invalid URL: not-an-url', 'url'), 'url2'],
       [
         { cronPattern, hashingSalt, url: 'https://test.com/rss.xml' },
-        makeErr('Feed name is missing', 'displayName'),
+        makeErr('Missing value', 'displayName'),
         'displayName1',
       ],
       [
         { cronPattern, hashingSalt, url: 'https://test.com/rss.xml', displayName: '' },
-        makeErr('Feed name is missing', 'displayName'),
+        makeErr('Missing value', 'displayName'),
         'displayName2',
       ],
       [
@@ -90,7 +90,7 @@ describe(makeFeed.name, () => {
       ],
       [
         { cronPattern, hashingSalt, displayName: 'test-valid-displayName', url: 'https://test.com/rss.xml' },
-        makeErr('Feed ID is missing', 'id'),
+        makeErr('Missing value', 'id'),
         'id1',
       ],
       [
@@ -113,7 +113,7 @@ describe(makeFeed.name, () => {
           url: 'https://test.com/rss.xml',
           id: 'valid-feedId',
         },
-        makeErr('Invalid Reply To email: Email is empty', 'replyTo'),
+        makeErr('Missing value', 'replyTo'),
         'replyTo',
       ],
       [
@@ -137,7 +137,7 @@ describe(makeFeed.name, () => {
           id: 'valid-feedId',
           replyTo: 'some-id@test.com',
         },
-        makeErr('Missing feed status', 'status'),
+        makeErr('Missing value', 'status'),
         'status',
       ],
       [

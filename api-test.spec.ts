@@ -378,7 +378,7 @@ describe('API', () => {
           };
           const { responseBody } = await addNewFeedSend(invalidRequest);
 
-          expect(responseBody).to.deep.equal(makeInputError('Feed URL is missing', 'url'));
+          expect(responseBody).to.deep.equal(makeInputError('Missing value', 'url'));
         });
 
         it(si`${ApiPath.editFeed} returns a proper InputError`, async () => {

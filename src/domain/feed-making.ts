@@ -1,4 +1,4 @@
-import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
+import { getTypeName, isErr, isString, makeErr, makeValues, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
 import { makeUnixCronPattern } from './cron-pattern-making';
@@ -19,65 +19,16 @@ export interface MakeFeedInput {
 }
 
 export function makeFeed(input: unknown): Result<Feed> {
-  if (!isObject(input)) {
-    return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(input)}]`);
-  }
-
-  const makeFeedInput = input as MakeFeedInput;
-  const url = makeFeedUrl(makeFeedInput.url);
-
-  if (isErr(url)) {
-    return url;
-  }
-
-  const hashingSalt = makeFeedHashingSalt(makeFeedInput.hashingSalt);
-
-  if (isErr(hashingSalt)) {
-    return hashingSalt;
-  }
-
-  const displayName = makeFeedDisplayName(makeFeedInput.displayName);
-
-  if (isErr(displayName)) {
-    return displayName;
-  }
-
-  const id = makeFeedId(makeFeedInput.id);
-
-  if (isErr(id)) {
-    return id;
-  }
-
-  const replyTo = makeFeedReplyToEmailAddress(makeFeedInput.replyTo);
-
-  if (isErr(replyTo)) {
-    return replyTo;
-  }
-
-  const cronPattern = makeUnixCronPattern(makeFeedInput.cronPattern);
-
-  if (isErr(cronPattern)) {
-    return cronPattern;
-  }
-
-  const status = makeFeedStatus(makeFeedInput.status);
-
-  if (isErr(status)) {
-    return status;
-  }
-
-  const feed: Feed = {
+  return makeValues<Feed>(input, {
     kind: 'Feed',
-    id,
-    displayName,
-    url,
-    hashingSalt,
-    replyTo,
-    cronPattern,
-    status,
-  };
-
-  return feed;
+    url: makeFeedUrl,
+    displayName: makeFeedDisplayName,
+    id: makeFeedId,
+    hashingSalt: makeFeedHashingSalt,
+    replyTo: makeFeedReplyToEmailAddress,
+    cronPattern: makeUnixCronPattern,
+    status: makeFeedStatus,
+  });
 }
 
 export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress> {
