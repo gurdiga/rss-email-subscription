@@ -3,15 +3,15 @@ import { attempt, getTypeName, isErr, isString, makeErr, Result } from '../share
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
 
-export function makeUnixCronPattern(input: unknown): Result<UnixCronPattern> {
+export function makeUnixCronPattern(input: unknown, field = 'cronPattern'): Result<UnixCronPattern> {
   if (!isString(input)) {
-    return makeErr(si`Invalid cron pattern: expected string, got ${getTypeName(input)}`);
+    return makeErr(si`Invalid cron pattern: expected string, got ${getTypeName(input)}`, field);
   }
 
   const parsed = attempt(() => new CronTime(input));
 
   if (isErr(parsed)) {
-    return makeErr(si`Invalid cron pattern: "${input}"`);
+    return makeErr(si`Invalid cron pattern: "${input}"`, field);
   }
 
   // NOTE: The node-cron library supports 6-field cron patterns, and

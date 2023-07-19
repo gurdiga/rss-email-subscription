@@ -101,7 +101,7 @@ describe(loadFeed.name, () => {
     );
 
     expect(resultForData({ hashingSalt: hashingSalt.value, cronPattern: 'not-a-cron-pattern' })).to.deep.equal(
-      makeErr('Invalid cron pattern: "not-a-cron-pattern"')
+      makeErr('Invalid cron pattern: "not-a-cron-pattern"', 'cronPattern')
     );
   });
 

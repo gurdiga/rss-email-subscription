@@ -19,14 +19,16 @@ describe(makeUnixCronPattern.name, () => {
   });
 
   it('returns an Err value when the input is invalid', () => {
-    expect(makeUnixCronPattern('@reboot')).to.deep.equal(makeErr('Invalid cron pattern: "@reboot"'));
-    expect(makeUnixCronPattern('@midnight')).to.deep.equal(makeErr('Invalid cron pattern: "@midnight"'));
-    expect(makeUnixCronPattern(null)).to.deep.equal(makeErr('Invalid cron pattern: expected string, got null'));
+    const field = 'cronPattern';
+
+    expect(makeUnixCronPattern('@reboot')).to.deep.equal(makeErr('Invalid cron pattern: "@reboot"', field));
+    expect(makeUnixCronPattern('@midnight')).to.deep.equal(makeErr('Invalid cron pattern: "@midnight"', field));
+    expect(makeUnixCronPattern(null)).to.deep.equal(makeErr('Invalid cron pattern: expected string, got null', field));
     expect(makeUnixCronPattern(undefined)).to.deep.equal(
-      makeErr('Invalid cron pattern: expected string, got undefined')
+      makeErr('Invalid cron pattern: expected string, got undefined', field)
     );
-    expect(makeUnixCronPattern(7)).to.deep.equal(makeErr('Invalid cron pattern: expected string, got number'));
-    expect(makeUnixCronPattern('often')).to.deep.equal(makeErr('Invalid cron pattern: "often"'));
-    expect(makeUnixCronPattern('61 * * * *')).to.deep.equal(makeErr('Invalid cron pattern: "61 * * * *"'));
+    expect(makeUnixCronPattern(7)).to.deep.equal(makeErr('Invalid cron pattern: expected string, got number', field));
+    expect(makeUnixCronPattern('often')).to.deep.equal(makeErr('Invalid cron pattern: "often"', field));
+    expect(makeUnixCronPattern('61 * * * *')).to.deep.equal(makeErr('Invalid cron pattern: "61 * * * *"', field));
   });
 });

@@ -12,12 +12,18 @@ describe(makeUnixCronPattern.name, () => {
   });
 
   it('returns an Err for invalid input', () => {
-    expect(makeUnixCronPattern('every period')).does.deep.equal(makeErr('Invalid cron pattern: "every period"'));
-    expect(makeUnixCronPattern('-')).does.deep.equal(makeErr('Invalid cron pattern: "-"'));
+    const field = 'cronPattern';
+
+    expect(makeUnixCronPattern('every period')).does.deep.equal(makeErr('Invalid cron pattern: "every period"', field));
+    expect(makeUnixCronPattern('-')).does.deep.equal(makeErr('Invalid cron pattern: "-"', field));
     expect(makeUnixCronPattern(undefined)).does.deep.equal(
-      makeErr('Invalid cron pattern: expected string, got undefined')
+      makeErr('Invalid cron pattern: expected string, got undefined', field)
     );
-    expect(makeUnixCronPattern(null)).does.deep.equal(makeErr('Invalid cron pattern: expected string, got null'));
-    expect(makeUnixCronPattern(42)).does.deep.equal(makeErr('Invalid cron pattern: expected string, got number'));
+    expect(makeUnixCronPattern(null)).does.deep.equal(
+      makeErr('Invalid cron pattern: expected string, got null', field)
+    );
+    expect(makeUnixCronPattern(42)).does.deep.equal(
+      makeErr('Invalid cron pattern: expected string, got number', field)
+    );
   });
 });
