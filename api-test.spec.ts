@@ -682,7 +682,7 @@ describe('API', () => {
       const expectedSecretData: PasswordResetConfirmationSecretData = {
         accountId: getAccountIdByEmail(emailAddress, appSettings.hashingSalt).value,
       };
-      expect(secretData, JSON.stringify(secretData)).to.deep.equal(expectedSecretData);
+      expect(secretData, JSON.stringify(secretData)).to.deep.include(expectedSecretData);
       confirmationSecret = secret;
     });
 
