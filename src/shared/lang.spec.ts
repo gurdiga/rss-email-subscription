@@ -2,22 +2,23 @@ import { expect } from 'chai';
 import { AccountId, makeAccountId } from '../domain/account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { makePassword, Password } from '../domain/password';
+import { Password, makePassword } from '../domain/password';
 import {
+  RecordOfMakeFns,
   getErrorMessage,
   getTypeName,
   isEmptyObject,
   isObject,
+  makeArrayOfValues,
   makeErr,
-  RecordOfMakeFns,
+  makeNonEmptyString,
   makeNumber,
   makeValues,
   readStringArray,
-  makeArrayOfValues,
-  makeNonEmptyString,
 } from './lang';
-import { makeTestAccountId } from './test-utils';
 import { si } from './string-utils';
+import { makeTestAccountId } from './test-utils';
+import { makeAbsoluteHttpUrl } from './url';
 
 describe(getTypeName.name, () => {
   it('returns the type name of the given value', () => {
@@ -185,6 +186,28 @@ describe(makeValues.name, () => {
     });
   });
 
+  it('supports kinded types', () => {
+    interface OutputType {
+      kind: 'SomeRecord';
+      value: URL;
+    }
+
+    const input = {
+      value: 'https://test.com/page.html',
+    };
+    const output = makeValues<OutputType>(input, {
+      kind: 'SomeRecord',
+      value: makeAbsoluteHttpUrl,
+    });
+
+    const expectedOutput: OutputType = {
+      kind: 'SomeRecord',
+      value: new URL(input.value),
+    };
+
+    expect(output).to.deep.equal(expectedOutput);
+  });
+
   it('returns the first making Err on failure', () => {
     const requestData: InputData = {
       email: 'not-an-email',
@@ -197,7 +220,7 @@ describe(makeValues.name, () => {
     expect(result).to.deep.equal(makeErr('Email is syntactically incorrect: "not-an-email"', 'email'));
   });
 
-  it('accepts 0 as present value', () => {
+  it('considers 0 present value', () => {
     interface InputData {
       count: unknown;
     }
@@ -214,7 +237,7 @@ describe(makeValues.name, () => {
     expect(result).to.deep.equal({ count: 0 });
   });
 
-  it('says that "" is missing', () => {
+  it('considers "" missing value', () => {
     interface InputData {
       text: string;
     }

@@ -126,10 +126,14 @@ export function exhaustivenessCheck(_x: never): never {
   throw new Error('Exhaustiveness check failed');
 }
 
-type MakeFn<T extends unknown> = (input: any, field: string) => Result<T[keyof T]>;
-export type RecordOfMakeFns<T extends unknown> = Record<keyof T, MakeFn<T>>;
+interface PossiblyKindedType extends Record<string, any> {
+  kind?: string;
+}
 
-export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeFns<T>) {
+type MakeFn<T extends PossiblyKindedType> = (input: any, field: string) => Result<T[keyof T]>;
+export type RecordOfMakeFns<T extends PossiblyKindedType> = Record<keyof T, MakeFn<T> | T['kind']>;
+
+export function makeValues<T extends PossiblyKindedType>(x: unknown, makeFns: RecordOfMakeFns<T>) {
   if (!isObject(x)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(x)}]`);
   }
@@ -138,9 +142,26 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeF
 
   for (const keyName in makeFns) {
     const unknownValue = (x as any)[keyName];
+
+    if (keyName === 'kind') {
+      const kind = makeFns[keyName];
+
+      if (typeof kind !== 'string') {
+        return makeErr(si`Expected value for "kind" to be a string`);
+      }
+
+      values.kind = kind;
+      continue;
+    }
+
     const valueIsFalsy = unknownValue === '' || unknownValue === undefined || unknownValue === null;
 
     const makeFn = makeFns[keyName];
+
+    if (typeof makeFn !== 'function') {
+      return makeErr(si`Expected value for "${keyName}" to be a function`);
+    }
+
     const valueIsRequired = !makeFn.name.startsWith('makeOptional');
 
     if (valueIsRequired && valueIsFalsy) {
@@ -161,7 +182,7 @@ export function makeValues<T extends unknown>(x: unknown, makeFns: RecordOfMakeF
 
 type StringKey<T> = Exclude<keyof T, number | symbol>;
 
-export function makeArrayOfValues<T extends unknown, MF extends AnyFunction = MakeFn<T>>(
+export function makeArrayOfValues<T extends PossiblyKindedType, MF extends AnyFunction = MakeFn<T>>(
   values: unknown,
   makeFn: MF,
   field: StringKey<T>
