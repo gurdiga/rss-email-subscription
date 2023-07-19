@@ -1,14 +1,12 @@
-import { Err, isErr, makeErr, Result, hasKind } from '../shared/lang';
-import { AppStorage } from './storage';
-import { si } from '../shared/string-utils';
+import { Err, Result, hasKind, isErr, makeErr } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
-import { AccountId, AccountNotFound, makeAccountId } from './account';
+import { si } from '../shared/string-utils';
+import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
-import { makeAccountNotFound } from './account';
-import { makeUnixCronPattern } from './cron-pattern-making';
-import { Feed, makeFeedHashingSalt, isFeed, EditFeedRequest, FeedStatus } from './feed';
-import { FeedId, makeFeedId, isFeedId } from './feed-id';
+import { EditFeedRequest, Feed, FeedStatus, isFeed } from './feed';
+import { FeedId, isFeedId, makeFeedId } from './feed-id';
 import { MakeFeedInput, makeFeed } from './feed-making';
+import { AppStorage } from './storage';
 
 export interface FeedStoredData {
   displayName: string;
@@ -119,27 +117,17 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     return makeErr(si`Failed to loadItem: ${loadedData.reason}`);
   }
 
-  const hashingSalt = makeFeedHashingSalt(loadedData.hashingSalt);
-
-  if (isErr(hashingSalt)) {
-    return makeErr(si`Invalid feed hashingSalt: "${loadedData.hashingSalt}"`, 'hashingSalt');
-  }
-
-  const cronPattern = makeUnixCronPattern(loadedData.cronPattern);
-
-  if (isErr(cronPattern)) {
-    return makeErr(si`Invalid feed cronPattern: "${loadedData.cronPattern}"`, 'cronPattern');
-  }
-
   const makeFeedInput: MakeFeedInput = {
     displayName: loadedData.displayName || feedId.value,
     url: loadedData.url,
+    hashingSalt: loadedData.hashingSalt,
     id: feedId.value,
     replyTo: loadedData.replyTo,
+    cronPattern: loadedData.cronPattern,
     status: loadedData.status,
   };
 
-  return makeFeed(makeFeedInput, hashingSalt, cronPattern);
+  return makeFeed(makeFeedInput);
 }
 
 export interface FeedsByAccountId {

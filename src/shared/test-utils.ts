@@ -122,12 +122,12 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
     replyTo: 'feed-replyTo@test.com',
     isDeleted: false,
     status: FeedStatus.AwaitingReview,
+    hashingSalt: props.hashingSalt || 'random-16-bytes.',
+    cronPattern: props.cronPattern || '1 2 3 4 5',
     ...props,
   };
 
-  const hasingSalt = makeTestFeedHashingSalt();
-  const cronPattern = makeTestUnixCronPattern();
-  const result = makeFeed(input, hasingSalt, cronPattern);
+  const result = makeFeed(input);
 
   assert(isFeed(result), si`${makeFeed.name} did not return a valid Feed: ${JSON.stringify(result)}`);
 
@@ -180,7 +180,8 @@ export function deepClone(data: any): any {
   return JSON.parse(JSON.stringify(data));
 }
 
-export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): FeedHashingSalt {
+export const testFeedHashingSaltString = 'random-16-bytes.';
+export function makeTestFeedHashingSalt(input: string = testFeedHashingSaltString): FeedHashingSalt {
   const result = makeFeedHashingSalt(input);
 
   assert(
@@ -191,7 +192,8 @@ export function makeTestFeedHashingSalt(input: string = 'random-16-bytes.'): Fee
   return result;
 }
 
-export function makeTestUnixCronPattern(input: string = '1 2 3 4 5'): UnixCronPattern {
+export const testUnixCronPatternString = '1 2 3 4 5';
+export function makeTestUnixCronPattern(input: string = testUnixCronPatternString): UnixCronPattern {
   const result = makeUnixCronPattern(input);
 
   assert(

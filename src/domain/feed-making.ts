@@ -1,22 +1,24 @@
-import { makeEmailAddress } from './email-address-making';
 import { getTypeName, isErr, isObject, isString, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
-import { FeedHashingSalt, Feed, FeedStatus, makeFeedStatus } from './feed';
-import { makeFeedId } from './feed-id';
-import { UnixCronPattern } from './cron-pattern';
+import { makeUnixCronPattern } from './cron-pattern-making';
 import { EmailAddress } from './email-address';
+import { makeEmailAddress } from './email-address-making';
+import { Feed, FeedStatus, makeFeedHashingSalt, makeFeedStatus } from './feed';
+import { makeFeedId } from './feed-id';
 
 export interface MakeFeedInput {
   displayName?: string;
   url?: string;
+  hashingSalt?: string;
   id?: string;
   replyTo?: string;
+  cronPattern?: string;
   isDeleted?: boolean;
   status?: FeedStatus;
 }
 
-export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPattern: UnixCronPattern): Result<Feed> {
+export function makeFeed(input: unknown): Result<Feed> {
   if (!isObject(input)) {
     return makeErr(si`Invalid input type: expected [object] but got [${getTypeName(input)}]`);
   }
@@ -26,6 +28,12 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
 
   if (isErr(url)) {
     return url;
+  }
+
+  const hashingSalt = makeFeedHashingSalt(makeFeedInput.hashingSalt);
+
+  if (isErr(hashingSalt)) {
+    return hashingSalt;
   }
 
   const displayName = makeFeedDisplayName(makeFeedInput.displayName);
@@ -44,6 +52,12 @@ export function makeFeed(input: unknown, hashingSalt: FeedHashingSalt, cronPatte
 
   if (isErr(replyTo)) {
     return replyTo;
+  }
+
+  const cronPattern = makeUnixCronPattern(makeFeedInput.cronPattern);
+
+  if (isErr(cronPattern)) {
+    return cronPattern;
   }
 
   const status = makeFeedStatus(makeFeedInput.status);

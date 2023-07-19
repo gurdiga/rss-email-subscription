@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { isErr, makeErr } from '../shared/lang';
+import { PickPartial, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   Stub,
@@ -69,11 +69,11 @@ describe(loadFeed.name, () => {
       status: data.status,
     };
 
-    expect(result).to.deep.include(expectedResult);
+    expect(result).to.deep.include(expectedResult, si`result: ${JSON.stringify(result)}`);
   });
 
   it('defaults displayName to feedId', () => {
-    const incompleteData = deepClone(data);
+    const incompleteData = deepClone(data) as PickPartial<FeedStoredData, 'displayName'>;
 
     delete incompleteData.displayName;
 
@@ -91,17 +91,17 @@ describe(loadFeed.name, () => {
   });
 
   it('returns an Err value when cronPattern or hashingSalt is invalid', () => {
-    const resultForData = (data: Partial<FeedStoredData>): ReturnType<typeof loadFeed> => {
-      const storage = makeTestStorage({ hasItem: () => true, loadItem: () => data });
+    const resultForData = (props: Partial<FeedStoredData>): ReturnType<typeof loadFeed> => {
+      const storage = makeTestStorage({ hasItem: () => true, loadItem: () => ({ ...data, ...props }) });
       return loadFeed(accountId, feedId, storage);
     };
 
     expect(resultForData({ hashingSalt: 'invalid-hashingSalt' })).to.deep.equal(
-      makeErr('Invalid feed hashingSalt: "invalid-hashingSalt"', 'hashingSalt')
+      makeErr('Must have the length of 16', 'hashingSalt')
     );
 
     expect(resultForData({ hashingSalt: hashingSalt.value, cronPattern: 'not-a-cron-pattern' })).to.deep.equal(
-      makeErr('Invalid feed cronPattern: "not-a-cron-pattern"', 'cronPattern')
+      makeErr('Invalid cron pattern: "not-a-cron-pattern"')
     );
   });
 

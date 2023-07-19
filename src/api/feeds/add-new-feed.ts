@@ -85,12 +85,14 @@ function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
   const makeFeedInput: MakeFeedInput = {
     displayName: requestData.displayName,
     url: requestData.url,
+    hashingSalt: feedHashingSalt.value,
     id: requestData.id,
     replyTo: requestData.replyTo,
     status: FeedStatus.AwaitingReview,
+    cronPattern: cronPattern.value,
   };
 
-  return makeFeed(makeFeedInput, feedHashingSalt, cronPattern);
+  return makeFeed(makeFeedInput);
 }
 
 export function getFeedAccountId(
