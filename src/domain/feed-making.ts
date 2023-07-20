@@ -4,19 +4,8 @@ import { makeHttpUrl } from '../shared/url';
 import { makeUnixCronPattern } from './cron-pattern-making';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress } from './email-address-making';
-import { Feed, FeedStatus, makeFeedHashingSalt, makeFeedStatus } from './feed';
+import { Feed, makeFeedEmailBodySpec, makeFeedHashingSalt, makeFeedStatus } from './feed';
 import { makeFeedId } from './feed-id';
-
-export interface MakeFeedInput {
-  displayName?: string;
-  url?: string;
-  hashingSalt?: string;
-  id?: string;
-  replyTo?: string;
-  cronPattern?: string;
-  isDeleted?: boolean;
-  status?: FeedStatus;
-}
 
 export function makeFeed(input: unknown): Result<Feed> {
   return makeValues<Feed>(input, {
@@ -28,6 +17,7 @@ export function makeFeed(input: unknown): Result<Feed> {
     replyTo: makeFeedReplyToEmailAddress,
     cronPattern: makeUnixCronPattern,
     status: makeFeedStatus,
+    emailBodySpec: makeFeedEmailBodySpec,
   });
 }
 

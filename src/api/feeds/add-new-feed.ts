@@ -1,19 +1,19 @@
 import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../../domain/account';
-import { AddNewFeedResponseData, Feed, FeedStatus, isAddNewFeedRequestData } from '../../domain/feed';
-import { MakeFeedInput, makeFeed } from '../../domain/feed-making';
+import { getAccountIdList } from '../../domain/account-storage';
+import { defaultFeedPattern } from '../../domain/cron-pattern';
+import { AddNewFeedResponseData, Feed } from '../../domain/feed';
+import { makeNewFeedHashingSalt } from '../../domain/feed-crypto';
+import { FeedId } from '../../domain/feed-id';
+import { makeFeed } from '../../domain/feed-making';
 import { feedExists, storeFeed } from '../../domain/feed-storage';
+import { AppStorage } from '../../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
-import { Result, isErr, makeErr } from '../../shared/lang';
+import { isEmpty, isNotEmpty } from '../../shared/array-utils';
+import { Result, isErr, isObject, makeErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
 import { checkSession, isAuthenticatedSession } from '../session';
-import { defaultFeedPattern } from '../../domain/cron-pattern';
-import { makeNewFeedHashingSalt } from '../../domain/feed-crypto';
-import { getAccountIdList } from '../../domain/account-storage';
-import { FeedId } from '../../domain/feed-id';
-import { AppStorage } from '../../domain/storage';
-import { isNotEmpty, isEmpty } from '../../shared/array-utils';
 
 export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: addNewFeed.name, reqId });
@@ -74,25 +74,15 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
   return makeSuccess('New feed added. 👍', logData, responseData);
 };
 
-function makeFeedFromAddNewFeedRequestData(requestData: unknown): Result<Feed> {
-  if (!isAddNewFeedRequestData(requestData)) {
+function makeFeedFromAddNewFeedRequestData(data: unknown): Result<Feed> {
+  if (!isObject(data)) {
     return makeErr('Invalid request');
   }
 
-  const feedHashingSalt = makeNewFeedHashingSalt();
+  const hashingSalt = makeNewFeedHashingSalt();
   const cronPattern = defaultFeedPattern;
 
-  const makeFeedInput: MakeFeedInput = {
-    displayName: requestData.displayName,
-    url: requestData.url,
-    hashingSalt: feedHashingSalt.value,
-    id: requestData.id,
-    replyTo: requestData.replyTo,
-    status: FeedStatus.AwaitingReview,
-    cronPattern: cronPattern.value,
-  };
-
-  return makeFeed(makeFeedInput);
+  return makeFeed({ ...data, cronPattern, hashingSalt });
 }
 
 export function getFeedAccountId(

@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { Feed, FeedStatus } from './feed';
-import { makeFeed, MakeFeedInput, maxFeedNameLength } from './feed-making';
+import { Feed, FeedStatus, makeFullItemText } from './feed';
+import { makeFeed, maxFeedNameLength } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
 import {
   makeTestFeedHashingSalt,
@@ -16,7 +16,7 @@ describe(makeFeed.name, () => {
   const cronPattern = makeTestUnixCronPattern();
 
   it('returns a Feed when valid props', () => {
-    const input: MakeFeedInput = {
+    const input = {
       displayName: 'Test Feed Name',
       url: 'https://test.com/rss.xml',
       hashingSalt: testFeedHashingSaltString,
@@ -25,6 +25,7 @@ describe(makeFeed.name, () => {
       cronPattern: testUnixCronPatternString,
       isDeleted: true,
       status: FeedStatus.AwaitingReview,
+      emailBodySpec: makeFullItemText(),
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
@@ -37,6 +38,7 @@ describe(makeFeed.name, () => {
       replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
       cronPattern,
       status: input.status!,
+      emailBodySpec: makeFullItemText(),
     };
 
     expect(makeFeed(input)).to.deep.equal(expectedResult);
@@ -47,14 +49,10 @@ describe(makeFeed.name, () => {
 
     const cronPattern = testUnixCronPatternString;
     const hashingSalt = testFeedHashingSaltString;
-    const expectedErrForInput: [MakeFeedInput, Err, FieldName][] = [
-      [null as any as MakeFeedInput, makeErr('Invalid input type: expected [object] but got [null]'), 'input1'],
-      [
-        undefined as any as MakeFeedInput,
-        makeErr('Invalid input type: expected [object] but got [undefined]'),
-        'input2',
-      ],
-      [42 as any as MakeFeedInput, makeErr('Invalid input type: expected [object] but got [number]'), 'input3'],
+    const expectedErrForInput: [any, Err, FieldName][] = [
+      [null, makeErr('Invalid input type: expected [object] but got [null]'), 'input1'],
+      [undefined, makeErr('Invalid input type: expected [object] but got [undefined]'), 'input2'],
+      [42, makeErr('Invalid input type: expected [object] but got [number]'), 'input3'],
       [{ url: ' \t\r\n   ' /* white-space */ }, makeErr('Feed URL is missing', 'url'), 'url0'],
       [{}, makeErr('Missing value', 'url'), 'url1'],
       [{ url: 'not-an-url' }, makeErr('Invalid URL: not-an-url', 'url'), 'url2'],

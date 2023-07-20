@@ -1,11 +1,11 @@
-import { Err, Result, hasKind, isErr, makeErr } from '../shared/lang';
+import { Err, Result, hasKind, isErr, isObject, makeErr, makeTypeMismatchErr } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
-import { EditFeedRequest, Feed, FeedStatus, isFeed } from './feed';
+import { EditFeedRequest, Feed, FeedEmailBodySpec, FeedStatus, isFeed } from './feed';
 import { FeedId, isFeedId, makeFeedId } from './feed-id';
-import { MakeFeedInput, makeFeed } from './feed-making';
+import { makeFeed } from './feed-making';
 import { AppStorage } from './storage';
 
 export interface FeedStoredData {
@@ -15,6 +15,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   status: FeedStatus;
+  emailBodySpec?: FeedEmailBodySpec;
 }
 
 export interface FeedNotFound {
@@ -111,23 +112,17 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
     return makeFeedNotFound(feedId);
   }
 
-  const loadedData = storage.loadItem(storageKey) as Err | FeedStoredData;
+  const data = storage.loadItem(storageKey) as unknown;
 
-  if (isErr(loadedData)) {
-    return makeErr(si`Failed to loadItem: ${loadedData.reason}`);
+  if (isErr(data)) {
+    return makeErr(si`Failed to loadItem: ${data.reason}`);
   }
 
-  const makeFeedInput: MakeFeedInput = {
-    displayName: loadedData.displayName || feedId.value,
-    url: loadedData.url,
-    hashingSalt: loadedData.hashingSalt,
-    id: feedId.value,
-    replyTo: loadedData.replyTo,
-    cronPattern: loadedData.cronPattern,
-    status: loadedData.status,
-  };
+  if (!isObject(data)) {
+    return makeTypeMismatchErr(data, 'object');
+  }
 
-  return makeFeed(makeFeedInput);
+  return makeFeed({ ...data, id: feedId.value });
 }
 
 export interface FeedsByAccountId {

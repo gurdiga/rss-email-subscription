@@ -26,6 +26,7 @@ export function makeErr<FIELD extends NonNullable<Err['field']>>(reason: string 
   return err;
 }
 
+// TODO: Constrain type for expectedType
 export function makeTypeMismatchErr(value: unknown, expectedType: string): Err {
   const actualType = getTypeName(value);
   const jsonValue = JSON.stringify(value);
@@ -102,7 +103,11 @@ export function isString(value: unknown): value is string {
 }
 
 export function hasKind(x: unknown, kind: string): boolean {
-  return isObject(x) && (x as any).kind === kind;
+  return isObject(x) && 'kind' in x && x.kind === kind;
+}
+
+export function hasKindOnly(x: unknown, kind: string): boolean {
+  return isObject(x) && hasKind(x, kind) && Object.keys(x).length === 1;
 }
 
 export function hasKey(x: unknown, propName: string): boolean {
@@ -224,6 +229,24 @@ export function makeNumber(value: unknown, field?: string): Result<number> {
   }
 
   return value;
+}
+
+export function makePositiveInteger(value: unknown, field?: string): Result<number> {
+  const number = makeNumber(value, field);
+
+  if (isErr(number)) {
+    return number;
+  }
+
+  if (number <= 0) {
+    return makeErr('Value is not a positive number');
+  }
+
+  if (!Number.isInteger(number)) {
+    return makeErr('Value is not an integer number');
+  }
+
+  return number;
 }
 
 export function makeString(value: unknown, field?: string): Result<string> {

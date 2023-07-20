@@ -1,9 +1,8 @@
 import { expect } from 'chai';
-import { PickPartial, isErr, makeErr } from '../shared/lang';
+import { isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   Stub,
-  deepClone,
   makeStub,
   makeTestAccountId,
   makeTestEmailAddress,
@@ -18,7 +17,7 @@ import {
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
 import { makeUnixCronPattern } from './cron-pattern-making';
-import { EditFeedRequest, Feed, FeedStatus } from './feed';
+import { EditFeedRequest, Feed, FeedStatus, makeFullItemText } from './feed';
 import { makeFeedId } from './feed-id';
 import {
   FeedExistsResult,
@@ -50,6 +49,7 @@ describe(loadFeed.name, () => {
     replyTo: 'sandra@test.com',
     cronPattern: '5 * * * *',
     status: FeedStatus.Approved,
+    emailBodySpec: makeFullItemText(),
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -67,20 +67,10 @@ describe(loadFeed.name, () => {
       replyTo: makeTestEmailAddress(data.replyTo),
       cronPattern: makeTestUnixCronPattern(data.cronPattern),
       status: data.status,
+      emailBodySpec: makeFullItemText(),
     };
 
     expect(result).to.deep.include(expectedResult, si`result: ${JSON.stringify(result)}`);
-  });
-
-  it('defaults displayName to feedId', () => {
-    const incompleteData = deepClone(data) as PickPartial<FeedStoredData, 'displayName'>;
-
-    delete incompleteData.displayName;
-
-    const storage = makeTestStorage({ hasItem: () => true, loadItem: () => incompleteData });
-    const result = loadFeed(accountId, feedId, storage) as Feed;
-
-    expect(result).to.include(<Feed>{ kind: 'Feed', displayName: feedId.value }, si`result: ${JSON.stringify(result)}`);
   });
 
   it('returns an FeedNotFound when value not found', () => {
@@ -130,6 +120,7 @@ describe(loadFeedsByAccountId.name, () => {
         cronPattern: makeUnixCronPattern('1 1 1 1 1'),
         isDeleted: false,
         status: FeedStatus.AwaitingReview,
+        emailBodySpec: makeFullItemText(),
       },
       missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
       missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),

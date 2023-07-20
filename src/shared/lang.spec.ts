@@ -13,6 +13,7 @@ import {
   makeErr,
   makeNonEmptyString,
   makeNumber,
+  makePositiveInteger,
   makeValues,
   readStringArray,
 } from './lang';
@@ -298,5 +299,14 @@ describe(makeNumber.name, () => {
     expect(makeNumber('42')).to.equal(42);
     expect(makeNumber('42.2')).to.equal(42.2);
     expect(makeNumber('-42')).to.equal(-42);
+  });
+});
+
+describe(makePositiveInteger.name, () => {
+  it('tries to make a positive number from the given value', () => {
+    expect(makePositiveInteger('42')).to.equal(42);
+    expect(makePositiveInteger(-42)).to.deep.equal(makeErr('Value is not a positive number'));
+    expect(makePositiveInteger('42.5')).to.deep.equal(makeErr('Value is not an integer number'));
+    expect(makePositiveInteger(new Date())).to.deep.equal(makeErr('Value is not a number'));
   });
 });

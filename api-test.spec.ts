@@ -41,7 +41,6 @@ import {
   LoadFeedsResponseData,
 } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
-import { MakeFeedInput } from './src/domain/feed-making';
 import {
   FeedStoredData,
   findFeedAccountId,
@@ -85,7 +84,7 @@ describe('API', () => {
 
   const newUserEmail = 'api-test-new-email@feedsubscription.com';
 
-  const testFeedProps: MakeFeedInput = {
+  const testFeedProps = {
     displayName: 'API Test Feed Name',
     url: 'https://api-test.com/rss.xml',
     id: 'api-test-feed',

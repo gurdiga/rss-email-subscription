@@ -3,11 +3,10 @@ import assert from 'node:assert';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Account, AccountData, AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { Feed, FeedHashingSalt, FeedStatus, isFeed, isFeedHashingSalt } from '../domain/feed';
+import { Feed, FeedHashingSalt, FeedStatus, isFeed, isFeedHashingSalt, makeFullItemText } from '../domain/feed';
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { makeFeedHashingSalt } from '../domain/feed';
-import { MakeFeedInput } from '../domain/feed-making';
 import { AppStorage, makeStorage, StorageKey, StorageValue } from '../domain/storage';
 import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
 import { EmailAddress } from '../domain/email-address';
@@ -114,8 +113,8 @@ export function makeTestFeedId(idString = 'test-feed-id'): FeedId {
   return result;
 }
 
-export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
-  const input: MakeFeedInput = {
+export function makeTestFeed(props: any = {}): Feed {
+  const input = {
     displayName: 'Test Feed Name',
     url: 'https://test.com/rss.xml',
     id: 'test-feed-id',
@@ -124,6 +123,7 @@ export function makeTestFeed(props: Partial<MakeFeedInput> = {}): Feed {
     status: FeedStatus.AwaitingReview,
     hashingSalt: props.hashingSalt || 'random-16-bytes.',
     cronPattern: props.cronPattern || '1 2 3 4 5',
+    emailBodySpec: makeFullItemText(),
     ...props,
   };
 

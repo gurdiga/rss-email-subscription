@@ -1,4 +1,4 @@
-import { getTypeName, hasKey, hasKind, isString, makeErr, makeValues, Result } from '../shared/lang';
+import { getTypeName, hasKind, isString, makeErr, makePositiveInteger, makeValues, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { UnixCronPattern } from './cron-pattern';
 import { EmailAddress, HashedEmail } from './email-address';
@@ -14,10 +14,47 @@ export interface Feed {
   replyTo: EmailAddress;
   cronPattern: UnixCronPattern;
   status: FeedStatus;
+  emailBodySpec: FeedEmailBodySpec;
 }
 
 export function isFeed(value: unknown): value is Feed {
   return hasKind(value, 'Feed');
+}
+
+export type FeedEmailBodySpec = FullItemText | ItemExcerptWordCount;
+
+interface FullItemText {
+  kind: 'FullItemText';
+}
+
+export function makeFullItemText(): FullItemText {
+  return {
+    kind: 'FullItemText',
+  };
+}
+
+interface ItemExcerptWordCount {
+  kind: 'ItemExcerptWordCount';
+  wordCount: number;
+}
+
+function makeItemExcerptWordCount(value: unknown): Result<ItemExcerptWordCount> {
+  return makeValues<ItemExcerptWordCount>(value, {
+    kind: 'ItemExcerptWordCount',
+    wordCount: makePositiveInteger,
+  });
+}
+
+export function makeFeedEmailBodySpec(value: unknown, field = 'emailBodySpec'): Result<FeedEmailBodySpec> {
+  if (hasKind(value, 'FullItemText')) {
+    return makeFullItemText();
+  }
+
+  if (hasKind(value, 'ItemExcerptWordCount')) {
+    return makeItemExcerptWordCount(value);
+  }
+
+  return makeErr(si`Invalid value`, field);
 }
 
 export interface FeedHashingSalt {
@@ -115,12 +152,6 @@ export type DeleteFeedRequestData = Record<keyof DeleteFeedRequest, string>;
 export type AddNewFeedRequestData = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
 export interface AddNewFeedResponseData {
   feedId: string;
-}
-
-export function isAddNewFeedRequestData(value: unknown): value is AddNewFeedRequestData {
-  const expectedKeys: (keyof AddNewFeedRequestData)[] = ['displayName', 'url', 'id', 'replyTo'];
-
-  return expectedKeys.every((keyName) => hasKey(value, keyName));
 }
 
 export interface EditFeedRequest {
