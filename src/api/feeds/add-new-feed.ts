@@ -1,7 +1,7 @@
 import { AccountId, AccountNotFound, isAccountId, makeAccountNotFound } from '../../domain/account';
 import { getAccountIdList } from '../../domain/account-storage';
 import { defaultFeedPattern } from '../../domain/cron-pattern';
-import { AddNewFeedResponseData, Feed } from '../../domain/feed';
+import { AddNewFeedResponseData, Feed, FeedStatus } from '../../domain/feed';
 import { makeNewFeedHashingSalt } from '../../domain/feed-crypto';
 import { FeedId } from '../../domain/feed-id';
 import { makeFeed } from '../../domain/feed-making';
@@ -9,7 +9,7 @@ import { feedExists, storeFeed } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
-import { Result, isErr, isObject, makeErr } from '../../shared/lang';
+import { Result, isErr, isObject, makeErr, makeTypeMismatchErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
@@ -76,13 +76,14 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
 
 function makeFeedFromAddNewFeedRequestData(data: unknown): Result<Feed> {
   if (!isObject(data)) {
-    return makeErr('Invalid request');
+    return makeTypeMismatchErr(data, 'object');
   }
 
-  const hashingSalt = makeNewFeedHashingSalt();
-  const cronPattern = defaultFeedPattern;
+  const hashingSalt = makeNewFeedHashingSalt().value;
+  const cronPattern = defaultFeedPattern.value;
+  const status = FeedStatus.AwaitingReview;
 
-  return makeFeed({ ...data, cronPattern, hashingSalt });
+  return makeFeed({ ...data, cronPattern, hashingSalt, status });
 }
 
 export function getFeedAccountId(

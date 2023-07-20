@@ -17,7 +17,7 @@ import {
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
 import { makeUnixCronPattern } from './cron-pattern-making';
-import { EditFeedRequest, Feed, FeedStatus, makeFullItemText } from './feed';
+import { EditFeedRequest, Feed, FeedStatus, makeFullItemText, makeFullItemTextString } from './feed';
 import { makeFeedId } from './feed-id';
 import {
   FeedExistsResult,
@@ -49,7 +49,7 @@ describe(loadFeed.name, () => {
     replyTo: 'sandra@test.com',
     cronPattern: '5 * * * *',
     status: FeedStatus.Approved,
-    emailBodySpec: makeFullItemText(),
+    emailBodySpec: makeFullItemTextString(),
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -201,6 +201,7 @@ describe(storeFeed.name, () => {
       url: 'https://test.com/rss.xml',
       replyTo: feed.replyTo.value,
       status: feed.status,
+      emailBodySpec: makeFullItemTextString(),
     };
 
     expect(isErr(result)).be.false;

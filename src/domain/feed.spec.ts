@@ -1,10 +1,18 @@
 import { expect } from 'chai';
-import { FeedId } from './feed-id';
-import { EditFeedRequest, EditFeedRequestData, FeedHashingSalt, makeEditFeedRequest } from './feed';
-import { makeFeedHashingSalt } from './feed';
 import { Err, makeErr } from '../shared/lang';
-import { EmailAddress } from './email-address';
 import { si } from '../shared/string-utils';
+import { EmailAddress } from './email-address';
+import {
+  EditFeedRequest,
+  EditFeedRequestData,
+  FeedHashingSalt,
+  ItemExcerptWordCount,
+  makeEditFeedRequest,
+  makeFeedEmailBodySpec,
+  makeFeedHashingSalt,
+  makeFullItemText,
+} from './feed';
+import { FeedId } from './feed-id';
 
 describe(makeFeedHashingSalt.name, () => {
   it('returns a HashingSalt value when input valid', () => {
@@ -77,5 +85,15 @@ describe(makeEditFeedRequest.name, () => {
     for (const [input, err, fieldName] of expectedErrForInput) {
       expect(makeEditFeedRequest(input)).to.deep.equal(err, si`invalid ${fieldName}`);
     }
+  });
+});
+
+describe(makeFeedEmailBodySpec.name, () => {
+  it('returns a FeedEmailBodySpec from the input string', () => {
+    expect(makeFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFullItemText());
+    expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(<ItemExcerptWordCount>{
+      kind: 'ItemExcerptWordCount',
+      wordCount: 24,
+    });
   });
 });

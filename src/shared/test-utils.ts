@@ -1,26 +1,33 @@
-import { rmSync } from 'node:fs';
 import assert from 'node:assert';
+import { rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Account, AccountData, AccountId, isAccountId, makeAccountId } from '../domain/account';
-import { Feed, FeedHashingSalt, FeedStatus, isFeed, isFeedHashingSalt, makeFullItemText } from '../domain/feed';
-import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
-import { makeFeed } from '../domain/feed-making';
-import { makeFeedHashingSalt } from '../domain/feed';
-import { AppStorage, makeStorage, StorageKey, StorageValue } from '../domain/storage';
-import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
-import { EmailAddress } from '../domain/email-address';
-import { isUnixCronPattern, UnixCronPattern } from '../domain/cron-pattern';
-import { makeUnixCronPattern } from '../domain/cron-pattern-making';
-import { si } from './string-utils';
 import {
   ConfirmationSecret,
   confirmationSecretLength,
   isConfirmationSecret,
   makeConfirmationSecret,
 } from '../domain/confirmation-secrets';
+import { UnixCronPattern, isUnixCronPattern } from '../domain/cron-pattern';
+import { makeUnixCronPattern } from '../domain/cron-pattern-making';
+import { EmailAddress } from '../domain/email-address';
+import { isEmailAddress, makeEmailAddress } from '../domain/email-address-making';
+import {
+  Feed,
+  FeedHashingSalt,
+  FeedStatus,
+  isFeed,
+  isFeedHashingSalt,
+  makeFeedHashingSalt,
+  makeFullItemTextString,
+} from '../domain/feed';
+import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
+import { makeFeed } from '../domain/feed-making';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
+import { AppStorage, StorageKey, StorageValue, makeStorage } from '../domain/storage';
+import { si } from './string-utils';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -123,7 +130,7 @@ export function makeTestFeed(props: any = {}): Feed {
     status: FeedStatus.AwaitingReview,
     hashingSalt: props.hashingSalt || 'random-16-bytes.',
     cronPattern: props.cronPattern || '1 2 3 4 5',
-    emailBodySpec: makeFullItemText(),
+    emailBodySpec: makeFullItemTextString(),
     ...props,
   };
 

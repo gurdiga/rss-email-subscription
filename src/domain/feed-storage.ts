@@ -3,7 +3,7 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
-import { EditFeedRequest, Feed, FeedEmailBodySpec, FeedStatus, isFeed } from './feed';
+import { EditFeedRequest, Feed, FeedStatus, isFeed, makeFeedEmailBodySpecString } from './feed';
 import { FeedId, isFeedId, makeFeedId } from './feed-id';
 import { makeFeed } from './feed-making';
 import { AppStorage } from './storage';
@@ -15,7 +15,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   status: FeedStatus;
-  emailBodySpec?: FeedEmailBodySpec;
+  emailBodySpec?: string;
 }
 
 export interface FeedNotFound {
@@ -96,6 +96,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     cronPattern: feed.cronPattern.value,
     replyTo: feed.replyTo.value,
     status: feed.status,
+    emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
   };
 
   const result = storage.storeItem(storageKey, data);

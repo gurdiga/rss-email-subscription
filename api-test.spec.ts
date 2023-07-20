@@ -39,6 +39,7 @@ import {
   FeedStatus,
   LoadEmailsResponse,
   LoadFeedsResponseData,
+  makeFullItemTextString,
 } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import {
@@ -89,6 +90,7 @@ describe('API', () => {
     url: 'https://api-test.com/rss.xml',
     id: 'api-test-feed',
     replyTo: 'feed-replyto@api-test.com',
+    emailBodySpec: makeFullItemTextString(),
   };
 
   const testFeedId = makeTestFeedId(testFeedProps.id);
@@ -250,10 +252,11 @@ describe('API', () => {
       describe('CRUD happy path', () => {
         it('flows', async () => {
           const addNewFeedRequest: AddNewFeedRequestData = {
-            displayName: testFeedProps.displayName!,
-            url: testFeedProps.url!,
-            id: testFeedProps.id!,
-            replyTo: testFeedProps.replyTo!,
+            displayName: testFeedProps.displayName,
+            url: testFeedProps.url,
+            id: testFeedProps.id,
+            replyTo: testFeedProps.replyTo,
+            emailBodySpec: testFeedProps.emailBodySpec,
           };
           const { responseBody } = await addNewFeedSend(addNewFeedRequest);
 
@@ -272,6 +275,7 @@ describe('API', () => {
           expect(storedFeed.hashingSalt).to.match(/[0-9a-f]{16}/);
           expect(storedFeed.cronPattern).to.equal(defaultFeedPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
+          expect(storedFeed.emailBodySpec).to.equal(testFeedProps.emailBodySpec);
 
           const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId);
           const { responseData: loadedFeed } = loadFeedByIdResponse.responseBody as Success<Feed>;
@@ -387,6 +391,7 @@ describe('API', () => {
             url: '',
             id: '',
             replyTo: '',
+            emailBodySpec: '',
           };
           const { responseBody } = await addNewFeedSend(invalidRequest);
 
@@ -453,6 +458,7 @@ describe('API', () => {
         url: testFeedProps.url!,
         id: testFeedProps.id!,
         replyTo: testFeedProps.replyTo!,
+        emailBodySpec: makeFullItemTextString(),
       };
       const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest);
       expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');

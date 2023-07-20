@@ -1,9 +1,20 @@
-import { getTypeName, hasKind, isString, makeErr, makePositiveInteger, makeValues, Result } from '../shared/lang';
+import {
+  getTypeName,
+  hasKind,
+  isErr,
+  isString,
+  makeErr,
+  makePositiveInteger,
+  makeTypeMismatchErr,
+  makeValues,
+  Result,
+} from '../shared/lang';
 import { si } from '../shared/string-utils';
+import { makeHttpUrl } from '../shared/url';
 import { UnixCronPattern } from './cron-pattern';
 import { EmailAddress, HashedEmail } from './email-address';
+import { makeEmailAddress } from './email-address-making';
 import { FeedId, makeFeedId } from './feed-id';
-import { makeFeedDisplayName, makeFeedReplyToEmailAddress, makeFeedUrl } from './feed-making';
 
 export interface Feed {
   kind: 'Feed';
@@ -33,28 +44,56 @@ export function makeFullItemText(): FullItemText {
   };
 }
 
-interface ItemExcerptWordCount {
+export function makeFullItemTextString(): string {
+  return 'full-item-text';
+}
+
+export interface ItemExcerptWordCount {
   kind: 'ItemExcerptWordCount';
   wordCount: number;
 }
 
-function makeItemExcerptWordCount(value: unknown): Result<ItemExcerptWordCount> {
-  return makeValues<ItemExcerptWordCount>(value, {
+function makeItemExcerptWordCount(value: unknown, field?: string): Result<ItemExcerptWordCount> {
+  if (!isString(value)) {
+    return makeTypeMismatchErr(value, 'string');
+  }
+
+  const matches = value.match(/^(\d+) words$/);
+
+  if (!matches) {
+    return makeErr('Invalid string');
+  }
+
+  const wordCount = makePositiveInteger(matches[1], field);
+
+  if (isErr(wordCount)) {
+    return wordCount;
+  }
+
+  return {
     kind: 'ItemExcerptWordCount',
-    wordCount: makePositiveInteger,
-  });
+    wordCount,
+  };
+}
+
+export function makeItemExcerptWordCountString(wordCount: number): string {
+  return si`${wordCount} words`;
 }
 
 export function makeFeedEmailBodySpec(value: unknown, field = 'emailBodySpec'): Result<FeedEmailBodySpec> {
-  if (hasKind(value, 'FullItemText')) {
+  if (value === makeFullItemTextString()) {
     return makeFullItemText();
+  } else {
+    return makeItemExcerptWordCount(value, field);
   }
+}
 
-  if (hasKind(value, 'ItemExcerptWordCount')) {
-    return makeItemExcerptWordCount(value);
+export function makeFeedEmailBodySpecString(emailBodySpec: FeedEmailBodySpec): string {
+  if (emailBodySpec.kind === 'FullItemText') {
+    return makeFullItemTextString();
+  } else {
+    return makeItemExcerptWordCountString(emailBodySpec.wordCount);
   }
-
-  return makeErr(si`Invalid value`, field);
 }
 
 export interface FeedHashingSalt {
@@ -149,7 +188,9 @@ export interface DeleteFeedRequest {
 
 export type DeleteFeedRequestData = Record<keyof DeleteFeedRequest, string>;
 
-export type AddNewFeedRequestData = Record<'displayName' | 'url' | 'id' | 'replyTo', string>;
+type FeedUiFields = keyof Omit<Feed, 'kind' | 'status' | 'hashingSalt' | 'cronPattern'>;
+export type AddNewFeedRequestData = Record<FeedUiFields, string>;
+
 export interface AddNewFeedResponseData {
   feedId: string;
 }
@@ -176,6 +217,67 @@ export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
     initialId: makeFeedId,
     replyTo: makeFeedReplyToEmailAddress,
   });
+}
+
+export function makeFeedReplyToEmailAddress(input: unknown): Result<EmailAddress> {
+  const emailAddress = makeEmailAddress(input);
+
+  if (isErr(emailAddress)) {
+    return makeErr(si`Invalid Reply To email: ${emailAddress.reason}`, 'replyTo');
+  }
+
+  if (emailAddress.value.endsWith('@feedsubscription.com')) {
+    return makeErr('Reply To email can’t be @FeedSubscription.com', 'replyTo');
+  }
+
+  return emailAddress;
+}
+
+export function makeFeedUrl(input: unknown, field = 'url'): Result<URL> {
+  if (!input) {
+    return makeErr('Feed URL is missing', field);
+  }
+
+  if (!isString(input)) {
+    return makeErr(si`Feed URL has the wrong type: "${getTypeName(input)}"`, field);
+  }
+
+  const trimmedUrl = input.trim();
+
+  if (!trimmedUrl) {
+    return makeErr('Feed URL is missing', field);
+  }
+
+  return makeHttpUrl(trimmedUrl, undefined, field);
+}
+
+const minFeedNameLength = 5;
+export const maxFeedNameLength = 50;
+
+export function makeFeedDisplayName(input: unknown, field = 'displayName'): Result<string> {
+  if (!input) {
+    return makeErr('Feed name is missing', field);
+  }
+
+  if (!isString(input)) {
+    return makeErr(si`Invalid blog feed name: expected type [string] but got "${getTypeName(input)}"`, field);
+  }
+
+  const trimmedInput = input.trim();
+
+  if (!trimmedInput) {
+    return makeErr('Feed name is missing', field);
+  }
+
+  if (trimmedInput.length < minFeedNameLength) {
+    return makeErr(si`Feed name is too short. I needs to be at least ${minFeedNameLength} characters.`, field);
+  }
+
+  if (trimmedInput.length > maxFeedNameLength) {
+    return makeErr(si`Feed name is too long. It needs to be less than ${maxFeedNameLength} characters.`, field);
+  }
+
+  return trimmedInput;
 }
 
 type UiEmailList = string[];

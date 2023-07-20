@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { Feed, FeedStatus, makeFullItemText } from './feed';
-import { makeFeed, maxFeedNameLength } from './feed-making';
+import { Feed, FeedStatus, makeFullItemText, makeFullItemTextString, maxFeedNameLength } from './feed';
+import { makeFeed } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
 import {
   makeTestFeedHashingSalt,
@@ -25,7 +25,7 @@ describe(makeFeed.name, () => {
       cronPattern: testUnixCronPatternString,
       isDeleted: true,
       status: FeedStatus.AwaitingReview,
-      emailBodySpec: makeFullItemText(),
+      emailBodySpec: makeFullItemTextString(),
     };
     const hashingSalt = makeTestFeedHashingSalt();
 
