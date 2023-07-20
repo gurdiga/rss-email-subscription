@@ -53,7 +53,7 @@ export interface ItemExcerptWordCount {
   wordCount: number;
 }
 
-function makeItemExcerptWordCount(value: unknown, field?: string): Result<ItemExcerptWordCount> {
+export function makeItemExcerptWordCount(value: unknown, field?: string): Result<ItemExcerptWordCount> {
   if (!isString(value)) {
     return makeTypeMismatchErr(value, 'string');
   }
@@ -61,7 +61,7 @@ function makeItemExcerptWordCount(value: unknown, field?: string): Result<ItemEx
   const matches = value.match(/^(\d+) words$/);
 
   if (!matches) {
-    return makeErr('Invalid string');
+    return makeErr('Invalid string', field);
   }
 
   const wordCount = makePositiveInteger(matches[1], field);
@@ -81,10 +81,6 @@ export function makeItemExcerptWordCountString(wordCount: number): string {
 }
 
 export function makeFeedEmailBodySpec(value: unknown, field?: string): Result<FeedEmailBodySpec> {
-  if (!value) {
-    return makeFullItemText();
-  }
-
   if (value === makeFullItemTextString()) {
     return makeFullItemText();
   }

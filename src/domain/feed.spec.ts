@@ -11,6 +11,7 @@ import {
   makeFeedEmailBodySpec,
   makeFeedHashingSalt,
   makeFullItemText,
+  makeItemExcerptWordCount,
   makeOptionalFeedEmailBodySpec,
 } from './feed';
 import { FeedId } from './feed-id';
@@ -89,23 +90,29 @@ describe(makeEditFeedRequest.name, () => {
   });
 });
 
+describe(makeItemExcerptWordCount.name, () => {
+  it('parses the input string and returns an ItemExcerptWordCount when possible', () => {
+    const expectedResult: ItemExcerptWordCount = {
+      kind: 'ItemExcerptWordCount',
+      wordCount: 25,
+    };
+
+    expect(makeItemExcerptWordCount('25 words')).to.deep.equal(expectedResult);
+    expect(makeItemExcerptWordCount('bad-input', 'field')).to.deep.equal(makeErr('Invalid string', 'field'));
+  });
+});
+
 describe(makeFeedEmailBodySpec.name, () => {
   it('returns a FeedEmailBodySpec from the input string', () => {
     expect(makeFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFullItemText());
-    expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(<ItemExcerptWordCount>{
-      kind: 'ItemExcerptWordCount',
-      wordCount: 24,
-    });
+    expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(makeItemExcerptWordCount('24 words'));
   });
 });
 
 describe(makeOptionalFeedEmailBodySpec.name, () => {
   it('returns a FullItemText value when no input', () => {
     expect(makeOptionalFeedEmailBodySpec(undefined)).to.deep.equal(makeFullItemText());
-    expect(makeOptionalFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFullItemText());
-    expect(makeOptionalFeedEmailBodySpec('42 words')).to.deep.equal(<ItemExcerptWordCount>{
-      kind: 'ItemExcerptWordCount',
-      wordCount: 42,
-    });
+    expect(makeOptionalFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFeedEmailBodySpec('full-item-text'));
+    expect(makeOptionalFeedEmailBodySpec('42 words')).to.deep.equal(makeFeedEmailBodySpec('42 words'));
   });
 });
