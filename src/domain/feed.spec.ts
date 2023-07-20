@@ -11,6 +11,7 @@ import {
   makeFeedEmailBodySpec,
   makeFeedHashingSalt,
   makeFullItemText,
+  makeOptionalFeedEmailBodySpec,
 } from './feed';
 import { FeedId } from './feed-id';
 
@@ -94,6 +95,17 @@ describe(makeFeedEmailBodySpec.name, () => {
     expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(<ItemExcerptWordCount>{
       kind: 'ItemExcerptWordCount',
       wordCount: 24,
+    });
+  });
+});
+
+describe(makeOptionalFeedEmailBodySpec.name, () => {
+  it('returns a FullItemText value when no input', () => {
+    expect(makeOptionalFeedEmailBodySpec(undefined)).to.deep.equal(makeFullItemText());
+    expect(makeOptionalFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFullItemText());
+    expect(makeOptionalFeedEmailBodySpec('42 words')).to.deep.equal(<ItemExcerptWordCount>{
+      kind: 'ItemExcerptWordCount',
+      wordCount: 42,
     });
   });
 });

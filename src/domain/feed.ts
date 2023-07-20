@@ -80,11 +80,23 @@ export function makeItemExcerptWordCountString(wordCount: number): string {
   return si`${wordCount} words`;
 }
 
-export function makeFeedEmailBodySpec(value: unknown, field = 'emailBodySpec'): Result<FeedEmailBodySpec> {
+export function makeFeedEmailBodySpec(value: unknown, field?: string): Result<FeedEmailBodySpec> {
+  if (!value) {
+    return makeFullItemText();
+  }
+
   if (value === makeFullItemTextString()) {
     return makeFullItemText();
+  }
+
+  return makeItemExcerptWordCount(value, field);
+}
+
+export function makeOptionalFeedEmailBodySpec(value: unknown, field?: string): Result<FeedEmailBodySpec> {
+  if (!value) {
+    return makeFullItemText();
   } else {
-    return makeItemExcerptWordCount(value, field);
+    return makeFeedEmailBodySpec(value, field);
   }
 }
 

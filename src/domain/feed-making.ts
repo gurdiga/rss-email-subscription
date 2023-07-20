@@ -3,11 +3,11 @@ import { makeUnixCronPattern } from './cron-pattern-making';
 import {
   Feed,
   makeFeedDisplayName,
-  makeFeedEmailBodySpec,
   makeFeedHashingSalt,
   makeFeedReplyToEmailAddress,
   makeFeedStatus,
   makeFeedUrl,
+  makeOptionalFeedEmailBodySpec,
 } from './feed';
 import { makeFeedId } from './feed-id';
 
@@ -21,6 +21,6 @@ export function makeFeed(input: unknown): Result<Feed> {
     replyTo: makeFeedReplyToEmailAddress,
     cronPattern: makeUnixCronPattern,
     status: makeFeedStatus,
-    emailBodySpec: makeFeedEmailBodySpec,
+    emailBodySpec: makeOptionalFeedEmailBodySpec,
   });
 }
