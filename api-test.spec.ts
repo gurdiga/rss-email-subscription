@@ -148,6 +148,19 @@ describe('API', () => {
         expect(responseBody).to.match(gitRevisionMask);
       });
     });
+
+    describe('short Subscribe Link redirects', () => {
+      const feedId = 'feed-id';
+      const shortUrl = si`${apiOrigin}/to/${feedId}`;
+      const longUrl = si`${apiOrigin}/subscription-request.html?feedId=${feedId}`;
+
+      it('redirects /to/FEED_ID to /subscription-request.html?feedId=FEED_ID', async () => {
+        const response = await fetch(shortUrl, { redirect: 'manual' });
+
+        expect(response.status).to.equal(302);
+        expect(response.headers.get('location')).to.equal(longUrl);
+      });
+    });
   });
 
   describe('registration-confirmation-authentication-deauthentication flow', () => {
