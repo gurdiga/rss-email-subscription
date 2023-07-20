@@ -1,7 +1,7 @@
 import { LoadFeedsResponseData, makeUiFeedListItem } from '../../domain/feed';
 import { loadFeedsByAccountId } from '../../domain/feed-storage';
 import { makeAppError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
-import { isNotEmpty, sortBy } from '../../shared/array-utils';
+import { isEmpty, isNotEmpty, sortBy } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
@@ -26,21 +26,36 @@ export const loadFeeds: AppRequestHandler = async function listFeeds(reqId, _req
   }
 
   if (isNotEmpty(result.feedIdErrs)) {
-    logError(si`Failed to load feed IDs for account ${accountId.value}`, {
-      feedIdErrs: result.feedIdErrs.map((x) => x.reason),
+    logError('Failed to load some feed IDs for account', {
+      accountId: accountId.value,
+      feedIdErrs: result.feedIdErrs,
     });
   }
 
   if (isNotEmpty(result.errs)) {
-    logError(si`Failed to load feeds for account ${accountId.value}`, {
-      errs: result.errs.map((x) => x.reason),
+    logError('Failed to load some feeds for account', {
+      accountId: accountId.value,
+      errs: result.errs,
     });
   }
 
   if (isNotEmpty(result.feedNotFoundIds)) {
-    logError(si`Missing feeds for account ${accountId.value}`, {
+    logError('Missing some feeds for account', {
+      accountId: accountId.value,
       feedNotFoundIds: result.feedNotFoundIds,
     });
+  }
+
+  const someErrs = isNotEmpty(result.feedIdErrs) || isNotEmpty(result.errs);
+  const noSuccesses = isEmpty(result.validFeeds);
+  const somethingIsWrong = noSuccesses && someErrs;
+
+  if (somethingIsWrong) {
+    logError('Some load errors and no success', {
+      errs: result.errs,
+      feedIdErrs: result.feedIdErrs,
+    });
+    return makeAppError();
   }
 
   const logData = {};

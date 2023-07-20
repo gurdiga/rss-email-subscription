@@ -16,9 +16,7 @@ import {
 } from '../shared/test-utils';
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
-import { makeUnixCronPattern } from './cron-pattern-making';
 import { EditFeedRequest, Feed, FeedStatus, makeFullItemText, makeFullItemTextString } from './feed';
-import { makeFeedId } from './feed-id';
 import {
   FeedExistsResult,
   FeedStoredData,
@@ -108,24 +106,23 @@ describe(loadFeed.name, () => {
 
 describe(loadFeedsByAccountId.name, () => {
   it('returns a FeedsByAccountId value for account', () => {
+    const validFeed: Feed = {
+      kind: 'Feed',
+      id: makeTestFeedId('valid-feedId'),
+      displayName: 'Test Feed Display Name',
+      url: new URL('https://test-url.com'),
+      hashingSalt: makeTestFeedHashingSalt(),
+      replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
+      cronPattern: makeTestUnixCronPattern(),
+      status: FeedStatus.AwaitingReview,
+      emailBodySpec: makeFullItemText(),
+    };
     const feeds: Record<string, ReturnType<typeof loadFeed>> = {
-      validFeed: <Feed>{
-        kind: 'Feed',
-        id: makeFeedId('valid-feedId'),
-        displayName: 'Test Feed Display Name',
-        url: new URL('https://test-url.com'),
-        hashingSalt: makeTestFeedHashingSalt(),
-        fromAddress: makeTestEmailAddress('feed-fromAddress@test.com'),
-        replyTo: makeTestEmailAddress('feed-replyTo@test.com'),
-        cronPattern: makeUnixCronPattern('1 1 1 1 1'),
-        isDeleted: false,
-        status: FeedStatus.AwaitingReview,
-        emailBodySpec: makeFullItemText(),
-      },
-      missingFeed1: makeFeedNotFound(makeTestFeedId('missing-feed-1')),
-      missingFeed2: makeFeedNotFound(makeTestFeedId('missing-feed-2')),
-      invalidFeed1: makeErr('somehow feed data 1'),
-      invalidFeed2: makeErr('somehow feed data 2'),
+      validFeed,
+      missingFeed1: makeFeedNotFound(makeTestFeedId('missingFeed1')),
+      missingFeed2: makeFeedNotFound(makeTestFeedId('missingFeed2')),
+      invalidFeed1: makeErr('somehow failed to load feed data 1'),
+      invalidFeed2: makeErr('somehow failed to load feed data 2'),
     };
     const badFeedIds = ['a', 42 as any];
     const storage = makeTestStorage({
@@ -139,13 +136,12 @@ describe(loadFeedsByAccountId.name, () => {
     expect(result.validFeeds).to.deep.equal([feeds['validFeed']]);
     expect(result.feedNotFoundIds).to.deep.equal([
       // prettier: keep these stacked
-      'missing-feed-1',
-      'missing-feed-2',
+      'missingFeed1',
+      'missingFeed2',
     ]);
     expect(result.errs).to.deep.equal([
-      // prettier: keep these stacked
-      makeErr('somehow feed data 1'),
-      makeErr('somehow feed data 2'),
+      [makeTestFeedId('invalidFeed1'), makeErr('somehow failed to load feed data 1')],
+      [makeTestFeedId('invalidFeed2'), makeErr('somehow failed to load feed data 2')],
     ]);
     expect(result.feedIdErrs).to.deep.equal([
       // prettier: keep these stacked

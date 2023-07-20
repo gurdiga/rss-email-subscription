@@ -89,8 +89,7 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
       }
 
       if (isNotEmpty(feedsByAccountId.errs)) {
-        const errs = feedsByAccountId.errs.map((x) => x.reason);
-        logError(si`Errors on ${loadFeedsByAccountId.name}`, { ...logData, errs });
+        logError(si`Errors on ${loadFeedsByAccountId.name}`, { ...logData, errs: feedsByAccountId.errs });
       }
 
       if (isEmpty(feedsByAccountId.validFeeds)) {

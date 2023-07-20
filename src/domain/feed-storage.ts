@@ -3,8 +3,8 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
-import { EditFeedRequest, Feed, FeedStatus, isFeed, makeFeedEmailBodySpecString } from './feed';
-import { FeedId, isFeedId, makeFeedId } from './feed-id';
+import { EditFeedRequest, Feed, FeedStatus, makeFeedEmailBodySpecString } from './feed';
+import { FeedId, makeFeedId } from './feed-id';
 import { makeFeed } from './feed-making';
 import { AppStorage } from './storage';
 
@@ -129,7 +129,7 @@ export function loadFeed(accountId: AccountId, feedId: FeedId, storage: AppStora
 export interface FeedsByAccountId {
   validFeeds: Feed[];
   feedNotFoundIds: string[];
-  errs: Err[];
+  errs: [FeedId, Err][];
   feedIdErrs: Err[];
 }
 
@@ -138,7 +138,7 @@ export function loadFeedsByAccountId(
   storage: AppStorage,
   loadFeedFn = loadFeed
 ): Result<FeedsByAccountId> {
-  const result: FeedsByAccountId = {
+  const results: FeedsByAccountId = {
     validFeeds: [],
     errs: [],
     feedIdErrs: [],
@@ -153,7 +153,7 @@ export function loadFeedsByAccountId(
   }
 
   if (hasAnyFeeds === false) {
-    return result;
+    return results;
   }
 
   const feedIdStrings = storage.listSubdirectories(feedRootStorageKey);
@@ -162,16 +162,26 @@ export function loadFeedsByAccountId(
     return makeErr(si`Failed to list feeds: ${feedIdStrings.reason}`);
   }
 
-  const feedIdResults = feedIdStrings.map((x) => makeFeedId(x));
-  const feedIds = feedIdResults.filter(isFeedId);
-  const feeds = feedIds.map((feedId) => loadFeedFn(accountId, feedId, storage));
+  for (const feedIdString of feedIdStrings) {
+    const feedId = makeFeedId(feedIdString);
 
-  result.validFeeds = feeds.filter(isFeed);
-  result.errs = feeds.filter(isErr);
-  result.feedIdErrs = feedIdResults.filter(isErr);
-  result.feedNotFoundIds = feeds.filter(isFeedNotFound).map((x) => x.feedId.value);
+    if (isErr(feedId)) {
+      results.feedIdErrs.push(feedId);
+      continue;
+    }
 
-  return result;
+    const result = loadFeedFn(accountId, feedId, storage);
+
+    if (isErr(result)) {
+      results.errs.push([feedId, result]);
+    } else if (isFeedNotFound(result)) {
+      results.feedNotFoundIds.push(feedId.value);
+    } else {
+      results.validFeeds.push(result);
+    }
+  }
+
+  return results;
 }
 
 export function findFeedAccountId(feedId: FeedId, storage: AppStorage): Result<AccountId | AccountNotFound> {
