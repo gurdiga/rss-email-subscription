@@ -4,6 +4,7 @@ ARG NODE_VERSION=18.16.0-alpine3.17
 FROM node:${NODE_VERSION} as build
 
 RUN apk -U upgrade
+RUN npm i -g npm@latest
 
 WORKDIR /code
 
