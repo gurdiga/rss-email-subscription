@@ -28,7 +28,7 @@ async function main() {
   process.stdin.on('data', (data: Buffer) => processData(data, status, storage));
   process.stdin.on('end', () => logWarning('End of STDIN'));
 
-  logInfo(si`Stared watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
+  logInfo(si`Started watching Postfix logs in ${process.env['NODE_ENV']!} environment`);
 
   new CronJob('6 6 * * *', () => {
     logInfo('delmon heartbeat', {
