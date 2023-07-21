@@ -603,7 +603,7 @@ clean:
 	rm -rf website/html/ src/api/web-ui-scripts/ dist/
 
 clean-docker: stop
-	docker image rm --force app
+	docker image rm --force app delmon smtp-out smtp-in website certbot logger
 
 init-data-dir:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
