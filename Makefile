@@ -853,6 +853,7 @@ delivery-duration:
 			>( tail -1 | ts 'end:  ' > /dev/stderr )
 	) > /dev/null
 
+# #auth #users #logge
 logins-in-last-month:
 	@from_date="$$(date '+%F' --date='1 month ago')T00:00:00+00:00"
 
