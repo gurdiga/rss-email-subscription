@@ -513,7 +513,7 @@ website:
 	log_to .tmp/logs/feedsubscription/docker-build-website.log
 
 build-website:
-	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build )
+	( cd ../feedsubscription.com && source ~/.nvm/nvm.sh && nvm use && make build-prod )
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
 
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
