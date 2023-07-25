@@ -1,5 +1,5 @@
 import { StoredEmailAddresses, loadEmailAddresses } from '../../app/email-sending/emails';
-import { Feed, FeedManageScreenRequest, FeedManageScreenResponse } from '../../domain/feed';
+import { Feed, FeedEmailBodySpec, FeedManageScreenRequest, FeedManageScreenResponse } from '../../domain/feed';
 import { makeFeedId } from '../../domain/feed-id';
 import { isFeedNotFound, loadFeed } from '../../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
@@ -10,7 +10,6 @@ import { AppRequestHandler } from '../app-request-handler';
 import { checkSession, isAuthenticatedSession } from '../session';
 
 // TODO: Add api-test
-
 export const manageFeed: AppRequestHandler = async function manageFeed(
   reqId,
   _reqBody,
@@ -68,11 +67,13 @@ export const manageFeed: AppRequestHandler = async function manageFeed(
 
   return makeSuccess('Success', logData, response);
 };
+
 function makeFeedManageScreenRequest(data: unknown): Result<FeedManageScreenRequest> {
   return makeValues<FeedManageScreenRequest>(data, {
     feedId: makeFeedId,
   });
 }
+
 function makeFeedManageScreenResponse(
   feed: Feed,
   storedEmails: StoredEmailAddresses,
@@ -85,8 +86,17 @@ function makeFeedManageScreenResponse(
     displayName: feed.displayName,
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domainName}`,
+    emailBodySpec: makeFeedEmailBodySpecUi(feed.emailBodySpec),
     replyTo: feed.replyTo.value,
     status: feed.status,
     subscriberCount,
   };
+}
+
+export function makeFeedEmailBodySpecUi(emailBodySpec: FeedEmailBodySpec): string {
+  if (emailBodySpec.kind === 'FullItemText') {
+    return 'Send full post';
+  } else {
+    return si`Only send an excerpt of ${emailBodySpec.wordCount} words`;
+  }
 }

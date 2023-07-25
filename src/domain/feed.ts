@@ -149,6 +149,7 @@ export interface UiFeed {
   displayName: string;
   url: string;
   email: string;
+  emailBodySpec: string;
   replyTo: string;
   status: FeedStatus;
 }
@@ -185,6 +186,7 @@ export function makeUiFeed(feed: Feed, domain: string): UiFeed {
     displayName: feed.displayName,
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domain}`,
+    emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
     replyTo: feed.replyTo.value,
     status: feed.status,
   };
@@ -352,6 +354,7 @@ export interface FeedManageScreenResponse {
   displayName: string;
   url: string;
   email: string;
+  emailBodySpec: string;
   replyTo: string;
   status: FeedStatus;
   subscriberCount: number;

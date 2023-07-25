@@ -276,6 +276,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Blog feed URL:', value: uiFeed.url, name: 'url' },
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'Email:', value: uiFeed.email, name: 'email' },
+    { label: 'Email body:', value: uiFeed.emailBodySpec, name: 'emailBodySpec' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
   ];
 
