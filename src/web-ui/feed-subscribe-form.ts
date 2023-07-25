@@ -78,7 +78,7 @@ function addCopyButton(...elements: HTMLTextAreaElement[]): void {
 function createCopyButton(el: HTMLTextAreaElement): HTMLElement {
   const buttonLabel = 'Copy';
   const button = createElement('button', buttonLabel, {
-    class: 'btn btn-primary btn-sm opacity-50',
+    class: 'btn btn-primary btn-sm',
   });
 
   setStyle(button, {
