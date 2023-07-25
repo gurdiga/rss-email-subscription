@@ -1,9 +1,9 @@
 import { ApiPath } from '../domain/api-path';
-import { EditFeedRequestData, EditFeedResponse, UiFeed } from '../domain/feed';
+import { EditFeedRequestData, EditFeedResponse, UiFeed, makeFeedEmailBodySpec } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
-import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
+import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { asyncAttempt, isErr, makeErr, Result } from '../shared/lang';
+import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   BreadcrumbsUiElements,
@@ -13,22 +13,22 @@ import {
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
 import {
-  apiResponseUiElements,
   ApiResponseUiElements,
+  HttpMethod,
+  SpinnerUiElements,
+  UiFeedFormFields,
+  apiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
   displayValidationError,
-  HttpMethod,
   navigateTo,
   onSubmit,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
-  SpinnerUiElements,
   spinnerUiElements,
-  UiFeedFormFields,
   uiFeedFormFields,
   unhideElement,
 } from './shared';
@@ -73,7 +73,13 @@ async function main() {
     return;
   }
 
-  fillForm(uiElements, uiFeed);
+  const fillFormResult = fillForm(uiElements, uiFeed);
+
+  if (isErr(fillFormResult)) {
+    displayInitError(fillFormResult.reason);
+    return;
+  }
+
   unhideElement(uiElements.form);
   bindSubmitButton(uiElements, feedId);
   displayBreadcrumbs(uiElements, [
@@ -145,11 +151,24 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
   });
 }
 
-function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed) {
+function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
   uiElements.displayName.value = uiFeed.displayName;
   uiElements.url.value = uiFeed.url;
   uiElements.id.value = uiFeed.id;
   uiElements.replyTo.value = uiFeed.replyTo;
+
+  const emailBodySpec = makeFeedEmailBodySpec(uiFeed.emailBodySpec);
+
+  if (isErr(emailBodySpec)) {
+    return emailBodySpec;
+  }
+
+  if (emailBodySpec.kind === 'FullItemText') {
+    uiElements.emailBodyFullPost.checked = true;
+  } else {
+    uiElements.emailBodyExcerptOnly.checked = true;
+    uiElements.emailBodyExcerptWordCount.valueAsNumber = emailBodySpec.wordCount;
+  }
 }
 
 async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {

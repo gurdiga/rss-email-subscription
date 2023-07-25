@@ -44,7 +44,9 @@ export function makeFullItemText(): FullItemText {
   };
 }
 
-export function makeFullItemTextString(): string {
+type FullItemTextString = string;
+
+export function makeFullItemTextString(): FullItemTextString {
   return 'full-item-text';
 }
 
@@ -61,7 +63,7 @@ export function makeItemExcerptWordCount(value: unknown, field?: string): Result
   const matches = value.match(/^(\d+) words$/);
 
   if (!matches) {
-    return makeErr('Invalid string', field);
+    return makeErr('Invalid word count excerpt string', field);
   }
 
   const wordCount = makePositiveInteger(matches[1], field);
@@ -76,7 +78,9 @@ export function makeItemExcerptWordCount(value: unknown, field?: string): Result
   };
 }
 
-export function makeItemExcerptWordCountString(wordCount: number): string {
+type ItemExcerptWordCountString = string;
+
+export function makeItemExcerptWordCountString(wordCount: number): ItemExcerptWordCountString {
   return si`${wordCount} words`;
 }
 
@@ -149,7 +153,7 @@ export interface UiFeed {
   displayName: string;
   url: string;
   email: string;
-  emailBodySpec: string;
+  emailBodySpec: FullItemTextString | ItemExcerptWordCountString;
   replyTo: string;
   status: FeedStatus;
 }

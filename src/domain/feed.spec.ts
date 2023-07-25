@@ -98,7 +98,9 @@ describe(makeItemExcerptWordCount.name, () => {
     };
 
     expect(makeItemExcerptWordCount('25 words')).to.deep.equal(expectedResult);
-    expect(makeItemExcerptWordCount('bad-input', 'field')).to.deep.equal(makeErr('Invalid string', 'field'));
+    expect(makeItemExcerptWordCount('bad-input', 'field')).to.deep.equal(
+      makeErr('Invalid word count excerpt string', 'field')
+    );
   });
 });
 
