@@ -55,6 +55,10 @@ export interface ItemExcerptWordCount {
   wordCount: number;
 }
 
+export const defaultExcerptWordCount = 200;
+export const minExcerptWordCount = 50;
+export const maxExcerptWordCount = 10_000;
+
 export function makeItemExcerptWordCount(value: unknown, field?: string): Result<ItemExcerptWordCount> {
   if (!isString(value)) {
     return makeTypeMismatchErr(value, 'string');
@@ -72,6 +76,14 @@ export function makeItemExcerptWordCount(value: unknown, field?: string): Result
     return wordCount;
   }
 
+  if (wordCount < minExcerptWordCount) {
+    return makeErr(si`Min word count is ${minExcerptWordCount}`, field);
+  }
+
+  if (wordCount > maxExcerptWordCount) {
+    return makeErr(si`Max word count is ${maxExcerptWordCount}`, field);
+  }
+
   return {
     kind: 'ItemExcerptWordCount',
     wordCount,
@@ -84,19 +96,19 @@ export function makeItemExcerptWordCountString(wordCount: number): ItemExcerptWo
   return si`${wordCount} words`;
 }
 
-export function makeFeedEmailBodySpec(value: unknown, field?: string): Result<FeedEmailBodySpec> {
+export function makeFeedEmailBodySpec(value: unknown): Result<FeedEmailBodySpec> {
   if (value === makeFullItemTextString()) {
     return makeFullItemText();
   }
 
-  return makeItemExcerptWordCount(value, field);
+  return makeItemExcerptWordCount(value, 'emailBodyExcerptWordCount');
 }
 
-export function makeOptionalFeedEmailBodySpec(value: unknown, field?: string): Result<FeedEmailBodySpec> {
+export function makeOptionalFeedEmailBodySpec(value: unknown): Result<FeedEmailBodySpec> {
   if (!value) {
     return makeFullItemText();
   } else {
-    return makeFeedEmailBodySpec(value, field);
+    return makeFeedEmailBodySpec(value);
   }
 }
 
@@ -213,6 +225,7 @@ export interface EditFeedRequest {
   displayName: string;
   url: URL;
   id: FeedId;
+  emailBodySpec: FeedEmailBodySpec;
   initialId: FeedId;
   replyTo: EmailAddress;
 }
@@ -228,6 +241,7 @@ export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
     displayName: makeFeedDisplayName,
     url: makeFeedUrl,
     id: makeFeedId,
+    emailBodySpec: makeFeedEmailBodySpec,
     initialId: makeFeedId,
     replyTo: makeFeedReplyToEmailAddress,
   });

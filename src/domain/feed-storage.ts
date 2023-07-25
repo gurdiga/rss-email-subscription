@@ -15,7 +15,7 @@ export interface FeedStoredData {
   cronPattern: string;
   replyTo: string;
   status: FeedStatus;
-  emailBodySpec?: string;
+  emailBodySpec: string;
 }
 
 export interface FeedNotFound {
@@ -233,6 +233,7 @@ export function applyEditFeedRequest(
   feed.displayName = editFeedRequest.displayName;
   feed.url = editFeedRequest.url;
   feed.replyTo = editFeedRequest.replyTo;
+  feed.emailBodySpec = editFeedRequest.emailBodySpec;
 
   const storeFeedResult = storeFeed(accountId, feed, storage);
 

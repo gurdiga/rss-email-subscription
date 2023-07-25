@@ -5,12 +5,14 @@ import { EmailAddress } from './email-address';
 import {
   EditFeedRequest,
   EditFeedRequestData,
+  FeedEmailBodySpec,
   FeedHashingSalt,
   ItemExcerptWordCount,
   makeEditFeedRequest,
   makeFeedEmailBodySpec,
   makeFeedHashingSalt,
   makeFullItemText,
+  makeFullItemTextString,
   makeItemExcerptWordCount,
   makeOptionalFeedEmailBodySpec,
 } from './feed';
@@ -39,6 +41,7 @@ describe(makeEditFeedRequest.name, () => {
       displayName: 'Just Add Light',
       url: 'https://just-add-light.com/blog/feed.rss',
       id: 'just-add-light',
+      emailBodySpec: '50 words',
       initialId: 'just-add-light',
       replyTo: 'just-add-light@test.com',
     };
@@ -49,6 +52,10 @@ describe(makeEditFeedRequest.name, () => {
       id: <FeedId>{
         kind: 'FeedId',
         value: 'just-add-light',
+      },
+      emailBodySpec: <FeedEmailBodySpec>{
+        kind: 'ItemExcerptWordCount',
+        wordCount: 50,
       },
       initialId: <FeedId>{
         kind: 'FeedId',
@@ -65,6 +72,7 @@ describe(makeEditFeedRequest.name, () => {
     type FieldName = string;
     type Input = EditFeedRequestData;
 
+    const emailBodySpec = makeFullItemTextString();
     const expectedErrForInput: [Input, Err, FieldName][] = [
       [24 as any as Input, makeErr('Invalid input type: expected [object] but got [number]'), 'input'],
       [undefined as any as Input, makeErr('Invalid input type: expected [object] but got [undefined]'), 'input2'],
@@ -74,11 +82,27 @@ describe(makeEditFeedRequest.name, () => {
       [{ displayName: 'Just Add Light', url: 'https://a.co' } as Input, makeErr('Missing value', 'id'), 'id'],
       [
         { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id' } as Input,
-        makeErr('Missing value', 'initialId'),
-        'replyTo',
+        makeErr('Missing value', 'emailBodySpec'),
+        'emailBodySpec',
       ],
       [
-        { displayName: 'Just Add Light', url: 'https://a.co', id: 'test-feed-id', initialId: 'init-feed-id' } as Input,
+        {
+          displayName: 'Just Add Light',
+          url: 'https://a.co',
+          emailBodySpec,
+          id: 'test-feed-id',
+        } as Input,
+        makeErr('Missing value', 'initialId'),
+        'initialId',
+      ],
+      [
+        {
+          displayName: 'Just Add Light',
+          url: 'https://a.co',
+          id: 'test-feed-id',
+          emailBodySpec,
+          initialId: 'init-feed-id',
+        } as Input,
         makeErr('Missing value', 'replyTo'),
         'replyTo',
       ],
@@ -94,20 +118,23 @@ describe(makeItemExcerptWordCount.name, () => {
   it('parses the input string and returns an ItemExcerptWordCount when possible', () => {
     const expectedResult: ItemExcerptWordCount = {
       kind: 'ItemExcerptWordCount',
-      wordCount: 25,
+      wordCount: 55,
     };
 
-    expect(makeItemExcerptWordCount('25 words')).to.deep.equal(expectedResult);
+    expect(makeItemExcerptWordCount('55 words')).to.deep.equal(expectedResult);
     expect(makeItemExcerptWordCount('bad-input', 'field')).to.deep.equal(
       makeErr('Invalid word count excerpt string', 'field')
     );
+    expect(makeItemExcerptWordCount('3 words', 'field')).to.deep.equal(makeErr('Min word count is 50', 'field'));
   });
 });
 
 describe(makeFeedEmailBodySpec.name, () => {
   it('returns a FeedEmailBodySpec from the input string', () => {
     expect(makeFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFullItemText());
-    expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(makeItemExcerptWordCount('24 words'));
+    expect(makeFeedEmailBodySpec('24 words')).to.deep.equal(
+      makeItemExcerptWordCount('24 words', 'emailBodyExcerptWordCount')
+    );
   });
 });
 

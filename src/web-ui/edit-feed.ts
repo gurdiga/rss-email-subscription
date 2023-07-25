@@ -1,5 +1,13 @@
 import { ApiPath } from '../domain/api-path';
-import { EditFeedRequestData, EditFeedResponse, UiFeed, makeFeedEmailBodySpec } from '../domain/feed';
+import {
+  EditFeedRequestData,
+  EditFeedResponse,
+  UiFeed,
+  defaultExcerptWordCount,
+  makeFeedEmailBodySpec,
+  maxExcerptWordCount,
+  minExcerptWordCount,
+} from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
@@ -14,6 +22,7 @@ import {
 } from './breadcrumbs';
 import {
   ApiResponseUiElements,
+  FeedEmailBodyFields,
   HttpMethod,
   SpinnerUiElements,
   UiFeedFormFields,
@@ -23,6 +32,7 @@ import {
   displayCommunicationError,
   displayInitError,
   displayValidationError,
+  makeEmailBodySpecFromFromFields,
   navigateTo,
   onSubmit,
   requireQueryParams,
@@ -82,11 +92,23 @@ async function main() {
 
   unhideElement(uiElements.form);
   bindSubmitButton(uiElements, feedId);
+  bindBodySpecField(uiElements);
   displayBreadcrumbs(uiElements, [
     feedListBreadcrumbsLink,
     makeFeedManageBreadcrumbsLink(uiFeed.displayName, feedId),
     { label: uiElements.pageTitle.textContent! },
   ]);
+}
+
+function bindBodySpecField(uiElements: FeedEmailBodyFields): void {
+  const { emailBodyExcerptOnly, emailBodyExcerptWordCount } = uiElements;
+
+  emailBodyExcerptOnly.addEventListener('change', () => {
+    if (emailBodyExcerptOnly.checked) {
+      emailBodyExcerptWordCount.focus();
+      emailBodyExcerptWordCount.select();
+    }
+  });
 }
 
 export async function loadUiFeed<T = UiFeed>(feedId: FeedId): Promise<Result<T>> {
@@ -152,10 +174,12 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
 }
 
 function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
-  uiElements.displayName.value = uiFeed.displayName;
-  uiElements.url.value = uiFeed.url;
-  uiElements.id.value = uiFeed.id;
-  uiElements.replyTo.value = uiFeed.replyTo;
+  const { displayName, url, id, replyTo } = uiElements;
+
+  displayName.value = uiFeed.displayName;
+  url.value = uiFeed.url;
+  id.value = uiFeed.id;
+  replyTo.value = uiFeed.replyTo;
 
   const emailBodySpec = makeFeedEmailBodySpec(uiFeed.emailBodySpec);
 
@@ -163,18 +187,32 @@ function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
     return emailBodySpec;
   }
 
+  const { emailBodyFullPost, emailBodyExcerptOnly, emailBodyExcerptWordCount } = uiElements;
+
+  emailBodyExcerptWordCount.valueAsNumber = defaultExcerptWordCount;
+
   if (emailBodySpec.kind === 'FullItemText') {
-    uiElements.emailBodyFullPost.checked = true;
+    emailBodyFullPost.checked = true;
   } else {
-    uiElements.emailBodyExcerptOnly.checked = true;
-    uiElements.emailBodyExcerptWordCount.valueAsNumber = emailBodySpec.wordCount;
+    emailBodyExcerptOnly.checked = true;
+    emailBodyExcerptWordCount.valueAsNumber = emailBodySpec.wordCount;
   }
+
+  emailBodyExcerptWordCount.max = maxExcerptWordCount.toString();
+  emailBodyExcerptWordCount.min = minExcerptWordCount.toString();
 }
 
 async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
+  const emailBodySpec = makeEmailBodySpecFromFromFields(formFields);
+
+  if (isErr(emailBodySpec)) {
+    return emailBodySpec;
+  }
+
   const editFeedRequest: EditFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
+    emailBodySpec,
     initialId: initialId.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,

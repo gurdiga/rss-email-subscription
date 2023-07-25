@@ -278,6 +278,7 @@ describe(applyEditFeedRequest.name, () => {
       id: initialFeedId,
       initialId: newFeedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+      emailBodySpec: makeFullItemText(),
     };
     const loadFeedFn = () => feed;
     const storeItem = makeStub<AppStorage['storeItem']>();
@@ -313,6 +314,7 @@ describe(applyEditFeedRequest.name, () => {
       id: feedId,
       initialId: feedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+      emailBodySpec: makeFullItemText(),
     };
     const feed = makeTestFeed({ id: editFeedRequest.id.value });
     const loadFeedFn = () => feed;
@@ -340,6 +342,7 @@ describe(applyEditFeedRequest.name, () => {
       id: feedId,
       initialId: initialFeedId,
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
+      emailBodySpec: makeFullItemText(),
     };
     const loadFeedErr = makeErr('Loading failed');
     const failingLoadFeedFn = () => loadFeedErr;

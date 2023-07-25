@@ -1,34 +1,30 @@
 import { ApiPath } from '../domain/api-path';
-import {
-  AddNewFeedRequestData,
-  AddNewFeedResponseData,
-  makeFullItemTextString,
-  makeItemExcerptWordCountString,
-} from '../domain/feed';
-import { FeedManageParams, makePagePathWithParams, PagePath } from '../domain/page-path';
+import { AddNewFeedRequestData, AddNewFeedResponseData, defaultExcerptWordCount } from '../domain/feed';
+import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import {
-  breadcrumbsUiElements,
   BreadcrumbsUiElements,
+  breadcrumbsUiElements,
   displayBreadcrumbs,
   feedListBreadcrumbsLink,
 } from './breadcrumbs';
 import {
-  apiResponseUiElements,
   ApiResponseUiElements,
+  HttpMethod,
+  UiFeedFormFields,
+  apiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
   displayValidationError,
-  HttpMethod,
+  makeEmailBodySpecFromFromFields,
   navigateTo,
   onSubmit,
   requireUiElements,
   sendApiRequest,
   uiFeedFormFields,
-  UiFeedFormFields,
 } from './shared';
 
 async function main() {
@@ -49,6 +45,8 @@ async function main() {
     feedListBreadcrumbsLink,
     { label: uiElements.pageTitle.textContent! },
   ]);
+
+  uiElements.emailBodyExcerptWordCount.value = defaultExcerptWordCount.toString();
 
   onSubmit(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
@@ -85,25 +83,21 @@ async function main() {
 }
 
 async function submitForm(formFields: UiFeedFormFields) {
+  const emailBodySpec = makeEmailBodySpecFromFromFields(formFields);
+
+  if (isErr(emailBodySpec)) {
+    return emailBodySpec;
+  }
+
   const request: AddNewFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,
-    emailBodySpec: makeAddNewFeedRequestEmailBodySpec(formFields),
+    emailBodySpec,
   };
 
   return await asyncAttempt(() => sendApiRequest<AddNewFeedResponseData>(ApiPath.addNewFeed, HttpMethod.POST, request));
-}
-
-function makeAddNewFeedRequestEmailBodySpec(formFields: UiFeedFormFields): string {
-  if (formFields.emailBodyFullPost.checked) {
-    return makeFullItemTextString();
-  } else if (formFields.emailBodyExcerptOnly.checked) {
-    return makeItemExcerptWordCountString(formFields.emailBodyExcerptWordCount.valueAsNumber);
-  } else {
-    return 'unexpected emailBodySpec';
-  }
 }
 
 interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {

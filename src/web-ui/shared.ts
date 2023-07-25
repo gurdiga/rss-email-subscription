@@ -1,5 +1,6 @@
 import { navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
+import { UiFeed, makeFullItemTextString, makeItemExcerptWordCountString } from '../domain/feed';
 import { PagePath } from '../domain/page-path';
 import {
   ApiResponse,
@@ -378,6 +379,16 @@ export interface FeedEmailBodyFields {
   emailBodyFullPost: HTMLInputElement;
   emailBodyExcerptOnly: HTMLInputElement;
   emailBodyExcerptWordCount: HTMLInputElement;
+}
+
+export function makeEmailBodySpecFromFromFields(formFields: FeedEmailBodyFields): Result<UiFeed['emailBodySpec']> {
+  if (formFields.emailBodyFullPost.checked) {
+    return makeFullItemTextString();
+  } else if (formFields.emailBodyExcerptOnly.checked) {
+    return makeItemExcerptWordCountString(formFields.emailBodyExcerptWordCount.valueAsNumber);
+  } else {
+    return makeErr('Invalid emailBodySpec state');
+  }
 }
 
 export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
