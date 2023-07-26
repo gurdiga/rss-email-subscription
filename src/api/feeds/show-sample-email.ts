@@ -86,7 +86,10 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
     return makeAppError('Failed to send the sample email');
   }
 
-  return makeSuccess('We’ve sent you a sample email with the most recent post from your blog feed');
+  return makeSuccess(
+    si`Please check ${account.email.value}.` +
+      ' We’ve sent you a sample email with the most recent post from your blog feed.'
+  );
 };
 
 async function getMostRecentPost(url: URL): Promise<Result<RssItem>> {
