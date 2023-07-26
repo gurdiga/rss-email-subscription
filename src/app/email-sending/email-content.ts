@@ -128,7 +128,7 @@ export function htmlBody(contents: string): string {
 }
 
 function makeReadMoreLink(url: URL): string {
-  return si`<p><a href="${url.toString()}">Read more on the blog.</a></p>`;
+  return si`<p><a href="${url.toString()}">Read more on the blog</a></p>`;
 }
 
 export function extractExcerpt(html: string, wordCount: number): string {
