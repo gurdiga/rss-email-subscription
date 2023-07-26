@@ -285,6 +285,7 @@ describe('API', () => {
             displayName: 'API Test Feed Name',
             url: 'https://api-test.com/rss.xml',
             email: 'api-test-feed@localhost.feedsubscription.com',
+            emailBodySpec: 'full-item-text',
             replyTo: 'feed-replyto@api-test.com',
             status: FeedStatus.AwaitingReview,
           });

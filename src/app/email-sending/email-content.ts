@@ -1,16 +1,27 @@
 import * as cheerio from 'cheerio';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
+import { FeedEmailBodySpec, isFullItemText } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
 import { RssItem } from '../../domain/rss-item';
-import { si } from '../../shared/string-utils';
+import { rawsi, si } from '../../shared/string-utils';
 
 export interface EmailContent {
   subject: string;
   htmlBody: string;
 }
 
-export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress: EmailAddress): EmailContent {
-  const itemHtml = massageContent(item.content, item.link);
+export function makeEmailContent(
+  item: RssItem,
+  unsubscribeUrl: URL,
+  fromAddress: EmailAddress,
+  emailBodySpec: FeedEmailBodySpec
+): EmailContent {
+  const sendFullText = isFullItemText(emailBodySpec);
+  const content = sendFullText
+    ? item.content
+    : extractExcerpt(item.content, emailBodySpec.wordCount) + makeReadMoreLink(item.link);
+
+  const itemHtml = preprocessContent(content, item.link);
 
   return {
     subject: item.title,
@@ -22,7 +33,11 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
       <footer>
         <small>
           <p>
-            You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.
+            ${
+              sendFullText
+                ? si`You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.`
+                : ''
+            }
             If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
           </p>
 
@@ -35,8 +50,8 @@ export function makeEmailContent(item: RssItem, unsubscribeUrl: URL, fromAddress
   };
 }
 
-export function massageContent(html: string, itemLink: URL) {
-  const $ = cheerio.load(html);
+export function preprocessContent(html: string, itemLink: URL) {
+  const $ = parseHtml(html);
 
   $('img').each((_index, image) => {
     setMaxWidth(image);
@@ -44,12 +59,13 @@ export function massageContent(html: string, itemLink: URL) {
   });
 
   $('p.MsoNormal').each((_index, p) => {
-    // Because Gmail defines .MsoNormal { margin: 0 }, which makes the
-    // entire email look like a blob.
+    // Because Gmail defines .MsoNormal { margin: 0 }, which removes the
+    // spacing between paragraphs, and makes the entire email look like
+    // a blob.
     $(p).removeClass('MsoNormal');
   });
 
-  return $('body').html() || '';
+  return $.html();
 }
 
 const maxWidthStyle = 'max-width:100% !important';
@@ -109,4 +125,63 @@ export function htmlBody(contents: string): string {
     </footer>
 
   </div>`;
+}
+
+function makeReadMoreLink(url: URL): string {
+  return si`<p><a href="${url.toString()}">Read more on the website…</a></p>`;
+}
+
+export function extractExcerpt(html: string, wordCount: number): string {
+  const $ = parseHtml(html);
+
+  let collectedWordCount = 0;
+
+  const processNode = (node: cheerio.AnyNode) => {
+    if (collectedWordCount < wordCount) {
+      collectWords(node);
+    } else {
+      removeNode(node);
+    }
+  };
+
+  const nodesToRemove: cheerio.AnyNode[] = [];
+  const removeNode = (node: cheerio.AnyNode) => nodesToRemove.push(node);
+
+  const collectWords = (node: cheerio.AnyNode) => {
+    if (node.type === 'tag') {
+      node.childNodes.forEach(processNode);
+    } else if (node.type === 'text') {
+      const nodeWordCount = node.data.trim().split(/\s+/).length;
+      const neededWordCount = wordCount - collectedWordCount;
+
+      if (neededWordCount < nodeWordCount) {
+        const firstWordsRe = new RegExp(rawsi`\s*(\S+(\s+|$)){${neededWordCount}}`);
+        const matches = node.data.match(firstWordsRe);
+
+        if (!matches) {
+          throw new Error('Could not match words for excerpt');
+        }
+
+        const firstNWords = matches[0];
+
+        node.data = firstNWords.trimEnd();
+        collectedWordCount += neededWordCount;
+      } else {
+        collectedWordCount += nodeWordCount;
+      }
+    }
+  };
+
+  $._root.childNodes.forEach(processNode);
+
+  nodesToRemove.reverse().forEach((node) => $(node).remove());
+
+  return $.html().trim();
+}
+
+export function parseHtml(html: string): ReturnType<typeof cheerio.load> {
+  const isFullDocument = false;
+  const cheerioOptions = {};
+
+  return cheerio.load(html, cheerioOptions, isFullDocument);
 }

@@ -44,6 +44,10 @@ export function makeFullItemText(): FullItemText {
   };
 }
 
+export function isFullItemText(value: unknown): value is FullItemText {
+  return hasKind(value, 'FullItemText');
+}
+
 type FullItemTextString = string;
 
 export function makeFullItemTextString(): FullItemTextString {
@@ -53,6 +57,10 @@ export function makeFullItemTextString(): FullItemTextString {
 export interface ItemExcerptWordCount {
   kind: 'ItemExcerptWordCount';
   wordCount: number;
+}
+
+export function isItemExcerptWordCount(value: unknown): value is ItemExcerptWordCount {
+  return hasKind(value, 'ItemExcerptWordCount');
 }
 
 export const defaultExcerptWordCount = 200;

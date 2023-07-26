@@ -7,6 +7,7 @@ import { RssItem } from '../../domain/rss-item';
 import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
 import { si } from '../../shared/string-utils';
 import { makeTestEmailAddress } from '../../shared/test-utils';
+import { FeedEmailBodySpec, makeFullItemText } from '../../domain/feed';
 
 async function main(): Promise<number> {
   const env = getEnv();
@@ -38,7 +39,8 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
     link: new URL('https://example.com/post.html'),
     pubDate: new Date(),
   };
-  const emailMessage = makeEmailContent(item, new URL('https://example.com'), from.emailAddress);
+  const emailBodySpec: FeedEmailBodySpec = makeFullItemText();
+  const emailMessage = makeEmailContent(item, new URL('https://example.com'), from.emailAddress, emailBodySpec);
   const subject = emailMessage.subject;
   const htmlBody = si`
       <p>This emai is sent from this unit test:</p>

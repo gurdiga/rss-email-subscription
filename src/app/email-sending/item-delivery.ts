@@ -321,7 +321,7 @@ export function makeStoredEmailMessageData(
   domainName: string
 ): StoredEmailMessageData {
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, domainName);
-  const emailContent = makeEmailContent(item, unsubscribeUrl, fromAddress);
+  const emailContent = makeEmailContent(item, unsubscribeUrl, fromAddress, feed.emailBodySpec);
 
   const message: StoredEmailMessageData = {
     to: to.emailAddress.value,

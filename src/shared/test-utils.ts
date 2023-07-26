@@ -17,10 +17,13 @@ import {
   Feed,
   FeedHashingSalt,
   FeedStatus,
+  ItemExcerptWordCount,
   isFeed,
   isFeedHashingSalt,
+  isItemExcerptWordCount,
   makeFeedHashingSalt,
   makeFullItemTextString,
+  makeItemExcerptWordCount,
 } from '../domain/feed';
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
@@ -217,6 +220,17 @@ export function makeTestConfirmationSecret(input: string = 'a'.repeat(confirmati
   assert(
     isConfirmationSecret(result),
     si`${makeConfirmationSecret.name} did not return a valid ConfirmationSecret: ${JSON.stringify(result)}`
+  );
+
+  return result;
+}
+
+export function makeTesItemExcerptWordCount(input: number): ItemExcerptWordCount {
+  const result = makeItemExcerptWordCount(si`${input} words`);
+
+  assert(
+    isItemExcerptWordCount(result),
+    si`${makeItemExcerptWordCount.name} did not return a valid ItemExcerptWordCount: ${JSON.stringify(result)}`
   );
 
   return result;

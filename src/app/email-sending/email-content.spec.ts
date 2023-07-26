@@ -1,9 +1,15 @@
 import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
-import { si } from '../../shared/string-utils';
-import { makeTestEmailAddress, encodeSearchParamValue, makeTestFeedId } from '../../shared/test-utils';
-import { makeEmailContent, makeUnsubscribeUrl, massageContent } from './email-content';
+import { FeedEmailBodySpec, makeFullItemText } from '../../domain/feed';
 import { RssItem } from '../../domain/rss-item';
+import { si } from '../../shared/string-utils';
+import {
+  encodeSearchParamValue,
+  makeTesItemExcerptWordCount,
+  makeTestEmailAddress,
+  makeTestFeedId,
+} from '../../shared/test-utils';
+import { extractExcerpt, makeEmailContent, makeUnsubscribeUrl, preprocessContent } from './email-content';
 import { makeFullEmailAddress } from './emails';
 
 const feedId = makeTestFeedId();
@@ -20,10 +26,11 @@ describe(makeEmailContent.name, () => {
     link: new URL('http://localhost:4000/jekyll/update/2021/06/12/welcome-to-jekyll.html'),
     guid: '1',
   };
+  const emailBodySpec: FeedEmailBodySpec = makeFullItemText();
 
   it('returns an EmailMessage value for the given RssItem', () => {
     const unsubscribeUrl = new URL('https://example.com');
-    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress);
+    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec);
 
     expect(emailMessage.subject).to.equal(item.title);
     expect(emailMessage.htmlBody).to.contain(item.content);
@@ -32,28 +39,45 @@ describe(makeEmailContent.name, () => {
     expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
     expect(emailMessage.htmlBody).to.contain('FeedSubscription.com?from=email-footer', 'trackable link');
   });
+
+  it('returns content according to given emailBodySpec', () => {
+    const unsubscribeUrl = new URL('https://example.com/unsubscribe?secret');
+    const emailBodySpec = makeTesItemExcerptWordCount(55);
+    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec);
+
+    const expectedContent =
+      '<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory.' + // 8 words
+      ' Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways,' + // 22 words
+      ' but the most common way is to run <code class="language-plaintext highlighter-rouge">jekyll serve</code>, which' + // 12 words, "," is a word in this context
+      ' launches a web server and auto-regenerates your site when a file is updated.</p>'; // 13 words
+
+    expect(emailMessage.htmlBody).to.contain(expectedContent);
+    expect(emailMessage.htmlBody).to.contain(item.link.toString(), 'includes link to the post on website');
+    expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
+    expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
+  });
 });
 
-describe(massageContent.name, () => {
+describe(preprocessContent.name, () => {
   const itemLink = new URL('https://test.com/post.html');
 
   it('forces image size into 100%', () => {
     const html = '<img id="the-image" />';
-    const result = massageContent(html, itemLink);
+    const result = preprocessContent(html, itemLink);
 
     expect(result).to.equal('<img id="the-image" style="max-width:100% !important">');
   });
 
   it('ensures src protocol', () => {
     const html = '<img src="//example.com/image.png" />';
-    const result = massageContent(html, itemLink);
+    const result = preprocessContent(html, itemLink);
 
     expect(result).to.equal('<img src="https://example.com/image.png" style="max-width:100% !important">');
   });
 
   it('removes .MsoNormal from <p>s', () => {
     const html = '<p class="MsoNormal ok-class">Some text</p>';
-    const result = massageContent(html, itemLink);
+    const result = preprocessContent(html, itemLink);
 
     expect(result).to.equal('<p class="ok-class">Some text</p>');
   });
@@ -91,5 +115,19 @@ describe(makeUnsubscribeUrl.name, () => {
         si`&displayName=${feedId.value}` +
         si`&email=${encodeSearchParamValue(hashedEmail.emailAddress.value)}`
     );
+  });
+});
+
+describe(extractExcerpt.name, () => {
+  it('returns a proper HTML excerpt', () => {
+    expect(extractExcerpt('One two <hr/> three', 2)).to.equal('One two');
+    expect(extractExcerpt('One two three', 2)).to.equal('One two');
+    expect(extractExcerpt('<b>One</b> two three', 2)).to.equal('<b>One</b> two');
+    expect(extractExcerpt('One <b>two</b> three', 2)).to.equal('One <b>two</b>');
+    expect(extractExcerpt('The words <b>one two three four five</b>', 4)).to.equal('The words <b>one two</b>');
+    expect(extractExcerpt('<p>The words <b>one two three four five</b> some more</p>', 4)).to.equal(
+      '<p>The words <b>one two</b></p>'
+    );
+    expect(extractExcerpt('<a><b><c><d>1</d><s>3 more words</s>', 2)).to.equal('<a><b><c><d>1</d><s>3</s></c></b></a>');
   });
 });
