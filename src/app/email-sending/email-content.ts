@@ -19,7 +19,7 @@ export function makeEmailContent(
   const sendFullText = isFullItemText(emailBodySpec);
   const content = sendFullText
     ? item.content
-    : extractExcerpt(item.content, emailBodySpec.wordCount) + makeReadMoreLink(item.link);
+    : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
 
   const itemHtml = preprocessContent(content, item.link);
 
@@ -128,7 +128,7 @@ export function htmlBody(contents: string): string {
 }
 
 function makeReadMoreLink(url: URL): string {
-  return si`<p><a href="${url.toString()}">Read more on the website…</a></p>`;
+  return si`<p><a href="${url.toString()}">Read more on the blog.</a></p>`;
 }
 
 export function extractExcerpt(html: string, wordCount: number): string {
