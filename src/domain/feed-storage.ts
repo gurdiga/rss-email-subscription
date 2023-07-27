@@ -219,7 +219,6 @@ export function applyEditFeedRequest(
   storage: AppStorage,
   loadFeedFn = loadFeed
 ): Result<void> {
-  // TODO: Assert editFeedRequest.id is NOT taken
   const feed = loadFeedFn(accountId, editFeedRequest.initialId, storage);
 
   if (isErr(feed)) {

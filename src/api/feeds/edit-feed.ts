@@ -1,3 +1,4 @@
+import { isAccountId } from '../../domain/account';
 import { EditFeedResponse, makeEditFeedRequest } from '../../domain/feed';
 import { applyEditFeedRequest } from '../../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
@@ -6,6 +7,7 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
 import { checkSession, isAuthenticatedSession } from '../session';
+import { getFeedAccountId } from './add-new-feed';
 
 export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: editFeed.name, reqId });
@@ -25,6 +27,22 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
       reason: editFeedRequest.reason,
     });
     return makeInputError(editFeedRequest.reason, editFeedRequest.field);
+  }
+
+  const feedAccountId = getFeedAccountId(editFeedRequest.id, app.storage, reqId);
+
+  if (isErr(feedAccountId)) {
+    logError(si`Failed to check if ${getFeedAccountId.name}`, { reason: feedAccountId.reason });
+    return makeAppError();
+  }
+
+  if (isAccountId(feedAccountId)) {
+    const errorMessage =
+      feedAccountId.value === session.accountId.value ? 'You already have a feed with this ID' : 'Feed ID is taken';
+
+    logWarning(errorMessage, { feedId: editFeedRequest.id.value });
+
+    return makeInputError(errorMessage, 'id');
   }
 
   const result = applyEditFeedRequest(editFeedRequest, accountId, app.storage);

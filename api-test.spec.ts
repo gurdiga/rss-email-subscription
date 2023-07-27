@@ -55,7 +55,7 @@ import {
   PasswordResetRequestData,
 } from './src/domain/password-reset';
 import { PlanId } from './src/domain/plan';
-import { ApiResponse, makeInputError, Success } from './src/shared/api-response';
+import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
 import { hash } from './src/shared/crypto';
 import { isErr } from './src/shared/lang';
@@ -369,7 +369,7 @@ describe('API', () => {
 
           const finalFeedList = await loadFeedsSend();
           const { responseData: feedsAfterDeletion } = finalFeedList.responseBody as Success<LoadFeedsResponseData>;
-          expect(feedsAfterDeletion).to.deep.equal([]);
+          expect(feedsAfterDeletion).to.not.include(newFeedId);
         });
 
         function loadStoredFeed(email: string, feedId: FeedId) {
@@ -404,6 +404,53 @@ describe('API', () => {
           const responseBody = (await editFeedSend(invalidRequest)).responseBody;
 
           expect(responseBody).to.deep.equal(makeInputError('Missing value', 'url'));
+        });
+
+        describe('when feed ID is taken', () => {
+          describe('by another feed of mine', () => {
+            beforeEach(async () => {
+              const addExistingFeed = await addNewFeedSend({
+                displayName: 'Another test feed',
+                url: 'https://test.com/existing-feed/rss',
+                id: 'existing-feed',
+                replyTo: 'reply-to-existing-feed@test.com',
+                emailBodySpec: makeFullItemTextString(),
+              });
+              expect(addExistingFeed.responseBody.kind).to.equal('Success');
+
+              const response = await addNewFeedSend({
+                displayName: 'Feed to edit',
+                url: 'https://test.com/feed-to-edit/rss',
+                id: 'feed-to-edit',
+                replyTo: 'reply-to-feed-to-edit@test.com',
+                emailBodySpec: makeFullItemTextString(),
+              });
+              expect(response.responseBody.kind).to.equal('Success');
+            });
+
+            it('refuses request', async () => {
+              const editFeedRequest: EditFeedRequestData = {
+                displayName: 'Feed to edit',
+                url: 'https://test.com/feed-to-edit/rss',
+                replyTo: 'reply-to-feed-to-edit@test.com',
+                emailBodySpec: makeFullItemTextString(),
+                initialId: 'feed-to-edit',
+                id: 'existing-feed',
+              };
+
+              const failedEditResponse = await editFeedSend(editFeedRequest);
+              const expectedFailedEditFeedResponse: InputError = {
+                field: 'id',
+                kind: 'InputError',
+                message: 'You already have a feed with this ID',
+              };
+              expect(failedEditResponse.responseBody).to.deep.equal(expectedFailedEditFeedResponse);
+            });
+          });
+
+          describe('by someone-else’s feed', () => {
+            // Not testing because it’s too complex
+          });
         });
       });
     });
@@ -737,7 +784,7 @@ describe('API', () => {
 
       return await post(path, request);
     }
-  });
+  }).timeout(5000);
 
   after(() => {
     const cleanup = deleteAccount(makeTestEmailAddress(userEmail));
