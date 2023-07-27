@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { FeedStatus, UiFeed } from '../domain/feed';
-import { makeTestFeedId } from '../shared/test-utils';
-import { UiData, makeUiData } from './manage-feed';
+import { makeCreateElementStub, makeTestFeedId } from '../shared/test-utils';
+import { UiData, makeStatusField, makeUiData } from './manage-feed';
 
 describe(makeUiData.name, () => {
   it('returns the field list and link hrefs', () => {
@@ -20,7 +20,7 @@ describe(makeUiData.name, () => {
       feedAttributes: [
         { label: 'Blog feed URL:', value: 'https://test.com/just-add-light/feed.xml', name: 'url' },
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
-        { label: 'Email:', value: 'just-add-light@test.com', name: 'email' },
+        { label: 'Email address:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Email body:', value: 'Send full post', name: 'emailBodySpec' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
       ],
@@ -33,5 +33,66 @@ describe(makeUiData.name, () => {
     const result = makeUiData(uiFeed, feedId);
 
     expect(result).to.deep.equal(expectedUiData);
+  });
+});
+
+describe(makeStatusField.name, () => {
+  it('returns DOM elements appropriate for feed status', () => {
+    const resultApproved = makeStatusField(FeedStatus.Approved, makeCreateElementStub());
+
+    expect(resultApproved, 'when approved').to.deep.equal([
+      { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
+      {
+        tagName: 'dd',
+        attributes: { class: 'res-feed-attribute-value' },
+        children: [
+          'Approved',
+          {
+            tagName: 'i',
+            attributes: { class: 'fa-solid fa-circle-check ms-1 text-success' },
+            children: [],
+          },
+        ],
+      },
+    ]);
+
+    const resultAwaitingReview = makeStatusField(FeedStatus.AwaitingReview, makeCreateElementStub());
+
+    expect(resultAwaitingReview, 'when awaiting review').to.deep.equal([
+      { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
+      {
+        tagName: 'dd',
+        attributes: { class: 'res-feed-attribute-value' },
+        children: [
+          'Awaiting Review',
+          {
+            tagName: 'p',
+            attributes: { class: 'form-text m-0 text-success' },
+            children: [
+              { tagName: 'i', attributes: { class: 'fa-solid fa-circle-info me-1 ' }, children: [] },
+              'It should take less than 24 hours to review and approve your feed. We’ll send you a notification at the account email.',
+            ],
+          },
+        ],
+      },
+    ]);
+
+    const resultRejected = makeStatusField(FeedStatus.Rejected, makeCreateElementStub());
+
+    expect(resultRejected, 'when rejected').to.deep.equal([
+      { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
+      {
+        tagName: 'dd',
+        attributes: { class: 'res-feed-attribute-value' },
+        children: [
+          'Rejected',
+          {
+            tagName: 'i',
+            attributes: { class: 'fa-solid fa-circle-xmark ms-1 text-danger' },
+            children: [],
+          },
+        ],
+      },
+    ]);
   });
 });

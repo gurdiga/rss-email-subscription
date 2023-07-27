@@ -211,34 +211,36 @@ function displayFeedAttributeList(
   deliveryReportsLink.href = uiData.deliveryReportsLinkHref;
 }
 
-// TODO: Add unit test?
-function makeStatusField(status: FeedStatus): HTMLElement[] {
-  const dtElement = createElement('dt', 'Status', { class: 'res-feed-attribute-label' });
-  const ddElement = createElement('dd', status, { class: 'res-feed-attribute-value' });
+export function makeStatusField(status: FeedStatus, createElementFn = createElement): HTMLElement[] {
+  const dtElement = createElementFn('dt', 'Status:', { class: 'res-feed-attribute-label' });
+  const ddElement = createElementFn('dd', status, { class: 'res-feed-attribute-value' });
 
   if (status === FeedStatus.AwaitingReview) {
-    const message = `
-      It should take less than 24 hours to review and approve your feed.
-      We’ll send you a notification at the account email.
-    `;
-    const approvalInfo = createElement('p', message, {
+    const message =
+      'It should take less than 24 hours to review and approve your feed.' +
+      ' We’ll send you a notification at the account email.';
+
+    const approvalInfo = createElementFn('p', message, {
       class: 'form-text m-0 text-success',
     });
-    const infoIcon = createElement('i', '', { class: 'fa-solid fa-circle-info me-1 ' });
+
+    const infoIcon = createElementFn('i', '', { class: 'fa-solid fa-circle-info me-1 ' });
+
     approvalInfo.prepend(infoIcon);
     ddElement.append(approvalInfo);
-  }
-
-  if (status === FeedStatus.Approved) {
-    const successIcon = createElement('i', '', { class: 'fa-solid fa-circle-check ms-1 text-success' });
+  } else if (status === FeedStatus.Approved) {
+    const successIcon = createElementFn('i', '', { class: 'fa-solid fa-circle-check ms-1 text-success' });
     ddElement.append(successIcon);
+  } else if (status === FeedStatus.Rejected) {
+    const failIcon = createElementFn('i', '', { class: 'fa-solid fa-circle-xmark ms-1 text-danger' });
+    ddElement.append(failIcon);
   }
 
   return [dtElement, ddElement];
 }
 
 function makeSubscriberCountField(subscriberCount: number, href: string): [HTMLElement, HTMLElement] {
-  const dtElement = createElement('dt', 'Subscriber count', { class: 'res-feed-attribute-label' });
+  const dtElement = createElement('dt', 'Subscriber count:', { class: 'res-feed-attribute-label' });
   const ddElement = createElement('dd', subscriberCount.toString(), { class: 'res-feed-attribute-value' });
 
   const linkText = subscriberCount === 0 ? 'Add subscribers' : 'Manage subscribers';
@@ -275,7 +277,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
   const feedAttributes: FeedAttribute[] = [
     { label: 'Blog feed URL:', value: uiFeed.url, name: 'url' },
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
-    { label: 'Email:', value: uiFeed.email, name: 'email' },
+    { label: 'Email address:', value: uiFeed.email, name: 'email' },
     { label: 'Email body:', value: uiFeed.emailBodySpec, name: 'emailBodySpec' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
   ];

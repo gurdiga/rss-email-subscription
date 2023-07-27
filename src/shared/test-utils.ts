@@ -31,6 +31,7 @@ import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../dom
 import { PlanId } from '../domain/plan';
 import { AppStorage, StorageKey, StorageValue, makeStorage } from '../domain/storage';
 import { si } from './string-utils';
+import { createElement } from '../web-ui/dom-isolation';
 
 export type Stub<F extends Function = Function> = Spy<F>; // Just an alias
 export type Spy<F extends Function = Function> = F & {
@@ -234,4 +235,27 @@ export function makeTesItemExcerptWordCount(input: number): ItemExcerptWordCount
   );
 
   return result;
+}
+
+export function makeCreateElementStub() {
+  return makeStub<typeof createElement>((...args: any[]) => {
+    const [tagName, textContent, attributes] = args;
+    const element = {};
+    const children: any[] = textContent ? [textContent] : [];
+
+    Object.defineProperties(element, {
+      append: {
+        value: (...args: any) => children.push(...args),
+        enumerable: false,
+      },
+      prepend: {
+        value: (...args: any) => children.unshift(...args),
+        enumerable: false,
+      },
+    });
+
+    Object.assign(element, { tagName, attributes, children });
+
+    return element;
+  });
 }
