@@ -944,6 +944,11 @@ update-docker-scout:
 
 	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/$$latest_tag/install.sh | sh -s --
 
+decode-ua:
+	@: $${UA:?Missing envar}
+
+	node -p 'require("ua-parser-js")(process.env.UA)'
+
 # Helper functions
 
 define include_log_to
