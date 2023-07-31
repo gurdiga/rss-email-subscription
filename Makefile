@@ -617,16 +617,24 @@ rsync-logs:
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
 
 sent-count: rsync-logs
-	@ls -1 .tmp/logs/feedsubscription/app.log-*.gz |
-	sort -r |
+	@$(MAKE) --no-print-directory sent-count-last-week |
+		tail -1 |
+		tee >( numfmt --grouping | ts "last week:  " | cat <(echo) - > /dev/stderr ) |
+	cat - <(
+		grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/my-footer.njk" |
+		sed 's/,//g'
+	) |
+	paste -sd+ - | bc |
+	numfmt --grouping |
+	ts "grand total:"
+
+sent-count-last-week: rsync-logs
+	@ls -1t .tmp/logs/feedsubscription/app.log-*.gz |
 	head -1 |
 	xargs zcat -f |
 	grep '"Sending report"' |
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
-	jq -s 'map(.data.report.sent) | add' |
-	cat - <(grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/my-footer.njk" | sed 's/,//g' ) |
-	paste -sd+ - | bc |
-	numfmt --grouping
+	jq -s 'map(.data.report.sent) | add'
 
 # cron @monthly
 prune-docker-images:
