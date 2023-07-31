@@ -23,7 +23,7 @@ import {
 import { makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, isFeedNotFound, loadFeed } from '../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isEmpty } from '../shared/array-utils';
+import { filterUniq, isEmpty } from '../shared/array-utils';
 import {
   Result,
   asyncAttempt,
@@ -418,7 +418,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     logWarning(si`Failed to ${makeHttpUrl.name} from some of the feed hrefs`, { errs, feedUrls, blogUrl });
   }
 
-  const validFeedUrls = feedUrls.filter(isUrl);
+  const validFeedUrls = feedUrls.filter(isUrl).filter(filterUniq);
 
   if (isEmpty(validFeedUrls)) {
     logWarning(si`No valid feed URL found`, { feedUrls, blogUrl });
