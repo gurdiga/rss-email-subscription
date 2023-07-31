@@ -4,6 +4,12 @@
 SHELL = bash
 TIME=gtime -f '%es'
 
+RED='\e[0;31m'
+NC='\033[0m' # No Color
+ERROR="${RED}ERROR${NC}"
+YELLOW='\e[38;5;82m'
+DEBUG="${YELLOW}DEBUG${NC}"
+
 default: pre-commit
 
 local-test:
@@ -961,6 +967,21 @@ decode-ua:
 	@: $${UA:?Missing envar}
 
 	node -p 'require("ua-parser-js")(process.env.UA)'
+
+hash-email:
+	@: $${FEED_ID:?Missing envar} $${EMAIL:?Missing envar}
+
+	feed_hashing_salt=$$(jq -r .hashingSalt .tmp/docker-data/accounts/*/feeds/$$FEED_ID/feed.json)
+
+	if [ -z "$$feed_hashing_salt" ]; then
+		echo -e "\n${ERROR}Feed not found?\n"
+		exit 1
+	fi
+
+	echo "feed_hashing_salt: $$feed_hashing_salt"
+	echo "email: $$EMAIL"
+
+	ts-node -pe "import {hash} from './src/shared/crypto'; hash('$$EMAIL', '$$feed_hashing_salt')"
 
 # Helper functions
 
