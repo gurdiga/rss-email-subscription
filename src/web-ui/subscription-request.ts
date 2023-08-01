@@ -15,6 +15,7 @@ import {
   displayValidationError,
   hideElement,
   onSubmit,
+  reportAppError,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -35,10 +36,14 @@ async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
     ...apiResponseUiElements,
     ...spinnerUiElements,
+    invalidLinkMessage: '#invalid-link-message',
+    applicationErrorMessage: '#application-error-message',
     ctaTextFeedName: '#cta-text-feed-name',
     form: '#form',
     emailField: '#email-field',
     submitButton: '#submit-button',
+    emailAddress: '#email-address',
+    successMessage: '#success-message',
   });
 
   if (isErr(uiElements)) {
@@ -49,12 +54,18 @@ async function main() {
   const response = await loadFeedDisplayName(queryParams.feedId);
 
   hideElement(uiElements.spinner);
-  unhideElement(uiElements.form);
 
-  if (isErr(response)) {
+  if (isErr(response) && response.reason === 'Feed not found') {
+    unhideElement(uiElements.invalidLinkMessage);
     return;
   }
 
+  if (isErr(response)) {
+    unhideElement(uiElements.applicationErrorMessage);
+    return;
+  }
+
+  unhideElement(uiElements.form);
   uiElements.ctaTextFeedName.textContent = response.displayName;
   uiElements.emailField.focus();
 
@@ -62,25 +73,23 @@ async function main() {
 }
 
 async function loadFeedDisplayName<T = LoadFeedDisplayNameResponseData>(feedId: string): Promise<Result<T>> {
-  const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadFeedDisplayName, HttpMethod.GET, { feedId }));
+  const path = ApiPath.loadFeedDisplayName;
+  const response = await asyncAttempt(() => sendApiRequest<T>(path, HttpMethod.GET, { feedId }));
 
   if (isErr(response)) {
-    return makeErr(si`Failed to GET ${ApiPath.loadFeedDisplayName}`);
+    reportAppError(si`Failed to GET ${path}: ${response.reason}`);
+    return makeErr(si`Failed to GET ${path}`);
   }
 
-  if (isAppError(response)) {
+  if (isAppError(response) || isInputError(response)) {
     return makeErr(response.message);
-  }
-
-  if (isInputError(response)) {
-    return makeErr('Input error when loading the feed display name');
   }
 
   return response.responseData!; // TODO: Avoid banging
 }
 
 function initForm(uiElements: RequiredUiElements, feedId: string): void {
-  const { form, submitButton, emailField, apiResponseMessage } = uiElements;
+  const { form, submitButton, emailField, apiResponseMessage, emailAddress, successMessage } = uiElements;
 
   onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
@@ -110,7 +119,8 @@ function initForm(uiElements: RequiredUiElements, feedId: string): void {
     }
 
     if (isSuccess(response)) {
-      displayApiResponse(response, apiResponseMessage);
+      emailAddress.textContent = uiElements.emailField.value;
+      unhideElement(successMessage);
       hideElement(form);
       return;
     }
@@ -124,10 +134,14 @@ interface RequiredParams {
 }
 
 interface RequiredUiElements extends ApiResponseUiElements, SpinnerUiElements {
+  invalidLinkMessage: HTMLElement;
+  applicationErrorMessage: HTMLElement;
   ctaTextFeedName: HTMLElement;
   form: HTMLFormElement;
   emailField: HTMLInputElement;
   submitButton: HTMLButtonElement;
+  emailAddress: HTMLElement;
+  successMessage: HTMLElement;
 }
 
 typeof window !== 'undefined' && main();
