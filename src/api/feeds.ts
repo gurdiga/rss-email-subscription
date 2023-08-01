@@ -7,7 +7,7 @@ import {
   storeEmails,
 } from '../app/email-sending/emails';
 import { fetch } from '../app/rss-checking/fetch';
-import { isValidFeedContentType } from '../app/rss-checking/rss-response';
+import { fetchRss, isValidFeedContentType } from '../app/rss-checking/rss-response';
 import {
   AddEmailsRequest,
   AddEmailsResponse,
@@ -410,6 +410,14 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     return makeInputError(feedHrefs.reason, fieldName);
   }
 
+  if (isEmpty(feedHrefs)) {
+    const guessedFeedUrl = await tryGuessingFeedUrl(blogUrl);
+
+    if (guessedFeedUrl) {
+      feedHrefs.push(guessedFeedUrl);
+    }
+  }
+
   const feedUrls = feedHrefs.map((x) => makeBlogFeedHttpUrl(x, blogUrl, fieldName));
 
   const errs = feedUrls.filter(isErr);
@@ -421,7 +429,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const validFeedUrls = feedUrls.filter(isUrl).filter(filterUniq);
 
   if (isEmpty(validFeedUrls)) {
-    logWarning(si`No valid feed URL found`, { feedUrls, blogUrl });
+    logWarning('No valid feed URL found', { feedUrls, blogUrl });
     return makeInputError('No valid feed URL found', fieldName);
   }
 
@@ -432,6 +440,21 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
 
   return makeSuccess('OK', logData, responseData);
 };
+
+async function tryGuessingFeedUrl(blogUrl: URL): Promise<string | undefined> {
+  const feedPathsToGuess = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml'];
+
+  for (const feedPath of feedPathsToGuess) {
+    const fullFeedUrl = new URL(blogUrl.origin + feedPath);
+    const rssResponse = await fetchRss(fullFeedUrl);
+
+    if (!isErr(rssResponse)) {
+      return fullFeedUrl.toString();
+    }
+  }
+
+  return undefined;
+}
 
 export function makeBlogFeedHttpUrl(href: string, blogUrl: URL, fieldName: string) {
   if (href.startsWith('//')) {
@@ -452,18 +475,10 @@ export function getFeedHrefs(html: string): Result<string[]> {
     const rssLinkSelectors = rssLinkTypes.map((type) => si`link[type="${type}"]`).join(',');
     const links = $(rssLinkSelectors);
 
-    if (links.length === 0) {
-      return makeErr('This blog doesn’t seem to have a published feed');
-    }
-
     const linkHrefs = links
       .map((_index, link) => $(link).attr('href')?.trim())
       .toArray()
       .filter(isNonEmptyString);
-
-    if (isEmpty(linkHrefs)) {
-      return makeErr('No feed <link> has "ref"');
-    }
 
     return linkHrefs;
   } catch (error) {

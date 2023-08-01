@@ -28,20 +28,20 @@ describe(getFeedHrefs.name, () => {
     expect(getFeedHrefs(html)).to.deep.equal(['/feed.xml']);
   });
 
-  it('returns an Err when no <link> found', () => {
+  it('returns [] when no <link> found', () => {
     const html = '<html>Valid HTML!</html>';
 
-    expect(getFeedHrefs(html)).to.deep.equal(makeErr('This blog doesn’t seem to have a published feed'));
+    expect(getFeedHrefs(html)).to.deep.equal([]);
   });
 
-  it('returns an Err when <link> "ref" is empty or missing', () => {
+  it('ignores <link>s with empty or missing "ref"', () => {
     expect(
       getFeedHrefs(si`
         <html>
           Valid HTML!
           <link type="application/atom+xml" rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
+    ).to.deep.equal([]);
 
     expect(
       getFeedHrefs(si`
@@ -49,7 +49,7 @@ describe(getFeedHrefs.name, () => {
           Valid HTML!
           <link type="application/atom+xml" ref="" rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
+    ).to.deep.equal([]);
 
     expect(
       getFeedHrefs(si`
@@ -58,7 +58,7 @@ describe(getFeedHrefs.name, () => {
           <link type="application/atom+xml" ref="
           " rel="alternate" />
         </html>`)
-    ).to.deep.equal(makeErr('No feed <link> has "ref"'));
+    ).to.deep.equal([]);
   });
 });
 
