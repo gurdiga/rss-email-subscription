@@ -442,7 +442,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
 };
 
 async function tryGuessingFeedUrl(blogUrl: URL): Promise<string | undefined> {
-  const feedPathsToGuess = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml'];
+  const feedPathsToGuess = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml', '/feed/rss/'];
 
   for (const feedPath of feedPathsToGuess) {
     const fullFeedUrl = new URL(blogUrl.origin + feedPath);
