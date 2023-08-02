@@ -456,13 +456,13 @@ list-qid-index:
 	@source .env
 	require=$${DATA_DIR_ROOT:?envar is missing}
 
-	ls -la $$DATA_DIR_ROOT/qid-index |
+	ls -1 $$DATA_DIR_ROOT/qid-index |
 	grep -v "^total " |
 	cat <(
 		echo "Subject: RES list-qid-index"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) - |
+	) <(echo "(empty?)") - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 delmon-dev:
