@@ -662,13 +662,13 @@ list-sessions:
 	@source .env
 	require=$${DATA_DIR_ROOT:?envar is missing}
 
-	ls -l $$DATA_DIR_ROOT/sessions |
+	ls -1 $$DATA_DIR_ROOT/sessions |
 	grep -v "^total " |
 	cat <(
 		echo "Subject: RES list-sessions"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) - |
+	) <(echo "(empty?)") - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 # cron @daily
