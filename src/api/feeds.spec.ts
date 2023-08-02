@@ -13,12 +13,17 @@ describe(getFeedHrefs.name, () => {
         <!-- the XML below is uppercased on purpose, to make sure this is found -->
         <link type="application/atom+XML" rel="alternate" href="/feed.xml" />
         <link type="application/atom+xml" rel="alternate" href="/feed-2.xml" />
+        <link type="application/atom+xml" rel="alternate" href="https://www.youtube.com/feeds/videos.xml?channel_id=UChFaTFPk7FVsI3Xi30tLS8Q" />
       </head>
       <body>Somebody!</body>
     </html>
     `;
 
-    expect(getFeedHrefs(html)).to.deep.equal(['/feed.xml', '/feed-2.xml']);
+    expect(getFeedHrefs(html)).to.deep.equal([
+      '/feed.xml',
+      '/feed-2.xml',
+      'https://www.youtube.com/feeds/videos.xml?channel_id=UChFaTFPk7FVsI3Xi30tLS8Q',
+    ]);
   });
 
   it('trims the "href"', () => {

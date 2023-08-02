@@ -469,7 +469,7 @@ export function makeBlogFeedHttpUrl(href: string, blogUrl: URL, fieldName: strin
 
 export function getFeedHrefs(html: string): Result<string[]> {
   try {
-    const $ = cheerio.load(html.toLowerCase());
+    const $ = cheerio.load(html);
 
     const rssLinkTypes = ['application/atom+xml', 'application/rss+xml'];
     const rssLinkSelectors = rssLinkTypes.map((type) => si`link[type="${type}"]`).join(',');
