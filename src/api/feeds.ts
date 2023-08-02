@@ -442,7 +442,16 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
 };
 
 async function tryGuessingFeedUrl(blogUrl: URL): Promise<string | undefined> {
-  const feedPathsToGuess = ['/feed', '/rss', '/feed.xml', '/rss.xml', '/atom.xml', '/feed/rss/'];
+  const feedPathsToGuess = [
+    '/feed', // WordPress
+    '/rss',
+    '/feed.xml',
+    '/rss.xml',
+    '/atom.xml',
+    '/feed/rss/', // NN/g
+    '/1/feed', // WIX
+    '/blog-feed.xml', // WIX
+  ];
 
   for (const feedPath of feedPathsToGuess) {
     const fullFeedUrl = new URL(blogUrl.origin + feedPath);
