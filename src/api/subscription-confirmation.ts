@@ -1,12 +1,12 @@
 import { loadEmailAddresses, storeEmails } from '../app/email-sending/emails';
+import { isAccountNotFound } from '../domain/account';
+import { findFeedAccountId } from '../domain/feed-storage';
+import { SubscriptionConfirmationRequest, makeSubscriptionId } from '../domain/subscription-id';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
-import { makeSubscriptionId, SubscriptionConfirmationRequest } from '../domain/subscription-id';
-import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { AppRequestHandler } from './app-request-handler';
-import { findFeedAccountId, isFeedNotFound } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
-import { isAccountNotFound } from '../domain/account';
+import { AppRequestHandler } from './app-request-handler';
 
 export const subscriptionConfirmation: AppRequestHandler = async function subscriptionConfirmation(
   reqId,
@@ -41,11 +41,6 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
   if (isErr(storedEmails)) {
     logError(si`Failed to ${loadEmailAddresses.name}`, { feedId, reason: storedEmails.reason });
     return makeAppError('Database read error');
-  }
-
-  if (isFeedNotFound(storedEmails)) {
-    logError('Feed not found', { feedId });
-    return makeInputError('Feed not found');
   }
 
   const { validEmails } = storedEmails;

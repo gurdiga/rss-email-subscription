@@ -264,10 +264,6 @@ export function hasConfirmedSubscribers(storage: AppStorage, accountId: AccountI
     return makeErr(si`Failed to ${loadEmailAddresses.name}: ${emailAddresses.reason}`);
   }
 
-  if (isFeedNotFound(emailAddresses)) {
-    return makeErr(si`Feed not found: "${feedId.value}", accountId: ${accountId.value}`);
-  }
-
   const hasConfirmedEmails = emailAddresses.validEmails.some((x) => x.isConfirmed);
 
   return hasConfirmedEmails;

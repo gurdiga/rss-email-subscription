@@ -3,7 +3,6 @@ import { AccountId, isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
 import { makeEmailAddress } from '../../domain/email-address-making';
 import { Feed } from '../../domain/feed';
-import { isFeedNotFound } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
@@ -49,11 +48,6 @@ export async function sendEmails(
 
   if (isErr(emailAddresses)) {
     logError('Could not read emails', { reason: emailAddresses.reason });
-    return 1;
-  }
-
-  if (isFeedNotFound(emailAddresses)) {
-    logError('Feed not found');
     return 1;
   }
 
