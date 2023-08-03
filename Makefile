@@ -706,7 +706,7 @@ watch-containers:
 		echo "Subject: RES 404-report"; \
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
-	) <(echo "(empty?)") - |
+	) - <(echo "(empty?)") |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 deno-notes:
