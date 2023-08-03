@@ -4,8 +4,9 @@ import { sendEmails } from '../app/email-sending';
 import { checkRss } from '../app/rss-checking';
 import { isAccountNotFound } from '../domain/account';
 import { getAllAccountIds, loadAccount } from '../domain/account-storage';
+import { AppSettings, loadAppSettings } from '../domain/app-settings';
 import { FeedStatus } from '../domain/feed';
-import { loadFeedsByAccountId } from '../domain/feed-storage';
+import { hasConfirmedSubscribers, loadFeedsByAccountId } from '../domain/feed-storage';
 import { AppStorage, makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { requireEnv } from '../shared/env';
@@ -13,7 +14,6 @@ import { isErr } from '../shared/lang';
 import { logDuration, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
-import { AppSettings, loadAppSettings } from '../domain/app-settings';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -97,11 +97,11 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
         continue;
       }
 
-      const approvedFeeds = feedsByAccountId.validFeeds.filter((x) => x.status === FeedStatus.Approved);
+      const approvedFeedsWithSubscribers = feedsByAccountId.validFeeds
+        .filter((feed) => feed.status === FeedStatus.Approved)
+        .filter((feed) => hasConfirmedSubscribers(storage, accountId, feed.id) === true);
 
-      logInfo('Counting approved feeds', { ...logData, feedCount: approvedFeeds.length });
-
-      for (const feed of approvedFeeds) {
+      for (const feed of approvedFeedsWithSubscribers) {
         const feedLogData = { ...logData, displayName: feed.displayName, feedId: feed.id.value };
 
         await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage, env, settings));

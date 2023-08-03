@@ -1,3 +1,4 @@
+import { loadEmailAddresses } from '../app/email-sending/emails';
 import { Err, Result, hasKind, isErr, isObject, makeErr, makeTypeMismatchErr } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
@@ -254,4 +255,20 @@ export function applyEditFeedRequest(
   }
 
   return renameResult;
+}
+
+export function hasConfirmedSubscribers(storage: AppStorage, accountId: AccountId, feedId: FeedId): Result<boolean> {
+  const emailAddresses = loadEmailAddresses(accountId, feedId, storage);
+
+  if (isErr(emailAddresses)) {
+    return makeErr(si`Failed to ${loadEmailAddresses.name}: ${emailAddresses.reason}`);
+  }
+
+  if (isFeedNotFound(emailAddresses)) {
+    return makeErr(si`Feed not found: "${feedId.value}", accountId: ${accountId.value}`);
+  }
+
+  const hasConfirmedEmails = emailAddresses.validEmails.some((x) => x.isConfirmed);
+
+  return hasConfirmedEmails;
 }
