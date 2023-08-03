@@ -4,6 +4,7 @@ import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
+import { getEmailsStorageKey } from './src/app/email-sending/emails';
 import {
   AccountData,
   AccountId,
@@ -290,6 +291,10 @@ describe('API', () => {
             status: FeedStatus.AwaitingReview,
           });
 
+          const subscribers = loadStoredFeedSubscribers(userEmail, testFeedId);
+
+          expect(subscribers).to.deep.equal([userEmail]);
+
           const loadFeedsResponse = await loadFeedsSend();
           const { responseData: loadedFeeds } = loadFeedsResponse.responseBody as Success<LoadFeedsResponseData>;
 
@@ -328,7 +333,7 @@ describe('API', () => {
           let expectedResponse: Success<LoadEmailsResponse> = {
             kind: 'Success',
             message: 'Feed subscribers',
-            responseData: { displayName: displayNameUpdated, emails: [] },
+            responseData: { displayName: displayNameUpdated, emails: [userEmail] },
           };
           let { responseBody: loadEmailsResponse } = await loadEmailsSend(newFeedId);
           expect(loadEmailsResponse).to.deep.equal(expectedResponse);
@@ -343,7 +348,7 @@ describe('API', () => {
             kind: 'Success',
             message: 'Added 3 subscribers',
             responseData: {
-              currentEmails: [...emailsToAdd].sort(sortBy(domainAndLocalPart)),
+              currentEmails: [userEmail, ...emailsToAdd].sort(sortBy(domainAndLocalPart)),
               newEmailsCount: emailsToAdd.length,
             },
           };
@@ -357,7 +362,7 @@ describe('API', () => {
           const expectedDeleteEmailsResponse: Success<DeleteEmailsResponse> = {
             kind: 'Success',
             message: 'Deleted subscribers',
-            responseData: { currentEmails: [emailsToAdd[0]!, emailsToAdd[2]!] },
+            responseData: { currentEmails: [emailsToAdd[0]!, emailsToAdd[2]!, userEmail] },
           };
           expect(deleteEmailsResponse).to.deep.equal(expectedDeleteEmailsResponse);
 
@@ -376,6 +381,15 @@ describe('API', () => {
           const accountId = getAccountId(email);
 
           return loadJSON(getFeedJsonStorageKey(accountId, feedId)) as FeedStoredData;
+        }
+
+        function loadStoredFeedSubscribers(email: string, feedId: FeedId) {
+          const accountId = getAccountId(email);
+          const storageKey = getEmailsStorageKey(accountId, feedId);
+
+          const json = loadJSON(storageKey);
+
+          return Object.values(json).map((x: any) => x.emailAddress);
         }
 
         function storedFeedExists(email: string, feedId: FeedId) {
@@ -513,7 +527,6 @@ describe('API', () => {
     });
 
     it('flows', async () => {
-      // ASSUMPTION: The feed testFeedId exists
       const { responseBody: subscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(subscriptionResult.kind).to.equal(
         'Success',

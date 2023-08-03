@@ -5,7 +5,7 @@ import { AddNewFeedResponseData, Feed, FeedStatus } from '../../domain/feed';
 import { makeNewFeedHashingSalt } from '../../domain/feed-crypto';
 import { FeedId } from '../../domain/feed-id';
 import { makeFeed } from '../../domain/feed-making';
-import { feedExists, storeFeed } from '../../domain/feed-storage';
+import { addFeedSubscriber, feedExists, storeFeed } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
@@ -52,7 +52,15 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
 
   if (isErr(storeFeedResult)) {
     logError(si`Failed to ${storeFeed.name}`, { reason: storeFeedResult.reason });
-    return makeAppError('Failed to create feed');
+    return makeAppError();
+  }
+
+  const accountEmail = session.email;
+  const result = addFeedSubscriber(app.storage, accountEmail, feed, accountId);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${addFeedSubscriber.name}`, { reason: result.reason });
+    return makeAppError();
   }
 
   logInfo('New feed added', {

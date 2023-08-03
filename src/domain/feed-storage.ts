@@ -1,9 +1,10 @@
-import { loadEmailAddresses } from '../app/email-sending/emails';
+import { loadEmailAddresses, makeEmailHashFn, makeHashedEmail, storeEmails } from '../app/email-sending/emails';
 import { Err, Result, hasKind, isErr, isObject, makeErr, makeTypeMismatchErr } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
+import { EmailAddress } from './email-address';
 import { EditFeedRequest, Feed, FeedStatus, makeFeedEmailBodySpecString } from './feed';
 import { FeedId, makeFeedId } from './feed-id';
 import { makeFeed } from './feed-making';
@@ -267,4 +268,17 @@ export function hasConfirmedSubscribers(storage: AppStorage, accountId: AccountI
   const hasConfirmedEmails = emailAddresses.validEmails.some((x) => x.isConfirmed);
 
   return hasConfirmedEmails;
+}
+
+export function addFeedSubscriber(storage: AppStorage, accountEmail: EmailAddress, feed: Feed, accountId: AccountId) {
+  const isConfirmed = true;
+  const emailHashFn = makeEmailHashFn(feed.hashingSalt);
+  const hashedEmail = makeHashedEmail(accountEmail, emailHashFn, isConfirmed);
+  const result = storeEmails([hashedEmail], accountId, feed.id, storage);
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to ${storeEmails.name}: ${result.reason}`);
+  }
+
+  return result;
 }
