@@ -343,10 +343,10 @@ export const addFeedSubscribers: AppRequestHandler = async function addFeedSubsc
 
   const storedEmailStrings = storedEmails.validEmails.map((x) => x.emailAddress.value);
   const emailHashFn = makeEmailHashFn(feed.hashingSalt);
-  const confirmationState = true;
+  const defaultConfirmationState = true;
   const newHashedEmails = parseResult.validEmails
     .filter((x) => !storedEmailStrings.includes(x.value))
-    .map((x) => makeHashedEmail(x, emailHashFn, confirmationState));
+    .map((x) => makeHashedEmail(x, emailHashFn, defaultConfirmationState));
   const newEmailsToStore = storedEmails.validEmails.concat(...newHashedEmails);
   const result = storeEmails(newEmailsToStore, accountId, feedId, app.storage);
 
