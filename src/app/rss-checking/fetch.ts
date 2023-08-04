@@ -1,16 +1,38 @@
 /** To prevent the abusive case where someone sets up a malicious feed of 100G. */
-const defaultMaxResponseBytes = 10 * 1024 * 124;
+interface FetchOptions {
+  maxResponseBytes: number;
+  timeoutMs: number;
+}
 
-export async function fetch(url: URL, maxResponseBytes = defaultMaxResponseBytes): Promise<Response> {
-  return globalThis.fetch(url, { redirect: 'follow' }).then((response) => {
-    const limitedStream = getLimitedReadableStream(response.body, maxResponseBytes);
+const defaultFetchOptions: FetchOptions = {
+  maxResponseBytes: 10 * 1024 * 124,
+  timeoutMs: 3 * 1000,
+};
 
-    return new Response(limitedStream, {
-      headers: response.headers,
-      status: response.status,
-      statusText: response.statusText,
+export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}): Promise<Response> {
+  const options: FetchOptions = {
+    ...defaultFetchOptions,
+    ...inputOptions,
+  };
+
+  const abortController = new AbortController();
+  const abortControllerTimeoutId = setTimeout(() => abortController.abort(), options.timeoutMs);
+
+  const response = await globalThis
+    .fetch(url, { redirect: 'follow', signal: abortController.signal })
+    .then((response) => {
+      const limitedStream = getLimitedReadableStream(response.body, options.maxResponseBytes);
+
+      return new Response(limitedStream, {
+        headers: response.headers,
+        status: response.status,
+        statusText: response.statusText,
+      });
     });
-  });
+
+  clearTimeout(abortControllerTimeoutId);
+
+  return response;
 }
 
 export type FetchFn = typeof fetch;
