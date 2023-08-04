@@ -20,7 +20,7 @@ x-app-env: &app-env
 
 services:
   smtp-out:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: smtp-out
     hostname: feedsubscription.com
     image: smtp-out
@@ -50,9 +50,13 @@ services:
     <<: [*logging]
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
+    networks:
+      net:
+        ipv4_address: 10.5.5.9
+    dns: 10.5.5.2
 
   smtp-in:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: smtp-in
     hostname: smtp-in
     image: smtp-in
@@ -75,9 +79,13 @@ services:
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.8
+    dns: 10.5.5.2
 
   app:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: app
     hostname: app
     image: app
@@ -93,9 +101,13 @@ services:
       <<: *app-env
     command: node dist/app/cron.js
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.7
+    dns: 10.5.5.2
 
   delmon:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: delmon
     hostname: delmon
     image: delmon
@@ -107,9 +119,13 @@ services:
     environment:
       <<: *app-env
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.6
+    dns: 10.5.5.2
 
   api:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: api
     hostname: api
     image: app
@@ -124,6 +140,10 @@ services:
       # TS_NODE_DEBUG: 'true'
       <<: *app-env
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.5
+    dns: 10.5.5.2
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -141,10 +161,14 @@ services:
     environment:
       NGINX_HOST: feedsubscription.com
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.4
+    dns: 10.5.5.2
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
-    depends_on: [logger]
+    depends_on: [logger, resolver]
     container_name: certbot
     hostname: certbot
     image: certbot
@@ -164,6 +188,10 @@ services:
         done;
       '
     <<: [*logging]
+    networks:
+      net:
+        ipv4_address: 10.5.5.3
+    dns: 10.5.5.2
 
   logger:
     container_name: logger
@@ -173,3 +201,29 @@ services:
     ports: ['127.0.0.1:514:514']
     volumes:
       - ./.tmp/logs:/var/log/syslog-ng
+    networks:
+      net:
+        ipv4_address: 10.5.5.1
+    dns: 10.5.5.2
+
+  resolver:
+    depends_on: [logger]
+    hostname: resolver
+    image: ubuntu/bind9
+    container_name: resolver
+    restart: always
+    ports: ['127.0.0.1:30053:53']
+    volumes:
+      - ./.tmp/resolver/var/cache/bind:/var/cache/bind
+    networks:
+      net:
+        ipv4_address: 10.5.5.2
+    <<: [*logging]
+
+networks:
+  net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.5.5.0/8
+          gateway: 10.5.5.100

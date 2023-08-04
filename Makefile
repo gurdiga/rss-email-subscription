@@ -182,6 +182,10 @@ smtp-in:
 start:
 	docker-compose --project-name res up --remove-orphans --detach
 
+start-resolver:
+	docker-compose --project-name res up --remove-orphans --detach \
+		-- resolver
+
 start-app: app
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- app
