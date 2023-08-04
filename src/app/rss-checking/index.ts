@@ -33,7 +33,9 @@ export async function checkRss(
     feedDisplayName,
   });
   const { url } = feed;
+  const startTime = Date.now();
   const rssResponse = await fetchRss(url);
+  const durationMs = Date.now() - startTime;
 
   if (isErr(rssResponse)) {
     logError('Failed fetching RSS', { url, reason: rssResponse.reason });
@@ -46,9 +48,6 @@ export async function checkRss(
 
     return 1;
   }
-
-  // Just to get a sense of what is a common response length.
-  logInfo('RSS xml lenght', { length: rssResponse.xml.length });
 
   const rssParsingResult = await parseRssItems(rssResponse);
 
@@ -94,13 +93,15 @@ export async function checkRss(
   }
 
   const report = {
+    xmlLength: rssResponse.xml.length,
+    durationMs,
     validItems: validItems.length,
     lastPostMetadata,
     newItems: newItems.length,
     writtenItems: recordingResult,
   };
 
-  logInfo('Feed checking report', { report });
+  logInfo('RSS check report', { report });
 
   const result = recordLastPostMetadata(accountId, feed.id, storage, newItems);
 
