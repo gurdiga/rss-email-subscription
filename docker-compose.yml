@@ -214,6 +214,7 @@ services:
     restart: always
     ports: ['127.0.0.1:30053:53']
     volumes:
+      # Needs chown -R 100:101 .tmp/resolver; get UID and GID by running the container locally
       - ./.tmp/resolver/var/cache/bind:/var/cache/bind
     networks:
       net:
