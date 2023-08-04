@@ -47,6 +47,9 @@ export async function checkRss(
     return 1;
   }
 
+  // Just to get a sense of what is a common response length.
+  logInfo('RSS xml lenght', { length: rssResponse.xml.length });
+
   const rssParsingResult = await parseRssItems(rssResponse);
 
   if (isErr(rssParsingResult)) {
