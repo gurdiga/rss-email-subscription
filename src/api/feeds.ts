@@ -436,12 +436,22 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const isCommentFeed = (url: URL) => url.pathname.includes('/comments/');
 
   const postFeedUrls = validFeedUrls.filter((x) => !isCommentFeed(x));
+
+  // Most of the time, this is the feed we’re after. The rest are either
+  // comment feeds or something else that is not of interest to us.
+  const firstFeedUrl = postFeedUrls[0];
+
+  if (!firstFeedUrl) {
+    logWarning('No valid post feed URL found', { feedUrls, blogUrl });
+    return makeInputError('No valid post feed URL found', fieldName);
+  }
+
   const commentFeedUrls = validFeedUrls.filter(isCommentFeed);
 
   const logData = {};
-  const responseData: CheckFeedUrlResponseData = { feedUrls: postFeedUrls.toString() };
+  const responseData: CheckFeedUrlResponseData = { feedUrls: firstFeedUrl.toString() };
 
-  logInfo('Blog RSS check', { blogUrl, postFeedUrls, commentFeedUrls });
+  logInfo('Blog RSS check', { blogUrl, firstFeedUrl, postFeedUrls, commentFeedUrls });
 
   return makeSuccess('OK', logData, responseData);
 };
