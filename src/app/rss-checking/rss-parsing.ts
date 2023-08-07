@@ -8,6 +8,7 @@ import { si } from '../../shared/string-utils';
 
 export interface RssParsingResult {
   kind: 'RssParsingResult';
+  title: string;
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
 }
@@ -35,6 +36,7 @@ export async function parseRssItems(
 
       return {
         kind: 'RssParsingResult',
+        title: feed.title || 'Untitled Blog',
         validItems,
         invalidItems,
       };

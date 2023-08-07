@@ -48,6 +48,7 @@ describe(parseRssItems.name, () => {
 
     expect(result).to.deep.equal({
       kind: 'RssParsingResult',
+      title: 'Your awesome title',
       validItems: expectedValidItems,
       invalidItems: [],
     } as RssParsingResult);
@@ -83,6 +84,7 @@ describe(parseRssItems.name, () => {
 
     expect(result).to.deep.equal({
       kind: 'RssParsingResult',
+      title: "Seth's Blog",
       validItems: expectedValidItems,
       invalidItems: [],
     } as RssParsingResult);
