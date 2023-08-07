@@ -429,15 +429,24 @@ watch-delmon:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/delmon.log |
 	while read -r _skip_timestamp _skip_namespace _skip_container_name_and_id json; do
 		(
-			severity=$$(jq -r .severity <<<"$$json")
-			message=$$(jq -r .message <<<"$$json")
-
-			echo "Subject: RES delmon $$severity: $$message"
 			echo "From: RES <system@feedsubscription.com>"
-			echo
 
-			wc --bytes <<<"$$json" | ts "JSON bytes:"
-			jq . <<<"$$json"
+			if jq --exit-status <<<"$$json" &> /dev/null; then
+				severity=$$(jq -r .severity <<<"$$json")
+				message=$$(jq -r .message <<<"$$json")
+
+				echo "Subject: RES delmon $$severity: $$message"
+				echo
+
+				wc --bytes <<<"$$json" | ts "JSON bytes:"
+				jq . <<<"$$json"
+			else
+				echo "Subject: RES delmon non-JSON log record"
+				echo
+
+				wc --bytes <<<"$$json" | ts "bytes:"
+				echo "$$json"
+			fi
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 	done \
