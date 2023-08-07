@@ -1,6 +1,6 @@
 import { Request, RequestHandler, Response } from 'express';
 import { ApiResponse, Success } from '../shared/api-response';
-import { exhaustivenessCheck } from '../shared/lang';
+import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -40,8 +40,14 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     logInfo(action, { reqId, reqBody, reqParams });
 
     const start = new Date();
-    const result = await handler(reqId, reqBody, reqParams, reqSession, app);
+    const result = await asyncAttempt(() => handler(reqId, reqBody, reqParams, reqSession, app));
     const durationMs = new Date().getTime() - start.getTime();
+
+    if (isErr(result)) {
+      logError('AppRequestHandler threw', { reason: result.reason, durationMs });
+      res.status(500).send(result);
+      return;
+    }
 
     switch (result.kind) {
       case 'Success': {
