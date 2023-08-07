@@ -49,3 +49,12 @@ export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
 
   return feedId;
 }
+
+export function makeSampleFeedId(): FeedId {
+  const feedId: FeedId = {
+    kind: 'FeedId',
+    value: 'sample-feed-id',
+  };
+
+  return feedId;
+}

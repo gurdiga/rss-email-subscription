@@ -7,6 +7,7 @@ import { AppRequestHandler } from './app-request-handler';
 import { findFeedAccountId } from '../domain/feed-storage';
 import { si } from '../shared/string-utils';
 import { isAccountNotFound } from '../domain/account';
+import { makeSampleFeedId } from '../domain/feed-id';
 
 export const unsubscription: AppRequestHandler = async function unsubscription(
   reqId,
@@ -24,6 +25,13 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   }
 
   const { emailHash, feedId } = request.id;
+
+  if (feedId.value === makeSampleFeedId().value) {
+    logInfo('Unsubscribed from sample email');
+
+    return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
+  }
+
   const accountId = findFeedAccountId(feedId, storage);
 
   if (isErr(accountId)) {
