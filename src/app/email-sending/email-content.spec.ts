@@ -81,6 +81,13 @@ describe(preprocessContent.name, () => {
 
     expect(result).to.equal('<p class="ok-class">Some text</p>');
   });
+
+  it('absolutize a.href', () => {
+    const html = '<a href="/path/page.htm">link text</a>';
+    const result = preprocessContent(html, itemLink);
+
+    expect(result).to.equal('<a href="https://test.com/path/page.htm">link text</a>');
+  });
 });
 
 describe(makeUnsubscribeUrl.name, () => {

@@ -65,7 +65,19 @@ export function preprocessContent(html: string, itemLink: URL) {
     $(p).removeClass('MsoNormal');
   });
 
+  $('a[href]').each((_index, a) => {
+    ensureAbsoluteHref(a, itemLink);
+  });
+
   return $.html();
+}
+
+function ensureAbsoluteHref(a: cheerio.Element, itemLink: URL): void {
+  const href = a.attribs['href'];
+
+  if (href?.startsWith('/')) {
+    a.attribs['href'] = itemLink.origin + href;
+  }
 }
 
 const maxWidthStyle = 'max-width:100% !important';
