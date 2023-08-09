@@ -159,6 +159,12 @@ logger:
 		--tag logger \
 		docker-services/logger
 
+resolver:
+	docker buildx build \
+		--progress=plain \
+		--tag resolver \
+		docker-services/resolver
+
 logger-list-packages:
 	docker exec -it logger apk list -a |
 	grep -P "^(syslog-ng|logrotate|tini)-\d"
