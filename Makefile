@@ -922,7 +922,7 @@ docker-image-check:
 	while read image; do
 		echo "====================== $$image ======================"
 
-		if ! docker scout cves --exit-code "$$image" > /dev/null; then
+		if ! docker scout cves --exit-code "$$image"; then
 			exit 1
 		fi
 	done
