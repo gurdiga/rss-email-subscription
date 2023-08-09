@@ -8,6 +8,7 @@ import {
 } from '../app/email-sending/emails';
 import { fetch } from '../app/rss-checking/fetch';
 import { fetchRss, isValidFeedContentType } from '../app/rss-checking/rss-response';
+import { isAccountNotFound } from '../domain/account';
 import {
   AddEmailsRequest,
   AddEmailsResponse,
@@ -23,7 +24,7 @@ import {
 import { makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, isFeedNotFound, loadFeed } from '../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { filterUniq, isEmpty } from '../shared/array-utils';
+import { isEmpty } from '../shared/array-utils';
 import {
   Result,
   asyncAttempt,
@@ -37,10 +38,9 @@ import {
 } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { isUrl, makeHttpUrl } from '../shared/url';
+import { makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession } from './session';
-import { isAccountNotFound } from '../domain/account';
 
 export const loadFeedDisplayName: AppRequestHandler = async function loadFeedDisplayName(
   reqId,
@@ -391,9 +391,10 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   }
 
   const contentType = response.headers.get('content-type') || '';
+  const isProbablyFeedUrl = isValidFeedContentType(contentType);
 
-  if (isValidFeedContentType(contentType)) {
-    const responseData: CheckFeedUrlResponseData = { feedUrls: blogUrl.toString() };
+  if (isProbablyFeedUrl) {
+    const responseData: CheckFeedUrlResponseData = { feedUrl: blogUrl.toString() };
     return makeSuccess('OK', {}, responseData);
   }
 
@@ -406,74 +407,60 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const feedHrefs = getFeedHrefs(html);
 
   if (isErr(feedHrefs)) {
-    logWarning(si`Failed to ${getFeedHrefs.name}`, { reason: feedHrefs.reason, blogUrl });
+    logWarning(si`Failed to ${getFeedHrefs.name}`, { reason: feedHrefs.reason, blogUrl: blogUrl.toString() });
     return makeInputError(feedHrefs.reason, fieldName);
   }
 
-  if (isEmpty(feedHrefs)) {
+  // ASSUMPTION: Most of the time, the first one is the post RSS feed,
+  // and then, if any, comment feeds, or post feed in other formats.
+  let feedHref = feedHrefs[0];
+
+  if (!feedHref) {
     const guessedFeedUrl = await tryGuessingFeedUrl(blogUrl);
 
     if (guessedFeedUrl) {
-      feedHrefs.push(guessedFeedUrl);
+      feedHref = guessedFeedUrl;
     }
   }
 
-  const feedUrls = feedHrefs.map((x) => makeBlogFeedHttpUrl(x, blogUrl, fieldName));
-
-  const errs = feedUrls.filter(isErr);
-
-  if (!isEmpty(errs)) {
-    logWarning(si`Failed to ${makeHttpUrl.name} from some of the feed hrefs`, { errs, feedUrls, blogUrl });
+  if (!feedHref) {
+    logWarning('No RSS feed found', { blogUrl: blogUrl.toString() });
+    return makeInputError('No RSS feed found', fieldName);
   }
 
-  const validFeedUrls = feedUrls.filter(isUrl).filter(filterUniq);
+  const feedUrl = makeBlogFeedHttpUrl(feedHref, blogUrl, fieldName);
 
-  if (isEmpty(validFeedUrls)) {
-    logWarning('No valid feed URL found', { feedUrls, blogUrl });
-    return makeInputError('No valid feed URL found', fieldName);
+  if (isErr(feedUrl)) {
+    logWarning('Invalid feed URL', { feedHref, blogUrl: blogUrl.toString() });
+    return makeInputError('Invalid feed URL', fieldName);
   }
-
-  const isCommentFeed = (url: URL) => url.pathname.includes('/comments/');
-
-  const postFeedUrls = validFeedUrls.filter((x) => !isCommentFeed(x));
-
-  // Most of the time, this is the feed we’re after. The rest are either
-  // comment feeds or something else that is not of interest to us.
-  const firstFeedUrl = postFeedUrls[0];
-
-  if (!firstFeedUrl) {
-    logWarning('No valid post feed URL found', { feedUrls, blogUrl });
-    return makeInputError('No valid post feed URL found', fieldName);
-  }
-
-  const commentFeedUrls = validFeedUrls.filter(isCommentFeed);
 
   const logData = {};
-  const responseData: CheckFeedUrlResponseData = { feedUrls: firstFeedUrl.toString() };
+  const responseData: CheckFeedUrlResponseData = { feedUrl: feedUrl.toString() };
 
-  logInfo('Blog RSS check', { blogUrl, firstFeedUrl, postFeedUrls, commentFeedUrls });
+  logInfo('Blog RSS check', { blogUrl, feedUrl: feedUrl.toString() });
 
   return makeSuccess('OK', logData, responseData);
 };
 
 async function tryGuessingFeedUrl(blogUrl: URL): Promise<string | undefined> {
-  const feedPathsToGuess = [
+  const feedPathsToTry = [
     '/feed', // WordPress
     '/rss',
     '/feed.xml',
     '/rss.xml',
     '/atom.xml',
-    '/feed/rss/', // NN/g
+    '/feed/rss/', // nngroup.com
     '/1/feed', // WIX
     '/blog-feed.xml', // WIX
   ];
 
-  for (const feedPath of feedPathsToGuess) {
-    const fullFeedUrl = new URL(blogUrl.origin + feedPath);
-    const rssResponse = await fetchRss(fullFeedUrl);
+  for (const feedPath of feedPathsToTry) {
+    const feedUrl = new URL(blogUrl.origin + feedPath);
+    const rssResponse = await fetchRss(feedUrl);
 
     if (!isErr(rssResponse)) {
-      return fullFeedUrl.toString();
+      return feedUrl.toString();
     }
   }
 

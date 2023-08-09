@@ -27,6 +27,7 @@ import {
   hideElement,
   navigateTo,
   onClick,
+  onEscape,
   onSubmit,
   reportUnexpectedEmptyResponseData,
   requireUiElements,
@@ -461,14 +462,6 @@ async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   }
 
   return response.responseData!;
-}
-
-function onEscape(element: HTMLElement, f: Function) {
-  element.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (event.code === 'Escape') {
-      f();
-    }
-  });
 }
 
 interface RequiredUiElements

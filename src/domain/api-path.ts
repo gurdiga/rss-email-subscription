@@ -19,6 +19,7 @@ export enum ApiPath {
   editFeed = '/feeds/edit-feed',
   deleteFeed = '/feeds/delete-feed',
   showSampleEmail = '/feeds/show-sample-email',
+  showSampleEmailPublic = '/feeds/show-sample-email-public',
   subscription = '/subscription',
   subscriptionConfirmation = '/subscription-confirmation',
   unsubscription = '/unsubscription',

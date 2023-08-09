@@ -423,3 +423,11 @@ export function onClick(element: HTMLElement, f: (event: Event) => void) {
 export function onInput(element: HTMLInputElement, f: (event: Event) => void) {
   element.addEventListener('input', f);
 }
+
+export function onEscape(element: HTMLElement, f: Function) {
+  element.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.code === 'Escape') {
+      f();
+    }
+  });
+}

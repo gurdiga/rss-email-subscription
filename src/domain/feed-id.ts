@@ -53,7 +53,7 @@ export function makeFeedId(input: any, field = 'id'): Result<FeedId> {
 export function makeSampleFeedId(): FeedId {
   const feedId: FeedId = {
     kind: 'FeedId',
-    value: 'sample-feed-id',
+    value: 'sample',
   };
 
   return feedId;

@@ -42,7 +42,7 @@ import { accountSupportProduct, storeStripeCardDescription, stripeKeys } from '.
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
-import { showSampleEmail } from './feeds/show-sample-email';
+import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
 import { requestPasswordReset, confirmPasswordReset } from './password-reset';
 
 async function main() {
@@ -91,6 +91,7 @@ async function main() {
   router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
+  router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
   router.post(ApiPath.storeStripeCardDescription, makeAppRequestHandler(storeStripeCardDescription, app));

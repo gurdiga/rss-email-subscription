@@ -1,17 +1,23 @@
 import { ApiPath } from '../domain/api-path';
-import { CheckFeedUrlRequest, CheckFeedUrlRequestData, CheckFeedUrlResponseData } from '../domain/feed';
-import { isInputError, isSuccess } from '../shared/api-response';
+import {
+  CheckFeedUrlRequestData,
+  CheckFeedUrlResponseData,
+  PublicShowSampleEmailRequestData,
+  PublicShowSampleEmailResponse,
+} from '../domain/feed';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { createElement } from './dom-isolation';
 import {
   HttpMethod,
   clearInitError,
   clearValidationErrors,
+  displayApiResponse,
   displayInitError,
   displayValidationError,
   hideElement,
-  isAuthenticated,
+  onClick,
+  onEscape,
   onInput,
   onSubmit,
   reportAppError,
@@ -28,9 +34,17 @@ function main() {
     blogUrlField: '#feed-checker-field',
     submitButton: '#feed-checker-button',
     successMessage: '#feed-checker-success-message',
-    successMessageCta: '#rss-check-success-cta',
-    feedCountWording: '#feed-count-wording',
-    rssUrlContainer: '#feed-checker-rss-url-container',
+    feedCheckApiErrorMessage: '#feed-check-api-error-message',
+    rssUrlContainer: '#rss-url-container',
+    showSampleEmailButton: '#show-sample-email-button',
+    emailFieldContainer: '#email-field-container',
+    emailField: '#email-field',
+    submitSampleEmailButton: '#submit-sample-email-button',
+    cancelButton: '#cancel-button',
+    sampleEmailSentMessage: '#sample-email-sent-message',
+    sampleEmailApiErrorMessage: '#sample-email-api-error-message',
+    sampleEmailSender: '#sample-email-sender',
+    sampleEmailSubject: '#sample-email-subject',
   });
 
   if (isErr(uiElements)) {
@@ -38,24 +52,100 @@ function main() {
     return;
   }
 
-  const { blogUrlField, submitButton, rssUrlContainer, feedCountWording, successMessage, successMessageCta } =
+  initMainForm(uiElements);
+  initSampleEmailForm(uiElements);
+}
+
+function initSampleEmailForm(uiElements: SampleEmailFormElements) {
+  const { showSampleEmailButton, emailFieldContainer, emailField, submitSampleEmailButton, cancelButton } = uiElements;
+  const { rssUrlContainer, sampleEmailSentMessage, sampleEmailApiErrorMessage, sampleEmailSender, sampleEmailSubject } =
     uiElements;
 
-  onInput(blogUrlField, () => {
-    hideElement(successMessage);
-    unhideElement(submitButton);
+  onClick(showSampleEmailButton, () => {
+    hideElement(showSampleEmailButton);
+    unhideElement(emailFieldContainer);
+    emailField.focus();
+    emailField.select();
   });
 
-  onSubmit(submitButton, async () => {
-    clearValidationErrors(uiElements);
-    clearInitError();
+  onEscape(emailField, () => dismissSampleEmailForm(uiElements));
+  onInput(emailField, () => {
+    clearValidationErrors({ emailField });
+    hideElement(sampleEmailSentMessage);
+  });
 
-    const requestData: CheckFeedUrlRequestData = {
-      blogUrl: uiElements.blogUrlField.value,
+  onClick(cancelButton, () => dismissSampleEmailForm(uiElements));
+
+  onSubmit(submitSampleEmailButton, async () => {
+    clearValidationErrors({ emailField });
+    hideElement(sampleEmailApiErrorMessage);
+
+    const path = ApiPath.showSampleEmailPublic;
+    const requestData: PublicShowSampleEmailRequestData = {
+      feedUrl: rssUrlContainer.textContent || '',
+      recipientEmail: emailField.value,
     };
 
-    const formFieldName: keyof FormFields = 'blogUrlField';
-    const responseFieldName: keyof CheckFeedUrlRequest = 'blogUrl';
+    const response = await asyncAttempt(() =>
+      sendApiRequest<PublicShowSampleEmailResponse>(path, HttpMethod.POST, requestData)
+    );
+
+    if (isErr(response)) {
+      displayInitError(response.reason);
+      return;
+    }
+
+    if (isAppError(response)) {
+      displayApiResponse(response, sampleEmailApiErrorMessage);
+      return;
+    }
+
+    if (isInputError(response)) {
+      const responseFieldName: keyof typeof requestData = 'recipientEmail';
+
+      // ASSUMPTION: There will never be an error for the requestData.feedUrl
+      displayValidationError(response, { [responseFieldName]: emailField });
+      return;
+    }
+
+    const { responseData } = response;
+
+    if (!responseData) {
+      reportUnexpectedEmptyResponseData(path);
+      displayInitError('Application error');
+      return;
+    }
+
+    sampleEmailSender.textContent = responseData.sender;
+    sampleEmailSubject.textContent = responseData.emailSubject;
+    unhideElement(sampleEmailSentMessage);
+    scrollIntoView(sampleEmailSentMessage);
+  });
+}
+
+function dismissSampleEmailForm(uiElements: SampleEmailFormElements): void {
+  const { emailFieldContainer, sampleEmailSentMessage, showSampleEmailButton, sampleEmailApiErrorMessage } = uiElements;
+
+  hideElement(emailFieldContainer);
+  unhideElement(showSampleEmailButton);
+  hideElement(sampleEmailSentMessage);
+  hideElement(sampleEmailApiErrorMessage);
+}
+
+function initMainForm(uiElements: UiElements) {
+  const { blogUrlField, submitButton, successMessage, rssUrlContainer, showSampleEmailButton } = uiElements;
+  const { feedCheckApiErrorMessage } = uiElements;
+
+  onInput(blogUrlField, () => dismissMainForm(uiElements));
+
+  onSubmit(submitButton, async () => {
+    clearValidationErrors({ blogUrlField });
+    clearInitError();
+    hideElement(feedCheckApiErrorMessage);
+
+    const requestData: CheckFeedUrlRequestData = {
+      blogUrl: blogUrlField.value,
+    };
 
     const path = ApiPath.checkFeedUrl;
     const response = await asyncAttempt(() =>
@@ -67,8 +157,14 @@ function main() {
       return;
     }
 
+    if (isAppError(response)) {
+      displayApiResponse(response, feedCheckApiErrorMessage);
+      return;
+    }
+
     if (isInputError(response)) {
-      displayValidationError(response, { [responseFieldName]: uiElements[formFieldName] });
+      const responseFieldName: keyof typeof requestData = 'blogUrl';
+      displayValidationError(response, { [responseFieldName]: blogUrlField });
       return;
     }
 
@@ -78,19 +174,13 @@ function main() {
         return;
       }
 
-      const feedUrls = response.responseData.feedUrls.split(',');
-      const feedCount = feedUrls.length;
+      const { feedUrl } = response.responseData;
 
-      feedCountWording.textContent = feedCount == 1 ? 'is the feed' : si`are the ${feedCount} feeds`;
-      renderFeedUrls(rssUrlContainer, feedUrls);
       hideElement(submitButton);
+      rssUrlContainer.textContent = feedUrl;
       unhideElement(successMessage);
+      unhideElement(showSampleEmailButton);
       scrollIntoView(successMessage);
-
-      if (!isAuthenticated()) {
-        unhideElement(successMessageCta);
-      }
-
       return;
     }
 
@@ -98,25 +188,38 @@ function main() {
   });
 }
 
-function renderFeedUrls(rssUrlContainer: HTMLElement, feedUrls: string[]): void {
-  rssUrlContainer.innerHTML = '';
+function dismissMainForm(uiElements: UiElements) {
+  const { blogUrlField, successMessage, submitButton, feedCheckApiErrorMessage } = uiElements;
 
-  feedUrls.forEach((url) => {
-    rssUrlContainer.append(createElement('div', url, { class: 'my-2' }));
-  });
+  clearValidationErrors({ blogUrlField });
+  dismissSampleEmailForm(uiElements);
+  hideElement(successMessage);
+  hideElement(feedCheckApiErrorMessage);
+  unhideElement(submitButton);
 }
 
-interface UiElements extends FormFields {
+interface UiElements extends MainFormFields, SampleEmailFormElements {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
   successMessage: HTMLElement;
-  successMessageCta: HTMLElement;
-  feedCountWording: HTMLElement;
-  rssUrlContainer: HTMLElement;
 }
 
-interface FormFields {
+interface SampleEmailFormElements {
+  rssUrlContainer: HTMLElement;
+  showSampleEmailButton: HTMLButtonElement;
+  emailFieldContainer: HTMLFormElement;
+  emailField: HTMLInputElement;
+  submitSampleEmailButton: HTMLButtonElement;
+  cancelButton: HTMLButtonElement;
+  sampleEmailSentMessage: HTMLElement;
+  sampleEmailSender: HTMLElement;
+  sampleEmailSubject: HTMLElement;
+  sampleEmailApiErrorMessage: HTMLElement;
+}
+
+interface MainFormFields {
   blogUrlField: HTMLInputElement;
+  feedCheckApiErrorMessage: HTMLElement;
 }
 
 main();

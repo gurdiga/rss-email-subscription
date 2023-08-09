@@ -358,7 +358,7 @@ export interface CheckFeedUrlRequest {
 export type CheckFeedUrlRequestData = Record<keyof CheckFeedUrlRequest, string>;
 
 export interface CheckFeedUrlResponseData {
-  feedUrls: string;
+  feedUrl: string;
 }
 
 export interface SendingReport {
@@ -391,6 +391,18 @@ export interface ShowSampleEmailRequest {
 }
 
 export type ShowSampleEmailRequestData = Record<keyof ShowSampleEmailRequest, string>;
+
+export interface PublicShowSampleEmailRequest {
+  feedUrl: URL;
+  recipientEmail: EmailAddress;
+}
+
+export type PublicShowSampleEmailRequestData = Record<keyof PublicShowSampleEmailRequest, string>;
+
+export interface PublicShowSampleEmailResponse {
+  sender: string;
+  emailSubject: string;
+}
 
 export interface LoadFeedDisplayNameResponseData {
   displayName: string;
