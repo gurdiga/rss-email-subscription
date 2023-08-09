@@ -13,7 +13,7 @@ import { FullEmailAddress } from '../email-sending/emails';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
-import { parseRssItems } from './rss-parsing';
+import { parseRssFeed } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
 const myIssues = [/getaddrinfo ENOTFOUND/];
@@ -49,7 +49,7 @@ export async function checkRss(
     return 1;
   }
 
-  const rssParsingResult = await parseRssItems(rssResponse);
+  const rssParsingResult = await parseRssFeed(rssResponse);
 
   if (isErr(rssParsingResult)) {
     logError('Failed parsing RSS items', { reason: rssParsingResult.reason });

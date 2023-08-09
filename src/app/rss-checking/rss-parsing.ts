@@ -6,8 +6,8 @@ import { makeHttpUrl } from '../../shared/url';
 import { RssResponse } from './rss-response';
 import { si } from '../../shared/string-utils';
 
-export interface RssParsingResult {
-  kind: 'RssParsingResult';
+export interface RssFeed {
+  kind: 'RssFeed';
   title: string;
   validItems: RssItem[];
   invalidItems: InvalidRssItem[];
@@ -15,10 +15,10 @@ export interface RssParsingResult {
 
 export const maxValidItems = 10;
 
-export async function parseRssItems(
+export async function parseRssFeed(
   rssResponse: RssResponse,
   buildRssItemFn: MakeRssItemFn = makeRssItem
-): Promise<Result<RssParsingResult>> {
+): Promise<Result<RssFeed>> {
   const parser = new Parser();
 
   try {
@@ -35,7 +35,7 @@ export async function parseRssItems(
       const invalidItems = items.filter(isInvalidRssItem);
 
       return {
-        kind: 'RssParsingResult',
+        kind: 'RssFeed',
         title: feed.title || 'Untitled Blog',
         validItems,
         invalidItems,

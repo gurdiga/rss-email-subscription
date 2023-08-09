@@ -1,7 +1,7 @@
 import { makeEmailContent, makeUnsubscribeUrl } from '../../app/email-sending/email-content';
 import { sendEmail } from '../../app/email-sending/email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from '../../app/email-sending/emails';
-import { parseRssItems } from '../../app/rss-checking/rss-parsing';
+import { parseRssFeed } from '../../app/rss-checking/rss-parsing';
 import { fetchRss } from '../../app/rss-checking/rss-response';
 import { isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
@@ -114,10 +114,10 @@ async function getFeedInfo(url: URL): Promise<Result<FeedInfo>> {
     return makeErr(si`Failed to ${fetchRss.name}: ${rssResponse.reason}`);
   }
 
-  const rssParsingResult = await parseRssItems(rssResponse);
+  const rssParsingResult = await parseRssFeed(rssResponse);
 
   if (isErr(rssParsingResult)) {
-    return makeErr(si`Failed to ${parseRssItems.name}: ${rssParsingResult.reason}`);
+    return makeErr(si`Failed to ${parseRssFeed.name}: ${rssParsingResult.reason}`);
   }
 
   const { title, validItems, invalidItems } = rssParsingResult;

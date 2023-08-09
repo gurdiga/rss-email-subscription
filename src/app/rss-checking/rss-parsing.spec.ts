@@ -3,15 +3,15 @@ import { readFileSync } from 'node:fs';
 import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
-import { makeRssItem, parseRssItems, RssParsingResult, ParsedRssItem, MakeRssItemFn } from './rss-parsing';
+import { makeRssItem, parseRssFeed, RssFeed, ParsedRssItem, MakeRssItemFn } from './rss-parsing';
 import { ValidRssItem } from './rss-parsing';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 
-describe(parseRssItems.name, () => {
+describe(parseRssFeed.name, () => {
   const baseURL = new URL('https://example.com');
 
-  it('returns a RssParsingResult containing the items', async () => {
+  it('returns a RssFeed containing the items', async () => {
     const xml = readFixture('rss-parsing.spec.fixture.xml');
     const expectedValidItems: RssItem[] = [
       {
@@ -40,18 +40,18 @@ describe(parseRssItems.name, () => {
       },
     ];
 
-    const result = await parseRssItems({
+    const result = await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
     });
 
     expect(result).to.deep.equal({
-      kind: 'RssParsingResult',
+      kind: 'RssFeed',
       title: 'Your awesome title',
       validItems: expectedValidItems,
       invalidItems: [],
-    } as RssParsingResult);
+    } as RssFeed);
   });
 
   it('can extract <content:encoded>', async () => {
@@ -76,28 +76,28 @@ describe(parseRssItems.name, () => {
       },
     ];
 
-    const result = await parseRssItems({
+    const result = await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
     });
 
     expect(result).to.deep.equal({
-      kind: 'RssParsingResult',
+      kind: 'RssFeed',
       title: "Seth's Blog",
       validItems: expectedValidItems,
       invalidItems: [],
-    } as RssParsingResult);
+    } as RssFeed);
   });
 
   it('only returns maxValidItems most recent valid items', async () => {
     const xml = readFixture('rss-parsing.spec.fixture.max.xml');
 
-    const result = (await parseRssItems({
+    const result = (await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
-    })) as RssParsingResult;
+    })) as RssFeed;
 
     const itemTitles = result.validItems.map((x) => x.title);
 
@@ -115,7 +115,7 @@ describe(parseRssItems.name, () => {
     ]);
   });
 
-  it('returns the invalid items into invalidItems of RssParsingResult', async () => {
+  it('returns the invalid items into invalidItems of RssFeed', async () => {
     const xml = `
       <?xml version="1.0" encoding="utf-8"?>
       <feed xmlns="http://www.w3.org/2005/Atom">
@@ -144,11 +144,11 @@ describe(parseRssItems.name, () => {
       </feed>
     `;
 
-    const result = (await parseRssItems({
+    const result = (await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
-    })) as RssParsingResult;
+    })) as RssFeed;
 
     const expectedInvalidItems = [
       {
@@ -185,11 +185,11 @@ describe(parseRssItems.name, () => {
       </feed>
     `;
 
-    const result = (await parseRssItems({
+    const result = (await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
-    })) as RssParsingResult;
+    })) as RssFeed;
 
     expect(result.validItems[0]!.guid).to.equal(link.toString());
   });
@@ -197,11 +197,11 @@ describe(parseRssItems.name, () => {
   it('takes "summary" when no "content"', async () => {
     const xml = readFixture('rss-parsing.spec.fixture.2ality.xml');
 
-    const result = (await parseRssItems({
+    const result = (await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
-    })) as RssParsingResult;
+    })) as RssFeed;
 
     expect(result.validItems[1]?.content).to.equal('Sample summary content');
   });
@@ -221,7 +221,7 @@ describe(parseRssItems.name, () => {
     </feed>
   `;
 
-    const result = (await parseRssItems({
+    const result = (await parseRssFeed({
       kind: 'RssResponse',
       xml,
       baseURL,
@@ -234,7 +234,7 @@ describe(parseRssItems.name, () => {
     const xml = readFixture('rss-parsing.spec.fixture.xml');
     const buildRssItemFn = makeThrowingStub<MakeRssItemFn>(new Error('Something broke!'));
 
-    const result = (await parseRssItems(
+    const result = (await parseRssFeed(
       {
         kind: 'RssResponse',
         xml,
