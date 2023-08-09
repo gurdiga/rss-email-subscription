@@ -823,7 +823,8 @@ tracking-report: bot-list.txt
 		-e 's/T/ /' | # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
-	grep -v '"referrer":"http://baidu.com/"' | # exclude myself
+	grep -v '"url":"/?from=fzbvy-abbgfe' | # preview bots?
+	grep -v '"referrer":"http://baidu.com/"' | # baidu crawler?
 	(
 		tee \
 			>( wc -l | ts "total events" ) \
