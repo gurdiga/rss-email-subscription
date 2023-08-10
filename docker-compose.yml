@@ -32,6 +32,7 @@ services:
     environment:
       TZ: UTC
       ALLOWED_SENDER_DOMAINS: feedsubscription.com
+      POSTFIX_smtp_helo_name: feedsubscription.com
       POSTFIX_notify_classes: 'bounce,resource,software'
       POSTFIX_2bounce_notice_recipient: postmaster@feedsubscription.com
       POSTFIX_delay_notice_recipient: postmaster@feedsubscription.com
