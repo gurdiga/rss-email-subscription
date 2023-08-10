@@ -92,6 +92,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
   onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
+    hideElement(appErrorMessage);
 
     const planId = planDropdown.value;
     const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
