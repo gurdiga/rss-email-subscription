@@ -45,6 +45,24 @@ export const stripeKeys: AppRequestHandler = async function stripeKeys(
   return makeSuccess('Stripe keys', logData, responseData);
 };
 
+const trialPeriodDays = 30;
+
+export const stripeData: AppRequestHandler = async function stripeData(
+  _reqId,
+  _reqBody,
+  _reqParams,
+  _reqSession,
+  _app
+) {
+  return makeSuccess(
+    'Stripe data',
+    {},
+    {
+      trialPeriodDays,
+    }
+  );
+};
+
 export const storeStripeCardDescription: AppRequestHandler = async function storeStripeCardDescription(
   reqId,
   reqBody,

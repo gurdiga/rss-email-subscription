@@ -38,7 +38,7 @@ import { initApp } from './init-app';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
-import { accountSupportProduct, storeStripeCardDescription, stripeKeys } from './stripe-integration';
+import { accountSupportProduct, storeStripeCardDescription, stripeData, stripeKeys } from './stripe-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
@@ -96,6 +96,7 @@ async function main() {
   router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
   router.post(ApiPath.storeStripeCardDescription, makeAppRequestHandler(storeStripeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
+  router.get(ApiPath.stripeData, makeAppRequestHandler(stripeData, app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

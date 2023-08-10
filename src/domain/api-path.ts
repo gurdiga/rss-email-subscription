@@ -38,6 +38,7 @@ export enum ApiPath {
   deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
   stripeKeys = '/stripe-keys',
+  stripeData = '/stripe-data',
   storeStripeCardDescription = '/store-stripe-card-description',
   accountSupportProduct = '/account-support-product',
 }
