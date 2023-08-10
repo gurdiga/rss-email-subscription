@@ -6,6 +6,7 @@ import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
+import { humanSize } from '../../shared/number-utils';
 import { si } from '../../shared/string-utils';
 import { EmailContent, htmlBody } from '../email-sending/email-content';
 import { sendEmail } from '../email-sending/email-delivery';
@@ -93,7 +94,7 @@ export async function checkRss(
   }
 
   const report = {
-    xmlLength: rssResponse.xml.length,
+    xmlLength: humanSize(rssResponse.xml.length),
     durationMs,
     validItems: validItems.length,
     lastPostMetadata,
