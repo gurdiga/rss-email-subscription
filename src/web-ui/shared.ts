@@ -156,6 +156,7 @@ export function displayAppError(error: AppError, messageElement: Element): void 
   messageElement.textContent = error.message;
   messageElement.classList.add('alert', 'alert-danger');
   messageElement.setAttribute('role', 'alert');
+  unhideElement(messageElement);
 }
 
 export function reportUnexpectedEmptyResponseData(path: ApiPath): void {
