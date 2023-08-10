@@ -16,6 +16,7 @@ import {
   displayInitError,
   displayValidationError,
   hideElement,
+  isAuthenticated,
   onClick,
   onEscape,
   onInput,
@@ -25,6 +26,7 @@ import {
   requireUiElements,
   scrollIntoView,
   sendApiRequest,
+  toggleElement,
   unhideElement,
 } from './shared';
 
@@ -179,7 +181,8 @@ function initMainForm(uiElements: UiElements) {
       hideElement(submitButton);
       rssUrlContainer.textContent = feedUrl;
       unhideElement(successMessage);
-      unhideElement(showSampleEmailButton);
+      toggleElement(isAuthenticated(), showSampleEmailButton);
+      toggleElement(isAuthenticated(), showSampleEmailButton);
       scrollIntoView(successMessage);
       return;
     }
