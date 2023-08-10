@@ -63,6 +63,11 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError<keyof RegistrationRequest>('Please select one of the subscription plans', 'planId');
   }
 
+  if (request.planId === PlanId.Free) {
+    logWarning('Attemtping to register with the Free plan');
+    return makeInputError<keyof RegistrationRequest>('The Free plan has been discontinued', 'planId');
+  }
+
   const accountId = initAccount(storage, settings, request);
 
   if (isErr(accountId)) {

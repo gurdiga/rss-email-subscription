@@ -178,7 +178,7 @@ function initPlanDropdown(
 
   planDropdown.replaceChildren(
     ...Object.entries(Plans)
-      .filter(([id]) => id !== PlanId.SDE)
+      .filter(([id]) => id !== PlanId.SDE && id !== PlanId.Free)
       .map(([id, { title }]) => {
         const option = createElement('option', title, { value: id });
 
