@@ -22,6 +22,7 @@ services:
   smtp-out:
     depends_on: [logger, resolver]
     container_name: smtp-out
+    hostname: smtp-out
     image: smtp-out
     restart: always
     ports: ['127.0.0.1:1587:587']
