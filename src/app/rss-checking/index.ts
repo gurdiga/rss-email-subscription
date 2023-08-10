@@ -94,7 +94,7 @@ export async function checkRss(
   }
 
   const report = {
-    xmlLength: humanSize(rssResponse.xml.length),
+    xmlSize: humanSize(new Blob([rssResponse.xml]).size),
     durationMs,
     validItems: validItems.length,
     lastPostMetadata,
