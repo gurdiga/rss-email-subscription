@@ -375,10 +375,10 @@ export async function createStripeSubscription(
     stripe.subscriptions.create({
       customer: customer.id,
       items: [{ price: priceId }],
-      payment_behavior: 'default_incomplete',
       payment_settings: { save_default_payment_method: 'on_subscription' },
-      expand: ['latest_invoice.payment_intent'],
+      expand: ['pending_setup_intent'],
       metadata: { res_customer_email: customer.email },
+      trial_period_days: trialPeriodDays,
     })
   );
 
@@ -444,22 +444,16 @@ export async function cancelCustomerSubscriptions(stripe: Stripe, customerEmail:
 }
 
 function getClientSecretFromSubscription(subscription: Stripe.Subscription): Result<StripeClientSecret> {
-  const latestInvoice = subscription.latest_invoice;
+  const setupIntent = subscription.pending_setup_intent;
 
-  if (!isObject(latestInvoice)) {
-    return makeErr(si`Non-object subscription.latest_invoice: ${JSON.stringify(latestInvoice)}`);
+  if (!isObject(setupIntent)) {
+    return makeErr(si`Non-object subscription.pending_setup_intent: ${JSON.stringify(setupIntent)}`);
   }
 
-  const paymentIntent = latestInvoice.payment_intent;
-
-  if (!isObject(paymentIntent)) {
-    return makeErr(si`Non-object subscription.latest_invoice.payment_intent: ${JSON.stringify(paymentIntent)}`);
-  }
-
-  const clientSecret = paymentIntent.client_secret;
+  const clientSecret = setupIntent.client_secret;
 
   if (clientSecret === null) {
-    return makeErr(si`Null subscription.latest_invoice.payment_intent.client_secret`);
+    return makeErr(si`Null subscription.pending_setup_intent.client_secret`);
   }
 
   return makeStripeClientSecret(clientSecret);

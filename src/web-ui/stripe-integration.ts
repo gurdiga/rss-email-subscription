@@ -1,7 +1,7 @@
 import {
   Appearance,
-  PaymentIntentResult,
   PaymentMethod,
+  SetupIntentResult,
   Stripe,
   StripeConstructor,
   StripeElements,
@@ -28,7 +28,7 @@ import { HttpMethod, reportUnexpectedEmptyResponseData, sendApiRequest } from '.
 export interface PaymentSubformHandle {
   setPlanId(planId: PlanId): Promise<Result<void>>;
   validate(): Promise<Result<Awaited<ReturnType<StripeElements['submit']>>>>;
-  confirmPayment(clientSecret: string): Promise<Result<PaymentIntentResult>>;
+  confirmSetup(clientSecret: string): Promise<Result<SetupIntentResult>>;
   focus(): void;
 }
 
@@ -74,16 +74,16 @@ export async function makePaymentSubformHandle(
         'validate payment information'
       ),
 
-    confirmPayment: async (clientSecret: string) =>
+    confirmSetup: async (clientSecret: string) =>
       await attemptStripeCall(
         () =>
-          stripe.confirmPayment({
+          stripe.confirmSetup({
             elements,
             clientSecret,
             confirmParams: { expand: ['payment_method'] },
             redirect: 'if_required',
           }),
-        'stripe.confirmPayment',
+        'stripe.confirmSetup',
         'set up payment'
       ),
   };
@@ -171,7 +171,7 @@ export async function attemptStripeCall<F extends AnyAsyncFunction>(
 
   if (isErr(result)) {
     reportError(si`Got error from ${callName}: ${result.reason}`);
-    return makeErr(description);
+    return makeErr(si`Failed to ${description}`);
   }
 
   const error = result.error;
@@ -319,16 +319,16 @@ export async function maybeConfirmPayment<FIELD extends string>(
   }
 
   const err = (message: string) => makeInputError<FIELD>(message, fieldName);
-  const result = await paymentSubformHandle.confirmPayment(clientSecret);
+  const result = await paymentSubformHandle.confirmSetup(clientSecret);
 
   if (isErr(result)) {
     return err(result.reason);
   }
 
-  const paymentMethod = result?.paymentIntent?.payment_method;
+  const paymentMethod = result?.setupIntent?.payment_method;
 
   if (!isObject(paymentMethod)) {
-    return err('Invalid response from Stripe: non-object paymentIntent.payment_method');
+    return err('Invalid response from Stripe: non-object setupIntent.payment_method');
   }
 
   const { card } = paymentMethod;
