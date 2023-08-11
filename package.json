@@ -37,7 +37,7 @@
     "typescript": "^5.1.6"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^1.54.1",
+    "@stripe/stripe-js": "^2.0.0",
     "@types/ua-parser-js": "^0.7.36",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
