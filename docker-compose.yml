@@ -50,6 +50,8 @@ services:
       net:
         ipv4_address: 10.5.5.9
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   smtp-in:
     depends_on: [logger, resolver]
@@ -79,6 +81,8 @@ services:
       net:
         ipv4_address: 10.5.5.8
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   app:
     depends_on: [logger, resolver]
@@ -101,6 +105,8 @@ services:
       net:
         ipv4_address: 10.5.5.7
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   delmon:
     depends_on: [logger, resolver]
@@ -119,6 +125,8 @@ services:
       net:
         ipv4_address: 10.5.5.6
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   api:
     depends_on: [logger, resolver]
@@ -140,6 +148,8 @@ services:
       net:
         ipv4_address: 10.5.5.5
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -161,6 +171,8 @@ services:
       net:
         ipv4_address: 10.5.5.4
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
@@ -188,6 +200,8 @@ services:
       net:
         ipv4_address: 10.5.5.3
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   logger:
     container_name: logger
@@ -201,6 +215,8 @@ services:
       net:
         ipv4_address: 10.5.5.1
     dns: 10.5.5.2
+    dns_opt:
+      - single-request
 
   resolver:
     depends_on: [logger]
@@ -212,6 +228,8 @@ services:
     networks:
       net:
         ipv4_address: 10.5.5.2
+    dns_opt:
+      - single-request
     <<: [*logging]
 
 networks:
