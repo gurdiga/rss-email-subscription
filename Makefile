@@ -71,7 +71,7 @@ cw:
 pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
 
-lint: lint-mocha-only lint-require-strict-interpolation lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config
+lint: lint-mocha-only lint-require-strict-interpolation lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config lint-dnsmasq-conf
 l: lint
 
 lint-quiet:
@@ -94,6 +94,9 @@ lint-nginx-config:
 
 lint-docker-compose:
 	docker-compose --file docker-compose.yml config
+
+lint-dnsmasq-conf:
+	dnsmasq --test -C docker-services/resolver/etc/dnsmasq.conf
 
 lint-dockerfile:
 	find . -name Dockerfile |
