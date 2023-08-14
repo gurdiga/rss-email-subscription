@@ -13,4 +13,4 @@ RUN apt-get update \
 
 COPY etc/dnsmasq.conf /etc/dnsmasq.conf
 
-ENTRYPOINT ["dnsmasq", "--no-daemon"]
+ENTRYPOINT ["dnsmasq", "--keep-in-foreground"]
