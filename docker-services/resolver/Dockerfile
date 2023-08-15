@@ -8,9 +8,6 @@ RUN apt-get update \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
-# TODO: Delete this line?
-# COPY etc/default/dnsmasq /etc/default/dnsmasq
-
 COPY etc/dnsmasq.conf /etc/dnsmasq.conf
 
 ENTRYPOINT ["dnsmasq", "--keep-in-foreground"]

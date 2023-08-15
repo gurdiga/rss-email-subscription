@@ -209,6 +209,8 @@ services:
     container_name: resolver
     restart: always
     ports: ['127.0.0.1:53:53/udp']
+    volumes:
+      - ./.tmp/resolver/etc/hosts:/etc/hosts:ro
     networks:
       net:
         ipv4_address: 10.5.5.2
