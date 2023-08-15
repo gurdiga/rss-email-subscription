@@ -269,7 +269,7 @@ function initPlansDropdown(
   const { planDropdown, paymentSubformContainer } = uiElements;
 
   const planOptions = Object.entries(Plans)
-    .filter(([id]) => id !== PlanId.SDE)
+    .filter(([id]) => isSubscriptionPlan(id))
     .map(([id, { title }]) =>
       createElement('option', title, {
         value: id,
