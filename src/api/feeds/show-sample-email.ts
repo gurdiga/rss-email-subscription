@@ -98,7 +98,7 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
 
   return makeSuccess(
     si`Please check ${account.email.value}.` +
-      ' We’ve sent you a sample email with the most recent post from your blog feed.'
+      ' We’ve sent you a sample email with the most recent post from this blog feed.'
   );
 };
 
