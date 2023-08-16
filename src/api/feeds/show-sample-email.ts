@@ -24,7 +24,7 @@ import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
 import { AppEnv } from '../init-app';
-import { checkSession, isAuthenticatedSession } from '../session';
+import { checkSession, isAuthenticatedSession, isDemoSession } from '../session';
 
 export const showSampleEmail: AppRequestHandler = async function showSampleEmail(
   reqId,
@@ -86,7 +86,7 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
 
   const feedEmailAddress = makeEmailAddressFromFeedId(feedId, env.DOMAIN_NAME);
   const sender = makeFullEmailAddress(feed.displayName, feedEmailAddress);
-  const recipient = makeRecipientForSampleEmail(account.email);
+  const recipient = makeRecipientForSampleEmail(isDemoSession(reqSession) ? feed.replyTo : account.email);
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, recipient, feed.displayName, env.DOMAIN_NAME);
 
   const result = await sendSampleEmail(env, recipient, sender, feedInfo.mostRecentItem, unsubscribeUrl);
@@ -97,7 +97,7 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
   }
 
   return makeSuccess(
-    si`Please check ${account.email.value}.` +
+    si`Please check ${recipient.emailAddress.value}.` +
       ' We’ve sent you a sample email with the most recent post from this blog feed.'
   );
 };
