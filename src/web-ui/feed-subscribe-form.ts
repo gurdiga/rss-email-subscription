@@ -10,7 +10,15 @@ import {
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
 import { createElement } from './dom-isolation';
-import { displayInitError, onClick, reportAppError, requireQueryParams, requireUiElements } from './shared';
+import {
+  displayInitError,
+  isDemoAccount,
+  onClick,
+  reportAppError,
+  requireQueryParams,
+  requireUiElements,
+  toggleElement,
+} from './shared';
 
 function main() {
   const queryStringParams = requireQueryParams<FeedSubscribeFormParams>({
@@ -34,6 +42,7 @@ function main() {
     ...breadcrumbsUiElements,
     scriptContainer: '#script-container',
     linkContainer: '#link-container',
+    demoAccountNote: '#demo-account-note',
   });
 
   if (isErr(uiElements)) {
@@ -59,6 +68,8 @@ function main() {
       label: uiElements.pageTitle.textContent!,
     },
   ]);
+
+  toggleElement(isDemoAccount(), uiElements.demoAccountNote);
 }
 
 function addCopyButton(...elements: HTMLTextAreaElement[]): void {
@@ -113,6 +124,7 @@ function setStyle(el: HTMLElement, style: Record<string, string>): void {
 interface RequiredUiElements extends BreadcrumbsUiElements {
   scriptContainer: HTMLTextAreaElement;
   linkContainer: HTMLTextAreaElement;
+  demoAccountNote: HTMLElement;
 }
 
 main();
