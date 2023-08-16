@@ -96,7 +96,10 @@ lint-docker-compose:
 	docker-compose --file docker-compose.yml config
 
 lint-dnsmasq-conf:
-	dnsmasq --test -C docker-services/resolver/etc/dnsmasq.conf
+	@command="dnsmasq --test -C docker-services/resolver/etc/dnsmasq.conf"
+	if ! $$command &> /dev/null; then
+		$$command
+	fi
 
 lint-dockerfile:
 	find . -name Dockerfile |
