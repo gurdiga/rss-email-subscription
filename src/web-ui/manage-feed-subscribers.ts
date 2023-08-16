@@ -25,12 +25,14 @@ import {
   displayCommunicationError,
   displayInitError,
   HttpMethod,
+  isDemoAccount,
   onClick,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
   spinnerUiElements,
   SpinnerUiElements,
+  toggleElement,
   unhideElement,
 } from './shared';
 
@@ -65,6 +67,7 @@ async function main() {
     addEmailsButton: '#add-emails-button',
     addEmailsApiResponseMessage: '#add-emails-api-response-message',
     downloadLink: '#download-link',
+    demoAccountNote: '#demo-account-note',
   });
 
   if (isErr(uiElements)) {
@@ -92,6 +95,8 @@ async function main() {
       label: uiElements.pageTitle.textContent!,
     },
   ]);
+
+  toggleElement(isDemoAccount(), uiElements.demoAccountNote);
 }
 
 function setupDownloadLink(downloadLink: HTMLAnchorElement, feedId: FeedId, data: LoadEmailsResponse) {
@@ -259,6 +264,7 @@ interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements {
   addEmailsButton: HTMLButtonElement;
   addEmailsApiResponseMessage: HTMLElement;
   downloadLink: HTMLAnchorElement;
+  demoAccountNote: HTMLElement;
 }
 
 interface RequiredParams {
