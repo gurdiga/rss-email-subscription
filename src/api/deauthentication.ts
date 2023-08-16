@@ -1,7 +1,8 @@
+import { demoAccountEmail } from '../domain/demo-account';
 import { makeSuccess } from '../shared/api-response';
-import { disablePrivateNavbarCookie } from './app-cookie';
+import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
-import { deinitSession } from './session';
+import { checkSession, deinitSession, isAuthenticatedSession } from './session';
 
 export const deauthentication: AppRequestHandler = async function deauthentication(
   _reqId,
@@ -10,11 +11,22 @@ export const deauthentication: AppRequestHandler = async function deauthenticati
   reqSession,
   _app
 ) {
+  const isDemoAccount = isAuthenticatedDemoAccount(reqSession);
+
   deinitSession(reqSession);
 
   const logData = {};
   const responseData = {};
-  const cookies = [disablePrivateNavbarCookie];
+
+  const maybeUnsetDemoCookie = isDemoAccount ? [unsetDemoCookie] : [];
+  const cookies = [disablePrivateNavbarCookie, ...maybeUnsetDemoCookie];
 
   return makeSuccess('Have a nice day!', logData, responseData, cookies);
 };
+
+function isAuthenticatedDemoAccount(reqSession: any): boolean {
+  const session = checkSession(reqSession);
+  const accountEmail = isAuthenticatedSession(session) ? session.email.value : undefined;
+
+  return accountEmail === demoAccountEmail;
+}

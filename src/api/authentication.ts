@@ -11,7 +11,8 @@ import { si } from '../shared/string-utils';
 import { App } from './init-app';
 import { AppRequestHandler } from './app-request-handler';
 import { initSession } from './session';
-import { enablePrivateNavbarCookie } from './app-cookie';
+import { enablePrivateNavbarCookie, setDemoCookie } from './app-cookie';
+import { demoAccountEmail } from '../domain/demo-account';
 
 export const authentication: AppRequestHandler = async function authentication(
   _reqId,
@@ -36,7 +37,9 @@ export const authentication: AppRequestHandler = async function authentication(
 
   const logData = {};
   const responseData: AuthenticationResponseData = { sessionId: reqSession.id };
-  const cookies = [enablePrivateNavbarCookie];
+
+  const maybeSetDemoCookie = request.email.value === demoAccountEmail ? [setDemoCookie] : [];
+  const cookies = [enablePrivateNavbarCookie, ...maybeSetDemoCookie];
 
   return makeSuccess('Welcome back!', logData, responseData, cookies);
 };
