@@ -33,6 +33,7 @@ import {
   apiResponseUiElements,
   displayApiResponse,
   displayInitError,
+  isDemoAccount,
   navigateTo,
   onClick,
   preventDoubleClick,
@@ -42,6 +43,7 @@ import {
   scrollIntoView,
   sendApiRequest,
   spinnerUiElements,
+  toggleElement,
   unhideElement,
 } from './shared';
 
@@ -76,6 +78,7 @@ async function main() {
     showSampleEmailButton: '#show-sample-email-button',
     idChangedMessage: '#id-changed-message',
     newFeedId: '#new-feed-id',
+    demoAccountNote: '#demo-account-note',
   });
 
   if (isErr(uiElements)) {
@@ -108,6 +111,8 @@ async function main() {
     feedListBreadcrumbsLink,
     { label: displayName },
   ]);
+
+  toggleElement(isDemoAccount(), uiElements.demoAccountNote);
 }
 
 function bindShowSampleEmailButton(uiElements: RequiredUiElements, feedId: FeedId): void {
@@ -315,6 +320,7 @@ interface RequiredUiElements extends BreadcrumbsUiElements, SpinnerUiElements, A
   showSampleEmailButton: HTMLButtonElement;
   idChangedMessage: HTMLButtonElement;
   newFeedId: HTMLButtonElement;
+  demoAccountNote: HTMLElement;
 }
 
 interface RequiredParams {
