@@ -181,8 +181,7 @@ function initMainForm(uiElements: UiElements) {
       hideElement(submitButton);
       rssUrlContainer.textContent = feedUrl;
       unhideElement(successMessage);
-      toggleElement(isAuthenticated(), showSampleEmailButton);
-      toggleElement(isAuthenticated(), showSampleEmailButton);
+      toggleElement(!isAuthenticated(), showSampleEmailButton);
       scrollIntoView(successMessage);
       return;
     }

@@ -347,7 +347,7 @@ export function unhideElement(...elements: Element[]): void {
 }
 
 export function toggleElement(visible: boolean, ...elements: Element[]): void {
-  elements.forEach((x) => x.toggleAttribute('hidden', visible));
+  elements.forEach((x) => x.toggleAttribute('hidden', !visible));
 }
 
 export function disableElement(...elements: HTMLElement[]): void {
