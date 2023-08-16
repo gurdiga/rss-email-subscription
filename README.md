@@ -2,7 +2,7 @@
 
 This is an RSS-to-email system that periodically checks one or more RSS feed and sends new items to a list of emails. Every feed has a list of emails associated.
 
-Every feed gets its own feed-id@feedsubscription.com email address. The default frequency is hourly now, but any [cron-like][0] schedule is supported.
+Every feed gets its own `feed-id@feedsubscription.com` email address. The default frequency is hourly now, but any [cron-like][0] schedule is supported.
 
 [0]: https://github.com/node-cron/node-cron#cron-syntax
 
