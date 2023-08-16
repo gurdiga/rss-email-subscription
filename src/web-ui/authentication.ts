@@ -55,13 +55,15 @@ function main() {
   initForm(uiElements);
   initForgotPasswordLink(uiElements);
 
+  const { demoAccountMessage, email, password, forgotPasswordLink } = uiElements;
   const isDemoLoginLink = queryStringParams.demo === '1';
 
-  toggleElement(isDemoLoginLink, uiElements.demoAccountMessage);
+  toggleElement(isDemoLoginLink, demoAccountMessage);
 
   if (isDemoLoginLink) {
-    uiElements.email.value = demoAccountEmail;
-    uiElements.password.value = demoAccountPassword;
+    email.value = demoAccountEmail;
+    password.value = demoAccountPassword;
+    prepForgotPasswordLink(forgotPasswordLink, email);
   }
 }
 
@@ -105,9 +107,11 @@ function initForm(uiElements: RequiredUiElements): void {
 function initForgotPasswordLink(uiElements: RequiredUiElements): void {
   const { forgotPasswordLink, email } = uiElements;
 
-  onInput(email, () => {
-    forgotPasswordLink.href = makePagePathWithParams(PagePath.requestPasswordReset, { email: email.value });
-  });
+  onInput(email, () => prepForgotPasswordLink(forgotPasswordLink, email));
+}
+
+function prepForgotPasswordLink(forgotPasswordLink: HTMLAnchorElement, email: HTMLInputElement) {
+  forgotPasswordLink.href = makePagePathWithParams(PagePath.requestPasswordReset, { email: email.value });
 }
 
 interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {
