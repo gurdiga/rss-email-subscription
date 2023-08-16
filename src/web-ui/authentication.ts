@@ -1,4 +1,5 @@
 import { AuthenticationRequestData } from '../domain/account';
+import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isInputError, isSuccess } from '../shared/api-response';
@@ -14,14 +15,26 @@ import {
   HttpMethod,
   isAuthenticated,
   navigateTo,
+  onInput,
   onSubmit,
+  requireQueryParams,
   requireUiElements,
   sendApiRequest,
+  toggleElement,
 } from './shared';
 
 function main() {
   if (isAuthenticated()) {
     location.href = PagePath.feedList;
+    return;
+  }
+
+  const queryStringParams = requireQueryParams<Params>({
+    demo: 'demo?',
+  });
+
+  if (isErr(queryStringParams)) {
+    displayInitError(queryStringParams.reason);
     return;
   }
 
@@ -31,6 +44,7 @@ function main() {
     password: '#password',
     submitButton: '#submit-button',
     forgotPasswordLink: '#forgot-password-link',
+    demoAccountMessage: '#demo-account-message',
   });
 
   if (isErr(uiElements)) {
@@ -40,10 +54,19 @@ function main() {
 
   initForm(uiElements);
   initForgotPasswordLink(uiElements);
+
+  const isDemoLoginLink = queryStringParams.demo === '1';
+
+  toggleElement(isDemoLoginLink, uiElements.demoAccountMessage);
+
+  if (isDemoLoginLink) {
+    uiElements.email.value = demoAccountEmail;
+    uiElements.password.value = demoAccountPassword;
+  }
 }
 
 function initForm(uiElements: RequiredUiElements): void {
-  const { submitButton, email, password, apiResponseMessage } = uiElements;
+  const { submitButton, email, password, apiResponseMessage, demoAccountMessage } = uiElements;
 
   onSubmit(submitButton, async (event: Event) => {
     event.preventDefault();
@@ -71,18 +94,25 @@ function initForm(uiElements: RequiredUiElements): void {
       navigateTo(PagePath.userStart, 1000);
     }
   });
+
+  onInput(email, () => {
+    const isDemoEmail = email.value.trim() === demoAccountEmail;
+
+    toggleElement(isDemoEmail, demoAccountMessage);
+  });
 }
 
 function initForgotPasswordLink(uiElements: RequiredUiElements): void {
   const { forgotPasswordLink, email } = uiElements;
 
-  email.addEventListener('input', () => {
+  onInput(email, () => {
     forgotPasswordLink.href = makePagePathWithParams(PagePath.requestPasswordReset, { email: email.value });
   });
 }
 
 interface RequiredUiElements extends FormUiElements, ApiResponseUiElements {
   forgotPasswordLink: HTMLAnchorElement;
+  demoAccountMessage: HTMLElement;
 }
 
 export interface FormFields {
@@ -92,6 +122,10 @@ export interface FormFields {
 
 export interface FormUiElements extends FormFields {
   submitButton: HTMLButtonElement;
+}
+
+interface Params {
+  demo: string;
 }
 
 main();
