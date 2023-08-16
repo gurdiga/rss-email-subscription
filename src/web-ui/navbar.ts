@@ -7,9 +7,11 @@ import {
   hideElement,
   HttpMethod,
   isAuthenticated,
+  isDemoAccount,
   onClick,
   requireUiElements,
   sendApiRequest,
+  toggleElement,
   unhideElement,
 } from './shared';
 
@@ -20,6 +22,7 @@ function main() {
     signOutLink: '#sign-out-link',
     haSignInLink: '#ha-sign-in',
     navToggle: 'button[data-bs-toggle="collapse"]',
+    demoWarningMessage: '#demo-warning-message',
   });
 
   if (isErr(uiElements)) {
@@ -33,6 +36,7 @@ function main() {
     displayPublicNavbar(uiElements);
   }
 
+  toggleElement(isDemoAccount(), uiElements.demoWarningMessage);
   maybeInitMobileToggle(uiElements.navToggle);
 }
 
@@ -110,6 +114,7 @@ interface RequiredUiElements {
   signOutLink: HTMLAnchorElement;
   haSignInLink: HTMLAnchorElement;
   navToggle: HTMLButtonElement;
+  demoWarningMessage: HTMLElement;
 }
 
 typeof window !== 'undefined' && main();

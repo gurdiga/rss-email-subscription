@@ -28,3 +28,20 @@ export const disablePrivateNavbarCookie: AppCookie = {
   ...enablePrivateNavbarCookie,
   value: 'false',
 };
+
+export const demoCookieName = 'isDemo';
+const demoCookieOptions: AppCookieOptions = {
+  httpOnly: false,
+  maxAge: sessionCookieMaxAge,
+};
+
+export const setDemoCookie: AppCookie = {
+  name: demoCookieName,
+  value: 'true',
+  options: demoCookieOptions,
+};
+
+export const unsetDemoCookie: AppCookie = {
+  ...setDemoCookie,
+  value: 'false',
+};

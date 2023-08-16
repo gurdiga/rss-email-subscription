@@ -1,4 +1,4 @@
-import { navbarCookieName } from '../api/app-cookie';
+import { demoCookieName, navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
 import { UiFeed, makeFullItemTextString, makeItemExcerptWordCountString } from '../domain/feed';
 import { PagePath } from '../domain/page-path';
@@ -419,6 +419,10 @@ export function getCookieByName(name: string, documentCookie = document.cookie):
 
 export function isAuthenticated(): boolean {
   return getCookieByName(navbarCookieName) === 'true';
+}
+
+export function isDemoAccount(): boolean {
+  return getCookieByName(demoCookieName) === 'true';
 }
 
 export function onClick(element: HTMLElement, f: (event: Event) => void) {
