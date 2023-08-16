@@ -1,7 +1,7 @@
 import { demoCookieName, navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
 import { UiFeed, makeFullItemTextString, makeItemExcerptWordCountString } from '../domain/feed';
-import { PagePath } from '../domain/page-path';
+import { PagePath, privatePaths } from '../domain/page-path';
 import {
   ApiResponse,
   AppError,
@@ -420,17 +420,6 @@ export function getCookieByName(name: string, documentCookie = document.cookie):
 export function isAuthenticated(): boolean {
   return getCookieByName(navbarCookieName) === 'true';
 }
-
-const privatePaths = [
-  '/user/account.html',
-  '/user/feeds.html',
-  '/user/add-new-feed.html',
-  '/user/edit-feed.html',
-  '/user/manage-feed.html',
-  '/user/manage-feed-subscribers.html',
-  '/user/delivery-reports.html',
-  '/user/feed-subscribe-form.html',
-];
 
 export function isDemoAccount(): boolean {
   return privatePaths.includes(location.pathname) && getCookieByName(demoCookieName) === 'true';

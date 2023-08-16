@@ -19,6 +19,17 @@ export enum PagePath {
   accountPage = '/user/account.html',
 }
 
+export const privatePaths = [
+  PagePath.accountPage,
+  PagePath.feedList,
+  '/user/add-new-feed.html',
+  PagePath.feedEdit,
+  PagePath.feedManage,
+  PagePath.manageFeedSubscribers,
+  PagePath.deliveryReports,
+  PagePath.feedSubscribeForm,
+];
+
 export interface FeedSubscribeFormParams {
   id: string;
   displayName: string;
