@@ -15,6 +15,7 @@ import {
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
+import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedPassword } from '../domain/hashed-password';
@@ -32,7 +33,7 @@ import { hash } from '../shared/crypto';
 import { Result, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { enablePrivateNavbarCookie } from './app-cookie';
+import { enablePrivateNavbarCookie, setDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
@@ -193,7 +194,8 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  const resetResult = resetAccountPassword(storage, accountId, newHashedPassword);
+  const isDemoAccount = account.email.value === demoAccountEmail;
+  const resetResult = isDemoAccount ? undefined : resetAccountPassword(storage, accountId, newHashedPassword);
 
   if (isErr(resetResult)) {
     logError(si`Failed to ${resetAccountPassword.name}: ${resetResult.reason}`);
@@ -211,7 +213,9 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
 
   const logData = {};
   const responseData = {};
-  const cookies = [enablePrivateNavbarCookie];
+
+  const maybeSetDemoCookie = isDemoAccount ? [setDemoCookie] : [];
+  const cookies = [enablePrivateNavbarCookie, ...maybeSetDemoCookie];
 
   logInfo('User confirmed password change', { email: account.email.value, accountId: accountId.value });
 
