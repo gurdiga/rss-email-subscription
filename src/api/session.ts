@@ -1,4 +1,5 @@
 import { AccountId, makeAccountId } from '../domain/account';
+import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { Err, hasKind, isErr, makeValues } from '../shared/lang';
@@ -88,4 +89,10 @@ export function checkSession(reqSession: unknown): AuthenticatedSession | Unauth
   }
 
   return { kind: 'AuthenticatedSession', ...values };
+}
+
+export function isDemoSession(reqSession: unknown): boolean {
+  const session = checkSession(reqSession);
+
+  return isAuthenticatedSession(session) && session.email.value === demoAccountEmail;
 }

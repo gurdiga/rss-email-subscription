@@ -45,7 +45,7 @@ import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
-import { checkSession, deinitSession, isAuthenticatedSession } from './session';
+import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
   cancelCustomerSubscriptions,
   changeCustomerSubscription,
@@ -140,7 +140,9 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
   }
 
   const { accountId, newEmail } = data;
-  const oldEmail = setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
+  const oldEmail = isDemoSession(reqSession)
+    ? newEmail
+    : setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
 
   if (isErr(oldEmail)) {
     logError(si`Failed to ${setAccountEmail.name}`, { reason: oldEmail.reason });
@@ -262,10 +264,9 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
-  const storeAccountResult = storeAccount(storage, accountId, {
-    ...account,
-    hashedPassword: newHashedPassword,
-  });
+  const storeAccountResult = isDemoSession(reqSession)
+    ? undefined
+    : storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
 
   if (isErr(storeAccountResult)) {
     logError(si`Failed to ${storeAccount.name}`, {
