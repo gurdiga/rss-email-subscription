@@ -40,7 +40,7 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './app-request-handler';
-import { checkSession, isAuthenticatedSession } from './session';
+import { checkSession, isAuthenticatedSession, isDemoSession } from './session';
 
 export const loadFeedDisplayName: AppRequestHandler = async function loadFeedDisplayName(
   reqId,
@@ -347,7 +347,9 @@ export const addFeedSubscribers: AppRequestHandler = async function addFeedSubsc
   const newHashedEmails = parseResult.validEmails
     .filter((x) => !storedEmailStrings.includes(x.value))
     .map((x) => makeHashedEmail(x, emailHashFn, defaultConfirmationState));
-  const newEmailsToStore = storedEmails.validEmails.concat(...newHashedEmails);
+
+  const limit = isDemoSession(reqSession) ? 10 : undefined;
+  const newEmailsToStore = storedEmails.validEmails.concat(...newHashedEmails).slice(0, limit);
   const result = storeEmails(newEmailsToStore, accountId, feedId, app.storage);
 
   if (isErr(result)) {
