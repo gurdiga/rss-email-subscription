@@ -1010,6 +1010,19 @@ hash-email:
 
 	ts-node -pe "import {hash} from './src/shared/crypto'; hash('$$EMAIL', '$$feed_hashing_salt')"
 
+# cron @daily
+purge-demo-feeds:
+	@: quiet
+	grep -l .tmp/docker-data/accounts/*/account.json -e '"email": "demo@feedsubscription.com",' |
+	xargs dirname |
+	xargs -I{} rm -rfv {}/feeds |
+	cat <( \
+		echo "Subject: RES purge-demo-feeds"; \
+		echo "From: RES <system@feedsubscription.com>"; \
+		echo; \
+	) - <(echo "(empty?)") |
+	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+
 # Helper functions
 
 define include_log_to
