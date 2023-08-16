@@ -42,7 +42,7 @@ import { hash } from '../shared/crypto';
 import { isErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { disablePrivateNavbarCookie } from './app-cookie';
+import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
@@ -471,7 +471,8 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     }
   }
 
-  const deleteAccountResult = deleteAccount(storage, accountId);
+  const isDemoAccount = isDemoSession(reqSession);
+  const deleteAccountResult = isDemoAccount ? undefined : deleteAccount(storage, accountId);
 
   if (isErr(deleteAccountResult)) {
     logError(si`Failed to ${deleteAccount.name}`, { reason: deleteAccountResult.reason, accountId: accountId.value });
@@ -483,11 +484,15 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
-  logInfo('Account deleted', { account });
   deinitSession(reqSession);
-  sendAccountDeletionConfirmationEmail(account.email, settings, env);
 
-  const cookies = [disablePrivateNavbarCookie];
+  if (!isDemoAccount) {
+    logInfo('Account deleted', { account });
+    sendAccountDeletionConfirmationEmail(account.email, settings, env);
+  }
+
+  const maybeUnsetDemoCookie = isDemoAccount ? [unsetDemoCookie] : [];
+  const cookies = [disablePrivateNavbarCookie, ...maybeUnsetDemoCookie];
 
   return makeSuccess('Success', {}, {}, cookies);
 };
