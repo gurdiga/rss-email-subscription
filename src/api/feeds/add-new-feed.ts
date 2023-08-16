@@ -13,7 +13,7 @@ import { Result, isErr, isObject, makeErr, makeTypeMismatchErr } from '../../sha
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
-import { checkSession, isAuthenticatedSession } from '../session';
+import { checkSession, isAuthenticatedSession, isDemoSession } from '../session';
 
 export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, reqBody, _reqParams, reqSession, app) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: addNewFeed.name, reqId });
@@ -45,6 +45,10 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
     logWarning(errorMessage, { feedId: feed.id.value });
 
     return makeInputError(errorMessage, 'id');
+  }
+
+  if (isDemoSession(reqSession)) {
+    feed.status = FeedStatus.Approved;
   }
 
   const { accountId } = session;
