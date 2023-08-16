@@ -9,9 +9,11 @@ import {
   HttpMethod,
   SpinnerUiElements,
   displayInitError,
+  isDemoAccount,
   requireUiElements,
   sendApiRequest,
   spinnerUiElements,
+  toggleElement,
   unhideElement,
 } from './shared';
 
@@ -21,6 +23,7 @@ async function main() {
     blankSlateMessage: '#blank-slate-message',
     feedListPreamble: '#feed-list-preamble',
     feedList: 'ol#feed-list',
+    demoAccountNote: '#demo-account-note',
   });
 
   if (isErr(uiElements)) {
@@ -42,6 +45,8 @@ async function main() {
   } else {
     displayFeedList(uiFeedList, uiElements);
   }
+
+  toggleElement(isDemoAccount(), uiElements.demoAccountNote);
 }
 
 function displayFeedList(uiFeedList: UiFeedListItem[], uiElements: FeedListUiElements): void {
@@ -124,6 +129,7 @@ interface FeedListUiElements {
   blankSlateMessage: HTMLElement;
   feedListPreamble: HTMLElement;
   feedList: HTMLOListElement;
+  demoAccountNote: HTMLElement;
 }
 
 typeof window !== 'undefined' && main();
