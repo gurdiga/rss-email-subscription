@@ -421,8 +421,19 @@ export function isAuthenticated(): boolean {
   return getCookieByName(navbarCookieName) === 'true';
 }
 
+const privatePaths = [
+  '/user/account.html',
+  '/user/feeds.html',
+  '/user/add-new-feed.html',
+  '/user/edit-feed.html',
+  '/user/manage-feed.html',
+  '/user/manage-feed-subscribers.html',
+  '/user/delivery-reports.html',
+  '/user/feed-subscribe-form.html',
+];
+
 export function isDemoAccount(): boolean {
-  return getCookieByName(demoCookieName) === 'true';
+  return privatePaths.includes(location.pathname) && getCookieByName(demoCookieName) === 'true';
 }
 
 export function onClick(element: HTMLElement, f: (event: Event) => void) {
