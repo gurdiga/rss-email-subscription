@@ -60,7 +60,13 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
   }
 
   const accountEmail = session.email;
-  const result = addFeedSubscriber(app.storage, accountEmail, feed, accountId);
+  const defaultSubscribers = [accountEmail];
+
+  if (isDemoSession(reqSession)) {
+    defaultSubscribers.push(feed.replyTo);
+  }
+
+  const result = addFeedSubscriber(app.storage, defaultSubscribers, feed, accountId);
 
   if (isErr(result)) {
     logError(si`Failed to ${addFeedSubscriber.name}`, { reason: result.reason });

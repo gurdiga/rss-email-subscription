@@ -270,11 +270,11 @@ export function hasConfirmedSubscribers(storage: AppStorage, accountId: AccountI
   return hasConfirmedEmails;
 }
 
-export function addFeedSubscriber(storage: AppStorage, accountEmail: EmailAddress, feed: Feed, accountId: AccountId) {
+export function addFeedSubscriber(storage: AppStorage, emails: EmailAddress[], feed: Feed, accountId: AccountId) {
   const isConfirmed = true;
   const emailHashFn = makeEmailHashFn(feed.hashingSalt);
-  const hashedEmail = makeHashedEmail(accountEmail, emailHashFn, isConfirmed);
-  const result = storeEmails([hashedEmail], accountId, feed.id, storage);
+  const hashedEmails = emails.map((email) => makeHashedEmail(email, emailHashFn, isConfirmed));
+  const result = storeEmails(hashedEmails, accountId, feed.id, storage);
 
   if (isErr(result)) {
     return makeErr(si`Failed to ${storeEmails.name}: ${result.reason}`);
