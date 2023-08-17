@@ -33,7 +33,7 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
   reqSession,
   { env, storage }
 ) {
-  const { logWarning, logError } = makeCustomLoggers({ module: showSampleEmail.name, reqId });
+  const { logInfo, logWarning, logError } = makeCustomLoggers({ module: showSampleEmail.name, reqId });
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -90,6 +90,12 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, recipient, feed.displayName, env.DOMAIN_NAME);
 
   const result = await sendSampleEmail(env, recipient, sender, feedInfo.mostRecentItem, unsubscribeUrl);
+
+  logInfo('sendSampleEmail', {
+    recipient: recipient.emailAddress.value,
+    sender: sender.emailAddress.value,
+    feedInfo: feedInfo,
+  });
 
   if (isErr(result)) {
     logError(si`Failed to ${sendSampleEmail.name}: ${result.reason}`);
