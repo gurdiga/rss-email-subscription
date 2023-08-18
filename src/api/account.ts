@@ -506,8 +506,7 @@ function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settin
       <p>At your request, your account at FeedSubscription.com has been deleted.</p>
 
       <p>If you would like to share the reason for deleting the account, we’d really appreciate it.
-      You can reply just to this email, or take a ten-second survey:
-      <a href="https://app.qpointsurvey.com/s/vo2hg1fbueqaj5o0">click here for survey</a>.</p>
+      You can reply just to this email.</p>
 
       <p>Have a nice day.</p>
     `),
