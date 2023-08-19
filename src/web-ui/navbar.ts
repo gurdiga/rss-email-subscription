@@ -9,6 +9,7 @@ import {
   isAuthenticated,
   isDemoAccount,
   onClick,
+  reportAppError,
   requireUiElements,
   sendApiRequest,
   toggleElement,
@@ -26,7 +27,7 @@ function main() {
   });
 
   if (isErr(uiElements)) {
-    displayInitError(uiElements.reason);
+    reportAppError(uiElements.reason);
     return;
   }
 
