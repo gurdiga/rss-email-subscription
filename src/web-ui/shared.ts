@@ -195,6 +195,8 @@ function assertHeader(headerName: string, expectedHeaderValue: string) {
 
 function assertAuthorized(response: Response) {
   if (response.status === 401) {
+    deleteCookieByName(navbarCookieName);
+
     setTimeout(() => {
       window.location.href = PagePath.userAuthentication;
     }, 2000);
@@ -415,6 +417,10 @@ export function getCookieByName(name: string, documentCookie = document.cookie):
   const value = decodeURIComponent(encodedValue);
 
   return value;
+}
+
+export function deleteCookieByName(name: string): void {
+  document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 }
 
 export function isAuthenticated(): boolean {

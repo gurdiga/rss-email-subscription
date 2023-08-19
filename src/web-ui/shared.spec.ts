@@ -3,9 +3,7 @@ import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
-import { fillUiElements, getCookieByName, requireUiElements } from './shared';
-import { UiElementFillSpec } from './shared';
-import { requireQueryParams } from './shared';
+import { fillUiElements, getCookieByName, requireQueryParams, requireUiElements, UiElementFillSpec } from './shared';
 
 describe(requireQueryParams.name, () => {
   interface RequiredParams {
