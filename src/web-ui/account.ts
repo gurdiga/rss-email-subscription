@@ -25,6 +25,7 @@ import {
   displayValidationError,
   fillUiElements,
   hideElement,
+  isDemoAccount,
   navigateTo,
   onClick,
   onEscape,
@@ -34,6 +35,7 @@ import {
   scrollIntoView,
   sendApiRequest,
   spinnerUiElements,
+  toggleElement,
   unhideElement,
 } from './shared';
 import {
@@ -133,7 +135,7 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
 }
 
 async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: PlanId): Promise<void> {
-  const { changePlanButton, cancelPlanChangeButton, submitNewPlanButton } = uiElements;
+  const { changePlanButton, cancelPlanChangeButton, submitNewPlanButton, changePlanDemoAccountNote } = uiElements;
   const { viewPlanSection, changePlanSection, planChangeSuccessMessage, planDropdown } = uiElements;
 
   const paymentSubformHandle = await makePaymentSubformHandle(currentPlanId, uiElements.paymentSubform, () =>
@@ -168,6 +170,9 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     hideElement(planChangeSuccessMessage);
     await submitNewPlan(uiElements, paymentSubformHandle);
   });
+
+  toggleElement(isDemoAccount(), changePlanDemoAccountNote);
+  submitNewPlanButton.disabled = isDemoAccount();
 }
 
 function handleApiResponse<T>(
@@ -535,6 +540,7 @@ interface PlanUiElements {
   planChangeSuccessMessage: HTMLElement;
   paymentSubformContainer: HTMLElement;
   paymentSubform: HTMLElement;
+  changePlanDemoAccountNote: HTMLElement;
 }
 
 const planUiElements: ElementSelectors<PlanUiElements> = {
@@ -551,6 +557,7 @@ const planUiElements: ElementSelectors<PlanUiElements> = {
   planChangeSuccessMessage: '#plan-change-success-message',
   paymentSubformContainer: '#payment-subform-container',
   paymentSubform: '#payment-subform',
+  changePlanDemoAccountNote: '#change-plan-demo-account-note',
 };
 
 interface DeleteAccountUiElements {
