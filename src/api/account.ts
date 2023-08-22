@@ -12,6 +12,7 @@ import {
   PasswordChangeRequestData,
   PlanChangeRequest,
   PlanChangeRequestData,
+  PlanChangeResponseData,
   UiAccount,
 } from '../domain/account';
 import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
@@ -531,6 +532,13 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeNotAuthenticatedError();
   }
 
+  if (isDemoSession(reqSession)) {
+    const logData = {};
+    const responseData: PlanChangeResponseData = { clientSecret: 'demo account' };
+
+    return makeSuccess('Success', logData, responseData);
+  }
+
   const { accountId } = session;
   const request = makePlanChangeRequest(reqBody);
 
@@ -630,7 +638,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
   const logData = {};
-  const responseData = { clientSecret };
+  const responseData: PlanChangeResponseData = { clientSecret };
 
   return makeSuccess('Success', logData, responseData);
 };
