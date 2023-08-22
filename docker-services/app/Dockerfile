@@ -3,11 +3,7 @@ ARG NODE_VERSION=18.16.0-alpine3.17
 ### --- build
 FROM node:${NODE_VERSION} as build
 
-RUN apk update
-RUN apk add --no-cache \
-  openssl=3.0.9-r3
-RUN apk upgrade --no-cache
-
+RUN apk update && apk upgrade --no-cache
 RUN npm i -g npm@latest
 
 WORKDIR /code
@@ -38,11 +34,7 @@ FROM node:${NODE_VERSION}
 VOLUME /data
 WORKDIR /code
 
-RUN apk update
-RUN apk add --no-cache \
-  openssl=3.0.9-r3
-RUN apk upgrade --no-cache
-
+RUN apk update && apk upgrade --no-cache
 RUN npm i -g npm@latest
 
 COPY package*.json ./
