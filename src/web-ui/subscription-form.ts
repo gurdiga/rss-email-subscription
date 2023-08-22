@@ -109,37 +109,28 @@
     return createElement('div', { className: 'res-form-area' });
   }
 
-  function createFieldLabel(index: number, textContent?: string, className?: string): HTMLLabelElement {
+  function createFieldLabel(index: number, textContent?: string, className = ''): HTMLLabelElement {
     return createElement('label', {
       htmlFor: fieldId(index),
       textContent: textContent || 'Get new posts in your inbox:',
-      className: className || '',
-      style: <CSSStyleDeclaration>{
-        marginRight: '0.5em',
-      },
+      className: 'res-field-label ' + className,
     });
   }
 
-  function createFieldTextbox(index: number, placeholder?: string, className?: string): HTMLInputElement {
+  function createFieldTextbox(index: number, placeholder?: string, className = ''): HTMLInputElement {
     return createElement('input', {
       id: fieldId(index),
-      name: 'email', // trigger appropriate auto-complete
+      name: 'email',
       placeholder: placeholder || 'your@email.com',
-      style: <CSSStyleDeclaration>{
-        marginRight: '0.25em',
-      },
-      className: className || '',
+      className: 'res-field-textbox ' + className,
     });
   }
 
-  function createSubmitButton(className?: string, buttonLabel?: string): HTMLButtonElement {
+  function createSubmitButton(className = '', buttonLabel?: string): HTMLButtonElement {
     return createElement(
       'button',
       {
-        style: <CSSStyleDeclaration>{
-          margin: '0.25em 0',
-        },
-        className: className || '',
+        className: 'res-submit-button ' + className,
       },
       buttonLabel || 'Subscribe'
     );
@@ -200,6 +191,15 @@
     }
     .res-ui-containter:hover .res-powered-by {
       opacity: 1;
+    }
+    .res-field-label {
+      margin-right: 0.5em;
+    }
+    .res-field-textbox {
+      margin-right: 0.25em;
+    }
+    .res-submit-button {
+      margin: 0.25em 0;
     }
     `
     );
