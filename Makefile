@@ -1015,8 +1015,8 @@ hash-email:
 purge-demo-feeds:
 	@: quiet
 	grep -l .tmp/docker-data/accounts/*/account.json -e '"email": "demo@feedsubscription.com",' |
-	xargs dirname |
-	xargs -I{} rm -rfv {}/feeds |
+	xargs --no-run-if-empty dirname |
+	xargs --no-run-if-empty -I{} rm -rfv {}/feeds |
 	cat <( \
 		echo "Subject: RES purge-demo-feeds"; \
 		echo "From: RES <system@feedsubscription.com>"; \
