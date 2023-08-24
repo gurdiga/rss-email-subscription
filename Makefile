@@ -485,11 +485,12 @@ list-qid-index:
 
 	ls -1 $$DATA_DIR_ROOT/qid-index |
 	grep -v "^total " |
+	ifne -n echo '(empty)' |
 	cat <(
 		echo "Subject: RES list-qid-index"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) - <(echo "(empty?)") |
+	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 delmon-dev:
@@ -691,11 +692,12 @@ list-sessions:
 
 	ls -1 $$DATA_DIR_ROOT/sessions |
 	grep -v "^total " |
+	ifne -n echo '(empty)' |
 	cat <(
 		echo "Subject: RES list-sessions"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) - <(echo "(empty?)") |
+	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 # cron @daily
@@ -729,11 +731,12 @@ watch-containers:
 	sed -E -e 's/^\S+ \S+ \S+ //' |
 	grep -v -E -s 'GET /(robots.txt|favicon.ico|.git|.env|.well-known|.vscode|info.php|sitemap.xml)' |
 	grep -v -E -s 'Googlebot' |
+	ifne -n echo '(empty)' |
 	cat <( \
 		echo "Subject: RES 404-report"; \
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
-	) - <(echo "(empty?)") |
+	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 deno-notes:
@@ -1017,11 +1020,12 @@ purge-demo-feeds:
 	grep -l .tmp/docker-data/accounts/*/account.json -e '"email": "demo@feedsubscription.com",' |
 	xargs --no-run-if-empty dirname |
 	xargs --no-run-if-empty -I{} rm -rfv {}/feeds |
+	ifne -n echo '(empty)' |
 	cat <( \
 		echo "Subject: RES purge-demo-feeds"; \
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
-	) - <(echo "(empty?)") |
+	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
 # Helper functions
