@@ -349,7 +349,7 @@ export function unhideElement(...elements: Element[]): void {
 }
 
 export function toggleElement(visible: boolean, ...elements: Element[]): void {
-  elements.forEach((x) => x.toggleAttribute('hidden', !visible));
+  elements.forEach((x) => toggleAttribute(x, 'hidden', !visible));
 }
 
 export function disableElement(...elements: HTMLElement[]): void {
@@ -445,4 +445,20 @@ export function onEscape(element: HTMLElement, f: Function) {
       f();
     }
   });
+}
+
+// This function exists because I’ve seen errors like this in the wild a
+// couple of times:
+//
+//   TypeError: x.toggleAttribute is not a function
+export function toggleAttribute(element: Element, attrName: string, force?: boolean): void {
+  if (force === undefined) {
+    force = !element.getAttribute(attrName);
+  }
+
+  if (force) {
+    element.setAttribute(attrName, '');
+  } else {
+    element.removeAttribute(attrName);
+  }
 }

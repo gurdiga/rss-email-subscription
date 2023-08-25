@@ -32,6 +32,7 @@ import {
   sendApiRequest,
   spinnerUiElements,
   SpinnerUiElements,
+  toggleAttribute,
   toggleElement,
   unhideElement,
 } from './shared';
@@ -229,7 +230,7 @@ function fillEmailList(uiElements: RequiredUiElements, emails: string[]): void {
   }
 
   uiElements.emailList.replaceChildren(...items);
-  uiElements.deleteSelectedButton.toggleAttribute('hidden', noEmails);
+  toggleAttribute(uiElements.deleteSelectedButton, 'hidden', noEmails);
   uiElements.emailListCounter.textContent = emails.length.toString();
 }
 

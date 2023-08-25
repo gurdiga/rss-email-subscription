@@ -3,7 +3,14 @@ import { makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
-import { fillUiElements, getCookieByName, requireQueryParams, requireUiElements, UiElementFillSpec } from './shared';
+import {
+  fillUiElements,
+  getCookieByName,
+  requireQueryParams,
+  requireUiElements,
+  toggleAttribute,
+  UiElementFillSpec,
+} from './shared';
 
 describe(requireQueryParams.name, () => {
   interface RequiredParams {
@@ -165,4 +172,60 @@ describe(getCookieByName.name, () => {
     expect(getCookieByName('testName', cookieRequestHeader)).to.equal('with spaces');
     expect(getCookieByName('magics', cookieRequestHeader)).to.equal('');
   });
+});
+
+describe(toggleAttribute.name, () => {
+  describe('with no force', () => {
+    it('sets the attribute if it’s not', () => {
+      const element = makeAttrStub();
+      const attrName = 'hidden';
+
+      toggleAttribute(element, attrName);
+      expect(element.getAttribute(attrName)).to.equal('');
+    });
+
+    it('removes the attribute if it exists', () => {
+      const element = makeAttrStub();
+      const attrName = 'hidden';
+
+      element.setAttribute(attrName, attrName);
+
+      toggleAttribute(element, attrName);
+      expect(element.getAttribute(attrName)).to.be.undefined;
+    });
+  });
+
+  describe('with force', () => {
+    it('sets or removes the attribute depending on force', () => {
+      const element = makeAttrStub();
+      const attrName = 'hidden';
+
+      expect(element.getAttribute(attrName)).to.be.undefined;
+
+      toggleAttribute(element, attrName, true);
+      expect(element.getAttribute(attrName)).to.equal('');
+
+      toggleAttribute(element, attrName, false);
+      expect(element.getAttribute(attrName)).to.be.undefined;
+
+      toggleAttribute(element, attrName, true);
+      expect(element.getAttribute(attrName)).to.equal('');
+    });
+  });
+
+  function makeAttrStub(): Element {
+    const attrs: Record<string, string> = {};
+
+    return {
+      setAttribute(attrName: string, attrValue: string): void {
+        attrs[attrName] = attrValue;
+      },
+      getAttribute(attrName: string): string | undefined {
+        return attrs[attrName];
+      },
+      removeAttribute(attrName: string): void {
+        delete attrs[attrName];
+      },
+    } as Element;
+  }
 });
