@@ -329,7 +329,6 @@ watch-app:
 			-e '"message":"(New feed added|Feed updated|Feed deleted)"' \
 			-e '"message":"(Unsubscribed)"' \
 			-e '"message":"Deleted confirmation secrets' \
-			-e '"message":"RSS check report' \
 			-e '"message":"(User registered|User confirmed registration|User (requested|confirmed) password change|User logged in|Account deleted)"' \
 		|
 	while read -r _skip_timestamp _skip_namespace container_name_and_id json; do
