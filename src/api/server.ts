@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import { readFileSync } from 'fs';
@@ -25,16 +26,18 @@ import {
   addFeedSubscribers,
   checkFeedUrl,
   deleteFeedSubscribers,
-  loadFeedDisplayName,
   loadFeedById,
+  loadFeedDisplayName,
   loadFeedSubscribers,
 } from './feeds';
-import { manageFeed } from './feeds/manage-feed';
-import { loadFeeds } from './feeds/load-feeds';
-import { editFeed } from './feeds/edit-feed';
 import { addNewFeed } from './feeds/add-new-feed';
 import { deleteFeed } from './feeds/delete-feed';
+import { editFeed } from './feeds/edit-feed';
+import { loadFeeds } from './feeds/load-feeds';
+import { manageFeed } from './feeds/manage-feed';
+import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
 import { initApp } from './init-app';
+import { confirmPasswordReset, requestPasswordReset } from './password-reset';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
@@ -42,8 +45,6 @@ import { accountSupportProduct, storeStripeCardDescription, stripeData, stripeKe
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
-import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
-import { requestPasswordReset, confirmPasswordReset } from './password-reset';
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -60,6 +61,7 @@ async function main() {
   router.use(ApiPath.versionTxt, express.static(makePath(__dirname, 'version.txt')));
   router.use(helmet());
   router.use(cors());
+  router.use(cookieParser());
   router.get(ApiPath.corsTest, (_req, res) => res.send('CORS test'));
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));

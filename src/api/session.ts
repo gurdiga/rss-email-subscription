@@ -11,6 +11,8 @@ const FileStore = require('session-file-store')(session);
 
 export type ReqSession = ReturnType<typeof session>;
 
+export const isSessionCookieRolling = true;
+
 export function makeExpressSession({ env, settings }: App): ReqSession {
   const store = new FileStore({
     path: makePath(env.DATA_DIR_ROOT, 'sessions'),
@@ -21,7 +23,7 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
     secret: settings.hashingSalt,
     resave: false,
     saveUninitialized: true,
-    rolling: true,
+    rolling: isSessionCookieRolling,
   });
 }
 

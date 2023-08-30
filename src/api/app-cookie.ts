@@ -10,12 +10,14 @@ export interface AppCookie {
 interface AppCookieOptions {
   maxAge?: number;
   httpOnly?: boolean;
+  isRolling?: boolean;
 }
 
 export const navbarCookieName = 'displayPrivateNavbar';
 const navbarCookieOptions: AppCookieOptions = {
   httpOnly: false,
   maxAge: sessionCookieMaxAge,
+  isRolling: true,
 };
 
 export const enablePrivateNavbarCookie: AppCookie = {
@@ -33,6 +35,7 @@ export const demoCookieName = 'isDemo';
 const demoCookieOptions: AppCookieOptions = {
   httpOnly: false,
   maxAge: sessionCookieMaxAge,
+  isRolling: true,
 };
 
 export const setDemoCookie: AppCookie = {
@@ -45,3 +48,5 @@ export const unsetDemoCookie: AppCookie = {
   ...setDemoCookie,
   value: 'false',
 };
+
+export const appCookies: AppCookie[] = [enablePrivateNavbarCookie, setDemoCookie];

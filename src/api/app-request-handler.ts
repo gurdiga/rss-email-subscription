@@ -1,11 +1,12 @@
 import { Request, RequestHandler, Response } from 'express';
+import uaParser from 'ua-parser-js';
 import { ApiResponse, Success } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
+import { appCookies, sessionCookieMaxAge } from './app-cookie';
 import { App } from './init-app';
-import { ReqSession, SessionFieldName } from './session';
-import uaParser from 'ua-parser-js';
+import { ReqSession, SessionFieldName, isSessionCookieRolling } from './session';
 
 export type AppRequestHandler = (
   reqId: string,
@@ -53,7 +54,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
       case 'Success': {
         logInfo(si`${action} succeeded`, { ...result.logData, durationMs });
         delete result.logData;
-        sendSuccess(res, result);
+        sendSuccess(req, res, result);
         break;
       }
       case 'NotAuthenticatedError': {
@@ -87,7 +88,8 @@ function getUaInfo(uaString: string | undefined) {
   };
 }
 
-function sendSuccess(res: Response, result: Success): void {
+function sendSuccess(req: Request, res: Response, result: Success): void {
+  maybeRollAppCookies(req, res);
   maybeSetCookies(res, result);
   sendJson(res, result);
 }
@@ -106,4 +108,25 @@ function maybeSetCookies(res: Response, result: Success): void {
   }
 
   delete result.cookies;
+}
+
+function maybeRollAppCookies(req: Request, res: Response): void {
+  if (!isSessionCookieRolling) {
+    return;
+  }
+
+  for (const cookie of appCookies) {
+    const reqValue = req.cookies[cookie.name];
+
+    if (!reqValue) {
+      continue;
+    }
+
+    const options = cookie.options || {};
+
+    if (options.isRolling) {
+      options.maxAge = sessionCookieMaxAge;
+      res.cookie(cookie.name, reqValue, options);
+    }
+  }
 }
