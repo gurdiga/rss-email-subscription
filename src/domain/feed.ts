@@ -4,6 +4,7 @@ import {
   isErr,
   isString,
   makeErr,
+  makeNonEmptyString,
   makePositiveInteger,
   makeTypeMismatchErr,
   makeValues,
@@ -26,6 +27,7 @@ export interface Feed {
   cronPattern: UnixCronPattern;
   status: FeedStatus;
   emailBodySpec: FeedEmailBodySpec;
+  emailSubjectSpec: FeedEmailSubjectSpec;
 }
 
 export function isFeed(value: unknown): value is Feed {
@@ -128,6 +130,90 @@ export function makeFeedEmailBodySpecString(emailBodySpec: FeedEmailBodySpec): s
   }
 }
 
+export type FeedEmailSubjectSpec = ItemTitle | CustomSubject;
+
+interface ItemTitle {
+  kind: 'ItemTitle';
+}
+
+export function makeItemTitle(): ItemTitle {
+  return { kind: 'ItemTitle' };
+}
+
+export function isItemTitle(value: unknown): value is ItemTitle {
+  return hasKind(value, 'ItemTitle');
+}
+
+export const customSubjectMaxLength = 60;
+
+interface CustomSubject {
+  kind: 'CustomSubject';
+  text: string;
+}
+
+type ItemTitleString = 'item-title';
+
+export function makeItemTitleString(): ItemTitleString {
+  return 'item-title';
+}
+
+type CustomSubjectString = string;
+
+export function makeCustomSubjectString(text: string, field = 'emailSubjectCustomText'): Result<string> {
+  const nonEmptyString = makeNonEmptyString(text, field);
+
+  if (isErr(nonEmptyString)) {
+    return nonEmptyString;
+  }
+
+  if (nonEmptyString.length > customSubjectMaxLength) {
+    return makeErr(si`Max length is ${customSubjectMaxLength}`, field);
+  }
+
+  return nonEmptyString;
+}
+
+export function makeFeedEmailCustomSubject(value: unknown): Result<CustomSubject> {
+  if (!isString(value)) {
+    return makeTypeMismatchErr(value, 'string');
+  }
+
+  const nonEmptyValue = makeCustomSubjectString(value.slice(0, customSubjectMaxLength));
+
+  if (isErr(nonEmptyValue)) {
+    return nonEmptyValue;
+  }
+
+  return {
+    kind: 'CustomSubject',
+    text: nonEmptyValue,
+  };
+}
+
+export function makeFeedEmailSubjectSpecString(emailSubjectSpec: FeedEmailSubjectSpec): string {
+  if (isItemTitle(emailSubjectSpec)) {
+    return makeItemTitleString();
+  }
+
+  return emailSubjectSpec.text;
+}
+
+export function makeFeedEmailSubjectSpec(value: unknown): Result<FeedEmailSubjectSpec> {
+  if (value === makeItemTitleString()) {
+    return makeItemTitle();
+  }
+
+  return makeFeedEmailCustomSubject(value);
+}
+
+export function makeOptionalFeedEmailSubjectSpec(value: unknown): Result<FeedEmailSubjectSpec> {
+  if (!value) {
+    return makeItemTitle();
+  } else {
+    return makeFeedEmailSubjectSpec(value);
+  }
+}
+
 export interface FeedHashingSalt {
   kind: 'FeedHashingSalt';
   value: string;
@@ -174,6 +260,7 @@ export interface UiFeed {
   url: string;
   email: string;
   emailBodySpec: FullItemTextString | ItemExcerptWordCountString;
+  emailSubjectSpec: ItemTitleString | CustomSubjectString;
   replyTo: string;
   status: FeedStatus;
 }
@@ -211,6 +298,7 @@ export function makeUiFeed(feed: Feed, domain: string): UiFeed {
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domain}`,
     emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
+    emailSubjectSpec: makeFeedEmailSubjectSpecString(feed.emailSubjectSpec),
     replyTo: feed.replyTo.value,
     status: feed.status,
   };
@@ -381,6 +469,7 @@ export interface FeedManageScreenResponse {
   url: string;
   email: string;
   emailBodySpec: string;
+  emailSubjectSpec: string;
   replyTo: string;
   status: FeedStatus;
   subscriberCount: number;

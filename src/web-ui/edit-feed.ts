@@ -22,26 +22,28 @@ import {
 } from './breadcrumbs';
 import {
   ApiResponseUiElements,
-  FeedEmailBodyFields,
   HttpMethod,
   SpinnerUiElements,
-  UiFeedFormFields,
   apiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
   displayValidationError,
-  makeEmailBodySpecFromFromFields,
   navigateTo,
   onSubmit,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
   spinnerUiElements,
-  uiFeedFormFields,
   unhideElement,
 } from './shared';
+import {
+  FeedEmailBodyFields,
+  UiFeedFormFields,
+  makeEmailBodySpecFromFromFields,
+  uiFeedFormFields,
+} from './feed-form-shared';
 
 async function main() {
   const queryStringParams = requireQueryParams<RequiredParams>({

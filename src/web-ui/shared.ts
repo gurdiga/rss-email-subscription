@@ -1,6 +1,5 @@
 import { demoCookieName, navbarCookieName } from '../api/app-cookie';
 import { ApiPath, getFullApiPath } from '../domain/api-path';
-import { UiFeed, makeFullItemTextString, makeItemExcerptWordCountString } from '../domain/feed';
 import { PagePath, privatePaths } from '../domain/page-path';
 import {
   ApiResponse,
@@ -10,7 +9,7 @@ import {
   isAppError,
   isInputError,
 } from '../shared/api-response';
-import { Result, makeErr } from '../shared/lang';
+import { Err, Result, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement, insertAdjacentElement, querySelector } from './dom-isolation';
 
@@ -263,11 +262,12 @@ export function preventDoubleClick(button: HTMLButtonElement, f: () => Promise<v
 }
 
 export function displayValidationError<FF>(
-  response: InputError,
+  response: InputError | Err,
   formFields: FF,
   getOrCreateValidationMessageFn = getOrCreateValidationMessage
 ) {
   const field = response.field as keyof FF;
+  const errorMessage = isErr(response) ? response.reason : response.message;
 
   if (!field) {
     reportAppError('No "field" prop in InputError from API.');
@@ -286,7 +286,7 @@ export function displayValidationError<FF>(
 
   const validationMessage = getOrCreateValidationMessageFn(fieldElement);
 
-  validationMessage.textContent = response.message;
+  validationMessage.textContent = errorMessage;
 }
 
 export function getOrCreateValidationMessage(
@@ -373,41 +373,6 @@ export function navigateTo(url: string, delay = 0): void {
     location.href = url;
   }, delay);
 }
-
-export interface UiFeedFormFields extends FeedEmailBodyFields {
-  displayName: HTMLInputElement;
-  url: HTMLInputElement;
-  id: HTMLInputElement;
-  replyTo: HTMLInputElement;
-}
-
-export interface FeedEmailBodyFields {
-  emailBodyFieldContainer: HTMLElement;
-  emailBodyFullPost: HTMLInputElement;
-  emailBodyExcerptOnly: HTMLInputElement;
-  emailBodyExcerptWordCount: HTMLInputElement;
-}
-
-export function makeEmailBodySpecFromFromFields(formFields: FeedEmailBodyFields): Result<UiFeed['emailBodySpec']> {
-  if (formFields.emailBodyFullPost.checked) {
-    return makeFullItemTextString();
-  } else if (formFields.emailBodyExcerptOnly.checked) {
-    return makeItemExcerptWordCountString(formFields.emailBodyExcerptWordCount.valueAsNumber);
-  } else {
-    return makeErr('Invalid emailBodySpec state');
-  }
-}
-
-export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
-  displayName: '#feed-name-field',
-  url: '#feed-url-field',
-  id: '#feed-id-field',
-  replyTo: '#feed-reply-to-field',
-  emailBodyFieldContainer: '#email-body-field-container',
-  emailBodyFullPost: '#email-body-full-post',
-  emailBodyExcerptOnly: '#email-body-excerpt-only',
-  emailBodyExcerptWordCount: '#email-body-excerpt-word-count',
-};
 
 export function getCookieByName(name: string, documentCookie = document.cookie): string {
   const pairs = documentCookie.split('; ');

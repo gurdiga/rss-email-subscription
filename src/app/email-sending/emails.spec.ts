@@ -272,7 +272,7 @@ describe(loadEmailAddresses.name, () => {
         'Email is syntactically incorrect: "not-an-email"', // prettier: keep these stacked please
         'Expected non-empty hash string but got string: " "',
         'Expected email string but got number: 42',
-        'Expected EmailInformation object but got null: null',
+        'Expected EmailInformation object but got null',
         'Expected EmailInformation object but got array: [1,2,3]',
         'Expected EmailInformation object but got object: {}',
       ],

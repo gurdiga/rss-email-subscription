@@ -2,7 +2,7 @@ import { ApiPath } from '../domain/api-path';
 import { AddNewFeedRequestData, AddNewFeedResponseData, defaultExcerptWordCount } from '../domain/feed';
 import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
-import { asyncAttempt, isErr } from '../shared/lang';
+import { Result, asyncAttempt, isErr } from '../shared/lang';
 import {
   BreadcrumbsUiElements,
   breadcrumbsUiElements,
@@ -12,20 +12,23 @@ import {
 import {
   ApiResponseUiElements,
   HttpMethod,
-  UiFeedFormFields,
   apiResponseUiElements,
   clearValidationErrors,
   displayApiResponse,
   displayCommunicationError,
   displayInitError,
   displayValidationError,
-  makeEmailBodySpecFromFromFields,
   navigateTo,
   onSubmit,
   requireUiElements,
   sendApiRequest,
-  uiFeedFormFields,
 } from './shared';
+import {
+  UiFeedFormFields,
+  makeEmailBodySpecFromFromFields,
+  makeEmailSubjectSpecFromFromFields,
+  uiFeedFormFields,
+} from './feed-form-shared';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
@@ -52,7 +55,16 @@ async function main() {
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    const response = await submitForm(uiElements);
+    const requestData = makeAddNewFeedRequestData(uiElements);
+
+    if (isErr(requestData)) {
+      displayValidationError(requestData, uiElements);
+      return;
+    }
+
+    const response = await asyncAttempt(() =>
+      sendApiRequest<AddNewFeedResponseData>(ApiPath.addNewFeed, HttpMethod.POST, requestData)
+    );
 
     if (isErr(response)) {
       displayCommunicationError(response, uiElements.apiResponseMessage);
@@ -82,22 +94,29 @@ async function main() {
   });
 }
 
-async function submitForm(formFields: UiFeedFormFields) {
+function makeAddNewFeedRequestData(formFields: UiFeedFormFields): Result<AddNewFeedRequestData> {
   const emailBodySpec = makeEmailBodySpecFromFromFields(formFields);
 
   if (isErr(emailBodySpec)) {
     return emailBodySpec;
   }
 
-  const request: AddNewFeedRequestData = {
+  const emailSubjectSpec = makeEmailSubjectSpecFromFromFields(formFields);
+
+  if (isErr(emailSubjectSpec)) {
+    return emailSubjectSpec;
+  }
+
+  const requestData: AddNewFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,
     emailBodySpec,
+    emailSubjectSpec,
   };
 
-  return await asyncAttempt(() => sendApiRequest<AddNewFeedResponseData>(ApiPath.addNewFeed, HttpMethod.POST, request));
+  return requestData;
 }
 
 interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements {

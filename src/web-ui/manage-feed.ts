@@ -284,6 +284,7 @@ export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'Email address:', value: uiFeed.email, name: 'email' },
     { label: 'Email body:', value: uiFeed.emailBodySpec, name: 'emailBodySpec' },
+    { label: 'Email subject:', value: uiFeed.emailSubjectSpec, name: 'emailSubjectSpec' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
   ];
 

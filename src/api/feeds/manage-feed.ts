@@ -1,5 +1,12 @@
 import { StoredEmailAddresses, loadEmailAddresses } from '../../app/email-sending/emails';
-import { Feed, FeedEmailBodySpec, FeedManageScreenRequest, FeedManageScreenResponse } from '../../domain/feed';
+import {
+  Feed,
+  FeedEmailBodySpec,
+  FeedEmailSubjectSpec,
+  FeedManageScreenRequest,
+  FeedManageScreenResponse,
+  isItemTitle,
+} from '../../domain/feed';
 import { makeFeedId } from '../../domain/feed-id';
 import { isFeedNotFound, loadFeed } from '../../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
@@ -87,6 +94,7 @@ function makeFeedManageScreenResponse(
     url: feed.url.toString(),
     email: si`${feed.id.value}@${domainName}`,
     emailBodySpec: makeFeedEmailBodySpecUi(feed.emailBodySpec),
+    emailSubjectSpec: makeFeedEmailSubjectSpecUi(feed.emailSubjectSpec),
     replyTo: feed.replyTo.value,
     status: feed.status,
     subscriberCount,
@@ -98,5 +106,13 @@ export function makeFeedEmailBodySpecUi(emailBodySpec: FeedEmailBodySpec): strin
     return 'Send full post';
   } else {
     return si`Only send an excerpt of ${emailBodySpec.wordCount} words`;
+  }
+}
+
+export function makeFeedEmailSubjectSpecUi(emailSubjectSpec: FeedEmailSubjectSpec): string {
+  if (isItemTitle(emailSubjectSpec)) {
+    return 'Is the post title';
+  } else {
+    return si`Is this custom text: ${emailSubjectSpec.text}`;
   }
 }

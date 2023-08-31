@@ -5,7 +5,7 @@ import { si } from '../shared/string-utils';
 import { AccountId, AccountNotFound, makeAccountId, makeAccountNotFound } from './account';
 import { accountsStorageKey } from './account-storage';
 import { EmailAddress } from './email-address';
-import { EditFeedRequest, Feed, FeedStatus, makeFeedEmailBodySpecString } from './feed';
+import { EditFeedRequest, Feed, FeedStatus, makeFeedEmailBodySpecString, makeFeedEmailSubjectSpecString } from './feed';
 import { FeedId, makeFeedId } from './feed-id';
 import { makeFeed } from './feed-making';
 import { AppStorage } from './storage';
@@ -18,6 +18,7 @@ export interface FeedStoredData {
   replyTo: string;
   status: FeedStatus;
   emailBodySpec: string;
+  emailSubjectSpec: string;
 }
 
 export interface FeedNotFound {
@@ -99,6 +100,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     replyTo: feed.replyTo.value,
     status: feed.status,
     emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
+    emailSubjectSpec: makeFeedEmailSubjectSpecString(feed.emailSubjectSpec),
   };
 
   const result = storage.storeItem(storageKey, data);

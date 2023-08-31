@@ -8,13 +8,19 @@ import {
   FeedEmailBodySpec,
   FeedHashingSalt,
   ItemExcerptWordCount,
+  customSubjectMaxLength,
+  makeCustomSubjectString,
   makeEditFeedRequest,
   makeFeedEmailBodySpec,
+  makeFeedEmailCustomSubject,
+  makeFeedEmailSubjectSpec,
   makeFeedHashingSalt,
   makeFullItemText,
   makeFullItemTextString,
   makeItemExcerptWordCount,
+  makeItemTitle,
   makeOptionalFeedEmailBodySpec,
+  makeOptionalFeedEmailSubjectSpec,
 } from './feed';
 import { FeedId } from './feed-id';
 
@@ -143,5 +149,54 @@ describe(makeOptionalFeedEmailBodySpec.name, () => {
     expect(makeOptionalFeedEmailBodySpec(undefined)).to.deep.equal(makeFullItemText());
     expect(makeOptionalFeedEmailBodySpec('full-item-text')).to.deep.equal(makeFeedEmailBodySpec('full-item-text'));
     expect(makeOptionalFeedEmailBodySpec('42 words')).to.deep.equal(makeFeedEmailBodySpec('42 words'));
+  });
+});
+
+describe(makeFeedEmailCustomSubject.name, () => {
+  it('validates input string as a CustomSubject', () => {
+    expect(makeFeedEmailCustomSubject(42)).to.deep.equal(makeErr('Expected string but got number: 42'));
+    expect(makeFeedEmailCustomSubject(undefined)).to.deep.equal(makeErr('Expected string but got undefined'));
+  });
+});
+
+describe(makeFeedEmailSubjectSpec.name, () => {
+  it('returns a Result<FeedEmailSubjectSpec> from the input string', () => {
+    expect(makeFeedEmailSubjectSpec('item-title')).to.deep.equal(makeItemTitle());
+    expect(makeFeedEmailSubjectSpec('This is my custom subject')).to.deep.equal(
+      makeFeedEmailCustomSubject('This is my custom subject')
+    );
+    expect(makeFeedEmailSubjectSpec('')).to.deep.equal(makeErr('Must not be empty', 'emailSubjectCustomText'));
+  });
+});
+
+describe(makeOptionalFeedEmailSubjectSpec.name, () => {
+  it('returns a ItemTitle value when no input', () => {
+    expect(makeOptionalFeedEmailSubjectSpec(undefined)).to.deep.equal(makeItemTitle());
+  });
+
+  it('forwards to makeFeedEmailSubjectSpec when value present', () => {
+    expect(makeOptionalFeedEmailSubjectSpec('item-title')).to.deep.equal(makeFeedEmailSubjectSpec('item-title'));
+    expect(makeOptionalFeedEmailSubjectSpec('A new post on my blog')).to.deep.equal(
+      makeFeedEmailSubjectSpec('A new post on my blog')
+    );
+  });
+});
+
+describe(makeCustomSubjectString.name, () => {
+  it('returns the input when OK', () => {
+    const input = 'A new post on Scribe Savvy';
+
+    expect(makeCustomSubjectString(input)).to.deep.equal(input);
+  });
+
+  it('does not accept an empty or white-space-only string', () => {
+    expect(makeCustomSubjectString('')).to.deep.equal(makeErr('Must not be empty', 'emailSubjectCustomText'));
+    expect(makeCustomSubjectString('\n \t \n  ')).to.deep.equal(makeErr('Must not be empty', 'emailSubjectCustomText'));
+  });
+
+  it(si`does not accept a string longer than ${customSubjectMaxLength}`, () => {
+    expect(makeCustomSubjectString('x'.repeat(customSubjectMaxLength + 1))).to.deep.equal(
+      makeErr(si`Max length is ${customSubjectMaxLength}`, 'emailSubjectCustomText')
+    );
   });
 });

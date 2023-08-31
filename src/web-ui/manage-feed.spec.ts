@@ -12,6 +12,7 @@ describe(makeUiData.name, () => {
       url: 'https://test.com/just-add-light/feed.xml',
       email: 'just-add-light@test.com',
       emailBodySpec: 'Send full post',
+      emailSubjectSpec: 'Is the post title',
       replyTo: 'reply-to@test.com',
       status: FeedStatus.AwaitingReview,
     };
@@ -22,6 +23,7 @@ describe(makeUiData.name, () => {
         { label: 'Name:', value: 'Just Add Light', name: 'displayName' },
         { label: 'Email address:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Email body:', value: 'Send full post', name: 'emailBodySpec' },
+        { label: 'Email subject:', value: 'Is the post title', name: 'emailSubjectSpec' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',

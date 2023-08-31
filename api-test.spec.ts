@@ -41,6 +41,7 @@ import {
   LoadEmailsResponse,
   LoadFeedsResponseData,
   makeFullItemTextString,
+  makeItemTitleString,
 } from './src/domain/feed';
 import { FeedId } from './src/domain/feed-id';
 import {
@@ -92,6 +93,7 @@ describe('API', () => {
     id: 'api-test-feed',
     replyTo: 'feed-replyto@api-test.com',
     emailBodySpec: makeFullItemTextString(),
+    emailSubjectSpec: makeItemTitleString(),
   };
 
   const testFeedId = makeTestFeedId(testFeedProps.id);
@@ -258,6 +260,7 @@ describe('API', () => {
             id: testFeedProps.id,
             replyTo: testFeedProps.replyTo,
             emailBodySpec: testFeedProps.emailBodySpec,
+            emailSubjectSpec: testFeedProps.emailSubjectSpec,
           };
           const { responseBody } = await addNewFeedSend(addNewFeedRequest);
 
@@ -407,6 +410,7 @@ describe('API', () => {
             id: '',
             replyTo: '',
             emailBodySpec: '',
+            emailSubjectSpec: '',
           };
           const { responseBody } = await addNewFeedSend(invalidRequest);
 
@@ -429,6 +433,7 @@ describe('API', () => {
                 id: 'existing-feed',
                 replyTo: 'reply-to-existing-feed@test.com',
                 emailBodySpec: makeFullItemTextString(),
+                emailSubjectSpec: makeItemTitleString(),
               });
               expect(addExistingFeed.responseBody.kind).to.equal('Success');
 
@@ -438,6 +443,7 @@ describe('API', () => {
                 id: 'feed-to-edit',
                 replyTo: 'reply-to-feed-to-edit@test.com',
                 emailBodySpec: makeFullItemTextString(),
+                emailSubjectSpec: makeItemTitleString(),
               });
               expect(response.responseBody.kind).to.equal('Success');
             });
@@ -521,6 +527,7 @@ describe('API', () => {
         id: testFeedProps.id!,
         replyTo: testFeedProps.replyTo!,
         emailBodySpec: makeFullItemTextString(),
+        emailSubjectSpec: makeItemTitleString(),
       };
       const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest);
       expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');

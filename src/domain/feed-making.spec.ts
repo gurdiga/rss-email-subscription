@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { Feed, FeedStatus, makeFullItemText, makeFullItemTextString, maxFeedNameLength } from './feed';
+import { Feed, FeedStatus, makeFullItemText, makeFullItemTextString, makeItemTitle, maxFeedNameLength } from './feed';
 import { makeFeed } from './feed-making';
 import { Err, makeErr } from '../shared/lang';
 import {
@@ -39,6 +39,7 @@ describe(makeFeed.name, () => {
       cronPattern,
       status: input.status!,
       emailBodySpec: makeFullItemText(),
+      emailSubjectSpec: makeItemTitle(),
     };
 
     expect(makeFeed(input)).to.deep.equal(expectedResult);

@@ -16,7 +16,15 @@ import {
 } from '../shared/test-utils';
 import { AccountData, makeAccountNotFound } from './account';
 import { getAccountStorageKey } from './account-storage';
-import { EditFeedRequest, Feed, FeedStatus, makeFullItemText, makeFullItemTextString } from './feed';
+import {
+  EditFeedRequest,
+  Feed,
+  FeedStatus,
+  makeFullItemText,
+  makeFullItemTextString,
+  makeItemTitle,
+  makeItemTitleString,
+} from './feed';
 import {
   FeedExistsResult,
   FeedStoredData,
@@ -48,6 +56,7 @@ describe(loadFeed.name, () => {
     cronPattern: '5 * * * *',
     status: FeedStatus.Approved,
     emailBodySpec: makeFullItemTextString(),
+    emailSubjectSpec: makeItemTitleString(),
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -66,6 +75,7 @@ describe(loadFeed.name, () => {
       cronPattern: makeTestUnixCronPattern(data.cronPattern),
       status: data.status,
       emailBodySpec: makeFullItemText(),
+      emailSubjectSpec: makeItemTitle(),
     };
 
     expect(result).to.deep.include(expectedResult, si`result: ${JSON.stringify(result)}`);
@@ -116,6 +126,7 @@ describe(loadFeedsByAccountId.name, () => {
       cronPattern: makeTestUnixCronPattern(),
       status: FeedStatus.AwaitingReview,
       emailBodySpec: makeFullItemText(),
+      emailSubjectSpec: makeItemTitle(),
     };
     const feeds: Record<string, ReturnType<typeof loadFeed>> = {
       validFeed,
@@ -198,6 +209,7 @@ describe(storeFeed.name, () => {
       replyTo: feed.replyTo.value,
       status: feed.status,
       emailBodySpec: makeFullItemTextString(),
+      emailSubjectSpec: makeItemTitleString(),
     };
 
     expect(isErr(result)).be.false;
