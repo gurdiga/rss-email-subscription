@@ -14,6 +14,7 @@ import {
   makeNonEmptyString,
   makeNumber,
   makePositiveInteger,
+  makeTypeMismatchErr,
   makeValues,
   readStringArray,
 } from './lang';
@@ -308,5 +309,18 @@ describe(makePositiveInteger.name, () => {
     expect(makePositiveInteger(-42)).to.deep.equal(makeErr('Value is not a positive number'));
     expect(makePositiveInteger('42.5')).to.deep.equal(makeErr('Value is not an integer number'));
     expect(makePositiveInteger(new Date())).to.deep.equal(makeErr('Value is not a number'));
+  });
+});
+
+describe(makeTypeMismatchErr.name, () => {
+  it('skips the value when null or undefined', () => {
+    expect(makeTypeMismatchErr(undefined, 'string')).to.deep.equal(makeErr('Expected string but got undefined'));
+    expect(makeTypeMismatchErr(null, 'string')).to.deep.equal(makeErr('Expected string but got null'));
+    expect(makeTypeMismatchErr(42, 'string')).to.deep.equal(makeErr('Expected string but got number: 42'));
+    expect(makeTypeMismatchErr('42', 'object')).to.deep.equal(makeErr('Expected object but got string: "42"'));
+  });
+
+  it('requires the type name param', () => {
+    expect(makeTypeMismatchErr(42, '')).to.deep.equal(makeErr('Missing expectedType'));
   });
 });

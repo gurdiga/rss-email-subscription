@@ -27,10 +27,16 @@ export function makeErr<FIELD extends NonNullable<Err['field']>>(reason: string 
 }
 
 export function makeTypeMismatchErr(value: unknown, expectedType: string): Err {
+  expectedType = expectedType.trim();
+
+  if (!expectedType) {
+    return makeErr('Missing expectedType');
+  }
+
   const actualType = getTypeName(value);
   const jsonValue = JSON.stringify(value);
 
-  return makeErr(si`Expected ${expectedType} but got ${actualType}: ${jsonValue}`);
+  return makeErr(si`Expected ${expectedType} but got ${actualType}${value != undefined ? si`: ${jsonValue}` : ''}`);
 }
 
 export function isNonEmptyString(value: unknown): value is string {
