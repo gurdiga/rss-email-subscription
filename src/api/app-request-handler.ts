@@ -4,7 +4,7 @@ import { ApiResponse, Success } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { appCookies, sessionCookieMaxAge } from './app-cookie';
+import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
 import { App } from './init-app';
 import { ReqSession, SessionFieldName, isSessionCookieRolling } from './session';
 
@@ -89,7 +89,7 @@ function getUaInfo(uaString: string | undefined) {
 }
 
 function sendSuccess(req: Request, res: Response, result: Success): void {
-  maybeRollAppCookies(req, res);
+  maybeRollAppCookies(req, res, result.cookies);
   maybeSetCookies(res, result);
   sendJson(res, result);
 }
@@ -110,12 +110,18 @@ function maybeSetCookies(res: Response, result: Success): void {
   delete result.cookies;
 }
 
-function maybeRollAppCookies(req: Request, res: Response): void {
+function maybeRollAppCookies(req: Request, res: Response, newCookies: AppCookie[] = []): void {
   if (!isSessionCookieRolling) {
     return;
   }
 
   for (const cookie of appCookies) {
+    const willBeSet = newCookies.find((x) => x.name === cookie.name);
+
+    if (willBeSet) {
+      continue;
+    }
+
     const reqValue = req.cookies[cookie.name];
 
     if (!reqValue) {
