@@ -1,6 +1,6 @@
 import * as cheerio from 'cheerio';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
-import { FeedEmailBodySpec, isFullItemText } from '../../domain/feed';
+import { FeedEmailBodySpec, FeedEmailSubjectSpec, isFullItemText, isItemTitle } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
 import { RssItem } from '../../domain/rss-item';
 import { rawsi, si } from '../../shared/string-utils';
@@ -14,17 +14,19 @@ export function makeEmailContent(
   item: RssItem,
   unsubscribeUrl: URL,
   fromAddress: EmailAddress,
-  emailBodySpec: FeedEmailBodySpec
+  emailBodySpec: FeedEmailBodySpec,
+  emailSubjectSpec: FeedEmailSubjectSpec
 ): EmailContent {
   const sendFullText = isFullItemText(emailBodySpec);
   const content = sendFullText
     ? item.content
     : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
+  const subject = isItemTitle(emailSubjectSpec) ? item.title : emailSubjectSpec.text;
 
   const itemHtml = preprocessContent(content, item.link);
 
   return {
-    subject: item.title,
+    subject,
     htmlBody: htmlBody(si`
       <article>${itemHtml}</article>
 

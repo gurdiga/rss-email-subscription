@@ -1,6 +1,6 @@
 import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
-import { FeedEmailBodySpec, makeFullItemText } from '../../domain/feed';
+import { FeedEmailBodySpec, FeedEmailSubjectSpec, makeFullItemText, makeItemTitle } from '../../domain/feed';
 import { RssItem } from '../../domain/rss-item';
 import { si } from '../../shared/string-utils';
 import {
@@ -27,10 +27,11 @@ describe(makeEmailContent.name, () => {
     guid: '1',
   };
   const emailBodySpec: FeedEmailBodySpec = makeFullItemText();
+  const emailSubjectSpec: FeedEmailSubjectSpec = makeItemTitle();
 
   it('returns an EmailMessage value for the given RssItem', () => {
     const unsubscribeUrl = new URL('https://example.com');
-    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec);
+    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec, emailSubjectSpec);
 
     expect(emailMessage.subject).to.equal(item.title);
     expect(emailMessage.htmlBody).to.contain(item.content);
@@ -43,7 +44,7 @@ describe(makeEmailContent.name, () => {
   it('returns content according to given emailBodySpec', () => {
     const unsubscribeUrl = new URL('https://example.com/unsubscribe?secret');
     const emailBodySpec = makeTesItemExcerptWordCount(55);
-    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec);
+    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec, emailSubjectSpec);
 
     const expectedContent =
       '<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory.' + // 8 words

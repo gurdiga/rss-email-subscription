@@ -8,11 +8,13 @@ import { loadAccount } from '../../domain/account-storage';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress, makeEmailAddressFromFeedId } from '../../domain/email-address-making';
 import {
+  FeedEmailSubjectSpec,
   PublicShowSampleEmailRequest,
   PublicShowSampleEmailResponse,
   ShowSampleEmailRequest,
   makeFeedUrl,
   makeFullItemText,
+  makeItemTitle,
 } from '../../domain/feed';
 import { makeFeedId, makeSampleFeedId } from '../../domain/feed-id';
 import { isFeedNotFound, loadFeed } from '../../domain/feed-storage';
@@ -89,7 +91,14 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
   const recipient = makeRecipientForSampleEmail(isDemoSession(reqSession) ? feed.replyTo : account.email);
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, recipient, feed.displayName, env.DOMAIN_NAME);
 
-  const result = await sendSampleEmail(env, recipient, sender, feedInfo.mostRecentItem, unsubscribeUrl);
+  const result = await sendSampleEmail(
+    env,
+    recipient,
+    sender,
+    feedInfo.mostRecentItem,
+    unsubscribeUrl,
+    feed.emailSubjectSpec
+  );
 
   logInfo('sendSampleEmail', {
     recipient: recipient.emailAddress.value,
@@ -151,10 +160,17 @@ async function sendSampleEmail(
   recipient: HashedEmail,
   sender: FullEmailAddress,
   mostRecentPost: RssItem,
-  unsubscribeUrl: URL
+  unsubscribeUrl: URL,
+  emailSubjectSpec: FeedEmailSubjectSpec
 ) {
   const emailBodySpec = makeFullItemText();
-  const emailContent = makeEmailContent(mostRecentPost, unsubscribeUrl, sender.emailAddress, emailBodySpec);
+  const emailContent = makeEmailContent(
+    mostRecentPost,
+    unsubscribeUrl,
+    sender.emailAddress,
+    emailBodySpec,
+    emailSubjectSpec
+  );
 
   return await sendEmail(sender, recipient.emailAddress, sender.emailAddress, emailContent, env);
 }
@@ -203,8 +219,16 @@ export const showSampleEmailPublic: AppRequestHandler = async function showSampl
   const feedEmailAddress = makeEmailAddressFromFeedId(makeSampleFeedId(), env.DOMAIN_NAME);
   const sender = makeFullEmailAddress(feedInfo.title, feedEmailAddress);
   const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, feedInfo.title, env.DOMAIN_NAME);
+  const emailSubjectSpec = makeItemTitle();
 
-  const result = await sendSampleEmail(env, recipient, sender, feedInfo.mostRecentItem, unsubscribeUrl);
+  const result = await sendSampleEmail(
+    env,
+    recipient,
+    sender,
+    feedInfo.mostRecentItem,
+    unsubscribeUrl,
+    emailSubjectSpec
+  );
 
   if (isErr(result)) {
     logError(si`Failed to ${sendSampleEmail.name}: ${result.reason}`);
