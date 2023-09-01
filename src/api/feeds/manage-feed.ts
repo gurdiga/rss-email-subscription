@@ -111,8 +111,8 @@ export function makeFeedEmailBodySpecUi(emailBodySpec: FeedEmailBodySpec): strin
 
 export function makeFeedEmailSubjectSpecUi(emailSubjectSpec: FeedEmailSubjectSpec): string {
   if (isItemTitle(emailSubjectSpec)) {
-    return 'Is the post title';
+    return 'Post title';
   } else {
-    return si`Is this custom text: ${emailSubjectSpec.text}`;
+    return si`Custom: ${emailSubjectSpec.text}`;
   }
 }

@@ -237,6 +237,7 @@ export function applyEditFeedRequest(
   feed.url = editFeedRequest.url;
   feed.replyTo = editFeedRequest.replyTo;
   feed.emailBodySpec = editFeedRequest.emailBodySpec;
+  feed.emailSubjectSpec = editFeedRequest.emailSubjectSpec;
 
   const storeFeedResult = storeFeed(accountId, feed, storage);
 

@@ -322,6 +322,7 @@ export interface EditFeedRequest {
   url: URL;
   id: FeedId;
   emailBodySpec: FeedEmailBodySpec;
+  emailSubjectSpec: FeedEmailSubjectSpec;
   initialId: FeedId;
   replyTo: EmailAddress;
 }
@@ -338,6 +339,7 @@ export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
     url: makeFeedUrl,
     id: makeFeedId,
     emailBodySpec: makeFeedEmailBodySpec,
+    emailSubjectSpec: makeFeedEmailSubjectSpec,
     initialId: makeFeedId,
     replyTo: makeFeedReplyToEmailAddress,
   });

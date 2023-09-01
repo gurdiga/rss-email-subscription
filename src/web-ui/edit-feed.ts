@@ -3,8 +3,11 @@ import {
   EditFeedRequestData,
   EditFeedResponse,
   UiFeed,
+  customSubjectMaxLength,
   defaultExcerptWordCount,
+  isItemTitle,
   makeFeedEmailBodySpec,
+  makeFeedEmailSubjectSpec,
   maxExcerptWordCount,
   minExcerptWordCount,
 } from '../domain/feed';
@@ -40,8 +43,10 @@ import {
 } from './shared';
 import {
   FeedEmailBodyFields,
+  FeedEmailSubjectFields,
   UiFeedFormFields,
   makeEmailBodySpecFromFromFields,
+  makeEmailSubjectSpecFromFromFields,
   uiFeedFormFields,
 } from './feed-form-shared';
 
@@ -138,7 +143,16 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
     event.preventDefault();
     clearValidationErrors(uiElements);
 
-    const response = await submitForm(uiElements, feedId);
+    const requestData = makeEditFeedRequestData(uiElements, feedId);
+
+    if (isErr(requestData)) {
+      displayValidationError(requestData, uiElements);
+      return;
+    }
+
+    const response = await asyncAttempt(() =>
+      sendApiRequest<EditFeedResponse>(ApiPath.editFeed, HttpMethod.POST, requestData)
+    );
 
     if (isErr(response)) {
       displayCommunicationError(response, uiElements.apiResponseMessage);
@@ -183,7 +197,40 @@ function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
   id.value = uiFeed.id;
   replyTo.value = uiFeed.replyTo;
 
-  const emailBodySpec = makeFeedEmailBodySpec(uiFeed.emailBodySpec);
+  const fillEmailBodyResult = fillEmailBodyField(uiElements, uiFeed.emailBodySpec);
+
+  if (isErr(fillEmailBodyResult)) {
+    return fillEmailBodyResult;
+  }
+
+  const fillEmailSubjectResult = fillEmailSubjectField(uiElements, uiFeed.emailSubjectSpec);
+
+  if (isErr(fillEmailSubjectResult)) {
+    return fillEmailSubjectResult;
+  }
+}
+
+function fillEmailSubjectField(uiElements: FeedEmailSubjectFields, spec: UiFeed['emailSubjectSpec']): Result<void> {
+  const emailSubjectSpec = makeFeedEmailSubjectSpec(spec);
+
+  if (isErr(emailSubjectSpec)) {
+    return emailSubjectSpec;
+  }
+
+  const { emailSubjectPostTitle, emailSubjectCustom, emailSubjectCustomText } = uiElements;
+
+  if (isItemTitle(emailSubjectSpec)) {
+    emailSubjectPostTitle.checked = true;
+  } else {
+    emailSubjectCustom.checked = true;
+    emailSubjectCustomText.value = emailSubjectSpec.text;
+  }
+
+  emailSubjectCustomText.maxLength = customSubjectMaxLength;
+}
+
+function fillEmailBodyField(uiElements: FeedEmailBodyFields, spec: UiFeed['emailBodySpec']): Result<void> {
+  const emailBodySpec = makeFeedEmailBodySpec(spec);
 
   if (isErr(emailBodySpec)) {
     return emailBodySpec;
@@ -204,23 +251,30 @@ function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
   emailBodyExcerptWordCount.min = minExcerptWordCount.toString();
 }
 
-async function submitForm(formFields: UiFeedFormFields, initialId: FeedId) {
+function makeEditFeedRequestData(formFields: UiFeedFormFields, initialId: FeedId): Result<EditFeedRequestData> {
   const emailBodySpec = makeEmailBodySpecFromFromFields(formFields);
 
   if (isErr(emailBodySpec)) {
     return emailBodySpec;
   }
 
-  const editFeedRequest: EditFeedRequestData = {
+  const emailSubjectSpec = makeEmailSubjectSpecFromFromFields(formFields);
+
+  if (isErr(emailSubjectSpec)) {
+    return emailSubjectSpec;
+  }
+
+  const requestData: EditFeedRequestData = {
     displayName: formFields.displayName.value,
     id: formFields.id.value,
     emailBodySpec,
+    emailSubjectSpec,
     initialId: initialId.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,
   };
 
-  return await asyncAttempt(() => sendApiRequest<EditFeedResponse>(ApiPath.editFeed, HttpMethod.POST, editFeedRequest));
+  return requestData;
 }
 
 interface RequiredUiElements extends UiFeedFormFields, ApiResponseUiElements, BreadcrumbsUiElements, SpinnerUiElements {

@@ -6,6 +6,7 @@ import {
   EditFeedRequest,
   EditFeedRequestData,
   FeedEmailBodySpec,
+  FeedEmailSubjectSpec,
   FeedHashingSalt,
   ItemExcerptWordCount,
   customSubjectMaxLength,
@@ -19,6 +20,7 @@ import {
   makeFullItemTextString,
   makeItemExcerptWordCount,
   makeItemTitle,
+  makeItemTitleString,
   makeOptionalFeedEmailBodySpec,
   makeOptionalFeedEmailSubjectSpec,
 } from './feed';
@@ -48,6 +50,7 @@ describe(makeEditFeedRequest.name, () => {
       url: 'https://just-add-light.com/blog/feed.rss',
       id: 'just-add-light',
       emailBodySpec: '50 words',
+      emailSubjectSpec: makeItemTitleString(),
       initialId: 'just-add-light',
       replyTo: 'just-add-light@test.com',
     };
@@ -62,6 +65,9 @@ describe(makeEditFeedRequest.name, () => {
       emailBodySpec: <FeedEmailBodySpec>{
         kind: 'ItemExcerptWordCount',
         wordCount: 50,
+      },
+      emailSubjectSpec: <FeedEmailSubjectSpec>{
+        kind: 'ItemTitle',
       },
       initialId: <FeedId>{
         kind: 'FeedId',
@@ -79,6 +85,8 @@ describe(makeEditFeedRequest.name, () => {
     type Input = EditFeedRequestData;
 
     const emailBodySpec = makeFullItemTextString();
+    const emailSubjectSpec = makeItemTitleString();
+
     const expectedErrForInput: [Input, Err, FieldName][] = [
       [24 as any as Input, makeErr('Invalid input type: expected [object] but got [number]'), 'input'],
       [undefined as any as Input, makeErr('Invalid input type: expected [object] but got [undefined]'), 'input2'],
@@ -96,6 +104,7 @@ describe(makeEditFeedRequest.name, () => {
           displayName: 'Just Add Light',
           url: 'https://a.co',
           emailBodySpec,
+          emailSubjectSpec,
           id: 'test-feed-id',
         } as Input,
         makeErr('Missing value', 'initialId'),
@@ -105,8 +114,19 @@ describe(makeEditFeedRequest.name, () => {
         {
           displayName: 'Just Add Light',
           url: 'https://a.co',
+          emailBodySpec,
+          id: 'test-feed-id',
+        } as Input,
+        makeErr('Missing value', 'emailSubjectSpec'),
+        'emailSubjectSpec',
+      ],
+      [
+        {
+          displayName: 'Just Add Light',
+          url: 'https://a.co',
           id: 'test-feed-id',
           emailBodySpec,
+          emailSubjectSpec,
           initialId: 'init-feed-id',
         } as Input,
         makeErr('Missing value', 'replyTo'),

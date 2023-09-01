@@ -454,6 +454,7 @@ describe('API', () => {
                 url: 'https://test.com/feed-to-edit/rss',
                 replyTo: 'reply-to-feed-to-edit@test.com',
                 emailBodySpec: makeFullItemTextString(),
+                emailSubjectSpec: makeItemTitleString(),
                 initialId: 'feed-to-edit',
                 id: 'existing-feed',
               };
