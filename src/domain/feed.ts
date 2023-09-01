@@ -123,7 +123,7 @@ export function makeOptionalFeedEmailBodySpec(value: unknown): Result<FeedEmailB
 }
 
 export function makeFeedEmailBodySpecString(emailBodySpec: FeedEmailBodySpec): string {
-  if (emailBodySpec.kind === 'FullItemText') {
+  if (isFullItemText(emailBodySpec)) {
     return makeFullItemTextString();
   } else {
     return makeItemExcerptWordCountString(emailBodySpec.wordCount);

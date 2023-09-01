@@ -5,6 +5,7 @@ import {
   FeedEmailSubjectSpec,
   FeedManageScreenRequest,
   FeedManageScreenResponse,
+  isFullItemText,
   isItemTitle,
 } from '../../domain/feed';
 import { makeFeedId } from '../../domain/feed-id';
@@ -102,7 +103,7 @@ function makeFeedManageScreenResponse(
 }
 
 export function makeFeedEmailBodySpecUi(emailBodySpec: FeedEmailBodySpec): string {
-  if (emailBodySpec.kind === 'FullItemText') {
+  if (isFullItemText(emailBodySpec)) {
     return 'Send full post';
   } else {
     return si`Only send an excerpt of ${emailBodySpec.wordCount} words`;

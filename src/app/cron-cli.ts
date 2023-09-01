@@ -1,7 +1,7 @@
 import { checkRss } from './rss-checking/index';
 import { sendEmails } from './email-sending/index';
 import { makeFeedId } from '../domain/feed-id';
-import { findFeedAccountId, loadFeed } from '../domain/feed-storage';
+import { findFeedAccountId, isFeedNotFound, loadFeed } from '../domain/feed-storage';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { getFirstCliArg, getSecondCliArg, programFilePath } from '../shared/process-utils';
@@ -70,7 +70,7 @@ if (isErr(feed)) {
   process.exit(1);
 }
 
-if (feed.kind === 'FeedNotFound') {
+if (isFeedNotFound(feed)) {
   logError('Feed not found', { feedId: feedId.value });
   process.exit(1);
 }

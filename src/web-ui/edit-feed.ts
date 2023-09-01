@@ -5,6 +5,7 @@ import {
   UiFeed,
   customSubjectMaxLength,
   defaultExcerptWordCount,
+  isFullItemText,
   isItemTitle,
   makeFeedEmailBodySpec,
   makeFeedEmailSubjectSpec,
@@ -240,7 +241,7 @@ function fillEmailBodyField(uiElements: FeedEmailBodyFields, spec: UiFeed['email
 
   emailBodyExcerptWordCount.valueAsNumber = defaultExcerptWordCount;
 
-  if (emailBodySpec.kind === 'FullItemText') {
+  if (isFullItemText(emailBodySpec)) {
     emailBodyFullPost.checked = true;
   } else {
     emailBodyExcerptOnly.checked = true;
