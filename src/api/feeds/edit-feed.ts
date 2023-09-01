@@ -40,7 +40,9 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
 
   if (feedIdHasChanged && isAccountId(feedAccountId)) {
     const errorMessage =
-      feedAccountId.value === session.accountId.value ? 'You already have a feed with this ID' : 'Feed ID is taken';
+      feedAccountId.value === session.accountId.value // prettier: keep these stacked
+        ? 'You already have a feed with this ID'
+        : 'Feed ID is taken';
 
     logWarning(errorMessage, {
       id: editFeedRequest.id.value,
