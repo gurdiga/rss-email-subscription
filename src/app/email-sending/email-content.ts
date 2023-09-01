@@ -18,12 +18,15 @@ export function makeEmailContent(
   emailSubjectSpec: FeedEmailSubjectSpec
 ): EmailContent {
   const sendFullText = isFullItemText(emailBodySpec);
+  const subjectIsPostTitle = isItemTitle(emailSubjectSpec);
+
+  const contentPrefix = subjectIsPostTitle ? '' : si`<h1>${item.title}</h1>`;
   const content = sendFullText
     ? item.content
     : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
-  const subject = isItemTitle(emailSubjectSpec) ? item.title : emailSubjectSpec.text;
 
-  const itemHtml = preprocessContent(content, item.link);
+  const subject = subjectIsPostTitle ? item.title : emailSubjectSpec.text;
+  const itemHtml = preprocessContent(contentPrefix + content, item.link);
 
   return {
     subject,
