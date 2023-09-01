@@ -8,7 +8,6 @@ export interface Err<FIELD extends string = string> {
   field?: FIELD;
 }
 
-// TODO: Restrict argument to Result<any> to be able to catch un-Awaited<Result>, and other non-Result values.
 export function isErr(value: unknown): value is Err {
   return hasKind(value, 'Err');
 }
@@ -98,7 +97,6 @@ export function isObject(value: unknown): value is object {
   return value !== null && typeof value === 'object';
 }
 
-// TODO: Add unit test
 export function isEmptyObject(value: unknown): boolean {
   return isObject(value) && Object.keys(value).length === 0 && value.constructor === Object;
 }
