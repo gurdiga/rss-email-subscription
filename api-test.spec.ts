@@ -4,6 +4,7 @@ import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
+import { getStripeCardDescriptionStorageKey } from './src/api/stripe-integration';
 import { getEmailsStorageKey } from './src/app/email-sending/emails';
 import {
   AccountData,
@@ -50,7 +51,7 @@ import {
   getFeedJsonStorageKey,
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
-import { fileExists, readFile } from './src/domain/io-isolation';
+import { deleteFile, fileExists, readFile, writeFile } from './src/domain/io-isolation';
 import {
   PasswordResetConfirmationData,
   PasswordResetConfirmationSecretData,
@@ -290,6 +291,7 @@ describe('API', () => {
             url: 'https://api-test.com/rss.xml',
             email: 'api-test-feed@localhost.feedsubscription.com',
             emailBodySpec: 'full-item-text',
+            emailSubjectSpec: 'item-title',
             replyTo: 'feed-replyto@api-test.com',
             status: FeedStatus.AwaitingReview,
           });
@@ -605,7 +607,13 @@ describe('API', () => {
     describe('Load account info', () => {
       before(authenticate);
 
-      it.skip('loads the account information for the authenticated user', async () => {
+      const cardDescription = 'Api-Test-AMEX ••••4567 expiring in December 2020';
+      const accountId = getAccountIdByEmail(makeTestEmailAddress(userEmail), appSettings.hashingSalt);
+
+      before(() => storeCardDescription(accountId));
+      after(() => removeCardDescription(accountId));
+
+      it('loads the account information for the authenticated user', async () => {
         const { responseBody } = await loadCurrentAccountSend();
 
         expect(responseBody).to.deep.equal(<Success>{
@@ -613,12 +621,24 @@ describe('API', () => {
           message: 'Success',
           responseData: {
             email: 'api-test-blogger@feedsubscription.com',
-            planId: 'free',
-            cardDescription: '',
+            planId,
+            cardDescription,
             isAdmin: false,
           },
         });
       });
+
+      function storeCardDescription(accountId: AccountId): void {
+        const filePath = getStripeCardDescriptionStorageKey(accountId);
+
+        writeFile(makePath(dataDirRoot, filePath), JSON.stringify(cardDescription));
+      }
+
+      function removeCardDescription(accountId: AccountId): void {
+        const filePath = getStripeCardDescriptionStorageKey(accountId);
+
+        deleteFile(makePath(dataDirRoot, filePath));
+      }
 
       async function loadCurrentAccountSend() {
         const path = getFullApiPath(ApiPath.loadCurrentAccount);

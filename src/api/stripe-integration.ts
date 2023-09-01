@@ -125,7 +125,7 @@ export function loadCardDescription(storage: AppStorage, accountId: AccountId): 
   return storage.loadItem(storageKey);
 }
 
-function getStripeCardDescriptionStorageKey(accountId: AccountId): StorageKey {
+export function getStripeCardDescriptionStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'card-description.json');
 }
 
