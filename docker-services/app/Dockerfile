@@ -1,10 +1,14 @@
 ARG NODE_VERSION=18.16.0-alpine3.17
 
+# See the appropriate version here: https://nodejs.org/en/download/releases
+ARG NPM_VERSION=9.6.7
+
 ### --- build
 FROM node:${NODE_VERSION} as build
+ARG NPM_VERSION
 
 RUN apk update && apk upgrade --no-cache
-RUN npm i -g npm@latest
+RUN npm i -g "npm@${NPM_VERSION}"
 
 WORKDIR /code
 
@@ -30,12 +34,13 @@ RUN cat ./src/web-ui/systemjs-resolve-patch.js >> dist/api/web-ui-scripts/system
 
 ### --- run
 FROM node:${NODE_VERSION}
+ARG NPM_VERSION
 
 VOLUME /data
 WORKDIR /code
 
 RUN apk update && apk upgrade --no-cache
-RUN npm i -g npm@latest
+RUN npm i -g "npm@${NPM_VERSION}"
 
 COPY package*.json ./
 RUN npm install --omit=dev
