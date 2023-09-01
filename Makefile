@@ -136,6 +136,7 @@ smtp-test:
 app:
 	@$(call include_log_to)
 
+	set -euo pipefail
 	docker buildx build \
 		--progress=plain \
 		--tag app \
