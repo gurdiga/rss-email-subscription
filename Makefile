@@ -1028,6 +1028,9 @@ purge-demo-feeds:
 	) - |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
+show-certificate-date:
+	echo | openssl s_client -connect feedsubscription.com:443 | openssl x509 -noout -dates
+
 # Helper functions
 
 define include_log_to
