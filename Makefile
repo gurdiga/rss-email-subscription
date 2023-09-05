@@ -1031,6 +1031,18 @@ purge-demo-feeds:
 show-certificate-date:
 	echo | openssl s_client -connect feedsubscription.com:443 | openssl x509 -noout -dates
 
+extend-trial:
+	@: quiet
+	: $${SUB_ID:?Missing envar as sub_longBlahBlah}
+	: $${TRIAL_END:?Missing envar as %F date string}
+
+	trial_end_timestamp=`date -d "$${TRIAL_END}T00:00:00+00:00" +"%s"`
+
+	curl https://api.stripe.com/v1/subscriptions/$$SUB_ID \
+		-u $$STRIPE_SECRET_KEY: \
+		-d "trial_end"="$$trial_end_timestamp" \
+		-d "metadata[extended_trial_on]"="`date`"
+
 # Helper functions
 
 define include_log_to
