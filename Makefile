@@ -172,6 +172,7 @@ resolver:
 		--tag resolver \
 		docker-services/resolver
 
+# cron @reboot
 watch-resolver:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/resolver.log |
 	grep --line-buffered -E \
