@@ -172,6 +172,25 @@ resolver:
 		--tag resolver \
 		docker-services/resolver
 
+watch-resolver:
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/resolver.log |
+	grep --line-buffered -E \
+			-e ' (exiting|started,|using|read) ' \
+			-e ' is NODATA-' \
+	|
+	while read -r timestamp _skip_namespace _skip_container_name_and_id _skip_process_name record; do
+		(
+			date_and_hour=`echo $$timestamp | cut -d: -f1`
+
+			echo "From: RES <system@feedsubscription.com>"
+			echo "Subject: RES resolver $$date_and_hour"
+			echo ""
+			echo "$$timestamp $$record"
+		) |
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	done \
+	& disown
+
 logger-list-packages:
 	docker exec -it logger apk list -a |
 	grep -P "^(syslog-ng|logrotate|tini)-\d"
