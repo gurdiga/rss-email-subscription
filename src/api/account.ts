@@ -48,7 +48,7 @@ import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
-  cancelCustomerSubscriptions,
+  cancelCustomerSubscription,
   changeCustomerSubscription,
   createCustomerWithSubscription,
   loadCardDescription,
@@ -464,12 +464,17 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
   if (isSubscriptionPlan(account.planId)) {
     const stripe = makeStripe(env.STRIPE_SECRET_KEY);
     const { email } = account;
-    const result = await cancelCustomerSubscriptions(stripe, email);
+    const subscription = await cancelCustomerSubscription(stripe, email);
 
-    if (isErr(result)) {
-      logError(si`Failed to ${cancelCustomerSubscriptions.name}`, { reason: result.reason, email: email.value });
+    if (isErr(subscription)) {
+      logError(si`Failed to ${cancelCustomerSubscription.name}`, { reason: subscription.reason, email: email.value });
       return makeAppError();
     }
+
+    logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, {
+      email: email.value,
+      subscriptionId: subscription.id,
+    });
   }
 
   const isDemoAccount = isDemoSession(reqSession);
@@ -579,10 +584,10 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   let clientSecret: string;
 
   if (changingFromPaidPlanToFree) {
-    const cancelResult = await cancelCustomerSubscriptions(stripe, email);
+    const cancelResult = await cancelCustomerSubscription(stripe, email);
 
     if (isErr(cancelResult)) {
-      logError(si`Failed to ${cancelCustomerSubscriptions.name}`, {
+      logError(si`Failed to ${cancelCustomerSubscription.name}`, {
         reason: cancelResult.reason,
         email: email.value,
       });

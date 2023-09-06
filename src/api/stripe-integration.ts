@@ -420,27 +420,70 @@ async function getStripePriceIdForPlan(stripe: Stripe, planId: PlanId): Promise<
   return price.id;
 }
 
-export async function cancelCustomerSubscriptions(stripe: Stripe, customerEmail: EmailAddress): Promise<Result<void>> {
-  const query = si`status:"active" AND metadata["res_customer_email"]:"${customerEmail.value}"`;
-  const searchResults = await asyncAttempt(() => stripe.subscriptions.search({ query }));
+async function searchCustomerSubscriptions(
+  stripe: Stripe,
+  email: EmailAddress,
+  status: Stripe.Subscription.Status
+): Promise<Result<Stripe.Subscription[]>> {
+  const query = si`status:'${status}' AND metadata['res_customer_email']:'${email.value}'`;
+  const searchResults = await asyncAttempt(() => stripe.subscriptions.search({ query: query }));
 
   if (isErr(searchResults)) {
     return makeErr(si`Failed to stripe.subscriptions.search({query: "${query}"}): "${searchResults.reason}"`);
   }
 
-  const subscriptions = searchResults.data;
+  return searchResults.data;
+}
 
-  for (const { id } of subscriptions) {
-    const subscription = await asyncAttempt(() => stripe.subscriptions.cancel(id));
+export async function cancelCustomerSubscription(
+  stripe: Stripe,
+  customerEmail: EmailAddress
+): Promise<Result<Stripe.Subscription>> {
+  const activeSubscriptions = await searchCustomerSubscriptions(stripe, customerEmail, 'active');
 
-    if (isErr(subscription)) {
-      return makeErr(si`Failed to stripe.subscriptions.cancel("${id}"): ${subscription.reason}`);
-    }
-
-    if (subscription.status !== 'canceled') {
-      return makeErr(si`Subscription status for "${id}" is "${subscription.status}" instead of "canceled"`);
-    }
+  if (isErr(activeSubscriptions)) {
+    return makeErr(
+      si`Failed to ${searchCustomerSubscriptions.name}('${customerEmail.value}', 'active'): ${activeSubscriptions.reason}`
+    );
   }
+
+  const trialSubscriptions = await searchCustomerSubscriptions(stripe, customerEmail, 'trialing');
+
+  if (isErr(trialSubscriptions)) {
+    return makeErr(
+      si`Failed to ${searchCustomerSubscriptions.name}('${customerEmail.value}', 'trialing'): ${trialSubscriptions.reason}`
+    );
+  }
+
+  const subscriptions = activeSubscriptions.concat(trialSubscriptions);
+
+  if (subscriptions.length > 1) {
+    const subscriptionIds = subscriptions.map((x) => si`${x.id} => ${x.status}`).join(', ');
+
+    return makeErr(si`More than one subscriptions found to cancel for ${customerEmail.value}: ${subscriptionIds}`);
+  }
+
+  const subscription = subscriptions[0];
+
+  if (!subscription) {
+    return makeErr(si`No subscription found to cancel for ${customerEmail.value}`);
+  }
+
+  const result = await asyncAttempt(() => stripe.subscriptions.cancel(subscription.id));
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to stripe.subscriptions.cancel("${subscription.id}"): ${result.reason}`);
+  }
+
+  const expectedStatus = 'canceled';
+
+  if (result.status !== expectedStatus) {
+    return makeErr(
+      si`Subscription status for "${subscription.id}" is "${result.status}" instead of "${expectedStatus}"`
+    );
+  }
+
+  return subscription;
 }
 
 function getClientSecretFromSubscription(subscription: Stripe.Subscription): Result<StripeClientSecret> {
