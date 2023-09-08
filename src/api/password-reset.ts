@@ -113,7 +113,7 @@ function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: st
   return {
     subject: 'Password reset link from FeedSubscription',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Here is the link to reset your password at FeedSubscription.com:</p>
 
@@ -226,7 +226,7 @@ function sendPasswordResetConfirmationEmail(accountEmail: EmailAddress, settings
   const emailContent = {
     subject: 'FeedSubscription password reset confirmation',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>At your request, your password at FeedSubscription.com has been reset.</p>
 

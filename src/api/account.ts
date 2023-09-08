@@ -191,7 +191,7 @@ async function sendEmailChangeInformationEmail(
   const emailContent = {
     subject: 'Please note FeedSubscription email change',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Please note that the account email at FeedSubscription.com
       has been changed from <b>${oldEmail.value}</b> to <b>${newEmail.value}</b>.</p>
@@ -287,7 +287,7 @@ async function sendPasswordChangeInformationEmail(email: EmailAddress, settings:
   const emailContent = {
     subject: 'Please note FeedSubscription passsword change',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Please note that the account password at FeedSubscription.com
       has been changed.</p>
@@ -379,7 +379,7 @@ async function sendEmailChangeConfirmationEmail(
   const emailContent = {
     subject: 'Please confirm FeedSubscription email change',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Please confirm FeedSubscription.com email change by clicking the link below:</p>
 
@@ -507,7 +507,7 @@ function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settin
   const emailContent = {
     subject: 'FeedSubscription account deletion confirmation',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>At your request, your account at FeedSubscription.com has been deleted.</p>
 
@@ -662,7 +662,7 @@ async function sendPlanChangeInformationEmail(
   const emailContent = {
     subject: 'Please note FeedSubscription plan change',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Please note that your plan at FeedSubscription.com has been
       changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>

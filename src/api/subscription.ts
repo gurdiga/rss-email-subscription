@@ -184,7 +184,7 @@ export function makeSubscriptionConfirmationEmailContent(
   return {
     subject: 'Please confirm subscription',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
 

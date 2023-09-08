@@ -125,7 +125,7 @@ async function sendAlertEmail(feed: Feed, errorMessage: string, env: AppEnv, fro
   const emailContent: EmailContent = {
     subject: 'Alert: failed to check your feed',
     htmlBody: htmlBody(si`
-      <p>Hi there,</p>
+      <p>Hello,</p>
 
       <p>This is a notification message from FeedSubscription.com.</p>
 
