@@ -44,7 +44,7 @@ export async function parseRssFeed(
         invalidItems,
       };
     } catch (error) {
-      return makeErr(si`buildRssItemFn threw: ${getErrorMessage(error)}`);
+      return makeErr(si`Failed to parse RSS: ${getErrorMessage(error)}`);
     }
   } catch (error) {
     return makeErr(si`Invalid XML: ${rssResponse.xml}`);

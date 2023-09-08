@@ -243,7 +243,7 @@ describe(parseRssFeed.name, () => {
       buildRssItemFn
     )) as Err;
 
-    expect(result).to.deep.equal(makeErr('buildRssItemFn threw: Something broke!'));
+    expect(result).to.deep.equal(makeErr('Failed to parse RSS: Something broke!'));
   });
 
   describe(makeRssItem.name, () => {
