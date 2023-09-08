@@ -455,7 +455,7 @@ async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
   const response = await asyncAttempt(() => sendApiRequest<T>(ApiPath.loadCurrentAccount));
 
   if (isErr(response)) {
-    return makeErr('Failed to load the account information');
+    return makeErr(si`Failed to load the account information: ${response.reason}`);
   }
 
   if (isAppError(response)) {
