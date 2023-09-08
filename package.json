@@ -38,7 +38,7 @@
   },
   "dependencies": {
     "@stripe/stripe-js": "^2.0.0",
-    "@types/ua-parser-js": "^0.7.36",
+    "@types/ua-parser-js": "^0.7.37",
     "cheerio": "^1.0.0-rc.12",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
