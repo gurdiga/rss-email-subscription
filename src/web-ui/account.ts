@@ -136,7 +136,8 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
 
 async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: PlanId): Promise<void> {
   const { changePlanButton, cancelPlanChangeButton, submitNewPlanButton, changePlanDemoAccountNote } = uiElements;
-  const { viewPlanSection, changePlanSection, planChangeSuccessMessage, planDropdown } = uiElements;
+  const { viewPlanSection, changePlanSection, planChangeSuccessMessage, planChangeApiResponseMessage, planDropdown } =
+    uiElements;
 
   const paymentSubformHandle = await makePaymentSubformHandle(currentPlanId, uiElements.paymentSubform, () =>
     clearValidationErrors(uiElements)
@@ -168,6 +169,7 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
   onSubmit(submitNewPlanButton, async () => {
     clearValidationErrors(uiElements);
     hideElement(planChangeSuccessMessage);
+    hideElement(planChangeApiResponseMessage);
     await submitNewPlan(uiElements, paymentSubformHandle);
   });
 
