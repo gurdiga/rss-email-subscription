@@ -25,7 +25,10 @@ export async function parseRssFeed(
     const feed = await parser.parseString(rssResponse.xml);
 
     try {
-      const items = feed.items.map((item) => buildRssItemFn(item as ParsedRssItem, rssResponse.baseURL));
+      const defaultItemTitle = feed.title || rssResponse.baseURL.hostname;
+      const items = feed.items.map((item) =>
+        buildRssItemFn(item as ParsedRssItem, rssResponse.baseURL, defaultItemTitle)
+      );
 
       const validItems = items
         .filter(isValidRssItem)
@@ -70,12 +73,16 @@ function isValidRssItem(value: unknown): value is ValidRssItem {
   return hasKind(value, 'ValidRssItem');
 }
 
-export type MakeRssItemFn = (item: ParsedRssItem, baseURL: URL) => ValidRssItem | InvalidRssItem;
+export type MakeRssItemFn = typeof makeRssItem;
 
-export function makeRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | InvalidRssItem {
-  const { title, isoDate } = item;
+export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: string): ValidRssItem | InvalidRssItem {
+  const { isoDate } = item;
+
+  const title = item.title || defaultTitle;
+
   let content = item['content:encoded'] || item.content || item.summary;
   const author = item.author || item.creator || 'Anonymous Coward';
+
   const isMissing = (value: string | undefined): value is undefined => !value?.trim();
   const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
 
@@ -85,10 +92,6 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL): ValidRssItem | I
 
   if (isMissing(content)) {
     content = 'Post content is missing';
-  }
-
-  if (isMissing(author)) {
-    return invalidRssItem('Post author is missing');
   }
 
   if (isMissing(isoDate)) {
