@@ -105,6 +105,9 @@ async function main() {
   if (isDev) {
     expressServer.use(apiBasePath, router);
     expressServer.use('/', express.static(process.env['DOCUMENT_ROOT']!));
+    expressServer.get('/to/:feedId', (req, res) =>
+      res.redirect(si`/subscription-request.html?feedId=${req.params['feedId']}`)
+    );
   } else {
     expressServer.use(router);
   }
