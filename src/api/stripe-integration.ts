@@ -347,10 +347,11 @@ function getCustomerActiveSubscriptions(customer: Stripe.Customer): Result<Strip
     return makeErr('Customer to change subscription has none');
   }
 
-  const activeSubscriptions = subscriptions.filter((x) => x.status === 'active');
+  const eligibleStatuses: Stripe.Subscription.Status[] = ['active', 'trialing'];
+  const activeSubscriptions = subscriptions.filter((x) => eligibleStatuses.includes(x.status));
 
   if (isEmpty(activeSubscriptions)) {
-    return makeErr('Customer to change subscription has none active');
+    return makeErr(si`Customer to change subscription has none ${eligibleStatuses.join(' or ')}`);
   }
 
   return activeSubscriptions;
