@@ -18,7 +18,7 @@ import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
 
-  logInfo(si`Starting cron in ${process.env['NODE_ENV']!} environment`);
+  logInfo(si`Starting cron in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
 
   const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
 

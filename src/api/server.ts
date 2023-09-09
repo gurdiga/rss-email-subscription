@@ -127,7 +127,7 @@ async function main() {
     : [3000, 'http', http.createServer(expressServer)];
 
   const shutdownHandle = server.listen(port, () => {
-    logInfo(si`Starting API server in ${process.env['NODE_ENV']!} environment`);
+    logInfo(si`Starting API server in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
     logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
   });
 
