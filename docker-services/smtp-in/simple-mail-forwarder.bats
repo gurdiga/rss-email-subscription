@@ -233,7 +233,6 @@ SMF_POSTFIXLOG_BEFORE_TEST_EXECUTION="$SMF_POSTFIXLOG"
 
 @test "test custom postfix logging configuration" {
     # Check if postfix can start and logs to the specified file
-    SMF_POSTFIXLOG="/var/log/postfix/postfix.log"
     if [ "$SMF_POSTFIXLOG" == "" ]; then
       echo "Postfix should not use the default configuration"
       exit 1

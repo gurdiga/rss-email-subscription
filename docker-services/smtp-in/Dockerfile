@@ -13,3 +13,8 @@ RUN postconf -e smtpd_sasl_local_domain="${SASL_DOMAIN}"
 RUN echo "${SASL_PASSWORD}" | saslpasswd2 -p -c -u "${SASL_DOMAIN}" "${SASL_LOGIN}"
 
 COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
+
+# Remove some of the irrelevant tests.
+# 1. docker cp smtp-in:/app/test/simple-mail-forwarder.bats docker-services/smtp-in/
+# 2. edit docker-services/smtp-in/simple-mail-forwarder.bats
+COPY simple-mail-forwarder.bats /app/test/
