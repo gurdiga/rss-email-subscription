@@ -299,7 +299,7 @@ describe(applyEditFeedRequest.name, () => {
     const storage = makeTestStorage({ storeItem, renameItem });
 
     const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
-    expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
+    expect(result, si`result: ${JSON.stringify(result)}`).not.to.haveOwnProperty('kind', 'Error');
 
     const storageKey = storeItem.calls[0]![0] as FeedStoredData;
     expect(storageKey, 'initially stores the item under the old key').to.equal(
@@ -337,7 +337,7 @@ describe(applyEditFeedRequest.name, () => {
     const storage = makeTestStorage({ storeItem, renameItem });
 
     const result = applyEditFeedRequest(editFeedRequest, accountId, storage, loadFeedFn);
-    expect(result, si`result: ${JSON.stringify(result)}`).not.to.exist;
+    expect(result, si`result: ${JSON.stringify(result)}`).not.to.haveOwnProperty('kind', 'Error');
 
     const storedFeed = storeItem.calls[0]![1] as FeedStoredData;
     expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);

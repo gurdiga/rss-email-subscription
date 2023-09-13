@@ -1,3 +1,4 @@
+import { diffString } from 'json-diff';
 import { isAccountId } from '../../domain/account';
 import { EditFeedResponse, makeEditFeedRequest } from '../../domain/feed';
 import { applyEditFeedRequest } from '../../domain/feed-storage';
@@ -59,7 +60,11 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
     return makeAppError();
   }
 
-  logInfo('Feed updated', { accountId: accountId.value, editFeedRequest });
+  logInfo('Feed updated', {
+    accountId: accountId.value,
+    editFeedRequest,
+    diff: diffString(...result, { color: false }),
+  });
 
   const logData = {};
   const responseData: EditFeedResponse = {

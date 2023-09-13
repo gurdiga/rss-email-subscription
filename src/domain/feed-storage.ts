@@ -217,12 +217,16 @@ export function findFeedAccountId(feedId: FeedId, storage: AppStorage): Result<A
   return makeAccountNotFound();
 }
 
+type FeedBefore = Feed;
+type FeedAfter = Feed;
+type EditFeedResult = [FeedBefore, FeedAfter];
+
 export function applyEditFeedRequest(
   editFeedRequest: EditFeedRequest,
   accountId: AccountId,
   storage: AppStorage,
   loadFeedFn = loadFeed
-): Result<void> {
+): Result<EditFeedResult> {
   const feed = loadFeedFn(accountId, editFeedRequest.initialId, storage);
 
   if (isErr(feed)) {
@@ -233,23 +237,28 @@ export function applyEditFeedRequest(
     return makeErr(si`Feed not found for update: ${editFeedRequest.initialId.value}, accountId: ${accountId.value}`);
   }
 
+  const feedBefore = structuredClone(feed);
+
   feed.displayName = editFeedRequest.displayName;
   feed.url = editFeedRequest.url;
   feed.replyTo = editFeedRequest.replyTo;
   feed.emailBodySpec = editFeedRequest.emailBodySpec;
   feed.emailSubjectSpec = editFeedRequest.emailSubjectSpec;
 
+  const feedAfter = structuredClone(feed);
   const storeFeedResult = storeFeed(accountId, feed, storage);
 
   if (isErr(storeFeedResult)) {
     return storeFeedResult;
   }
 
+  const returnValue: EditFeedResult = [feedBefore, feedAfter];
+
   const oldStorageKey = getFeedRootStorageKey(accountId, editFeedRequest.initialId);
   const newStorageKey = getFeedRootStorageKey(accountId, editFeedRequest.id);
 
   if (oldStorageKey === newStorageKey) {
-    return;
+    return returnValue;
   }
 
   const renameResult = storage.renameItem(oldStorageKey, newStorageKey);
@@ -258,7 +267,7 @@ export function applyEditFeedRequest(
     return makeErr(si`Failed to rename item: ${renameResult.reason}`);
   }
 
-  return renameResult;
+  return returnValue;
 }
 
 export function hasConfirmedSubscribers(storage: AppStorage, accountId: AccountId, feedId: FeedId): Result<boolean> {

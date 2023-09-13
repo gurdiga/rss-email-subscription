@@ -365,6 +365,11 @@ watch-app:
 			jq . <<<"$$json"
 
 			if [[ $$reason == "getaddrinfo ENOTFOUND"* ]]; then handle_ENOTFOUND <<<"$$reason"; fi
+
+			if [[ $$message == "Feed updated" ]]; then
+				echo "DIFF:"
+				jq -r .data.diff <<<"$$json"
+			fi
 		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
 	done \
