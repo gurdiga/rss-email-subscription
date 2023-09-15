@@ -1,10 +1,9 @@
 import { RegistrationRequest, RegistrationRequestData, RegistrationResponseData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
+import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
-import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
-import { createElement } from './dom-isolation';
+import { Result, asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import {
   AppStatusUiElements,
   HttpMethod,
@@ -26,6 +25,7 @@ import {
 } from './shared';
 import {
   PaymentSubformHandle,
+  buildPlanDropdownOptions,
   makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
@@ -81,7 +81,13 @@ async function main() {
     return;
   }
 
-  initPlanDropdown(uiElements, paymentSubformHandle, planId);
+  const initPlanDropdownResult = await initPlanDropdown(uiElements, paymentSubformHandle, planId);
+
+  if (isErr(initPlanDropdownResult)) {
+    displayInitError(initPlanDropdownResult.reason);
+    return;
+  }
+
   initSubmitButton(uiElements, paymentSubformHandle);
 }
 
@@ -169,26 +175,19 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
   });
 }
 
-function initPlanDropdown(
+export async function initPlanDropdown(
   uiElements: RequiredUiElements,
   paymentSubformHandle: PaymentSubformHandle,
   selectedPlanId: string
-): void {
+): Promise<Result<void>> {
   const { planDropdown, paymentSubformContainer } = uiElements;
+  const options = await buildPlanDropdownOptions(selectedPlanId);
 
-  planDropdown.replaceChildren(
-    ...Object.entries(Plans)
-      .filter(([id]) => id !== PlanId.SDE && id !== PlanId.Free)
-      .map(([id, { title }]) => {
-        const option = createElement('option', title, { value: id });
+  if (isErr(options)) {
+    return options;
+  }
 
-        if (id === selectedPlanId) {
-          option.selected = true;
-        }
-
-        return option;
-      })
-  );
+  planDropdown.replaceChildren(...options);
 
   const togglePaymentSubform = async (planIdString: string) => {
     const planId = makePlanId(planIdString);

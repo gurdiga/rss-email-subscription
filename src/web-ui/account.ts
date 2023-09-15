@@ -8,12 +8,11 @@ import {
 } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
+import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { Card, makeCardDescription } from '../domain/stripe-integration';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { createElement } from './dom-isolation';
 import {
   ElementSelectors,
   HttpMethod,
@@ -30,6 +29,7 @@ import {
   onClick,
   onEscape,
   onSubmit,
+  reportAppError,
   reportUnexpectedEmptyResponseData,
   requireUiElements,
   scrollIntoView,
@@ -40,6 +40,8 @@ import {
 } from './shared';
 import {
   PaymentSubformHandle,
+  buildPlanDropdownOptions,
+  getPlanOptionLabel,
   makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
@@ -68,7 +70,7 @@ async function main() {
     return;
   }
 
-  const fillUiResult = fillUi(uiElements, uiAccount);
+  const fillUiResult = await fillUi(uiElements, uiAccount);
 
   if (isErr(fillUiResult)) {
     displayInitError(fillUiResult.reason);
@@ -255,7 +257,14 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         hideElement(currentCardField);
       }
 
-      currentPlanLabel.textContent = Plans[newPlanId].title;
+      let planLabel = await getPlanOptionLabel(newPlanId);
+
+      if (isErr(planLabel)) {
+        reportAppError(planLabel.reason);
+        planLabel = 'Error';
+      }
+
+      currentPlanLabel.textContent = planLabel;
       hideElement(paymentSubformContainer);
       unhideElement(planChangeSuccessMessage);
       scrollIntoView(changePlanSection);
@@ -268,21 +277,18 @@ function displayCard(uiElements: PlanUiElements, card: Card): void {
   unhideElement(uiElements.currentCardField);
 }
 
-function initPlansDropdown(
+async function initPlansDropdown(
   uiElements: PlanUiElements,
   currentPlanId: PlanId,
   paymentSubformHandle: PaymentSubformHandle
 ) {
   const { planDropdown, paymentSubformContainer } = uiElements;
+  const planOptions = await buildPlanDropdownOptions(currentPlanId);
 
-  const planOptions = Object.entries(Plans)
-    .filter(([id]) => isSubscriptionPlan(id))
-    .map(([id, { title }]) =>
-      createElement('option', title, {
-        value: id,
-        ...(currentPlanId === id ? { selected: 'selected' } : {}),
-      })
-    );
+  if (isErr(planOptions)) {
+    displayInitError(planOptions.reason);
+    return;
+  }
 
   planDropdown.replaceChildren(...planOptions);
 
@@ -420,7 +426,13 @@ async function submitNewEmail(uiElements: EmailUiElements) {
   );
 }
 
-function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
+async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
+  const currentPlanLabel = await getPlanOptionLabel(uiAccount.planId);
+
+  if (isErr(currentPlanLabel)) {
+    return currentPlanLabel;
+  }
+
   let result = fillUiElements([
     {
       element: uiElements.currentEmailLabel,
@@ -430,7 +442,7 @@ function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
     {
       element: uiElements.currentPlanLabel,
       propName: 'textContent',
-      value: Plans[uiAccount.planId].title,
+      value: currentPlanLabel,
     },
   ]);
 

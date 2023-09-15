@@ -8,9 +8,10 @@ import {
   StripePaymentElement,
 } from '@stripe/stripe-js';
 import { ApiPath } from '../domain/api-path';
-import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
+import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { Card, StoreCardRequestData, StripeKeysResponseData } from '../domain/stripe-integration';
 import { InputError, isAppError, isInputError, makeInputError } from '../shared/api-response';
+import { isNotEmpty } from '../shared/array-utils';
 import {
   AnyAsyncFunction,
   Result,
@@ -23,7 +24,8 @@ import {
   makeValues,
 } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { HttpMethod, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
+import { createElement } from './dom-isolation';
+import { HttpMethod, reportAppError, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
   setPlanId(planId: PlanId): Promise<Result<void>>;
@@ -124,10 +126,10 @@ async function buildPaymentElement(
     },
   };
 
-  const amount = await getAmountForPlan(planId);
+  const amount = await getCentAmountForPlan(planId);
 
   if (isErr(amount)) {
-    return makeErr(si`Failed to ${getAmountForPlan.name}: ${amount.reason}`);
+    return makeErr(si`Failed to ${getCentAmountForPlan.name}: ${amount.reason}`);
   }
 
   const elements = stripe.elements({
@@ -146,7 +148,7 @@ async function buildPaymentElement(
   return [paymentElement, elements];
 }
 
-async function getAmountForPlan(planId: PlanId): Promise<Result<number>> {
+async function getCentAmountForPlan(planId: PlanId): Promise<Result<number>> {
   const planPrices = await loadPlanPrices();
 
   if (isErr(planPrices)) {
@@ -159,7 +161,7 @@ async function getAmountForPlan(planId: PlanId): Promise<Result<number>> {
     return makeErr(si`No price for plan ${planId}`);
   }
 
-  return planPrice.amount;
+  return planPrice.amountInCents;
 }
 
 export async function attemptStripeCall<F extends AnyAsyncFunction>(
@@ -198,10 +200,16 @@ interface PlanPriceData {
 
 interface PlanPrice {
   planId: PlanId;
-  amount: number;
+  amountInCents: number;
 }
 
+let planPrices: PlanPrice[] = [];
+
 async function loadPlanPrices(): Promise<Result<PlanPrice[]>> {
+  if (isNotEmpty(planPrices)) {
+    return planPrices;
+  }
+
   const path = '/plans.json';
   const response = await asyncAttempt(() => fetch(path));
 
@@ -215,7 +223,7 @@ async function loadPlanPrices(): Promise<Result<PlanPrice[]>> {
     return makeErr(si`Prices from ${path} is not an array`);
   }
 
-  const planPrices: PlanPrice[] = [];
+  planPrices = [];
 
   for (const item of list) {
     const planPriceData = makeValues<PlanPriceData>(item, {
@@ -233,7 +241,7 @@ async function loadPlanPrices(): Promise<Result<PlanPrice[]>> {
       return makeErr(si`Invalid plan price: planId=${planId} priceInDollars=${priceInDollars}`);
     }
 
-    planPrices.push({ planId, amount: priceInDollars * 100 });
+    planPrices.push({ planId, amountInCents: priceInDollars * 100 });
   }
 
   return planPrices;
@@ -365,4 +373,51 @@ async function storeCardDescription(card: Card): Promise<Result<void>> {
   if (isAppError(response) || isInputError(response)) {
     return makeErr(response.message);
   }
+}
+
+export async function getPlanOptionLabel(planIdString: string): Promise<Result<string>> {
+  const planId = makePlanId(planIdString);
+
+  if (isErr(planId)) {
+    reportAppError(si`Invalid Plan ID in ${buildPlanDropdownOptions.name}: "${planIdString}"`);
+    return makeErr('Error in Plan dropdown: Invalid plan ID');
+  }
+
+  const centAmountForPlan = await getCentAmountForPlan(planId);
+
+  if (isErr(centAmountForPlan)) {
+    reportAppError(si`Failed to ${getCentAmountForPlan.name}: "${centAmountForPlan.reason}"`);
+    return makeErr('Error in Plan dropdown: Failed to get plan price');
+  }
+
+  const title = Plans[planId].title;
+  const priceInDollars = centAmountForPlan / 100;
+
+  return title + ' • $' + priceInDollars;
+}
+
+export async function buildPlanDropdownOptions(selectedPlanId: string): Promise<Result<HTMLOptionElement[]>> {
+  const options: HTMLOptionElement[] = [];
+
+  for (const [id] of Object.entries(Plans)) {
+    if (!isSubscriptionPlan(id)) {
+      continue;
+    }
+
+    const optionLabel = await getPlanOptionLabel(id);
+
+    if (isErr(optionLabel)) {
+      return optionLabel;
+    }
+
+    const option = createElement('option', optionLabel, { value: id });
+
+    if (id === selectedPlanId) {
+      option.selected = true;
+    }
+
+    options.push(option);
+  }
+
+  return options;
 }
