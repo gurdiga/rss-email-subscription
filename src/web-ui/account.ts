@@ -257,7 +257,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         hideElement(currentCardField);
       }
 
-      let planLabel = await getPlanOptionLabel(newPlanId);
+      let planLabel = isDemoAccount() ? 'Demo Plan' : await getPlanOptionLabel(newPlanId);
 
       if (isErr(planLabel)) {
         reportAppError(planLabel.reason);
@@ -427,7 +427,7 @@ async function submitNewEmail(uiElements: EmailUiElements) {
 }
 
 async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  const currentPlanLabel = await getPlanOptionLabel(uiAccount.planId);
+  const currentPlanLabel = isDemoAccount() ? 'Demo Plan' : await getPlanOptionLabel(uiAccount.planId);
 
   if (isErr(currentPlanLabel)) {
     return currentPlanLabel;
