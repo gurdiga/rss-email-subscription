@@ -1068,6 +1068,18 @@ extend-trial:
 		-d "trial_end"="$$trial_end_timestamp" \
 		-d "metadata[extended_trial_on]"="`date`"
 
+# This presumes the local app running the latest code, and will compare
+# the bundle with the prod version.
+check-for-bundle-change:
+	@set -euo pipefail
+	wget \
+		https://feedsubscription.com/web-ui-scripts/web-ui/subscription-form.js \
+		https://localhost.feedsubscription.com/web-ui-scripts/web-ui/subscription-form.js
+
+	diff -u subscription-form.js* | ifne -n echo -e '\n✅ No change in the output bundle.\n'
+
+	rm subscription-form.js*
+
 # Helper functions
 
 define include_log_to
