@@ -391,9 +391,14 @@ export async function getPlanOptionLabel(planIdString: string): Promise<Result<s
   }
 
   const title = Plans[planId].title;
+
+  return formatPlanTitleAndPrice(title, centAmountForPlan);
+}
+
+export function formatPlanTitleAndPrice(planTitle: string, centAmountForPlan: number): string {
   const priceInDollars = centAmountForPlan / 100;
 
-  return title + ' • $' + priceInDollars;
+  return planTitle + ' • $' + priceInDollars;
 }
 
 export async function buildPlanDropdownOptions(selectedPlanId: string): Promise<Result<HTMLOptionElement[]>> {

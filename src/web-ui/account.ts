@@ -41,6 +41,7 @@ import {
 import {
   PaymentSubformHandle,
   buildPlanDropdownOptions,
+  formatPlanTitleAndPrice,
   getPlanOptionLabel,
   makePaymentSubformHandle,
   maybeConfirmPayment,
@@ -257,7 +258,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         hideElement(currentCardField);
       }
 
-      let planLabel = isDemoAccount() ? 'Demo Plan' : await getPlanOptionLabel(newPlanId);
+      let planLabel = await getPlanTitleAndPrice(newPlanId);
 
       if (isErr(planLabel)) {
         reportAppError(planLabel.reason);
@@ -427,7 +428,7 @@ async function submitNewEmail(uiElements: EmailUiElements) {
 }
 
 async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  const currentPlanLabel = isDemoAccount() ? 'Demo Plan' : await getPlanOptionLabel(uiAccount.planId);
+  const currentPlanLabel = await getPlanTitleAndPrice(uiAccount.planId);
 
   if (isErr(currentPlanLabel)) {
     return currentPlanLabel;
@@ -463,6 +464,10 @@ async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
   }
 
   return result;
+}
+
+async function getPlanTitleAndPrice(planId: PlanId): Promise<Result<string>> {
+  return isDemoAccount() ? formatPlanTitleAndPrice('Demo Plan', 0) : await getPlanOptionLabel(planId);
 }
 
 async function loadUiAccount<T = UiAccount>(): Promise<Result<T>> {
