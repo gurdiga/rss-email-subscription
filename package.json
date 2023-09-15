@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "See README.md",
   "main": "dist/app/cron.js",
+  "engines": {
+    "node": "18.17.1",
+    "npm": "10.1.0"
+  },
   "scripts": {},
   "keywords": [
     "rss-to-email",
