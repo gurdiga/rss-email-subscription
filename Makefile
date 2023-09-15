@@ -1080,6 +1080,17 @@ check-for-bundle-change:
 
 	rm subscription-form.js*
 
+gurdiga-com-visits-per-mont:
+	@bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
+
+	for i in `seq 6 9`; do
+		printf "$$i "
+		zcat -f .tmp/logs/feedsubscription/website.log-20230$${i}* |
+		grep 'subscription-form.js.*https://gurdiga.com/' |
+		grep -vPi ".*$$bot_list_re.*" |
+		wc -l
+	done
+
 # Helper functions
 
 define include_log_to
