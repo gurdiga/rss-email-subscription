@@ -12,7 +12,7 @@ RUN npm i -g "npm@${NPM_VERSION}"
 
 WORKDIR /code
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm ci
 
 COPY tsconfig.json ./
@@ -42,7 +42,7 @@ WORKDIR /code
 RUN apk update && apk upgrade --no-cache
 RUN npm i -g "npm@${NPM_VERSION}"
 
-COPY package*.json ./
+COPY package.json package-lock.json ./
 RUN npm install --omit=dev
 
 COPY --from=build /code/dist ./dist
