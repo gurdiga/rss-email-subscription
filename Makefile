@@ -859,7 +859,8 @@ tracking-report: bot-list.txt
 		-e 's|https://feedsubscription.com||' \
 		-e 's|https://www.feedsubscription.com||' \
 		-e 's/00:00 //' \
-		-e 's/T/ /' | # remove noise
+		-e "s/^$${date}T//" \
+	| # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
 	grep -v '"url":"/?from=fzbvy-abbgfe' | # preview bots?
@@ -875,7 +876,7 @@ tracking-report: bot-list.txt
 			>( grep -Po '(?<="event":")[^"]+' | sort | uniq -c )
 	) 2>&1 |
 	cat <(
-		echo "Subject: RES tracking-report"
+		echo "Subject: RES tracking-report $$date"
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 	) - |
