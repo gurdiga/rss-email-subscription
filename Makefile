@@ -1080,7 +1080,7 @@ check-for-bundle-change:
 
 	rm subscription-form.js*
 
-gurdiga-com-visits-per-mont:
+gurdiga-com-visits-per-month:
 	@bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
 
 	for i in `seq 6 9`; do
