@@ -1091,6 +1091,29 @@ gurdiga-com-visits-per-mont:
 		wc -l
 	done
 
+# NOTE: This exists because some of *.olc.protection.outlook.com fail to
+# resolve as per dnsmasq.log:
+#
+# dnsmasq[1]: query[A] hotmail-com.olc.protection.outlook.com from 10.5.5.9
+# dnsmasq[1]: forwarded hotmail-com.olc.protection.outlook.com to 8.8.8.8
+# dnsmasq[1]: reply hotmail-com.olc.protection.outlook.com is NODATA-IPv4
+#
+# The output is to be appended to ./.tmp/resolver/etc/hosts
+# NOTE: Run `docker restart resolver` for the update to take effect
+resolver-hosts:
+	@: quiet
+
+	domains='
+		outlook-com.olc.protection.outlook.com
+		hotmail-com.olc.protection.outlook.com
+	'
+
+	for domain in $$domains; do
+		host -4T $$domain |
+		cut -d' ' -f4 |
+		sed "s/$$/\t"$$domain"/"
+	done
+
 # Helper functions
 
 define include_log_to
