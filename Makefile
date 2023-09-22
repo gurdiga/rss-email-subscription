@@ -1107,6 +1107,7 @@ resolver-hosts:
 	domains='
 		outlook-com.olc.protection.outlook.com
 		hotmail-com.olc.protection.outlook.com
+		live-com.olc.protection.outlook.com
 	'
 
 	for domain in $$domains; do
