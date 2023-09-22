@@ -1115,6 +1115,17 @@ resolver-hosts:
 		sed "s/$$/\t"$$domain"/"
 	done
 
+# cron @daily
+open-ports-report:
+	@: quiet
+	netstat -tnlp |
+	cat <(
+		echo "Subject: RES open-ports-report"
+		echo "From: RES <system@feedsubscription.com>"
+		echo ""
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 # Helper functions
 
 define include_log_to
