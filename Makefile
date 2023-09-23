@@ -1120,6 +1120,7 @@ resolver-hosts:
 open-ports-report:
 	@: quiet
 	netstat -tnlp |
+	sort |
 	tee >(
 		wc -l | ts "
 		total:"
