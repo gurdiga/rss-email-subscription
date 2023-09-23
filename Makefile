@@ -1122,6 +1122,7 @@ open-ports-report:
 	netstat -tnlp |
 	sort |
 	tee >(
+		grep '^tcp'
 		wc -l | ts "
 		total:"
 	)
