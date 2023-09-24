@@ -1125,7 +1125,7 @@ open-ports-report:
 		grep '^tcp' |
 		wc -l | ts "
 		total:"
-	)
+	) |
 	cat <(
 		echo "Subject: RES open-ports-report"
 		echo "From: RES <system@feedsubscription.com>"
