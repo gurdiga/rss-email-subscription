@@ -1129,9 +1129,7 @@ open-ports-report:
 	cat <(
 		echo "Subject: RES open-ports-report"
 		echo "From: RES <system@feedsubscription.com>"
-		echo "Content-Type: text/html"
 		echo ""
-		echo "<pre>"
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
