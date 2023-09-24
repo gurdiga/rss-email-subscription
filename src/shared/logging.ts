@@ -1,4 +1,5 @@
 import { stdOutPrinter, StdOutPrinterFn } from '../domain/io-isolation';
+import { getUptimeDays, getMemoryUsageStats } from './process-utils';
 import { si } from './string-utils';
 
 export type Severity = 'info' | 'warning' | 'error';
@@ -90,4 +91,12 @@ export async function logDuration<R>(label: string, logData: object, f: () => R)
   logInfo(si`Finished ${label}`, { durationMs });
 
   return result;
+}
+
+export function logHeartbeat(log: LoggerFunction, data: {} = {}) {
+  log('heartbeat', {
+    uptimeDays: getUptimeDays(),
+    memoryUsage: getMemoryUsageStats(),
+    ...data,
+  });
 }

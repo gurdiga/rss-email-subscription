@@ -6,8 +6,9 @@ import helmet from 'helmet';
 import http from 'http';
 import https from 'https';
 import { apiBasePath, ApiPath } from '../domain/api-path';
+import { startCronJob } from '../shared/cron-utils';
 import { getErrorMessage } from '../shared/lang';
-import { makeCustomLoggers } from '../shared/logging';
+import { logHeartbeat, makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import {
@@ -131,6 +132,8 @@ async function main() {
     logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
   });
 
+  const heartBeat = startCronJob('6 6 * * *', () => logHeartbeat(logInfo));
+
   process.on('SIGTERM', () => {
     logWarning('Received SIGTERM. Will shut down the HTTP server and exit.');
 
@@ -139,6 +142,8 @@ async function main() {
         logWarning(si`Failed to shutdown HTTP server: ${getErrorMessage(error)}`);
       }
     });
+
+    heartBeat.stop();
   });
 }
 

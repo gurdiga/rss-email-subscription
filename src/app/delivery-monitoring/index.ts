@@ -1,13 +1,12 @@
-import { LoggerFunction, makeCustomLoggers } from '../../shared/logging';
-import { requireEnv } from '../../shared/env';
 import { AppEnv } from '../../api/init-app';
 import { makeStorage } from '../../domain/storage';
+import { startCronJob } from '../../shared/cron-utils';
+import { requireEnv } from '../../shared/env';
 import { isErr } from '../../shared/lang';
+import { logHeartbeat, makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
-import { processData } from './line-processing';
-import { CronJob } from 'cron';
 import { DelmonStatus } from './delmon-status';
-import { humanSize } from '../../shared/number-utils';
+import { processData } from './line-processing';
 
 async function main() {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: 'delivery-monitoring' });
@@ -31,26 +30,9 @@ async function main() {
 
   logInfo(si`Started watching Postfix logs in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
 
-  new CronJob('6 6 * * *', () => {
-    logHeartbeat(logInfo, status);
-  }).start();
-}
-
-main();
-
-function logHeartbeat(logInfo: LoggerFunction, status: DelmonStatus) {
-  logInfo('delmon heartbeat', {
-    lineCount: status.lineCount,
-    uptimeDays: (process.uptime() / 3600 / 24).toFixed(),
-    memoryUsage: memoryUsageStats(),
+  startCronJob('6 6 * * *', () => {
+    logHeartbeat(logInfo, { lineCount: status.lineCount });
   });
 }
 
-function memoryUsageStats() {
-  const usage = process.memoryUsage();
-
-  return {
-    rss: humanSize(usage.rss),
-    heap: humanSize(usage.heapUsed),
-  };
-}
+main();

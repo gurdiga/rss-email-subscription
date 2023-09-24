@@ -1,4 +1,3 @@
-import { CronCommand, CronJob } from 'cron';
 import { AppEnv } from '../api/init-app';
 import { sendEmails } from '../app/email-sending';
 import { checkRss } from '../app/rss-checking';
@@ -11,9 +10,10 @@ import { AppStorage, makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
-import { logDuration, makeCustomLoggers } from '../shared/logging';
+import { logDuration, logHeartbeat, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
+import { startCronJob } from '../shared/cron-utils';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -37,8 +37,9 @@ function main() {
   }
 
   const jobs = [
-    startJob('2 * * * *', () => checkFeeds(storage, env, settings)),
-    startJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
+    startCronJob('2 * * * *', () => checkFeeds(storage, env, settings)),
+    startCronJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
+    startCronJob('6 6 * * *', () => logHeartbeat(logInfo)),
   ];
 
   process.on('SIGHUP', () => {
@@ -109,13 +110,6 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
       }
     }
   });
-}
-
-function startJob(cronTime: string, workerFn: CronCommand): CronJob {
-  const startNow = true;
-  const onComplete = null;
-
-  return new CronJob(cronTime, workerFn, onComplete, startNow);
 }
 
 main();
