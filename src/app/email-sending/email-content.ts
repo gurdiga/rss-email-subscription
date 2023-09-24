@@ -136,9 +136,7 @@ export function htmlBody(contents: string): string {
         </address>
       </small>
 
-      <a href="https://feedsubscription.com/?from=email-footer-logo" alt="FeedSubscription.com logo">
-        <img src="https://feedsubscription.com/assets/img/favicon.png" width="40">
-      </a>
+      <img src="https://feedsubscription.com/assets/img/favicon.png" alt="FeedSubscription.com logo" width="40">
     </footer>
 
   </div>`;
