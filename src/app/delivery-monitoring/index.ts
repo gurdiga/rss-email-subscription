@@ -30,7 +30,7 @@ async function main() {
 
   logInfo(si`Started watching Postfix logs in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
 
-  startCronJob('6 6 * * *', () => {
+  startCronJob('5 5 * * *', () => {
     logHeartbeat(logInfo, { lineCount: status.lineCount });
   });
 }

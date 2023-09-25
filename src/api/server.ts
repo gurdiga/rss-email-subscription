@@ -132,7 +132,7 @@ async function main() {
     logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
   });
 
-  const heartBeat = startCronJob('6 6 * * *', () => logHeartbeat(logInfo));
+  const heartBeat = startCronJob('5 5 * * *', () => logHeartbeat(logInfo));
 
   process.on('SIGTERM', () => {
     logWarning('Received SIGTERM. Will shut down the HTTP server and exit.');

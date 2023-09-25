@@ -39,7 +39,7 @@ function main() {
   const jobs = [
     startCronJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startCronJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
-    startCronJob('6 6 * * *', () => logHeartbeat(logInfo)),
+    startCronJob('5 5 * * *', () => logHeartbeat(logInfo)),
   ];
 
   process.on('SIGHUP', () => {
