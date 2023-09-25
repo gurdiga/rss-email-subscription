@@ -346,6 +346,7 @@ watch-app:
 			-e '"message":"Sending report"' \
 			-e '"message":"sendSampleEmail"' \
 			-e '"message":"Blog RSS check"' \
+			-e '"message":"heartbeat"' \
 			-e '"message":"(New unconfirmed subscriber|Subscriber confirmed email)"' \
 			-e '"message":"(New feed added|Feed updated|Feed deleted)"' \
 			-e '"message":"(Unsubscribed)"' \
