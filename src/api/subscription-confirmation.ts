@@ -32,7 +32,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
   }
 
   if (isAccountNotFound(accountId)) {
-    logError('Feed account not found', { feedId: feedId.value });
+    logError(si`Feed account not found on ${subscriptionConfirmation.name}`, { feedId: feedId.value });
     return makeInputError('Feed not found');
   }
 

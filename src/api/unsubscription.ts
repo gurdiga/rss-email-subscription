@@ -40,7 +40,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
   }
 
   if (isAccountNotFound(accountId)) {
-    logError('Feed account not found', { feedId: feedId.value });
+    logError(si`Feed account not found on ${unsubscription.name}`, { feedId: feedId.value });
     return makeInputError('Feed not found');
   }
 

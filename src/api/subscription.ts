@@ -14,7 +14,7 @@ import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from 
 import { AppStorage } from '../domain/storage';
 import { AppRequestHandler } from './app-request-handler';
 import { si } from '../shared/string-utils';
-import { isAccountNotFound } from '../domain/account';
+import { AccountId, isAccountNotFound } from '../domain/account';
 import { sendEmail } from '../app/email-sending/email-delivery';
 
 export const subscription: AppRequestHandler = async function subscription(
@@ -38,19 +38,7 @@ export const subscription: AppRequestHandler = async function subscription(
     return inputProcessingResult;
   }
 
-  const { emailAddress, feed, feedId } = inputProcessingResult;
-  const accountId = findFeedAccountId(feedId, storage);
-
-  if (isErr(accountId)) {
-    logError(si`Failed to find feed account`, { reason: accountId.reason, feedId: feedId.value });
-    return makeAppError('Feed not found');
-  }
-
-  if (isAccountNotFound(accountId)) {
-    logError('Feed account not found', { feedId: feedId.value });
-    return makeInputError('Feed not found');
-  }
-
+  const { emailAddress, feed, feedId, accountId } = inputProcessingResult;
   const loadEmailsResult = loadEmailAddresses(accountId, feedId, storage);
 
   if (isErr(loadEmailsResult)) {
@@ -118,6 +106,7 @@ interface ProcessedInput {
   emailAddress: EmailAddress;
   feed: Feed;
   feedId: FeedId;
+  accountId: AccountId;
 }
 
 function processInput(input: Input, storage: AppStorage): ProcessedInput | InputError | AppError {
@@ -166,6 +155,7 @@ function processInput(input: Input, storage: AppStorage): ProcessedInput | Input
     emailAddress,
     feed,
     feedId,
+    accountId,
   };
 }
 
