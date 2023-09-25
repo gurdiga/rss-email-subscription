@@ -45,6 +45,7 @@ function main() {
   process.on('SIGHUP', () => {
     logWarning('Received SIGUP. Will check feeds now.');
     checkFeeds(storage, env, settings);
+    logHeartbeat(logInfo);
   });
 
   process.on('SIGTERM', () => {
