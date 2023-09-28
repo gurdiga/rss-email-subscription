@@ -851,8 +851,7 @@ tracking-report: bot-list.txt
 	xargs zcat -f |
 	grep -P "^$$date" |
 	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
-	grep -vF "/dW5zdWJzY3?id=" | # exclude obfuscated requests, seemingly from Microsoft
-	grep -vP ': (95.65.96.65|212.56.195.182) ' | # exclude some IPs
+	grep -vP ': (95.65.96.65) ' | # exclude some IPs
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
 	sed \
@@ -864,7 +863,6 @@ tracking-report: bot-list.txt
 	| # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
-	grep -v '"url":"/?from=fzbvy-abbgfe' | # preview bots?
 	grep -v '"referrer":"http://baidu.com/"' | # baidu crawler?
 	(
 		tee \
