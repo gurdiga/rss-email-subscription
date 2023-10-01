@@ -459,7 +459,7 @@ certbot-report:
 
 		ls -1t .tmp/logs/feedsubscription/certbot.log-*.gz | # find last log archive
 		head -1 |
-		xargs zcat -f
+		xargs zcat -f .tmp/logs/feedsubscription/certbot.log
 	) 2>&1 |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
