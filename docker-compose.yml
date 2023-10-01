@@ -24,6 +24,9 @@ x-disable-ipv6: &x-disable-ipv6
     net.ipv6.conf.default.disable_ipv6: 1
     net.ipv6.conf.lo.disable_ipv6: 1
 
+x-dns: &x-dns
+  dns: 10.5.5.2
+
 services:
   smtp-out:
     depends_on: [logger, resolver]
@@ -49,13 +52,12 @@ services:
       POSTFIX_fragile_destination_concurrency_limit: 1
       POSTFIX_fragile_destination_rate_delay: 2s
 
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     healthcheck:
       disable: true # Disabled because makes it makes following the logs harder when degugging
     networks:
       net:
         ipv4_address: 10.5.5.9
-    dns: 10.5.5.2
 
   smtp-in:
     depends_on: [logger, resolver]
@@ -80,11 +82,10 @@ services:
       # TLS: No ECDSA certificate in this setup, only RSA
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.8
-    dns: 10.5.5.2
 
   app:
     depends_on: [logger, resolver]
@@ -102,11 +103,10 @@ services:
     environment:
       <<: *app-env
     command: node dist/app/cron.js
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.7
-    dns: 10.5.5.2
 
   delmon:
     depends_on: [logger, resolver]
@@ -120,11 +120,10 @@ services:
       - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.6
-    dns: 10.5.5.2
 
   api:
     depends_on: [logger, resolver]
@@ -141,11 +140,10 @@ services:
       # DEBUG: 'express:*'
       # TS_NODE_DEBUG: 'true'
       <<: *app-env
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.5
-    dns: 10.5.5.2
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   website:
@@ -162,11 +160,10 @@ services:
       - ./.tmp/certbot/www:/var/www/certbot
     environment:
       NGINX_HOST: feedsubscription.com
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.4
-    dns: 10.5.5.2
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
@@ -189,11 +186,10 @@ services:
           sleep 7d & wait $${!};
         done;
       '
-    <<: [*logging, *x-disable-ipv6]
+    <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.3
-    dns: 10.5.5.2
 
   logger:
     container_name: logger
@@ -203,10 +199,10 @@ services:
     ports: ['127.0.0.1:514:514']
     volumes:
       - ./.tmp/logs:/var/log/syslog-ng
+    <<: [*x-dns]
     networks:
       net:
         ipv4_address: 10.5.5.1
-    dns: 10.5.5.2
 
   resolver:
     depends_on: [logger]
