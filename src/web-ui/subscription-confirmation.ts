@@ -11,7 +11,7 @@ import {
   fillUiElements,
   hideElement,
   HttpMethod,
-  onClick,
+  onSubmit,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -67,7 +67,7 @@ function main() {
   unhideElement(uiElements.inputUiContainer);
   unhideElement(uiElements.formUiContainer);
 
-  onClick(uiElements.confirmButton, async () => {
+  onSubmit(uiElements.confirmButton, async () => {
     const request: SubscriptionConfirmationRequestData = { id: queryParams.id };
     const response = await asyncAttempt(() =>
       sendApiRequest(ApiPath.subscriptionConfirmation, HttpMethod.POST, request)
@@ -104,5 +104,5 @@ interface InputUiElements {
 
 interface FormUiElements {
   formUiContainer: HTMLElement;
-  confirmButton: HTMLElement;
+  confirmButton: HTMLButtonElement;
 }
