@@ -168,7 +168,7 @@
       display: none;
     }
     .res-message {
-      margin: 0.25em 0;
+      margin: 0.5em 0;
       padding: .25em .5em;
       border: 1px solid;
       border-radius: .25em;
