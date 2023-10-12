@@ -231,10 +231,16 @@ export function sendApiRequest<R extends any = any>(
       ? [getFullApiPath(relativePath), urlEncodedData]
       : [getFullApiPath(relativePath, data), null];
 
+  const trackPerf = (x: Response) => {
+    performance.mark(si`res-api-${relativePath}`);
+    return x;
+  };
+
   return fetch(url, { method, body })
     .then(assertFound)
     .then(assertHeader('content-type', 'application/json; charset=utf-8'))
     .then(assertAuthorized)
+    .then(trackPerf)
     .then(async (r) => (await r.json()) as AuthenticatedApiResponse<R>);
 }
 

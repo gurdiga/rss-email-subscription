@@ -115,8 +115,6 @@ async function loadUiFeedList(): Promise<Result<UiFeedListItem[]>> {
     return makeErr('Input error when loading the feed list');
   }
 
-  performance.mark('app-data-loaded');
-
   return response.responseData!;
 }
 
