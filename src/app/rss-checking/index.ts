@@ -39,7 +39,7 @@ export async function checkRss(
   const durationMs = Date.now() - startTime;
 
   if (isErr(rssResponse)) {
-    logError('Failed fetching RSS', { url, reason: rssResponse.reason });
+    logError('Failed fetching RSS', { url, reason: rssResponse.reason, durationMs });
 
     const isNotMyIssue = !myIssues.some((x) => x.test(rssResponse.reason));
 
