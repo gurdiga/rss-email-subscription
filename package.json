@@ -42,7 +42,7 @@
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^2.1.5",
+    "@stripe/stripe-js": "^2.1.7",
     "@types/ua-parser-js": "^0.7.37",
     "cheerio": "^1.0.0-rc.12",
     "cookie-parser": "^1.4.6",
