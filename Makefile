@@ -1133,6 +1133,20 @@ open-ports-report:
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+compare-subscription-form-bundle-after-esbundle-update:
+	@(
+		set -euo pipefail
+		wget \
+			https://feedsubscription.com/web-ui-scripts/web-ui/subscription-form.js \
+			https://localhost.feedsubscription.com/web-ui-scripts/web-ui/subscription-form.js && \
+		diff -u subscription-form.js* |&
+		ifne -n echo '✅ No change in the bundle'
+	)
+
+	echo
+	rm -fv ./subscription-form.js*
+	echo
+
 # Helper functions
 
 define include_log_to
