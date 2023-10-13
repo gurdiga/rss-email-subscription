@@ -172,6 +172,13 @@ resolver:
 		--tag resolver \
 		docker-services/resolver
 
+resolver-check:
+	@set -euo pipefail
+
+	docker exec -it resolver dig @localhost feedsubscription.com
+	docker exec -it resolver dig @localhost feedsubscription.com |
+	grep -E "^;; Query time: [0-4] msec"
+
 # cron @reboot
 watch-resolver:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/resolver.log |
