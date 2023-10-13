@@ -231,7 +231,7 @@ start-logger: logger
 	docker-compose --project-name res up --remove-orphans --detach \
 		-- logger
 
-start-api: build-website app
+start-api: compile test build-website app
 	export NODE_ENV="production"
 	docker-compose --project-name res up --remove-orphans --force-recreate \
 		-- resolver logger website api > /dev/null &
