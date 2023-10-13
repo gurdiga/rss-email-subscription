@@ -1,7 +1,7 @@
-ARG NODE_VERSION=18.17.1-alpine3.17
+ARG NODE_VERSION=18.18.1-alpine3.18
 
 # See the appropriate version here: https://nodejs.org/en/download/releases
-ARG NPM_VERSION=10.1.0
+ARG NPM_VERSION=10.2.0
 
 ### --- build
 FROM node:${NODE_VERSION} as build
