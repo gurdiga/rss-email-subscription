@@ -7,7 +7,7 @@ describe(makeUnixCronPattern.name, () => {
   it('returns a CronPattern value when the syntax is recognized', () => {
     const p = (value: string): UnixCronPattern => ({ kind: 'UnixCronPattern', value });
 
-    expect(makeUnixCronPattern('@yearly')).to.deep.equal(p('0 0 1 0 *'));
+    expect(makeUnixCronPattern('@yearly')).to.deep.equal(p('0 0 1 1 *'));
     expect(makeUnixCronPattern('@monthly')).to.deep.equal(p('0 0 1 * *'));
     expect(makeUnixCronPattern('@weekly')).to.deep.equal(p('0 0 * * 0'));
     expect(makeUnixCronPattern('@daily')).to.deep.equal(p('0 0 * * *'));
