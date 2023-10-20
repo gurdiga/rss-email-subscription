@@ -18,6 +18,7 @@ import {
   displayCommunicationError,
   displayInitError,
   displayValidationError,
+  isAuthenticated,
   navigateTo,
   onSubmit,
   requireUiElements,
@@ -31,6 +32,11 @@ import {
 } from './feed-form-shared';
 
 async function main() {
+  if (!isAuthenticated()) {
+    location.href = PagePath.userAuthentication;
+    return;
+  }
+
   const uiElements = requireUiElements<RequiredUiElements>({
     ...uiFeedFormFields,
     ...breadcrumbsUiElements,
