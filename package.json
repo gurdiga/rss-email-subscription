@@ -4,8 +4,8 @@
   "description": "See README.md",
   "main": "dist/app/cron.js",
   "engines": {
-    "node": "18.18.1",
-    "npm": "10.2.0"
+    "node": "18.18.2",
+    "npm": "10.2.1"
   },
   "scripts": {},
   "keywords": [
