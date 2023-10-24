@@ -4,7 +4,7 @@ x-logging: &logging
   logging:
     driver: syslog
     options:
-      syslog-address: tcp://127.0.0.1:514
+      syslog-address: tcp://10.5.5.1:514
       syslog-format: rfc3164
       tag: '{{.Name}}'
 
@@ -34,7 +34,6 @@ services:
     hostname: smtp-out
     image: smtp-out
     restart: always
-    ports: ['127.0.0.1:1587:587']
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ${POSTFIX_DIR_ROOT?}:/var/spool/postfix # to persist queue during container restarts
@@ -132,7 +131,6 @@ services:
     image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     restart: always
-    ports: ['127.0.0.1:3000:3000']
     command: node dist/api/server.js
     volumes:
       - ${DATA_DIR_ROOT?}:/data
@@ -196,7 +194,6 @@ services:
     hostname: logger
     image: logger
     restart: always
-    ports: ['127.0.0.1:514:514']
     volumes:
       - ./.tmp/logs:/var/log/syslog-ng
     <<: [*x-dns]
@@ -210,7 +207,6 @@ services:
     image: resolver
     container_name: resolver
     restart: always
-    ports: ['127.0.0.1:53:53/udp']
     volumes:
       - ./.tmp/resolver/etc/hosts:/etc/hosts:ro
     networks:
