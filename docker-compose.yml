@@ -34,6 +34,7 @@ services:
     hostname: smtp-out
     image: smtp-out
     restart: always
+    ports: ['127.0.0.1:1587:587']
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ${POSTFIX_DIR_ROOT?}:/var/spool/postfix # to persist queue during container restarts
