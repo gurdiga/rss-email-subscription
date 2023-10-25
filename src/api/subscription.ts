@@ -174,9 +174,9 @@ export function makeSubscriptionConfirmationEmailContent(
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
-      <p>Please confirm subscription to <b>${feedDisplayName}</b>:</p>
+      <p>Please confirm subscription to <b>${feedDisplayName}</b> by clicking the link below:</p>
 
-      <p><a href="${confirmationLinkUrl.toString()}">Yes, subscribe me</a></p>
+      <p><a href="${confirmationLinkUrl.toString()}">${confirmationLinkUrl.toString()}</a></p>
 
       <p style="max-width: 35em">
         If you subscribed, add this email address to your contacts
