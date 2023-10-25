@@ -127,7 +127,7 @@ export function htmlBody(contents: string): string {
     <footer style="color: GrayText; text-align: center">
       <small>
         <p style="margin: 0">
-          This email was sent with ❤️ by
+          This email was sent by
           <a href="https://FeedSubscription.com?from=email-footer">FeedSubscription.com</a>
         </p>
 
