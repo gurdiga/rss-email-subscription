@@ -1,3 +1,3 @@
-FROM certbot/certbot:v2.7.1
+FROM certbot/certbot:v2.7.2
 
 RUN apk update && apk upgrade --no-cache
