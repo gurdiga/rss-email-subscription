@@ -231,8 +231,9 @@ export function sendApiRequest<R extends any = any>(
       ? [getFullApiPath(relativePath), urlEncodedData]
       : [getFullApiPath(relativePath, data), null];
 
+  const start = performance.now();
   const trackPerf = (x: Response) => {
-    performance.mark(si`res-api${relativePath}`);
+    performance.measure(si`res-api${relativePath}`, { start });
     return x;
   };
 
