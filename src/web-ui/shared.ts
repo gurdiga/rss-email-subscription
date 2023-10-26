@@ -232,7 +232,7 @@ export function sendApiRequest<R extends any = any>(
       : [getFullApiPath(relativePath, data), null];
 
   const trackPerf = (x: Response) => {
-    performance.mark(si`res-api-${relativePath}`);
+    performance.mark(si`res-api${relativePath}`);
     return x;
   };
 
