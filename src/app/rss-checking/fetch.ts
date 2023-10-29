@@ -6,7 +6,7 @@ interface FetchOptions {
 
 const defaultFetchOptions: FetchOptions = {
   maxResponseBytes: 10 * 1024 * 124,
-  timeoutMs: 10_000,
+  timeoutMs: 15_000,
 };
 
 export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}): Promise<Response> {
