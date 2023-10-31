@@ -711,7 +711,7 @@ prune-docker-images:
 		echo "Subject: RES prune-docker-images"
 		echo "From: RES <system@feedsubscription.com>";
 		echo
-		d system df
+		docker system df
 		echo
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
