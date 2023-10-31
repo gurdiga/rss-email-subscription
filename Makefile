@@ -707,12 +707,14 @@ sent-count-last-week: rsync-logs
 # cron @monthly
 prune-docker-images:
 	@docker image prune --force |
-	cat <( \
-		echo "Subject: RES prune-docker-images"; \
-		echo "From: RES <system@feedsubscription.com>"; \
-		echo; \
-	) - \
-	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	cat <(
+		echo "Subject: RES prune-docker-images"
+		echo "From: RES <system@feedsubscription.com>";
+		echo
+		d system df
+		echo
+	) - |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 git-pre-commit-hook:
 	echo "#!/bin/sh" > .git/hooks/pre-commit
