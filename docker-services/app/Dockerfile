@@ -1,7 +1,7 @@
 ARG NODE_VERSION=18.18.2-alpine3.18
 
 # See the appropriate version here: https://nodejs.org/en/download/releases
-ARG NPM_VERSION=10.2.1
+ARG NPM_VERSION=10.2.3
 
 ### --- build
 FROM node:${NODE_VERSION} as build
