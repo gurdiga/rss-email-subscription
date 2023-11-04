@@ -1,4 +1,4 @@
-ARG NODE_VERSION=18.18.2-alpine3.18
+ARG NODE_VERSION=20.9.0-alpine3.18
 
 # See the appropriate version here: https://nodejs.org/en/download/releases
 ARG NPM_VERSION=10.2.3

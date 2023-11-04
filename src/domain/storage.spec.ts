@@ -111,7 +111,7 @@ describe(makeStorage.name, () => {
       const result = loadItem(key, readFileFn);
 
       expect(result).to.deep.equal(
-        makeErr(si`Failed to parse JSON at ${key}: Unexpected token o in JSON at position 1`)
+        makeErr(si`Failed to parse JSON at ${key}: Unexpected token 'o', \"non-json-string\" is not valid JSON`)
       );
     });
   });
