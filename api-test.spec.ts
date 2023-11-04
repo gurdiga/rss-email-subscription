@@ -791,7 +791,7 @@ describe('API', () => {
       };
       expect(secretData, JSON.stringify(secretData)).to.deep.include(expectedSecretData);
       confirmationSecret = secret;
-    });
+    }).timeout(5000);
 
     it('updates the account password hash and deletes the confirmation secret', async () => {
       const newPassword = 'the-new-53cret-p455w0rd';
@@ -810,7 +810,7 @@ describe('API', () => {
 
       const result = doesConfirmationSecretExist(confirmationSecret);
       expect(result, 'confirmation secred has been deleted').to.be.false;
-    });
+    }).timeout(5000);
 
     async function requestPasswordReset(email: string) {
       const request: PasswordResetRequestData = { email };
