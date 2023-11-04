@@ -1,4 +1,4 @@
-FROM boky/postfix:v3.6.1-alpine
+FROM boky/postfix:v4.0.2-alpine
 
 RUN apk update
 RUN apk upgrade --no-cache
