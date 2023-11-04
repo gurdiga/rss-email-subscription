@@ -39,6 +39,15 @@ async function main() {
     logHeartbeat(logInfo, { lineCount, lineCountDiff });
     prevLineCount = lineCount;
   });
+
+  process.on('SIGHUP', () => {
+    logWarning('Received SIGUP. Will log heartbeat now.');
+
+    const { lineCount } = status;
+    const lineCountDiff = lineCount - prevLineCount;
+
+    logHeartbeat(logInfo, { lineCount, lineCountDiff });
+  });
 }
 
 main();
