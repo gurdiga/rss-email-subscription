@@ -55,8 +55,22 @@ async function main() {
     { label: uiElements.pageTitle.textContent! },
   ]);
 
-  uiElements.emailBodyExcerptWordCount.value = defaultExcerptWordCount.toString();
+  initDefaultExcerptWordCount(uiElements.emailBodyExcerptWordCount, defaultExcerptWordCount);
+  bindSubmitButton(uiElements);
+  bindBlogFeedUrlField(uiElements);
+}
 
+function bindBlogFeedUrlField(uiElements: RequiredUiElements) {
+  uiElements; // TODO: remove
+  // TODO Maybe:
+  // - oninput: check if it’s a valid URL, and try to ApiPath.checkFeedUrl
+}
+
+function initDefaultExcerptWordCount(filed: HTMLInputElement, count: number) {
+  filed.value = count.toString();
+}
+
+function bindSubmitButton(uiElements: RequiredUiElements) {
   onSubmit(uiElements.submitButton, async (event: Event) => {
     event.preventDefault();
     clearValidationErrors(uiElements);
