@@ -448,6 +448,7 @@ export interface CheckFeedUrlRequest {
 export type CheckFeedUrlRequestData = Record<keyof CheckFeedUrlRequest, string>;
 
 export interface CheckFeedUrlResponseData {
+  blogTitle: string;
   feedUrl: string;
 }
 

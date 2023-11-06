@@ -1,8 +1,7 @@
 import { makeEmailContent, makeUnsubscribeUrl } from '../../app/email-sending/email-content';
 import { sendEmail } from '../../app/email-sending/email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from '../../app/email-sending/emails';
-import { parseRssFeed } from '../../app/rss-checking/rss-parsing';
-import { fetchRss } from '../../app/rss-checking/rss-response';
+import { getFeedInfo } from '../../app/rss-checking/rss-parsing';
 import { isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
@@ -20,8 +19,7 @@ import { makeFeedId, makeSampleFeedId } from '../../domain/feed-id';
 import { isFeedNotFound, loadFeed } from '../../domain/feed-storage';
 import { RssItem } from '../../domain/rss-item';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
-import { isEmpty } from '../../shared/array-utils';
-import { Result, isErr, makeErr, makeValues } from '../../shared/lang';
+import { isErr, makeValues } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { AppRequestHandler } from '../app-request-handler';
@@ -116,44 +114,6 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
       ' We’ve sent you a sample email with the most recent post from this blog feed.'
   );
 };
-
-interface FeedInfo {
-  title: string;
-  mostRecentItem: RssItem;
-}
-
-async function getFeedInfo(url: URL): Promise<Result<FeedInfo>> {
-  const rssResponse = await fetchRss(url);
-
-  if (isErr(rssResponse)) {
-    return makeErr(si`Failed to ${fetchRss.name}: ${rssResponse.reason}`);
-  }
-
-  const rssParsingResult = await parseRssFeed(rssResponse);
-
-  if (isErr(rssParsingResult)) {
-    return makeErr(si`Failed to ${parseRssFeed.name}: ${rssParsingResult.reason}`);
-  }
-
-  const { title, validItems, invalidItems } = rssParsingResult;
-
-  if (isEmpty(validItems) && isEmpty(invalidItems)) {
-    return makeErr('No RSS items');
-  }
-
-  const mostRecentItem = validItems[0];
-
-  if (!mostRecentItem) {
-    return makeErr('No valid RSS items');
-  }
-
-  const result: FeedInfo = {
-    title,
-    mostRecentItem,
-  };
-
-  return result;
-}
 
 async function sendSampleEmail(
   env: AppEnv,

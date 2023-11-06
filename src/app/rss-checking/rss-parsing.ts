@@ -1,10 +1,10 @@
 import Parser, { Item } from 'rss-parser';
-import { sortBy, SortDirection } from '../../shared/array-utils';
-import { getErrorMessage, hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
-import { makeHttpUrl } from '../../shared/url';
-import { RssResponse } from './rss-response';
+import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
+import { getErrorMessage, hasKind, isErr, makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
+import { makeHttpUrl } from '../../shared/url';
+import { fetchRss, RssResponse } from './rss-response';
 
 export interface RssFeed {
   kind: 'RssFeed';
@@ -127,4 +127,42 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
 
 function isInvalidRssItem(value: unknown): value is InvalidRssItem {
   return hasKind(value, 'InvalidRssItem');
+}
+
+interface FeedInfo {
+  title: string;
+  mostRecentItem: RssItem;
+}
+
+export async function getFeedInfo(url: URL): Promise<Result<FeedInfo>> {
+  const rssResponse = await fetchRss(url);
+
+  if (isErr(rssResponse)) {
+    return makeErr(si`Failed to ${fetchRss.name}: ${rssResponse.reason}`);
+  }
+
+  const rssParsingResult = await parseRssFeed(rssResponse);
+
+  if (isErr(rssParsingResult)) {
+    return makeErr(si`Failed to ${parseRssFeed.name}: ${rssParsingResult.reason}`);
+  }
+
+  const { title, validItems, invalidItems } = rssParsingResult;
+
+  if (isEmpty(validItems) && isEmpty(invalidItems)) {
+    return makeErr('No RSS items');
+  }
+
+  const mostRecentItem = validItems[0];
+
+  if (!mostRecentItem) {
+    return makeErr('No valid RSS items');
+  }
+
+  const result: FeedInfo = {
+    title,
+    mostRecentItem,
+  };
+
+  return result;
 }

@@ -41,6 +41,7 @@ import { si } from '../shared/string-utils';
 import { makeHttpUrl } from '../shared/url';
 import { AppRequestHandler } from './app-request-handler';
 import { checkSession, isAuthenticatedSession, isDemoSession } from './session';
+import { getFeedInfo } from '../app/rss-checking/rss-parsing';
 
 export const loadFeedDisplayName: AppRequestHandler = async function loadFeedDisplayName(
   reqId,
@@ -396,7 +397,10 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const isProbablyFeedUrl = isValidFeedContentType(contentType);
 
   if (isProbablyFeedUrl) {
-    const responseData: CheckFeedUrlResponseData = { feedUrl: blogUrl.toString() };
+    const feedInfo = await getFeedInfo(blogUrl);
+    let blogTitle = isErr(feedInfo) ? '' : feedInfo.title;
+
+    const responseData: CheckFeedUrlResponseData = { blogTitle, feedUrl: blogUrl.toString() };
     return makeSuccess('OK', {}, responseData);
   }
 
@@ -437,8 +441,18 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     return makeInputError('Invalid feed URL', fieldName);
   }
 
+  let blogTitle = getPageTitle(html);
+
+  if (isErr(blogTitle)) {
+    logWarning('Invalid page title when adding blog', { blogTitle, blogUrl: blogUrl.toString() });
+    blogTitle = '';
+  }
+
   const logData = {};
-  const responseData: CheckFeedUrlResponseData = { feedUrl: feedUrl.toString() };
+  const responseData: CheckFeedUrlResponseData = {
+    blogTitle,
+    feedUrl: feedUrl.toString(),
+  };
 
   logInfo('Blog RSS check', { blogUrl, feedUrl: feedUrl.toString() });
 
@@ -494,6 +508,17 @@ export function getFeedHrefs(html: string): Result<string[]> {
       .filter(isNonEmptyString);
 
     return linkHrefs;
+  } catch (error) {
+    return makeErr(si`Failed to parse HTML: ${getErrorMessage(error)}`);
+  }
+}
+
+export function getPageTitle(html: string): Result<string> {
+  try {
+    const $ = cheerio.load(html);
+    const title = $('head title').text();
+
+    return title;
   } catch (error) {
     return makeErr(si`Failed to parse HTML: ${getErrorMessage(error)}`);
   }
