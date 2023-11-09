@@ -75,6 +75,7 @@ export const addNewFeed: AppRequestHandler = async function addNewFeed(reqId, re
 
   logInfo('New feed added', {
     accountId: accountId.value,
+    accountEmail,
     feed: {
       id: feed.id.value,
       displayName: feed.displayName,
