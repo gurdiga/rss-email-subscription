@@ -37,18 +37,16 @@ export function makeEmailContent(
 
       <footer>
         <small>
-          <p>
-            ${
-              sendFullText
-                ? si`You can read this post online here: <a href="${item.link.toString()}">${item.title}</a>.`
-                : ''
-            }
-            If you no longer want to receive these emails, you can always <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
-          </p>
+          ${sendFullText ? si`<p>You can read this post online here: ${item.link.toString()}.</p>` : ''}
 
           <p>
             PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
             Replying with “Hello!” or “Thank you!” works even better. 🙂
+          </p>
+
+          <p>
+            PS: If you no longer want to receive these emails, you can always
+            <a href="${unsubscribeUrl.toString()}">unsubscribe</a>.
           </p>
         </small>
       </footer>`),
