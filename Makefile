@@ -689,7 +689,7 @@ sent-count: rsync-logs
 		tail -1 |
 		tee >( numfmt --grouping | ts "last week:  " | cat <(echo) - > /dev/stderr ) |
 	cat - <(
-		grep -Po "\d+,\d+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/my-footer.njk" |
+		grep -Po "\d+(,\d+)+(?= \(updated on Mondays\))" "../feedsubscription.com/src/includes/my-footer.njk" |
 		sed 's/,//g'
 	) |
 	paste -sd+ - | bc |
