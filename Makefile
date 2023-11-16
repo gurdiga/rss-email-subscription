@@ -1174,7 +1174,7 @@ endef
 archive-old-deliveries:
 	@set -euo pipefail
 
-	date=$${DATE:-`date +%Y%m%d`}
+	date=$${DATE:-`date --date='30 days ago' +%Y%m%d`}
 
 	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$date-*" |
 	while read dir; do
