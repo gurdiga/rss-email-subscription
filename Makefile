@@ -1169,3 +1169,20 @@ define include_log_to
 
 	export -f log_to
 endef
+
+# cron @daily
+archive-old-deliveries:
+	@set -euo pipefail
+
+	date=$${DATE:-`date +%Y%m%d`}
+
+	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$date-*" |
+	while read dir; do
+		printf "Archiving $$dir ... "
+		tar czf "$$dir.tgz" "$$dir"
+		echo "OK"
+
+		printf "Deleting $$dir ... "
+		rm -rf "$$dir"
+		echo "OK"
+	done
