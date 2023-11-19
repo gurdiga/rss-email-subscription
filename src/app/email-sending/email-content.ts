@@ -122,7 +122,7 @@ export function htmlBody(contents: string): string {
 
     <hr />
 
-    <footer style="color: GrayText; text-align: center">
+    <center style="color: GrayText">
       <small>
         <p style="margin: 0">
           This email was sent by
@@ -134,8 +134,9 @@ export function htmlBody(contents: string): string {
         </address>
       </small>
 
+      <br/>
       <img src="https://feedsubscription.com/assets/img/favicon.png" alt="FeedSubscription.com logo" width="40">
-    </footer>
+    </center>
 
   </div>`;
 }
