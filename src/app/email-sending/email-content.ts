@@ -37,7 +37,7 @@ export function makeEmailContent(
 
       <footer>
         <small>
-          ${sendFullText ? si`<p>You can read this post online here: ${item.link.toString()}.</p>` : ''}
+          ${sendFullText ? si`<p>You can read this post online here: ${item.link.toString()}</p>` : ''}
 
           <p>
             PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
