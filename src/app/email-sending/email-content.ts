@@ -133,8 +133,9 @@ export function htmlBody(contents: string): string {
           FeedSubscription, LLC, 651 N Broad St, Middletown, DE 19709
         </address>
       </small>
+    </center>
 
-      <br/>
+    <center>
       <img src="https://feedsubscription.com/assets/img/favicon.png" alt="FeedSubscription.com logo" width="40">
     </center>
 
