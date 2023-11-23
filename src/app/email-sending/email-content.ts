@@ -135,7 +135,7 @@ export function htmlBody(contents: string): string {
       </small>
     </center>
 
-    <center>
+    <center style="margin-top: 0.25em">
       <img src="https://feedsubscription.com/assets/img/favicon.png" alt="FeedSubscription.com logo" width="40">
     </center>
 
