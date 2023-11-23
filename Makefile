@@ -1186,5 +1186,7 @@ archive-old-deliveries:
 		echo "Subject: RES archive-old-deliveries"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
+		date --date="20231024" +'%F'
+		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
