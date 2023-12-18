@@ -47,7 +47,7 @@ export async function parseRssFeed(
       return makeErr(si`Failed to parse RSS: ${getErrorMessage(error)}`);
     }
   } catch (error) {
-    return makeErr(si`Invalid XML: ${rssResponse.xml}`);
+    return makeErr(si`Invalid XML: ${getErrorMessage(error)}`);
   }
 }
 

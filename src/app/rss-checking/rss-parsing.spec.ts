@@ -227,7 +227,9 @@ describe(parseRssFeed.name, () => {
       baseURL,
     })) as Err;
 
-    expect(result).to.deep.equal(makeErr(si`Invalid XML: ${xml}`));
+    expect(result).to.deep.equal(
+      makeErr('Invalid XML: Forward-slash in opening tag not followed by >\nLine: 8\nColumn: 22\nChar: 2')
+    );
   });
 
   it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
