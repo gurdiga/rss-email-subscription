@@ -17,6 +17,8 @@ import { si } from '../../shared/string-utils';
 import { isNotEmpty } from '../../shared/array-utils';
 import { makeDate } from '../../shared/date-utils';
 
+const unexpirableKinds = ['RegistrationConfirmationSecretData'];
+
 export function expireConfirmationSecrets(storage: AppStorage) {
   const logData = { module: expireConfirmationSecrets.name };
 
@@ -45,6 +47,12 @@ export function expireConfirmationSecrets(storage: AppStorage) {
 
       if (isConfirmationSecretNotFound(secretData)) {
         logWarning(si`Confirmation secred not found for expiration: ${secret.value}`);
+        continue;
+      }
+
+      const kind = (secretData as any).kind;
+
+      if (unexpirableKinds.includes(kind)) {
         continue;
       }
 
