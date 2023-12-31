@@ -1096,13 +1096,12 @@ esbundle-upgrade-check: check-for-bundle-change
 gurdiga-com-visits-per-month:
 	@bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
 
-	for i in `seq 6 9`; do
-		printf "$$i "
-		zcat -f .tmp/logs/feedsubscription/website.log-20230$${i}* |
-		grep 'subscription-form.js.*https://gurdiga.com/' |
-		grep -vPi ".*$$bot_list_re.*" |
-		wc -l
-	done
+	zcat -f .tmp/logs/feedsubscription/website.log* |
+	grep -P '"GET /web-ui-scripts/web-ui/subscription-form.js HTTP/(1.1|2.0)" 200 \d+ "https://gurdiga.com' |
+	grep -vPi ".*$$bot_list_re.*" |
+	grep -Po '\d{4}-\d{2}' |
+	sort |
+	uniq -c
 
 # NOTE: This exists because some of *.olc.protection.outlook.com fail to
 # resolve as per dnsmasq.log:
