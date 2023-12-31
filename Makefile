@@ -1191,3 +1191,6 @@ archive-old-deliveries:
 		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
+rsync-certbot:
+	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/certbot/ .tmp/certbot/
