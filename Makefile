@@ -1179,8 +1179,9 @@ archive-old-deliveries:
 	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$date-*" |
 	while read dir; do
 		echo "$${dir/.tmp\/docker-data\/accounts\/''}"
-		tar czf "$$dir.tgz" "$$dir" && echo "...archived" || echo "...failed"
-		rm -rf "$$dir" && echo "...deleted" || echo "...failed"
+		tar czf "$$dir.tgz" "$$dir" && printf "...archived" || printf "...failed"
+		rm -rf "$$dir" && printf "...deleted" || printf "...failed"
+		echo ""
 	done |
 	cat <(
 		echo "Subject: RES archive-old-deliveries"
