@@ -1091,6 +1091,8 @@ check-for-bundle-change:
 
 	rm subscription-form.js*
 
+esbundle-upgrade-check: check-for-bundle-change
+
 gurdiga-com-visits-per-month:
 	@bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
 
