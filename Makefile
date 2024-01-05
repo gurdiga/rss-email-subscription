@@ -863,6 +863,7 @@ tracking-report: bot-list.txt
 	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	grep -vP ': (95.65.96.65) ' | # exclude some IPs
 	grep -vF ' "https://feedsubscription.com/dW5zdWJzY3?id=' | # exclude reqs w/ obfuscated referrer, cause they ain’t humans
+	grep -vF ' "https://feedsubscription.com/?from=fzbvy-abbgfe' | # exclude reqs w/ obfuscated referrer, cause they ain’t humans
 	grep -P "(?<=GET /track\?data=)\S+" |
 	cut --delimiter=' ' --fields=1,4,10,14 | # select: timestamp, ip, request, referrer
 	sed \
