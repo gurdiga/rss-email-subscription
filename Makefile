@@ -862,6 +862,7 @@ tracking-report: bot-list.txt
 	grep -P "^$$date" |
 	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	grep -vP ': (95.65.96.65) ' | # exclude some IPs
+	grep -vP ': 40\.9[2-4]\.\d+\.\d+ - - ' | # exclude Office 365 IP ranges mail.protection.outlook.com 40.92.0.0/15
 	grep -vF ' "https://feedsubscription.com/dW5zdWJzY3?id=' | # exclude reqs w/ obfuscated referrer, cause they ain’t humans
 	grep -vF ' "https://feedsubscription.com/?from=fzbvy-abbgfe' | # exclude reqs w/ obfuscated referrer, cause they ain’t humans
 	grep -P "(?<=GET /track\?data=)\S+" |
