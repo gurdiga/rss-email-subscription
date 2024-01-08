@@ -16,8 +16,9 @@ import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { isNotEmpty } from '../../shared/array-utils';
 import { makeDate } from '../../shared/date-utils';
+import { RegistrationConfirmationSecretData } from '../../api/registration';
 
-const unexpirableKinds = ['RegistrationConfirmationSecretData'];
+const unexpirableKinds: [RegistrationConfirmationSecretData['kind']] = ['RegistrationConfirmationSecretData'];
 
 export function expireConfirmationSecrets(storage: AppStorage) {
   const logData = { module: expireConfirmationSecrets.name };

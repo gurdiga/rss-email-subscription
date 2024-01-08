@@ -141,7 +141,7 @@ function storeRegistrationConfirmationSecret(
   }
 }
 
-interface RegistrationConfirmationSecretData {
+export interface RegistrationConfirmationSecretData {
   kind: 'RegistrationConfirmationSecretData'; // for inspectability
   accountId: AccountId;
   email: EmailAddress;
