@@ -5,7 +5,7 @@ interface FetchOptions {
 }
 
 const defaultFetchOptions: FetchOptions = {
-  maxResponseBytes: 10 * 1024 * 124,
+  maxResponseBytes: 10 * 1024 * 1024,
   timeoutMs: 15_000,
 };
 
