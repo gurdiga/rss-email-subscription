@@ -485,7 +485,6 @@ watch-delmon:
 				echo "Subject: RES delmon $$severity: $$message"
 				echo
 
-				wc --bytes <<<"$$json" | ts "JSON bytes:"
 				jq . <<<"$$json"
 			else
 				echo "Subject: RES delmon non-JSON log record"
