@@ -7,7 +7,7 @@ RUN apk update && apk upgrade --no-cache
 
 # patches
 RUN apk add --no-cache \
-  openssl=3.1.4-r1
+  openssl=3.1.4-r5
 
 RUN apk add --no-cache \
   syslog-ng=4.1.1-r2 \
