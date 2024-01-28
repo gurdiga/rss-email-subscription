@@ -464,10 +464,11 @@ certbot-report:
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 
-		ls -1t .tmp/logs/feedsubscription/certbot.log-*.gz |
+		ls -1t .tmp/logs/feedsubscription/certbot.log{,-*.gz} |
 		head -2 |
 		sort -r |
-		xargs zcat -f
+		xargs zcat -f |
+		tail -12
 	) 2>&1 |
 	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 
