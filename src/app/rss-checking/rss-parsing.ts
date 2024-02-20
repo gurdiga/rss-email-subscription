@@ -1,7 +1,7 @@
 import Parser, { Item } from 'rss-parser';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
-import { getErrorMessage, hasKind, isErr, makeErr, Result } from '../../shared/lang';
+import { getErrorMessage, hasKind, isErr, isObject, makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { makeHttpUrl } from '../../shared/url';
 import { fetchRss, RssResponse } from './rss-response';
@@ -58,7 +58,7 @@ interface InvalidRssItem {
 }
 
 export interface ParsedRssItem extends Item {
-  author?: string; // The Item interface of rss-parser is missing author?!
+  author?: string | { name: string }; // The Item interface of rss-parser is missing author?!
   creator?: string; // This is non-standard, but present in WP feeds
   id?: string; // Atom feeds have "id" instead of "guid". Please see https://validator.w3.org/feed/docs/atom.html#sampleFeed
   ['content:encoded']?: string; // Please see https://www.w3.org/wiki/RssContent
@@ -81,10 +81,15 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
   const title = item.title || defaultTitle;
 
   let content = item['content:encoded'] || item.content || item.summary;
-  const author = item.author || item.creator || 'Anonymous Coward';
+
+  const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
+  const author = makeAuthor(item);
+
+  if (isErr(author)) {
+    return invalidRssItem('Post autor is invalid');
+  }
 
   const isMissing = (value: string | undefined): value is undefined => !value?.trim();
-  const invalidRssItem = (reason: string) => ({ kind: 'InvalidRssItem' as const, reason, item });
 
   if (isMissing(title)) {
     return invalidRssItem('Post title is missing');
@@ -123,6 +128,22 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     kind: 'ValidRssItem',
     value,
   };
+}
+
+export function makeAuthor(item: ParsedRssItem): Result<string> {
+  if (typeof item.author === 'string') {
+    return item.author;
+  }
+
+  if (isObject(item.author)) {
+    if (typeof item.author.name === 'string') {
+      return item.author.name;
+    } else {
+      return makeErr('Invalid author object');
+    }
+  }
+
+  return item.creator || 'Anonymous Coward';
 }
 
 function isInvalidRssItem(value: unknown): value is InvalidRssItem {

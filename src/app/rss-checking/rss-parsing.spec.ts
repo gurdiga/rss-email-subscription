@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
-import { makeRssItem, parseRssFeed, RssFeed, ParsedRssItem, MakeRssItemFn } from './rss-parsing';
+import { makeRssItem, parseRssFeed, RssFeed, ParsedRssItem, MakeRssItemFn, makeAuthor } from './rss-parsing';
 import { ValidRssItem } from './rss-parsing';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
@@ -262,6 +262,16 @@ describe(parseRssFeed.name, () => {
           guid: '1',
         },
         {
+          title: '#1: Talks from CactusCon, Global AppSec, Black Hat, mWISE',
+          content: 'Post body',
+          isoDate: new Date().toJSON(),
+          author: {
+            name: 'David Sepashvili',
+          },
+          link: '/the/path/to/file.html',
+          guid: '1',
+        },
+        {
           title: 'Post title',
           content: 'Post body',
           isoDate: new Date().toJSON(),
@@ -284,7 +294,7 @@ describe(parseRssFeed.name, () => {
           value: {
             title: inputItem.title!,
             content: inputItem.content?.trim()! || 'Post content is missing',
-            author: inputItem.author! || inputItem.creator! || 'Anonymous Coward',
+            author: makeAuthor(inputItem) as string,
             pubDate: new Date(inputItem.isoDate!),
             link: new URL(inputItem.link!, baseURL),
             guid: inputItem.guid!,
