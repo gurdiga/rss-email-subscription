@@ -266,7 +266,7 @@ describe(parseRssFeed.name, () => {
           content: 'Post body',
           isoDate: new Date().toJSON(),
           author: {
-            name: 'David Sepashvili',
+            name: ['David Sepashvili'],
           },
           link: '/the/path/to/file.html',
           guid: '1',

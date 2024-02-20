@@ -58,7 +58,7 @@ interface InvalidRssItem {
 }
 
 export interface ParsedRssItem extends Item {
-  author?: string | { name: string }; // The Item interface of rss-parser is missing author?!
+  author?: string | { name: string[] }; // The Item interface of rss-parser is missing author?!
   creator?: string; // This is non-standard, but present in WP feeds
   id?: string; // Atom feeds have "id" instead of "guid". Please see https://validator.w3.org/feed/docs/atom.html#sampleFeed
   ['content:encoded']?: string; // Please see https://www.w3.org/wiki/RssContent
@@ -136,8 +136,8 @@ export function makeAuthor(item: ParsedRssItem): Result<string> {
   }
 
   if (isObject(item.author)) {
-    if (typeof item.author.name === 'string') {
-      return item.author.name;
+    if (Array.isArray(item.author.name) && typeof item.author.name[0] === 'string') {
+      return item.author.name[0];
     } else {
       return makeErr('Invalid author object');
     }
