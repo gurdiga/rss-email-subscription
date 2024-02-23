@@ -1058,6 +1058,7 @@ purge-demo-feeds:
 	grep -l .tmp/docker-data/accounts/*/account.json -e '"email": "demo@feedsubscription.com",' |
 	xargs --no-run-if-empty dirname |
 	xargs --no-run-if-empty -I{} rm -rfv {}/feeds |
+	sed 's|.tmp/docker-data/accounts/fe95d2f305d7ba5dcd955a9f2083d7faab76e42d98f52d2e6583380c4600cd0e/||' |
 	ifne -n echo '(empty)' |
 	cat <( \
 		echo "Subject: RES purge-demo-feeds"; \
