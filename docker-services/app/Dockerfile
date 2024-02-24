@@ -1,6 +1,7 @@
 ARG NODE_VERSION=20.11.0-alpine3.18
 
-# See the appropriate version here: https://nodejs.org/en/download/releases
+# See the appropriate version here:
+# https://nodejs.org/en/about/previous-releases#looking-for-latest-release-of-a-version-branch
 ARG NPM_VERSION=10.4.0
 
 ### --- build
