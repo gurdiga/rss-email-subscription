@@ -705,8 +705,8 @@ sent-count-last-week: rsync-logs
 	jq -s 'map(.data.report.sent) | add'
 
 # cron @monthly
-prune-docker-images:
-	@docker image prune --force |
+docker-prune:
+	@docker system prune --all --force |
 	cat <(
 		echo "Subject: RES prune-docker-images"
 		echo "From: RES <system@feedsubscription.com>";
