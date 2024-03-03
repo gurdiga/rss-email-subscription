@@ -35,7 +35,11 @@ rss-checking:
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking blogger
 
 test:
-	node_modules/.bin/ts-mocha -R dot 'src/**/*.spec.ts'
+	@export TS_NODE_TRANSPILE_ONLY=true
+	node_modules/.bin/mocha \
+		--require ts-node/register \
+		--reporter dot \
+		'src/**/*.spec.ts'
 
 test-quiet:
 	@printf "Test... "
