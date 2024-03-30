@@ -32,7 +32,7 @@
     "@types/nodemailer": "^6.4.14",
     "chai": "^4.3.10",
     "cookie": "^0.6.0",
-    "esbuild": "^0.20.0",
+    "esbuild": "^0.20.2",
     "fetch-cookie": "^2.2.0",
     "mocha": "^10.4.0",
     "nodemon": "^3.1.0",
