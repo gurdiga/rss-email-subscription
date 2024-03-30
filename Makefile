@@ -48,7 +48,13 @@ test-quiet:
 t: test
 
 tw:
-	node_modules/.bin/ts-mocha -R dot --watch --watch-files src 'src/**/*.spec.ts'
+	@export TS_NODE_TRANSPILE_ONLY=true
+	node_modules/.bin/mocha \
+		--require ts-node/register \
+		--reporter dot \
+		--watch \
+		--watch-files src \
+		'src/**/*.spec.ts'
 
 edit:
 	code -n .
@@ -331,7 +337,11 @@ start-dev: web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:
-	node_modules/.bin/ts-mocha --bail -R dot api-test.spec.ts
+	@export TS_NODE_TRANSPILE_ONLY=true
+	node_modules/.bin/mocha \
+		--require ts-node/register \
+		--reporter dot \
+		--bail -R dot api-test.spec.ts
 
 snyk:
 	snyk test
