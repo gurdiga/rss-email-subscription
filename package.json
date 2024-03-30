@@ -35,7 +35,7 @@
     "esbuild": "^0.20.0",
     "fetch-cookie": "^2.2.0",
     "mocha": "^10.3.0",
-    "nodemon": "^3.0.3",
+    "nodemon": "^3.1.0",
     "prettier": "^3.2.5",
     "systemjs": "^6.14.3",
     "ts-node": "^10.9.2",
