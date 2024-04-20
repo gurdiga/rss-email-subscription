@@ -1044,7 +1044,10 @@ update-docker-scout:
 	@latest_tag=$$(curl --silent https://api.github.com/repos/docker/scout-cli/tags | jq -r '.[].name' | sort | tail -1)
 	echo "latest_tag: $$latest_tag"
 
-	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/$$latest_tag/install.sh | sh -s --
+	export DOCKER_HOME=/Applications/Docker.app/Contents/Resources
+	echo "installing to $$DOCKER_HOME"
+
+	curl -sSfL https://raw.githubusercontent.com/docker/scout-cli/$$latest_tag/install.sh | sudo sh -s --
 
 decode-ua:
 	@: $${UA:?Missing envar}
