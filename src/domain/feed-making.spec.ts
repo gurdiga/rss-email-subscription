@@ -79,7 +79,7 @@ describe(makeFeed.name, () => {
       ],
       [
         { cronPattern, hashingSalt, url: 'https://test.com/rss.xml', displayName: 'lil' },
-        makeErr('Feed name is too short. I needs to be at least 5 characters.', 'displayName'),
+        makeErr('Feed name is too short. I needs to be at least 4 characters.', 'displayName'),
         'displayName4',
       ],
       [

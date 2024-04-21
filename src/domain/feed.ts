@@ -377,7 +377,7 @@ export function makeFeedUrl(input: unknown, field = 'url'): Result<URL> {
   return makeHttpUrl(trimmedUrl, undefined, field);
 }
 
-const minFeedNameLength = 5;
+const minFeedNameLength = 4;
 export const maxFeedNameLength = 50;
 
 export function makeFeedDisplayName(input: unknown, field = 'displayName'): Result<string> {
