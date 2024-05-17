@@ -563,8 +563,9 @@ delivery-report:
 		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
-	) 2>&1 \
-	| ifne bash -c send_report
+	) 2>&1 |
+	ifne -n echo '(empty)' |
+	send_report
 
 # cron 59 23 * * *
 mailq-report:
@@ -580,8 +581,9 @@ mailq-report:
 
 	export -f send_report
 
-	docker exec smtp-out mailq \
-	| ifne bash -c send_report
+	docker exec smtp-out mailq |
+	ifne -n echo '(empty)' |
+	send_report
 
 .PHONY: website
 website:
