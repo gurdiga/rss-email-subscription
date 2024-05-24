@@ -2,3 +2,4 @@ web-ui-scripts/
 .tmp/
 dist/
 html/
+package-lock.json
