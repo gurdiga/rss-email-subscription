@@ -505,7 +505,7 @@ function getClientSecretFromSubscription(subscription: Stripe.Subscription): Res
 
 export function makeStripe(secretKey: string): Stripe {
   const config: Stripe.StripeConfig = {
-    apiVersion: '2023-10-16',
+    apiVersion: '2024-04-10',
     maxNetworkRetries: 5,
   };
 
