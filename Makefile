@@ -995,7 +995,7 @@ docker-image-check:
 		fi
 	done
 
-all-images: app certbot delmon logger smtp-in smtp-out website
+all-images: app certbot delmon logger smtp-in smtp-out website resolver
 
 user-list:
 	@counter=1
