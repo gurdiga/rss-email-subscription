@@ -1,8 +1,8 @@
-ARG NODE_VERSION=20.12.2-alpine3.19
+ARG NODE_VERSION=20.14.0-alpine3.20
 
 # See the appropriate version here:
 # https://nodejs.org/en/about/previous-releases#looking-for-latest-release-of-a-version-branch
-ARG NPM_VERSION=10.5.2
+ARG NPM_VERSION=10.8.1
 
 ### --- build
 FROM node:${NODE_VERSION} as build
