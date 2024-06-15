@@ -232,9 +232,10 @@ describe(parseRssFeed.name, () => {
     );
   });
 
-  it('returns an InvalidRssParsingResult value when buildRssItem throws', async () => {
+  it('returns an Err with stack-trace value when buildRssItem throws', async () => {
     const xml = readFixture('rss-parsing.spec.fixture.xml');
-    const buildRssItemFn = makeThrowingStub<MakeRssItemFn>(new Error('Something broke!'));
+    const error = new Error('Something broke!');
+    const buildRssItemFn = makeThrowingStub<MakeRssItemFn>(error);
 
     const result = (await parseRssFeed(
       {
@@ -245,7 +246,7 @@ describe(parseRssFeed.name, () => {
       buildRssItemFn
     )) as Err;
 
-    expect(result).to.deep.equal(makeErr('Failed to parse RSS: Something broke!'));
+    expect(result).to.deep.equal(makeErr(si`Failed to parse RSS: ${error.stack!}`));
   });
 
   describe(makeRssItem.name, () => {

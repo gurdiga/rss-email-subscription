@@ -44,7 +44,9 @@ export async function parseRssFeed(
         invalidItems,
       };
     } catch (error) {
-      return makeErr(si`Failed to parse RSS: ${getErrorMessage(error)}`);
+      const errorMessage = error instanceof Error ? error.stack || error.message : getErrorMessage(error);
+
+      return makeErr(si`Failed to parse RSS: ${errorMessage}`);
     }
   } catch (error) {
     return makeErr(si`Invalid XML: ${getErrorMessage(error)}`);
@@ -78,7 +80,7 @@ export type MakeRssItemFn = typeof makeRssItem;
 export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: string): ValidRssItem | InvalidRssItem {
   const { isoDate } = item;
 
-  const title = item.title || defaultTitle;
+  const title = typeof item.title === 'string' ? item.title || defaultTitle : defaultTitle;
 
   let content = item['content:encoded'] || item.content || item.summary;
 

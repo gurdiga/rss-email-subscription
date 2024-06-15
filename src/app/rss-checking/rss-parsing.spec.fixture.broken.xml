@@ -1,0 +1,1441 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><?xml-stylesheet href="http://www.blogger.com/styles/atom.css" type="text/css"?>
+<feed xmlns="http://www.w3.org/2005/Atom" xmlns:blogger="http://schemas.google.com/blogger/2008"
+  xmlns:gd="http://schemas.google.com/g/2005" xmlns:georss="http://www.georss.org/georss"
+  xmlns:openSearch="http://a9.com/-/spec/opensearchrss/1.0/"
+  xmlns:thr="http://purl.org/syndication/thread/1.0">
+  <id>tag:blogger.com,1999:blog-8982037438137564684</id>
+  <updated>2024-06-14T23:02:20.760-07:00</updated>
+  <category term="Beta updates" />
+  <category term="Dev updates" />
+  <category term="Stable updates" />
+  <category term="Chrome OS" />
+  <category term="Desktop Update" />
+  <category term="Chrome for Android" />
+  <category term="Chrome for iOS" />
+  <category term="dev update" />
+  <category term="ChromeOS Flex" />
+  <category term="ChromeOS" />
+  <category term="Extended Stable updates" />
+  <category term="Chrome Dev for Android" />
+  <category term="LTS" />
+  <category term="Admin Console" />
+  <category term="Early Stable Updates" />
+  <category term="Beta" />
+  <category term="Android WebView" />
+  <category term="Chrome OS Flex" />
+  <category term="chrome" />
+  <category term="Chrome OS Management" />
+  <category term="stable" />
+  <category term="Chromecast Update" />
+  <category term="Chrome for Meetings" />
+  <category term="Flash Player update" />
+  <category term="Hangouts Meet hardware" />
+  <title type="text">Google Chrome Releases</title>
+  <subtitle type="html">Announcements and release notes for the Google Chrome browser.</subtitle>
+  <link href="http://chromereleases.googleblog.com/feeds/posts/default"
+    rel="http://schemas.google.com/g/2005#feed" type="application/atom+xml" />
+  <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default?redirect=false"
+    rel="self" type="application/atom+xml" />
+  <link href="http://chromereleases.googleblog.com/" rel="alternate" type="text/html" />
+  <link href="http://pubsubhubbub.appspot.com/" rel="hub" />
+  <link
+    href="http://www.blogger.com/feeds/8982037438137564684/posts/default?start-index=26&amp;max-results=25&amp;redirect=false"
+    rel="next" type="application/atom+xml" />
+  <author>
+    <name>Ben Mason</name>
+    <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+    <email>noreply@blogger.com</email>
+    <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+      src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+  </author>
+  <generator uri="http://www.blogger.com" version="7.00">Blogger</generator>
+  <openSearch:totalResults>5051</openSearch:totalResults>
+  <openSearch:startIndex>1</openSearch:startIndex>
+  <openSearch:itemsPerPage>25</openSearch:itemsPerPage>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-4004869924580978440</id>
+    <published>2024-06-14T11:43:00.001-07:00</published>
+    <updated>2024-06-14T11:43:33.659-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome Dev for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Dev updates" />
+    <title type="text">Chrome Dev for Android Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Dev 128 (128.0.6537.2) for
+      Android. It's now available on &lt;a
+      href="https://play.google.com/store/apps/details?id=com.chrome.dev"&gt;Google
+      Play&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;You can see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/127.0.6521.0..128.0.6537.2?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. For details on new features, check out the &lt;a
+      href="https://blog.chromium.org"&gt;Chromium blog&lt;/a&gt;, and for details on web platform
+      updates, check &lt;a
+      href="https://www.chromestatus.com/features#milestone%3D128"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;If
+      you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Harry Souders&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/4004869924580978440/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=4004869924580978440&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/4004869924580978440"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/4004869924580978440"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-dev-for-android-update_14.html"
+      rel="alternate" title="Chrome Dev for Android Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-9107432030694182914</id>
+    <published>2024-06-14T08:28:00.001-07:00</published>
+    <updated>2024-06-14T08:28:33.948-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Dev updates" />
+    <title type="text">Chrome Dev for Desktop Update</title>
+    <content type="html">&lt;p&gt;The Dev channel has been updated to 128.0.6535.2 for Windows, Mac
+      and Linux.&lt;/p&gt;&lt;p&gt;A partial list of changes is available in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/127.0.6523.4..128.0.6535.2?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. Interested in &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;switching&lt;/a&gt; release
+      channels? Find out &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;how&lt;/a&gt;. If you find a
+      new issue, please let us know by &lt;a href="https://crbug.com/"&gt;filing a bug&lt;/a&gt;.
+      The &lt;a href="https://productforums.google.com/forum/#!forum/chrome"&gt;community help
+      forum&lt;/a&gt; is also a great place to reach out for help or learn about common
+      issues.&lt;/p&gt;&lt;p&gt;Prudhvi Bommana&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/9107432030694182914/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=9107432030694182914&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/9107432030694182914"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/9107432030694182914"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-dev-for-desktop-update_14.html"
+      rel="alternate" title="Chrome Dev for Desktop Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-8823130048979461963</id>
+    <published>2024-06-13T13:51:00.000-07:00</published>
+    <updated>2024-06-13T13:51:00.702-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Chrome for Android Update</title>
+    <content type="html">&lt;p&gt;&amp;nbsp; Hello, Everyone! We've just released Chrome 126
+      (126.0.6478.71) for Android: it'll become&amp;nbsp;&lt;a
+      href="https://play.google.com/store/apps/details?id=com.android.chrome"&gt;available on Google
+      Play&lt;/a&gt;&amp;nbsp;over the next few days.&lt;/p&gt;&lt;p&gt;This release includes
+      stability and performance improvements. You can see a full list of the changes in
+      the&amp;nbsp;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.50..126.0.6478.71?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by&amp;nbsp;&lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;div&gt;&lt;br
+      /&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;Erhu&lt;/div&gt;&lt;div&gt;&lt;a
+      href="https://www.google.com/chrome/"&gt;Google Chrome&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/8823130048979461963/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=8823130048979461963&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/8823130048979461963"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/8823130048979461963"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-for-android-update_13.html"
+      rel="alternate" title="Chrome for Android Update" type="text/html" />
+    <author>
+      <name>Erhu Akpobaro</name>
+      <uri>http://www.blogger.com/profile/07866913198395926985</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-1209968128445787785</id>
+    <published>2024-06-13T13:00:00.000-07:00</published>
+    <updated>2024-06-13T13:00:52.990-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Extended Stable updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Stable Channel Update for Desktop</title>
+    <content type="html">&lt;p&gt;&lt;span style="color: #666666; font-family: arial;"&gt;The Stable
+      channel has been updated to 126.0.6478.61/.62 for Windows, Mac
+      and&amp;nbsp;&lt;/span&gt;&lt;span style="color: #666666; font-family:
+      arial;"&gt;126.0.6478.61&lt;/span&gt;&lt;span style="color: #666666; font-family:
+      arial;"&gt;&amp;nbsp;for Linux which will roll out over the coming days/weeks. A full list of
+      changes in this build is available in the&lt;/span&gt;&lt;span style="color: #666666;
+      font-family: arial;"&gt;&amp;nbsp;&lt;/span&gt;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.56..126.0.6478.61?pretty=fuller&amp;amp;n=10000"
+      style="color: #4184f3; font-family: arial; text-decoration-line:
+      none;"&gt;Log&lt;/a&gt;&lt;span style="color: #666666; font-family:
+      arial;"&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: #666666; font-family:
+      arial;"&gt;&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;&lt;p style="color: rgba(0, 0, 0, 0.87);
+      font-family: Roboto, sans-serif; font-size: 17px;"&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: medium;"&gt;Interested in switching release channels? Find out
+      how&amp;nbsp;&lt;a href="https://www.chromium.org/getting-involved/dev-channel" style="color:
+      #4184f3; text-decoration-line: none;"&gt;here&lt;/a&gt;. If you find a new issue, please let
+      us know by&amp;nbsp;&lt;a href="https://crbug.com/" style="color: #4184f3;
+      text-decoration-line: none;"&gt;filing a bug&lt;/a&gt;. The&amp;nbsp;&lt;a
+      href="https://support.google.com/chrome/community" style="color: #4184f3;
+      text-decoration-line: none;"&gt;community help forum&lt;/a&gt;&amp;nbsp;is also a great place
+      to reach out for help or learn about common issues.&lt;/span&gt;&lt;/p&gt;&lt;p style="color:
+      rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px;"&gt;&lt;/p&gt;&lt;p
+      style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size:
+      17px;"&gt;&lt;span style="color: #666666; font-family: arial; font-size:
+      medium;"&gt;&lt;/span&gt;&lt;/p&gt;&lt;p style="color: rgba(0, 0, 0, 0.87); font-family:
+      Roboto, sans-serif; font-size: 17px; line-height: 1.38; margin-bottom: 0pt; margin-top:
+      0pt;"&gt;&lt;span style="color: #666666; font-family: arial; font-size: medium;
+      font-variant-alternates: normal; font-variant-east-asian: normal; font-variant-numeric:
+      normal; font-variant-position: normal; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;&lt;/span&gt;&lt;/p&gt;&lt;div style="color: rgba(0, 0, 0, 0.87); font-family:
+      Roboto, sans-serif; font-size:
+      17px;"&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;span
+      style="color: #666666; font-family: arial; font-size: medium;"&gt;&lt;br style="content:
+      &amp;quot; &amp;quot;; display: block; padding: 4px;"
+      /&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;span
+      style="color: #666666; font-family: arial; font-size: medium;"&gt;&lt;div style="color:
+      rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px;"&gt;&lt;span
+      style="color: #666666; font-family: arial; font-size: medium;"&gt;Srinivas
+      Sista&lt;/span&gt;&lt;/div&gt;Google Chrome&lt;/span&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: medium;"&gt;&lt;br style="content: &amp;quot; &amp;quot;;
+      display: block; padding: 4px;" /&gt;&lt;br /&gt;&lt;br style="content: &amp;quot; &amp;quot;;
+      display: block; padding: 4px;" /&gt;&lt;br style="content: &amp;quot; &amp;quot;; display:
+      block; padding: 4px;" /&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style="color: #666666;
+      font-family: arial;"&gt;&lt;br /&gt;&lt;/span&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/1209968128445787785/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=1209968128445787785&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1209968128445787785"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1209968128445787785"
+      rel="self" type="application/atom+xml" />
+    <link
+      href="http://chromereleases.googleblog.com/2024/06/stable-channel-update-for-desktop_13.html"
+      rel="alternate" title="Stable Channel Update for Desktop" type="text/html" />
+    <author>
+      <name>Srinivas Sista</name>
+      <uri>http://www.blogger.com/profile/02985628015337174400</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-2631395868264987378</id>
+    <published>2024-06-12T21:13:00.001-07:00</published>
+    <updated>2024-06-13T04:20:13.924-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <title type="text">Chrome Beta for Desktop Update</title>
+    <content type="html">&lt;p&gt;The Chrome team is excited to announce the promotion of Chrome 127
+      to the Beta channel for Windows, Mac and Linux. Chrome 127.0.6533.4/.5 contains our usual
+      under-the-hood performance and stability tweaks, but there are also some cool new features to
+      explore - please head to the &lt;a href="https://blog.chromium.org/"&gt;Chromium
+      blog&lt;/a&gt; to learn more!&lt;/p&gt;&lt;p&gt;A partial list of changes is available in the
+      &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.36..127.0.6533.5?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. Interested in &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;switching&lt;/a&gt; release
+      channels? Find out &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;how&lt;/a&gt;. If you find a
+      new issue, please let us know by &lt;a href="https://crbug.com/"&gt;filing a bug&lt;/a&gt;.
+      The &lt;a href="https://productforums.google.com/forum/#!forum/chrome"&gt;community help
+      forum&lt;/a&gt; is also a great place to reach out for help or learn about common
+      issues.&lt;/p&gt;&lt;p&gt;Daniel Yip&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/2631395868264987378/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=2631395868264987378&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2631395868264987378"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2631395868264987378"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-desktop-update_12.html"
+      rel="alternate" title="Chrome Beta for Desktop Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-1958626300992102047</id>
+    <published>2024-06-12T14:44:00.000-07:00</published>
+    <updated>2024-06-12T14:44:48.315-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome OS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome OS Flex" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Dev updates" />
+    <title type="text" />
+    <content type="html">&lt;p&gt;&amp;nbsp;&lt;/p&gt;&lt;h2 class="title" itemprop="name"
+      style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 16px;
+      line-height: 2em; margin: 0px; position: relative;"&gt;&lt;a
+      href="https://chromereleases.googleblog.com/2024/04/dev-channel-update-for-chromeos_24.html"
+      itemprop="url" style="color: rgba(0, 0, 0, 0.87); font-size: 24px; font-weight: normal;
+      text-decoration-line: none;" title="Dev Channel Update for ChromeOS / ChromeOS Flex"&gt;Dev
+      Channel Update for ChromeOS / ChromeOS Flex&lt;/a&gt;&lt;/h2&gt;&lt;div class="post-header"
+      style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 14px;
+      line-height: 1.6; margin: 0px; padding: 0px;"&gt;&lt;div class="published" style="font-size:
+      11px; font-weight: bold; margin-bottom: 40px; margin-top: -2px;"&gt;&lt;span
+      class="publishdate" itemprop="datePublished" style="color: rgba(0, 0, 0, 0.54); font-size:
+      17px; font-weight: normal;"&gt;Wednesday, June 12,
+      2024&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class="post-body" style="color: rgba(0, 0, 0,
+      0.87); font-family: Roboto, sans-serif; font-size: 14px; width: 660px;"&gt;&lt;div
+      class="post-content post-original" itemprop="articleBody" style="font-size: 17px; line-height:
+      32px; margin: 25px 0px 36px; overflow-wrap: break-word;"&gt;&lt;p&gt;&lt;span
+      style="font-family: inherit;"&gt;The Dev channel is being updated to OS
+      version&amp;nbsp;&lt;/span&gt;127.0.6533.0 (Platform
+      version&amp;nbsp;15917.2.0)&amp;nbsp;&lt;span style="font-family: inherit;"&gt;for most
+      ChromeOS devices.&amp;nbsp;&lt;/span&gt;This build contains a number of bug fixes and security
+      updates.&lt;/p&gt;&lt;p style="box-sizing: inherit;"&gt;&lt;span style="font-family:
+      inherit;"&gt;If you find new issues, please let us know one of the following
+      ways&lt;/span&gt;&lt;/p&gt;&lt;ol style="box-sizing: inherit; margin: 16px 0px; padding: 0px
+      48px;"&gt;&lt;li style="box-sizing: inherit; line-height: 32px; margin: 0px 0px 0.25em;
+      padding: 0px;"&gt;&lt;a href="https://bugs.chromium.org/p/chromium/issues/list"
+      style="box-sizing: inherit; color: #007479; text-decoration-line: none;"&gt;File a
+      bug&lt;/a&gt;&lt;/li&gt;&lt;li style="box-sizing: inherit; line-height: 32px; margin: 0px 0px
+      0.25em; padding: 0px;"&gt;&lt;span style="font-family: inherit;"&gt;Visit our ChromeOS
+      communities&lt;/span&gt;&lt;ol style="box-sizing: inherit; margin: 16px 0px; padding: 0px
+      48px;"&gt;&lt;li style="box-sizing: inherit; line-height: 32px; margin: 0px 0px 0.25em;
+      padding: 0px;"&gt;&lt;span style="font-family: inherit;"&gt;General:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromebook/community/?hl=en&amp;amp;gpf=%23!forum%2Fchromebook-central"
+      style="box-sizing: inherit; color: #007479; text-decoration-line: none;"&gt;Chromebook Help
+      Community&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;&lt;li style="box-sizing: inherit; line-height:
+      32px; margin: 0px 0px 0.25em; padding: 0px;"&gt;&lt;span style="font-family: inherit;"&gt;Beta
+      Specific:&amp;nbsp;&lt;a href="https://support.google.com/chromeos-beta/community"
+      style="box-sizing: inherit; color: #007479; text-decoration-line: none;"&gt;ChromeOS Beta Help
+      Community&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li style="box-sizing:
+      inherit; line-height: 32px; margin: 0px 0px 0.25em; padding: 0px;"&gt;&lt;a
+      href="https://support.google.com/chrome/answer/95315?hl=en&amp;amp;co=GENIE.Platform%3DDesktop"
+      style="box-sizing: inherit; color: #007479; text-decoration-line: none;"&gt;Report an issue or
+      send feedback on Chrome&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p style="box-sizing:
+      inherit;"&gt;&lt;span style="font-family: inherit;"&gt;Interested in switching
+      channels?&amp;nbsp;&lt;a href="https://support.google.com/chromebook/answer/1086915"
+      style="box-sizing: inherit; color: #007479; text-decoration-line: none;"&gt;Find out
+      how&lt;/a&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p style="box-sizing: inherit;"&gt;Alon,&lt;br
+      style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;" /&gt;Google
+      ChromeOS&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/1958626300992102047/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=1958626300992102047&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1958626300992102047"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1958626300992102047"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/dev-channel-update-for-chromeos.html"
+      rel="alternate" title="" type="text/html" />
+    <author>
+      <name>Alon</name>
+      <uri>http://www.blogger.com/profile/13210280052349199415</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-399029359769124655</id>
+    <published>2024-06-12T13:28:00.001-07:00</published>
+    <updated>2024-06-12T13:28:33.876-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <title type="text">Chrome Beta for Android Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Beta 127 (127.0.6533.2)
+      for Android. It's now available on &lt;a
+      href="https://play.google.com/store/apps/details?id=com.chrome.beta"&gt;Google
+      Play&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;You can see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.50..127.0.6533.2?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. For details on new features, check out the &lt;a
+      href="https://blog.chromium.org"&gt;Chromium blog&lt;/a&gt;, and for details on web platform
+      updates, check &lt;a
+      href="https://www.chromestatus.com/features#milestone%3D127"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;If
+      you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Erhu Akpobaro&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/399029359769124655/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=399029359769124655&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/399029359769124655"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/399029359769124655"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-android-update_12.html"
+      rel="alternate" title="Chrome Beta for Android Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-6998661871656881220</id>
+    <published>2024-06-12T09:28:00.001-07:00</published>
+    <updated>2024-06-12T09:28:35.374-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for iOS" />
+    <title type="text">Chrome Beta for iOS Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Beta 127 (127.0.6533.3)
+      for iOS; it'll become available on App Store in the next few days.&lt;/p&gt;&lt;p&gt;You can
+      see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.34..127.0.6533.3?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=iOS%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Erhu Akpobaro&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/6998661871656881220/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=6998661871656881220&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6998661871656881220"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6998661871656881220"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-ios-update_12.html"
+      rel="alternate" title="Chrome Beta for iOS Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-7091304458858743948</id>
+    <published>2024-06-12T08:39:00.000-07:00</published>
+    <updated>2024-06-12T08:39:04.358-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome OS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome OS Flex" />
+    <title type="text">Beta Channel Update for ChromeOS/ChromeOS Flex</title>
+    <content type="html">&lt;p&gt;The Beta channel is being updated to OS version: 15886.29.0,
+      Browser version: 126.0.6478.48 for most ChromeOS devices.&lt;/p&gt;&lt;p&gt;If you find new
+      issues, please let us know one of the following
+      ways:&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;ol&gt;&lt;li&gt;&lt;a
+      href="https://bugs.chromium.org/p/chromium/issues/list"&gt;File a
+      bug&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Visit our ChromeOS
+      communities&lt;/li&gt;&lt;ol&gt;&lt;li&gt;General:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromebook/community/?hl=en&amp;amp;gpf=%23!forum%2Fchromebook-central"&gt;Chromebook
+      Help Community&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Beta Specific:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromeos-beta/community"&gt;ChromeOS Beta Help
+      Community&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;li&gt;&lt;a
+      href="https://support.google.com/chrome/answer/95315?hl=en&amp;amp;co=GENIE.Platform%3DDesktop"&gt;Report
+      an issue or send feedback on Chrome&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Interested in switching
+      channels?&amp;nbsp;&lt;a href="https://support.google.com/chromebook/answer/1086915"&gt;Find
+      out how.&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Cole
+      Brown,&lt;/p&gt;&lt;p&gt;Google ChromeOS15886.29.0&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/7091304458858743948/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=7091304458858743948&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/7091304458858743948"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/7091304458858743948"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/beta-channel-update-for_12.html"
+      rel="alternate" title="Beta Channel Update for ChromeOS/ChromeOS Flex" type="text/html" />
+    <author>
+      <name>Cole Brown</name>
+      <uri>http://www.blogger.com/profile/06718999177862209632</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-6567776635572838577</id>
+    <published>2024-06-11T13:30:00.000-07:00</published>
+    <updated>2024-06-11T13:30:25.211-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Early Stable Updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Chrome for Android Update</title>
+    <content type="html">&lt;p&gt;&amp;nbsp;Hi, everyone! We've just released Chrome 126
+      (126.0.6478.50) for Android . It'll become&amp;nbsp;&lt;a
+      href="https://play.google.com/store/apps/details?id=com.android.chrome"&gt;available on Google
+      Play&lt;/a&gt;&amp;nbsp;over the next few days.&amp;nbsp;&lt;/p&gt;This release includes
+      stability and performance improvements. You can see a full list of the changes in
+      the&amp;nbsp;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.40.126.0.6478.50?pretty=fuller&amp;amp;n=1000067.159..125.0.6422.40?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by&amp;nbsp;&lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Android releases contain the same
+      security fixes as their corresponding&amp;nbsp;&lt;a
+      href="https://chromereleases.googleblog.com/2024/06/stable-channel-update-for-desktop.html"&gt;Desktop&lt;/a&gt;&amp;nbsp;(Windows
+      &amp;amp; Mac: 126.0.6478.56/57 and Linux:126.0.6478.54&amp;nbsp; ) unless otherwise
+      noted.&lt;br /&gt;&lt;br /&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Erhu
+      Akpobaro&lt;br /&gt;&lt;a href="https://www.google.com/chrome/"&gt;Google
+      Chrome&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/6567776635572838577/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=6567776635572838577&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6567776635572838577"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6567776635572838577"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-for-android-update_11.html"
+      rel="alternate" title="Chrome for Android Update" type="text/html" />
+    <author>
+      <name>Krishna Govind</name>
+      <uri>http://www.blogger.com/profile/03425880317288089520</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-3745177939512192190</id>
+    <published>2024-06-11T12:56:00.000-07:00</published>
+    <updated>2024-06-11T13:56:42.427-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Extended Stable updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Stable Channel Update for Desktop</title>
+    <content type="html">&lt;p&gt;&lt;span style="color: #666666; font-family: arial; font-size:
+      large;"&gt;The Chrome team is delighted to announce the promotion of Chrome 126 to the stable
+      channel for Windows, Mac and Linux. This will roll out over the coming
+      days/weeks.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: #666666; font-family: arial;
+      font-size: large;"&gt;Chrome&amp;nbsp;&lt;/span&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: large;"&gt;126.0.6478.54&lt;/span&gt;&lt;span style="color:
+      #666666; font-family: arial; font-size: large;"&gt;&lt;span color="rgba(0, 0, 0,
+      0.87)"&gt;&amp;nbsp;(Linux)&amp;nbsp; 126.0.6478.56/57( Windows, Mac) contains a number of
+      fixes and improvements -- a list of changes is available in the&lt;/span&gt;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/125.0.6422.143..126.0.6478.57?pretty=fuller&amp;amp;n=10000"
+      style="color: #4184f3; text-decoration-line: none;"&gt;&amp;nbsp;log&lt;/a&gt;&lt;span
+      color="rgba(0, 0, 0, 0.87)"&gt;. Watch out for upcoming&lt;/span&gt;&lt;a
+      href="https://chrome.blogspot.com/" style="color: #4184f3; text-decoration-line:
+      none;"&gt;&amp;nbsp;&lt;/a&gt;&lt;a href="https://chrome.blogspot.com/" style="color: #4184f3;
+      text-decoration-line: none;"&gt;Chrome&lt;/a&gt;&lt;span color="rgba(0, 0, 0,
+      0.87)"&gt;&amp;nbsp;and&lt;/span&gt;&lt;a href="https://blog.chromium.org/" style="color:
+      #4184f3; text-decoration-line: none;"&gt;&amp;nbsp;Chromium&lt;/a&gt;&lt;span color="rgba(0,
+      0, 0, 0.87)"&gt;&amp;nbsp;blog posts about new features and big efforts delivered in
+      126.&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: #666666; font-family:
+      arial; font-size: large;"&gt;Chrome&amp;nbsp;&lt;/span&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: large;"&gt;126.0.6478.56/57( Windows, Mac) has been pushed to
+      extended stable channel as well&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: large;"&gt;&lt;span color="rgba(0, 0, 0, 0.87)"&gt;&lt;br
+      /&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p dir="ltr" style="line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span face="Arial,sans-serif"
+      style="background-color: transparent; color: #666666; font-size: 16pt; font-style: normal;
+      font-variant: normal; font-weight: 400; text-decoration: none; vertical-align: baseline;
+      white-space: pre;"&gt;Security Fixes and Rewards&lt;/span&gt;&lt;/p&gt;&lt;span
+      style="font-family: inherit; font-size: medium;"&gt;&lt;br /&gt;&lt;br /&gt;Note: Access to
+      bug details and links may be kept restricted until a majority of users are updated with a fix.
+      We will also retain restrictions if the bug exists in a third party library that other
+      projects similarly depend on, but haven’t yet fixed.&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br
+      /&gt;&lt;br /&gt;This update includes &lt;a
+      href="https://issues.chromium.org/issues?q=customfield1223088:0-M126"&gt;21&lt;/a&gt; security
+      fixes. Below, we highlight fixes that were contributed by external researchers. Please see the
+      &lt;a href="https://www.chromium.org/Home/chromium-security"&gt;Chrome Security Page&lt;/a&gt;
+      for more information.&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br
+      /&gt;[$25000][&lt;a
+      href="https://issues.chromium.org/issues/342456991"&gt;342456991&lt;/a&gt;] High
+      CVE-2024-5830: Type Confusion in V8. Reported by Man Yue Mo of GitHub Security Lab on
+      2024-05-24&lt;br /&gt;&lt;br /&gt;[$10000][&lt;a
+      href="https://issues.chromium.org/issues/339171223"&gt;339171223&lt;/a&gt;] High
+      CVE-2024-5831: Use after free in Dawn. Reported by wgslfuzz on 2024-05-07&lt;br /&gt;&lt;br
+      /&gt;[$10000][&lt;a
+      href="https://issues.chromium.org/issues/340196361"&gt;340196361&lt;/a&gt;] High
+      CVE-2024-5832: Use after free in Dawn. Reported by wgslfuzz on 2024-05-13&lt;br /&gt;&lt;br
+      /&gt;[$7000][&lt;a href="https://issues.chromium.org/issues/342602616"&gt;342602616&lt;/a&gt;]
+      High CVE-2024-5833: Type Confusion in V8. Reported by @ginggilBesel on 2024-05-24&lt;br
+      /&gt;&lt;br /&gt;[$5000][&lt;a
+      href="https://issues.chromium.org/issues/342840932"&gt;342840932&lt;/a&gt;] High
+      CVE-2024-5834: Inappropriate implementation in Dawn. Reported by gelatin dessert on
+      2024-05-26&lt;br /&gt;&lt;br /&gt;[$3000][&lt;a
+      href="https://issues.chromium.org/issues/341991535"&gt;341991535&lt;/a&gt;] High
+      CVE-2024-5835: Heap buffer overflow in Tab Groups. Reported by Weipeng Jiang (@Krace) of VRI
+      on 2024-05-22&lt;br /&gt;&lt;br /&gt;[TBD][&lt;a
+      href="https://issues.chromium.org/issues/341875171"&gt;341875171&lt;/a&gt;] High
+      CVE-2024-5836: Inappropriate Implementation in DevTools. Reported by Allen Ding on
+      2024-05-21&lt;br /&gt;&lt;br /&gt;[TBD][&lt;a
+      href="https://issues.chromium.org/issues/342415789"&gt;342415789&lt;/a&gt;] High
+      CVE-2024-5837: Type Confusion in V8. Reported by Anonymous on 2024-05-23&lt;br /&gt;&lt;br
+      /&gt;[TBD][&lt;a href="https://issues.chromium.org/issues/342522151"&gt;342522151&lt;/a&gt;]
+      High CVE-2024-5838: Type Confusion in V8. Reported by Zhenghang Xiao (@Kipreyyy) on
+      2024-05-24&lt;br /&gt;&lt;br /&gt;[$100115][&lt;a
+      href="https://issues.chromium.org/issues/340122160"&gt;340122160&lt;/a&gt;] Medium
+      CVE-2024-5839: Inappropriate Implementation in Memory Allocator. Reported by Micky on
+      2024-05-13&lt;br /&gt;&lt;br /&gt;[$5000][&lt;a
+      href="https://issues.chromium.org/issues/41492103"&gt;41492103&lt;/a&gt;] Medium
+      CVE-2024-5840: Policy Bypass in CORS. Reported by Matt Howard on 2024-01-17&lt;br /&gt;&lt;br
+      /&gt;[$2000][&lt;a href="https://issues.chromium.org/issues/326765855"&gt;326765855&lt;/a&gt;]
+      Medium CVE-2024-5841: Use after free in V8. Reported by Cassidy Kim(@cassidy6564) on
+      2024-02-26&lt;br /&gt;&lt;br /&gt;[$1000][&lt;a
+      href="https://issues.chromium.org/issues/40062622"&gt;40062622&lt;/a&gt;] Medium
+      CVE-2024-5842: Use after free in Browser UI. Reported by Sven Dysthe (@svn_dy) on
+      2023-01-12&lt;br /&gt;&lt;br /&gt;[$500][&lt;a
+      href="https://issues.chromium.org/issues/333940412"&gt;333940412&lt;/a&gt;] Medium
+      CVE-2024-5843: Inappropriate implementation in Downloads. Reported by hjy79425575 on
+      2024-04-12&lt;br /&gt;&lt;br /&gt;[TBD][&lt;a
+      href="https://issues.chromium.org/issues/331960660"&gt;331960660&lt;/a&gt;] Medium
+      CVE-2024-5844: Heap buffer overflow in Tab Strip. Reported by Sri on 2024-04-01&lt;br
+      /&gt;&lt;br /&gt;[TBD][&lt;a
+      href="https://issues.chromium.org/issues/340178596"&gt;340178596&lt;/a&gt;] Medium
+      CVE-2024-5845: Use after free in Audio. Reported by anonymous on 2024-05-13&lt;br /&gt;&lt;br
+      /&gt;[TBD][&lt;a href="https://issues.chromium.org/issues/341095523"&gt;341095523&lt;/a&gt;]
+      Medium CVE-2024-5846: Use after free in PDFium. Reported by Han Zheng (HexHive) on
+      2024-05-16&lt;br /&gt;&lt;br /&gt;[TBD][&lt;a
+      href="https://issues.chromium.org/issues/341313077"&gt;341313077&lt;/a&gt;] Medium
+      CVE-2024-5847: Use after free in PDFium. Reported by Han Zheng (HexHive) on 2024-05-18&lt;br
+      /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;We would also like to thank all security
+      researchers that worked with us during the development cycle to prevent security bugs from
+      ever reaching the stable channel.&lt;br /&gt;&lt;br /&gt;As usual, our ongoing internal
+      security work was responsible for a wide range of fixes:&lt;br /&gt;&lt;br /&gt;[&lt;a
+      href="https://issues.chromium.org/issues/346461939"&gt;346461939&lt;/a&gt;] Various fixes from
+      internal audits, fuzzing and other initiatives&lt;br /&gt;&lt;br /&gt;&lt;br /&gt;&lt;br
+      /&gt;&lt;br /&gt;Many of our security bugs are detected using &lt;a
+      href="https://code.google.com/p/address-sanitizer/wiki/AddressSanitizer"&gt;AddressSanitizer&lt;/a&gt;,
+      &lt;a
+      href="https://code.google.com/p/memory-sanitizer/wiki/MemorySanitizer"&gt;MemorySanitizer&lt;/a&gt;,
+      &lt;a
+      href="https://www.chromium.org/developers/testing/undefinedbehaviorsanitizer"&gt;UndefinedBehaviorSanitizer&lt;/a&gt;,
+      &lt;a href="https://www.chromium.org/developers/testing/control-flow-integrity/"&gt;Control
+      Flow Integrity&lt;/a&gt;, &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+/HEAD/testing/libfuzzer/README.md"&gt;libFuzzer&lt;/a&gt;,
+      or &lt;a href="https://github.com/google/afl"&gt;AFL&lt;/a&gt;.&lt;/span&gt;&lt;p&gt;&lt;span
+      style="color: #666666; font-family: arial; font-size: large;"&gt;&lt;span color="rgba(0, 0, 0,
+      0.87)"&gt;&lt;br /&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p dir="ltr" style="color:
+      rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px; line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span style="color: #666666; font-family: arial;
+      font-size: large; font-variant-alternates: normal; font-variant-east-asian: normal;
+      font-variant-numeric: normal; font-variant-position: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;&lt;span color="rgba(0, 0, 0, 0.87)"
+      style="white-space-collapse: collapse;"&gt;Interested in switching release channels? Find out
+      how&amp;nbsp;&lt;/span&gt;&lt;a href="https://www.chromium.org/getting-involved/dev-channel"
+      style="color: #4184f3; text-decoration-line: none; white-space-collapse:
+      collapse;"&gt;here&lt;/a&gt;&lt;span color="rgba(0, 0, 0, 0.87)" style="white-space-collapse:
+      collapse;"&gt;. If you find a new issue, please let us know by&amp;nbsp;&lt;/span&gt;&lt;a
+      href="https://crbug.com/" style="color: #4184f3; text-decoration-line: none;
+      white-space-collapse: collapse;"&gt;filing a bug&lt;/a&gt;&lt;span color="rgba(0, 0, 0, 0.87)"
+      style="white-space-collapse: collapse;"&gt;. The&amp;nbsp;&lt;/span&gt;&lt;a
+      href="https://support.google.com/chrome/community" style="color: #4184f3;
+      text-decoration-line: none; white-space-collapse: collapse;"&gt;community help
+      forum&lt;/a&gt;&lt;span color="rgba(0, 0, 0, 0.87)" style="white-space-collapse:
+      collapse;"&gt;&amp;nbsp;is also a great place to reach out for help or learn about common
+      issues.&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color: #666666;
+      font-family: arial; font-size: large;"&gt;&lt;span color="rgba(0, 0, 0,
+      0.87)"&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p dir="ltr" style="color: rgba(0, 0, 0,
+      0.87); font-family: Roboto, sans-serif; font-size: 17px; line-height: 1.38; margin-bottom:
+      0pt; margin-top: 0pt;"&gt;&lt;span style="color: #666666; font-family: arial; font-size:
+      large;"&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;"
+      /&gt;&lt;span face="Arial, sans-serif" style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; font-variant-position: normal;
+      vertical-align: baseline; white-space-collapse: preserve;"&gt;&lt;br style="content:
+      &amp;quot; &amp;quot;; display: block; padding: 4px; white-space-collapse: collapse;"
+      /&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;
+      white-space-collapse: collapse;" /&gt;Srinivas Sista&lt;br style="content: &amp;quot;
+      &amp;quot;; display: block; padding: 4px;" /&gt;&lt;br style="content: &amp;quot; &amp;quot;;
+      display: block; padding: 4px; white-space-collapse: collapse;" /&gt;&lt;span color="rgba(0, 0,
+      0, 0.87)" style="white-space-collapse: collapse;"&gt;Google
+      Chrome&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style="color:
+      #666666; font-family: arial; font-size: large;"&gt;&lt;br /&gt;&lt;/span&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/3745177939512192190/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=3745177939512192190&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3745177939512192190"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3745177939512192190"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/stable-channel-update-for-desktop.html"
+      rel="alternate" title="Stable Channel Update for Desktop" type="text/html" />
+    <author>
+      <name>Srinivas Sista</name>
+      <uri>http://www.blogger.com/profile/02985628015337174400</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-2669788057835119698</id>
+    <published>2024-06-11T07:58:00.001-07:00</published>
+    <updated>2024-06-11T07:58:34.630-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for iOS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Chrome Stable for iOS Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Stable 126 (126.0.6478.54)
+      for iOS; it'll become available on App Store in the next few hours.&lt;/p&gt;&lt;p&gt;This
+      release includes stability and performance improvements. You can see a full list of the
+      changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.35..126.0.6478.54?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=iOS%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Erhu Akpobaro&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/2669788057835119698/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=2669788057835119698&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2669788057835119698"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2669788057835119698"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-stable-for-ios-update_11.html"
+      rel="alternate" title="Chrome Stable for iOS Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-6632573767773968636</id>
+    <published>2024-06-11T06:43:00.001-07:00</published>
+    <updated>2024-06-11T06:43:33.828-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <title type="text">Chrome Beta for Android Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Beta 126 (126.0.6478.50)
+      for Android. It's now available on &lt;a
+      href="https://play.google.com/store/apps/details?id=com.chrome.beta"&gt;Google
+      Play&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;You can see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.40..126.0.6478.50?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. For details on new features, check out the &lt;a
+      href="https://blog.chromium.org"&gt;Chromium blog&lt;/a&gt;, and for details on web platform
+      updates, check &lt;a
+      href="https://www.chromestatus.com/features#milestone%3D126"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;If
+      you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Erhu Akpobaro&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/6632573767773968636/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=6632573767773968636&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6632573767773968636"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6632573767773968636"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-android-update_11.html"
+      rel="alternate" title="Chrome Beta for Android Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-2276820615076035801</id>
+    <published>2024-06-10T15:40:00.000-07:00</published>
+    <updated>2024-06-10T15:40:28.822-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome OS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS Flex" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="LTS" />
+    <title type="text">Long Term Support Channel Update for ChromeOS</title>
+    <content type="html">
+      &lt;p&gt;&lt;span style="font-family: inherit;"&gt;LTS-120 is being updated
+      in the LTS (Long Term Support) channel&lt;span style="white-space-collapse: preserve;"&gt;,
+      version &lt;/span&gt;&lt;span face="Arial, Helvetica, sans-serif" style="background-color:
+      white;"&gt;120.0.6099.314&amp;nbsp;&lt;/span&gt;&lt;span style="white-space-collapse:
+      preserve;"&gt;(Platform Version: &lt;/span&gt;&lt;span face="Arial, Helvetica, sans-serif"
+      style="background-color: white;"&gt;15662.111&lt;/span&gt;&lt;span
+      style="white-space-collapse: preserve;"&gt;), for&lt;/span&gt;&lt;span
+      style="white-space-collapse: preserve;"&gt; most ChromeOS
+      devices.&amp;nbsp;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;div style="line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;&lt;span style="font-family: inherit;"&gt;&lt;div
+      style="line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt; white-space-collapse:
+      collapse;"&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian:
+      normal; font-variant-numeric: normal; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;"
+      /&gt;&lt;/span&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian:
+      normal; font-variant-numeric: normal; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;Release notes for LTS-120 can be found &lt;/span&gt;&lt;a
+      href="https://support.google.com/chrome/a/answer/12239814" style="text-decoration-line:
+      none;"&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian: normal;
+      font-variant-numeric: normal; text-decoration-line: underline; text-decoration-skip-ink: none;
+      vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;&amp;nbsp;&lt;br style="content: &amp;quot; &amp;quot;;
+      display: block; padding: 4px;" /&gt;&lt;/span&gt;&lt;span style="font-variant-alternates:
+      normal; font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align:
+      baseline; white-space-collapse: preserve;"&gt;Want to know more about Long-term Support? Click
+      &lt;/span&gt;&lt;a href="https://support.google.com/chrome/a/answer/11333726"
+      style="text-decoration-line: none;"&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; text-decoration-line:
+      underline; text-decoration-skip-ink: none; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style="line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt; white-space-collapse: collapse;"&gt;&lt;br
+      style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;" /&gt;&lt;/div&gt;&lt;div
+      style="line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt; white-space-collapse:
+      collapse;"&gt;&lt;div&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/div&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;This update
+      contains selective Security fixes, including:&lt;/div&gt;&lt;div class="post-body"
+      style="width: 659.995px;"&gt;&lt;div class="post-content post-original" itemprop="articleBody"
+      style="line-height: 32px; margin: 25px 0px 36px; overflow-wrap: break-word;"&gt;&lt;div
+      class="post-body" style="width: 659.995px;"&gt;&lt;div class="post-content post-original"
+      itemprop="articleBody" style="line-height: 32px; margin: 25px 0px 36px; overflow-wrap:
+      break-word;"&gt;&lt;div&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;u style="white-space-collapse:
+      preserve;"&gt;Chrome Browser Security
+      Fixes&lt;/u&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;a
+      class="in-cell-link" href="http://b/339877167" style="text-align: right;"
+      target="_blank"&gt;339877167&lt;/a&gt;&amp;nbsp;High&amp;nbsp;&lt;span data-sheets-root="1"
+      data-sheets-userformat="{&amp;quot;2&amp;quot;:513,&amp;quot;3&amp;quot;:{&amp;quot;1&amp;quot;:0},&amp;quot;12&amp;quot;:0}"
+      data-sheets-value="{&amp;quot;1&amp;quot;:2,&amp;quot;2&amp;quot;:&amp;quot;CVE-2024-5499&amp;quot;}"&gt;CVE-2024-5499&lt;/span&gt;&lt;span
+      style="background-color: white; white-space-collapse: preserve;"&gt;&amp;nbsp;&lt;/span&gt;Out
+      of bounds write in Streams API&lt;/div&gt;&lt;div&gt;&lt;a class="in-cell-link"
+      href="https://g-issues.chromium.org/issues/330759272" style="text-align: right;"
+      target="_blank"&gt;330759272&lt;/a&gt;&amp;nbsp;High CVE-2024-5274&amp;nbsp;Type Confusion in
+      V8&lt;/div&gt;&lt;div&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/div&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Giuliana
+      Pritchard&lt;/div&gt;&lt;div&gt;&lt;span style="font-family: inherit;"&gt;Google
+      ChromeOS&lt;/span&gt;&lt;span style="font-family:
+      inherit;"&gt;&amp;nbsp;&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/2276820615076035801/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=2276820615076035801&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2276820615076035801"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2276820615076035801"
+      rel="self" type="application/atom+xml" />
+    <link
+      href="http://chromereleases.googleblog.com/2024/06/long-term-support-channel-update-for_10.html"
+      rel="alternate" title="Long Term Support Channel Update for ChromeOS" type="text/html" />
+    <author>
+      <name>Giuliana Pritchard</name>
+      <uri>http://www.blogger.com/profile/18140805232886292965</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-9138426305192160644</id>
+    <published>2024-06-10T10:25:00.000-07:00</published>
+    <updated>2024-06-10T10:25:29.896-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS Flex" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Stable Channel Update for ChromeOS and ChromeOS Flex</title>
+    <content type="html">&lt;p&gt;&lt;span style="font-family: inherit;"&gt;The Stable channel is
+      being updated to OS version:&amp;nbsp;&lt;/span&gt;15853.61.0&lt;span style="font-family:
+      inherit;"&gt;&amp;nbsp;Browser version:&amp;nbsp;&lt;/span&gt;125.0.6422.169&lt;span
+      style="font-family: inherit;"&gt;&amp;nbsp;for most ChromeOS
+      devices.&lt;/span&gt;&lt;/p&gt;&lt;p style="box-sizing: inherit;"&gt;&lt;span
+      style="font-family: inherit;"&gt;If you find new issues, please let us know one of the
+      following ways&lt;/span&gt;&lt;/p&gt;&lt;ol style="box-sizing: inherit;"&gt;&lt;li
+      style="box-sizing: inherit;"&gt;&lt;a href="https://bugs.chromium.org/p/chromium/issues/list"
+      style="box-sizing: inherit; color: #007479;"&gt;&lt;span style="font-family: inherit;"&gt;File
+      a bug&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;&lt;li style="box-sizing: inherit;"&gt;&lt;span
+      style="font-family: inherit;"&gt;Visit our ChromeOS communities&lt;/span&gt;&lt;ol
+      style="box-sizing: inherit;"&gt;&lt;li style="box-sizing: inherit;"&gt;&lt;span
+      style="font-family: inherit;"&gt;General:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromebook/community/?hl=en&amp;amp;gpf=%23!forum%2Fchromebook-central"
+      style="box-sizing: inherit; color: #007479;"&gt;Chromebook Help
+      Community&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;&lt;li style="box-sizing: inherit;"&gt;&lt;span
+      style="font-family: inherit;"&gt;Beta Specific:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromeos-beta/community" style="box-sizing: inherit; color:
+      #007479;"&gt;ChromeOS Beta Help
+      Community&lt;/a&gt;&lt;/span&gt;&lt;/li&gt;&lt;/ol&gt;&lt;/li&gt;&lt;li style="box-sizing:
+      inherit;"&gt;&lt;a
+      href="https://support.google.com/chrome/answer/95315?hl=en&amp;amp;co=GENIE.Platform%3DDesktop"
+      style="box-sizing: inherit; color: #007479;"&gt;&lt;span style="font-family:
+      inherit;"&gt;Report an issue or send feedback on
+      Chrome&lt;/span&gt;&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p style="box-sizing:
+      inherit;"&gt;&lt;span style="font-family: inherit;"&gt;Interested in switching
+      channels?&amp;nbsp;&lt;a href="https://support.google.com/chromebook/answer/1086915"
+      style="box-sizing: inherit; color: #007479;"&gt;Find out
+      how&lt;/a&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p style="box-sizing: inherit;"&gt;Daniel Gagnon&lt;br
+      /&gt;Google ChromeOS&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/9138426305192160644/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=9138426305192160644&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/9138426305192160644"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/9138426305192160644"
+      rel="self" type="application/atom+xml" />
+    <link
+      href="http://chromereleases.googleblog.com/2024/06/stable-channel-update-for-chromeos-and.html"
+      rel="alternate" title="Stable Channel Update for ChromeOS and ChromeOS Flex" type="text/html" />
+    <author>
+      <name>Daniel Gagnon</name>
+      <uri>http://www.blogger.com/profile/08962480190214295615</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-6383449299925908760</id>
+    <published>2024-06-07T17:58:00.001-07:00</published>
+    <updated>2024-06-07T17:58:33.960-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Dev updates" />
+    <title type="text">Chrome Dev for Desktop Update</title>
+    <content type="html">&lt;p&gt;The Dev channel has been updated to 127.0.6523.4 for Windows, Mac
+      and Linux.&lt;/p&gt;&lt;p&gt;A partial list of changes is available in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/127.0.6510.4..127.0.6523.4?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. Interested in &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;switching&lt;/a&gt; release
+      channels? Find out &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;how&lt;/a&gt;. If you find a
+      new issue, please let us know by &lt;a href="https://crbug.com/"&gt;filing a bug&lt;/a&gt;.
+      The &lt;a href="https://productforums.google.com/forum/#!forum/chrome"&gt;community help
+      forum&lt;/a&gt; is also a great place to reach out for help or learn about common
+      issues.&lt;/p&gt;&lt;p&gt;Daniel Yip&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/6383449299925908760/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=6383449299925908760&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6383449299925908760"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/6383449299925908760"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-dev-for-desktop-update.html"
+      rel="alternate" title="Chrome Dev for Desktop Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-5444984738424580332</id>
+    <published>2024-06-06T06:43:00.001-07:00</published>
+    <updated>2024-06-06T06:43:33.969-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome Dev for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Dev updates" />
+    <title type="text">Chrome Dev for Android Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Dev 127 (127.0.6521.0) for
+      Android. It's now available on &lt;a
+      href="https://play.google.com/store/apps/details?id=com.chrome.dev"&gt;Google
+      Play&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;You can see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/127.0.6510.5..127.0.6521.0?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. For details on new features, check out the &lt;a
+      href="https://blog.chromium.org"&gt;Chromium blog&lt;/a&gt;, and for details on web platform
+      updates, check &lt;a
+      href="https://www.chromestatus.com/features#milestone%3D127"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;If
+      you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Erhu Akpobaro&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/5444984738424580332/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=5444984738424580332&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/5444984738424580332"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/5444984738424580332"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-dev-for-android-update.html"
+      rel="alternate" title="Chrome Dev for Android Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-4607627306587632610</id>
+    <published>2024-06-05T15:49:00.000-07:00</published>
+    <updated>2024-06-05T15:49:26.847-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS Flex" />
+    <title type="text">Beta Channel Update for ChromeOS/ChromeOS Flex</title>
+    <content type="html">&lt;p&gt;&amp;nbsp;The Beta channel is being updated to OS version:
+      15886.24.0, Browser version: 126.0.6478.33 for most ChromeOS devices.&lt;/p&gt;&lt;p&gt;If you
+      find new issues, please let us know one of the following
+      ways:&lt;/p&gt;&lt;p&gt;&lt;/p&gt;&lt;ol&gt;&lt;li&gt;&lt;a
+      href="https://bugs.chromium.org/p/chromium/issues/list"&gt;File a
+      bug&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Visit our ChromeOS
+      communities&lt;/li&gt;&lt;ol&gt;&lt;li&gt;General:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromebook/community/?hl=en&amp;amp;gpf=%23!forum%2Fchromebook-central"&gt;Chromebook
+      Help Community&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Beta Specific:&amp;nbsp;&lt;a
+      href="https://support.google.com/chromeos-beta/community"&gt;ChromeOS Beta Help
+      Community&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;li&gt;&lt;a
+      href="https://support.google.com/chrome/answer/95315?hl=en&amp;amp;co=GENIE.Platform%3DDesktop"&gt;Report
+      an issue or send feedback on Chrome&lt;/a&gt;&lt;/li&gt;&lt;li&gt;Interested in switching
+      channels?&amp;nbsp;&lt;a href="https://support.google.com/chromebook/answer/1086915"&gt;Find
+      out how.&lt;/a&gt;&lt;/li&gt;&lt;/ol&gt;&lt;p&gt;&lt;/p&gt;&lt;p&gt;Cole
+      Brown,&lt;/p&gt;&lt;p&gt;Google ChromeOS&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/4607627306587632610/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=4607627306587632610&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/4607627306587632610"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/4607627306587632610"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/beta-channel-update-for.html"
+      rel="alternate" title="Beta Channel Update for ChromeOS/ChromeOS Flex" type="text/html" />
+    <author>
+      <name>Cole Brown</name>
+      <uri>http://www.blogger.com/profile/06718999177862209632</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-8075151663087130053</id>
+    <published>2024-06-05T13:05:00.000-07:00</published>
+    <updated>2024-06-05T13:05:06.121-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Early Stable Updates" />
+    <title type="text">Early Stable Update for Desktop</title>
+    <content type="html">&lt;p&gt;&lt;span style="color: #666666; font-family: Arial; font-size:
+      13pt; font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;The Stable channel has been updated to
+      &lt;/span&gt;&lt;span style="background-color: white; color: #666666; font-family: Arial;
+      font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric: normal;
+      vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;126.0.6478.36&lt;/span&gt;&lt;span style="color: #666666; font-family: Arial;
+      font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric: normal;
+      vertical-align: baseline; white-space-collapse: preserve;"&gt; for Windows and Mac as part of
+      our early stable release to a &lt;span style="background-color: white;"&gt;small percentage of
+      users. &lt;/span&gt;A full list of changes in this build is available in the&lt;/span&gt;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/125.0.6422.142..126.0.6478.36?pretty=fuller&amp;amp;n=10000"
+      style="color: #4184f3; font-family: Roboto, sans-serif; font-size: 17px; text-decoration-line:
+      none;"&gt;&lt;span style="color: #666666; font-family: Arial; font-size: 13pt;
+      font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt; &lt;/span&gt;&lt;span style="color: black; font-family:
+      Arial; font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric: normal;
+      font-weight: 700; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;log&lt;/span&gt;&lt;/a&gt;&lt;span style="color: #666666; font-family: Arial;
+      font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric: normal;
+      vertical-align: baseline; white-space-collapse: preserve;"&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p
+      style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size:
+      17px;"&gt;&lt;span color="rgba(0, 0, 0, 0.87)" face="Roboto, sans-serif"
+      id="docs-internal-guid-0a453843-7fff-ea16-d658-84710d25d36d"&gt;&lt;br style="content:
+      &amp;quot; &amp;quot;; display: block; padding: 4px;" /&gt;&lt;/span&gt;&lt;/p&gt;&lt;p
+      dir="ltr" style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px;
+      line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span style="color: #666666;
+      font-family: Arial; font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric:
+      normal; vertical-align: baseline; white-space-collapse: preserve;"&gt;You can find more
+      details about early Stable releases &lt;/span&gt;&lt;a
+      href="https://developer.chrome.com/blog/early-stable/" style="color: #4184f3;
+      text-decoration-line: none;"&gt;&lt;span style="color: #1155cc; font-family: Arial; font-size:
+      13pt; font-variant-east-asian: normal; font-variant-numeric: normal; text-decoration-line:
+      underline; text-decoration-skip-ink: none; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;span style="color: #666666; font-family: Arial;
+      font-size: 13pt; font-variant-east-asian: normal; font-variant-numeric: normal;
+      vertical-align: baseline; white-space-collapse: preserve;"&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p
+      dir="ltr" style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px;
+      line-height: 1.38; margin-bottom: 13pt; margin-top: 13pt;"&gt;&lt;span style="color: #666666;
+      font-family: arial; vertical-align: baseline; white-space-collapse: preserve;"&gt;Interested
+      in switching release channels? &amp;nbsp;Find out how &lt;/span&gt;&lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel" style="color: #4184f3;
+      font-family: Tinos; text-decoration-line: none; white-space-collapse: preserve;"&gt;&lt;span
+      style="color: black; font-family: arial; font-weight: 700; vertical-align:
+      baseline;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;span style="color: #666666; font-family: arial;
+      vertical-align: baseline; white-space-collapse: preserve;"&gt;. If you find a new issue,
+      please let us know by &lt;/span&gt;&lt;a href="https://crbug.com/" style="color: #4184f3;
+      font-family: Tinos; text-decoration-line: none; white-space-collapse: preserve;"&gt;&lt;span
+      style="color: black; font-family: arial; font-weight: 700; vertical-align:
+      baseline;"&gt;filing a bug&lt;/span&gt;&lt;/a&gt;&lt;span style="color: #666666; font-family:
+      arial; vertical-align: baseline; white-space-collapse: preserve;"&gt;. &lt;/span&gt;&lt;span
+      style="background-color: white; color: #666666; font-family: arial; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;The &lt;/span&gt;&lt;a
+      href="https://support.google.com/chrome/community" style="color: #4184f3; font-family: Tinos;
+      text-decoration-line: none; white-space-collapse: preserve;"&gt;&lt;span
+      style="background-color: white; color: black; font-family: arial; font-weight: 700;
+      vertical-align: baseline;"&gt;community help forum&lt;/span&gt;&lt;/a&gt;&lt;span
+      style="background-color: white; color: #666666; font-family: arial; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt; is also a great place to reach out for help or learn
+      about common issues.&lt;/span&gt;&lt;/p&gt;&lt;p style="color: rgba(0, 0, 0, 0.87);
+      font-family: Roboto, sans-serif; font-size: 17px;"&gt;&lt;span color="rgba(0, 0, 0, 0.87)"
+      face="Roboto, sans-serif"&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/span&gt;&lt;/p&gt;&lt;p dir="ltr" style="color: rgba(0, 0, 0, 0.87);
+      font-family: Roboto, sans-serif; font-size: 17px; line-height: 1.38; margin-bottom: 0pt;
+      margin-top: 0pt;"&gt;&lt;span style="color: #666666; font-family: Arial; font-size: 13pt;
+      white-space-collapse: preserve;"&gt;Srinivas Sista&lt;/span&gt;&lt;/p&gt;&lt;p dir="ltr"
+      style="color: rgba(0, 0, 0, 0.87); font-family: Roboto, sans-serif; font-size: 17px;
+      line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span style="color: #666666;
+      font-family: Arial; font-size: 13pt; white-space-collapse: preserve;"&gt;Google
+      Chrome&lt;/span&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/8075151663087130053/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=8075151663087130053&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/8075151663087130053"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/8075151663087130053"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/early-stable-update-for-desktop.html"
+      rel="alternate" title="Early Stable Update for Desktop" type="text/html" />
+    <author>
+      <name>Srinivas Sista</name>
+      <uri>http://www.blogger.com/profile/02985628015337174400</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-417624973748429288</id>
+    <published>2024-06-05T12:58:00.001-07:00</published>
+    <updated>2024-06-05T12:58:35.704-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Desktop Update" />
+    <title type="text">Chrome Beta for Desktop Update</title>
+    <content type="html">&lt;p&gt;The Beta channel has been updated to 126.0.6478.36 for Windows,
+      Mac and Linux.&lt;/p&gt;&lt;p&gt;A partial list of changes is available in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.26..126.0.6478.36?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. Interested in &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;switching&lt;/a&gt; release
+      channels? Find out &lt;a
+      href="https://www.chromium.org/getting-involved/dev-channel/"&gt;how&lt;/a&gt;. If you find a
+      new issue, please let us know by &lt;a href="https://crbug.com/"&gt;filing a bug&lt;/a&gt;.
+      The &lt;a href="https://productforums.google.com/forum/#!forum/chrome"&gt;community help
+      forum&lt;/a&gt; is also a great place to reach out for help or learn about common
+      issues.&lt;/p&gt;&lt;p&gt;Srinivas Sista&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/417624973748429288/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=417624973748429288&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/417624973748429288"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/417624973748429288"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-desktop-update.html"
+      rel="alternate" title="Chrome Beta for Desktop Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-7889634593273075993</id>
+    <published>2024-06-05T10:43:00.001-07:00</published>
+    <updated>2024-06-05T10:43:34.278-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for iOS" />
+    <title type="text">Chrome Beta for iOS Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Beta 126 (126.0.6478.34)
+      for iOS; it'll become available on App Store in the next few days.&lt;/p&gt;&lt;p&gt;You can
+      see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.27..126.0.6478.34?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=iOS%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Krishna Govind&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/7889634593273075993/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=7889634593273075993&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/7889634593273075993"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/7889634593273075993"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-ios-update.html"
+      rel="alternate" title="Chrome Beta for iOS Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-2824280730597889018</id>
+    <published>2024-06-05T10:13:00.001-07:00</published>
+    <updated>2024-06-05T10:13:33.000-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for iOS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Chrome Stable for iOS Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Stable 126 (126.0.6478.35)
+      for iOS; it'll become available on App Store in the next few hours.&lt;/p&gt;&lt;p&gt;This
+      release includes stability and performance improvements. You can see a full list of the
+      changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/125.0.6422.145..126.0.6478.35?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=iOS%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Krishna Govind&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/2824280730597889018/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=2824280730597889018&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2824280730597889018"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/2824280730597889018"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-stable-for-ios-update.html"
+      rel="alternate" title="Chrome Stable for iOS Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-3708315181823672179</id>
+    <published>2024-06-05T08:28:00.001-07:00</published>
+    <updated>2024-06-05T08:28:33.734-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Beta updates" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <title type="text">Chrome Beta for Android Update</title>
+    <content type="html">&lt;p&gt;Hi everyone! We've just released Chrome Beta 126 (126.0.6478.40)
+      for Android. It's now available on &lt;a
+      href="https://play.google.com/store/apps/details?id=com.chrome.beta"&gt;Google
+      Play&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;You can see a partial list of the changes in the &lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/126.0.6478.26..126.0.6478.40?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. For details on new features, check out the &lt;a
+      href="https://blog.chromium.org"&gt;Chromium blog&lt;/a&gt;, and for details on web platform
+      updates, check &lt;a
+      href="https://www.chromestatus.com/features#milestone%3D126"&gt;here&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;If
+      you find a new issue, please let us know by &lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;p&gt;Krishna Govind&lt;br /&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;&lt;/a&gt;&lt;a
+      href="https://www.google.com/chrome"&gt;Google Chrome&lt;/a&gt;&lt;/p&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/3708315181823672179/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=3708315181823672179&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3708315181823672179"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3708315181823672179"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-beta-for-android-update.html"
+      rel="alternate" title="Chrome Beta for Android Update" type="text/html" />
+    <author>
+      <name>Ben Mason</name>
+      <uri>http://www.blogger.com/profile/03020057964049649634</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-1742315700313593400</id>
+    <published>2024-06-04T13:42:00.000-07:00</published>
+    <updated>2024-06-04T13:42:17.038-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="Chrome for Android" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="Stable updates" />
+    <title type="text">Chrome for Android Update</title>
+    <content type="html">&lt;p&gt;&amp;nbsp;Hello, Everyone! We've just released Chrome 125
+      (125.0.6422.164/.165) for Android: it'll become&amp;nbsp;&lt;a
+      href="https://play.google.com/store/apps/details?id=com.android.chrome"&gt;available on Google
+      Play&lt;/a&gt;&amp;nbsp;over the next few days.&lt;/p&gt;&lt;p&gt;This release includes
+      stability and performance improvements. You can see a full list of the changes in
+      the&amp;nbsp;&lt;a
+      href="https://chromium.googlesource.com/chromium/src/+log/125.0.6422.146..125.0.6422.165?pretty=fuller&amp;amp;n=10000"&gt;Git
+      log&lt;/a&gt;. If you find a new issue, please let us know by&amp;nbsp;&lt;a
+      href="https://code.google.com/p/chromium/issues/entry?template=Android%20Issue"&gt;filing a
+      bug&lt;/a&gt;.&lt;/p&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Android releases contain
+      the same security fixes as their corresponding&amp;nbsp;&lt;a
+      href="https://chromereleases.googleblog.com/2024/05/stable-channel-update-for-desktop_30.html"&gt;Desktop&lt;/a&gt;&amp;nbsp;(Windows
+      &amp;amp; Mac: 125.0.6422.141/.142 and Linux:125.0.6422.141 ) unless otherwise
+      noted.&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Krishna
+      Govind&lt;br /&gt;&lt;a href="https://www.google.com/chrome/"&gt;Google
+      Chrome&lt;/a&gt;&lt;/div&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/1742315700313593400/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=1742315700313593400&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1742315700313593400"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/1742315700313593400"
+      rel="self" type="application/atom+xml" />
+    <link href="http://chromereleases.googleblog.com/2024/06/chrome-for-android-update.html"
+      rel="alternate" title="Chrome for Android Update" type="text/html" />
+    <author>
+      <name>Krishna Govind</name>
+      <uri>http://www.blogger.com/profile/03425880317288089520</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+  <entry>
+    <id>tag:blogger.com,1999:blog-8982037438137564684.post-3470383891043595466</id>
+    <published>2024-06-03T11:20:00.000-07:00</published>
+    <updated>2024-06-03T11:20:06.018-07:00</updated>
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="ChromeOS Flex" />
+    <category scheme="http://www.blogger.com/atom/ns#" term="LTS" />
+    <title type="text">Long Term Support Channel Update for ChromeOS</title>
+    <content type="html">
+      &lt;p&gt;&lt;span style="font-family: inherit;"&gt;LTS-120 is being updated
+      in the LTS (Long Term Support) channel&lt;span style="white-space-collapse: preserve;"&gt;,
+      version &lt;/span&gt;&lt;span face="Arial, Helvetica, sans-serif" style="background-color:
+      white;"&gt;120.0.6099.313&amp;nbsp;&lt;/span&gt;&lt;span style="white-space-collapse:
+      preserve;"&gt;(Platform Version: &lt;/span&gt;&lt;span face="Arial, Helvetica, sans-serif"
+      style="background-color: white;"&gt;15662.110.0&lt;/span&gt;&lt;span
+      style="white-space-collapse: preserve;"&gt;), for&lt;/span&gt;&lt;span
+      style="white-space-collapse: preserve;"&gt; most ChromeOS
+      devices.&amp;nbsp;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;div style="line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt;"&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;&lt;span style="font-family: inherit;"&gt;&lt;div
+      style="line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt; white-space-collapse:
+      collapse;"&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian:
+      normal; font-variant-numeric: normal; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;"
+      /&gt;&lt;/span&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian:
+      normal; font-variant-numeric: normal; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;Release notes for LTS-120 can be found &lt;/span&gt;&lt;a
+      href="https://support.google.com/chrome/a/answer/12239814" style="text-decoration-line:
+      none;"&gt;&lt;span style="font-variant-alternates: normal; font-variant-east-asian: normal;
+      font-variant-numeric: normal; text-decoration-line: underline; text-decoration-skip-ink: none;
+      vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align: baseline;
+      white-space-collapse: preserve;"&gt;&amp;nbsp;&lt;br style="content: &amp;quot; &amp;quot;;
+      display: block; padding: 4px;" /&gt;&lt;/span&gt;&lt;span style="font-variant-alternates:
+      normal; font-variant-east-asian: normal; font-variant-numeric: normal; vertical-align:
+      baseline; white-space-collapse: preserve;"&gt;Want to know more about Long-term Support? Click
+      &lt;/span&gt;&lt;a href="https://support.google.com/chrome/a/answer/11333726"
+      style="text-decoration-line: none;"&gt;&lt;span style="font-variant-alternates: normal;
+      font-variant-east-asian: normal; font-variant-numeric: normal; text-decoration-line:
+      underline; text-decoration-skip-ink: none; vertical-align: baseline; white-space-collapse:
+      preserve;"&gt;here&lt;/span&gt;&lt;/a&gt;&lt;/div&gt;&lt;div style="line-height: 1.38;
+      margin-bottom: 0pt; margin-top: 0pt; white-space-collapse: collapse;"&gt;&lt;br
+      style="content: &amp;quot; &amp;quot;; display: block; padding: 4px;" /&gt;&lt;/div&gt;&lt;div
+      style="line-height: 1.38; margin-bottom: 0pt; margin-top: 0pt; white-space-collapse:
+      collapse;"&gt;&lt;div&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/div&gt;&lt;div&gt;This update contains selective Security fixes,
+      including:&lt;/div&gt;&lt;div class="post-body" style="width: 659.995px;"&gt;&lt;div
+      class="post-content post-original" itemprop="articleBody" style="line-height: 32px; margin:
+      25px 0px 36px; overflow-wrap: break-word;"&gt;&lt;div class="post-body" style="width:
+      659.995px;"&gt;&lt;div class="post-content post-original" itemprop="articleBody"
+      style="line-height: 32px; margin: 25px 0px 36px; overflow-wrap:
+      break-word;"&gt;&lt;div&gt;&lt;br style="content: &amp;quot; &amp;quot;; display: block;
+      padding: 4px;" /&gt;&lt;/div&gt;&lt;div&gt;&lt;div&gt;&lt;u style="white-space-collapse:
+      preserve;"&gt;Chrome Browser Security
+      Fixes&lt;/u&gt;&lt;/div&gt;&lt;div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div&gt;&lt;a
+      class="in-cell-link" href="https://g-issues.chromium.org/issues/339736513338908243"
+      style="text-align: right;"
+      target="_blank"&gt;338908243&lt;/a&gt;&amp;nbsp;High&amp;nbsp;&lt;span
+      style="background-color: white; white-space-collapse: preserve;"&gt;CVE-2024-5158
+      &lt;/span&gt;Type Confusion in V8&lt;/div&gt;&lt;div&gt;&lt;span
+      data-sheets-hyperlink="https://g-issues.chromium.org/issues/339877165" data-sheets-root="1"
+      data-sheets-userformat="{&amp;quot;2&amp;quot;:1049089,&amp;quot;3&amp;quot;:{&amp;quot;1&amp;quot;:0},&amp;quot;12&amp;quot;:0,&amp;quot;23&amp;quot;:1}"
+      data-sheets-value="{&amp;quot;1&amp;quot;:3,&amp;quot;3&amp;quot;:339877165}"
+      style="text-align: right; text-decoration-line: underline; text-decoration-skip-ink:
+      none;"&gt;&lt;a class="in-cell-link" href="https://g-issues.chromium.org/issues/339877165"
+      target="_blank"&gt;339877165&lt;/a&gt;&amp;nbsp;&lt;/span&gt;Critical&amp;nbsp;CVE-2024-5274&amp;nbsp;Type
+      Confusion in V8&lt;/div&gt;&lt;div&gt;&lt;br /&gt;&lt;/div&gt;&lt;div&gt;Giuliana
+      Pritchard&lt;/div&gt;&lt;div&gt;Google
+      ChromeOS&amp;nbsp;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;</content>
+    <link href="http://chromereleases.googleblog.com/feeds/3470383891043595466/comments/default"
+      rel="replies" title="Post Comments" type="application/atom+xml" />
+    <link
+      href="http://www.blogger.com/comment.g?blogID=8982037438137564684&amp;postID=3470383891043595466&amp;isPopup=true"
+      rel="replies" title="0 Comments" type="text/html" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3470383891043595466"
+      rel="edit" type="application/atom+xml" />
+    <link href="http://www.blogger.com/feeds/8982037438137564684/posts/default/3470383891043595466"
+      rel="self" type="application/atom+xml" />
+    <link
+      href="http://chromereleases.googleblog.com/2024/06/long-term-support-channel-update-for.html"
+      rel="alternate" title="Long Term Support Channel Update for ChromeOS" type="text/html" />
+    <author>
+      <name>Giuliana Pritchard</name>
+      <uri>http://www.blogger.com/profile/18140805232886292965</uri>
+      <email>noreply@blogger.com</email>
+      <gd:image height="16" rel="http://schemas.google.com/g/2005#thumbnail"
+        src="https://img1.blogblog.com/img/b16-rounded.gif" width="16" />
+    </author>
+    <thr:total>0</thr:total>
+  </entry>
+</feed>
