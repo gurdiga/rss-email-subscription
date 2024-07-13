@@ -5,7 +5,7 @@ ARG NODE_VERSION=20.14.0-alpine3.20
 ARG NPM_VERSION=10.8.1
 
 ### --- build
-FROM node:${NODE_VERSION} as build
+FROM node:${NODE_VERSION} AS build
 ARG NPM_VERSION
 
 RUN apk update && apk upgrade --no-cache
@@ -41,6 +41,10 @@ VOLUME /data
 WORKDIR /code
 
 RUN apk update && apk upgrade --no-cache
+
+RUN apk add --no-cache \
+  openssl=3.3.1-r3
+
 RUN npm i -g "npm@${NPM_VERSION}"
 
 COPY package.json package-lock.json ./
