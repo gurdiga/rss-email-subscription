@@ -6,6 +6,7 @@ EXPOSE 514/udp 601/tcp 6514/tcp
 RUN apk update && apk upgrade --no-cache
 
 RUN apk add --no-cache \
+  openssl=3.3.1-r3 \
   syslog-ng=4.7.1-r1 \
   logrotate=3.21.0-r1 \
   tini=0.19.0-r3
