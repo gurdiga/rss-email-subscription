@@ -39,7 +39,7 @@
     "prettier": "^3.2.5",
     "systemjs": "^6.15.1",
     "ts-node": "^10.9.2",
-    "typescript": "^5.4.5"
+    "typescript": "^5.5.3"
   },
   "dependencies": {
     "@stripe/stripe-js": "^3.4.1",

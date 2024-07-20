@@ -25,7 +25,7 @@ function interpolate(values: AllowedIterpolatedValueType[]) {
 }
 
 export function formatMoney(cents: number): string {
-  const options = { style: 'currency', currency: 'usd', maximumSignificantDigits: 2 };
+  const options: Intl.NumberFormatOptions = { style: 'currency', currency: 'usd', maximumSignificantDigits: 2 };
 
   return new Intl.NumberFormat('en-US', options).format(cents / 100);
 }
