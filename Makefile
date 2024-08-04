@@ -737,7 +737,7 @@ git-pre-commit-hook:
 	echo "" >> .git/hooks/pre-commit
 	echo "bash -i -c 'make pre-commit'" >> .git/hooks/pre-commit
 
-# cron @daily
+# cron @weekly
 list-sessions:
 	@source .env
 	require=$${DATA_DIR_ROOT:?envar is missing}
@@ -1071,7 +1071,7 @@ hash-email:
 
 	ts-node -pe "import {hash} from './src/shared/crypto'; hash('$$EMAIL', '$$feed_hashing_salt')"
 
-# cron @daily
+# cron @weekly
 purge-demo-feeds:
 	@: quiet
 	grep -l .tmp/docker-data/accounts/*/account.json -e '"email": "demo@feedsubscription.com",' |
@@ -1193,7 +1193,7 @@ define include_log_to
 	export -f log_to
 endef
 
-# cron @daily
+# cron @weekly
 archive-old-deliveries:
 	@set -euo pipefail
 
