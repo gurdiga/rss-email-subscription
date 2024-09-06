@@ -1,3 +1,3 @@
-FROM nginx:1.27.0-alpine3.19
+FROM nginx:1.27.1-alpine3.20
 
 RUN apk update && apk upgrade --no-cache
