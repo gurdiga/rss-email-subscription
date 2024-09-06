@@ -43,7 +43,7 @@ WORKDIR /code
 RUN apk update && apk upgrade --no-cache
 
 RUN apk add --no-cache \
-  openssl=3.3.1-r3
+  openssl=3.3.2-r0
 
 RUN npm i -g "npm@${NPM_VERSION}"
 
