@@ -1,6 +1,6 @@
 import { diffString } from 'json-diff';
 import { isAccountId } from '../../domain/account';
-import { EditFeedResponse, makeEditFeedRequest } from '../../domain/feed';
+import { EditFeedResponse, Feed, makeEditFeedRequest } from '../../domain/feed';
 import { applyEditFeedRequest } from '../../domain/feed-storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../../shared/api-response';
 import { isErr } from '../../shared/lang';
@@ -63,7 +63,7 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
   logInfo('Feed updated', {
     accountId: accountId.value,
     editFeedRequest,
-    diff: diffString(...result, { color: false }),
+    diff: diffFeed(...result),
   });
 
   const logData = {};
@@ -73,3 +73,14 @@ export const editFeed: AppRequestHandler = async function editFeed(reqId, reqBod
 
   return makeSuccess('Feed updated. 👍', logData, responseData);
 };
+
+export function diffFeed(f1: Feed, f2: Feed) {
+  const f1d = diffable(f1);
+  const f2d = diffable(f2);
+
+  return diffString(f1d, f2d, { color: false });
+}
+
+function diffable(x: any) {
+  return JSON.parse(JSON.stringify(x));
+}
