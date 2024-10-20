@@ -9,7 +9,7 @@ import {
 import { diffFeed } from './edit-feed';
 
 describe('diffFeed', () => {
-  it('properly displays the diff, including in URL', () => {
+  it('properly displays diff, including URL change', () => {
     const feed: Feed = {
       kind: 'Feed',
       id: makeTestFeedId('valid-feedId'),
