@@ -103,7 +103,7 @@ lint-nginx-config:
 		nginx -q -t -c /etc/nginx/nginx.conf
 
 lint-docker-compose:
-	docker-compose --file docker-compose.yml config
+	docker compose --file docker-compose.yml config
 
 lint-dnsmasq-conf:
 	@command="dnsmasq --test -C docker-services/resolver/etc/dnsmasq.conf"
@@ -230,30 +230,30 @@ smtp-in:
 
 # cron @reboot
 start:
-	docker-compose --project-name res up --remove-orphans --detach
+	docker compose --project-name res up --remove-orphans --detach
 
 start-resolver:
-	docker-compose --project-name res up --remove-orphans --detach \
+	docker compose --project-name res up --remove-orphans --detach \
 		-- resolver
 
 start-app: app
-	docker-compose --project-name res up --remove-orphans --detach \
+	docker compose --project-name res up --remove-orphans --detach \
 		-- app
 
 start-delmon: delmon
-	docker-compose --project-name res up --remove-orphans --detach \
+	docker compose --project-name res up --remove-orphans --detach \
 		-- delmon
 
 start-logger: logger
-	docker-compose --project-name res up --remove-orphans --detach \
+	docker compose --project-name res up --remove-orphans --detach \
 		-- logger
 
 start-api: compile test build-website website app
 	export NODE_ENV="production"
-	docker-compose --project-name res up --remove-orphans --force-recreate \
+	docker compose --project-name res up --remove-orphans --force-recreate \
 		-- resolver logger website api > /dev/null &
 	sleep 1
-	docker-compose --project-name res logs --follow --since 10s --timestamps &
+	docker compose --project-name res logs --follow --since 10s --timestamps &
 	wait
 
 start-website: build-website start-api
@@ -264,7 +264,7 @@ start-testblog:
 	echo '  make start'
 
 stop:
-	docker-compose --project-name res down
+	docker compose --project-name res down
 
 restart: stop start
 
@@ -298,12 +298,12 @@ certbot:
 	log_to .tmp/logs/feedsubscription/docker-build-certbot.log
 
 start-certbot: certbot
-	docker-compose --project-name res up --remove-orphans --detach \
+	docker compose --project-name res up --remove-orphans --detach \
 		-- certbot
 
 # NOTE: When changing certificate domains, rm -rf ll ./.tmp/certbot/conf/ first.
 ssl:
-	docker-compose --project-name res run --rm --entrypoint "\
+	docker compose --project-name res run --rm --entrypoint "\
 	  certbot certonly \
 			--webroot --webroot-path /var/www/certbot \
 			--domains feedsubscription.com \
