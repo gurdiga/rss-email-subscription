@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import cookie from 'cookie';
+const cookie = require('cookie');
 import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
@@ -832,7 +832,7 @@ describe('API', () => {
     expect(isErr(cleanup), si`cleanup deleteAccount failed: ${JSON.stringify(cleanup)}`).to.be.false;
   });
 
-  function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string> | null {
+  function getCookie(responseHeaders: Headers, cookieName: string): Record<string, string | undefined> | null {
     const rawCookie = responseHeaders
       .get('set-cookie')
       ?.split(/, [^\d]/)
