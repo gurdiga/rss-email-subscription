@@ -147,7 +147,7 @@ app:
 	@$(call include_log_to)
 
 	set -euo pipefail
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag app \
 		-f docker-services/app/Dockerfile \
@@ -155,7 +155,7 @@ app:
 	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
 delmon: app
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag delmon \
 		docker-services/delmon
@@ -171,13 +171,13 @@ delmon-restart:
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 logger:
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag logger \
 		docker-services/logger
 
 resolver:
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag resolver \
 		docker-services/resolver
@@ -214,14 +214,14 @@ logger-list-packages:
 	grep -P "^(syslog-ng|logrotate|tini)-\d"
 
 smtp-out:
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag smtp-out \
 		docker-services/smtp-out
 
 smtp-in:
 	source .env
-	docker buildx build \
+	docker build \
 		--no-cache \
 	 	--build-arg SASL_PASSWORD="$${SMTP_IN_SASL_PASSWORD:?envar is missing}"\
 		--progress=plain \
@@ -290,7 +290,7 @@ purge-smtp-queue:
 certbot:
 	@$(call include_log_to)
 
-	docker buildx build \
+	docker build \
 		--progress=plain \
 		--tag certbot \
 		-f docker-services/certbot/Dockerfile \
@@ -589,7 +589,7 @@ mailq-report:
 website:
 	@$(call include_log_to)
 
-	docker buildx build \
+	docker build \
 		--output type=docker \
 		--progress=plain \
 		--tag website \
