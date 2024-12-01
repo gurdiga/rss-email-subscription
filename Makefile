@@ -590,6 +590,7 @@ website:
 	@$(call include_log_to)
 
 	docker buildx build \
+		--output type=docker \
 		--progress=plain \
 		--tag website \
 		-f docker-services/website/Dockerfile \
