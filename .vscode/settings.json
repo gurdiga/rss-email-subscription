@@ -34,5 +34,8 @@
   },
   "files.associations": {
     "tsconfig.*.json": "jsonc"
+  },
+  "cSpell.enabledFileTypes": {
+    "makefile": false
   }
 }
