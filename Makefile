@@ -1194,13 +1194,14 @@ define include_log_to
 	export -f log_to
 endef
 
-# cron @weekly
+# cron @monthly on day 1
 archive-old-deliveries:
 	@set -euo pipefail
 
-	date=$${DATE:-`date --date='30 days ago' +%Y%m%d`}
+	# When run on Jan 1, we’ll get Nov
+	month=$${MONTH:-`date --date='32 days ago' +%Y%m`}
 
-	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$date-*" |
+	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$month*" |
 	while read dir; do
 		echo "$${dir/.tmp\/docker-data\/accounts\/''}"
 		tar czf "$$dir.tgz" "$$dir" && printf "...archived" || printf "...failed"
@@ -1208,10 +1209,10 @@ archive-old-deliveries:
 		echo ""
 	done |
 	cat <(
-		echo "Subject: RES archive-old-deliveries"
+		echo "Subject: RES $@"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-		date --date="$$date" +'%F'
+		echo "month $$month"
 		echo ""
 	) - |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
