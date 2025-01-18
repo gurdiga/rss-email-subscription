@@ -23,6 +23,7 @@
         fieldTextboxClassName,
         buttonClassName,
         buttonLabel,
+        apiBaseUrl = 'https://feedsubscription.com',
       } = dataset;
 
       const uiContainer = createUiContainer();
@@ -37,7 +38,7 @@
 
       const { origin } = new URL(script.src);
 
-      setupFormSending(feedId, submitButton, fieldTextbox, messageContent, new URL(origin));
+      setupFormSending(feedId, submitButton, fieldTextbox, messageContent, apiBaseUrl, new URL(origin));
       formArea.append(fieldLabel, fieldTextbox, submitButton);
       messageArea.append(messageContent);
       uiContainer.append(formArea, messageArea, poweredBy, styleSheet);
@@ -69,6 +70,7 @@
     submitButton: HTMLButtonElement,
     fieldTextbox: HTMLInputElement,
     messageContent: HTMLElement,
+    apiBaseUrl: string,
     origin: URL
   ) {
     const submitForm = () => {
@@ -86,7 +88,7 @@
         fieldTextbox.value = '';
       };
 
-      preventDoubleClick(submitButton, () => submitEmailToApi(origin, data, displayMessage, clearField));
+      preventDoubleClick(submitButton, () => submitEmailToApi(apiBaseUrl, origin, data, displayMessage, clearField));
     };
 
     const ifKey = (key: string, handler: () => void) => {
@@ -256,6 +258,7 @@
   }
 
   async function submitEmailToApi(
+    apiBaseUrl: string,
     origin: URL,
     data: DataToSubmit,
     displayMessage: (message: string, type: MessageType) => void,
@@ -263,7 +266,7 @@
   ): Promise<void> {
     displayMessage('', 'empty');
 
-    const url = new URL(`/api/subscription`, origin);
+    const url = new URL(`${apiBaseUrl}/api/subscription`, origin);
     const formData = new URLSearchParams({
       feedId: data.feedId,
       email: data.emailAddressText,
