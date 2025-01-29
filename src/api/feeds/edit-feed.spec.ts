@@ -1,3 +1,4 @@
+import structuredClone from '@ungap/structured-clone';
 import { expect } from 'chai';
 import { Feed, FeedStatus, makeFullItemText, makeItemTitle } from '../../domain/feed';
 import {
@@ -23,7 +24,7 @@ describe('diffFeed', () => {
       emailSubjectSpec: makeItemTitle(),
     };
 
-    const updatedFeed = structuredClone(feed);
+    const updatedFeed = structuredClone(feed, { json: true });
 
     updatedFeed.displayName = 'New Feed Display Name';
     updatedFeed.url = new URL('https://test-url.com/rss.xml');

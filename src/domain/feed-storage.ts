@@ -1,3 +1,4 @@
+import structuredClone from '@ungap/structured-clone';
 import { loadEmailAddresses, makeEmailHashFn, makeHashedEmail, storeEmails } from '../app/email-sending/emails';
 import { Err, Result, hasKind, isErr, isObject, makeErr, makeTypeMismatchErr } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
@@ -237,7 +238,7 @@ export function applyEditFeedRequest(
     return makeErr(si`Feed not found for update: ${editFeedRequest.initialId.value}, accountId: ${accountId.value}`);
   }
 
-  const feedBefore = structuredClone(feed);
+  const feedBefore = structuredClone(feed, { json: true });
 
   feed.displayName = editFeedRequest.displayName;
   feed.url = editFeedRequest.url;
@@ -245,7 +246,7 @@ export function applyEditFeedRequest(
   feed.emailBodySpec = editFeedRequest.emailBodySpec;
   feed.emailSubjectSpec = editFeedRequest.emailSubjectSpec;
 
-  const feedAfter = structuredClone(feed);
+  const feedAfter = structuredClone(feed, { json: true });
   const storeFeedResult = storeFeed(accountId, feed, storage);
 
   if (isErr(storeFeedResult)) {
