@@ -1202,6 +1202,7 @@ archive-old-deliveries:
 	month=$${MONTH:-`date --date='32 days ago' +%Y%m`}
 
 	find .tmp/docker-data/accounts/*/feeds/*/deliveries -type d -name "$$month*" |
+	sort |
 	while read dir; do
 		echo "$${dir/.tmp\/docker-data\/accounts\/''}"
 		tar czf "$$dir.tgz" "$$dir" && printf "...archived" || printf "...failed"
