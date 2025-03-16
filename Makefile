@@ -284,6 +284,15 @@ reload-website:
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+restart-smtp-in:
+	@docker restart-smtp-in | \
+	cat <( \
+		echo "Subject: RES restart-smtp-in"; \
+		echo "From: RES <system@feedsubscription.com>"; \
+		echo; \
+	) - \
+	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
 
