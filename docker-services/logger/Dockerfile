@@ -1,4 +1,4 @@
-FROM alpine:3.21.2
+FROM alpine:3.21.3
 
 VOLUME "/var/log/syslog-ng"
 EXPOSE 514/udp 601/tcp 6514/tcp
