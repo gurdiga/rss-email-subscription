@@ -78,8 +78,7 @@ describe('API', () => {
   let step = 0; // NOTE: Test are expected to run in source order AND with the --bail option.
 
   const dataDirRoot = process.env['DATA_DIR_ROOT'] || die('DATA_DIR_ROOT envar is missing');
-  const domainName = 'localhost.feedsubscription.com';
-  const apiOrigin = `https://${domainName}`;
+  const apiOrigin = `https://localhost.feedsubscription.com`;
   const appSettings = loadAppSettings();
 
   const userEmail = 'api-test-blogger@feedsubscription.com';
