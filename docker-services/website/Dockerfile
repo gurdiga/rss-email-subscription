@@ -1,7 +1,3 @@
-FROM nginx:1.27.3-alpine3.20
+FROM nginx:1.27.4-alpine3.21
 
 RUN apk update && apk upgrade --no-cache
-
-RUN apk add --no-cache \
-  expat=2.6.4-r0 \
-  openssl=3.3.2-r1

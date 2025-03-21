@@ -598,6 +598,7 @@ mailq-report:
 website:
 	@$(call include_log_to)
 
+	set -o pipefail
 	docker build \
 		--output type=docker \
 		--progress=plain \
