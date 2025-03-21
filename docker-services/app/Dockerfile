@@ -1,4 +1,4 @@
-ARG NODE_VERSION=22.13.1-alpine3.21
+ARG NODE_VERSION=22.14-alpine3.21
 
 # See the appropriate version here:
 # https://nodejs.org/en/about/previous-releases#looking-for-latest-release-of-a-version-branch
