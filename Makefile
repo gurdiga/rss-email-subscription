@@ -632,6 +632,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		du -sh $$DATA_DIR $$DATA_ARCHIVE
 
 		rclone \
+			--local-no-check-updated \
 			--stats=0 \
 			--verbose \
 			copy $$DATA_ARCHIVE $$DATA_DESTINATION \
