@@ -1,5 +1,5 @@
 import { Request, RequestHandler, Response } from 'express';
-import uaParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 import { ApiResponse, Success } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -79,7 +79,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 }
 
 function getUaInfo(uaString: string | undefined) {
-  const uaData = uaParser(uaString);
+  const uaData = UAParser(uaString);
 
   return {
     device: si`${uaData.device.type || ''} ${uaData.device.vendor || ''} ${uaData.device.vendor || ''}`,

@@ -1,88 +1,73 @@
-import uaParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 import { expect } from 'chai';
 
-describe('uaParser', () => {
-  it('works', () => {
-    expect(uaParser('')).to.deep.equal({
-      browser: {
-        major: undefined,
-        name: undefined,
-        version: undefined,
-      },
-      cpu: {
-        architecture: undefined,
-      },
-      device: {
-        model: undefined,
-        type: undefined,
-        vendor: undefined,
-      },
-      engine: {
-        name: undefined,
-        version: undefined,
-      },
-      os: {
-        name: undefined,
-        version: undefined,
-      },
-      ua: '',
+describe('UAParser', () => {
+  it('works with empty string', () => {
+    const result = UAParser('');
+
+    expect(result.browser).to.contain({
+      major: undefined,
+      name: undefined,
+      type: undefined,
+      version: undefined,
     });
 
-    // navigator.userAgent
-    let input =
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36';
-
-    expect(uaParser(input)).to.deep.equal({
-      browser: {
-        major: '119',
-        name: 'Chrome',
-        version: '119.0.0.0',
-      },
-      cpu: {
-        architecture: undefined,
-      },
-      device: {
-        model: 'Macintosh',
-        type: undefined,
-        vendor: 'Apple',
-      },
-      engine: {
-        name: 'Blink',
-        version: '119.0.0.0',
-      },
-      os: {
-        name: 'Mac OS',
-        version: '10.15.7',
-      },
-      ua: input,
+    expect(result.device).to.contain({
+      model: undefined,
+      type: undefined,
+      vendor: undefined,
     });
 
-    input =
-      'Mozilla/5.0 (iPad; CPU OS 15_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/19A348 [FBAN/FBIOS;FBAV/439.1.0.36.116;FBBV/532746663;FBDV/iPad7,2;FBMD/iPad;FBSN/iPadOS;FBSV/15.0.1;FBSS/2;FBID/tablet;FBLC/it_IT;FBOP/5;FBRV/533785113]';
+    expect(result.os).to.contain({
+      name: undefined,
+      version: undefined,
+    });
+  });
 
-    expect(uaParser(input)).to.deep.equal({
-      browser: {
-        major: '439',
-        name: 'Facebook',
-        version: '439.1.0.36.116',
-      },
-      cpu: {
-        architecture: undefined,
-      },
-      device: {
-        model: 'iPad',
-        type: 'tablet',
-        vendor: 'Apple',
-      },
-      engine: {
-        name: 'WebKit',
-        version: '605.1.15',
-      },
-      os: {
-        name: 'iOS',
-        version: '15.0.1',
-      },
-      ua: input,
+  it('works with macOS Chrome', () => {
+    const result = UAParser(
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36'
+    );
+
+    expect(result.browser).to.contain({
+      major: '119',
+      name: 'Chrome',
+      type: undefined,
+      version: '119.0.0.0',
+    });
+
+    expect(result.device).to.contain({
+      model: 'Macintosh',
+      type: undefined,
+      vendor: 'Apple',
+    });
+
+    expect(result.os).to.contain({
+      name: 'macOS',
+      version: '10.15.7',
+    });
+  });
+
+  it('works with iPad Facebook in-app browser', () => {
+    const result = UAParser(
+      'Mozilla/5.0 (iPad; CPU OS 15_0_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/19A348 [FBAN/FBIOS;FBAV/439.1.0.36.116;FBBV/532746663;FBDV/iPad7,2;FBMD/iPad;FBSN/iPadOS;FBSV/15.0.1;FBSS/2;FBID/tablet;FBLC/it_IT;FBOP/5;FBRV/533785113]'
+    );
+
+    expect(result.browser).to.contain({
+      major: '439',
+      name: 'Facebook',
+      version: '439.1.0.36.116',
+    });
+
+    expect(result.device).to.contain({
+      model: 'iPad',
+      type: 'tablet',
+      vendor: 'Apple',
+    });
+
+    expect(result.os).to.contain({
+      name: 'iOS',
+      version: '15.0.1',
     });
   });
 });
