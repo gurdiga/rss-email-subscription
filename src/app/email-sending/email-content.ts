@@ -1,3 +1,4 @@
+import type { AnyNode, Element } from 'domhandler';
 import * as cheerio from 'cheerio';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedEmailBodySpec, FeedEmailSubjectSpec, isFullItemText, isItemTitle } from '../../domain/feed';
@@ -75,7 +76,7 @@ export function preprocessContent(html: string, itemLink: URL) {
   return $.html();
 }
 
-function ensureAbsoluteHref(a: cheerio.Element, itemLink: URL): void {
+function ensureAbsoluteHref(a: Element, itemLink: URL): void {
   const href = a.attribs['href'];
 
   if (href?.startsWith('/')) {
@@ -85,14 +86,14 @@ function ensureAbsoluteHref(a: cheerio.Element, itemLink: URL): void {
 
 const maxWidthStyle = 'max-width:100% !important';
 
-function setMaxWidth(image: cheerio.Element): void {
+function setMaxWidth(image: Element): void {
   const existingStyle = image.attribs['style'];
 
   image.attribs['style'] = existingStyle ? existingStyle + ';' + maxWidthStyle : maxWidthStyle;
   delete image.attribs['height']; // To prevent skewing after forcing the width
 }
 
-function ensureSrcProtocol(image: cheerio.Element, itemLink: URL): void {
+function ensureSrcProtocol(image: Element, itemLink: URL): void {
   const src = image.attribs['src'];
 
   if (src?.startsWith('//')) {
@@ -151,7 +152,7 @@ export function extractExcerpt(html: string, wordCount: number): string {
 
   let collectedWordCount = 0;
 
-  const processNode = (node: cheerio.AnyNode) => {
+  const processNode = (node: AnyNode) => {
     if (collectedWordCount < wordCount) {
       collectWords(node);
     } else {
@@ -159,10 +160,10 @@ export function extractExcerpt(html: string, wordCount: number): string {
     }
   };
 
-  const nodesToRemove: cheerio.AnyNode[] = [];
-  const removeNode = (node: cheerio.AnyNode) => nodesToRemove.push(node);
+  const nodesToRemove: AnyNode[] = [];
+  const removeNode = (node: AnyNode) => nodesToRemove.push(node);
 
-  const collectWords = (node: cheerio.AnyNode) => {
+  const collectWords = (node: AnyNode) => {
     if (node.type === 'tag') {
       node.childNodes.forEach(processNode);
     } else if (node.type === 'text') {
