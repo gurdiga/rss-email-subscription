@@ -52,7 +52,7 @@
     "cron": "^3.1.7",
     "express": "^4.19.2",
     "express-session": "^1.18.0",
-    "helmet": "^7.1.0",
+    "helmet": "^8.1.0",
     "json-diff": "^1.0.6",
     "nodemailer": "^6.9.14",
     "rss-parser": "^3.13.0",
