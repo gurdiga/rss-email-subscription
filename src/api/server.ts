@@ -63,7 +63,9 @@ async function main() {
   router.use(helmet());
   router.use(cors());
   router.use(cookieParser());
-  router.get(ApiPath.corsTest, (_req, res) => res.send('CORS test'));
+  router.get(ApiPath.corsTest, (_req, res) => {
+    res.send('CORS test');
+  });
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
   router.get(ApiPath.sessionTest, makeAppRequestHandler(sessionTest, app));
