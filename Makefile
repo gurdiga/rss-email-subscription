@@ -228,7 +228,7 @@ smtp-in:
 	source .env
 	docker build \
 		--no-cache \
-	 	--build-arg SASL_PASSWORD="$${SMTP_IN_SASL_PASSWORD:?envar is missing}"\
+		--secret id=SMTP_IN_SASL_PASSWORD \
 		--progress=plain \
 		--tag smtp-in \
 		docker-services/smtp-in
