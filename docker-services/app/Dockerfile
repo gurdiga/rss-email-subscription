@@ -8,7 +8,7 @@ ARG NPM_VERSION=10.9.2
 FROM node:${NODE_VERSION} AS build
 ARG NPM_VERSION
 
-RUN apk update && apk upgrade --no-cache
+RUN apk update --no-cache && apk upgrade --no-cache
 RUN npm i -g "npm@${NPM_VERSION}"
 
 WORKDIR /code
@@ -40,7 +40,7 @@ ARG NPM_VERSION
 VOLUME /data
 WORKDIR /code
 
-RUN apk update && apk upgrade --no-cache
+RUN apk update --no-cache && apk upgrade --no-cache
 
 RUN npm i -g "npm@${NPM_VERSION}"
 

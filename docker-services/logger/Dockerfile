@@ -1,9 +1,9 @@
 FROM alpine:3.21.3
 
-VOLUME "/var/log/syslog-ng"
+VOLUME /var/log/syslog-ng
 EXPOSE 514/udp 601/tcp 6514/tcp
 
-RUN apk update && apk upgrade --no-cache
+RUN apk update --no-cache && apk upgrade --no-cache
 
 RUN apk add --no-cache \
   c-ares=1.34.5-r0 \

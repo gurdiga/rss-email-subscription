@@ -2,7 +2,7 @@ FROM zixia/simple-mail-forwarder:1.4
 
 ARG SASL_PASSWORD
 
-RUN apk update && apk upgrade --no-cache
+RUN apk update --no-cache && apk upgrade --no-cache
 
 ENV SASL_LOGIN=catch-all
 ENV SASL_DOMAIN=feedsubscription.com

@@ -1,6 +1,6 @@
 FROM boky/postfix:v4.4.0-alpine
 
-RUN apk update && apk upgrade --no-cache
+RUN apk update --no-cache && apk upgrade --no-cache
 
 COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/transport /etc/postfix/transport
