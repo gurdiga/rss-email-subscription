@@ -225,7 +225,9 @@ smtp-out:
 		docker-services/smtp-out
 
 smtp-in:
+	set -a
 	source .env
+	set +a
 	docker build \
 		--no-cache \
 		--secret id=SMTP_IN_SASL_PASSWORD \
