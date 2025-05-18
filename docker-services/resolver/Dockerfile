@@ -1,10 +1,10 @@
 # Inspired by https://github.com/jpillora/docker-dnsmasq/blob/master/Dockerfile
-FROM ubuntu:23.10
+FROM ubuntu:24.04
 
 RUN apt-get update \
   && apt-get install --no-install-recommends -y \
-    dnsmasq=2.90-0ubuntu0.23.10.1 \
-    dnsutils=1:9.18.24-0ubuntu0.23.10.1 \
+    dnsmasq=2.90-2build2 \
+    dnsutils=1:9.18.30-0ubuntu0.24.04.2 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
