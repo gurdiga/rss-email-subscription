@@ -2,6 +2,9 @@
 
 set -e
 
+echo "Setting up logrotate cron job..."
+echo "0 0 * * * /usr/sbin/logrotate /etc/logrotate.d/feedsubscription.conf" >/etc/crontabs/root
+
 mkdir -p /var/log/syslog-ng
 
 echo "Starting crond..."
