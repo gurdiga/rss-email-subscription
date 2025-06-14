@@ -1010,10 +1010,7 @@ docker-image-check:
 	fi |
 	while read image; do
 		echo "====================== $$image ======================"
-
-		if ! docker scout cves --exit-code "$$image"; then
-			exit 1
-		fi
+		docker scout cves --exit-code "$$image"
 	done
 
 all-images: app certbot delmon logger smtp-in smtp-out website resolver
