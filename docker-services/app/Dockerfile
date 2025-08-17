@@ -7,8 +7,7 @@ RUN apk update --no-cache && apk upgrade --no-cache
 
 WORKDIR /code
 
-ENV NODE_OPTIONS=--dns-result-order=ipv4first \
-    NPM_CONFIG_AUDIT=false \
+ENV NPM_CONFIG_AUDIT=false \
     NPM_CONFIG_FUND=false \
     NPM_CONFIG_PROGRESS=false
 
@@ -34,6 +33,8 @@ RUN cat ./src/web-ui/systemjs-resolve-patch.js >> dist/api/web-ui-scripts/system
 
 ### --- run
 FROM node:${NODE_VERSION}
+
+ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
 VOLUME /data
 WORKDIR /code
