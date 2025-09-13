@@ -31,6 +31,9 @@ RUN cp --target-directory=dist/api/web-ui-scripts \
   ./node_modules/systemjs/dist/system.min.js*
 RUN cat ./src/web-ui/systemjs-resolve-patch.js >> dist/api/web-ui-scripts/system.min.js
 
+# Reduce runtime image install time: keep only prod deps in builder
+RUN npm prune --omit=dev
+
 ### --- run
 FROM node:${NODE_VERSION}
 
@@ -41,7 +44,5 @@ WORKDIR /code
 
 RUN apk update --no-cache && apk upgrade --no-cache
 
-COPY package.json package-lock.json ./
-RUN npm install --omit=dev
-
 COPY --from=build /code/dist ./dist
+COPY --from=build /code/node_modules ./node_modules
