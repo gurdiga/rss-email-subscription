@@ -4,6 +4,10 @@ RUN apk update --no-cache \
   && apk upgrade --no-cache \
   && apk add --no-cache postgrey=1.37-r2
 
+# Prepare postgrey runtime directories with correct ownership
+RUN mkdir -p /var/spool/postfix/postgrey /var/lib/postgrey /var/run/postgrey \
+  && chown -R postgrey:postgrey /var/spool/postfix/postgrey /var/lib/postgrey /var/run/postgrey
+
 ENV SASL_LOGIN=catch-all
 ENV SASL_DOMAIN=feedsubscription.com
 
