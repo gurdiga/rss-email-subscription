@@ -18,8 +18,17 @@ export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}):
   const abortController = new AbortController();
   const abortControllerTimeoutId = setTimeout(() => abortController.abort(), options.timeoutMs);
 
+  // Imitate a local Chrome browser to improve compatibility with
+  // servers that gate responses based on User-Agent.
+  const chromeLikeUserAgent =
+    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
   const response = await globalThis
-    .fetch(url, { redirect: 'follow', signal: abortController.signal })
+    .fetch(url, {
+      redirect: 'follow',
+      signal: abortController.signal,
+      headers: { 'user-agent': chromeLikeUserAgent },
+    })
     .then((response) => {
       const limitedStream = getLimitedReadableStream(response.body, options.maxResponseBytes);
 
