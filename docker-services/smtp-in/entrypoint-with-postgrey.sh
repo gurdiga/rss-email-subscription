@@ -8,7 +8,6 @@ POSTGREY_OPTS="\
 --max-age=35 \
 --auto-whitelist-clients=5 \
 --pidfile=/var/run/postgrey/postgrey.pid \
---lock-file=/var/run/postgrey/postgrey.lock \
 --dbdir=/var/lib/postgrey"
 
 echo "[smtp-in] Starting postgrey with: ${POSTGREY_OPTS}" >&2
