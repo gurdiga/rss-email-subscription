@@ -229,7 +229,8 @@ smtp-in:
 	source .env
 	set +a
 	docker build \
-		--no-cache \
+		--pull `# because zixia/simple-mail-forwarder uses moving tags (even for 1.4)` \
+		--no-cache `# because we need to rebuild when SMTP_IN_SASL_PASSWORD changes` \
 		--secret id=SMTP_IN_SASL_PASSWORD \
 		--progress=plain \
 		--tag smtp-in \
