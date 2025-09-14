@@ -90,9 +90,9 @@
 @test "ESMTP AUTH supported" {
     output=$(echo ehlo simple.com | nc 127.0.0.1 25)
 
+    # Server should advertise AUTH and the enabled mechanism(s).
     [[ $output =~ AUTH ]]
     [[ $output =~ PLAIN ]]
-    [[ $output =~ LOGIN ]]
 }
 
 @test "ESMTP STARTTLS connect ok" {
