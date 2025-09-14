@@ -112,7 +112,7 @@ lint-dnsmasq-conf:
 	fi
 
 lint-dockerfile:
-	find . -name Dockerfile |
+	find docker-services -name Dockerfile |
 	# tee /dev/stderr | # DEBUG
 	xargs hadolint
 
