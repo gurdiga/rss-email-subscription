@@ -2,7 +2,9 @@ FROM zixia/simple-mail-forwarder:1.4
 
 RUN apk update --no-cache \
   && apk upgrade --no-cache \
-  && apk add --no-cache postgrey=1.37-r2
+  && apk add --no-cache \
+    postgrey=1.37-r2 \
+    patch=2.7.6-r7
 
 # Prepare postgrey runtime directories with correct ownership
 RUN mkdir -p /var/spool/postfix/postgrey /var/lib/postgrey /var/run/postgrey \
@@ -21,10 +23,11 @@ RUN \
 
 COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
 
-# Remove some of the irrelevant tests.
-# 1. docker cp smtp-in:/app/test/simple-mail-forwarder.bats docker-services/smtp-in/
-# 2. edit docker-services/smtp-in/simple-mail-forwarder.bats
-COPY simple-mail-forwarder.bats /app/test/
+# Apply a minimal patch to upstream tests to fit our setup
+COPY patches/simple-mail-forwarder.patch /tmp/simple-mail-forwarder.patch
+WORKDIR /app/test
+RUN patch -p0 < /tmp/simple-mail-forwarder.patch
+WORKDIR /
 
 # Start postgrey before delegating to the base image command
 COPY entrypoint-with-postgrey.sh /usr/local/bin/entrypoint-with-postgrey.sh
