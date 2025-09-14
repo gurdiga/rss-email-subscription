@@ -5,3 +5,5 @@ Conventions
   - `Co-authored-by: Codex CLI <codex-cli@users.noreply.github.com>`
 - Format examples as fenced code blocks with the correct language tag
   (e.g., `dockerfile` for Dockerfile instructions, `bash` for shell).
+- When proposing multiple options, prefer a numbered list
+  so they are easier to scan and reference.
