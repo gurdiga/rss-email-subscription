@@ -9,3 +9,8 @@ yahoo.es  fragile:
 yahoo.fr  fragile:
 
 bigpond.com  fragile:
+
+hotmail.com         ms-throttle:
+outlook.com         ms-throttle:
+live.com            ms-throttle:
+msn.com             ms-throttle:
