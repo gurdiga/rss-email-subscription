@@ -1,14 +1,14 @@
 # grep -Po '(?<="emailAddress": ")[^"]+' .tmp/docker-data/accounts/*/feeds/*/emails.json | grep -Po "yahoo\..+" | sort -
-yahoo.ca  fragile:
-yahoo.co.uk  fragile:
-yahoo.com  fragile:
-yahoo.com.au  fragile:
-yahoo.com.br  fragile:
-yahoo.de  fragile:
-yahoo.es  fragile:
-yahoo.fr  fragile:
+yahoo.ca  yahoo-throttle:
+yahoo.co.uk  yahoo-throttle:
+yahoo.com  yahoo-throttle:
+yahoo.com.au  yahoo-throttle:
+yahoo.com.br  yahoo-throttle:
+yahoo.de  yahoo-throttle:
+yahoo.es  yahoo-throttle:
+yahoo.fr  yahoo-throttle:
 
-bigpond.com  fragile:
+bigpond.com  yahoo-throttle:
 
 hotmail.com         ms-throttle:
 outlook.com         ms-throttle:
