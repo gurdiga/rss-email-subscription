@@ -1,7 +1,7 @@
 Conventions
 
 1. Keep changes scoped and minimal.
-2. Add a co-author trailer on agent-made commits: `Co-authored-by: Codex CLI <codex-cli@users.noreply.github.com>`
+2. Add a co-author trailer on agent-made commits, preceded by a blank line: `Co-authored-by: Codex CLI <codex-cli@users.noreply.github.com>`
 3. Format examples as fenced code blocks with the correct language tag (e.g., `dockerfile` for Dockerfile instructions, `bash` for shell).
 4. When proposing multiple options, prefer a numbered list so they are easier to scan and reference.
 5. Wrap long lines in commit messages: subject ≤ 72 chars, body wrapped at ~72 chars for readability.
