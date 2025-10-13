@@ -19,7 +19,8 @@ ms-throttle unix  -       -       n       -       -       smtp
   -o smtp_destination_rate_delay=2s
 
 comcast-throttle unix  -       -       n       -       -       smtp
-  -o smtp_destination_concurrency_limit=10
+  -o smtp_destination_concurrency_limit=2
+  -o smtp_destination_rate_delay=5s
 
 #
 # Postfix master process configuration file.  For details on the format
