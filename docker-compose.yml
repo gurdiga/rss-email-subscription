@@ -80,6 +80,8 @@ services:
       # TLS: No ECDSA certificate in this setup, only RSA
       SMF_POSTFIXMAIN_smtpd_tls_eccert_file: ''
       SMF_POSTFIXMAIN_smtpd_tls_eckey_file: ''
+      SMF_POSTFIXMAIN_inet_protocols: 'ipv4'
+      SMF_POSTFIXMAIN_smtp_address_preference: 'ipv4'
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
