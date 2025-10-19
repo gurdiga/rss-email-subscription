@@ -673,13 +673,13 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 backup-purge:
 	@rclone lsf gdrive-res:RES-backups |
 	sort |
-	head --lines=-31 | # exlude last 31
-	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge gdrive-res:RES-backups/{} 2>&1" |
+	head --lines=-31 | # exlude last 31 days
+	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge gdrive-res:RES-backups/{} 2>&1" > backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) - |
+	) backup-purge.log |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 ${RCLONE_BINARY}:
