@@ -27,7 +27,11 @@ x-dns: &x-dns
 
 services:
   smtp-out:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: smtp-out
     hostname: smtp-out
     image: smtp-out
@@ -58,7 +62,11 @@ services:
         ipv4_address: 10.5.5.9
 
   smtp-in:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: smtp-in
     hostname: smtp-in
     image: smtp-in
@@ -88,7 +96,11 @@ services:
         ipv4_address: 10.5.5.8
 
   app:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: app
     hostname: app
     image: app
@@ -109,7 +121,11 @@ services:
         ipv4_address: 10.5.5.7
 
   delmon:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: delmon
     hostname: delmon
     image: delmon
@@ -126,7 +142,11 @@ services:
         ipv4_address: 10.5.5.6
 
   api:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: api
     hostname: api
     image: app
@@ -166,7 +186,11 @@ services:
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:
-    depends_on: [logger, resolver]
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
     container_name: certbot
     hostname: certbot
     image: certbot
@@ -198,12 +222,19 @@ services:
     volumes:
       - ./.tmp/logs:/var/log/syslog-ng
     <<: [*x-dns]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z -w1 127.0.0.1 514"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
     networks:
       net:
         ipv4_address: 10.5.5.1
 
   resolver:
-    depends_on: [logger]
+    depends_on:
+      logger:
+        condition: service_healthy
     hostname: resolver
     image: resolver
     container_name: resolver
@@ -214,6 +245,11 @@ services:
       net:
         ipv4_address: 10.5.5.2
     <<: [*logging, *x-disable-ipv6]
+    healthcheck:
+      test: ["CMD-SHELL", "pidof dnsmasq >/dev/null"]
+      interval: 5s
+      timeout: 3s
+      retries: 2
 
 networks:
   net:
