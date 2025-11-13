@@ -715,6 +715,9 @@ init-data-dir:
 rsync-logs:
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
 
+rsync-data:
+	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/docker-data/ .tmp/docker-data/
+
 sent-count: rsync-logs
 	@$(MAKE) --no-print-directory sent-count-last-week |
 		tail -1 |
