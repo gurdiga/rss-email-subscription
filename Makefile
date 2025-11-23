@@ -834,7 +834,7 @@ access-report: rsync-logs bot-list.txt
 		--log-format=COMBINED -
 	open .goaccess/report.html
 
-# cron 59 23 * * *
+# cron @weekly
 tracking-report: bot-list.txt
 	@function url_decode {
 		while read line; do
@@ -863,12 +863,14 @@ tracking-report: bot-list.txt
 	bot_list_re="($$(cat bot-list.txt | paste -sd '|'))"
 	debug_log "bot_list_re: $$bot_list_re"
 
-	date=$${DATE:-`date +%F`}
-	debug_log "date: $$date"
+	days=$${DAYS:-7}
+	start_date=$${START_DATE:-$$(date --date="$$(($$days - 1)) days ago" +%F)}
+	end_date=$${END_DATE:-$$(date +%F)}
+	debug_log "date range: $$start_date..$$end_date"
 
 	ls -t1r .tmp/logs/feedsubscription/website.log* |
 	xargs zcat -f |
-	grep -P "^$$date" |
+	awk -v start="$$start_date" -v end="$$end_date" '{date=substr($$1,1,10); if (date>=start && date<=end) print}' |
 	grep -vPi ".*$$bot_list_re.*" | # exclude some bots
 	grep -vP ': (95.65.96.65) ' | # exclude some IPs
 	grep -vP ': 40\.9[2-4]\.\d+\.\d+ - - ' | # exclude Office 365 IP ranges mail.protection.outlook.com 40.92.0.0/15
@@ -881,7 +883,7 @@ tracking-report: bot-list.txt
 		-e 's|https://feedsubscription.com||' \
 		-e 's|https://www.feedsubscription.com||' \
 		-e 's/00:00 //' \
-		-e "s/^$${date}T//" \
+		-e 's/T/ /' \
 	| # remove noise
 	url_decode |
 	grep -v '"vid":"vlad"' | # exclude myself
@@ -897,7 +899,7 @@ tracking-report: bot-list.txt
 			>( grep -Po '(?<="event":")[^"]+' | sort | uniq -c )
 	) 2>&1 |
 	cat <(
-		echo "Subject: RES tracking-report $$date"
+		echo "Subject: RES tracking-report $$start_date..$$end_date"
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 	) - |
