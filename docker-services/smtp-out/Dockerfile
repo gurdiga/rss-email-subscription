@@ -7,7 +7,8 @@ RUN apk update --no-cache \
     'openssl=3.3.5-r0' \
     'expat=2.7.3-r0' \
     'sqlite=3.48.0-r4' \
-    'py3-pip=24.3.1-r0'
+    'py3-pip=24.3.1-r0' \
+    'busybox=1.37.0-r14'
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     'pip==25.3' \
