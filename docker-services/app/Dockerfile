@@ -1,13 +1,17 @@
 ARG NODE_VERSION=22.14-alpine3.21
 ARG OPENSSL_VERSION=3.3.5-r0
+ARG BUSYBOX_VERSION=1.37.0-r14
 
 ### --- build
 FROM node:${NODE_VERSION} AS build
 ARG OPENSSL_VERSION
+ARG BUSYBOX_VERSION
 
 RUN apk update --no-cache \
  && apk upgrade --no-cache \
- && apk add --no-cache --upgrade "openssl=${OPENSSL_VERSION}"
+ && apk add --no-cache --upgrade \
+    "openssl=${OPENSSL_VERSION}" \
+    "busybox=${BUSYBOX_VERSION}"
 
 WORKDIR /code
 
@@ -41,6 +45,7 @@ RUN npm prune --omit=dev
 ### --- run
 FROM node:${NODE_VERSION}
 ARG OPENSSL_VERSION
+ARG BUSYBOX_VERSION
 
 ENV NODE_OPTIONS=--dns-result-order=ipv4first
 
@@ -49,7 +54,9 @@ WORKDIR /code
 
 RUN apk update --no-cache \
  && apk upgrade --no-cache \
- && apk add --no-cache --upgrade "openssl=${OPENSSL_VERSION}"
+ && apk add --no-cache --upgrade \
+    "openssl=${OPENSSL_VERSION}" \
+    "busybox=${BUSYBOX_VERSION}"
 
 COPY --from=build /code/dist ./dist
 COPY --from=build /code/node_modules ./node_modules

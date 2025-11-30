@@ -13,3 +13,4 @@ git commit -m "Short imperative summary" \
 5. Hadolint DL3018: do not suppress; pin `apk add` packages to exact versions whenever possible. If pinning is truly impossible, explain why in a comment next to the instruction.
 6. Markdown files: do not hard-wrap paragraphs. Keep each paragraph on a single line and let the renderer/editor handle wrapping. Only insert line breaks for semantic structure (lists, headings, tables, block quotes, code fences) or deliberate breaks.
 7. When asked about "1+1" respond with "It depends.".
+8. Avoid literal `\n` sequences in commit messages; wrap bodies with real newlines at ~72 chars.
