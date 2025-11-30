@@ -1,35 +1,37 @@
-FROM zixia/simple-mail-forwarder:1.4
+FROM debian:bookworm-slim
 
-RUN apk update --no-cache \
-  && apk upgrade --no-cache \
-  && apk add --no-cache \
-    postgrey=1.37-r2 \
-    patch=2.7.6-r7
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Prepare postgrey runtime directories with correct ownership
-RUN mkdir -p /var/spool/postfix/postgrey /var/lib/postgrey /var/run/postgrey \
-  && chown -R postgrey:postgrey /var/spool/postfix/postgrey /var/lib/postgrey /var/run/postgrey
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+    'postfix=3.7.11-0+deb12u1' \
+    'postfix-pcre=3.7.11-0+deb12u1' \
+    'postgrey=1.37-2' \
+    'postsrsd=1.10-2+b1' \
+    'sasl2-bin=2.1.28+dfsg-10' \
+    'libsasl2-modules=2.1.28+dfsg-10' \
+    'opendkim=2.11.0~beta2-8+deb12u1' \
+    'bind9-dnsutils=1:9.18.41-1~deb12u1' \
+    'ca-certificates=20230311+deb12u1' \
+ && rm -rf /var/lib/apt/lists/*
 
-ENV SASL_LOGIN=catch-all
-ENV SASL_DOMAIN=feedsubscription.com
-
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-RUN postconf -e smtpd_relay_restrictions="permit_sasl_authenticated reject_unauth_destination"
-RUN postconf -e smtpd_recipient_restrictions="permit_mynetworks, permit_sasl_authenticated, reject_unauth_destination, check_policy_service inet:127.0.0.1:10023"
-RUN postconf -e smtpd_sasl_local_domain="${SASL_DOMAIN}"
-RUN \
-  --mount=type=secret,id=SMTP_IN_SASL_PASSWORD \
-  saslpasswd2 -p -c -u "${SASL_DOMAIN}" "${SASL_LOGIN}" < /run/secrets/SMTP_IN_SASL_PASSWORD
+RUN mkdir -p \
+    /etc/sasl2 \
+    /etc/opendkim \
+    /var/spool/postfix/postgrey \
+    /var/lib/postgrey \
+    /var/run/postgrey \
+    /var/run/opendkim
 
 COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
+COPY etc/postfix/virtual /etc/postfix/virtual
+COPY etc/postfix/main.cf.override /etc/postfix/main.cf.override
+COPY etc/opendkim/opendkim.conf /etc/opendkim/opendkim.conf
+COPY etc/opendkim/KeyTable /etc/opendkim/KeyTable
+COPY etc/opendkim/SigningTable /etc/opendkim/SigningTable
+COPY etc/opendkim/TrustedHosts /etc/opendkim/TrustedHosts
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN postmap /etc/postfix/virtual
 
-# Apply a minimal patch to upstream tests to fit our setup
-COPY patches/simple-mail-forwarder.patch /tmp/simple-mail-forwarder.patch
-WORKDIR /app/test
-RUN patch -p0 < /tmp/simple-mail-forwarder.patch
-WORKDIR /
-
-# Start postgrey before delegating to the base image command
-COPY entrypoint-with-postgrey.sh /usr/local/bin/entrypoint-with-postgrey.sh
-RUN chmod +x /usr/local/bin/entrypoint-with-postgrey.sh
-ENTRYPOINT ["/usr/local/bin/entrypoint-with-postgrey.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

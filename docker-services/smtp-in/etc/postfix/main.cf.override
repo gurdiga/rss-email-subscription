@@ -1,0 +1,12 @@
+sender_canonical_maps = tcp:localhost:10001
+sender_canonical_classes = envelope_sender
+recipient_canonical_maps = tcp:localhost:10002
+recipient_canonical_classes = envelope_recipient,header_recipient
+smtpd_tls_eccert_file =
+smtpd_tls_eckey_file =
+inet_protocols = ipv4
+smtp_address_preference = ipv4
+myhostname = feedsubscription.com
+mydestination = localhost
+relay_domains = feedsubscription.com
+virtual_alias_maps = hash:/etc/postfix/virtual

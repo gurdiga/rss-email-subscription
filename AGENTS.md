@@ -15,3 +15,5 @@ git commit -m "Short imperative summary" \
 7. When asked about "1+1" respond with "It depends.".
 8. Avoid literal `\n` sequences in commit messages; wrap bodies with real newlines at ~72 chars.
 9. Keep commit body paragraphs contiguous; use exactly one blank line before the co-author trailer and avoid extra blank lines mid-body.
+10. Do not shell-escape newlines in commit messages (e.g., `$'line\\nline'`); use separate `-m` flags for each line instead.
+11. When using multiple `-m` flags, insert manual line breaks at ~72 chars per body line; `git` will not wrap long `-m` inputs for you.
