@@ -63,7 +63,14 @@ configure_opendkim() {
 }
 
 configure_postsrsd() {
-  postsrsd -f -s 10001 -r 10002 -d "$DOMAIN" &
+  local secret_file="/etc/postsrsd.secret"
+  if [ ! -s "$secret_file" ]; then
+    [ -n "${POSTSRSD_SECRET:-}" ] || fail "POSTSRSD_SECRET is required for postsrsd secret"
+    echo "$POSTSRSD_SECRET" >"$secret_file"
+    chmod 600 "$secret_file"
+  fi
+
+  postsrsd -d"$DOMAIN" -s"$secret_file" &
   sleep 0.2 # brief wait to let postsrsd bind sockets
 }
 
