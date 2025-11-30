@@ -13,6 +13,7 @@
 
 1. Aim for subject ~50 chars (hard limit 72), wrap body lines ≈72 chars.
 2. Always include `Co-authored-by: Codex CLI <codex-cli@users.noreply.github.com>` on agent-made commits.
+3. Avoid `git commit -m`; use an editor or `-F` with a file to prevent wrapping mistakes.
 
 ## Tooling
 
