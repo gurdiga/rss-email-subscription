@@ -58,8 +58,8 @@ configure_opendkim() {
   postconf -e \
     'milter_default_action=accept' \
     'milter_protocol=6' \
-    'smtpd_milters=inet:localhost:8891' \
-    'non_smtpd_milters=inet:localhost:8891'
+    'smtpd_milters=inet:127.0.0.1:8891' \
+    'non_smtpd_milters=inet:127.0.0.1:8891'
 }
 
 configure_postsrsd() {
