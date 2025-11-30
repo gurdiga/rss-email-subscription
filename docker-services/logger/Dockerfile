@@ -6,6 +6,7 @@ EXPOSE 514/udp 601/tcp 6514/tcp
 RUN apk update --no-cache && apk upgrade --no-cache
 
 RUN apk add --no-cache \
+  busybox=1.37.0-r14 \
   curl=8.14.1-r2 \
   openssl=3.3.5-r0 \
   c-ares=1.34.5-r0 \
