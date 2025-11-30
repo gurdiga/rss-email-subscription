@@ -10,3 +10,4 @@ myhostname = feedsubscription.com
 mydestination = localhost
 relay_domains = feedsubscription.com
 virtual_alias_maps = hash:/etc/postfix/virtual
+maillog_file = /dev/stdout
