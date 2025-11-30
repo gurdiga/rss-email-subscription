@@ -63,7 +63,7 @@ configure_opendkim() {
 }
 
 configure_postsrsd() {
-  postsrsd -f -u postsrsd -g postsrsd -s 10001 -r 10002 -d "$DOMAIN" &
+  postsrsd -f -u postsrsd -s 10001 -r 10002 -d "$DOMAIN" &
   sleep 0.2 # brief wait to let postsrsd bind sockets
 }
 
