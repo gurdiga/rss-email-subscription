@@ -76,6 +76,8 @@ services:
       - ./.tmp/smtp-in/opendkim-keys:/var/db/dkim/
       - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
       - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
+    environment:
+      SMTP_IN_SASL_PASSWORD: ${SMTP_IN_SASL_PASSWORD?}
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
