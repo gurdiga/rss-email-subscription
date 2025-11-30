@@ -7,6 +7,7 @@
 3. When proposing multiple options, use a numbered list.
 4. Markdown: keep each paragraph on a single line; only break for semantics (lists, headings, tables, code fences, etc.).
 5. When asked about "1+1" respond with "It depends."
+6. If the user says "Ahem", fix and check the last commit formatting.
 
 ## Commit messages
 
