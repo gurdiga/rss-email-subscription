@@ -14,7 +14,7 @@ RUN apt-get update \
     'bind9-dnsutils=1:9.18.41-1~deb12u1' \
     'ca-certificates=20230311+deb12u1' \
     'procps=2:4.0.2-3' \
-    'net-tools=2.10-0.1' \
+    'net-tools=2.10-0.1+deb12u2' \
  && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p \
