@@ -94,6 +94,10 @@ start_postgrey() {
 
 main() {
   apply_postfix_overrides
+  install -d /var/spool/postfix/etc
+  cp -f /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
+  cp -f /etc/hosts /var/spool/postfix/etc/hosts
+
   configure_sasl
   configure_tls
 
