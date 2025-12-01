@@ -56,7 +56,7 @@ configure_opendkim() {
   chown -R opendkim:opendkim "$key_dir"
   chmod 600 "$key"
 
-  opendkim -f -x /etc/opendkim.conf &
+  opendkim -x /etc/opendkim.conf
   sleep 0.5 # small buffer to let opendkim bind the milter socket
 
   postconf -e \
@@ -104,6 +104,7 @@ main() {
 
   start_postgrey
   configure_postsrsd
+  configure_opendkim
   configure_opendkim
 
   log "Starting postfix in foreground"
