@@ -53,6 +53,7 @@ configure_opendkim() {
   local key="${key_dir}/default.private"
   [ -f "$key" ] || fail "DKIM key not found for ${DOMAIN} at ${key}"
 
+  sed -i 's/^Socket[[:space:]].*/Socket                  inet:8891@127.0.0.1/' /etc/opendkim.conf
   chown -R opendkim:opendkim "$key_dir"
   chmod 600 "$key"
 
