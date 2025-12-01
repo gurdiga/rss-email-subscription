@@ -97,6 +97,7 @@ main() {
   install -d /var/spool/postfix/etc
   cp -f /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
   cp -f /etc/hosts /var/spool/postfix/etc/hosts
+  cp -f /etc/nsswitch.conf /var/spool/postfix/etc/nsswitch.conf
 
   configure_sasl
   configure_tls
