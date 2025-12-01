@@ -49,8 +49,12 @@ configure_tls() {
 }
 
 configure_opendkim() {
-  local key="/var/db/dkim/${DOMAIN}/default.private"
+  local key_dir="/var/db/dkim/${DOMAIN}"
+  local key="${key_dir}/default.private"
   [ -f "$key" ] || fail "DKIM key not found for ${DOMAIN} at ${key}"
+
+  chown -R opendkim:opendkim "$key_dir"
+  chmod 600 "$key"
 
   opendkim -f -x /etc/opendkim.conf &
   sleep 0.5 # small buffer to let opendkim bind the milter socket
