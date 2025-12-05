@@ -50,7 +50,7 @@
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "cron": "^4.3.3",
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "express-session": "^1.18.0",
     "helmet": "^8.1.0",
     "json-diff": "^1.0.6",
