@@ -344,7 +344,8 @@ start-dev: web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
 
 api-test:
-	@export TS_NODE_TRANSPILE_ONLY=true
+	@set -a; source ./.env; set +a; \
+	export TS_NODE_TRANSPILE_ONLY=true; \
 	node_modules/.bin/mocha \
 		--require ts-node/register \
 		--reporter dot \
