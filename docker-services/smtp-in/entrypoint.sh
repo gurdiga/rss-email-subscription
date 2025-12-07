@@ -22,7 +22,7 @@ configure_sasl() {
   [ -n "$password" ] || fail "SMTP_IN_SASL_PASSWORD is required"
 
   echo "$password" | saslpasswd2 -p -c -u "$DOMAIN" "catch-all"
-  echo "$password" | saslpasswd2 -p -c "catch-all"
+  echo "$password" | saslpasswd2 -p -c -u "" "catch-all"
   usermod -a -G sasl postfix
   chown root:sasl /etc/sasldb2
   chmod 640 /etc/sasldb2
