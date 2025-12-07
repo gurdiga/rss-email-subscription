@@ -769,6 +769,44 @@ describe('API', () => {
         return await post(path, request);
       }
     });
+
+    describe('Delete account with password', () => {
+      it('deletes the authenticated account and its storage', async () => {
+        const deleteAccountEmail = 'api-test-delete-account@feedsubscription.com';
+        const deleteAccountPassword = 'DeleteMe123!';
+        const deleteEmailAddress = makeTestEmailAddress(deleteAccountEmail);
+        const deleteAccountId = getAccountIdByEmail(deleteEmailAddress, appSettings.hashingSalt);
+        const accountStoragePath = makePath(dataDirRoot, getAccountStorageKey(deleteAccountId));
+
+        deleteAccount(deleteEmailAddress); // clean up leftovers from previous runs
+        await deauthenticationSend();
+
+        const { responseBody: registrationResponse } = await registrationSend(
+          planId,
+          deleteAccountEmail,
+          deleteAccountPassword
+        );
+        expect(registrationResponse).to.include({ kind: 'Success' }, 'registration failed for delete-account user');
+
+        const { responseBody: confirmationResponse } = await registrationConfirmationSend(deleteAccountEmail);
+        expect(confirmationResponse).to.include({ kind: 'Success' }, 'confirmation failed for delete-account user');
+
+        const { responseBody: authenticationResponse } = await authenticationSend(
+          deleteAccountEmail,
+          deleteAccountPassword
+        );
+        expect(authenticationResponse).to.include({ kind: 'Success' }, 'authentication failed for delete-account user');
+
+        const { responseBody: deletionResponse } = await post(getFullApiPath(ApiPath.deleteAccountWithPassword), {
+          password: deleteAccountPassword,
+        });
+        expect(deletionResponse).to.include({ kind: 'Success', message: 'Success' });
+        expect((deletionResponse as Success).responseData).to.deep.equal({});
+        expect(fileExists(accountStoragePath)).to.be.false;
+
+        await deauthenticationSend();
+      }).timeout(15000);
+    });
   });
 
   describe('Forgot password endpoints', () => {
