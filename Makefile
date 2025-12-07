@@ -252,10 +252,7 @@ start-logger: logger
 start-api: compile test build-website website app
 	export NODE_ENV="production"
 	docker compose --project-name res up --remove-orphans --force-recreate \
-		-- resolver logger website api > /dev/null &
-	sleep 1
-	docker compose --project-name res logs --follow --since 10s --timestamps &
-	wait
+		-- resolver logger website api
 
 start-website: build-website start-api
 
