@@ -27,6 +27,8 @@ configure_sasl() {
   chown root:sasl /etc/sasldb2
   chmod 640 /etc/sasldb2
   cp -f /etc/sasldb2 /var/spool/postfix/etc/sasldb2
+  chown root:sasl /var/spool/postfix/etc/sasldb2
+  chmod 640 /var/spool/postfix/etc/sasldb2
 
   postconf -e \
     'smtpd_sasl_auth_enable=yes' \
