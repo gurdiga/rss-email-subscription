@@ -15,6 +15,7 @@ x-app-env: &app-env
   SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
   STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY?}
   STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY?}
+  STRIPE_ENABLED: ${STRIPE_ENABLED?}
 
 x-disable-ipv6: &x-disable-ipv6
   sysctls:
@@ -211,7 +212,7 @@ services:
       - ./.tmp/logs:/var/log/syslog-ng
     <<: [*x-dns]
     healthcheck:
-      test: ["CMD-SHELL", "nc -z -w1 127.0.0.1 514"]
+      test: ['CMD-SHELL', 'nc -z -w1 127.0.0.1 514']
       interval: 5s
       timeout: 3s
       retries: 2
@@ -234,7 +235,7 @@ services:
         ipv4_address: 10.5.5.2
     <<: [*logging, *x-disable-ipv6]
     healthcheck:
-      test: ["CMD-SHELL", "pidof dnsmasq >/dev/null"]
+      test: ['CMD-SHELL', 'pidof dnsmasq >/dev/null']
       interval: 5s
       timeout: 3s
       retries: 2

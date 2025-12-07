@@ -461,20 +461,22 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
-  if (isSubscriptionPlan(account.planId)) {
+  if (isSubscriptionPlan(account.planId) && env.STRIPE_ENABLED === 'true') {
     const stripe = makeStripe(env.STRIPE_SECRET_KEY);
     const { email } = account;
     const subscription = await cancelCustomerSubscription(stripe, email);
 
     if (isErr(subscription)) {
-      logError(si`Failed to ${cancelCustomerSubscription.name}`, { reason: subscription.reason, email: email.value });
-      return makeAppError();
+      logWarning(si`Skipping Stripe cancellation for account deletion`, {
+        reason: subscription.reason,
+        email: email.value,
+      });
+    } else {
+      logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, {
+        email: email.value,
+        subscriptionId: subscription.id,
+      });
     }
-
-    logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, {
-      email: email.value,
-      subscriptionId: subscription.id,
-    });
   }
 
   const isDemoAccount = isDemoSession(reqSession);

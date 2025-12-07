@@ -17,6 +17,7 @@ export interface AppEnv {
   SMTP_CONNECTION_STRING: string;
   STRIPE_PUBLISHABLE_KEY: string;
   STRIPE_SECRET_KEY: string;
+  STRIPE_ENABLED: string;
 }
 
 export function initApp(): App {
@@ -27,6 +28,7 @@ export function initApp(): App {
     'SMTP_CONNECTION_STRING',
     'STRIPE_PUBLISHABLE_KEY',
     'STRIPE_SECRET_KEY',
+    'STRIPE_ENABLED',
   ]);
 
   if (isErr(env)) {
