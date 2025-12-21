@@ -33,9 +33,11 @@
     "src/api/web-ui-scripts/**": true
   },
   "files.associations": {
-    "tsconfig.*.json": "jsonc"
+    "tsconfig.*.json": "jsonc",
+    "**/crontab": "plaintext"
   },
   "cSpell.enabledFileTypes": {
     "makefile": false
-  }
+  },
+  "shellcheck.exclude": ["**/crontab"]
 }
