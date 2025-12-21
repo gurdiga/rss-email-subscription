@@ -189,14 +189,8 @@ services:
       - ./website/html:/var/www/certbot
     entrypoint: >-
       /bin/sh -c '
-        trap exit TERM;
-        trap "certbot renew" HUP;
-        while :; do
-          date;
-          certbot --version;
-          certbot renew;
-          sleep 7d & wait $${!};
-        done;
+        certbot --version;
+        exec crond -f -d 8;
       '
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
