@@ -6,3 +6,4 @@ website/html/
 dist/
 .goaccess/
 bot-list.txt
+.claude/settings.local.json
