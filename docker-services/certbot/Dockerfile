@@ -5,5 +5,5 @@ RUN apk add --no-cache --upgrade \
     'busybox=1.36.1-r31' \
     'openssl=3.3.5-r0'
 RUN python -m pip install --no-cache-dir 'pip==25.3'
-COPY crontab /etc/crontabs/root
+COPY docker-services/certbot/crontab /etc/crontabs/root
 RUN chmod 600 /etc/crontabs/root
