@@ -622,12 +622,13 @@ RCLONE_CONFIG=~/.config/rclone/rclone.conf
 
 # cron 50 23 * * * cd
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
-	@REMOTE="gdrive-res:/RES-backups"
-	DATA_DESTINATION="$$REMOTE/`date +%F-%H-%M-%S`"
+	@source .env
+	RCLONE_PATH="$$RCLONE_REMOTE:/RES-backups"
+	DATA_DESTINATION="$$RCLONE_PATH/`date +%F-%H-%M-%S`"
 	DATA_ARCHIVE="./data.tgz"
 	DATA_DIR=".tmp/docker-data"
 	LOGS_DIR=".tmp/logs/feedsubscription"
-	LOGS_DESTINATION="$$REMOTE/logs"
+	LOGS_DESTINATION="$$RCLONE_PATH/logs"
 
 	function upload_data() {
 		echo ""
@@ -674,10 +675,11 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	rm $$DATA_ARCHIVE
 
 backup-purge:
-	@rclone lsf gdrive-res:RES-backups |
+	@source .env
+	rclone lsf $$RCLONE_REMOTE:/RES-backups |
 	sort |
 	head --lines=-31 | # exlude last 31 days
-	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge gdrive-res:RES-backups/{} 2>&1" > backup-purge.log
+	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_REMOTE:RES-backups/{} 2>&1" > backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"
