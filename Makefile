@@ -635,16 +635,14 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		echo "--- upload_data ---"
 		echo ""
 
-		tar -czf $$DATA_ARCHIVE $$DATA_DIR
+		tar -czf $$DATA_ARCHIVE --exclude='sessions' $$DATA_DIR
 		du -sh $$DATA_DIR $$DATA_ARCHIVE
 
 		rclone \
 			--local-no-check-updated \
 			--stats=0 \
 			--verbose \
-			copy $$DATA_ARCHIVE $$DATA_DESTINATION \
-			--exclude=postfix/** \
-			--exclude=sessions/**
+			copy $$DATA_ARCHIVE $$DATA_DESTINATION
 	}
 
 	function upload_logs() {
