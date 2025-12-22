@@ -623,7 +623,6 @@ RCLONE_CONFIG=~/.config/rclone/rclone.conf
 # cron 50 23 * * * cd
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@source .env
-	RCLONE_PATH="$$RCLONE_REMOTE:/RES-backups"
 	DATA_DESTINATION="$$RCLONE_PATH/`date +%F-%H-%M-%S`"
 	DATA_ARCHIVE="./data.tgz"
 	DATA_DIR=".tmp/docker-data"
@@ -674,10 +673,10 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 
 backup-purge:
 	@source .env
-	rclone lsf $$RCLONE_REMOTE:/RES-backups |
+	rclone lsf $$RCLONE_PATH |
 	sort |
 	head --lines=-31 | # exlude last 31 days
-	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_REMOTE:RES-backups/{} 2>&1" > backup-purge.log
+	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_PATH/{} 2>&1" > backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"
