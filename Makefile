@@ -1146,19 +1146,37 @@ resolver-hosts:
 # cron @daily
 open-ports-report:
 	@: quiet
-	netstat -tnlp |
-	sort |
-	tee >(
-		grep '^tcp' |
-		wc -l | ts "
-		total:"
-	) |
-	cat <(
-		echo "Subject: RES open-ports-report"
-		echo "From: RES <system@feedsubscription.com>"
-		echo ""
-	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	report_dir=.tmp/open-ports-report
+	last_report=$$report_dir/last
+	current_report=$$report_dir/current
+
+	mkdir -p $$report_dir
+
+	report_body=$$(
+		netstat -tnlp |
+		sort |
+		tee >(
+			grep '^tcp' |
+			wc -l | ts "
+			total:"
+		)
+	)
+
+	printf '%s\n' "$$report_body" > $$current_report
+
+	if [ -t 1 ]; then
+		cat $$current_report
+	else
+		if [ ! -f $$last_report ] || ! cmp -s $$current_report $$last_report; then
+			cat <(
+				echo "Subject: RES open-ports-report"
+				echo "From: RES <system@feedsubscription.com>"
+				echo ""
+			) $$current_report | ssmtp gurdiga@gmail.com
+		fi
+	fi
+
+	cp $$current_report $$last_report
 
 compare-subscription-form-bundle-after-esbundle-update:
 	@(
