@@ -19,6 +19,10 @@
     "url": "https://github.com/gurdiga/rss-email-subscription.git"
   },
   "license": "",
+  "overrides": {
+    "glob": "^11.1.0"
+  },
+  "comment:overrides": "glob: Fix CVE-2025-64756 (OS Command Injection) in mocha's transitive dependency",
   "devDependencies": {
     "@types/chai": "^5.2.2",
     "@types/cookie": "^0.6.0",
