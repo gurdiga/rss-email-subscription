@@ -8,7 +8,8 @@ RUN apk update --no-cache \
     'expat=2.7.3-r0' \
     'sqlite=3.48.0-r4' \
     'py3-pip=24.3.1-r0' \
-    'busybox=1.37.0-r14'
+    'busybox=1.37.0-r14' \
+    'c-ares=1.34.6-r0'
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     'pip==25.3' \
