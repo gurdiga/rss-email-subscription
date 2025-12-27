@@ -51,9 +51,6 @@ services:
       POSTFIX_virtual_alias_maps: 'texthash:/etc/postfix/virtual'
 
       POSTFIX_transport_maps: 'texthash:/etc/postfix/transport'
-      # fragile destinations
-      POSTFIX_fragile_destination_concurrency_limit: 1
-      POSTFIX_fragile_destination_rate_delay: 2s
 
     <<: [*logging, *x-disable-ipv6, *x-dns]
     healthcheck:
