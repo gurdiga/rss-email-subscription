@@ -6,7 +6,7 @@ RUN apk update --no-cache \
 
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
     'pip==25.3' \
-    'setuptools==81.0.0'
+    'setuptools==80.9.0'
 
 COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/transport /etc/postfix/transport
