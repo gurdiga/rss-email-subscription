@@ -1205,7 +1205,7 @@ define include_log_to
 	export -f log_to
 endef
 
-# cron @monthly
+# 50 23 28 * * # not using @monthly because I need it to complete before backup begins
 archive-old-deliveries:
 	@set -euo pipefail
 
