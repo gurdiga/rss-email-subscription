@@ -282,6 +282,7 @@ reload-website:
 	) - \
 	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+# cron @weekly
 restart-smtp-in:
 	@docker restart smtp-in | \
 	cat <( \
@@ -620,7 +621,7 @@ build-website:
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.config/rclone/rclone.conf
 
-# cron 50 23 * * * cd
+# cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@source .env
 	DATA_DESTINATION="$$RCLONE_PATH/`date +%F-%H-%M-%S`"
@@ -671,6 +672,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 
 	rm $$DATA_ARCHIVE
 
+# cron @daily
 backup-purge:
 	@source .env
 	rclone lsf $$RCLONE_PATH |
@@ -1143,7 +1145,7 @@ resolver-hosts:
 		sed "s/$$/\t"$$domain"/"
 	done
 
-# cron @daily
+# cron @weekly
 open-ports-report:
 	@: quiet
 	report_dir=.tmp/open-ports-report
