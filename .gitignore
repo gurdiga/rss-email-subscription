@@ -7,3 +7,6 @@ dist/
 .goaccess/
 bot-list.txt
 .claude/settings.local.json
+
+# This is for prod only, where backup is run from a cron job with HOME=~/src/rss-email-subscription
+.rclone.conf

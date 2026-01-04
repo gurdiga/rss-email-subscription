@@ -619,7 +619,7 @@ build-website:
 	rsync -avz --delete-after ../feedsubscription.com/dist/ website/html/
 
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
-RCLONE_CONFIG=~/.config/rclone/rclone.conf
+RCLONE_CONFIG=~/.rclone.conf
 
 # cron @daily
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
