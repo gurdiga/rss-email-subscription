@@ -683,7 +683,10 @@ backup-purge:
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
-	) backup-purge.log |
+	) <(
+		cat backup-purge.log |
+		ifne -n echo '(empty)'
+	) |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 ${RCLONE_BINARY}:
