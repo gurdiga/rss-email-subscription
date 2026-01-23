@@ -155,10 +155,14 @@ app:
 	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
 delmon: app
+	@$(call include_log_to)
+
+	set -euo pipefail
 	docker build \
 		--progress=plain \
 		--tag delmon \
-		docker-services/delmon
+		docker-services/delmon |&
+	log_to .tmp/logs/feedsubscription/docker-build-delmon.log
 
 # This is targeted after the log rotation in logger, which happens around 01:02, but sometimes later
 delmon-restart:
@@ -171,16 +175,24 @@ delmon-restart:
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
 logger:
+	@$(call include_log_to)
+
+	set -euo pipefail
 	docker build \
 		--progress=plain \
 		--tag logger \
-		docker-services/logger
+		docker-services/logger |&
+	log_to .tmp/logs/feedsubscription/docker-build-logger.log
 
 resolver:
+	@$(call include_log_to)
+
+	set -euo pipefail
 	docker build \
 		--progress=plain \
 		--tag resolver \
-		docker-services/resolver
+		docker-services/resolver |&
+	log_to .tmp/logs/feedsubscription/docker-build-resolver.log
 
 resolver-check:
 	@set -euo pipefail
@@ -214,12 +226,19 @@ logger-list-packages:
 	grep -P "^(syslog-ng|logrotate|tini)-\d"
 
 smtp-out:
+	@$(call include_log_to)
+
+	set -euo pipefail
 	docker build \
 		--progress=plain \
 		--tag smtp-out \
-		docker-services/smtp-out
+		docker-services/smtp-out |&
+	log_to .tmp/logs/feedsubscription/docker-build-smtp-out.log
 
 smtp-in:
+	@$(call include_log_to)
+
+	set -euo pipefail
 	set -a
 	source .env
 	set +a
@@ -227,7 +246,8 @@ smtp-in:
 		--secret id=SMTP_IN_SASL_PASSWORD \
 		--progress=plain \
 		--tag smtp-in \
-		docker-services/smtp-in
+		docker-services/smtp-in |&
+	log_to .tmp/logs/feedsubscription/docker-build-smtp-in.log
 
 # cron @reboot
 start:
