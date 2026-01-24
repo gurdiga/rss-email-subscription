@@ -496,7 +496,7 @@ watch-smtp-out:
 
 			fi
 		) |
-		if [ -t 1 ]; then cat; else sleep 1m; ifne ssmtp gurdiga@gmail.com; fi
+		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 	done \
 	& disown
 
