@@ -10,19 +10,21 @@ yahoo.fr  yahoo-throttle:
 
 bigpond.com  yahoo-throttle:
 
-hotmail.com         ms-throttle:
-hotmail.co.uk       ms-throttle:
-hotmail.es          ms-throttle:
-hotmail.fr          ms-throttle:
-hotmail.nl          ms-throttle:
-outlook.com         ms-throttle:
-outlook.dk          ms-throttle:
-live.ca             ms-throttle:
-live.co.uk          ms-throttle:
-live.com            ms-throttle:
-live.de             ms-throttle:
-live.fr             ms-throttle:
-live.nl             ms-throttle:
-msn.com             ms-throttle:
+# TODO: Temporary hold (2026-01-29). Revert to ms-throttle: after ~1 week.
+#       To resume: change hold: -> ms-throttle:, restart, run: postsuper -H ALL
+hotmail.com         hold:
+hotmail.co.uk       hold:
+hotmail.es          hold:
+hotmail.fr          hold:
+hotmail.nl          hold:
+outlook.com         hold:
+outlook.dk          hold:
+live.ca             hold:
+live.co.uk          hold:
+live.com            hold:
+live.de             hold:
+live.fr             hold:
+live.nl             hold:
+msn.com             hold:
 
 comcast.net             comcast-throttle:
