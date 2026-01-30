@@ -697,7 +697,7 @@ backup-purge:
 	@source .env
 	rclone lsf $$RCLONE_PATH |
 	sort |
-	head --lines=-31 | # exlude last 31 days
+	head --lines=-14 | # exlude last 14 days
 	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_PATH/{} 2>&1" > backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
