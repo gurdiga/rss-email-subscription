@@ -24,7 +24,7 @@ configure_tls() {
   postconf -e \
     "smtpd_tls_cert_file=${cert}" \
     "smtpd_tls_key_file=${key}" \
-    'smtpd_use_tls=yes'
+    'smtpd_use_tls=no'
 }
 
 configure_opendkim() {
