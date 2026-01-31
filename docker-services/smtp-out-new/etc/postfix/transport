@@ -1,0 +1,30 @@
+# grep -Po '(?<="emailAddress": ")[^"]+' .tmp/docker-data/accounts/*/feeds/*/emails.json | grep -Po "yahoo\..+" | sort -
+yahoo.ca  yahoo-throttle:
+yahoo.co.uk  yahoo-throttle:
+yahoo.com  yahoo-throttle:
+yahoo.com.au  yahoo-throttle:
+yahoo.com.br  yahoo-throttle:
+yahoo.de  yahoo-throttle:
+yahoo.es  yahoo-throttle:
+yahoo.fr  yahoo-throttle:
+
+bigpond.com  yahoo-throttle:
+
+# TODO: Temporary hold (2026-01-29). Revert to ms-throttle: after ~1 week.
+#       To resume: change hold: -> ms-throttle:, restart, run: postsuper -H ALL
+hotmail.com         hold:
+hotmail.co.uk       hold:
+hotmail.es          hold:
+hotmail.fr          hold:
+hotmail.nl          hold:
+outlook.com         hold:
+outlook.dk          hold:
+live.ca             hold:
+live.co.uk          hold:
+live.com            hold:
+live.de             hold:
+live.fr             hold:
+live.nl             hold:
+msn.com             hold:
+
+comcast.net             comcast-throttle:

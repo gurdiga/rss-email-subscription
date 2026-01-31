@@ -59,6 +59,31 @@ services:
       net:
         ipv4_address: 10.5.5.9
 
+  smtp-out-new:
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
+    container_name: smtp-out-new
+    hostname: smtp-out-new
+    image: smtp-out-new
+    restart: always
+    ports: ['127.0.0.1:1588:587']
+    volumes:
+      - ./.tmp/opendkim-keys:/etc/opendkim/keys
+      - ./.tmp/postfix-queue-new:/var/spool/postfix
+      - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
+      - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
+    environment:
+      TZ: UTC
+    <<: [*logging, *x-disable-ipv6, *x-dns]
+    healthcheck:
+      disable: true
+    networks:
+      net:
+        ipv4_address: 10.5.5.10
+
   smtp-in:
     depends_on:
       logger:

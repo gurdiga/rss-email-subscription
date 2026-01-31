@@ -143,6 +143,152 @@ lint-require-strict-interpolation:
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
+smtp-out-new-config-test:
+	@echo "Building smtp-out-new container..."
+	docker build -t smtp-out-new-test docker-services/smtp-out-new/
+
+	@echo "Validating Postfix configuration..."
+	@docker run --rm --entrypoint /bin/bash smtp-out-new-test -c " \
+		set -euo pipefail; \
+		cat /etc/postfix/main.cf.override >> /etc/postfix/main.cf; \
+		postconf -n 2>&1 | grep -iE 'error|fatal|warning' | grep -v 'warning: SASL' || true; \
+		if postfix check 2>&1 | grep -iE 'error|fatal|warning' | grep -v 'warning: SASL'; then \
+			echo '❌ Configuration validation FAILED'; \
+			exit 1; \
+		else \
+			echo '✅ Configuration validation PASSED'; \
+			exit 0; \
+		fi \
+	"
+
+smtp-out-new-smoke-test:
+	@container=$${CONTAINER:-smtp-out-new}; \
+	echo "=== SMTP-OUT SMOKE TEST: $$container ==="; \
+	echo ""; \
+	failed=0; \
+	\
+	echo -n "✓ Container running... "; \
+	if docker ps --filter "name=$$container" --format "{{.Names}}" | grep -q "^$$container$$"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ Postfix master process... "; \
+	if docker exec $$container pgrep -x master > /dev/null; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ OpenDKIM process... "; \
+	if docker exec $$container pgrep -x opendkim > /dev/null; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ OpenDKIM milter socket (8891)... "; \
+	if docker exec $$container netstat -tln | grep -q ":8891"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	port=$${PORT:-1588}; \
+	echo -n "✓ Port 587 accessible... "; \
+	if timeout 2 bash -c "echo 'QUIT' | nc -w 1 localhost $$port" 2>/dev/null | grep -q "220"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ TLS configured... "; \
+	if docker exec $$container postconf smtpd_use_tls | grep -q "= yes"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ IPv4 preference... "; \
+	if docker exec $$container postconf smtp_address_preference | grep -q "= ipv4"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ Hostname (feedsubscription.com)... "; \
+	if docker exec $$container postconf myhostname | grep -q "= feedsubscription.com"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ Virtual alias domains... "; \
+	if docker exec $$container postconf virtual_alias_domains | grep -q "= feedsubscription.com"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ Transport maps... "; \
+	if docker exec $$container postconf transport_maps | grep -q "texthash:/etc/postfix/transport"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ DKIM milter configured... "; \
+	if docker exec $$container postconf smtpd_milters | grep -q "inet:127.0.0.1:8891"; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ Queue directory writable... "; \
+	if docker exec $$container test -w /var/spool/postfix/queue; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo -n "✓ No errors in logs since boot... "; \
+	if docker logs $$container 2>&1 | grep -iE "error|fatal|crit" | grep -vE "warning: SASL|Permission denied" > /dev/null; then \
+		echo "FAIL (errors found in logs)"; \
+		failed=$$((failed + 1)); \
+	else \
+		echo "PASS"; \
+	fi; \
+	\
+	echo -n "✓ DKIM selector (mail)... "; \
+	if docker exec $$container grep -q "^Selector.*mail" /etc/opendkim/opendkim.conf; then \
+		echo "PASS"; \
+	else \
+		echo "FAIL"; \
+		failed=$$((failed + 1)); \
+	fi; \
+	\
+	echo ""; \
+	if [ $$failed -eq 0 ]; then \
+		echo "=== ✅ ALL TESTS PASSED ==="; \
+		exit 0; \
+	else \
+		echo "=== ❌ $$failed TEST(S) FAILED ==="; \
+		exit 1; \
+	fi
+
 app:
 	@$(call include_log_to)
 
@@ -234,6 +380,16 @@ smtp-out:
 		--tag smtp-out \
 		docker-services/smtp-out |&
 	log_to .tmp/logs/feedsubscription/docker-build-smtp-out.log
+
+smtp-out-new:
+	@$(call include_log_to)
+
+	set -euo pipefail
+	docker build \
+		--progress=plain \
+		--tag smtp-out-new \
+		docker-services/smtp-out-new |&
+	log_to .tmp/logs/feedsubscription/docker-build-smtp-out-new.log
 
 smtp-in:
 	@$(call include_log_to)
