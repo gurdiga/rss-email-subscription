@@ -618,7 +618,7 @@ watch-website:
 
 # cron @reboot
 watch-smtp-out:
-	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out-new.log |
 	grep --line-buffered -E \
 			-e '(warning|error|fatal|panic|reject):' \
 			-e ' POSTFIX STARTING UP ' \
@@ -627,7 +627,7 @@ watch-smtp-out:
 		|
 	while read -r timestamp rest; do
 		(
-			echo "Subject: RES smtp-out $$timestamp"
+			echo "Subject: RES smtp-out-new $$timestamp"
 			echo "From: RES <system@feedsubscription.com>"
 			echo ""
 			echo "$$rest"
@@ -639,10 +639,10 @@ watch-smtp-out:
 				domain=$${BASH_REMATCH[1]}
 
 				echo "--- DEBUG: A record from inside container"
-				docker exec smtp-out nslookup "$$domain"
+				docker exec smtp-out-new nslookup "$$domain"
 
 				echo "--- DEBUG: MX record from inside container"
-				docker exec smtp-out nslookup -query=mx "$$domain"
+				docker exec smtp-out-new nslookup -query=mx "$$domain"
 
 				echo "--- DEBUG: A record from host"
 				nslookup "$$domain"
@@ -713,7 +713,7 @@ delmon-catch-up:
 
 	ls -1 $$DATA_DIR_ROOT/qid-index/ |
 	while read qid; do
-		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
+		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out-new.log
 	done |
 	tee /dev/stderr | # so that I can see that something is happening
 	docker exec --interactive delmon node dist/app/delivery-monitoring
@@ -751,7 +751,7 @@ delivery-report:
 	export -f send_report
 
 	( \
-		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
+		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out-new.log \
 		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
