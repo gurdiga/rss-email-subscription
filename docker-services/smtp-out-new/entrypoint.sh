@@ -11,7 +11,21 @@ apply_postfix_overrides() {
   [ -f "$override" ] || fail "main.cf.override not found at ${override}"
 
   log "Applying main.cf.override"
-  cat "$override" >> /etc/postfix/main.cf
+
+  # Use postconf to set values in-place instead of appending
+  # This avoids "overriding earlier entry" warnings
+  postconf -e \
+    "myhostname=feedsubscription.com" \
+    "mydestination=localhost" \
+    "maillog_file=/dev/stdout" \
+    "smtp_address_preference=ipv4" \
+    "mynetworks=127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16" \
+    "notify_classes=bounce,resource,software" \
+    "message_size_limit=10485760" \
+    "virtual_alias_domains=feedsubscription.com" \
+    "virtual_alias_maps=texthash:/etc/postfix/virtual" \
+    "transport_maps=texthash:/etc/postfix/transport" \
+    "smtpd_tls_security_level=none"
 }
 
 configure_tls() {
