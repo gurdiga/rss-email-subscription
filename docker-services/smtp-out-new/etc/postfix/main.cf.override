@@ -15,3 +15,6 @@ message_size_limit = 10485760
 virtual_alias_domains = feedsubscription.com
 virtual_alias_maps = texthash:/etc/postfix/virtual
 transport_maps = texthash:/etc/postfix/transport
+
+# TLS settings (disabled for internal relay)
+smtpd_tls_security_level = none
