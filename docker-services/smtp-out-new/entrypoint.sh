@@ -61,7 +61,7 @@ main() {
   # Apply main.cf.override
   apply_postfix_overrides
 
-  configure_tls
+  # configure_tls  # Disabled: not needed for internal relay
   configure_opendkim
 
   log "Starting postfix in foreground"
