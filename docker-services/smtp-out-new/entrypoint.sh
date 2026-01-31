@@ -6,14 +6,9 @@ fail() { log "ERROR: $*"; exit 1; }
 
 DOMAIN="${POSTFIX_myhostname:-feedsubscription.com}"
 
-apply_postfix_overrides() {
-  local override="/etc/postfix/main.cf.override"
-  [ -f "$override" ] || fail "main.cf.override not found at ${override}"
+apply_postfix_config() {
+  log "Applying Postfix configuration"
 
-  log "Applying main.cf.override"
-
-  # Use postconf to set values in-place instead of appending
-  # This avoids "overriding earlier entry" warnings
   postconf -e \
     "myhostname=feedsubscription.com" \
     "mydestination=localhost" \
@@ -72,8 +67,7 @@ main() {
   cp -f /etc/hosts /var/spool/postfix/etc/hosts
   cp -f /etc/nsswitch.conf /var/spool/postfix/etc/nsswitch.conf
 
-  # Apply main.cf.override
-  apply_postfix_overrides
+  apply_postfix_config
 
   # configure_tls  # Disabled: not needed for internal relay
   configure_opendkim

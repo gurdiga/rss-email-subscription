@@ -24,7 +24,6 @@ RUN mkdir -p \
 COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/transport /etc/postfix/transport
 COPY etc/postfix/master.cf /etc/postfix/master.cf
-COPY etc/postfix/main.cf.override /etc/postfix/main.cf.override
 COPY etc/opendkim/opendkim.conf /etc/opendkim/opendkim.conf
 COPY etc/opendkim/KeyTable /etc/opendkim/KeyTable
 COPY etc/opendkim/SigningTable /etc/opendkim/SigningTable
