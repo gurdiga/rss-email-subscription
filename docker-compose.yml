@@ -73,8 +73,6 @@ services:
     volumes:
       - ./.tmp/opendkim-keys:/etc/opendkim/keys
       - ./.tmp/postfix-queue-new:/var/spool/postfix
-      - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
-      - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
     environment:
       TZ: UTC
     <<: [*logging, *x-disable-ipv6, *x-dns]

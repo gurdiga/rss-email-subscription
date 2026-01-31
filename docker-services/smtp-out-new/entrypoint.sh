@@ -23,19 +23,6 @@ apply_postfix_config() {
     "smtpd_tls_security_level=none"
 }
 
-configure_tls() {
-  local cert="/etc/postfix/cert/smtp.cert"
-  local key="/etc/postfix/cert/smtp.key"
-  [ -f "$cert" ] || fail "TLS cert not found at ${cert}"
-  [ -f "$key" ] || fail "TLS key not found at ${key}"
-
-  log "Configuring TLS with ${cert}"
-  postconf -e \
-    "smtpd_tls_cert_file=${cert}" \
-    "smtpd_tls_key_file=${key}" \
-    'smtpd_use_tls=no'
-}
-
 configure_opendkim() {
   # IMPORTANT: Keys are mounted as flat files, not in subdirectories
   # Mount layout: /etc/opendkim/keys/feedsubscription.com.private
@@ -68,8 +55,6 @@ main() {
   cp -f /etc/nsswitch.conf /var/spool/postfix/etc/nsswitch.conf
 
   apply_postfix_config
-
-  # configure_tls  # Disabled: not needed for internal relay
   configure_opendkim
 
   log "Starting postfix in foreground"
