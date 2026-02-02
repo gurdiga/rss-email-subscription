@@ -601,7 +601,7 @@ watch-website:
 	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referrer rest; do
 		(
 			echo "Subject: RES website error-log"
-			echo "From: watch-website@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo "From: system@feedsubscription.com"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
 			echo ""
 			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
