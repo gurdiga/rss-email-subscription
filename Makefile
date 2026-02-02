@@ -625,6 +625,7 @@ watch-smtp-out:
 			-e ' INFO (stopped|spawned): ' \
 			-e ' (WARN|CRIT|ERR) ' \
 		|
+	grep --line-buffered -v 'from=<system@feedsubscription\.com>' |
 	while read -r timestamp rest; do
 		(
 			echo "Subject: RES smtp-out-new $$timestamp"
