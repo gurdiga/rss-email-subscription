@@ -71,7 +71,7 @@ services:
     restart: always
     ports: ['127.0.0.1:1588:587']
     volumes:
-      - ./.tmp/opendkim-keys:/etc/opendkim/keys
+      - ./.tmp/opendkim-keys:/mnt/opendkim-keys:ro
       - ./.tmp/postfix-queue-new:/var/spool/postfix
     environment:
       TZ: UTC

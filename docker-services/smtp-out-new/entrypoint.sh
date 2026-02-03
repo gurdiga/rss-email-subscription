@@ -24,10 +24,15 @@ apply_postfix_config() {
 }
 
 configure_opendkim() {
-  # IMPORTANT: Keys are mounted as flat files, not in subdirectories
-  # Mount layout: /etc/opendkim/keys/feedsubscription.com.private
-  local key="/etc/opendkim/keys/${DOMAIN}.private"
-  [ -f "$key" ] || fail "DKIM key not found for ${DOMAIN} at ${key}"
+  local source_dir="/mnt/opendkim-keys"
+  local dest_dir="/etc/opendkim/keys"
+  local key="${dest_dir}/${DOMAIN}.private"
+
+  [ -f "${source_dir}/${DOMAIN}.private" ] || fail "DKIM key not found at ${source_dir}/${DOMAIN}.private"
+
+  mkdir -p "${dest_dir}"
+  log "Copying DKIM keys from ${source_dir} to ${dest_dir}"
+  cp "${source_dir}/${DOMAIN}.private" "${dest_dir}/"
 
   chown opendkim:opendkim "$key"
   chmod 600 "$key"
