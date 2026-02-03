@@ -29,3 +29,25 @@ capture full failure output.
 
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
+
+## SSH Connections to Production
+
+When operating on prod (feedsubscription.com), always use persistent SSH connections via ControlMaster to improve performance and reduce authentication overhead.
+
+### Setup
+
+Establish a master connection:
+
+```bash
+ssh -M -S ~/.ssh/control-feedsubscription -o ControlPersist=10m -fN feedsubscription.com
+```
+
+### Usage
+
+Use the persistent connection for subsequent commands:
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com <command>
+```
+
+The connection persists for 10 minutes after last use.
