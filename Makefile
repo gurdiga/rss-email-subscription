@@ -352,7 +352,7 @@ watch-resolver:
 	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/resolver.log |
 	grep --line-buffered -E \
 			-e ' (exiting|started,|using|read) ' \
-			-e ' is NODATA-' \
+			-e ' is NODATA-IPv4' \
 	|
 	while read -r timestamp _skip_namespace _skip_container_name_and_id _skip_process_name record; do
 		(
