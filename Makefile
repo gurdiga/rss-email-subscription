@@ -866,6 +866,70 @@ backup-purge:
 	) |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 
+# cron @daily
+backup-purge-gfs:
+	@source .env
+
+	# GFS (Grandfather-Father-Son) rotation:
+	# - Sons (daily): Keep last 7 days
+	# - Fathers (weekly): Keep 4 weekly backups (Sundays)
+	# - Grandfathers (monthly): Keep 12 monthly backups (first of month)
+
+	function determine_keep() {
+		local backup_date=$$1
+		local today=`date +%s`
+		local backup_ts=`date -d "$${backup_date:0:10}" +%s 2>/dev/null || echo 0`
+		local days_old=$$(( (today - backup_ts) / 86400 ))
+
+		# Keep if within last 7 days (Son)
+		if [ $$days_old -le 7 ]; then
+			echo "keep-daily"
+			return
+		fi
+
+		# Keep if it's a Sunday and within 4 weeks (Father)
+		local dow=`date -d "$${backup_date:0:10}" +%u 2>/dev/null || echo 0`
+		if [ $$dow -eq 7 ] && [ $$days_old -le 28 ]; then
+			echo "keep-weekly"
+			return
+		fi
+
+		# Keep if it's the 1st of month and within 12 months (Grandfather)
+		local dom=`date -d "$${backup_date:0:10}" +%d 2>/dev/null || echo 0`
+		if [ $$dom -eq 01 ] && [ $$days_old -le 365 ]; then
+			echo "keep-monthly"
+			return
+		fi
+
+		echo "delete"
+	}
+
+	export -f determine_keep
+
+	rclone lsf $$RCLONE_PATH |
+	sort |
+	while read backup; do
+		backup_clean=$${backup%/}
+		status=`determine_keep $$backup_clean`
+
+		if [ "$$status" = "delete" ]; then
+			echo "DELETE: $$backup_clean"
+			rclone purge "$$RCLONE_PATH/$$backup_clean" 2>&1 || echo "  ERROR purging $$backup_clean"
+		else
+			echo "KEEP ($$status): $$backup_clean"
+		fi
+	done > backup-purge-gfs.log
+
+	cat <(
+		echo "Subject: RES backup-purge-gfs"
+		echo "From: RES <system@feedsubscription.com>"
+		echo ""
+	) <(
+		cat backup-purge-gfs.log |
+		ifne -n echo '(empty)'
+	) |
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 ${RCLONE_BINARY}:
 	curl https://rclone.org/install.sh | sudo bash
 
