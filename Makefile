@@ -907,6 +907,7 @@ backup-purge-gfs:
 	export -f determine_keep
 
 	rclone lsf $$RCLONE_PATH |
+	grep -v '^logs/' |
 	sort |
 	while read backup; do
 		backup_clean=$${backup%/}
