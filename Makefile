@@ -917,7 +917,7 @@ backup-purge-gfs:
 			echo "DELETE: $$backup_clean"
 			rclone purge "$$RCLONE_PATH/$$backup_clean" 2>&1 || echo "  ERROR purging $$backup_clean"
 		else
-			echo "KEEP ($$status): $$backup_clean"
+			# echo "KEEP ($$status): $$backup_clean"
 		fi
 	done > backup-purge-gfs.log
 
