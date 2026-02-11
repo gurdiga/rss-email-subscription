@@ -109,7 +109,6 @@ main() {
   start_postgrey
   configure_postsrsd
   configure_opendkim
-  configure_opendkim
 
   log "Starting postfix in foreground"
   exec postfix start-fg
