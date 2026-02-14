@@ -62,7 +62,7 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
   }
 
   if (isAccountNotFound(account)) {
-    logError('Account not found', { accountId: accountId.value });
+    logError('Account not found', { accountId: accountId.value, email: request.email });
     return makeInputError<keyof PasswordResetRequest>('We don’t have an account registered with this email', 'email');
   }
 
