@@ -58,7 +58,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
         break;
       }
       case 'NotAuthenticatedError': {
-        logWarning(si`${action} not authenticated`, { durationMs });
+        logWarning(si`${action} not authenticated`, { durationMs, reqBody });
         res.status(401).send(result);
         break;
       }
