@@ -98,6 +98,8 @@ function ensureSrcProtocol(image: Element, itemLink: URL): void {
 
   if (src?.startsWith('//')) {
     image.attribs['src'] = itemLink.protocol + src;
+  } else if (src?.startsWith('/')) {
+    image.attribs['src'] = itemLink.origin + src;
   }
 }
 

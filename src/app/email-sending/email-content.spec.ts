@@ -76,6 +76,13 @@ describe(preprocessContent.name, () => {
     expect(result).to.equal('<img src="https://example.com/image.png" style="max-width:100% !important">');
   });
 
+  it('makes root-relative src absolute', () => {
+    const html = '<img src="/articles/image.svg" />';
+    const result = preprocessContent(html, itemLink);
+
+    expect(result).to.equal('<img src="https://test.com/articles/image.svg" style="max-width:100% !important">');
+  });
+
   it('removes .MsoNormal from <p>s', () => {
     const html = '<p class="MsoNormal ok-class">Some text</p>';
     const result = preprocessContent(html, itemLink);
