@@ -855,13 +855,13 @@ backup-purge:
 	rclone lsf $$RCLONE_PATH |
 	sort |
 	head --lines=-21 | # exlude last N days
-	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_PATH/{} 2>&1" > backup-purge.log
+	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_PATH/{} 2>&1" > .tmp/logs/feedsubscription/backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) <(
-		cat backup-purge.log |
+		cat .tmp/logs/feedsubscription/backup-purge.log |
 		ifne -n echo '(empty)'
 	) |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
@@ -919,14 +919,14 @@ backup-purge-gfs:
 		else
 			# echo "KEEP ($$status): $$backup_clean"
 		fi
-	done > backup-purge-gfs.log
+	done > .tmp/logs/feedsubscription/backup-purge-gfs.log
 
 	cat <(
 		echo "Subject: RES backup-purge-gfs"
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) <(
-		cat backup-purge-gfs.log |
+		cat .tmp/logs/feedsubscription/backup-purge-gfs.log |
 		ifne -n echo '(empty)'
 	) |
 	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
