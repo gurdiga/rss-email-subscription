@@ -798,7 +798,7 @@ build-website:
 RCLONE_BINARY=$(shell which rclone || echo RCLONE_BINARY_NOT_FOUND)
 RCLONE_CONFIG=~/.rclone.conf
 
-# cron @daily
+# cron @weekly
 backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 	@source .env
 	DATA_DESTINATION="$$RCLONE_PATH/`date +%F-%H-%M-%S`"
