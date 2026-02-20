@@ -52,12 +52,17 @@ configure_tls() {
 }
 
 configure_opendkim() {
-  local key_dir="/var/db/dkim/${DOMAIN}"
-  local key="${key_dir}/default.private"
-  [ -f "$key" ] || fail "DKIM key not found for ${DOMAIN} at ${key}"
+  local source_dir="/mnt/opendkim-keys"
+  local dest_dir="/etc/opendkim/keys"
+  local key="${dest_dir}/${DOMAIN}.private"
 
-  sed -i 's/^Socket[[:space:]].*/Socket                  inet:8891@127.0.0.1/' /etc/opendkim.conf
-  chown -R opendkim:opendkim "$key_dir"
+  [ -f "${source_dir}/${DOMAIN}.private" ] || fail "DKIM key not found at ${source_dir}/${DOMAIN}.private"
+
+  mkdir -p "${dest_dir}"
+  log "Copying DKIM keys from ${source_dir} to ${dest_dir}"
+  cp "${source_dir}/${DOMAIN}.private" "${dest_dir}/"
+
+  chown opendkim:opendkim "$key"
   chmod 600 "$key"
 
   opendkim -x /etc/opendkim.conf
