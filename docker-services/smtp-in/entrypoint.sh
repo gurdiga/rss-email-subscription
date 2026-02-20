@@ -65,7 +65,7 @@ configure_opendkim() {
   chown opendkim:opendkim "$key"
   chmod 600 "$key"
 
-  opendkim -x /etc/opendkim.conf
+  opendkim -x /etc/opendkim/opendkim.conf
   sleep 0.5 # small buffer to let opendkim bind the milter socket
 
   postconf -e \
