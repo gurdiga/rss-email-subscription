@@ -33,6 +33,7 @@ awk -F'|' '{ print $2"|"$3"|"$4"|"$5"|"$6 }' "$CURRENT_FILE" | sort > "$CURRENT_
 while IFS= read -r line; do
   [[ "$line" =~ ^[[:space:]]*(#|$) ]] && continue
   read -r type name ttl pri data <<< "$line"
+  data="$(sed -E 's/ +#.*//' <<< "$data")"  # strip inline comments (space(s) + #)
   printf '%s|%s|%s|%s|%s\n' "$type" "$name" "$ttl" "$pri" "$data"
 done < "$CONFIG" | sort > "$DESIRED_KEYS"
 
@@ -47,12 +48,12 @@ fi
 echo "Pending changes:"
 if [[ -n "$to_add" ]]; then
   while IFS= read -r line; do
-    echo "  + $line"
+    echo "  CREATE: $line"
   done <<< "$to_add"
 fi
 if [[ -n "$to_delete" ]]; then
   while IFS= read -r line; do
-    echo "  - $line"
+    echo "  DELETE: $line"
   done <<< "$to_delete"
 fi
 echo

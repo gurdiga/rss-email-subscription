@@ -5,10 +5,11 @@
 # - PRIORITY is 0 for non-MX records
 # - DATA is everything after the 4th field (may contain spaces)
 # - Lines starting with # and blank lines are ignored
+# - Inline comments: append " # comment" (one or more spaces before #)
 
 # --- Hosting ---
 A       @                3600   0   207.154.253.211
-A       localhost        3600   0   207.154.253.211
+A       localhost        3600   0   207.154.253.211  # needed for Let's Encrypt HTTP-01 challenge
 CNAME   www              43200  0   @
 
 # --- Mail ---
