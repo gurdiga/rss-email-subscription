@@ -1,22 +1,23 @@
 # DNS records for feedsubscription.com
-# Managed via DigitalOcean. Apply changes with:
-#   doctl compute domain records create feedsubscription.com --record-type TXT --record-name foo --record-data "bar" --record-ttl 3600
-#   doctl compute domain records delete feedsubscription.com <ID>
-# List current records (with IDs):
-#   doctl compute domain records list feedsubscription.com
+# Edit this file and run `make dns-update` to apply changes.
+#
+# Format: TYPE NAME TTL PRIORITY DATA
+# - PRIORITY is 0 for non-MX records
+# - DATA is everything after the 4th field (may contain spaces)
+# - Lines starting with # and blank lines are ignored
 
 # --- Hosting ---
-A       @               207.154.253.211         TTL=3600
-A       localhost       207.154.253.211         TTL=3600
-CNAME   www             @                       TTL=43200
+A       @                3600   0   207.154.253.211
+A       localhost        3600   0   207.154.253.211
+CNAME   www              43200  0   @
 
 # --- Mail ---
-MX      @               @                       priority=10  TTL=3600
+MX      @                3600   10  @
 
 # --- Email authentication ---
-TXT     @               v=spf1 mx include:spf.protection.outlook.com include:ppe-hosted.com -all   TTL=3600
-TXT     mail._domainkey v=DKIM1; h=sha256; k=rsa; s=email; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsy4Agpg25EgHwyqGhK5PShu/B0X/fYeFU71+XWv4Vl8qK2IzdW8ZSK1CrzDBtH4+ZEAicZFDgY+yIg2GgExApHUw79zuM8u5P5kMsyI7HqpSjoMaJ2vaGRU8ub9CGdM02h0+Ju4bEEEGock6ChCV0y3cOtWKw3NIzCZwCylOZh4Sm3ZpHh7AGH73gsOjG4fa/8T7QsjJ19PETAx12Rg2G2zyyudr5HboHPbL6/GjDDOr7ji/e0cJnJQi2EO8FCAQLEr36O2+WsXi2NynicSiCD88+qALXMscltpVBv9R1F8nms7abMcZQCzt3CNa5xoab0j2JeUw6UXf3t/L+lKMbwIDAQAB   TTL=3600
-TXT     _dmarc          v=DMARC1; p=reject; adkim=s; aspf=s; rua=mailto:dmarc-reports@feedsubscription.com; ri=604800   TTL=3600
+TXT     @                3600   0   v=spf1 mx include:spf.protection.outlook.com include:ppe-hosted.com -all
+TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; s=email; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsy4Agpg25EgHwyqGhK5PShu/B0X/fYeFU71+XWv4Vl8qK2IzdW8ZSK1CrzDBtH4+ZEAicZFDgY+yIg2GgExApHUw79zuM8u5P5kMsyI7HqpSjoMaJ2vaGRU8ub9CGdM02h0+Ju4bEEEGock6ChCV0y3cOtWKw3NIzCZwCylOZh4Sm3ZpHh7AGH73gsOjG4fa/8T7QsjJ19PETAx12Rg2G2zyyudr5HboHPbL6/GjDDOr7ji/e0cJnJQi2EO8FCAQLEr36O2+WsXi2NynicSiCD88+qALXMscltpVBv9R1F8nms7abMcZQCzt3CNa5xoab0j2JeUw6UXf3t/L+lKMbwIDAQAB
+TXT     _dmarc           3600   0   v=DMARC1; p=reject; adkim=s; aspf=s; rua=mailto:dmarc-reports@feedsubscription.com; ri=604800
 
 # --- Google Search Console verification ---
-TXT     @               google-site-verification=cSSQYxQXkz37jcRrQtn044JPmFUsxC9D8oXyhyuVCuY   TTL=3600
+TXT     @                3600   0   google-site-verification=cSSQYxQXkz37jcRrQtn044JPmFUsxC9D8oXyhyuVCuY

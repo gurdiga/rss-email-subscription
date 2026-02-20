@@ -1478,3 +1478,7 @@ archive-old-deliveries:
 
 rsync-certbot:
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/certbot/ .tmp/certbot/
+
+.PHONY: dns-update
+dns-update:
+	@./dns/update.sh
