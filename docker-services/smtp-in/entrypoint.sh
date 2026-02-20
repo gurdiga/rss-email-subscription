@@ -51,30 +51,6 @@ configure_tls() {
   fi
 }
 
-configure_opendkim() {
-  local source_dir="/mnt/opendkim-keys"
-  local dest_dir="/etc/opendkim/keys"
-  local key="${dest_dir}/${DOMAIN}.private"
-
-  [ -f "${source_dir}/${DOMAIN}.private" ] || fail "DKIM key not found at ${source_dir}/${DOMAIN}.private"
-
-  mkdir -p "${dest_dir}"
-  log "Copying DKIM keys from ${source_dir} to ${dest_dir}"
-  cp "${source_dir}/${DOMAIN}.private" "${dest_dir}/"
-
-  chown opendkim:opendkim "$key"
-  chmod 600 "$key"
-
-  opendkim -x /etc/opendkim/opendkim.conf
-  sleep 0.5 # small buffer to let opendkim bind the milter socket
-
-  postconf -e \
-    'milter_default_action=accept' \
-    'milter_protocol=6' \
-    'smtpd_milters=inet:127.0.0.1:8891' \
-    'non_smtpd_milters=inet:127.0.0.1:8891'
-}
-
 configure_postsrsd() {
   local secret_file="/etc/postsrsd.secret"
   if [ ! -s "$secret_file" ]; then
@@ -113,7 +89,6 @@ main() {
 
   start_postgrey
   configure_postsrsd
-  configure_opendkim
 
   log "Starting postfix in foreground"
   exec postfix start-fg

@@ -94,7 +94,6 @@ services:
     ports: ['25:25']
     restart: always
     volumes:
-      - ./.tmp/opendkim-keys:/mnt/opendkim-keys:ro
       - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
       - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
     environment:

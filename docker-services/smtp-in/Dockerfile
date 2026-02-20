@@ -10,7 +10,6 @@ RUN apt-get update \
     'postsrsd=1.10-2+b1' \
     'sasl2-bin=2.1.28+dfsg-10' \
     'libsasl2-modules=2.1.28+dfsg-10' \
-    'opendkim=2.11.0~beta2-8+deb12u1' \
     'bind9-dnsutils=1:9.18.44-1~deb12u1' \
     'ca-certificates=20230311+deb12u1' \
     'procps=2:4.0.2-3' \
@@ -19,19 +18,13 @@ RUN apt-get update \
 
 RUN mkdir -p \
     /etc/sasl2 \
-    /etc/opendkim \
     /var/spool/postfix/postgrey \
     /var/lib/postgrey \
-    /var/run/postgrey \
-    /var/run/opendkim
+    /var/run/postgrey
 
 COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
 COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/main.cf.override /etc/postfix/main.cf.override
-COPY etc/opendkim/opendkim.conf /etc/opendkim/opendkim.conf
-COPY etc/opendkim/KeyTable /etc/opendkim/KeyTable
-COPY etc/opendkim/SigningTable /etc/opendkim/SigningTable
-COPY etc/opendkim/TrustedHosts /etc/opendkim/TrustedHosts
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 RUN postmap /etc/postfix/virtual
