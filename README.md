@@ -8,8 +8,7 @@ Every feed gets its own `feed-id@feedsubscription.com` email address. The defaul
 
 There is also an API which can be inspected in `src/api/server.ts`.
 
-Everything is packaged and deployed as a Docker composition: in
-`docker-compose.yml`.
+Everything is packaged and deployed as a Docker composition in `docker-compose.yml`.
 
 ## Storage structure
 

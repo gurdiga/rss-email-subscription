@@ -32,8 +32,7 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 ## Working Directory
 
-The working directory is always the project root. Use plain `git` commands
-without `-C`; no need for absolute path workarounds in git operations.
+The working directory is always the project root. Use plain `git` commands without `-C`; no need for absolute path workarounds in git operations.
 
 ## SSH Connections to Production
 

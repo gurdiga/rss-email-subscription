@@ -13,8 +13,7 @@ Debian-based Postfix + OpenDKIM container for outbound email delivery.
 
 ### `/etc/ssmtp/ssmtp.conf`
 
-The host uses `ssmtp` to send cron job notifications (watch-app, watch-smtp-out,
-etc.). It must relay through smtp-out:
+The host uses `ssmtp` to send cron job notifications (watch-app, watch-smtp-out, etc.). It must relay through smtp-out:
 
 ```
 mailhub=localhost:1587
@@ -32,13 +31,9 @@ SMTP_CONNECTION_STRING=smtp://smtp-out:587
 
 ## Persistent data
 
-- **Queue**: `.tmp/postfix-queue/` — mounted as `/var/spool/postfix` to survive
-  container restarts
+- **Queue**: `.tmp/postfix-queue/` — mounted as `/var/spool/postfix` to survive container restarts
 - **DKIM keys**: `.tmp/opendkim-keys/` — mounted read-only at `/mnt/opendkim-keys`
 
 ## Delivery monitoring
 
-`delmon` tails the log file named by its `SMTP_OUT_LOG` env var (set in
-`docker-compose.yml`) to track per-message delivery status. The filename is
-determined by syslog-ng based on the container name, so if this container is
-ever renamed, update `SMTP_OUT_LOG` in `docker-compose.yml` accordingly.
+`delmon` tails the log file named by its `SMTP_OUT_LOG` env var (set in `docker-compose.yml`) to track per-message delivery status. The filename is determined by syslog-ng based on the container name, so if this container is ever renamed, update `SMTP_OUT_LOG` in `docker-compose.yml` accordingly.
