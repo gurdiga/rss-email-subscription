@@ -5,8 +5,8 @@ RUN apk update --no-cache \
  && apk add --no-cache --upgrade \
     'libxml2=2.13.9-r0' \
     'curl=8.14.1-r2' \
-    'openssl=3.3.5-r0' \
-    'expat=2.7.3-r0' \
+    'openssl=3.3.6-r0' \
+    'expat=2.7.4-r0' \
     'tiff=4.7.1-r0' \
-    'libpng=1.6.53-r0' \
+    'libpng=1.6.54-r0' \
     'c-ares=1.34.6-r0'
