@@ -194,7 +194,7 @@ services:
       - ./.tmp/logs:/var/log/syslog-ng
     <<: [*x-dns]
     healthcheck:
-      test: ['CMD-SHELL', 'nc -z -w1 127.0.0.1 514']
+      test: ['CMD-SHELL', 'nc -z -w1 10.5.5.1 514']
       interval: 5s
       timeout: 3s
       retries: 2

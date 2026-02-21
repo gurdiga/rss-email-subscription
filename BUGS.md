@@ -22,17 +22,11 @@ This is a comprehensive audit of the RSS-to-email subscription service codebase.
 
 #### 10. Syslog Listening on 0.0.0.0
 
-**Location:** [docker-services/logger/syslog-ng.conf:81](docker-services/logger/syslog-ng.conf#L81)
+**Location:** [docker-services/logger/syslog-ng.conf](docker-services/logger/syslog-ng.conf)
 
-```conf
-tcp(ip("0.0.0.0") // Binds to all interfaces
-```
+**Fix:** Changed `ip("0.0.0.0")` to `ip("10.5.5.1")` (the logger container's fixed Docker IP). Updated the healthcheck in `docker-compose.yml` from `127.0.0.1:514` to `10.5.5.1:514` accordingly.
 
-**Impact:** While inside Docker container on isolated network, this practice exposes logs if container network isolation is compromised. No authentication required.
-
-**Fix:** Bind to specific Docker network IP or use Unix socket for inter-container communication.
-
-**Verification:** Verify log collection still works after binding to specific interface.
+**Verification:** Verify log collection still works after deploying.
 
 ---
 
