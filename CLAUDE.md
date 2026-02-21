@@ -5,7 +5,7 @@
 When creating commits, follow these guidelines:
 
 1. **Do NOT include "Generated with Claude Code" line**
-   - The `Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>` trailer is sufficient
+   - The `Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>` trailer is sufficient
    - Redundant marketing text clutters the commit history
 
 2. **Follow standard git commit message conventions**
@@ -27,7 +27,7 @@ Enhance certbot-report to detect failures and adjust
 email subject. Increase tail from 12 to 20 lines to
 capture full failure output.
 
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 ```
 
 ## Working Directory
