@@ -20,7 +20,8 @@ apply_postfix_config() {
     "virtual_alias_domains=feedsubscription.com" \
     "virtual_alias_maps=texthash:/etc/postfix/virtual" \
     "transport_maps=texthash:/etc/postfix/transport" \
-    "smtpd_tls_security_level=none"
+    "smtpd_tls_security_level=none" \
+    "smtp_tls_security_level=may"
 }
 
 configure_opendkim() {

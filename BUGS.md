@@ -6,19 +6,15 @@ This is a comprehensive audit of the RSS-to-email subscription service codebase.
 
 ## Prioritized Bug List
 
-#### 4. TLS Disabled for smtp-out Service
+#### 4. Outbound TLS not enabled in smtp-out
 
-**Location:** [docker-services/smtp-out/entrypoint.sh:23](docker-services/smtp-out/entrypoint.sh#L23)
+**Location:** [docker-services/smtp-out/entrypoint.sh](docker-services/smtp-out/entrypoint.sh)
 
-```bash
-"smtpd_tls_security_level=none"
-```
+`smtp_tls_security_level` was unset, so Postfix defaulted to no TLS when delivering to recipient mail servers. (`smtpd_tls_security_level=none` in the same file only affects inbound connections from the app, which are on the internal Docker network.)
 
-**Impact:** Outbound SMTP connections from smtp-out are unencrypted, exposing email credentials and message content during transit.
+**Fix:** Added `smtp_tls_security_level=may` — Postfix now uses STARTTLS when the recipient server offers it.
 
-**Fix:** Enable TLS with `smtpd_tls_security_level=may` (or `encrypt` for mandatory TLS).
-
-**Verification:** Send test email through smtp-out and verify TLS is used in Postfix logs.
+**Verification:** Send test email and confirm `TLS connection established` appears in smtp-out logs.
 
 ---
 
