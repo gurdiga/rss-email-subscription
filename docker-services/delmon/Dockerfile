@@ -3,4 +3,4 @@ FROM app:latest
 
 VOLUME /logs
 
-CMD ["/bin/sh", "-c", "tail -n 0 -F /logs/smtp-out.log | node dist/app/delivery-monitoring"]
+CMD ["/bin/sh", "-c", "tail -n 0 -F $SMTP_OUT_LOG | node dist/app/delivery-monitoring"]

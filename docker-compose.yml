@@ -112,6 +112,7 @@ services:
       - ${DATA_DIR_ROOT?}:/data
     environment:
       <<: *app-env
+      SMTP_OUT_LOG: /logs/smtp-out.log
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
