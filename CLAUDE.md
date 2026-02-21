@@ -30,6 +30,11 @@ capture full failure output.
 Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 ```
 
+## Working Directory
+
+The working directory is always the project root. Use plain `git` commands
+without `-C`; no need for absolute path workarounds in git operations.
+
 ## SSH Connections to Production
 
 When operating on prod (feedsubscription.com), always use persistent SSH connections via ControlMaster to improve performance and reduce authentication overhead.
