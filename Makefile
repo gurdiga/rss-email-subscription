@@ -143,12 +143,12 @@ lint-require-strict-interpolation:
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
 
-smtp-out-new-config-test:
-	@echo "Building smtp-out-new container..."
-	docker build -t smtp-out-new-test docker-services/smtp-out-new/
+smtp-out-config-test:
+	@echo "Building smtp-out container..."
+	docker build -t smtp-out-test docker-services/smtp-out/
 
 	@echo "Validating Postfix configuration..."
-	@docker run --rm --entrypoint /bin/bash smtp-out-new-test -c " \
+	@docker run --rm --entrypoint /bin/bash smtp-out-test -c " \
 		set -euo pipefail; \
 		cat /etc/postfix/main.cf.override >> /etc/postfix/main.cf; \
 		postconf -n 2>&1 | grep -iE 'error|fatal|warning' | grep -v 'warning: SASL' || true; \
@@ -161,8 +161,8 @@ smtp-out-new-config-test:
 		fi \
 	"
 
-smtp-out-new-smoke-test:
-	@container=$${CONTAINER:-smtp-out-new}; \
+smtp-out-smoke-test:
+	@container=$${CONTAINER:-smtp-out}; \
 	echo "=== SMTP-OUT SMOKE TEST: $$container ==="; \
 	echo ""; \
 	failed=0; \
@@ -199,7 +199,7 @@ smtp-out-new-smoke-test:
 		failed=$$((failed + 1)); \
 	fi; \
 	\
-	port=$${PORT:-1588}; \
+	port=$${PORT:-1587}; \
 	echo -n "✓ Port 587 accessible... "; \
 	if timeout 2 bash -c "echo 'QUIT' | nc -w 1 localhost $$port" 2>/dev/null | grep -q "220"; then \
 		echo "PASS"; \
@@ -380,16 +380,6 @@ smtp-out:
 		--tag smtp-out \
 		docker-services/smtp-out |&
 	log_to .tmp/logs/feedsubscription/docker-build-smtp-out.log
-
-smtp-out-new:
-	@$(call include_log_to)
-
-	set -euo pipefail
-	docker build \
-		--progress=plain \
-		--tag smtp-out-new \
-		docker-services/smtp-out-new |&
-	log_to .tmp/logs/feedsubscription/docker-build-smtp-out-new.log
 
 smtp-in:
 	@$(call include_log_to)
@@ -618,7 +608,7 @@ watch-website:
 
 # cron @reboot
 watch-smtp-out:
-	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out-new.log |
+	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/smtp-out.log |
 	grep --line-buffered -E \
 			-e '(warning|error|fatal|panic|reject):' \
 			-e ' POSTFIX STARTING UP ' \
@@ -628,7 +618,7 @@ watch-smtp-out:
 	grep --line-buffered -v 'from=<system@feedsubscription\.com>' |
 	while read -r timestamp rest; do
 		(
-			echo "Subject: RES smtp-out-new $$timestamp"
+			echo "Subject: RES smtp-out $$timestamp"
 			echo "From: RES <system@feedsubscription.com>"
 			echo ""
 			echo "$$rest"
@@ -640,10 +630,10 @@ watch-smtp-out:
 				domain=$${BASH_REMATCH[1]}
 
 				echo "--- DEBUG: A record from inside container"
-				docker exec smtp-out-new nslookup "$$domain"
+				docker exec smtp-out nslookup "$$domain"
 
 				echo "--- DEBUG: MX record from inside container"
-				docker exec smtp-out-new nslookup -query=mx "$$domain"
+				docker exec smtp-out nslookup -query=mx "$$domain"
 
 				echo "--- DEBUG: A record from host"
 				nslookup "$$domain"
@@ -714,7 +704,7 @@ delmon-catch-up:
 
 	ls -1 $$DATA_DIR_ROOT/qid-index/ |
 	while read qid; do
-		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out-new.log
+		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
 	tee /dev/stderr | # so that I can see that something is happening
 	docker exec --interactive delmon node dist/app/delivery-monitoring
@@ -752,7 +742,7 @@ delivery-report:
 	export -f send_report
 
 	( \
-		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out-new.log \
+		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
 		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
 		| grep -Po '(?<= status=)\S+' \
 		| sort | uniq -c \
