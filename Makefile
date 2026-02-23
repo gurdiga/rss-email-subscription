@@ -704,7 +704,7 @@ delmon-catch-up:
 
 	ls -1 $$DATA_DIR_ROOT/qid-index/ |
 	while read qid; do
-		grep -P "INFO    postfix/smtp.+ $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
+		grep -P "postfix/smtp\[\d+\]: $$qid: .+ status=" .tmp/logs/feedsubscription/smtp-out.log
 	done |
 	tee /dev/stderr | # so that I can see that something is happening
 	docker exec --interactive delmon node dist/app/delivery-monitoring

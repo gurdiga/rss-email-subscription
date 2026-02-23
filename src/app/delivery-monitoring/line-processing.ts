@@ -49,7 +49,7 @@ enum DeliveryAttemptLineReGroups {
 }
 
 export const deliveryAttemptLineRe = new RegExp(
-  rawsi`(?<${DeliveryAttemptLineReGroups.Timestamp}>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}\+\d{2}:\d{2}) INFO    postfix/smtp.+ (?<${DeliveryAttemptLineReGroups.Qid}>[0-9A-Z]{11}): to=.+ status=(?<${DeliveryAttemptLineReGroups.Status}>[a-z]+) \((?<${DeliveryAttemptLineReGroups.Message}>.+)\)`
+  rawsi`(?<${DeliveryAttemptLineReGroups.Timestamp}>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}[+\-]\d{2}:\d{2}) .+postfix/smtp\[\d+\]: (?<${DeliveryAttemptLineReGroups.Qid}>[0-9A-Z]+): to=.+ status=(?<${DeliveryAttemptLineReGroups.Status}>[a-z]+) \((?<${DeliveryAttemptLineReGroups.Message}>.+)\)`
 );
 
 export function isDeliveryAttemptLine(line: string): boolean {
