@@ -27,6 +27,8 @@ COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/main.cf.override /etc/postfix/main.cf.override
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+# TODO(debian-upgrade): postmap uses BerkeleyDB, deprecated in Postfix 3.11+.
+# Migrate to LMDB or CDB when upgrading the base image.
 RUN postmap /etc/postfix/virtual
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

@@ -30,6 +30,10 @@ COPY etc/opendkim/SigningTable /etc/opendkim/SigningTable
 COPY etc/opendkim/TrustedHosts /etc/opendkim/TrustedHosts
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
+# TODO(debian-upgrade): postmap uses BerkeleyDB, deprecated in Postfix 3.11+.
+# Migrate to LMDB or CDB when upgrading the base image.
+# Also review delmon log regexes (src/app/delivery-monitoring/line-processing.ts)
+# — Postfix 3.11+ adds TLS security level fields to delivery log lines.
 # Generate postfix lookup tables
 RUN postmap /etc/postfix/virtual \
  && postmap /etc/postfix/transport
