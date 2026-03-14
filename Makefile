@@ -350,7 +350,7 @@ resolver-check:
 
 # cron @weekly
 resolver-report:
-	@cutoff=$$(date -d '30 days ago' +%F); \
+	@cutoff=$$(date -d '7 days ago' +%F); \
 	( \
 		zcat -f .tmp/logs/feedsubscription/resolver.log* 2>/dev/null | \
 		grep ' is NODATA-IPv4' | \
