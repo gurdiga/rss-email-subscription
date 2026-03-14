@@ -368,6 +368,24 @@ watch-resolver:
 	done \
 	& disown
 
+# cron @weekly
+resolver-report:
+	@cutoff=$$(date -d '30 days ago' +%F); \
+	( \
+		zcat -f .tmp/logs/feedsubscription/resolver.log* 2>/dev/null | \
+		grep ' is NODATA-IPv4' | \
+		awk -v cutoff="$$cutoff" \
+			'substr($$1,1,10) >= cutoff {out=$$1; for(i=5;i<=NF;i++) out=out" "$$i; print out}' | \
+		sort \
+	) | \
+	ifne -n echo '(none)' | \
+	cat <( \
+		echo "Subject: RES resolver-report"; \
+		echo "From: RES <system@feedsubscription.com>"; \
+		echo; \
+	) - | \
+	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
 logger-list-packages:
 	docker exec -it logger apk list -a |
 	grep -P "^(syslog-ng|logrotate|tini)-\d"
