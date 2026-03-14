@@ -348,26 +348,6 @@ resolver-check:
 	docker exec -it resolver dig @localhost feedsubscription.com |
 	grep -E "^;; Query time: [0-4] msec"
 
-# cron @reboot
-watch-resolver:
-	@tail -n0 --follow=name --retry .tmp/logs/feedsubscription/resolver.log |
-	grep --line-buffered -E \
-			-e ' (exiting|started,|using|read) ' \
-			-e ' is NODATA-IPv4' \
-	|
-	while read -r timestamp _skip_namespace _skip_container_name_and_id _skip_process_name record; do
-		(
-			date_and_hour=`echo $$timestamp | cut -d: -f1`
-
-			echo "From: RES <system@feedsubscription.com>"
-			echo "Subject: RES resolver $$date_and_hour"
-			echo ""
-			echo "$$timestamp $$record"
-		) |
-		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
-	done \
-	& disown
-
 # cron @weekly
 resolver-report:
 	@cutoff=$$(date -d '30 days ago' +%F); \
