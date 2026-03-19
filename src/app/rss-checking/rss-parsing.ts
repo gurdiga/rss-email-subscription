@@ -134,7 +134,7 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
 
 export function makeAuthor(item: ParsedRssItem): Result<string> {
   if (typeof item.author === 'string') {
-    return item.author;
+    return item.author || item.creator || 'Anonymous Coward';
   }
 
   if (isObject(item.author)) {

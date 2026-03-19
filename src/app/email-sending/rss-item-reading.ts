@@ -103,8 +103,12 @@ export function makeStoredRssItem(fileName: string, json: unknown): ValidStoredR
     return invalid('The "content" property is not a present string');
   }
 
-  if (!author || typeof author !== 'string') {
-    return invalid('The "author" property is not a present string');
+  if (typeof author !== 'string') {
+    return invalid('The "author" property is not a string');
+  }
+
+  if (!author) {
+    author = 'Anonymous Coward';
   }
 
   pubDate = new Date(pubDate);

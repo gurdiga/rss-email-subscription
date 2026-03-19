@@ -187,7 +187,7 @@ describe(readStoredRssItems.name, () => {
       expect(result(invalidInput)).to.deep.equal(err(invalidInput, 'The "content" property is not a present string'));
 
       invalidInput = { ...data, author: 42 } as any;
-      expect(result(invalidInput)).to.deep.equal(err(invalidInput, 'The "author" property is not a present string'));
+      expect(result(invalidInput)).to.deep.equal(err(invalidInput, 'The "author" property is not a string'));
 
       invalidInput = { ...data, pubDate: 'not-a-date' };
       expect(result(invalidInput)).to.deep.equal(
