@@ -3,6 +3,7 @@ FROM debian:bookworm-slim
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update \
+ && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
     'postfix=3.7.11-0+deb12u1' \
     'postfix-pcre=3.7.11-0+deb12u1' \
