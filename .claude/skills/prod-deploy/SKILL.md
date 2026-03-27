@@ -69,6 +69,15 @@ ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
   'cd ~/src/rss-email-subscription && git pull && make all-images start'
 ```
 
+## Smoke test (optional)
+
+If the user asks for a smoke test after deploying `app`, trigger a feed check by removing `lastPostMetadata.json` and sending HUP:
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  'rm src/rss-email-subscription/.tmp/docker-data/accounts/*/feeds/gurdiga/lastPostMetadata.json && docker kill -s HUP app'
+```
+
 ## Notes
 
 - Always `git push` before deploying so `git pull` on prod gets the latest commits.
