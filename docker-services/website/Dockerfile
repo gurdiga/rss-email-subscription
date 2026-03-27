@@ -8,5 +8,5 @@ RUN apk update --no-cache \
     'openssl=3.3.6-r0' \
     'expat=2.7.5-r0' \
     'tiff=4.7.1-r0' \
-    'libpng=1.6.55-r0' \
+    'libpng=1.6.56-r0' \
     'c-ares=1.34.6-r0'

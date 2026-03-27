@@ -4,7 +4,7 @@
   "description": "See README.md",
   "main": "dist/app/cron.js",
   "engines": {
-    "node": "v22.14.0",
+    "node": "v22.22.2",
     "npm": "10.9.2"
   },
   "scripts": {},

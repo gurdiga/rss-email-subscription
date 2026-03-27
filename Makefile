@@ -3,6 +3,7 @@
 
 SHELL = bash
 TIME=gtime -f '%es'
+DOCKER_BUILD_FLAGS ?=
 
 RED='\e[0;31m'
 NC='\033[0m' # No Color
@@ -296,6 +297,7 @@ app:
 	set -euo pipefail
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag app \
 		-f docker-services/app/Dockerfile \
 		. |&
@@ -307,6 +309,7 @@ delmon: app
 	set -euo pipefail
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag delmon \
 		docker-services/delmon |&
 	log_to .tmp/logs/feedsubscription/docker-build-delmon.log
@@ -327,6 +330,7 @@ logger:
 	set -euo pipefail
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag logger \
 		docker-services/logger |&
 	log_to .tmp/logs/feedsubscription/docker-build-logger.log
@@ -337,6 +341,7 @@ resolver:
 	set -euo pipefail
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag resolver \
 		docker-services/resolver |&
 	log_to .tmp/logs/feedsubscription/docker-build-resolver.log
@@ -376,6 +381,7 @@ smtp-out:
 	set -euo pipefail
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag smtp-out \
 		docker-services/smtp-out |&
 	log_to .tmp/logs/feedsubscription/docker-build-smtp-out.log
@@ -390,6 +396,7 @@ smtp-in:
 	docker build \
 		--secret id=SMTP_IN_SASL_PASSWORD \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag smtp-in \
 		docker-services/smtp-in |&
 	log_to .tmp/logs/feedsubscription/docker-build-smtp-in.log
@@ -465,6 +472,7 @@ certbot:
 
 	docker build \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag certbot \
 		-f docker-services/certbot/Dockerfile \
 		. |&
@@ -775,6 +783,7 @@ website:
 	docker build \
 		--output type=docker \
 		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
 		--tag website \
 		-f docker-services/website/Dockerfile \
 		. |&
@@ -1226,6 +1235,9 @@ docker-image-check:
 	done
 
 all-images: app certbot delmon logger smtp-in smtp-out website resolver
+
+fresh-images:
+	$(MAKE) DOCKER_BUILD_FLAGS=--no-cache all-images
 
 user-list:
 	@counter=1
