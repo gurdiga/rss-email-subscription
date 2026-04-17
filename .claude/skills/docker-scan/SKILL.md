@@ -189,6 +189,15 @@ Identify new CVEs, fixed CVEs, and count changes since last scan.
 
 ## Common fix patterns
 
+**Before committing any fix, always build the image locally to verify it
+succeeds.** Use the Makefile target for the affected image, e.g.:
+
+```bash
+make app        # or: make certbot, make logger, etc.
+```
+
+If the build fails, diagnose before committing — don't push broken Dockerfiles.
+
 ### Alpine package pin update
 
 ```dockerfile
@@ -205,14 +214,14 @@ the same `apk add` command may now be stale and cause build failure.
 RUN python -m pip install --no-cache-dir 'cryptography>=46.0.5'
 ```
 
-After installing, verify there are no critical dependency conflicts:
+After building, verify there are no critical dependency conflicts:
 ```bash
 docker run --rm <image>:latest python -c "import <package>; print('ok')"
 ```
 
 For certbot specifically, also verify pyopenssl compatibility:
 ```bash
-docker exec certbot python -c "import certbot; import OpenSSL; print('ok')"
+docker run --rm <image>:latest python -c "import certbot; import OpenSSL; print('ok')"
 ```
 
 ### Debian/Ubuntu base packages (boky/postfix, Ubuntu resolver)
