@@ -11,7 +11,7 @@ RUN apt-get update \
     'postsrsd=1.10-2+b1' \
     'sasl2-bin=2.1.28+dfsg-10' \
     'libsasl2-modules=2.1.28+dfsg-10' \
-    'bind9-dnsutils=1:9.18.44-1~deb12u1' \
+    'bind9-dnsutils=1:9.18.47-1~deb12u1' \
     'ca-certificates=20230311+deb12u1' \
     'procps=2:4.0.2-3' \
     'net-tools=2.10-0.1+deb12u2' \

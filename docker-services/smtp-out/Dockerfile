@@ -11,7 +11,7 @@ RUN apt-get update \
     'opendkim=2.11.0~beta2-8+deb12u1' \
     'ca-certificates=20230311+deb12u1' \
     # Utilities
-    'bind9-dnsutils=1:9.18.44-1~deb12u1' \
+    'bind9-dnsutils=1:9.18.47-1~deb12u1' \
     'procps=2:4.0.2-3' \
     'net-tools=2.10-0.1+deb12u2' \
  && rm -rf /var/lib/apt/lists/*
