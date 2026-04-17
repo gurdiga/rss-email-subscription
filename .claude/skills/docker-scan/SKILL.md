@@ -15,6 +15,24 @@ Use this skill when the user:
 - Asks to compare with a previous security scan
 - Wants a security report for Docker containers
 
+## Scan target
+
+**Always scan the prod server images directly** — images are built on prod and some
+update system packages at build time, so a local rebuild would not reflect prod state.
+
+Docker Scout v0.15.0 is installed on prod (Ubuntu 22.04 x86_64). Run all scans over
+SSH using the persistent ControlMaster connection.
+
+Establish the connection first if not already active:
+```bash
+ssh -M -S ~/.ssh/control-feedsubscription -o ControlPersist=10m -fN feedsubscription.com
+```
+
+Then prefix every `docker scout` command with:
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com "<command>"
+```
+
 ## Quick start
 
 Scan all production images and generate a report:
@@ -25,12 +43,12 @@ grep "^all-images:" Makefile
 ```
 Output: `all-images: app certbot delmon logger smtp-in smtp-out website resolver`
 
-2. Check Docker Scout version:
+2. Check Docker Scout is reachable on prod:
 ```bash
-docker scout version 2>&1 | grep "version"
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com "docker scout version 2>&1 | grep version"
 ```
 
-3. Scan each image and generate `image-check-YYYY-MM-DD.md`
+3. Scan each image on prod and generate `image-check-YYYY-MM-DD.md`
 
 ## Workflow
 
@@ -42,9 +60,10 @@ Get the production image list from the Makefile — it's the source of truth:
 grep "^all-images:" Makefile
 ```
 
-Confirm images exist locally:
+Confirm images exist on prod:
 ```bash
-docker images --format "{{.Repository}}:{{.Tag}}" | grep -v "<none>" | sort
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker images --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort"
 ```
 
 If an image is missing, ask the user whether to build it first.
@@ -54,7 +73,8 @@ If an image is missing, ask the user whether to build it first.
 Run scans in background, **max 4 at a time** to avoid BuildKit cache conflicts:
 
 ```bash
-docker scout cves <image>:latest 2>&1 | grep -E "vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW" | tail -5 &
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker scout cves <image>:latest 2>&1 | grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' | tail -5" &
 ```
 
 Wait for each batch to complete before starting the next. Collect counts in this format:
@@ -71,13 +91,15 @@ Wait for each batch to complete before starting the next. Collect counts in this
 For each image with HIGH or CRITICAL findings, run sequentially (not in parallel):
 
 ```bash
-docker scout cves <image>:latest --only-severity high,critical --format only-packages 2>&1 | grep -E "│.*[1-9][CH]|✗|vulnerable"
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker scout cves <image>:latest --only-severity high,critical --format only-packages 2>&1 | grep -E '│.*[1-9][CH]|✗|vulnerable'"
 ```
 
 To get specific CVE IDs and fix versions for flagged packages:
 
 ```bash
-docker scout cves <image>:latest 2>&1 | grep -B2 -A8 "✗ HIGH\|✗ CRITICAL" | grep -E "✗|CVE|Fixed version" | head -40
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker scout cves <image>:latest 2>&1 | grep -B2 -A8 '✗ HIGH\|✗ CRITICAL' | grep -E '✗|CVE|Fixed version' | head -40"
 ```
 
 ### Step 4: Categorize vulnerabilities
@@ -89,9 +111,11 @@ For each vulnerable package, determine the category:
 **npm-bundled (Node.js images)**: tar, glob, minimatch appearing in Node.js images
 are npm's own internal modules, not app code. Verify:
 ```bash
-docker run --rm <image>:latest sh -c 'ls node_modules/tar node_modules/glob 2>/dev/null || echo "not in app"'
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker run --rm <image>:latest sh -c 'ls node_modules/tar node_modules/glob 2>/dev/null || echo \"not in app\"'"
 # Then check npm internals:
-docker run --rm <image>:latest sh -c 'find /usr/local/lib/node_modules/npm -name "package.json" -path "*/tar/package.json" | head -3'
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker run --rm <image>:latest sh -c 'find /usr/local/lib/node_modules/npm -name \"package.json\" -path \"*/tar/package.json\" | head -3'"
 ```
 If found only in `/usr/local/lib/node_modules/npm/`, these are npm internals —
 exploitable only during `npm install`, not at runtime. **No action needed.**
@@ -101,14 +125,16 @@ have already moved other pinned packages to newer versions, making those pins
 stale downgrades. If a build fails with `ERROR: unable to select packages`, check
 which packages `apk upgrade` upgraded:
 ```bash
-docker run --rm <base-image> sh -c 'apk update -q && apk upgrade --simulate 2>&1'
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker run --rm <base-image> sh -c 'apk update -q && apk upgrade --simulate 2>&1'"
 ```
 Update any stale pins to match.
 
 **Build-stage only (multi-stage Dockerfiles)**: Packages in build stages that
 aren't copied to the final image. Verify by running a container and checking:
 ```bash
-docker run --rm <image>:latest sh -c 'apk info | grep <package>'
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker run --rm <image>:latest sh -c 'apk info | grep <package>'"
 ```
 
 **No fix available**: Scout shows "Fixed version: not fixed" — document and monitor.
@@ -197,9 +223,9 @@ RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 
 ## Troubleshooting
 
-**Docker not running**:
+**SSH connection not established**:
 ```bash
-docker info >/dev/null 2>&1 || (open -a Docker && sleep 5)
+ssh -M -S ~/.ssh/control-feedsubscription -o ControlPersist=10m -fN feedsubscription.com
 ```
 
 **Cache conflict / empty output from background scan**:
@@ -209,14 +235,16 @@ sequentially after the others complete.
 **`grep "vulnerabilities │"` produces no output**:
 Scout's output format does not use `│` in the summary line. Use instead:
 ```bash
-docker scout cves <image>:latest 2>&1 | grep -E "vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW" | tail -5
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker scout cves <image>:latest 2>&1 | grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' | tail -5"
 ```
 
 **`unable to select packages` build error after pin update**:
 `apk upgrade` ran first and upgraded that package past the pinned version.
 Check what version is now current and update the pin:
 ```bash
-docker run --rm <base-image> sh -c 'apk update -q 2>/dev/null; apk info <package> | head -1'
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker run --rm <base-image> sh -c 'apk update -q 2>/dev/null; apk info <package> | head -1'"
 ```
 
 **pyopenssl `cryptography<46` conflict warning**:
