@@ -78,6 +78,24 @@ ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
   'rm src/rss-email-subscription/.tmp/docker-data/accounts/*/feeds/gurdiga/lastPostMetadata.json && docker kill -s HUP app'
 ```
 
+Then confirm the sending report appeared in app.log (wait ~15s first):
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  'grep "Sending report" src/rss-email-subscription/.tmp/logs/feedsubscription/app.log | grep "gurdiga" | tail -3'
+```
+
+Look for `"sent":N,"failed":0` in the report data.
+
+Then confirm delivery via smtp-out log:
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  'docker logs smtp-out 2>&1 | tail -40'
+```
+
+Look for `status=sent (250 2.0.0 OK)` for each queued message, and `removed` confirming the queue cleared. Any `status=deferred` or `status=bounced` lines indicate a delivery problem.
+
 ## Notes
 
 - Always `git push` before deploying so `git pull` on prod gets the latest commits.
