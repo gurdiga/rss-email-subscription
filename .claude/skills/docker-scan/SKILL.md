@@ -198,6 +198,9 @@ make app        # or: make certbot, make logger, etc.
 
 If the build fails, diagnose before committing — don't push broken Dockerfiles.
 
+**Group commits by image.** One commit per image, not one commit for all fixes.
+This keeps history bisectable and makes rollbacks scoped to a single image.
+
 ### Alpine package pin update
 
 ```dockerfile
