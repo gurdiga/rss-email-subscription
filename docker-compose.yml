@@ -13,9 +13,10 @@ x-app-env: &app-env
   NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
   # DEBUG: '*' # Useful for debuggind Express.js routing
   SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
-  STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY?}
-  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY?}
-  STRIPE_ENABLED: ${STRIPE_ENABLED?}
+  PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN?}
+  PADDLE_API_KEY: ${PADDLE_API_KEY?}
+  PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET?}
+  PADDLE_ENABLED: ${PADDLE_ENABLED?}
 
 x-disable-ipv6: &x-disable-ipv6
   sysctls:
