@@ -9,7 +9,6 @@ import {
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
-import { Card, makeCardDescription } from '../domain/stripe-integration';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -46,7 +45,7 @@ import {
   makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
-} from './stripe-integration';
+} from './paddle-integration';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
@@ -238,11 +237,11 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      const { clientSecret } = responseData as PlanChangeResponseData;
+      const { checkoutTransactionId } = responseData as PlanChangeResponseData;
       const card = await maybeConfirmPayment<keyof RequiredUiElements>(
         paymentSubformHandle,
         newPlanId,
-        clientSecret,
+        checkoutTransactionId,
         'paymentSubform'
       );
 
@@ -252,11 +251,8 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      if (card) {
-        displayCard(uiElements, card);
-      } else {
-        hideElement(currentCardField);
-      }
+      // Card details are delivered asynchronously via webhook; hide for now.
+      hideElement(currentCardField);
 
       let planLabel = await getPlanTitleAndPrice(newPlanId);
 
@@ -271,11 +267,6 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
       scrollIntoView(changePlanSection);
     }
   );
-}
-
-function displayCard(uiElements: PlanUiElements, card: Card): void {
-  uiElements.currentCardDescription.textContent = makeCardDescription(card);
-  unhideElement(uiElements.currentCardField);
 }
 
 async function initPlansDropdown(

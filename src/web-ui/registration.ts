@@ -29,7 +29,7 @@ import {
   makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
-} from './stripe-integration';
+} from './paddle-integration';
 
 async function main() {
   if (isAuthenticated()) {
@@ -153,11 +153,11 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
       exhaustivenessCheck(response);
     }
 
-    const { clientSecret } = response.responseData;
+    const { checkoutTransactionId } = response.responseData;
     const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
       paymentSubformHandle,
       planId,
-      clientSecret,
+      checkoutTransactionId,
       'paymentSubform'
     );
 
