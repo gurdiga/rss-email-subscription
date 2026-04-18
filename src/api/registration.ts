@@ -37,7 +37,7 @@ import { enablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
-import { createCustomerWithSubscription, makeStripe } from './stripe-integration';
+import { createCustomerWithSubscription, makePaddle } from './paddle-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,
@@ -99,24 +99,24 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  let clientSecret = '';
+  let checkoutTransactionId = '';
 
   if (isSubscriptionPlan(request.planId)) {
-    const stripe = makeStripe(env.STRIPE_SECRET_KEY);
-    const result = await createCustomerWithSubscription(stripe, email, planId);
+    const paddle = makePaddle(env.PADDLE_API_KEY);
+    const result = await createCustomerWithSubscription(paddle, email, planId);
 
     if (isErr(result)) {
       logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`, { email: email.value });
       return makeAppError();
     }
 
-    clientSecret = result.value;
+    checkoutTransactionId = result.value;
   }
 
   initSession(reqSession, accountId, request.email);
 
   const logData = {};
-  const responseData: RegistrationResponseData = { clientSecret };
+  const responseData: RegistrationResponseData = { checkoutTransactionId };
 
   return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
 };
