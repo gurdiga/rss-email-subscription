@@ -345,3 +345,19 @@ Paddle allows multiple active API keys, so use add-new → cut-over → revoke-o
 4. Plan cancel: downgrade to Free → subscription canceled in Paddle dashboard
 5. Account deletion: verify Paddle subscription canceled
 6. Check Paddle dashboard: subscriptions and customers appear correctly
+
+---
+
+## Follow-ups
+
+### Handle `subscription.canceled` webhook
+
+The current webhook handler only acts on `transaction.completed`. If a customer cancels their subscription directly in the Paddle-hosted customer portal (rather than through this app's plan-change UI), the local account record stays on its paid plan and goes stale.
+
+To close the gap:
+
+1. Subscribe the notification destination to `subscription.canceled`.
+2. In `paddleWebhookHandler`, on `EventName.SubscriptionCanceled`, look up the local account by the customer's email (same `res_customer_email` pattern as `transaction.completed`, or via Paddle customer ID) and set `planId` to `PlanId.Free`.
+3. Send the same plan-change information email that `requestAccountPlanChange` sends, so the user gets the same notification regardless of where they cancelled.
+
+Until this is implemented, customer-portal cancellations will silently desync.
