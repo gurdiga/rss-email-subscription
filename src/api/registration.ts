@@ -99,7 +99,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  let checkoutTransactionId = '';
+  let paymentToken = '';
 
   if (isSubscriptionPlan(request.planId)) {
     const paddle = makePaddle(env.PADDLE_API_KEY);
@@ -110,13 +110,13 @@ export const registration: AppRequestHandler = async function registration(
       return makeAppError();
     }
 
-    checkoutTransactionId = result.value;
+    paymentToken = result.value;
   }
 
   initSession(reqSession, accountId, request.email);
 
   const logData = {};
-  const responseData: RegistrationResponseData = { checkoutTransactionId };
+  const responseData: RegistrationResponseData = { paymentToken };
 
   return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
 };

@@ -153,11 +153,11 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
       exhaustivenessCheck(response);
     }
 
-    const { checkoutTransactionId } = response.responseData;
+    const { paymentToken } = response.responseData;
     const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
       paymentSubformHandle,
       planId,
-      checkoutTransactionId,
+      paymentToken,
       'paymentSubform'
     );
 

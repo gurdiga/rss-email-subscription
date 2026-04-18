@@ -538,7 +538,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   if (isDemoSession(reqSession)) {
     const logData = {};
-    const responseData: PlanChangeResponseData = { checkoutTransactionId: 'demo account' };
+    const responseData: PlanChangeResponseData = { paymentToken: 'demo account' };
 
     return makeSuccess('Success', logData, responseData);
   }
@@ -580,7 +580,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   const paddle = makePaddle(env.PADDLE_API_KEY);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
-  let checkoutTransactionId: string;
+  let paymentToken: string;
 
   if (changingFromPaidPlanToFree) {
     const cancelResult = await cancelCustomerSubscription(paddle, email);
@@ -593,7 +593,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    checkoutTransactionId = '';
+    paymentToken = '';
   } else if (changingFromOnePaidPlanToAnother) {
     const changeResult = await changeCustomerSubscription(paddle, email, request.planId);
 
@@ -606,7 +606,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    checkoutTransactionId = changeResult.value;
+    paymentToken = changeResult.value;
   } else {
     // changing from Free to a paid plan
     const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
@@ -620,7 +620,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    checkoutTransactionId = createResult.value;
+    paymentToken = createResult.value;
   }
 
   const oldPlanTitle = Plans[account.planId].title;
@@ -642,7 +642,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
   const logData = {};
-  const responseData: PlanChangeResponseData = { checkoutTransactionId };
+  const responseData: PlanChangeResponseData = { paymentToken };
 
   return makeSuccess('Success', logData, responseData);
 };

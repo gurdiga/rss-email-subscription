@@ -237,11 +237,11 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      const { checkoutTransactionId } = responseData as PlanChangeResponseData;
+      const { paymentToken } = responseData as PlanChangeResponseData;
       const card = await maybeConfirmPayment<keyof RequiredUiElements>(
         paymentSubformHandle,
         newPlanId,
-        checkoutTransactionId,
+        paymentToken,
         'paymentSubform'
       );
 

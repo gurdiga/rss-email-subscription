@@ -144,18 +144,18 @@ export async function maybeValidatePaymentSubform<FIELD extends string>(
 export async function maybeConfirmPayment<FIELD extends string>(
   paymentSubformHandle: PaymentSubformHandle,
   planId: string,
-  checkoutTransactionId: string,
+  paymentToken: string,
   fieldName: FIELD
 ): Promise<InputError | void> {
   if (!isSubscriptionPlan(planId)) {
     return;
   }
 
-  if (!checkoutTransactionId) {
+  if (!paymentToken) {
     return;
   }
 
-  const result = await paymentSubformHandle.openCheckout(checkoutTransactionId);
+  const result = await paymentSubformHandle.openCheckout(paymentToken);
 
   if (isErr(result)) {
     return makeInputError<FIELD>(result.reason, fieldName);
