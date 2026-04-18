@@ -461,7 +461,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
-  if (isSubscriptionPlan(account.planId) && env.PADDLE_ENABLED === 'true') {
+  if (isSubscriptionPlan(account.planId)) {
     const paddle = makePaddle(env.PADDLE_API_KEY);
     const { email } = account;
     const cancelResult = await cancelCustomerSubscription(paddle, email);

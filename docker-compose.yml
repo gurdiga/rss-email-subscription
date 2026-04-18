@@ -16,7 +16,6 @@ x-app-env: &app-env
   PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN?}
   PADDLE_API_KEY: ${PADDLE_API_KEY?}
   PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET?}
-  PADDLE_ENABLED: ${PADDLE_ENABLED?}
 
 x-disable-ipv6: &x-disable-ipv6
   sysctls:

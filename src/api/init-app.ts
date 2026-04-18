@@ -18,7 +18,6 @@ export interface AppEnv {
   PADDLE_CLIENT_TOKEN: string;
   PADDLE_API_KEY: string;
   PADDLE_WEBHOOK_SECRET: string;
-  PADDLE_ENABLED: string;
 }
 
 export function initApp(): App {
@@ -30,7 +29,6 @@ export function initApp(): App {
     'PADDLE_CLIENT_TOKEN',
     'PADDLE_API_KEY',
     'PADDLE_WEBHOOK_SECRET',
-    'PADDLE_ENABLED',
   ]);
 
   if (isErr(env)) {
