@@ -77,7 +77,7 @@ export interface RegistrationRequest {
 export type RegistrationRequestData = Record<keyof RegistrationRequest, string>;
 
 export interface RegistrationResponseData {
-  clientSecret: string;
+  checkoutTransactionId: string;
 }
 
 export interface AuthenticationRequest {
@@ -127,7 +127,7 @@ export interface PlanChangeRequest {
 export type PlanChangeRequestData = Record<keyof PlanChangeRequest, string>;
 
 export interface PlanChangeResponseData {
-  clientSecret: string;
+  checkoutTransactionId: string;
 }
 
 export interface DeleteAccountRequest {

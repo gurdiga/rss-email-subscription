@@ -1,7 +1,11 @@
 import { capitalize, si } from '../shared/string-utils';
 
-export interface StripeKeysResponseData {
-  publishableKey: string;
+export interface PaddleKeysResponseData {
+  clientToken: string;
+}
+
+export interface PaddleDataResponseData {
+  trialPeriodDays: number;
 }
 
 export interface AccountSupportProductResponseData {
