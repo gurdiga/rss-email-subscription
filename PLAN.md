@@ -44,13 +44,13 @@ Consequence: **never edit JS files in `feedsubscription.com/src/web-ui-scripts/`
 - `src/domain/stripe-integration.ts`
 
 **Create:**
-- `src/api/paddle-integration.ts` — backend Paddle functions
-- `src/web-ui/paddle-integration.ts` — frontend Paddle functions
+- `src/api/payment-integration.ts` — backend Paddle functions
+- `src/web-ui/payment-integration.ts` — frontend Paddle functions
 - `src/domain/payment.ts` — shared `Card`, `makeCardDescription`, `StoreCardRequest`, `PaddleKeysResponseData`
 
 **Modify:**
 - `src/domain/api-path.ts` — rename stripe paths, add webhook path
-- `src/domain/account.ts` — rename `clientSecret` → `checkoutTransactionId` in `PlanChangeResponseData`
+- `src/domain/account.ts` — rename `clientSecret` → `paymentToken` in `PlanChangeResponseData`
 - `src/api/registration.ts` — swap Stripe calls for Paddle
 - `src/api/account.ts` — swap Stripe calls for Paddle
 - `src/api/server.ts` — add webhook route, update route names
@@ -107,23 +107,23 @@ export interface PaddleDataResponseData {
 
 Update `PlanChangeResponseData` in `src/domain/account.ts`:
 ```ts
-checkoutTransactionId: string; // was clientSecret
+paymentToken: string; // was clientSecret
 ```
 
 ### Step 3: API paths (`src/domain/api-path.ts`)
 
 Rename:
-- `stripeKeys` → `paddleKeys`
-- `stripeData` → `paddleData`
+- `stripeKeys` → `paymentKeys`
+- `stripeData` → `paymentData`
 - `storeStripeCardDescription` → `storeCardDescription`
 - `accountSupportProduct` → `accountSupportProduct` (keep as-is, Paddle has equivalent)
 
 Add:
-- `paddleWebhook = '/webhook/paddle'`
+- `paymentWebhook = '/webhook/payment'`
 
-### Step 4: Backend — `src/api/paddle-integration.ts`
+### Step 4: Backend — `src/api/payment-integration.ts`
 
-Implement these functions mirroring the current Stripe file:
+Implement these functions mirroring the current Stripe file. Internal handler/function names keep the `paddle` prefix where they wrap Paddle-specific calls; only the file name and exported API path identifiers are provider-neutral.
 
 **Config/keys:**
 - `paddleKeys(req, res)` — returns `PADDLE_CLIENT_TOKEN` env var
@@ -150,7 +150,7 @@ Implement these functions mirroring the current Stripe file:
   - Paddle API: `GET /prices` → filter by custom_data
 
 **Webhook handler:**
-- `paddleWebhook(req, res)` — verifies Paddle signature, dispatches on event type
+- `paddleWebhookHandler(app)` — returns an Express handler that verifies Paddle signature, dispatches on event type
   - `transaction.completed` → extract card info from `payments[0].method_details`, call `storeCardDescription`
   - `subscription.canceled` → update local account plan to Free (defensive sync)
   - Signature verification: `paddle.webhooks.unmarshal(rawBody, secret, signature)`
@@ -168,7 +168,7 @@ return res.json({ clientSecret });
 With:
 ```ts
 const { transactionId } = await createCustomerWithSubscription(email, planId);
-return res.json({ checkoutTransactionId: transactionId });
+return res.json({ paymentToken: transactionId });
 ```
 
 ### Step 6: Update `src/api/account.ts`
@@ -181,10 +181,10 @@ return res.json({ checkoutTransactionId: transactionId });
 
 - Replace stripe route imports with paddle imports
 - Rename routes to match updated `ApiPath` constants
-- Add: `app.post(ApiPath.paddleWebhook, express.raw({ type: '*/*' }), paddleWebhook)`
+- Add: `app.post(ApiPath.paymentWebhook, express.raw({ type: '*/*' }), paddleWebhookHandler(app))`
   - Note: webhook route needs raw body (not JSON-parsed) for signature verification
 
-### Step 8: Frontend — `src/web-ui/paddle-integration.ts`
+### Step 8: Frontend — `src/web-ui/payment-integration.ts`
 
 Replace Stripe Elements flow with Paddle inline checkout:
 
@@ -192,7 +192,7 @@ Replace Stripe Elements flow with Paddle inline checkout:
 // Initialize Paddle (replaces getStripe)
 async function getPaddle(): Promise<Paddle> {
   // Load @paddle/paddle-js from CDN dynamically
-  // Initialize with client token from /api/paddle-keys
+  // Initialize with client token from /api/payment-keys
 }
 
 // Open inline checkout (replaces buildPaymentElement)
@@ -213,7 +213,7 @@ Preserve: `loadPlanPrices`, `getPlanOptionLabel`, `formatPlanTitleAndPrice`, `bu
 
 Swap Stripe import calls for Paddle equivalents. The overall shape (validate → submit → open checkout → on complete) stays the same; the implementation of the payment step changes.
 
-`registration.ts`: after backend responds with `checkoutTransactionId`, open Paddle checkout instead of calling `stripe.confirmSetup()`.
+`registration.ts`: after backend responds with `paymentToken`, open Paddle checkout instead of calling `stripe.confirmSetup()`.
 
 `account.ts`: same pattern for plan changes.
 
@@ -224,7 +224,6 @@ Swap Stripe import calls for Paddle equivalents. The overall shape (validate →
 PADDLE_CLIENT_TOKEN=test_...
 PADDLE_API_KEY=...
 PADDLE_WEBHOOK_SECRET=...
-PADDLE_ENABLED=false
 ```
 
 `docker-compose.yml`: replace `STRIPE_*` with `PADDLE_*`.
@@ -232,7 +231,7 @@ PADDLE_ENABLED=false
 ### Step 11: Tests (`api-test.spec.ts`)
 
 - Replace `getStripeCardDescriptionStorageKey` import with equivalent from new domain file
-- Update plan-change response field `clientSecret` → `checkoutTransactionId`
+- Update plan-change response field `clientSecret` → `paymentToken`
 - Update any Stripe SDK direct calls
 
 ---
@@ -247,7 +246,7 @@ The `data` make target (and its sub-targets) currently calls the Stripe API dire
 
 Replace with Paddle equivalents:
 - `plan-data`: fetch prices from `api.paddle.com/prices` filtered by `custom_data.res_plan_id`, combine with `plan_settings.json`
-- `app-data`: update URL from `/api/stripe-data` → `/api/paddle-data`
+- `app-data`: update URL from `/api/stripe-data` → `/api/payment-data`
 - `setup-service-data`: fetch product/price from Paddle by `custom_data.res_code = 'account_setup'`; fetch payment link by `custom_data.res_code = 'account_setup_payment_link'`
 - Remove `$STRIPE_SECRET_KEY` env var references; use `$PADDLE_API_KEY`
 
@@ -285,10 +284,56 @@ Do this in sandbox first, then repeat for production.
 
 3. **Set default checkout URL** (Checkout settings): `https://feedsubscription.com`
 
-4. **Configure webhook endpoint**: `https://feedsubscription.com/api/webhook/paddle`
+4. **Configure webhook endpoint**: `https://feedsubscription.com/api/webhook/payment`
    - Events: `transaction.completed`, `subscription.activated`, `subscription.canceled`
 
 5. **Copy credentials to env**: Client Token, API Key, Webhook Secret
+
+---
+
+## API Key Management
+
+### Required scopes
+
+When minting `PADDLE_API_KEY`, grant only the scopes the runtime actually needs:
+
+| Resource | Read | Write | Used for |
+|---|---|---|---|
+| Customers | yes | yes | `customers.list` (find by email), `customers.create` |
+| Subscriptions | yes | yes | `subscriptions.list`, `subscriptions.update` (plan change), `subscriptions.cancel` |
+| Transactions | — | yes | `transactions.create` (new sub + payment-method-refresh on plan change) |
+| Prices | yes | — | `prices.list` (lookup by `custom_data.res_plan_id`) |
+| Products | yes | — | `products.list` (lookup support product by `custom_data.res_code`) |
+
+Notes:
+
+- `paddle.webhooks.unmarshal` is a local signature check using `PADDLE_WEBHOOK_SECRET` — no API permission needed.
+- The Makefile `extend-trial` target hits `PATCH /subscriptions/{id}` — covered by Subscriptions write.
+- The `feedsubscription.com` build-time Makefile (Step 13) reads prices/products at build time — covered by the read scopes above. A separate read-only key is reasonable for least-privilege there.
+
+### Expiration and rotation
+
+Set the key to expire in **1 year** (or 180 days for stricter posture). Avoid "no expiry" — it removes the forcing function to ever rotate. Add a calendar reminder ~2 weeks before expiry so rotation is planned, not an outage.
+
+Paddle allows multiple active API keys, so use add-new → cut-over → revoke-old:
+
+1. **Mint new key** in the Paddle dashboard with the same scopes. Don't touch the old key yet.
+2. **Update `.env` on prod**:
+   ```bash
+   ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+     'sed -i "s/^PADDLE_API_KEY=.*/PADDLE_API_KEY=NEW_VALUE/" ~/path/to/.env'
+   ```
+3. **Recreate Paddle-touching containers**:
+   ```bash
+   docker compose --project-name res up -d --force-recreate api app
+   ```
+4. **Verify**: trigger a plan-change for a test account and tail logs for `Failed to paddle.*` errors.
+5. **Revoke the old key** in the Paddle dashboard.
+
+### Independent secrets
+
+- `PADDLE_WEBHOOK_SECRET` rotates separately — it's tied to the webhook endpoint config in the dashboard, not the API key. Same add-new → cut-over pattern.
+- `PADDLE_CLIENT_TOKEN` is a public client-side token; rotate only if compromised.
 
 ---
 
