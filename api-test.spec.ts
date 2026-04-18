@@ -4,7 +4,7 @@ import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
-import { getStripeCardDescriptionStorageKey } from './src/api/stripe-integration';
+import { getCardDescriptionStorageKey } from './src/api/paddle-integration';
 import { getEmailsStorageKey } from './src/app/email-sending/emails';
 import {
   AccountData,
@@ -628,13 +628,13 @@ describe('API', () => {
       });
 
       function storeCardDescription(accountId: AccountId): void {
-        const filePath = getStripeCardDescriptionStorageKey(accountId);
+        const filePath = getCardDescriptionStorageKey(accountId);
 
         writeFile(makePath(dataDirRoot, filePath), JSON.stringify(cardDescription));
       }
 
       function removeCardDescription(accountId: AccountId): void {
-        const filePath = getStripeCardDescriptionStorageKey(accountId);
+        const filePath = getCardDescriptionStorageKey(accountId);
 
         deleteFile(makePath(dataDirRoot, filePath));
       }
