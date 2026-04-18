@@ -111,7 +111,7 @@ async function getPaddle(): Promise<Result<unknown>> {
 }
 
 async function loadPaddleKeys(): Promise<Result<PaddleKeysResponseData>> {
-  const apiPath = ApiPath.paddleKeys;
+  const apiPath = ApiPath.paymentKeys;
   const response = await asyncAttempt(() => sendApiRequest<PaddleKeysResponseData>(apiPath));
 
   if (isErr(response)) {

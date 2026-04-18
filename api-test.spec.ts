@@ -4,7 +4,7 @@ import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
-import { getCardDescriptionStorageKey } from './src/api/paddle-integration';
+import { getCardDescriptionStorageKey } from './src/api/payment-integration';
 import { getEmailsStorageKey } from './src/app/email-sending/emails';
 import {
   AccountData,

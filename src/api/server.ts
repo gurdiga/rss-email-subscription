@@ -48,7 +48,7 @@ import {
   paddleKeys,
   paddleWebhookHandler,
   storeCardDescription,
-} from './paddle-integration';
+} from './payment-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
@@ -104,11 +104,11 @@ async function main() {
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
   router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
-  router.get(ApiPath.paddleKeys, makeAppRequestHandler(paddleKeys, app));
+  router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
   router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
-  router.get(ApiPath.paddleData, makeAppRequestHandler(paddleData, app));
-  router.post(ApiPath.paddleWebhook, express.raw({ type: '*/*' }), paddleWebhookHandler(app));
+  router.get(ApiPath.paymentData, makeAppRequestHandler(paddleData, app));
+  router.post(ApiPath.paymentWebhook, express.raw({ type: '*/*' }), paddleWebhookHandler(app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

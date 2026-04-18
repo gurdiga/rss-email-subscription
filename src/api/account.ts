@@ -53,7 +53,7 @@ import {
   createCustomerWithSubscription,
   loadCardDescription,
   makePaddle,
-} from './paddle-integration';
+} from './payment-integration';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,

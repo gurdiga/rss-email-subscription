@@ -37,7 +37,7 @@ import { enablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
-import { createCustomerWithSubscription, makePaddle } from './paddle-integration';
+import { createCustomerWithSubscription, makePaddle } from './payment-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,

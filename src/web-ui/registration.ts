@@ -29,7 +29,7 @@ import {
   makePaymentSubformHandle,
   maybeConfirmPayment,
   maybeValidatePaymentSubform,
-} from './paddle-integration';
+} from './payment-integration';
 
 async function main() {
   if (isAuthenticated()) {
