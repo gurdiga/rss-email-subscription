@@ -1335,13 +1335,12 @@ extend-trial:
 	@: quiet
 	: $${SUB_ID:?Missing envar as sub_longBlahBlah}
 	: $${TRIAL_END:?Missing envar as %F date string}
+	: $${PADDLE_API_KEY:?Missing envar}
 
-	trial_end_timestamp=`date -d "$${TRIAL_END}T00:00:00+00:00" +"%s"`
-
-	curl https://api.stripe.com/v1/subscriptions/$$SUB_ID \
-		-u $$STRIPE_SECRET_KEY: \
-		-d "trial_end"="$$trial_end_timestamp" \
-		-d "metadata[extended_trial_on]"="`date`"
+	curl -s -X PATCH https://api.paddle.com/subscriptions/$$SUB_ID \
+		-H "Authorization: Bearer $$PADDLE_API_KEY" \
+		-H "Content-Type: application/json" \
+		-d "{\"trial_ends_at\": \"$${TRIAL_END}T00:00:00Z\"}"
 
 # This presumes the local app running the latest code, and will compare
 # the bundle with the prod version.
