@@ -279,10 +279,15 @@ function isCustomerNotFound(value: unknown): value is CustomerNotFound {
 }
 
 async function findPaddleCustomerByEmail(paddle: Paddle, email: EmailAddress) {
-  const page = await asyncAttempt(() => paddle.customers.list({ search: email.value }).next());
+  const page = await asyncAttempt(() => paddle.customers.list({ email: [email.value] }).next());
 
   if (isErr(page)) {
     return makeErr(si`Failed to paddle.customers.list: ${page.reason}`);
+  }
+
+  if (page.length > 1) {
+    const ids = page.map((c: any) => c.id).join(', ');
+    return makeErr(si`Multiple Paddle customers found for "${email.value}": ${ids}`);
   }
 
   const customer = page[0];
