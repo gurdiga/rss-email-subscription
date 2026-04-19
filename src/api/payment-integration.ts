@@ -416,8 +416,10 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
 }
 
 export function makePaddle(apiKey: string): Paddle {
+  const environment = process.env['NODE_ENV'] === 'production' ? Environment.production : Environment.sandbox;
+
   return new Paddle(apiKey, {
-    environment: Environment.sandbox,
+    environment,
     logLevel: LogLevel.none,
   });
 }
