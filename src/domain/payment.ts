@@ -1,7 +1,14 @@
 import { capitalize, si } from '../shared/string-utils';
 
-export interface StripeKeysResponseData {
-  publishableKey: string;
+export type PaddleEnvironment = 'sandbox' | 'production';
+
+export interface PaddleKeysResponseData {
+  clientToken: string;
+  environment: PaddleEnvironment;
+}
+
+export interface PaddleDataResponseData {
+  trialPeriodDays: number;
 }
 
 export interface AccountSupportProductResponseData {

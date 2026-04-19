@@ -42,7 +42,13 @@ import { confirmPasswordReset, requestPasswordReset } from './password-reset';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
-import { accountSupportProduct, storeStripeCardDescription, stripeData, stripeKeys } from './stripe-integration';
+import {
+  accountSupportProduct,
+  paddleData,
+  paddleKeys,
+  paddleWebhookHandler,
+  storeCardDescription,
+} from './payment-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
@@ -98,10 +104,11 @@ async function main() {
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
   router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
-  router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
-  router.post(ApiPath.storeStripeCardDescription, makeAppRequestHandler(storeStripeCardDescription, app));
+  router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
+  router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
-  router.get(ApiPath.stripeData, makeAppRequestHandler(stripeData, app));
+  router.get(ApiPath.paymentData, makeAppRequestHandler(paddleData, app));
+  router.post(ApiPath.paymentWebhook, express.raw({ type: '*/*' }), paddleWebhookHandler(app));
 
   const isDev = process.env['NODE_ENV'] === 'development';
 
