@@ -1336,8 +1336,11 @@ extend-trial:
 	: $${SUB_ID:?Missing envar as sub_longBlahBlah}
 	: $${TRIAL_END:?Missing envar as %F date string}
 	: $${PADDLE_API_KEY:?Missing envar}
+	: $${PADDLE_ENVIRONMENT:?Missing envar: sandbox or production}
 
-	curl -s -X PATCH https://api.paddle.com/subscriptions/$$SUB_ID \
+	PADDLE_API_BASE=$$([ "$$PADDLE_ENVIRONMENT" = "production" ] && echo "https://api.paddle.com" || echo "https://sandbox-api.paddle.com")
+
+	curl -s -X PATCH $$PADDLE_API_BASE/subscriptions/$$SUB_ID \
 		-H "Authorization: Bearer $$PADDLE_API_KEY" \
 		-H "Content-Type: application/json" \
 		-d "{\"trial_ends_at\": \"$${TRIAL_END}T00:00:00Z\"}"
