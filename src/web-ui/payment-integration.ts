@@ -48,6 +48,11 @@ export async function makePaymentSubformHandle(
       checkoutOpen = true;
 
       return new Promise<Result<void>>((resolve) => {
+        currentCheckoutResolver = (result) => {
+          checkoutOpen = false;
+          resolve(result);
+        };
+
         (paddle as any).Checkout.open({
           transactionId,
           settings: {
@@ -55,15 +60,6 @@ export async function makePaymentSubformHandle(
             frameTarget: paymentSubform.id || 'payment-subform',
             frameInitialHeight: 450,
             frameStyle: 'width: 100%; min-width: 312px; background-color: transparent; border: none;',
-          },
-          eventCallback: (event: any) => {
-            if (event.name === 'checkout.completed') {
-              checkoutOpen = false;
-              resolve(undefined);
-            } else if (event.name === 'checkout.error') {
-              checkoutOpen = false;
-              resolve(makeErr(event.data?.error?.detail || 'Paddle checkout error'));
-            }
           },
         });
       });
@@ -77,7 +73,20 @@ export async function makePaymentSubformHandle(
   return paymentSubformHandle;
 }
 
-async function getPaddle(): Promise<Result<unknown>> {
+type CheckoutResolver = (result: Result<void>) => void;
+
+let paddlePromise: Promise<Result<unknown>> | undefined;
+let currentCheckoutResolver: CheckoutResolver | undefined;
+
+function getPaddle(): Promise<Result<unknown>> {
+  if (!paddlePromise) {
+    paddlePromise = initPaddle();
+  }
+
+  return paddlePromise;
+}
+
+async function initPaddle(): Promise<Result<unknown>> {
   const keysResult = await loadPaddleKeys();
 
   if (isErr(keysResult)) {
@@ -92,14 +101,33 @@ async function getPaddle(): Promise<Result<unknown>> {
     script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
     script.onload = () => {
-      if ('Paddle' in window) {
-        const paddle = (window as any).Paddle;
-
-        paddle.Initialize({ token: clientToken });
-        resolve(paddle);
-      } else {
+      if (!('Paddle' in window)) {
         reject(makeErr('Paddle global not found after script load'));
+        return;
       }
+
+      const paddle = (window as any).Paddle;
+
+      paddle.Initialize({
+        token: clientToken,
+        eventCallback: (event: any) => {
+          if (!currentCheckoutResolver) {
+            return;
+          }
+
+          if (event.name === 'checkout.completed') {
+            const resolver = currentCheckoutResolver;
+            currentCheckoutResolver = undefined;
+            resolver(undefined);
+          } else if (event.name === 'checkout.error') {
+            const resolver = currentCheckoutResolver;
+            currentCheckoutResolver = undefined;
+            resolver(makeErr(event.data?.error?.detail || 'Paddle checkout error'));
+          }
+        },
+      });
+
+      resolve(paddle);
     };
 
     script.onerror = (error) => {
