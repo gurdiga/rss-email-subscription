@@ -1,4 +1,5 @@
 import { AppSettings, loadAppSettings } from '../domain/app-settings';
+import { PaddleEnvironment } from '../domain/payment';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -18,7 +19,7 @@ export interface AppEnv {
   PADDLE_CLIENT_TOKEN: string;
   PADDLE_API_KEY: string;
   PADDLE_WEBHOOK_SECRET: string;
-  PADDLE_ENVIRONMENT: 'sandbox' | 'production';
+  PADDLE_ENVIRONMENT: PaddleEnvironment;
 }
 
 export function initApp(): App {

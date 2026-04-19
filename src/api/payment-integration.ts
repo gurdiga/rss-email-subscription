@@ -9,6 +9,7 @@ import {
   AccountSupportProductResponseData,
   Card,
   PaddleDataResponseData,
+  PaddleEnvironment,
   PaddleKeysResponseData,
   StoreCardRequest,
   makeCardDescription,
@@ -410,7 +411,7 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
   return (price as any).id;
 }
 
-export function makePaddle(apiKey: string, paddleEnvironment: 'sandbox' | 'production'): Paddle {
+export function makePaddle(apiKey: string, paddleEnvironment: PaddleEnvironment): Paddle {
   const environment = paddleEnvironment === 'production' ? Environment.production : Environment.sandbox;
 
   return new Paddle(apiKey, {
