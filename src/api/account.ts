@@ -606,7 +606,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    paymentToken = changeResult.value;
+    paymentToken = '';
   } else {
     // changing from Free to a paid plan
     const createResult = await createCustomerWithSubscription(paddle, email, request.planId);

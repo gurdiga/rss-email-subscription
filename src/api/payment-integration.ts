@@ -292,7 +292,7 @@ export async function changeCustomerSubscription(
   paddle: Paddle,
   email: EmailAddress,
   planId: PlanId
-): Promise<Result<PaddleTransactionId>> {
+): Promise<Result<void>> {
   if (!isSubscriptionPlan(planId)) {
     return makeNotASubscriptionPlanErr(planId);
   }
@@ -328,27 +328,15 @@ export async function changeCustomerSubscription(
   }
 
   const updated = await asyncAttempt(() =>
-    paddle.subscriptions.update(subscription.id, { items: [{ priceId, quantity: 1 }] })
+    paddle.subscriptions.update(subscription.id, {
+      items: [{ priceId, quantity: 1 }],
+      prorationBillingMode: 'prorated_immediately',
+    })
   );
 
   if (isErr(updated)) {
     return makeErr(si`Failed to paddle.subscriptions.update: ${updated.reason}`);
   }
-
-  const transaction = await asyncAttempt(() =>
-    paddle.transactions.create({
-      customerId: (customer as any).id,
-      items: [{ priceId, quantity: 1 }],
-      collectionMode: 'automatic',
-      customData: { res_customer_email: email.value },
-    })
-  );
-
-  if (isErr(transaction)) {
-    return makeErr(si`Failed to paddle.transactions.create after subscription update: ${transaction.reason}`);
-  }
-
-  return makePaddleTransactionId((transaction as any).id);
 }
 
 export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAddress): Promise<Result<void>> {
