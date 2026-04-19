@@ -57,7 +57,7 @@ export async function makePaymentSubformHandle(
           transactionId,
           settings: {
             displayMode: 'inline',
-            frameTarget: paymentSubform.id || 'payment-subform',
+            frameTarget: 'paddle-checkout',
             frameInitialHeight: 450,
             frameStyle: 'width: 100%; min-width: 312px; background-color: transparent; border: none;',
           },
