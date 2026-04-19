@@ -1,7 +1,10 @@
 import { capitalize, si } from '../shared/string-utils';
 
+export type PaddleEnvironment = 'sandbox' | 'production';
+
 export interface PaddleKeysResponseData {
   clientToken: string;
+  environment: PaddleEnvironment;
 }
 
 export interface PaddleDataResponseData {

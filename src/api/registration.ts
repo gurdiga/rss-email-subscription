@@ -102,7 +102,7 @@ export const registration: AppRequestHandler = async function registration(
   let paymentToken = '';
 
   if (isSubscriptionPlan(request.planId)) {
-    const paddle = makePaddle(env.PADDLE_API_KEY);
+    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
     const result = await createCustomerWithSubscription(paddle, email, planId);
 
     if (isErr(result)) {

@@ -463,7 +463,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
   }
 
   if (isSubscriptionPlan(account.planId)) {
-    const paddle = makePaddle(env.PADDLE_API_KEY);
+    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
     const { email } = account;
     const cancelResult = await cancelCustomerSubscription(paddle, email);
 
@@ -578,7 +578,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeInputError<keyof PlanChangeRequest>('Plan did not change', 'planId');
   }
 
-  const paddle = makePaddle(env.PADDLE_API_KEY);
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
   let paymentToken: string;

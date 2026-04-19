@@ -46,6 +46,7 @@ export const paddleKeys: AppRequestHandler = async function paddleKeys(
 ) {
   const responseData: PaddleKeysResponseData = {
     clientToken: env.PADDLE_CLIENT_TOKEN,
+    environment: env.PADDLE_ENVIRONMENT,
   };
 
   return makeSuccess('Paddle keys', {}, responseData);
@@ -137,7 +138,7 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
   { env }
 ) {
   const { logError } = makeCustomLoggers({ module: accountSupportProduct.name, reqId });
-  const paddle = makePaddle(env.PADDLE_API_KEY);
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
 
   const productsPage = await asyncAttempt(() => paddle.products.list().next());
 
@@ -404,8 +405,8 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
   return (price as any).id;
 }
 
-export function makePaddle(apiKey: string): Paddle {
-  const environment = process.env['NODE_ENV'] === 'production' ? Environment.production : Environment.sandbox;
+export function makePaddle(apiKey: string, paddleEnvironment: 'sandbox' | 'production'): Paddle {
+  const environment = paddleEnvironment === 'production' ? Environment.production : Environment.sandbox;
 
   return new Paddle(apiKey, {
     environment,
@@ -424,7 +425,7 @@ export function paddleWebhookHandler(app: App): RequestHandler {
       return;
     }
 
-    const paddle = makePaddle(app.env.PADDLE_API_KEY);
+    const paddle = makePaddle(app.env.PADDLE_API_KEY, app.env.PADDLE_ENVIRONMENT);
     const rawBody = req.body as Buffer;
 
     const event = await asyncAttempt(() =>

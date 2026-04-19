@@ -93,7 +93,7 @@ async function initPaddle(): Promise<Result<unknown>> {
     return makeErr(si`Failed to ${loadPaddleKeys.name}: ${keysResult.reason}`);
   }
 
-  const { clientToken } = keysResult;
+  const { clientToken, environment } = keysResult;
 
   return new Promise((resolve, reject) => {
     const script = document.createElement('script');
@@ -107,6 +107,10 @@ async function initPaddle(): Promise<Result<unknown>> {
       }
 
       const paddle = (window as any).Paddle;
+
+      if (environment === 'sandbox') {
+        paddle.Environment.set('sandbox');
+      }
 
       paddle.Initialize({
         token: clientToken,
