@@ -46,6 +46,7 @@ import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
+import { sendPlanChangeInformationEmail } from './plan-change-email';
 import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
   cancelCustomerSubscription,
@@ -649,28 +650,6 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {
   return makeValues<PlanChangeRequest>(data, { planId: makePlanId });
-}
-
-async function sendPlanChangeInformationEmail(
-  oldPlanTitle: string,
-  newPlanTitle: string,
-  email: EmailAddress,
-  settings: AppSettings,
-  env: AppEnv
-) {
-  const emailContent = {
-    subject: 'Please note FeedSubscription plan change',
-    htmlBody: htmlBody(si`
-      <p>Hello,</p>
-
-      <p>Please note that your plan at FeedSubscription.com has been
-      changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>
-
-      <p>Have a nice day.</p>
-    `),
-  };
-
-  return await sendEmail(settings.fullEmailAddress, email, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
 function makeDeleteAccountRequest(data: unknown | DeleteAccountRequestData): Result<DeleteAccountRequest> {

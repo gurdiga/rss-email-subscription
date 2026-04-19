@@ -1,10 +1,10 @@
 import { Environment, EventName, LogLevel, Paddle } from '@paddle/paddle-node-sdk';
 import { RequestHandler } from 'express';
-import { AccountId } from '../domain/account';
-import { getAccountRootStorageKey } from '../domain/account-storage';
+import { AccountId, isAccountNotFound } from '../domain/account';
+import { getAccountRootStorageKey, loadAccount, storeAccount } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { PlanId, isSubscriptionPlan, makeNotASubscriptionPlanErr } from '../domain/plan';
+import { PlanId, Plans, isSubscriptionPlan, makeNotASubscriptionPlanErr } from '../domain/plan';
 import {
   AccountSupportProductResponseData,
   Card,
@@ -31,6 +31,7 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
 import { App } from './init-app';
+import { sendPlanChangeInformationEmail } from './plan-change-email';
 import { checkSession, isAuthenticatedSession } from './session';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 
@@ -480,8 +481,59 @@ export function paddleWebhookHandler(app: App): RequestHandler {
           }
         }
       }
+    } else if (event.eventType === EventName.SubscriptionCanceled) {
+      await handleSubscriptionCanceled(app, paddle, event.data.customerId);
     }
 
     res.status(200).send('OK');
   };
+}
+
+async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<void> {
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleSubscriptionCanceled.name });
+
+  const customer = await asyncAttempt(() => paddle.customers.get(customerId));
+
+  if (isErr(customer)) {
+    logError(si`Failed to paddle.customers.get("${customerId}"): ${customer.reason}`);
+    return;
+  }
+
+  const email = makeEmailAddress(customer.email);
+
+  if (isErr(email)) {
+    logError(si`Invalid customer email from Paddle: "${customer.email}": ${email.reason}`);
+    return;
+  }
+
+  const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
+  const account = loadAccount(app.storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
+    return;
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning(si`Account not found for canceled subscription: ${email.value}`);
+    return;
+  }
+
+  if (account.planId === PlanId.Free) {
+    logInfo(si`Account for ${email.value} already on Free plan; skipping`);
+    return;
+  }
+
+  const oldPlanTitle = Plans[account.planId].title;
+  const newPlanTitle = Plans[PlanId.Free].title;
+  const storeResult = storeAccount(app.storage, accountId, { ...account, planId: PlanId.Free });
+
+  if (isErr(storeResult)) {
+    logError(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
+    return;
+  }
+
+  logInfo(si`Downgraded ${email.value} to Free after external subscription cancellation`);
+
+  await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
 }
