@@ -123,10 +123,14 @@ async function initPaddle(): Promise<Result<unknown>> {
             const resolver = currentCheckoutResolver;
             currentCheckoutResolver = undefined;
             resolver(undefined);
+          } else if (event.name === 'checkout.closed') {
+            const resolver = currentCheckoutResolver;
+            currentCheckoutResolver = undefined;
+            resolver(makeErr('Checkout was closed'));
           } else if (event.name === 'checkout.error') {
             const resolver = currentCheckoutResolver;
             currentCheckoutResolver = undefined;
-            resolver(makeErr(event.data?.error?.detail || 'Paddle checkout error'));
+            resolver(makeErr(event.detail || event.data?.error?.detail || 'Paddle checkout error'));
           }
         },
       });
