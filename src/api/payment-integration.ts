@@ -148,8 +148,8 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
     return makeAppError();
   }
 
-  const product = productsPage.find((p: any) => {
-    const cd = p.customData as Record<string, string> | null;
+  const product = productsPage.find((p) => {
+    const cd = p.customData;
     return cd?.['res_code'] === 'account_setup';
   });
 
@@ -165,7 +165,7 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
     return makeAppError();
   }
 
-  const price = pricesPage[0] as any;
+  const price = pricesPage[0];
 
   if (!price) {
     logError(si`No price found for account support product "${product.id}"`);
@@ -175,7 +175,7 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
   // Payment links are not manageable via the Paddle Node SDK; the URL is fetched
   // at build time by the feedsubscription.com Makefile and stored in payment_link.json.
   // At runtime, the API returns what is known from the product/price only.
-  const priceInCents = price.unitPrice ? parseInt(price.unitPrice.amount as string, 10) : 0;
+  const priceInCents = price.unitPrice ? parseInt(price.unitPrice.amount, 10) : 0;
 
   const responseData = makeAccountSupportProductResponseData({
     name: product.name,
@@ -233,7 +233,7 @@ export async function createCustomerWithSubscription(
 
   const transaction = await asyncAttempt(() =>
     paddle.transactions.create({
-      customerId: (customer as any).id,
+      customerId: customer.id,
       items: [{ priceId, quantity: 1 }],
       collectionMode: 'automatic',
       customData: { res_customer_email: email.value },
@@ -244,7 +244,7 @@ export async function createCustomerWithSubscription(
     return makeErr(si`Failed to paddle.transactions.create: ${transaction.reason}`);
   }
 
-  return makePaddleTransactionId((transaction as any).id);
+  return makePaddleTransactionId(transaction.id);
 }
 
 async function getOrCreatePaddleCustomer(paddle: Paddle, email: EmailAddress) {
@@ -322,17 +322,17 @@ export async function changeCustomerSubscription(
   }
 
   const subscriptionsPage = await asyncAttempt(() =>
-    paddle.subscriptions.list({ customerId: [(customer as any).id], status: ['active', 'trialing'] }).next()
+    paddle.subscriptions.list({ customerId: [customer.id], status: ['active', 'trialing'] }).next()
   );
 
   if (isErr(subscriptionsPage)) {
     return makeErr(si`Failed to paddle.subscriptions.list: ${subscriptionsPage.reason}`);
   }
 
-  const subscription = subscriptionsPage[0] as any;
+  const subscription = subscriptionsPage[0];
 
   if (!subscription) {
-    return makeErr(si`No active subscription found for customer "${(customer as any).id}"`);
+    return makeErr(si`No active subscription found for customer "${customer.id}"`);
   }
 
   const updated = await asyncAttempt(() =>
@@ -359,7 +359,7 @@ export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAdd
   }
 
   const subscriptionsPage = await asyncAttempt(() =>
-    paddle.subscriptions.list({ customerId: [(customer as any).id], status: ['active', 'trialing'] }).next()
+    paddle.subscriptions.list({ customerId: [customer.id], status: ['active', 'trialing'] }).next()
   );
 
   if (isErr(subscriptionsPage)) {
@@ -367,11 +367,11 @@ export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAdd
   }
 
   if (subscriptionsPage.length > 1) {
-    const ids = subscriptionsPage.map((s: any) => s.id).join(', ');
+    const ids = subscriptionsPage.map((s) => s.id).join(', ');
     return makeErr(si`More than one active subscription found for "${email.value}": ${ids}`);
   }
 
-  const subscription = subscriptionsPage[0] as any;
+  const subscription = subscriptionsPage[0];
 
   if (!subscription) {
     return makeErr(si`No active subscription found to cancel for "${email.value}"`);
@@ -399,16 +399,13 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
     return makeErr(si`Failed to paddle.prices.list: ${page.reason}`);
   }
 
-  const price = page.find((p: any) => {
-    const cd = p.customData as Record<string, string> | null;
-    return cd?.['res_plan_id'] === planId;
-  });
+  const price = page.find((p) => p.customData?.['res_plan_id'] === planId);
 
   if (!price) {
     return makeErr(si`Price not found for plan "${planId}"`);
   }
 
-  return (price as any).id;
+  return price.id;
 }
 
 export function makePaddle(apiKey: string, paddleEnvironment: PaddleEnvironment): Paddle {
@@ -459,8 +456,7 @@ export function paddleWebhookHandler(app: App): RequestHandler {
 
       if (methodDetails?.type === 'card' && methodDetails.card) {
         const { type, last4, expiryMonth, expiryYear } = methodDetails.card;
-        const customData = transaction.customData as Record<string, string> | null;
-        const customerEmail = customData?.['res_customer_email'];
+        const customerEmail = transaction.customData?.['res_customer_email'];
 
         if (!customerEmail) {
           logWarning('transaction.completed webhook missing res_customer_email in customData');
