@@ -578,6 +578,8 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
 
   if (changingFromPaidPlanToFree) {
+    // Cancel in Paddle with next_billing_period; local plan stays paid until
+    // subscription.canceled webhook fires at period end.
     const cancelResult = await cancelCustomerSubscription(paddle, email);
 
     if (isErr(cancelResult)) {
@@ -587,6 +589,8 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       });
       return makeAppError();
     }
+
+    return makeSuccess('Success', {}, { paymentToken: '' });
   } else if (changingFromOnePaidPlanToAnother) {
     const changeResult = await changeCustomerSubscription(paddle, email, request.planId);
 
@@ -599,8 +603,8 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
   } else {
-    // changing from Free to a paid plan: create a checkout transaction and
-    // defer the plan upgrade to the transaction.completed webhook
+    // Changing from Free to a paid plan: create a checkout transaction and
+    // defer the plan upgrade to the transaction.completed webhook.
     const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
 
     if (isErr(createResult)) {
@@ -612,11 +616,10 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    const responseData: PlanChangeResponseData = { paymentToken: createResult.value };
-
-    return makeSuccess('Success', {}, responseData);
+    return makeSuccess('Success', {}, { paymentToken: createResult.value });
   }
 
+  // Paid-to-paid: commit the new plan immediately (no checkout required).
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
   const storeAccountResult = storeAccount(storage, accountId, {
@@ -635,9 +638,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
-  const responseData: PlanChangeResponseData = { paymentToken: '' };
-
-  return makeSuccess('Success', {}, responseData);
+  return makeSuccess('Success', {}, { paymentToken: '' });
 };
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {
