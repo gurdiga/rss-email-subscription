@@ -449,10 +449,19 @@ export function paddleWebhookHandler(app: App): RequestHandler {
 
     logInfo(si`Paddle webhook event: ${event.eventType}`);
 
+    let result: Result<void>;
+
     if (event.eventType === EventName.TransactionCompleted) {
-      await handleTransactionCompleted(app, event.data);
+      result = await handleTransactionCompleted(app, event.data);
     } else if (event.eventType === EventName.SubscriptionCanceled) {
-      await handleSubscriptionCanceled(app, paddle, event.data.customerId);
+      result = await handleSubscriptionCanceled(app, paddle, event.data.customerId);
+    } else {
+      result = undefined;
+    }
+
+    if (isErr(result)) {
+      res.status(500).send('Internal error');
+      return;
     }
 
     res.status(200).send('OK');
@@ -474,7 +483,7 @@ interface CompletedTransactionData {
   }>;
 }
 
-async function handleTransactionCompleted(app: App, transaction: CompletedTransactionData): Promise<void> {
+async function handleTransactionCompleted(app: App, transaction: CompletedTransactionData): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
   const customerEmail = transaction.customData?.['res_customer_email'];
   const rawPlanId = transaction.customData?.['res_plan_id'];
@@ -498,25 +507,31 @@ async function handleTransactionCompleted(app: App, transaction: CompletedTransa
 
     if (isErr(newPlanId)) {
       logError(si`Invalid res_plan_id in webhook customData: "${rawPlanId}"`);
-    } else {
-      const account = loadAccount(app.storage, accountId);
+      return;
+    }
 
-      if (isErr(account)) {
-        logError(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
-      } else if (isAccountNotFound(account)) {
-        logWarning(si`Account not found for transaction.completed: ${email.value}`);
-      } else if (account.planId !== newPlanId) {
-        const oldPlanTitle = Plans[account.planId].title;
-        const newPlanTitle = Plans[newPlanId].title;
-        const storeResult = storeAccount(app.storage, accountId, { ...account, planId: newPlanId });
+    const account = loadAccount(app.storage, accountId);
 
-        if (isErr(storeResult)) {
-          logError(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
-        } else {
-          logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
-          await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
-        }
+    if (isErr(account)) {
+      return makeErr(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
+    }
+
+    if (isAccountNotFound(account)) {
+      logWarning(si`Account not found for transaction.completed: ${email.value}`);
+      return;
+    }
+
+    if (account.planId !== newPlanId) {
+      const oldPlanTitle = Plans[account.planId].title;
+      const newPlanTitle = Plans[newPlanId].title;
+      const storeResult = storeAccount(app.storage, accountId, { ...account, planId: newPlanId });
+
+      if (isErr(storeResult)) {
+        return makeErr(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
       }
+
+      logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
+      await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
     }
   }
 
@@ -534,28 +549,28 @@ async function handleTransactionCompleted(app: App, transaction: CompletedTransa
     const storeResult = app.storage.storeItem(getCardDescriptionStorageKey(accountId), description);
 
     if (isErr(storeResult)) {
-      logError(si`Failed to store card description for ${email.value}: ${storeResult.reason}`);
-    } else {
-      logInfo(si`Stored card description for ${email.value}`);
+      return makeErr(si`Failed to store card description for ${email.value}: ${storeResult.reason}`);
     }
+
+    logInfo(si`Stored card description for ${email.value}`);
   }
 }
 
-async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<void> {
+async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleSubscriptionCanceled.name });
 
   const customer = await asyncAttempt(() => paddle.customers.get(customerId));
 
   if (isErr(customer)) {
     logError(si`Failed to paddle.customers.get("${customerId}"): ${customer.reason}`);
-    return;
+    return makeErr(si`Failed to get Paddle customer ${customerId}: ${customer.reason}`);
   }
 
   const email = makeEmailAddress(customer.email);
 
   if (isErr(email)) {
     logError(si`Invalid customer email from Paddle: "${customer.email}": ${email.reason}`);
-    return;
+    return; // non-retriable: bad data from Paddle
   }
 
   const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
@@ -563,17 +578,17 @@ async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: 
 
   if (isErr(account)) {
     logError(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
-    return;
+    return makeErr(si`Failed to load account for ${email.value}: ${account.reason}`);
   }
 
   if (isAccountNotFound(account)) {
     logWarning(si`Account not found for canceled subscription: ${email.value}`);
-    return;
+    return; // non-retriable: no local account to downgrade
   }
 
   if (account.planId === PlanId.Free) {
     logInfo(si`Account for ${email.value} already on Free plan; skipping`);
-    return;
+    return; // non-retriable: already in target state
   }
 
   const oldPlanTitle = Plans[account.planId].title;
@@ -582,7 +597,7 @@ async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: 
 
   if (isErr(storeResult)) {
     logError(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
-    return;
+    return makeErr(si`Failed to store account for ${email.value}: ${storeResult.reason}`);
   }
 
   logInfo(si`Downgraded ${email.value} to Free after external subscription cancellation`);
