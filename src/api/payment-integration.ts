@@ -4,7 +4,7 @@ import { AccountId, isAccountNotFound } from '../domain/account';
 import { getAccountRootStorageKey, loadAccount, storeAccount } from '../domain/account-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { PlanId, Plans, isSubscriptionPlan, makeNotASubscriptionPlanErr } from '../domain/plan';
+import { PlanId, Plans, isSubscriptionPlan, makeNotASubscriptionPlanErr, makePlanId } from '../domain/plan';
 import {
   AccountSupportProductResponseData,
   Card,
@@ -236,7 +236,7 @@ export async function createCustomerWithSubscription(
       customerId: customer.id,
       items: [{ priceId, quantity: 1 }],
       collectionMode: 'automatic',
-      customData: { res_customer_email: email.value },
+      customData: { res_customer_email: email.value, res_plan_id: planId },
     })
   );
 
@@ -450,46 +450,95 @@ export function paddleWebhookHandler(app: App): RequestHandler {
     logInfo(si`Paddle webhook event: ${event.eventType}`);
 
     if (event.eventType === EventName.TransactionCompleted) {
-      const transaction = event.data;
-      const payment = transaction.payments?.[0];
-      const methodDetails = payment?.methodDetails;
-
-      if (methodDetails?.type === 'card' && methodDetails.card) {
-        const { type, last4, expiryMonth, expiryYear } = methodDetails.card;
-        const customerEmail = transaction.customData?.['res_customer_email'];
-
-        if (!customerEmail) {
-          logWarning('transaction.completed webhook missing res_customer_email in customData');
-        } else {
-          const emailResult = makeEmailAddress(customerEmail);
-
-          if (isErr(emailResult)) {
-            logError(si`Invalid customer email in webhook customData: ${customerEmail}`);
-          } else {
-            const accountId = getAccountIdByEmail(emailResult, app.settings.hashingSalt);
-            const card: Card = {
-              brand: type ?? 'unknown',
-              last4: last4 ?? '0000',
-              exp_month: expiryMonth ?? 1,
-              exp_year: expiryYear ?? 2099,
-            };
-            const description = makeCardDescription(card);
-            const storeResult = app.storage.storeItem(getCardDescriptionStorageKey(accountId), description);
-
-            if (isErr(storeResult)) {
-              logError(si`Failed to store card description for ${customerEmail}: ${storeResult.reason}`);
-            } else {
-              logInfo(si`Stored card description for ${customerEmail}`);
-            }
-          }
-        }
-      }
+      await handleTransactionCompleted(app, event.data);
     } else if (event.eventType === EventName.SubscriptionCanceled) {
       await handleSubscriptionCanceled(app, paddle, event.data.customerId);
     }
 
     res.status(200).send('OK');
   };
+}
+
+interface CompletedTransactionData {
+  customData: Record<string, unknown> | null;
+  payments: Array<{
+    methodDetails: {
+      type: string;
+      card?: {
+        type?: string | null;
+        last4?: string | null;
+        expiryMonth?: number | null;
+        expiryYear?: number | null;
+      } | null;
+    } | null;
+  }>;
+}
+
+async function handleTransactionCompleted(app: App, transaction: CompletedTransactionData): Promise<void> {
+  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
+  const customerEmail = transaction.customData?.['res_customer_email'];
+  const rawPlanId = transaction.customData?.['res_plan_id'];
+
+  if (!customerEmail || typeof customerEmail !== 'string') {
+    logWarning('transaction.completed webhook missing res_customer_email in customData');
+    return;
+  }
+
+  const email = makeEmailAddress(customerEmail);
+
+  if (isErr(email)) {
+    logError(si`Invalid customer email in webhook customData: "${customerEmail}"`);
+    return;
+  }
+
+  const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
+
+  if (rawPlanId && typeof rawPlanId === 'string') {
+    const newPlanId = makePlanId(rawPlanId);
+
+    if (isErr(newPlanId)) {
+      logError(si`Invalid res_plan_id in webhook customData: "${rawPlanId}"`);
+    } else {
+      const account = loadAccount(app.storage, accountId);
+
+      if (isErr(account)) {
+        logError(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
+      } else if (isAccountNotFound(account)) {
+        logWarning(si`Account not found for transaction.completed: ${email.value}`);
+      } else if (account.planId !== newPlanId) {
+        const oldPlanTitle = Plans[account.planId].title;
+        const newPlanTitle = Plans[newPlanId].title;
+        const storeResult = storeAccount(app.storage, accountId, { ...account, planId: newPlanId });
+
+        if (isErr(storeResult)) {
+          logError(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
+        } else {
+          logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
+          await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
+        }
+      }
+    }
+  }
+
+  const methodDetails = transaction.payments?.[0]?.methodDetails;
+
+  if (methodDetails?.type === 'card' && methodDetails.card) {
+    const { type, last4, expiryMonth, expiryYear } = methodDetails.card;
+    const card: Card = {
+      brand: type ?? 'unknown',
+      last4: last4 ?? '0000',
+      exp_month: expiryMonth ?? 1,
+      exp_year: expiryYear ?? 2099,
+    };
+    const description = makeCardDescription(card);
+    const storeResult = app.storage.storeItem(getCardDescriptionStorageKey(accountId), description);
+
+    if (isErr(storeResult)) {
+      logError(si`Failed to store card description for ${email.value}: ${storeResult.reason}`);
+    } else {
+      logInfo(si`Stored card description for ${email.value}`);
+    }
+  }
 }
 
 async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<void> {

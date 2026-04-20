@@ -576,7 +576,6 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
-  let paymentToken: string;
 
   if (changingFromPaidPlanToFree) {
     const cancelResult = await cancelCustomerSubscription(paddle, email);
@@ -588,8 +587,6 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       });
       return makeAppError();
     }
-
-    paymentToken = '';
   } else if (changingFromOnePaidPlanToAnother) {
     const changeResult = await changeCustomerSubscription(paddle, email, request.planId);
 
@@ -601,10 +598,9 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       });
       return makeAppError();
     }
-
-    paymentToken = '';
   } else {
-    // changing from Free to a paid plan
+    // changing from Free to a paid plan: create a checkout transaction and
+    // defer the plan upgrade to the transaction.completed webhook
     const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
 
     if (isErr(createResult)) {
@@ -616,7 +612,9 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    paymentToken = createResult.value;
+    const responseData: PlanChangeResponseData = { paymentToken: createResult.value };
+
+    return makeSuccess('Success', {}, responseData);
   }
 
   const oldPlanTitle = Plans[account.planId].title;
@@ -637,10 +635,9 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
-  const logData = {};
-  const responseData: PlanChangeResponseData = { paymentToken };
+  const responseData: PlanChangeResponseData = { paymentToken: '' };
 
-  return makeSuccess('Success', logData, responseData);
+  return makeSuccess('Success', {}, responseData);
 };
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {

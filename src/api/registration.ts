@@ -255,7 +255,7 @@ function initAccount(
 
   const hashedPassword = hash(request.password.value, settings.hashingSalt);
   const account: Account = {
-    planId: request.planId,
+    planId: PlanId.Free,
     email: request.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,
