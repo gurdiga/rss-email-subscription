@@ -94,12 +94,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
       return makeAppError();
     }
 
-    if (!loadedDescription) {
-      logError(si`Empty card description`);
-      return makeAppError();
-    }
-
-    cardDescription = loadedDescription;
+    cardDescription = loadedDescription ?? '';
   }
 
   const logData = {};
