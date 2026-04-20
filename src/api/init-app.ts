@@ -1,5 +1,5 @@
 import { AppSettings, loadAppSettings } from '../domain/app-settings';
-import { PaddleEnvironment } from '../domain/payment';
+import { makePaddleEnvironment, PaddleEnvironment } from '../domain/payment';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -36,6 +36,13 @@ export function initApp(): App {
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
+    process.exit(1);
+  }
+
+  const paddleEnvironment = makePaddleEnvironment(env.PADDLE_ENVIRONMENT);
+
+  if (isErr(paddleEnvironment)) {
+    logError(paddleEnvironment.reason);
     process.exit(1);
   }
 

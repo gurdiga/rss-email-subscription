@@ -1,6 +1,17 @@
+import { makeErr, Result } from '../shared/lang';
 import { capitalize, si } from '../shared/string-utils';
 
 export type PaddleEnvironment = 'sandbox' | 'production';
+
+const validPaddleEnvironments: PaddleEnvironment[] = ['sandbox', 'production'];
+
+export function makePaddleEnvironment(value: string): Result<PaddleEnvironment> {
+  if (!validPaddleEnvironments.includes(value as PaddleEnvironment)) {
+    return makeErr(si`Invalid PADDLE_ENVIRONMENT: "${value}"; expected sandbox or production`);
+  }
+
+  return value as PaddleEnvironment;
+}
 
 export interface PaddleKeysResponseData {
   clientToken: string;
