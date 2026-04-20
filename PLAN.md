@@ -285,7 +285,8 @@ Do this in sandbox first, then repeat for production.
 3. **Set default checkout URL** (Checkout settings): `https://feedsubscription.com`
 
 4. **Configure webhook endpoint**: `https://feedsubscription.com/api/webhook/payment`
-   - Events: `transaction.completed`, `subscription.activated`, `subscription.canceled`
+   - `transaction.completed` — upgrades the local plan and stores card details after checkout
+   - `subscription.canceled` — downgrades the local plan to Free when a subscription is cancelled outside the app (Paddle portal, dunning, merchant action)
 
 5. **Copy credentials to env**: Client Token, API Key, Webhook Secret
 
