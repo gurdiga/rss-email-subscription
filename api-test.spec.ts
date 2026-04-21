@@ -1,3 +1,4 @@
+/// <reference types="mocha" />
 import { expect } from 'chai';
 const cookie = require('cookie');
 import fetchCookie from 'fetch-cookie';
@@ -251,6 +252,12 @@ describe('API', () => {
 
   describe('/api/feeds', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
+
+    before(() => {
+      const [account, accountId] = loadStoredAccountByEmail(userEmail);
+      const upgraded = { ...account, planId };
+      writeFile(makePath(dataDirRoot, getAccountStorageKey(accountId)), JSON.stringify(upgraded));
+    });
 
     context('when authenticated', () => {
       before(authenticate);
