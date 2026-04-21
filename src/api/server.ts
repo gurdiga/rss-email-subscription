@@ -1,11 +1,14 @@
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
-import express from 'express';
+import express, { RequestHandler } from 'express';
 import { readFileSync } from 'fs';
 import helmet from 'helmet';
 import http from 'http';
 import https from 'https';
 import { apiBasePath, ApiPath } from '../domain/api-path';
+import { isAccountNotFound } from '../domain/account';
+import { PlanId } from '../domain/plan';
+import { loadAccount } from '../domain/account-storage';
 import { startCronJob } from '../shared/cron-utils';
 import { getErrorMessage } from '../shared/lang';
 import { logHeartbeat, makeCustomLoggers } from '../shared/logging';
@@ -40,6 +43,7 @@ import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-emai
 import { initApp } from './init-app';
 import { confirmPasswordReset, requestPasswordReset } from './password-reset';
 import { registration, registrationConfirmation } from './registration';
+import { checkSession } from './session';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
 import {
@@ -52,6 +56,28 @@ import {
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
+import { isErr } from '../shared/lang';
+import { App } from './init-app';
+
+function requirePaymentConfirmed(app: App): RequestHandler {
+  return (req, res, next) => {
+    const session = checkSession(req.session);
+
+    if (session.kind !== 'AuthenticatedSession') {
+      next();
+      return;
+    }
+
+    const account = loadAccount(app.storage, session.accountId);
+
+    if (!isErr(account) && !isAccountNotFound(account) && account.planId === PlanId.PendingPayment) {
+      res.status(402).json({ kind: 'AppError', message: 'Payment confirmation pending' });
+      return;
+    }
+
+    next();
+  };
+}
 
 async function main() {
   const { logInfo, logWarning } = makeCustomLoggers({ module: 'api-server' });
@@ -96,11 +122,13 @@ async function main() {
   router.get(ApiPath.manageFeed, makeAppRequestHandler(manageFeed, app));
   router.get(ApiPath.loadFeedSubscribers, makeAppRequestHandler(loadFeedSubscribers, app));
   router.get(ApiPath.deliveryReports, makeAppRequestHandler(deliveryReports, app));
-  router.post(ApiPath.deleteFeedSubscribers, makeAppRequestHandler(deleteFeedSubscribers, app));
-  router.post(ApiPath.addFeedSubscribers, makeAppRequestHandler(addFeedSubscribers, app));
-  router.post(ApiPath.addNewFeed, makeAppRequestHandler(addNewFeed, app));
-  router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
-  router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
+  const paymentConfirmed = requirePaymentConfirmed(app);
+
+  router.post(ApiPath.deleteFeedSubscribers, paymentConfirmed, makeAppRequestHandler(deleteFeedSubscribers, app));
+  router.post(ApiPath.addFeedSubscribers, paymentConfirmed, makeAppRequestHandler(addFeedSubscribers, app));
+  router.post(ApiPath.addNewFeed, paymentConfirmed, makeAppRequestHandler(addNewFeed, app));
+  router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
+  router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
   router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));

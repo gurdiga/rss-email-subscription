@@ -510,6 +510,11 @@ async function handleTransactionCompleted(app: App, transaction: CompletedTransa
       return;
     }
 
+    if (!Plans[newPlanId].isSubscription) {
+      logError(si`Non-subscription res_plan_id in webhook customData: "${rawPlanId}"`);
+      return;
+    }
+
     const account = loadAccount(app.storage, accountId);
 
     if (isErr(account)) {

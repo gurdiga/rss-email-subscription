@@ -175,7 +175,10 @@ describe('API', () => {
       const [account, accountId] = loadStoredAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
-      expect(account.planId).to.equal(planId, 'registration email');
+      expect(account.planId).to.equal(
+        PlanId.PendingPayment,
+        'registration stores pending plan until payment confirmed'
+      );
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');

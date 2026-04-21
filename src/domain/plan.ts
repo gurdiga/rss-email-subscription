@@ -7,6 +7,7 @@ export enum PlanId {
   Courage = 'courage',
   Strength = 'strength',
   Mastery = 'mastery',
+  PendingPayment = 'pending_payment',
 }
 
 export interface Plan {
@@ -46,6 +47,12 @@ export const Plans: Record<PlanId, Plan> = {
     maxEmailsPerMonth: 100_000,
     maxEmailsPerDay: 1_000,
     isSubscription: true,
+  },
+  [PlanId.PendingPayment]: {
+    title: 'Pending Payment',
+    maxEmailsPerMonth: 0,
+    maxEmailsPerDay: 0,
+    isSubscription: false,
   },
 };
 
