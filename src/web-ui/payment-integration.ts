@@ -1,4 +1,4 @@
-/// <reference types="@paddle/paddle-js" />
+import type { Paddle } from '@paddle/paddle-js';
 import { ApiPath } from '../domain/api-path';
 import { PaddleKeysResponseData } from '../domain/payment';
 import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
@@ -54,7 +54,7 @@ export async function makePaymentSubformHandle(
           resolve(result);
         };
 
-        (paddle as any).Checkout.open({
+        paddle.Checkout.open({
           transactionId,
           settings: {
             displayMode: 'inline',
@@ -76,10 +76,10 @@ export async function makePaymentSubformHandle(
 
 type CheckoutResolver = (result: Result<void>) => void;
 
-let paddlePromise: Promise<Result<unknown>> | undefined;
+let paddlePromise: Promise<Result<Paddle>> | undefined;
 let currentCheckoutResolver: CheckoutResolver | undefined;
 
-function getPaddle(): Promise<Result<unknown>> {
+function getPaddle(): Promise<Result<Paddle>> {
   if (!paddlePromise) {
     paddlePromise = initPaddle();
   }
@@ -87,7 +87,7 @@ function getPaddle(): Promise<Result<unknown>> {
   return paddlePromise;
 }
 
-async function initPaddle(): Promise<Result<unknown>> {
+async function initPaddle(): Promise<Result<Paddle>> {
   const keysResult = await loadPaddleKeys();
 
   if (isErr(keysResult)) {
