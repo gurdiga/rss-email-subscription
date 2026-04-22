@@ -36,6 +36,7 @@ import { sendPlanChangeInformationEmail } from './plan-change-email';
 import { checkSession, isAuthenticatedSession } from './session';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 
+// Must match trial_period configured on Paddle subscription prices.
 const trialPeriodDays = 30;
 
 export const paddleKeys: AppRequestHandler = async function paddleKeys(
