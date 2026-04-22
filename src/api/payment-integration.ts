@@ -142,16 +142,15 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
   const { logError } = makeCustomLoggers({ module: accountSupportProduct.name, reqId });
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
 
-  const productsPage = await asyncAttempt(() => paddle.products.list().next());
+  const productsPage = await asyncAttempt(() => paddle.products.list({ perPage: 200 }).next());
 
   if (isErr(productsPage)) {
     logError(si`Failed to paddle.products.list: ${productsPage.reason}`);
     return makeAppError();
   }
 
-  const product = productsPage.find((p) => {
-    const cd = p.customData;
-    return cd?.['res_code'] === 'account_setup';
+  const product = productsPage.find(({ customData }) => {
+    return customData?.['res_code'] === 'account_setup';
   });
 
   if (!product) {
@@ -394,7 +393,7 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
     return makeNotASubscriptionPlanErr(planId);
   }
 
-  const page = await asyncAttempt(() => paddle.prices.list().next());
+  const page = await asyncAttempt(() => paddle.prices.list({ perPage: 200 }).next());
 
   if (isErr(page)) {
     return makeErr(si`Failed to paddle.prices.list: ${page.reason}`);
