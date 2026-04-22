@@ -27,6 +27,7 @@
   },
   "comment:overrides": "Security fixes: glob (CVE-2025-64756), path-to-regexp (CVE-2026-4926), qs (CVE-2025-15284), tar (CVE-2026-23950, CVE-2026-23745)",
   "devDependencies": {
+    "@paddle/paddle-js": "^1.6.4",
     "@types/chai": "^5.2.2",
     "@types/cookie": "^0.6.0",
     "@types/cookie-parser": "^1.4.9",

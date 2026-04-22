@@ -1,3 +1,4 @@
+/// <reference types="@paddle/paddle-js" />
 import { ApiPath } from '../domain/api-path';
 import { PaddleKeysResponseData } from '../domain/payment';
 import { PlanId, Plans, isSubscriptionPlan, makePlanId } from '../domain/plan';
@@ -101,12 +102,12 @@ async function initPaddle(): Promise<Result<unknown>> {
     script.src = 'https://cdn.paddle.com/paddle/v2/paddle.js';
 
     script.onload = () => {
-      if (!('Paddle' in window)) {
+      if (!window.Paddle) {
         reject(makeErr('Paddle global not found after script load'));
         return;
       }
 
-      const paddle = (window as any).Paddle;
+      const paddle = window.Paddle;
 
       if (environment === 'sandbox') {
         paddle.Environment.set('sandbox');
