@@ -172,9 +172,6 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
     return makeAppError();
   }
 
-  // Payment links are not manageable via the Paddle Node SDK; the URL is fetched
-  // at build time by the feedsubscription.com Makefile and stored in payment_link.json.
-  // At runtime, the API returns what is known from the product/price only.
   const priceInCents = price.unitPrice ? parseInt(price.unitPrice.amount, 10) : 0;
 
   const responseData = makeAccountSupportProductResponseData({
