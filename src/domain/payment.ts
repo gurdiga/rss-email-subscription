@@ -26,7 +26,6 @@ export interface AccountSupportProductResponseData {
   name: string;
   description: string;
   priceInCents: number;
-  paymentLinkUrl: string;
 }
 
 export interface Card {

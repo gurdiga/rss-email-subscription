@@ -178,7 +178,6 @@ export const accountSupportProduct: AppRequestHandler = async function accountSu
     name: product.name,
     description: product.description,
     priceInCents,
-    paymentLinkUrl: '',
   });
 
   if (isErr(responseData)) {
@@ -194,7 +193,6 @@ function makeAccountSupportProductResponseData(data: unknown): Result<AccountSup
     name: makeString,
     description: makeString,
     priceInCents: makeNumber,
-    paymentLinkUrl: makeString,
   });
 }
 
