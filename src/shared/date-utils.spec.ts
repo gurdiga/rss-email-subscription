@@ -19,6 +19,10 @@ describe(makeDate.name, () => {
   it('defaults Err field to "date"', () => {
     expect(makeDate('not-a-date')).to.deep.equal(makeErr('Not a date string', 'date'));
   });
+
+  it('parses gov.md pubDate format', () => {
+    expect(makeDate('Vin, 04/24/2026 - 13:58')).to.deep.equal(new Date(2026, 3, 24, 13, 58));
+  });
 });
 
 describe(getDateBefore.name, () => {
