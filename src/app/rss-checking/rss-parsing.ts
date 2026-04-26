@@ -2,6 +2,7 @@ import Parser, { Item } from 'rss-parser';
 import { RssItem } from '../../domain/rss-item';
 import { isEmpty, sortBy, SortDirection } from '../../shared/array-utils';
 import { getErrorMessage, hasKind, isErr, isObject, makeErr, Result } from '../../shared/lang';
+import { makeDate } from '../../shared/date-utils';
 import { si } from '../../shared/string-utils';
 import { makeHttpUrl } from '../../shared/url';
 import { fetchRss, RssResponse } from './rss-response';
@@ -78,8 +79,6 @@ function isValidRssItem(value: unknown): value is ValidRssItem {
 export type MakeRssItemFn = typeof makeRssItem;
 
 export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: string): ValidRssItem | InvalidRssItem {
-  const { isoDate } = item;
-
   const title = typeof item.title === 'string' ? item.title || defaultTitle : defaultTitle;
 
   let content = item['content:encoded'] || item.content || item.summary;
@@ -101,7 +100,9 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     content = 'Post content is missing';
   }
 
-  if (isMissing(isoDate)) {
+  const dateString = item.isoDate?.trim() || item.pubDate?.trim();
+
+  if (!dateString) {
     return invalidRssItem('Post publication timestamp is missing');
   }
 
@@ -117,9 +118,9 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     return invalidRssItem('Post link is not a valid URL');
   }
 
-  const pubDate = new Date(isoDate?.trim());
+  const pubDate = makeDate(dateString);
 
-  if (pubDate.toString() === 'Invalid Date') {
+  if (isErr(pubDate)) {
     return invalidRssItem('Post publication timestamp is not a valid JSON date string');
   }
 

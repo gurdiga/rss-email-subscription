@@ -340,6 +340,20 @@ describe(parseRssFeed.name, () => {
         reason: 'Post publication timestamp is missing',
       });
 
+      const romanianPubDate = 'Marți, 04/07/2026 - 13:34';
+      const inputWithRomanianDate: ParsedRssItem = { ...item, isoDate: undefined, pubDate: romanianPubDate };
+      expect(makeRssItem(inputWithRomanianDate, baseURL, defaultItemTitle)).to.deep.equal({
+        kind: 'ValidRssItem',
+        value: {
+          author: item.author,
+          content: item.content,
+          title: item.title,
+          guid: new URL(item.link!, baseURL).toString(),
+          link: new URL(item.link!, baseURL),
+          pubDate: new Date(2026, 3, 7, 13, 34),
+        },
+      });
+
       invalidInput = { ...item, isoDate: 'Not a JSON date string' };
       expect(makeRssItem(invalidInput, baseURL, defaultItemTitle)).to.deep.equal({
         kind: 'InvalidRssItem',
