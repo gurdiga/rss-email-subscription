@@ -81,7 +81,7 @@ async function main() {
     return;
   }
 
-  const initPlanDropdownResult = await initPlanDropdown(uiElements, paymentSubformHandle, planId);
+  const initPlanDropdownResult = await initPlanDropdown(uiElements, planId);
 
   if (isErr(initPlanDropdownResult)) {
     displayInitError(initPlanDropdownResult.reason);
@@ -175,11 +175,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
   });
 }
 
-export async function initPlanDropdown(
-  uiElements: RequiredUiElements,
-  paymentSubformHandle: PaymentSubformHandle,
-  selectedPlanId: string
-): Promise<Result<void>> {
+export async function initPlanDropdown(uiElements: RequiredUiElements, selectedPlanId: string): Promise<Result<void>> {
   const { planDropdown, paymentSubformContainer } = uiElements;
   const options = await buildPlanDropdownOptions(selectedPlanId);
 
@@ -198,13 +194,6 @@ export async function initPlanDropdown(
     }
 
     if (isSubscriptionPlan(planId)) {
-      const updateResult = await paymentSubformHandle.setPlanId(planId);
-
-      if (isErr(updateResult)) {
-        displayInitError(updateResult.reason);
-        return;
-      }
-
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);

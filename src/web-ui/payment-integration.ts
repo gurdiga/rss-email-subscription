@@ -10,8 +10,6 @@ import { createElement } from './dom-isolation';
 import { HttpMethod, reportAppError, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
-  setPlanId(planId: PlanId): Promise<Result<void>>;
-  validate(): Promise<Result<void>>;
   openCheckout(transactionId: string): Promise<Result<void>>;
   focus(): void;
 }
@@ -24,16 +22,7 @@ export async function makePaymentSubformHandle(
   let checkoutOpen = false;
 
   const paymentSubformHandle: PaymentSubformHandle = {
-    setPlanId: async (_planId) => {
-      // Paddle inline checkout is opened per-transaction, not per-plan.
-      // No DOM setup needed here.
-    },
-
     focus: () => paymentSubform.focus(),
-
-    validate: async () => {
-      // Paddle handles its own validation inside the checkout overlay.
-    },
 
     openCheckout: async (transactionId: string) => {
       if (checkoutOpen) {

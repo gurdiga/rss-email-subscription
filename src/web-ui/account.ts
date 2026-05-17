@@ -150,7 +150,7 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     return;
   }
 
-  initPlansDropdown(uiElements, currentPlanId, paymentSubformHandle);
+  initPlansDropdown(uiElements, currentPlanId);
 
   onClick(changePlanButton, () => {
     hideElement(viewPlanSection);
@@ -269,11 +269,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
   );
 }
 
-async function initPlansDropdown(
-  uiElements: PlanUiElements,
-  currentPlanId: PlanId,
-  paymentSubformHandle: PaymentSubformHandle
-) {
+async function initPlansDropdown(uiElements: PlanUiElements, currentPlanId: PlanId) {
   const { planDropdown, paymentSubformContainer } = uiElements;
   const planOptions = await buildPlanDropdownOptions(currentPlanId);
 
@@ -293,13 +289,6 @@ async function initPlansDropdown(
     }
 
     if (isSubscriptionPlan(planId)) {
-      const updateResult = await paymentSubformHandle.setPlanId(planId);
-
-      if (isErr(updateResult)) {
-        displayInitError(updateResult.reason);
-        return;
-      }
-
       unhideElement(paymentSubformContainer);
     } else {
       hideElement(paymentSubformContainer);
