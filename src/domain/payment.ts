@@ -45,7 +45,6 @@ export interface StoreCardRequest {
   last4: string;
 }
 
-export type StoreCardRequestData = Record<keyof StoreCardRequest, string>;
 
 const shortMonthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
