@@ -395,7 +395,15 @@ async function submitNewEmail(uiElements: EmailUiElements) {
 }
 
 async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  const currentPlanLabel = await getPlanTitleAndPrice(uiAccount.planId);
+  const isPendingPayment = uiAccount.planId === PlanId.PendingPayment;
+
+  if (isPendingPayment) {
+    hideElement(uiElements.changePlanButton);
+  }
+
+  const currentPlanLabel = isPendingPayment
+    ? 'Payment pending'
+    : await getPlanTitleAndPrice(uiAccount.planId);
 
   if (isErr(currentPlanLabel)) {
     return currentPlanLabel;
