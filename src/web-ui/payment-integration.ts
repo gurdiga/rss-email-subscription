@@ -253,6 +253,10 @@ export async function getPlanOptionLabel(planIdString: string): Promise<Result<s
     return makeErr('Error in Plan dropdown: Invalid plan ID');
   }
 
+  if (!isSubscriptionPlan(planId)) {
+    return Plans[planId].title;
+  }
+
   const centAmountForPlan = await getCentAmountForPlan(planId);
 
   if (isErr(centAmountForPlan)) {
