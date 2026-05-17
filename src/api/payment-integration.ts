@@ -474,7 +474,7 @@ export function paddleWebhookHandler(app: App): RequestHandler {
   };
 }
 
-async function handleTransactionCompleted(app: App, transaction: TransactionNotification): Promise<Result<void>> {
+export async function handleTransactionCompleted(app: App, transaction: TransactionNotification): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
   const customerEmail = transaction.customData?.['res_customer_email'];
   const rawPlanId = transaction.customData?.['res_plan_id'];
@@ -552,7 +552,7 @@ async function handleTransactionCompleted(app: App, transaction: TransactionNoti
   }
 }
 
-async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<Result<void>> {
+export async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleSubscriptionCanceled.name });
 
   const customer = await asyncAttempt(() => paddle.customers.get(customerId));
