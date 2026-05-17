@@ -109,17 +109,14 @@ async function initPaddle(): Promise<Result<Paddle>> {
             return;
           }
 
+          const resolver = currentCheckoutResolver;
+          currentCheckoutResolver = undefined;
+
           if (event.name === 'checkout.completed') {
-            const resolver = currentCheckoutResolver;
-            currentCheckoutResolver = undefined;
             resolver(undefined);
           } else if (event.name === 'checkout.closed') {
-            const resolver = currentCheckoutResolver;
-            currentCheckoutResolver = undefined;
             resolver(makeErr('Checkout was closed'));
           } else if (event.name === 'checkout.error') {
-            const resolver = currentCheckoutResolver;
-            currentCheckoutResolver = undefined;
             resolver(makeErr(event.detail || event.data?.error?.detail || 'Paddle checkout error'));
           }
         },
@@ -288,11 +285,11 @@ export async function buildPlanDropdownOptions(selectedPlanId: string): Promise<
   const options: HTMLOptionElement[] = [];
 
   for (const [id] of Object.entries(Plans)) {
-    if (!isSubscriptionPlan(id)) {
+    if (!isSubscriptionPlan(id) && id !== PlanId.Free) {
       continue;
     }
 
-    const optionLabel = await getPlanOptionLabel(id);
+    const optionLabel = id === PlanId.Free ? Plans[PlanId.Free].title : await getPlanOptionLabel(id);
 
     if (isErr(optionLabel)) {
       return optionLabel;
