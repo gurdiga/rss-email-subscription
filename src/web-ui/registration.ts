@@ -154,6 +154,8 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     }
 
     const { paymentToken } = response.responseData;
+    unhideElement(uiElements.paymentSubformContainer);
+    hideElement(uiElements.submitButton);
     const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
       paymentSubformHandle,
       planId,
@@ -193,11 +195,10 @@ export async function initPlanDropdown(uiElements: RequiredUiElements, selectedP
       return;
     }
 
-    if (isSubscriptionPlan(planId)) {
-      unhideElement(paymentSubformContainer);
-    } else {
+    if (!isSubscriptionPlan(planId)) {
       hideElement(paymentSubformContainer);
     }
+    // paymentSubformContainer stays hidden until openCheckout is called
   };
 
   planDropdown.addEventListener('change', () => {
