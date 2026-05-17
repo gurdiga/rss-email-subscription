@@ -7,7 +7,7 @@ import { isNotEmpty } from '../shared/array-utils';
 import { Result, asyncAttempt, getErrorMessage, isErr, makeErr, makeNumber, makeValues } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { createElement } from './dom-isolation';
-import { HttpMethod, reportAppError, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
+import { reportAppError, reportUnexpectedEmptyResponseData, sendApiRequest } from './shared';
 
 export interface PaymentSubformHandle {
   openCheckout(transactionId: string): Promise<Result<void>>;
@@ -297,16 +297,3 @@ export async function buildPlanDropdownOptions(selectedPlanId: string): Promise<
   return options;
 }
 
-export async function sendStoreCardRequest(_request: Record<string, string>): Promise<Result<void>> {
-  const response = await asyncAttempt(() =>
-    sendApiRequest<void>(ApiPath.storeCardDescription, HttpMethod.POST, _request)
-  );
-
-  if (isErr(response)) {
-    return response;
-  }
-
-  if (isAppError(response) || isInputError(response)) {
-    return makeErr(response.message);
-  }
-}
