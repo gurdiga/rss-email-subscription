@@ -85,6 +85,9 @@ pc: pre-commit
 lint: lint-mocha-only lint-require-strict-interpolation lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config lint-dnsmasq-conf
 l: lint
 
+unused-exports:
+	npx ts-prune | grep -v '(used in module)'
+
 lint-quiet:
 	@printf "Lint... "
 	$(TIME) $(MAKE) lint > /dev/null
