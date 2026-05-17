@@ -14,6 +14,8 @@ export const maxStringValue = 1024;
 export const sensibleKeywords = ['password'];
 
 export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
+  if (stdOutPrinterFn === stdOutPrinter && process.env['LOG_LEVEL'] === 'silent') return;
+
   const message = JSON.stringify(record, (key, value) => {
     value = maybeTruncate(value);
     value = maskSensibleAttributes(key, value);

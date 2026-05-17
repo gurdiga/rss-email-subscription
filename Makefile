@@ -36,7 +36,7 @@ rss-checking:
 	node_modules/.bin/ts-node src/app/cron-cli.ts rss-checking blogger
 
 test:
-	@export TS_NODE_TRANSPILE_ONLY=true
+	@export TS_NODE_TRANSPILE_ONLY=true LOG_LEVEL=silent
 	node_modules/.bin/mocha \
 		--require ts-node/register \
 		--reporter dot \
