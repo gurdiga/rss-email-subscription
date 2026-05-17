@@ -52,6 +52,7 @@ import {
   cancelCustomerSubscription,
   changeCustomerSubscription,
   createCustomerWithSubscription,
+  getPaymentMethodUpdateTransaction,
   loadCardDescription,
   makePaddle,
 } from './payment-integration';
@@ -517,6 +518,45 @@ function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settin
 }
 
 // TODO: Add api test
+export const requestPaymentMethodUpdate: AppRequestHandler = async function requestPaymentMethodUpdate(
+  reqId,
+  _reqBody,
+  _reqParams,
+  reqSession,
+  { storage, env }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: requestPaymentMethodUpdate.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const { accountId } = session;
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account not found');
+    return makeNotAuthenticatedError();
+  }
+
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+  const transaction = await getPaymentMethodUpdateTransaction(paddle, account.email);
+
+  if (isErr(transaction)) {
+    logError(si`Failed to ${getPaymentMethodUpdateTransaction.name}`, { reason: transaction.reason });
+    return makeAppError();
+  }
+
+  return makeSuccess('Payment method update transaction', {}, { paymentToken: transaction.value });
+};
+
 export const requestAccountPlanChange: AppRequestHandler = async function requestAccountPlanChange(
   reqId,
   reqBody,

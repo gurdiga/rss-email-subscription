@@ -18,6 +18,7 @@ import {
   requestAccountEmailChange,
   requestAccountPasswordChange,
   requestAccountPlanChange,
+  requestPaymentMethodUpdate,
 } from './account';
 import { makeAppRequestHandler, requirePaymentConfirmed } from './app-request-handler';
 import { authentication } from './authentication';
@@ -89,6 +90,7 @@ async function main() {
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
   router.post(ApiPath.requestAccountPasswordChange, makeAppRequestHandler(requestAccountPasswordChange, app));
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
+  router.post(ApiPath.requestPaymentMethodUpdate, makeAppRequestHandler(requestPaymentMethodUpdate, app));
   router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));

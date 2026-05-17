@@ -343,6 +343,45 @@ export async function changeCustomerSubscription(
   }
 }
 
+export async function getPaymentMethodUpdateTransaction(
+  paddle: Paddle,
+  email: EmailAddress
+): Promise<Result<PaddleTransactionId>> {
+  const customer = await findPaddleCustomerByEmail(paddle, email);
+
+  if (isErr(customer)) {
+    return makeErr(si`Failed to ${findPaddleCustomerByEmail.name}: ${customer.reason}`);
+  }
+
+  if (isCustomerNotFound(customer)) {
+    return makeErr(si`Customer not found for email "${email.value}"`);
+  }
+
+  const subscriptionsPage = await asyncAttempt(() =>
+    paddle.subscriptions.list({ customerId: [customer.id], status: ['active', 'trialing'] }).next()
+  );
+
+  if (isErr(subscriptionsPage)) {
+    return makeErr(si`Failed to paddle.subscriptions.list: ${subscriptionsPage.reason}`);
+  }
+
+  const subscription = subscriptionsPage[0];
+
+  if (!subscription) {
+    return makeErr(si`No active subscription found for customer "${customer.id}"`);
+  }
+
+  const transaction = await asyncAttempt(() =>
+    paddle.subscriptions.getPaymentMethodChangeTransaction(subscription.id)
+  );
+
+  if (isErr(transaction)) {
+    return makeErr(si`Failed to paddle.subscriptions.getPaymentMethodChangeTransaction: ${transaction.reason}`);
+  }
+
+  return makePaddleTransactionId(transaction.id);
+}
+
 export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAddress): Promise<Result<void>> {
   const customer = await findPaddleCustomerByEmail(paddle, email);
 

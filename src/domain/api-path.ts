@@ -35,6 +35,7 @@ export enum ApiPath {
   requestAccountPlanChange = '/account/request-plan-change',
   deleteAccountWithPassword = '/account/delete',
   requestAccountPasswordChange = '/account/request-change-password',
+  requestPaymentMethodUpdate = '/account/request-payment-method-update',
   deliveryReports = '/delivery-reports',
   checkFeedUrl = '/check-feed-url',
   paymentKeys = '/payment-keys',
