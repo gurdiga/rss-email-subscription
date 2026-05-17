@@ -1,9 +1,10 @@
+import { Environment } from '@paddle/paddle-node-sdk';
 import { makeErr, Result } from '../shared/lang';
 import { capitalize, si } from '../shared/string-utils';
 
-export type PaddleEnvironment = 'sandbox' | 'production';
+export type PaddleEnvironment = `${Environment}`;
 
-const validPaddleEnvironments: PaddleEnvironment[] = ['sandbox', 'production'];
+const validPaddleEnvironments = Object.values(Environment) as PaddleEnvironment[];
 
 export function makePaddleEnvironment(value: string): Result<PaddleEnvironment> {
   if (!validPaddleEnvironments.includes(value as PaddleEnvironment)) {
