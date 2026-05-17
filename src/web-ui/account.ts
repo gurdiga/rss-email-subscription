@@ -238,7 +238,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      // Card details are delivered asynchronously via webhook; hide for now.
+      // Card details update via webhook after checkout; hide stale value until page reload.
       hideElement(currentCardField);
 
       let planLabel = await getPlanTitleAndPrice(newPlanId);
