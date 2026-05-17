@@ -249,7 +249,7 @@ export async function getPlanOptionLabel(planIdString: string): Promise<Result<s
   const planId = makePlanId(planIdString);
 
   if (isErr(planId)) {
-    reportAppError(si`Invalid Plan ID in ${buildPlanDropdownOptions.name}: "${planIdString}"`);
+    reportAppError(si`Invalid Plan ID in ${getPlanOptionLabel.name}: "${planIdString}"`);
     return makeErr('Error in Plan dropdown: Invalid plan ID');
   }
 
