@@ -225,6 +225,8 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
       }
 
       const { paymentToken } = responseData as PlanChangeResponseData;
+      unhideElement(paymentSubformContainer);
+      hideElement(uiElements.submitNewPlanButton);
       const card = await maybeConfirmPayment<keyof RequiredUiElements>(
         paymentSubformHandle,
         newPlanId,
@@ -275,11 +277,10 @@ async function initPlansDropdown(uiElements: PlanUiElements, currentPlanId: Plan
       return;
     }
 
-    if (isSubscriptionPlan(planId)) {
-      unhideElement(paymentSubformContainer);
-    } else {
+    if (!isSubscriptionPlan(planId)) {
       hideElement(paymentSubformContainer);
     }
+    // paymentSubformContainer stays hidden until openCheckout is called
   };
 
   planDropdown.addEventListener('change', () => {
