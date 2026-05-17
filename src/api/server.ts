@@ -136,7 +136,11 @@ async function main() {
   router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
   router.get(ApiPath.paymentData, makeAppRequestHandler(paddleData, app));
-  router.post(ApiPath.paymentWebhook, express.raw({ type: '*/*' }), paddleWebhookHandler(app));
+  router.post(
+    ApiPath.paymentWebhook,
+    express.raw({ type: '*/*' }), // raw body required for Paddle signature verification
+    paddleWebhookHandler(app)
+  );
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

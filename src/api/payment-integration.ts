@@ -1,4 +1,4 @@
-import { Environment, EventName, LogLevel, Paddle } from '@paddle/paddle-node-sdk';
+import { Environment, EventName, LogLevel, Paddle, TransactionNotification } from '@paddle/paddle-node-sdk';
 import { RequestHandler } from 'express';
 import { AccountId, isAccountNotFound } from '../domain/account';
 import { getAccountRootStorageKey, loadAccount, storeAccount } from '../domain/account-storage';
@@ -386,13 +386,13 @@ async function getPaddlePriceIdForPlan(paddle: Paddle, planId: PlanId): Promise<
     return makeNotASubscriptionPlanErr(planId);
   }
 
-  const page = await asyncAttempt(() => paddle.prices.list({ perPage: 200 }).next());
+  const pricesPage = await asyncAttempt(() => paddle.prices.list({ perPage: 200 }).next());
 
-  if (isErr(page)) {
-    return makeErr(si`Failed to paddle.prices.list: ${page.reason}`);
+  if (isErr(pricesPage)) {
+    return makeErr(si`Failed to paddle.prices.list: ${pricesPage.reason}`);
   }
 
-  const price = page.find((p) => p.customData?.['res_plan_id'] === planId);
+  const price = pricesPage.find((p) => p.customData?.['res_plan_id'] === planId);
 
   if (!price) {
     return makeErr(si`Price not found for plan "${planId}"`);
@@ -413,7 +413,11 @@ export function makePaddle(apiKey: string, paddleEnvironment: PaddleEnvironment)
 export function paddleWebhookHandler(app: App): RequestHandler {
   return async (req, res) => {
     const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'paddleWebhook' });
-    const signature = req.headers['paddle-signature'] as string | undefined;
+
+    // Express types headers as string | string[] | undefined; take the first
+    // value since Paddle always sends a single signature header.
+    const rawSig = req.headers['paddle-signature'];
+    const signature = Array.isArray(rawSig) ? rawSig[0] : rawSig;
 
     if (!signature) {
       logWarning('Missing Paddle-Signature header');
@@ -421,8 +425,14 @@ export function paddleWebhookHandler(app: App): RequestHandler {
       return;
     }
 
+    if (!Buffer.isBuffer(req.body)) {
+      logWarning('Expected raw body buffer');
+      res.status(400).send('Invalid body');
+      return;
+    }
+
+    const rawBody = req.body;
     const paddle = makePaddle(app.env.PADDLE_API_KEY, app.env.PADDLE_ENVIRONMENT);
-    const rawBody = req.body as Buffer;
 
     const event = await asyncAttempt(() =>
       paddle.webhooks.unmarshal(rawBody.toString(), app.env.PADDLE_WEBHOOK_SECRET, signature)
@@ -461,28 +471,13 @@ export function paddleWebhookHandler(app: App): RequestHandler {
   };
 }
 
-interface CompletedTransactionData {
-  customData: Record<string, unknown> | null;
-  payments: Array<{
-    methodDetails: {
-      type: string;
-      card?: {
-        type?: string | null;
-        last4?: string | null;
-        expiryMonth?: number | null;
-        expiryYear?: number | null;
-      } | null;
-    } | null;
-  }>;
-}
-
-async function handleTransactionCompleted(app: App, transaction: CompletedTransactionData): Promise<Result<void>> {
+async function handleTransactionCompleted(app: App, transaction: TransactionNotification): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
   const customerEmail = transaction.customData?.['res_customer_email'];
   const rawPlanId = transaction.customData?.['res_plan_id'];
 
-  if (!customerEmail || typeof customerEmail !== 'string') {
-    logWarning('transaction.completed webhook missing res_customer_email in customData');
+  if (typeof customerEmail !== 'string') {
+    logWarning('transaction.completed webhook has non-string res_customer_email in customData');
     return;
   }
 
@@ -495,7 +490,7 @@ async function handleTransactionCompleted(app: App, transaction: CompletedTransa
 
   const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
 
-  if (rawPlanId && typeof rawPlanId === 'string') {
+  if (typeof rawPlanId === 'string') {
     const newPlanId = makePlanId(rawPlanId);
 
     if (isErr(newPlanId)) {
