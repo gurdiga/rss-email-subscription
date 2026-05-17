@@ -4,14 +4,16 @@ import { capitalize, si } from '../shared/string-utils';
 
 export type PaddleEnvironment = `${Environment}`;
 
-const validPaddleEnvironments = Object.values(Environment) as PaddleEnvironment[];
-
 export function makePaddleEnvironment(value: string): Result<PaddleEnvironment> {
-  if (!validPaddleEnvironments.includes(value as PaddleEnvironment)) {
+  if (!isPaddleEnvironment(value)) {
     return makeErr(si`Invalid PADDLE_ENVIRONMENT: "${value}"; expected sandbox or production`);
   }
 
-  return value as PaddleEnvironment;
+  return value;
+}
+
+function isPaddleEnvironment(value: string): value is PaddleEnvironment {
+  return (Object.values(Environment) as string[]).includes(value);
 }
 
 export interface PaddleKeysResponseData {
