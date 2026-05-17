@@ -328,10 +328,13 @@ export async function changeCustomerSubscription(
     return makeErr(si`No active subscription found for customer "${customer.id}"`);
   }
 
+  // Paddle requires 'do_not_bill' during trial; 'prorated_immediately' for active subscriptions.
+  const prorationBillingMode = subscription.status === 'trialing' ? 'do_not_bill' : 'prorated_immediately';
+
   const updated = await asyncAttempt(() =>
     paddle.subscriptions.update(subscription.id, {
       items: [{ priceId, quantity: 1 }],
-      prorationBillingMode: 'prorated_immediately',
+      prorationBillingMode,
     })
   );
 
