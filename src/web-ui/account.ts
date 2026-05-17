@@ -44,7 +44,6 @@ import {
   getPlanOptionLabel,
   makePaymentSubformHandle,
   maybeConfirmPayment,
-  maybeValidatePaymentSubform,
 } from './payment-integration';
 
 async function main() {
@@ -210,18 +209,6 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
   const { changePlanSection, paymentSubformContainer, currentCardField } = uiElements;
 
   const newPlanId = planDropdown.value as PlanId;
-  const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
-    paymentSubformHandle,
-    newPlanId,
-    'paymentSubform'
-  );
-
-  if (isInputError(paymentSubformResult)) {
-    displayValidationError(paymentSubformResult, uiElements);
-    paymentSubformHandle.focus();
-    return;
-  }
-
   const apiPath = ApiPath.requestAccountPlanChange;
   const request: PlanChangeRequestData = { planId: newPlanId };
   const response = await asyncAttempt(() => sendApiRequest<PlanChangeResponseData>(apiPath, HttpMethod.POST, request));

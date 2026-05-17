@@ -28,7 +28,6 @@ import {
   buildPlanDropdownOptions,
   makePaymentSubformHandle,
   maybeConfirmPayment,
-  maybeValidatePaymentSubform,
 } from './payment-integration';
 
 async function main() {
@@ -101,18 +100,6 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     hideElement(appErrorMessage);
 
     const planId = planDropdown.value;
-    const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
-      paymentSubformHandle,
-      planId,
-      'paymentSubform'
-    );
-
-    if (isInputError(paymentSubformResult)) {
-      displayValidationError(paymentSubformResult, uiElements);
-      paymentSubformHandle.focus();
-      return;
-    }
-
     const request: RegistrationRequestData = {
       planId: planId,
       email: emailField.value,

@@ -153,16 +153,6 @@ async function loadPaddleKeys(): Promise<Result<PaddleKeysResponseData>> {
   return response.responseData;
 }
 
-export async function maybeValidatePaymentSubform<FIELD extends string>(
-  _paymentSubformHandle: PaymentSubformHandle,
-  planId: string,
-  _fieldName: FIELD
-): Promise<InputError | void> {
-  // Paddle validates inside its own checkout overlay; nothing to do here.
-  if (!isSubscriptionPlan(planId)) {
-    return;
-  }
-}
 
 export async function maybeConfirmPayment<FIELD extends string>(
   paymentSubformHandle: PaymentSubformHandle,
