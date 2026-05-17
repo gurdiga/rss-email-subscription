@@ -1,12 +1,35 @@
 import { Request, RequestHandler, Response } from 'express';
 import { UAParser } from 'ua-parser-js';
+import { isAccountNotFound } from '../domain/account';
+import { loadAccount } from '../domain/account-storage';
+import { PlanId } from '../domain/plan';
 import { ApiResponse, Success } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
 import { App } from './init-app';
-import { ReqSession, SessionFieldName, isSessionCookieRolling } from './session';
+import { ReqSession, SessionFieldName, checkSession, isSessionCookieRolling } from './session';
+
+export function requirePaymentConfirmed(app: App): RequestHandler {
+  return (req, res, next) => {
+    const session = checkSession(req.session);
+
+    if (session.kind !== 'AuthenticatedSession') {
+      next();
+      return;
+    }
+
+    const account = loadAccount(app.storage, session.accountId);
+
+    if (!isErr(account) && !isAccountNotFound(account) && account.planId === PlanId.PendingPayment) {
+      res.status(402).json({ kind: 'AppError', message: 'Payment confirmation pending' });
+      return;
+    }
+
+    next();
+  };
+}
 
 export type AppRequestHandler = (
   reqId: string,
