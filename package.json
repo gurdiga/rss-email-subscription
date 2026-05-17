@@ -5,7 +5,7 @@
   "main": "dist/app/cron.js",
   "engines": {
     "node": "v22.22.2",
-    "npm": "10.9.2"
+    "npm": "10.9.7"
   },
   "scripts": {},
   "keywords": [
