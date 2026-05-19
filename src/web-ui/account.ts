@@ -9,7 +9,6 @@ import {
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
 import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
-import { Card, makeCardDescription } from '../domain/stripe-integration';
 import { ApiResponse, isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, isErr, makeErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -45,8 +44,7 @@ import {
   getPlanOptionLabel,
   makePaymentSubformHandle,
   maybeConfirmPayment,
-  maybeValidatePaymentSubform,
-} from './stripe-integration';
+} from './payment-integration';
 
 async function main() {
   const uiElements = requireUiElements<RequiredUiElements>({
@@ -54,6 +52,7 @@ async function main() {
     ...emailUiElements,
     ...passwordUiElements,
     ...planUiElements,
+    ...cardUpdateUiElements,
     ...deleteAccountUiElements,
   });
 
@@ -81,6 +80,7 @@ async function main() {
   addEmailChangeEventHandlers(uiElements);
   addPasswordChangeEventHandlers(uiElements);
   addPlanChangeEventHandlers(uiElements, uiAccount.planId);
+  addCardUpdateEventHandlers(uiElements);
   addDeleteAccountEventHandlers(uiElements);
 }
 
@@ -151,7 +151,7 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     return;
   }
 
-  initPlansDropdown(uiElements, currentPlanId, paymentSubformHandle);
+  initPlansDropdown(uiElements, currentPlanId);
 
   onClick(changePlanButton, () => {
     hideElement(viewPlanSection);
@@ -178,6 +178,47 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
 
   toggleElement(isDemoAccount(), changePlanDemoAccountNote);
   submitNewPlanButton.disabled = isDemoAccount();
+}
+
+function addCardUpdateEventHandlers(uiElements: CardUpdateUiElements): void {
+  const { updateCardButton, updateCardSection, cardUpdateSubform, cancelCardUpdateButton } = uiElements;
+
+  onClick(updateCardButton, async () => {
+    hideElement(updateCardButton);
+    unhideElement(updateCardSection);
+
+    const paymentSubformHandle = await makePaymentSubformHandle(PlanId.Courage, cardUpdateSubform, () => {});
+
+    if (isErr(paymentSubformHandle)) {
+      reportAppError(paymentSubformHandle.reason);
+      return;
+    }
+
+    const response = await asyncAttempt(() =>
+      sendApiRequest<{ paymentToken: string }>(ApiPath.requestPaymentMethodUpdate, HttpMethod.POST, {})
+    );
+
+    if (isErr(response) || isAppError(response) || isInputError(response)) {
+      reportAppError(isErr(response) ? response.reason : response.message);
+      return;
+    }
+
+    const { paymentToken } = response.responseData!;
+    const result = await paymentSubformHandle.openCheckout(paymentToken);
+
+    if (isInputError(result)) {
+      reportAppError(result.message);
+      return;
+    }
+
+    hideElement(updateCardSection);
+    unhideElement(updateCardButton);
+  });
+
+  onClick(cancelCardUpdateButton, () => {
+    hideElement(updateCardSection);
+    unhideElement(updateCardButton);
+  });
 }
 
 function handleApiResponse<T>(
@@ -211,18 +252,6 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
   const { changePlanSection, paymentSubformContainer, currentCardField } = uiElements;
 
   const newPlanId = planDropdown.value as PlanId;
-  const paymentSubformResult = await maybeValidatePaymentSubform<keyof RequiredUiElements>(
-    paymentSubformHandle,
-    newPlanId,
-    'paymentSubform'
-  );
-
-  if (isInputError(paymentSubformResult)) {
-    displayValidationError(paymentSubformResult, uiElements);
-    paymentSubformHandle.focus();
-    return;
-  }
-
   const apiPath = ApiPath.requestAccountPlanChange;
   const request: PlanChangeRequestData = { planId: newPlanId };
   const response = await asyncAttempt(() => sendApiRequest<PlanChangeResponseData>(apiPath, HttpMethod.POST, request));
@@ -238,11 +267,13 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      const { clientSecret } = responseData as PlanChangeResponseData;
+      const { paymentToken } = responseData as PlanChangeResponseData;
+      unhideElement(paymentSubformContainer);
+      hideElement(uiElements.submitNewPlanButton);
       const card = await maybeConfirmPayment<keyof RequiredUiElements>(
         paymentSubformHandle,
         newPlanId,
-        clientSecret,
+        paymentToken,
         'paymentSubform'
       );
 
@@ -252,11 +283,8 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
         return;
       }
 
-      if (card) {
-        displayCard(uiElements, card);
-      } else {
-        hideElement(currentCardField);
-      }
+      // Card details update via webhook after checkout; hide stale value until page reload.
+      hideElement(currentCardField);
 
       let planLabel = await getPlanTitleAndPrice(newPlanId);
 
@@ -273,16 +301,7 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
   );
 }
 
-function displayCard(uiElements: PlanUiElements, card: Card): void {
-  uiElements.currentCardDescription.textContent = makeCardDescription(card);
-  unhideElement(uiElements.currentCardField);
-}
-
-async function initPlansDropdown(
-  uiElements: PlanUiElements,
-  currentPlanId: PlanId,
-  paymentSubformHandle: PaymentSubformHandle
-) {
+async function initPlansDropdown(uiElements: PlanUiElements, currentPlanId: PlanId) {
   const { planDropdown, paymentSubformContainer } = uiElements;
   const planOptions = await buildPlanDropdownOptions(currentPlanId);
 
@@ -301,18 +320,10 @@ async function initPlansDropdown(
       return;
     }
 
-    if (isSubscriptionPlan(planId)) {
-      const updateResult = await paymentSubformHandle.setPlanId(planId);
-
-      if (isErr(updateResult)) {
-        displayInitError(updateResult.reason);
-        return;
-      }
-
-      unhideElement(paymentSubformContainer);
-    } else {
+    if (!isSubscriptionPlan(planId)) {
       hideElement(paymentSubformContainer);
     }
+    // paymentSubformContainer stays hidden until openCheckout is called
   };
 
   planDropdown.addEventListener('change', () => {
@@ -428,7 +439,15 @@ async function submitNewEmail(uiElements: EmailUiElements) {
 }
 
 async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
-  const currentPlanLabel = await getPlanTitleAndPrice(uiAccount.planId);
+  const isPendingPayment = uiAccount.planId === PlanId.PendingPayment;
+
+  if (isPendingPayment) {
+    hideElement(uiElements.changePlanButton);
+  }
+
+  const currentPlanLabel = isPendingPayment
+    ? 'Payment pending'
+    : await getPlanTitleAndPrice(uiAccount.planId);
 
   if (isErr(currentPlanLabel)) {
     return currentPlanLabel;
@@ -461,6 +480,7 @@ async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
     ]);
 
     unhideElement(uiElements.currentCardField);
+    unhideElement(uiElements.updateCardButton);
   }
 
   return result;
@@ -493,6 +513,7 @@ interface RequiredUiElements
     EmailUiElements,
     PasswordUiElements,
     PlanUiElements,
+    CardUpdateUiElements,
     DeleteAccountUiElements {}
 
 interface EmailUiElements {
@@ -577,6 +598,22 @@ const planUiElements: ElementSelectors<PlanUiElements> = {
   paymentSubformContainer: '#payment-subform-container',
   paymentSubform: '#payment-subform',
   changePlanDemoAccountNote: '#change-plan-demo-account-note',
+};
+
+interface CardUpdateUiElements {
+  updateCardButton: HTMLButtonElement;
+  updateCardSection: HTMLElement;
+  cardUpdateSubform: HTMLElement;
+  cancelCardUpdateButton: HTMLButtonElement;
+  cardUpdateApiResponseMessage: HTMLElement;
+}
+
+const cardUpdateUiElements: ElementSelectors<CardUpdateUiElements> = {
+  updateCardButton: '#update-card',
+  updateCardSection: '#update-card-section',
+  cardUpdateSubform: '#card-update-subform',
+  cancelCardUpdateButton: '#cancel-card-update-button',
+  cardUpdateApiResponseMessage: '#card-update-api-response-message',
 };
 
 interface DeleteAccountUiElements {

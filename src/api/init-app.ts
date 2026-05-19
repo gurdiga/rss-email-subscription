@@ -1,4 +1,5 @@
 import { AppSettings, loadAppSettings } from '../domain/app-settings';
+import { makePaddleEnvironment, PaddleEnvironment } from '../domain/payment';
 import { requireEnv } from '../shared/env';
 import { isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
@@ -15,9 +16,10 @@ export interface AppEnv {
   DATA_DIR_ROOT: string;
   DOMAIN_NAME: string;
   SMTP_CONNECTION_STRING: string;
-  STRIPE_PUBLISHABLE_KEY: string;
-  STRIPE_SECRET_KEY: string;
-  STRIPE_ENABLED: string;
+  PADDLE_CLIENT_TOKEN: string;
+  PADDLE_API_KEY: string;
+  PADDLE_WEBHOOK_SECRET: string;
+  PADDLE_ENVIRONMENT: PaddleEnvironment;
 }
 
 export function initApp(): App {
@@ -26,13 +28,21 @@ export function initApp(): App {
     'DATA_DIR_ROOT',
     'DOMAIN_NAME',
     'SMTP_CONNECTION_STRING',
-    'STRIPE_PUBLISHABLE_KEY',
-    'STRIPE_SECRET_KEY',
-    'STRIPE_ENABLED',
+    'PADDLE_CLIENT_TOKEN',
+    'PADDLE_API_KEY',
+    'PADDLE_WEBHOOK_SECRET',
+    'PADDLE_ENVIRONMENT',
   ]);
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
+    process.exit(1);
+  }
+
+  const paddleEnvironment = makePaddleEnvironment(env.PADDLE_ENVIRONMENT);
+
+  if (isErr(paddleEnvironment)) {
+    logError(paddleEnvironment.reason);
     process.exit(1);
   }
 

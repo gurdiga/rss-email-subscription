@@ -46,14 +46,16 @@ import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
+import { sendPlanChangeInformationEmail } from './plan-change-email';
 import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
   cancelCustomerSubscription,
   changeCustomerSubscription,
   createCustomerWithSubscription,
+  getPaymentMethodUpdateTransaction,
   loadCardDescription,
-  makeStripe,
-} from './stripe-integration';
+  makePaddle,
+} from './payment-integration';
 
 export const loadCurrentAccount: AppRequestHandler = async function loadCurrentAccount(
   reqId,
@@ -93,12 +95,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
       return makeAppError();
     }
 
-    if (!loadedDescription) {
-      logError(si`Empty card description`);
-      return makeAppError();
-    }
-
-    cardDescription = loadedDescription;
+    cardDescription = loadedDescription ?? '';
   }
 
   const logData = {};
@@ -461,21 +458,18 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
-  if (isSubscriptionPlan(account.planId) && env.STRIPE_ENABLED === 'true') {
-    const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+  if (isSubscriptionPlan(account.planId)) {
+    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
     const { email } = account;
-    const subscription = await cancelCustomerSubscription(stripe, email);
+    const cancelResult = await cancelCustomerSubscription(paddle, email);
 
-    if (isErr(subscription)) {
-      logWarning(si`Skipping Stripe cancellation for account deletion`, {
-        reason: subscription.reason,
+    if (isErr(cancelResult)) {
+      logWarning(si`Skipping Paddle cancellation for account deletion`, {
+        reason: cancelResult.reason,
         email: email.value,
       });
     } else {
-      logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, {
-        email: email.value,
-        subscriptionId: subscription.id,
-      });
+      logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, { email: email.value });
     }
   }
 
@@ -524,6 +518,45 @@ function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settin
 }
 
 // TODO: Add api test
+export const requestPaymentMethodUpdate: AppRequestHandler = async function requestPaymentMethodUpdate(
+  reqId,
+  _reqBody,
+  _reqParams,
+  reqSession,
+  { storage, env }
+) {
+  const { logWarning, logError } = makeCustomLoggers({ module: requestPaymentMethodUpdate.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated');
+    return makeNotAuthenticatedError();
+  }
+
+  const { accountId } = session;
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account not found');
+    return makeNotAuthenticatedError();
+  }
+
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+  const transaction = await getPaymentMethodUpdateTransaction(paddle, account.email);
+
+  if (isErr(transaction)) {
+    logError(si`Failed to ${getPaymentMethodUpdateTransaction.name}`, { reason: transaction.reason });
+    return makeAppError();
+  }
+
+  return makeSuccess('Payment method update transaction', {}, { paymentToken: transaction.value });
+};
+
 export const requestAccountPlanChange: AppRequestHandler = async function requestAccountPlanChange(
   reqId,
   reqBody,
@@ -541,7 +574,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   if (isDemoSession(reqSession)) {
     const logData = {};
-    const responseData: PlanChangeResponseData = { clientSecret: 'demo account' };
+    const responseData: PlanChangeResponseData = { paymentToken: 'demo account' };
 
     return makeSuccess('Success', logData, responseData);
   }
@@ -580,13 +613,14 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeInputError<keyof PlanChangeRequest>('Plan did not change', 'planId');
   }
 
-  const stripe = makeStripe(env.STRIPE_SECRET_KEY);
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
-  let clientSecret: string;
 
   if (changingFromPaidPlanToFree) {
-    const cancelResult = await cancelCustomerSubscription(stripe, email);
+    // Cancel in Paddle with next_billing_period; local plan stays paid until
+    // subscription.canceled webhook fires at period end.
+    const cancelResult = await cancelCustomerSubscription(paddle, email);
 
     if (isErr(cancelResult)) {
       logError(si`Failed to ${cancelCustomerSubscription.name}`, {
@@ -596,9 +630,9 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    clientSecret = '';
+    return makeSuccess('Success', {}, { paymentToken: '' });
   } else if (changingFromOnePaidPlanToAnother) {
-    const changeResult = await changeCustomerSubscription(stripe, email, request.planId);
+    const changeResult = await changeCustomerSubscription(paddle, email, request.planId);
 
     if (isErr(changeResult)) {
       logError(si`Failed to ${changeCustomerSubscription.name}`, {
@@ -608,11 +642,10 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       });
       return makeAppError();
     }
-
-    clientSecret = changeResult.value;
   } else {
-    // changing from Free to a paid plan
-    const createResult = await createCustomerWithSubscription(stripe, email, request.planId);
+    // Changing from Free to a paid plan: create a checkout transaction and
+    // defer the plan upgrade to the transaction.completed webhook.
+    const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
 
     if (isErr(createResult)) {
       logError(si`Failed to ${createCustomerWithSubscription.name}`, {
@@ -623,9 +656,10 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    clientSecret = createResult.value;
+    return makeSuccess('Success', {}, { paymentToken: createResult.value });
   }
 
+  // Paid-to-paid: commit the new plan immediately (no checkout required).
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
   const storeAccountResult = storeAccount(storage, accountId, {
@@ -644,36 +678,11 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, settings, env);
 
-  const logData = {};
-  const responseData: PlanChangeResponseData = { clientSecret };
-
-  return makeSuccess('Success', logData, responseData);
+  return makeSuccess('Success', {}, { paymentToken: '' });
 };
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {
   return makeValues<PlanChangeRequest>(data, { planId: makePlanId });
-}
-
-async function sendPlanChangeInformationEmail(
-  oldPlanTitle: string,
-  newPlanTitle: string,
-  email: EmailAddress,
-  settings: AppSettings,
-  env: AppEnv
-) {
-  const emailContent = {
-    subject: 'Please note FeedSubscription plan change',
-    htmlBody: htmlBody(si`
-      <p>Hello,</p>
-
-      <p>Please note that your plan at FeedSubscription.com has been
-      changed from <b>${oldPlanTitle}</b> to <b>${newPlanTitle}</b>.</p>
-
-      <p>Have a nice day.</p>
-    `),
-  };
-
-  return await sendEmail(settings.fullEmailAddress, email, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
 function makeDeleteAccountRequest(data: unknown | DeleteAccountRequestData): Result<DeleteAccountRequest> {

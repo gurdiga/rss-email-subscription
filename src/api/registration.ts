@@ -37,7 +37,7 @@ import { enablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
-import { createCustomerWithSubscription, makeStripe } from './stripe-integration';
+import { createCustomerWithSubscription, makePaddle } from './payment-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,
@@ -99,24 +99,24 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  let clientSecret = '';
+  let paymentToken = '';
 
   if (isSubscriptionPlan(request.planId)) {
-    const stripe = makeStripe(env.STRIPE_SECRET_KEY);
-    const result = await createCustomerWithSubscription(stripe, email, planId);
+    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+    const result = await createCustomerWithSubscription(paddle, email, planId);
 
     if (isErr(result)) {
       logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`, { email: email.value });
       return makeAppError();
     }
 
-    clientSecret = result.value;
+    paymentToken = result.value;
   }
 
   initSession(reqSession, accountId, request.email);
 
   const logData = {};
-  const responseData: RegistrationResponseData = { clientSecret };
+  const responseData: RegistrationResponseData = { paymentToken };
 
   return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
 };
@@ -255,7 +255,7 @@ function initAccount(
 
   const hashedPassword = hash(request.password.value, settings.hashingSalt);
   const account: Account = {
-    planId: request.planId,
+    planId: PlanId.PendingPayment,
     email: request.email,
     hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
     confirmationTimestamp: undefined,

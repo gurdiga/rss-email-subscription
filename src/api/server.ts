@@ -18,8 +18,9 @@ import {
   requestAccountEmailChange,
   requestAccountPasswordChange,
   requestAccountPlanChange,
+  requestPaymentMethodUpdate,
 } from './account';
-import { makeAppRequestHandler } from './app-request-handler';
+import { makeAppRequestHandler, requirePaymentConfirmed } from './app-request-handler';
 import { authentication } from './authentication';
 import { deauthentication } from './deauthentication';
 import { deliveryReports } from './delivery-reports';
@@ -42,7 +43,13 @@ import { confirmPasswordReset, requestPasswordReset } from './password-reset';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
-import { accountSupportProduct, storeStripeCardDescription, stripeData, stripeKeys } from './stripe-integration';
+import {
+  accountSupportProduct,
+  paddleData,
+  paddleKeys,
+  paddleWebhookHandler,
+  storeCardDescription,
+} from './payment-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
@@ -83,6 +90,7 @@ async function main() {
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
   router.post(ApiPath.requestAccountPasswordChange, makeAppRequestHandler(requestAccountPasswordChange, app));
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
+  router.post(ApiPath.requestPaymentMethodUpdate, makeAppRequestHandler(requestPaymentMethodUpdate, app));
   router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
@@ -90,18 +98,25 @@ async function main() {
   router.get(ApiPath.manageFeed, makeAppRequestHandler(manageFeed, app));
   router.get(ApiPath.loadFeedSubscribers, makeAppRequestHandler(loadFeedSubscribers, app));
   router.get(ApiPath.deliveryReports, makeAppRequestHandler(deliveryReports, app));
-  router.post(ApiPath.deleteFeedSubscribers, makeAppRequestHandler(deleteFeedSubscribers, app));
-  router.post(ApiPath.addFeedSubscribers, makeAppRequestHandler(addFeedSubscribers, app));
-  router.post(ApiPath.addNewFeed, makeAppRequestHandler(addNewFeed, app));
-  router.post(ApiPath.editFeed, makeAppRequestHandler(editFeed, app));
-  router.post(ApiPath.deleteFeed, makeAppRequestHandler(deleteFeed, app));
+  const paymentConfirmed = requirePaymentConfirmed(app);
+
+  router.post(ApiPath.deleteFeedSubscribers, paymentConfirmed, makeAppRequestHandler(deleteFeedSubscribers, app));
+  router.post(ApiPath.addFeedSubscribers, paymentConfirmed, makeAppRequestHandler(addFeedSubscribers, app));
+  router.post(ApiPath.addNewFeed, paymentConfirmed, makeAppRequestHandler(addNewFeed, app));
+  router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
+  router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
   router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
-  router.get(ApiPath.stripeKeys, makeAppRequestHandler(stripeKeys, app));
-  router.post(ApiPath.storeStripeCardDescription, makeAppRequestHandler(storeStripeCardDescription, app));
+  router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
+  router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
-  router.get(ApiPath.stripeData, makeAppRequestHandler(stripeData, app));
+  router.get(ApiPath.paymentData, makeAppRequestHandler(paddleData, app));
+  router.post(
+    ApiPath.paymentWebhook,
+    express.raw({ type: '*/*' }), // raw body required for Paddle signature verification
+    paddleWebhookHandler(app)
+  );
 
   const isDev = process.env['NODE_ENV'] === 'development';
 

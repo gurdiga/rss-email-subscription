@@ -1,14 +1,34 @@
+import { Environment } from '@paddle/paddle-node-sdk';
+import { makeErr, Result } from '../shared/lang';
 import { capitalize, si } from '../shared/string-utils';
 
-export interface StripeKeysResponseData {
-  publishableKey: string;
+export type PaddleEnvironment = `${Environment}`;
+
+export function makePaddleEnvironment(value: string): Result<PaddleEnvironment> {
+  if (!isPaddleEnvironment(value)) {
+    return makeErr(si`Invalid PADDLE_ENVIRONMENT: "${value}"; expected sandbox or production`);
+  }
+
+  return value;
+}
+
+function isPaddleEnvironment(value: string): value is PaddleEnvironment {
+  return (Object.values(Environment) as string[]).includes(value);
+}
+
+export interface PaddleKeysResponseData {
+  clientToken: string;
+  environment: PaddleEnvironment;
+}
+
+export interface PaddleDataResponseData {
+  trialPeriodDays: number;
 }
 
 export interface AccountSupportProductResponseData {
   name: string;
   description: string;
   priceInCents: number;
-  paymentLinkUrl: string;
 }
 
 export interface Card {
@@ -25,7 +45,6 @@ export interface StoreCardRequest {
   last4: string;
 }
 
-export type StoreCardRequestData = Record<keyof StoreCardRequest, string>;
 
 const shortMonthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

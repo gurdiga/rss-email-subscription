@@ -1,10 +1,11 @@
+/// <reference types="mocha" />
 import { expect } from 'chai';
 const cookie = require('cookie');
 import fetchCookie from 'fetch-cookie';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
-import { getStripeCardDescriptionStorageKey } from './src/api/stripe-integration';
+import { getCardDescriptionStorageKey } from './src/api/payment-integration';
 import { getEmailsStorageKey } from './src/app/email-sending/emails';
 import {
   AccountData,
@@ -175,7 +176,10 @@ describe('API', () => {
       const [account, accountId] = loadStoredAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
-      expect(account.planId).to.equal(planId, 'registration email');
+      expect(account.planId).to.equal(
+        PlanId.PendingPayment,
+        'registration stores pending plan until payment confirmed'
+      );
       expect(account.email).to.equal(userEmail, 'registration email');
       expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
@@ -248,6 +252,12 @@ describe('API', () => {
 
   describe('/api/feeds', () => {
     before(() => expect(++step).to.equal(3, 'test are expected to run in source order'));
+
+    before(() => {
+      const [account, accountId] = loadStoredAccountByEmail(userEmail);
+      const upgraded = { ...account, planId };
+      writeFile(makePath(dataDirRoot, getAccountStorageKey(accountId)), JSON.stringify(upgraded));
+    });
 
     context('when authenticated', () => {
       before(authenticate);
@@ -628,13 +638,13 @@ describe('API', () => {
       });
 
       function storeCardDescription(accountId: AccountId): void {
-        const filePath = getStripeCardDescriptionStorageKey(accountId);
+        const filePath = getCardDescriptionStorageKey(accountId);
 
         writeFile(makePath(dataDirRoot, filePath), JSON.stringify(cardDescription));
       }
 
       function removeCardDescription(accountId: AccountId): void {
-        const filePath = getStripeCardDescriptionStorageKey(accountId);
+        const filePath = getCardDescriptionStorageKey(accountId);
 
         deleteFile(makePath(dataDirRoot, filePath));
       }
