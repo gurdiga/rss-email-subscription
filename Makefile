@@ -130,7 +130,8 @@ lint-shell-scripts:
 lsh: lint-shell-scripts
 
 lint-mocha-only:
-	@function changed_files {
+	@set +o pipefail
+	function changed_files {
 		# List staged files if any, or changed if not
 		git diff-index --cached --name-only HEAD | ifne -n \
 		git diff-index --name-only HEAD |
