@@ -143,6 +143,7 @@ lint-require-strict-interpolation:
 	find src -name '*.ts' |
 	grep -v src/web-ui/subscription-form.ts | # exceptions
 	xargs grep --line-number --color=always -P '(?<!si)`[^;\]), ]' |
+	grep --invert-match -E '\btype\b.* = ' |
 	tee /dev/stderr | ifne false
 
 smtp-test:
