@@ -64,7 +64,7 @@ async function main() {
     return;
   }
 
-  let planId = queryStringParams.plan ? makePlanId(queryStringParams.plan) : PlanId.Free;
+  let planId = queryStringParams.plan ? makePlanId(queryStringParams.plan) : PlanId.Courage;
 
   if (isErr(planId)) {
     displayInitError(planId.reason);
