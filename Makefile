@@ -130,7 +130,7 @@ lint-shell-scripts:
 lsh: lint-shell-scripts
 
 lint-mocha-only:
-	@set +o pipefail
+	@set +o pipefail # BASH_ENV sources ~/.bash_profile which sets pipefail; xargs exits 123 on no match and would propagate
 	function changed_files {
 		# List staged files if any, or changed if not
 		git diff-index --cached --name-only HEAD | ifne -n \
