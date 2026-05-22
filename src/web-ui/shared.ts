@@ -359,7 +359,6 @@ export function toggleElement(visible: boolean, ...elements: Element[]): void {
   elements.forEach((x) => toggleAttribute(x, 'hidden', !visible));
 }
 
-
 export function scrollIntoView(element: HTMLElement) {
   element.scrollIntoView({ behavior: 'smooth' });
 }

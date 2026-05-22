@@ -153,7 +153,6 @@ async function loadPaddleKeys(): Promise<Result<PaddleKeysResponseData>> {
   return response.responseData;
 }
 
-
 export async function maybeConfirmPayment<FIELD extends string>(
   paymentSubformHandle: PaymentSubformHandle,
   planId: string,
@@ -300,4 +299,3 @@ export async function buildPlanDropdownOptions(selectedPlanId: string): Promise<
 
   return options;
 }
-

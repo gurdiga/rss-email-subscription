@@ -445,9 +445,7 @@ async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
     hideElement(uiElements.changePlanButton);
   }
 
-  const currentPlanLabel = isPendingPayment
-    ? 'Payment pending'
-    : await getPlanTitleAndPrice(uiAccount.planId);
+  const currentPlanLabel = isPendingPayment ? 'Payment pending' : await getPlanTitleAndPrice(uiAccount.planId);
 
   if (isErr(currentPlanLabel)) {
     return currentPlanLabel;

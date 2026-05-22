@@ -371,9 +371,7 @@ export async function getPaymentMethodUpdateTransaction(
     return makeErr(si`No active subscription found for customer "${customer.id}"`);
   }
 
-  const transaction = await asyncAttempt(() =>
-    paddle.subscriptions.getPaymentMethodChangeTransaction(subscription.id)
-  );
+  const transaction = await asyncAttempt(() => paddle.subscriptions.getPaymentMethodChangeTransaction(subscription.id));
 
   if (isErr(transaction)) {
     return makeErr(si`Failed to paddle.subscriptions.getPaymentMethodChangeTransaction: ${transaction.reason}`);
@@ -513,7 +511,10 @@ export function paddleWebhookHandler(app: App): RequestHandler {
   };
 }
 
-export async function handleTransactionCompleted(app: App, transaction: TransactionNotification): Promise<Result<void>> {
+export async function handleTransactionCompleted(
+  app: App,
+  transaction: TransactionNotification
+): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
   const customerEmail = transaction.customData?.['res_customer_email'];
   const rawPlanId = transaction.customData?.['res_plan_id'];
