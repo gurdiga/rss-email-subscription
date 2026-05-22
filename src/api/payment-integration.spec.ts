@@ -4,7 +4,13 @@ import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
-import { makeTestAccount, makeTestEmailAddress, makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import {
+  makeTestAccount,
+  makeTestEmailAddress,
+  makeTestStorageFromSnapshot,
+  purgeTestStorageFromSnapshot,
+} from '../shared/test-utils';
+import { si } from '../shared/string-utils';
 import { handleTransactionCompleted, handleSubscriptionCanceled } from './payment-integration';
 import { App } from './init-app';
 
@@ -24,7 +30,10 @@ describe(handleTransactionCompleted.name, () => {
   });
 
   it('returns undefined when res_customer_email is an invalid email', async () => {
-    const result = await handleTransactionCompleted(makeTestApp(), makeFakeTransaction({ res_customer_email: 'not-an-email' }));
+    const result = await handleTransactionCompleted(
+      makeTestApp(),
+      makeFakeTransaction({ res_customer_email: 'not-an-email' })
+    );
     expect(result).to.be.undefined;
   });
 
@@ -86,7 +95,7 @@ describe(handleTransactionCompleted.name, () => {
       makeFakeTransaction({ res_customer_email: 'test@test.com', res_plan_id: 'courage' }, true)
     );
 
-    const cardKey = `accounts/${accountId.value}/card-description.json`;
+    const cardKey = si`accounts/${accountId.value}/card-description.json`;
     const card = app.storage.loadItem(cardKey);
     expect(card).to.include('Visa');
     expect(card).to.include('4242');
