@@ -524,7 +524,7 @@ certbot-report:
 			head -2 | \
 			sort -r | \
 			xargs zcat -f | \
-			tail -20)
+			awk '/crond:/{buf=""} {buf=buf (buf==""?"":"\n") $$0} END{print buf}')
 
 		if echo "$$output" | grep -qE '(error|ERROR|fail|FAIL|Failed to renew|Problem binding|An unexpected error)'; then
 			subject="RES weekly-certbot FAILURE"
