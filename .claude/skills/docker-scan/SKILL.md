@@ -20,64 +20,20 @@ Use this skill when the user:
 **Always scan the prod server images directly** — images are built on prod and some
 update system packages at build time, so a local rebuild would not reflect prod state.
 
-Docker Scout v0.15.0 is installed on prod (Ubuntu 22.04 x86_64). Run all scans over
-SSH using the persistent ControlMaster connection.
+## Scan results
 
-Establish the connection first if not already active:
-```bash
-ssh -M -S ~/.ssh/control-feedsubscription -o ControlPersist=10m -fN feedsubscription.com
+The bundled script handles SSH ControlMaster setup, image discovery from the Makefile,
+and running scans in batches of 4 to avoid BuildKit cache conflicts:
+
+```!
+${CLAUDE_SKILL_DIR}/scripts/scan-images.sh
 ```
-
-Then prefix every `docker scout` command with:
-```bash
-ssh -S ~/.ssh/control-feedsubscription feedsubscription.com "<command>"
-```
-
-## Quick start
-
-Scan all production images and generate a report:
-
-1. Find production images from the Makefile:
-```bash
-grep "^all-images:" Makefile
-```
-Output: `all-images: app certbot delmon logger smtp-in smtp-out website resolver`
-
-2. Check Docker Scout is reachable on prod:
-```bash
-ssh -S ~/.ssh/control-feedsubscription feedsubscription.com "docker scout version 2>&1 | grep version"
-```
-
-3. Scan each image on prod and generate `image-check-YYYY-MM-DD.md`
 
 ## Workflow
 
-### Step 1: Discover images
+### Step 1: Review scan results above
 
-Get the production image list from the Makefile — it's the source of truth:
-
-```bash
-grep "^all-images:" Makefile
-```
-
-Confirm images exist on prod:
-```bash
-ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
-  "docker images --format '{{.Repository}}:{{.Tag}}' | grep -v '<none>' | sort"
-```
-
-If an image is missing, ask the user whether to build it first.
-
-### Step 2: Scan for vulnerability counts
-
-Run scans in background, **max 4 at a time** to avoid BuildKit cache conflicts:
-
-```bash
-ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
-  "docker scout cves <image>:latest 2>&1 | grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' | tail -5" &
-```
-
-Wait for each batch to complete before starting the next. Collect counts in this format:
+Each image section shows counts in this format:
 ```
 14 vulnerabilities found in 8 packages
   CRITICAL  0
@@ -86,7 +42,13 @@ Wait for each batch to complete before starting the next. Collect counts in this
   LOW       3
 ```
 
-### Step 3: Get HIGH/CRITICAL package details
+If any image shows `(no output)`, re-run that image's scan manually:
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "docker scout cves <image>:latest 2>&1 | grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' | tail -5"
+```
+
+### Step 2: Get HIGH/CRITICAL package details
 
 For each image with HIGH or CRITICAL findings, run sequentially (not in parallel):
 
@@ -102,7 +64,7 @@ ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
   "docker scout cves <image>:latest 2>&1 | grep -B2 -A8 '✗ HIGH\|✗ CRITICAL' | grep -E '✗|CVE|Fixed version' | head -40"
 ```
 
-### Step 4: Categorize vulnerabilities
+### Step 3: Categorize vulnerabilities
 
 For each vulnerable package, determine the category:
 
@@ -139,7 +101,7 @@ ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
 
 **No fix available**: Scout shows "Fixed version: not fixed" — document and monitor.
 
-### Step 5: Assess runtime impact before fixing
+### Step 4: Assess runtime impact before fixing
 
 Not all flagged packages warrant action. Assess each by its actual runtime role:
 
@@ -156,7 +118,7 @@ For Python packages, check if the application actually uses them:
 - `sqlite`: check if app opens any `.db` files or uses `import sqlite3`
 - `cryptography`: used at runtime for TLS/ACME (e.g. certbot) — fix this
 
-### Step 6: Generate report
+### Step 5: Generate report
 
 Create `image-check-YYYY-MM-DD.md` with today's date.
 
@@ -178,7 +140,7 @@ Create `image-check-YYYY-MM-DD.md` with today's date.
 - `ℹ️ No action` — npm internals, build tools, unused stdlib deps
 - `ℹ️ No fix available` — awaiting upstream patches
 
-### Step 7: Compare with previous scan (optional)
+### Step 6: Compare with previous scan (optional)
 
 Look for the most recent previous report:
 ```bash
