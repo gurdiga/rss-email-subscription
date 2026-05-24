@@ -71,7 +71,8 @@ compile-quiet:
 	$(TIME) $(MAKE) compile check-no-node-in-web-ui > /dev/null
 
 check-no-node-in-web-ui:
-	@grep --line-number --color=always -RF 'node:' dist/api/web-ui-scripts/ |
+	@set +o pipefail
+	grep --line-number --color=always -RF 'node:' dist/api/web-ui-scripts/ |
 	tee /dev/stderr | ifne false
 
 c: compile
@@ -143,10 +144,11 @@ lint-mocha-only:
 	changed_files | grep -E '.spec.ts$$' | xargs grep --color=always -H --line-number -F ".only" | tee /dev/stderr | ifne false
 
 lint-require-strict-interpolation:
+	@set +o pipefail
 	find src -name '*.ts' |
 	grep -v src/web-ui/subscription-form.ts | # exceptions
-	xargs grep --line-number --color=always -P '(?<!si)`[^;\]), ]' |
-	grep --invert-match -E '\btype\b.* = ' |
+	xargs grep --color=always --line-number -P '(?<!si)`[^;\]), ]' |
+	awk '!/type [A-Z]/' |
 	tee /dev/stderr | ifne false
 
 smtp-test:

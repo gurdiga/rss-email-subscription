@@ -17,7 +17,7 @@ import { recordNewRssItems } from './new-item-recording';
 import { parseRssFeed } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
-const myIssues = [/getaddrinfo ENOTFOUND/];
+const suppressAlertPatterns = [/getaddrinfo ENOTFOUND/, /Connect Timeout Error/];
 
 export async function checkRss(
   accountId: AccountId,
@@ -41,10 +41,10 @@ export async function checkRss(
   if (isErr(rssResponse)) {
     logError('Failed fetching RSS', { url, reason: rssResponse.reason, durationMs });
 
-    const isNotMyIssue = !myIssues.some((x) => x.test(rssResponse.reason));
+    const shouldAlert = !suppressAlertPatterns.some((x) => x.test(rssResponse.reason));
 
-    if (isNotMyIssue) {
-      await sendAlertEmail(feed, rssResponse.reason, env, settings.fullEmailAddress);
+    if (shouldAlert) {
+      await sendAlertEmail(feed, env, settings.fullEmailAddress);
     }
 
     return 1;
@@ -54,7 +54,7 @@ export async function checkRss(
 
   if (isErr(rssParsingResult)) {
     logError('Failed parsing RSS items', { reason: rssParsingResult.reason });
-    await sendAlertEmail(feed, rssParsingResult.reason, env, settings.fullEmailAddress);
+    await sendAlertEmail(feed, env, settings.fullEmailAddress);
     return 1;
   }
 
@@ -118,26 +118,23 @@ export async function checkRss(
   return 0;
 }
 
-async function sendAlertEmail(feed: Feed, errorMessage: string, env: AppEnv, from: FullEmailAddress) {
+async function sendAlertEmail(feed: Feed, env: AppEnv, from: FullEmailAddress) {
   const to = feed.replyTo;
   const replyTo = to;
 
-  const emailContent: EmailContent = {
+  return await sendEmail(from, to, replyTo, makeAlertEmailContent(feed), env);
+}
+
+export function makeAlertEmailContent(feed: Feed): EmailContent {
+  return {
     subject: 'Alert: failed to check your feed',
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
-      <p>This is a notification message from FeedSubscription.com.</p>
-
       <p>
-        Please note that we could not check your feed
-        <b>${feed.displayName}</b> for new items.
-        Here is the response that we received:
+        We had trouble checking your <b>${feed.displayName}</b> feed
+        and could not retrieve new items. We’ll keep trying automatically.
       </p>
-
-      <pre>${errorMessage}</pre>
-
-      <p>We’ll keep on trying, but you should probably inform your technical staff about this.</p>
 
       <p>Just for reference, this is the feed URL:</p>
       <pre>${feed.url.toString()}</pre>
@@ -145,6 +142,4 @@ async function sendAlertEmail(feed: Feed, errorMessage: string, env: AppEnv, fro
       <p>Have a nice day.</p>
     `),
   };
-
-  return await sendEmail(from, to, replyTo, emailContent, env);
 }
