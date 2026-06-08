@@ -326,6 +326,8 @@ update-tor-exit-node-blocklist:
 			echo "From: RES <system@feedsubscription.com>"; \
 			echo; \
 			echo "Could not refresh the Tor exit-node blocklist (fetch, validation, move, or reload failed)."; \
+			echo; \
+			echo "Please try running the make command manually."; \
 		) | if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
 	fi
 
