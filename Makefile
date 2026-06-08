@@ -307,6 +307,15 @@ hashing-salt:
 reload-app:
 	docker kill --signal=SIGHUP app
 
+# cron @daily
+update-tor-exit-node-blocklist:
+	@mkdir -p .tmp/nginx-blocklists
+	curl -fsS https://check.torproject.org/torbulkexitlist \
+		| awk '{print "deny " $$0 ";"}' \
+		> .tmp/nginx-blocklists/tor-exit-nodes.conf.new
+	mv .tmp/nginx-blocklists/tor-exit-nodes.conf.new .tmp/nginx-blocklists/tor-exit-nodes.conf
+	docker kill --signal=HUP website
+
 # cron @weekly
 reload-website:
 	@docker kill --signal=SIGHUP website | \

@@ -153,6 +153,7 @@ services:
     volumes:
       - ./website/html:/usr/share/nginx/html:ro
       - ./website/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./.tmp/nginx-blocklists:/etc/nginx/blocklists:ro
       - ./.tmp/certbot/conf:/etc/letsencrypt
       - ./.tmp/certbot/www:/var/www/certbot
     environment:
