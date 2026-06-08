@@ -309,12 +309,25 @@ reload-app:
 
 # cron @daily
 update-tor-exit-node-blocklist:
-	@mkdir -p .tmp/nginx-blocklists
-	curl -fsS https://check.torproject.org/torbulkexitlist \
-		| awk '{print "deny " $$0 ";"}' \
-		> .tmp/nginx-blocklists/tor-exit-nodes.conf.new
-	mv .tmp/nginx-blocklists/tor-exit-nodes.conf.new .tmp/nginx-blocklists/tor-exit-nodes.conf
-	docker kill --signal=HUP website
+	@new=.tmp/nginx-blocklists/tor-exit-nodes.conf.new
+	current=.tmp/nginx-blocklists/tor-exit-nodes.conf
+	mkdir -p .tmp/nginx-blocklists
+
+	if curl -fsS https://check.torproject.org/torbulkexitlist | awk '{print "deny " $$0 ";"}' > $$new \
+		&& [ "$$(wc -l < $$new)" -gt 100 ] \
+		&& mv $$new $$current \
+		&& docker kill --signal=HUP website > /dev/null
+	then
+		true
+	else
+		rm -f $$new
+		cat <( \
+			echo "Subject: RES update-tor-exit-node-blocklist FAILED"; \
+			echo "From: RES <system@feedsubscription.com>"; \
+			echo; \
+			echo "Could not refresh the Tor exit-node blocklist (fetch, validation, move, or reload failed)."; \
+		) | if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	fi
 
 # cron @weekly
 reload-website:
