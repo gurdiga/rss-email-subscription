@@ -32,7 +32,7 @@ import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
 import { App } from './init-app';
-import { sendPlanChangeInformationEmail } from './plan-change-email';
+import { sendPlanChangeInformationEmail, sendWelcomeEmail } from './plan-change-email';
 import { checkSession, isAuthenticatedSession } from './session';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 
@@ -567,7 +567,12 @@ export async function handleTransactionCompleted(
       }
 
       logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
-      await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
+
+      if (account.planId === PlanId.PendingPayment) {
+        await sendWelcomeEmail(email, app.settings, app.env);
+      } else {
+        await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
+      }
     }
   }
 
