@@ -412,6 +412,13 @@ api-test:
 		--reporter dot \
 		--bail -R dot api-test.spec.ts
 
+# Tunnel local dev server to a public URL for receiving Paddle sandbox webhooks.
+# Requires: brew install cloudflared
+# After getting the public URL, set it as the sandbox notification destination:
+#   https://sandbox-vendors.paddle.com/notifications-v2/ntfset_01kpgxpy4fm6nk6w0qj6s8jm1p
+paddle-sandbox-webhook:
+	cloudflared tunnel --url https://localhost.feedsubscription.com
+
 snyk:
 	snyk test
 
