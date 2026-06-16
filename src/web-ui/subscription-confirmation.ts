@@ -20,6 +20,9 @@ import {
 } from './shared';
 
 function main() {
+  const loadingMessage = document.querySelector('#loading-message');
+  if (loadingMessage) hideElement(loadingMessage);
+
   const queryParams = requireQueryParams<RequiredParams>({
     id: 'id',
     displayName: 'displayName',
