@@ -63,6 +63,8 @@ It does all of the mechanical work in one pass:
 4. Postfix cross-reference — extracts *every* queue ID from the delivery's `postfixed` logRecords (not just one sample), looks each up in `smtp-out.log`, and flags any that are missing or not `status=sent`.
 5. Batch-level tally — greps `smtp-out.log` for the delivery's date and tallies all `status=` values, to catch bounces/deferrals elsewhere in the same batch.
 
+Runtime is roughly proportional to recipients × log size — the Postfix cross-reference runs one `grep` per queue ID over the whole `smtp-out.log` (~18-20s for an 866-recipient delivery against a 25MB log). If this gets painful for larger deliveries or a bigger log, switch step 4 to a single `grep -F -f <(queue IDs)` pass over the log instead of one grep per ID.
+
 ## Reporting
 
 Summarize both layers from the script's output: how many of the `sent/` records reached `sent` status, and what the batch tally shows. Flag any mismatch between the two (e.g. app says sent but Postfix shows deferred) as worth a closer look — the judgment call on what a mismatch means is not automated.
