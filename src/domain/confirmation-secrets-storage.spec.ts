@@ -16,7 +16,7 @@ import {
 } from './confirmation-secrets-storage';
 import { AppStorage } from './storage';
 
-const secret = makeTestConfirmationSecret('X'.repeat(confirmationSecretLength));
+const secret = makeTestConfirmationSecret('a'.repeat(confirmationSecretLength));
 const accountId = makeTestAccountId();
 const storageErr = makeErr('Boom!');
 

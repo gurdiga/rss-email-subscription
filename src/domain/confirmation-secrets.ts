@@ -14,6 +14,11 @@ export const humanConfirmationSecretLifetime = si`${getHoursFromMs(confirmationS
 
 export const confirmationSecretLength = 64;
 
+// Confirmation secrets are SHA-256 hex digests. The value is used verbatim as a
+// filesystem path segment (see getConfirmationSecretStorageKey), so restricting it
+// to hex characters prevents path traversal via crafted secrets like "../../settings".
+const confirmationSecretCharsetRe = /^[a-f0-9]+$/;
+
 export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {
   return hasKind(value, 'ConfirmationSecret');
 }
@@ -29,6 +34,10 @@ export function makeConfirmationSecret(input: unknown, field = 'secret'): Result
 
   if (input.length !== confirmationSecretLength) {
     return makeErr(si`Input of invalid length; expected ${confirmationSecretLength}`, field);
+  }
+
+  if (!confirmationSecretCharsetRe.test(input)) {
+    return makeErr('Input contains invalid characters', field);
   }
 
   return {
