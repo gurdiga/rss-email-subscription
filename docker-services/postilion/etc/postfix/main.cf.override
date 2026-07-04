@@ -5,6 +5,7 @@ smtp_address_preference = ipv4
 maillog_file = /dev/stdout
 mynetworks = 127.0.0.0/8
 message_size_limit = 26214400
+always_add_missing_headers = yes
 virtual_alias_domains = gurdiga.com
 virtual_alias_maps = texthash:/etc/postfix/virtual
 smtp_tls_security_level = may
