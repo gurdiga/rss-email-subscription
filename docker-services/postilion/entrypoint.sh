@@ -4,9 +4,6 @@ set -euo pipefail
 log() { printf '[postilion] %s\n' "$*" >&2; }
 fail() { log "ERROR: $*"; exit 1; }
 
-SASL_DOMAIN="gurdiga.com"
-SASL_USER="gurdiga"
-
 apply_postfix_overrides() {
   local override="/etc/postfix/main.cf.override"
   [ -f "$override" ] || fail "Postfix override file missing at ${override}"
@@ -25,11 +22,25 @@ configure_master() {
   postconf -M "submission/inet=submission inet n - y - - smtpd"
 }
 
+# One SASL login per domain, derived from the sender_logins map, so that
+# adding a domain is a config-only change. Each login user@domain requires
+# its own password in POSTILION_SASL_PASSWORD_<DOMAIN> (dots/dashes
+# become underscores, uppercased).
 configure_sasl() {
-  local password="${POSTILION_SASL_PASSWORD:-}"
-  [ -n "$password" ] || fail "POSTILION_SASL_PASSWORD is required"
+  local logins login user domain var password
+  logins=$(grep -Ev '^\s*(#|$)' /etc/postfix/sender_logins | awk '{print $2}' | sort -u)
+  [ -n "$logins" ] || fail "No logins found in /etc/postfix/sender_logins"
 
-  echo "$password" | saslpasswd2 -p -c -u "$SASL_DOMAIN" "$SASL_USER"
+  while read -r login; do
+    user="${login%%@*}"
+    domain="${login##*@}"
+    var="POSTILION_SASL_PASSWORD_$(echo "$domain" | tr '[:lower:].-' '[:upper:]__')"
+    password="${!var:-}"
+    [ -n "$password" ] || fail "${var} is required (password for SASL login ${login})"
+    echo "$password" | saslpasswd2 -p -c -u "$domain" "$user"
+    log "SASL login created: ${login}"
+  done <<<"$logins"
+
   usermod -a -G sasl postfix
   chown root:sasl /etc/sasldb2
   chmod 640 /etc/sasldb2

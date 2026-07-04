@@ -11,7 +11,7 @@ Inbound mail for these domains is NOT handled here — it arrives at smtp-in on 
 ## Policy
 
 - Only SASL-authenticated clients may relay: `smtpd_relay_restrictions = permit_sasl_authenticated, reject`.
-- One login for all domains: `gurdiga@gurdiga.com` (password: `POSTILION_SASL_PASSWORD` env var, required). `etc/postfix/sender_logins` restricts which MAIL FROM addresses the login may use (`reject_sender_login_mismatch`).
+- One login per domain, derived from `etc/postfix/sender_logins` (e.g. `gurdiga@gurdiga.com` for gurdiga.com). Each login’s password comes from its own required env var `POSTILION_SASL_PASSWORD_<DOMAIN>` (dots/dashes → underscores, uppercased: `POSTILION_SASL_PASSWORD_GURDIGA_COM`). `sender_logins` also restricts which MAIL FROM addresses each login may use (`reject_sender_login_mismatch`).
 - Outgoing mail is DKIM-signed by OpenDKIM (selector `mail`, keys per domain in `etc/opendkim/KeyTable`).
 - `etc/postfix/virtual` short-circuits mail addressed *to* the personal domains (e.g. Gmail’s send-as verification email) straight to gurdiga@gmail.com.
 
@@ -24,7 +24,7 @@ Inbound mail for these domains is NOT handled here — it arrives at smtp-in on 
 ## Mail client settings (Gmail “send mail as”)
 
 - SMTP server: `feedsubscription.com` (matches the TLS cert; do NOT use the domain’s own name), port `587`, TLS.
-- Username: `gurdiga@gurdiga.com`; password: the prod `POSTILION_SASL_PASSWORD`.
+- Username: the domain’s login from `sender_logins` (e.g. `gurdiga@gurdiga.com`); password: the domain’s `POSTILION_SASL_PASSWORD_<DOMAIN>` from prod `.env`.
 
 ## Known limitation
 
@@ -33,7 +33,8 @@ Mail originated **on the droplet itself** (ssmtp/smtp-out) addressed to a person
 ## Adding a domain (config-only; no code changes)
 
 1. `make dkim-key DKIM_DOMAIN=example.com` — on prod for the real key, locally for a throwaway. Publishable DNS record lands in `.tmp/opendkim-keys/example.com.txt`.
-2. postilion config lines: `etc/postfix/main.cf.override` (append to `virtual_alias_domains`), `etc/postfix/virtual` (`@example.com gurdiga@gmail.com`), `etc/postfix/sender_logins` (`@example.com gurdiga@gurdiga.com`), `etc/opendkim/KeyTable` + `etc/opendkim/SigningTable` (selector `mail`).
-3. smtp-in: append to `relay_domains` in `etc/postfix/main.cf.override` + add the `virtual` line.
-4. New `dns/example.com.txt`; publish MX/SPF/DKIM/DMARC on the domain’s DNS (see `dns/gurdiga.com.txt` for the pattern).
-5. Rebuild + restart postilion and smtp-in.
+2. postilion config lines: `etc/postfix/main.cf.override` (append to `virtual_alias_domains`), `etc/postfix/virtual` (`@example.com gurdiga@gmail.com`), `etc/postfix/sender_logins` (`@example.com gurdiga@example.com` — its own login), `etc/opendkim/KeyTable` + `etc/opendkim/SigningTable` (selector `mail`).
+3. New password: `POSTILION_SASL_PASSWORD_EXAMPLE_COM` in prod `.env` (+ `.env.sample`) and in the `postilion` service environment in `docker-compose.yml`.
+4. smtp-in: append to `relay_domains` in `etc/postfix/main.cf.override` + add the `virtual` line.
+5. New `dns/example.com.txt`; publish MX/SPF/DKIM/DMARC on the domain’s DNS (see `dns/gurdiga.com.txt` for the pattern).
+6. Rebuild + restart postilion and smtp-in.

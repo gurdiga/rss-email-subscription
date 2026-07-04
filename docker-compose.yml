@@ -90,7 +90,7 @@ services:
       - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
     environment:
       TZ: UTC
-      POSTILION_SASL_PASSWORD: ${POSTILION_SASL_PASSWORD?}
+      POSTILION_SASL_PASSWORD_GURDIGA_COM: ${POSTILION_SASL_PASSWORD_GURDIGA_COM?}
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:

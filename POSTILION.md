@@ -20,7 +20,7 @@ A new dedicated container **postilion** handles everything outbound for personal
 - **smtp-out: zero changes.** Different container, different queue, different port; app/ssmtp/delmon flows untouched.
 - **smtp-in: 2-line change per domain** — unavoidable, since it owns port 25 where all MX traffic for this IP lands: add the domain to `relay_domains` and `@domain → gurdiga@gmail.com` to `virtual`. postsrsd stays single-domain: the SRS rewrite domain only needs its SPF to authorize the forwarding IP and its MX to route bounces back to the same postsrsd — both already hold for feedsubscription.com, for any number of forwarded domains. postgrey is not wired into postfix (no `check_policy_service`), so no greylist delays.
 - `myhostname=feedsubscription.com` in postilion (HELO matches PTR; LE cert matches). Mail clients connect to `feedsubscription.com:587` regardless of sender domain — the cert already covers that name, so no cert changes are ever needed for new domains.
-- One SASL login for all domains: `gurdiga@gurdiga.com`; `sender_logins` maps each domain’s addresses to it.
+- One SASL login **per domain**, derived from `sender_logins` (e.g. `gurdiga@gurdiga.com` for gurdiga.com), each with its own password in `POSTILION_SASL_PASSWORD_<DOMAIN>` (dots/dashes → underscores, uppercased) — a leaked credential exposes only one domain.
 - Logging: automatic — the logger’s syslog-ng writes `$HOST/$PROGRAM.log` per container tag, so `.tmp/logs/feedsubscription/postilion.log` appears with no logger changes.
 
 ## New service: docker-services/postilion/
@@ -52,13 +52,13 @@ A new dedicated container **postilion** handles everything outbound for personal
 
   Global (not per-listener `-o`) settings are fine because this container serves only submission.
 - **etc/postfix/virtual** — `@gurdiga.com gurdiga@gmail.com` (so Gmail’s send-as verification email to gurdiga@gurdiga.com short-circuits to Gmail without a loop through the public MX).
-- **etc/postfix/sender_logins** — `@gurdiga.com gurdiga@gurdiga.com` (the authenticated user may send as any @gurdiga.com address, nothing else; future domains add a line mapping to the same login).
+- **etc/postfix/sender_logins** — `@gurdiga.com gurdiga@gurdiga.com` (the authenticated user may send as any @gurdiga.com address, nothing else; future domains add a line mapping to their own login).
 - **etc/sasl2/smtpd.conf** — `auxprop_plugin: sasldb` / `mech_list: PLAIN LOGIN` (only offered after STARTTLS).
 - **etc/opendkim/** — `opendkim.conf` (copy of smtp-out’s: Mode s, Selector mail, socket inet:8891@127.0.0.1, OversignHeaders From), `KeyTable` (`mail._domainkey.gurdiga.com gurdiga.com:mail:/etc/opendkim/keys/gurdiga.com.private`), `SigningTable` (`gurdiga.com mail._domainkey.gurdiga.com`), `TrustedHosts` (`127.0.0.1`, `localhost`). SASL-authenticated senders are signed by OpenDKIM by default (postfix passes `{auth_type}` milter macros) — verified in rollout step 5.
 - **entrypoint.sh** — merge of the two existing entrypoints, fully domain-agnostic:
   - apply overrides loop (smtp-in entrypoint.sh:9-18)
   - chroot copies incl. sasldb (smtp-in:82-85, 28-30 — Debian’s default chrooted master.cf is used here, unlike smtp-out’s custom one)
-  - `configure_sasl()` (smtp-in:20-39): fail without `POSTILION_SASL_PASSWORD`; `saslpasswd2 -p -c -u gurdiga.com gurdiga` → login `gurdiga@gurdiga.com`
+  - `configure_sasl()` (smtp-in:20-39, generalized): derive the login list from `sender_logins` (right-hand column, unique); for each `user@domain` require `POSTILION_SASL_PASSWORD_<DOMAIN>` and run `saslpasswd2 -p -c -u domain user`
   - `configure_tls()` (smtp-in:41-52): fail if `/etc/postfix/cert/smtp.cert|key` missing; set `smtpd_tls_cert_file`/`key_file`
   - `configure_opendkim()` (smtp-out:27-50, generalized): derive the key list from KeyTable — for each non-comment line, extract the key path (3rd colon-field of column 2), copy the matching `<domain>.private` from `/mnt/opendkim-keys`, chown/chmod, fail if missing. Adding a domain never touches this script.
   - enable the submission listener and drop the unused port-25 one: `postconf -M submission/inet='submission inet n - y - - smtpd'` and `postconf -M# smtp/inet`
@@ -71,11 +71,11 @@ A new dedicated container **postilion** handles everything outbound for personal
   - `./.tmp/opendkim-keys:/mnt/opendkim-keys:ro` (same host dir smtp-out uses; new key files, no conflict)
   - the two certbot mounts exactly as smtp-in has (docker-compose.yml:66-67)
   - `./.tmp/postilion-queue:/var/spool/postfix` (own persistent queue)
-  - environment: `TZ: UTC`, `POSTILION_SASL_PASSWORD: ${POSTILION_SASL_PASSWORD?}`
+  - environment: `TZ: UTC`, `POSTILION_SASL_PASSWORD_GURDIGA_COM: ${POSTILION_SASL_PASSWORD_GURDIGA_COM?}` (one per domain)
 - **smtp-in** (only touched files):
   - `docker-services/smtp-in/etc/postfix/main.cf.override:11` → `relay_domains = feedsubscription.com, gurdiga.com`
   - `docker-services/smtp-in/etc/postfix/virtual` → add `@gurdiga.com gurdiga@gmail.com` (Dockerfile already postmaps at build)
-- **.env.sample** — add `POSTILION_SASL_PASSWORD=` next to `SMTP_IN_SASL_PASSWORD`
+- **.env.sample** — add `POSTILION_SASL_PASSWORD_GURDIGA_COM=` next to `SMTP_IN_SASL_PASSWORD`
 - **Makefile**:
   - new `postilion` build target (mirror `smtp-out`, Makefile:241)
   - new `dkim-key` target: `docker run --rm --entrypoint sh -v $(PWD)/.tmp/opendkim-keys:/keys postilion -c 'opendkim-genkey -b 2048 -d $(DKIM_DOMAIN) -s mail -D /keys && mv /keys/mail.private /keys/$(DKIM_DOMAIN).private && mv /keys/mail.txt /keys/$(DKIM_DOMAIN).txt'` with a `DKIM_DOMAIN` guard (runs in the postilion image — smtp-out untouched)
@@ -87,10 +87,11 @@ A new dedicated container **postilion** handles everything outbound for personal
 ## Adding a domain later (README checklist; no code changes)
 
 1. `make dkim-key DKIM_DOMAIN=example.com` (on prod for the real key; locally for a throwaway).
-2. postilion config lines: `main.cf.override` (`virtual_alias_domains` list), `virtual` (`@example.com gurdiga@gmail.com`), `sender_logins` (`@example.com gurdiga@gurdiga.com`), `KeyTable` + `SigningTable` (selector `mail`).
-3. smtp-in: `relay_domains` list + `virtual` line.
-4. New `dns/example.com.txt`; publish MX/SPF/DKIM/DMARC on the domain’s DNS.
-5. Rebuild + restart postilion and smtp-in.
+2. postilion config lines: `main.cf.override` (`virtual_alias_domains` list), `virtual` (`@example.com gurdiga@gmail.com`), `sender_logins` (`@example.com gurdiga@example.com` — its own login), `KeyTable` + `SigningTable` (selector `mail`).
+3. New password: `POSTILION_SASL_PASSWORD_EXAMPLE_COM` in prod `.env` (+ `.env.sample`) and in the postilion service environment in `docker-compose.yml`.
+4. smtp-in: `relay_domains` list + `virtual` line.
+5. New `dns/example.com.txt`; publish MX/SPF/DKIM/DMARC on the domain’s DNS.
+6. Rebuild + restart postilion and smtp-in.
 
 ## DNS changes for gurdiga.com (Cloudflare dashboard, all grey-cloud/DNS-only)
 
