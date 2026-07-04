@@ -26,6 +26,10 @@ Inbound mail for these domains is NOT handled here — it arrives at smtp-in on 
 - SMTP server: `feedsubscription.com` (matches the TLS cert; do NOT use the domain’s own name), port `587`, TLS.
 - Username: `gurdiga@gurdiga.com`; password: the prod `POSTILION_SASL_PASSWORD`.
 
+## Known limitation
+
+Mail originated **on the droplet itself** (ssmtp/smtp-out) addressed to a personal domain bounces with “mail for &lt;domain&gt; loops back to myself”: smtp-out resolves the domain’s MX to its own IP but doesn’t consider the domain local. Real senders are unaffected — they connect straight to smtp-in. Fixing it would require touching smtp-out (off-limits); nothing on the droplet needs to mail these domains.
+
 ## Adding a domain (config-only; no code changes)
 
 1. `make dkim-key DKIM_DOMAIN=example.com` — on prod for the real key, locally for a throwaway. Publishable DNS record lands in `.tmp/opendkim-keys/example.com.txt`.
