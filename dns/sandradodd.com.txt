@@ -28,6 +28,6 @@ MX      @                3600   10  mx.sandradodd.com  # replaces BOTH mailgun.o
 TXT     @                3600   0   v=spf1 a:mx.sandradodd.com include:mailgun.org ~all
 # DKIM public key: from prod .tmp/opendkim-keys/sandradodd.com.txt
 # (generated with `make dkim-key DKIM_DOMAIN=sandradodd.com` on 2026-07-04)
-TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=<PASTE-FROM-PROD>
+TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA2z8W083sDw8uOvHc5VCHpEnaquz+wvLe1J0s58ePiXGkwmyUTHJzLcpX87Yd6tADXtjg6mrrxcV1iOgcTDocTISi6w18zEG8tcsROs+zy4Z7KQFp9fWoBgkQnmD37SzYejXv7i3SaOKPFnI+Gv6QDNhedu4yg4abWd0lx0c/FmjGypxKiOaPKJLIvfoWvgPwMCvNqIjr0aoU50B28NP0FA5PYkj7CMucBZnEGfx6cjsM+eWfq4Tx+Mbfm4yM90da5fUp7ctrDQkv6ty0jhYXoS+zh3IHni/BPiElGMoFExyNz2hy3kh5SvBF7yRKJlPCGqgtY3dKhrhrSqfeI76miwIDAQAB
 # DMARC: already published (v=DMARC1; p=reject; adkim=s; aspf=s;
 # rua=mailto:dmarc-reports@sandradodd.com; ri=604800) — leave as is.
