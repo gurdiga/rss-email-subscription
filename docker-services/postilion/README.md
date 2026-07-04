@@ -28,7 +28,7 @@ Inbound mail for these domains is NOT handled here — it arrives at smtp-in on 
 
 ## Droplet-origin mail to the hosted domains
 
-Mail originated on the droplet itself (ssmtp/smtp-out) addressed to a personal domain used to bounce with “mail for &lt;domain&gt; loops back to myself”: smtp-out and smtp-in both have `myhostname = feedsubscription.com`, and Postfix’s loop detection fires when the server it connects to greets with its own hostname. Fixed by giving smtp-in a distinct `smtpd_banner` (`mx.feedsubscription.com`) — droplet-origin mail now relays through smtp-in like any external mail. Don’t “simplify” that banner back to `$myhostname`.
+Mail originated on the droplet itself (ssmtp/smtp-out) addressed to a personal domain used to bounce with “mail for &lt;domain&gt; loops back to myself”: smtp-out’s loop detection compares the EHLO reply hostname of the server it connects to against its own `myhostname`, and both containers used `feedsubscription.com`. Fixed by setting smtp-in’s `myhostname = mx.feedsubscription.com` (with `smtp_helo_name` pinned to `feedsubscription.com` so outbound HELO/SPF is unchanged) — droplet-origin mail now relays through smtp-in like any external mail. Don’t “simplify” smtp-in’s hostname back to feedsubscription.com.
 
 ## Adding a domain (config-only; no code changes)
 

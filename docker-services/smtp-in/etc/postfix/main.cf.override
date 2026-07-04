@@ -6,12 +6,14 @@ smtpd_tls_eccert_file =
 smtpd_tls_eckey_file =
 inet_protocols = ipv4
 smtp_address_preference = ipv4
-myhostname = feedsubscription.com
+# NOT feedsubscription.com: smtp-out's loop detection compares the EHLO
+# reply hostname (always $myhostname) against its own myhostname and
+# bounces droplet-origin mail to the hosted personal domains ("mail for
+# <domain> loops back to myself"). smtp_helo_name below keeps the
+# outbound HELO (PTR-matching, used for SPF on bounces) unchanged.
+myhostname = mx.feedsubscription.com
+smtp_helo_name = feedsubscription.com
 mydestination = localhost
 relay_domains = feedsubscription.com, gurdiga.com, sandradodd.com
 virtual_alias_maps = hash:/etc/postfix/virtual
 maillog_file = /dev/stdout
-# Distinct from smtp-out's myhostname (also feedsubscription.com): with
-# identical greetings, smtp-out's loop detection bounces droplet-origin
-# mail to the hosted personal domains ("loops back to myself").
-smtpd_banner = mx.feedsubscription.com ESMTP Postfix
