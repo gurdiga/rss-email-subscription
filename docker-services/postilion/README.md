@@ -26,9 +26,9 @@ Inbound mail for these domains is NOT handled here — it arrives at smtp-in on 
 - SMTP server: `feedsubscription.com` (matches the TLS cert; do NOT use the domain’s own name), port `587`, TLS.
 - Username: the domain’s login from `sender_logins` (e.g. `gurdiga@gurdiga.com`); password: the domain’s `POSTILION_SASL_PASSWORD_<DOMAIN>` from prod `.env`.
 
-## Known limitation
+## Droplet-origin mail to the hosted domains
 
-Mail originated **on the droplet itself** (ssmtp/smtp-out) addressed to a personal domain bounces with “mail for &lt;domain&gt; loops back to myself”: smtp-out resolves the domain’s MX to its own IP but doesn’t consider the domain local. Real senders are unaffected — they connect straight to smtp-in. Fixing it would require touching smtp-out (off-limits); nothing on the droplet needs to mail these domains.
+Mail originated on the droplet itself (ssmtp/smtp-out) addressed to a personal domain used to bounce with “mail for &lt;domain&gt; loops back to myself”: smtp-out and smtp-in both have `myhostname = feedsubscription.com`, and Postfix’s loop detection fires when the server it connects to greets with its own hostname. Fixed by giving smtp-in a distinct `smtpd_banner` (`mx.feedsubscription.com`) — droplet-origin mail now relays through smtp-in like any external mail. Don’t “simplify” that banner back to `$myhostname`.
 
 ## Adding a domain (config-only; no code changes)
 

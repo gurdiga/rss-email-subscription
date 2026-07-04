@@ -11,3 +11,7 @@ mydestination = localhost
 relay_domains = feedsubscription.com, gurdiga.com, sandradodd.com
 virtual_alias_maps = hash:/etc/postfix/virtual
 maillog_file = /dev/stdout
+# Distinct from smtp-out's myhostname (also feedsubscription.com): with
+# identical greetings, smtp-out's loop detection bounces droplet-origin
+# mail to the hosted personal domains ("loops back to myself").
+smtpd_banner = mx.feedsubscription.com ESMTP Postfix
