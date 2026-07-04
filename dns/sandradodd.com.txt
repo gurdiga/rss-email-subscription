@@ -1,0 +1,33 @@
+# DNS records for sandradodd.com — mail-related records only.
+#
+# NOTE: sandradodd.com DNS is hosted on Cloudflare and these records are
+# applied MANUALLY in the dashboard — NOT managed by dns/update.sh
+# (which is DigitalOcean-only). This file is the reference copy.
+#
+# All records below must be DNS-only (grey cloud): proxying breaks SMTP
+# and would make SPF resolve to Cloudflare edge IPs.
+# The existing proxied A records (website) must not be touched.
+#
+# TRANSITION NOTE (2026-07-04): the domain has a live Mailgun mail setup
+# (MX mxa/mxb.mailgun.org, SPF include:mailgun.org) and an already-strict
+# DMARC (p=reject; adkim=s; aspf=s). Publish the A/SPF/DKIM records first
+# (additive, safe); replace the Mailgun MX records with the MX below only
+# when ready to move inbound routing to the droplet. Keep
+# include:mailgun.org in SPF while anything may still send through
+# Mailgun. IMPORTANT: do not send as @sandradodd.com through postilion
+# before the DKIM TXT below is published — p=reject bounces anything
+# unauthenticated.
+#
+# Format: TYPE NAME TTL PRIORITY DATA (same as feedsubscription.com.txt)
+
+# --- Mail ---
+A       mx               3600   0   207.154.253.211  # the feedsubscription.com droplet
+MX      @                3600   10  mx.sandradodd.com  # replaces BOTH mailgun.org MX records when flipping inbound
+
+# --- Email authentication ---
+TXT     @                3600   0   v=spf1 a:mx.sandradodd.com include:mailgun.org ~all
+# DKIM public key: from prod .tmp/opendkim-keys/sandradodd.com.txt
+# (generated with `make dkim-key DKIM_DOMAIN=sandradodd.com` on 2026-07-04)
+TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=<PASTE-FROM-PROD>
+# DMARC: already published (v=DMARC1; p=reject; adkim=s; aspf=s;
+# rua=mailto:dmarc-reports@sandradodd.com; ri=604800) — leave as is.

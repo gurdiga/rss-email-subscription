@@ -91,6 +91,7 @@ services:
     environment:
       TZ: UTC
       POSTILION_SASL_PASSWORD_GURDIGA_COM: ${POSTILION_SASL_PASSWORD_GURDIGA_COM?}
+      POSTILION_SASL_PASSWORD_SANDRADODD_COM: ${POSTILION_SASL_PASSWORD_SANDRADODD_COM?}
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:

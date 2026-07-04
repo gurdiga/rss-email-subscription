@@ -1,1 +1,2 @@
 mail._domainkey.gurdiga.com gurdiga.com:mail:/etc/opendkim/keys/gurdiga.com.private
+mail._domainkey.sandradodd.com sandradodd.com:mail:/etc/opendkim/keys/sandradodd.com.private
