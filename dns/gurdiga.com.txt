@@ -21,8 +21,8 @@ MX      @                3600   10  mx.gurdiga.com
 # Gmail-originated mail during the transition.
 # Tighten ~all to -all after 2-4 weeks of clean DMARC reports.
 TXT     @                3600   0   v=spf1 a:mx.gurdiga.com include:_spf.google.com ~all
-# DKIM public key: paste p= from prod .tmp/opendkim-keys/gurdiga.com.txt
-# (generated with `make dkim-key DKIM_DOMAIN=gurdiga.com`)
-TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=<PASTE-FROM-PROD>
+# DKIM public key: from prod .tmp/opendkim-keys/gurdiga.com.txt
+# (generated with `make dkim-key DKIM_DOMAIN=gurdiga.com` on 2026-07-04)
+TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAv8SlvcFCpxnxWJw/PmruLk1/qvAmJSf5dmt6rvHXqqCwMohH4DZSrqVmFIaxCz/fXVohEo/EkmKDozLJjYjHvuPBSbXFG0B9xo4gSPGFghidwNU7L7vPwSvySvL3eALqKwOzXc7g3KlTD+MKrK9AEu4M4DQtp3/LBJUScJQSf3jQmpFZVwArN5hJpajWQKOzZqzyxri6gITuhZih0DSnwEQ50TfwZGTZ2YM++eRLwHRuu+xlOfG94m/vt9p3rvxpqX7e4/QTqzoLhtQySXvI4CycTefS3M1EOElf7hb0vHvTV3yQ3HdbkKImZ383bKZSxFOlTzfHwUVpCG8NF6h22wIDAQAB
 # DMARC: p=none initially; move to quarantine/reject after clean reports
 TXT     _dmarc           3600   0   v=DMARC1; p=none; rua=mailto:dmarc-reports@gurdiga.com; ri=604800
