@@ -8,6 +8,6 @@ inet_protocols = ipv4
 smtp_address_preference = ipv4
 myhostname = feedsubscription.com
 mydestination = localhost
-relay_domains = feedsubscription.com
+relay_domains = feedsubscription.com, gurdiga.com
 virtual_alias_maps = hash:/etc/postfix/virtual
 maillog_file = /dev/stdout

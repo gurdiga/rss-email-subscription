@@ -264,6 +264,33 @@ smtp-in:
 		docker-services/smtp-in |&
 	log_to .tmp/logs/feedsubscription/docker-build-smtp-in.log
 
+postilion:
+	@$(call include_log_to)
+
+	set -euo pipefail
+	docker build \
+		--progress=plain \
+		$(DOCKER_BUILD_FLAGS) \
+		--tag postilion \
+		docker-services/postilion |&
+	log_to .tmp/logs/feedsubscription/docker-build-postilion.log
+
+# Generates a DKIM key pair for DKIM_DOMAIN into .tmp/opendkim-keys/.
+# The DNS record to publish lands in .tmp/opendkim-keys/$(DKIM_DOMAIN).txt.
+dkim-key:
+	@set -euo pipefail
+	[ -n "$(DKIM_DOMAIN)" ] || { echo "Usage: make dkim-key DKIM_DOMAIN=example.com"; exit 1; }
+	[ ! -f ".tmp/opendkim-keys/$(DKIM_DOMAIN).private" ] || { echo "Key already exists: .tmp/opendkim-keys/$(DKIM_DOMAIN).private"; exit 1; }
+	mkdir -p .tmp/opendkim-keys
+	docker run --rm \
+		--entrypoint sh \
+		-v $(PWD)/.tmp/opendkim-keys:/keys \
+		postilion \
+		-c 'opendkim-genkey -b 2048 -d $(DKIM_DOMAIN) -s mail -D /keys \
+			&& mv /keys/mail.private /keys/$(DKIM_DOMAIN).private \
+			&& mv /keys/mail.txt /keys/$(DKIM_DOMAIN).txt'
+	ls -l .tmp/opendkim-keys/$(DKIM_DOMAIN).*
+
 # cron @reboot
 start:
 	docker compose --project-name res up --remove-orphans --detach
@@ -346,6 +373,16 @@ restart-smtp-in:
 	@docker restart smtp-in | \
 	cat <( \
 		echo "Subject: RES restart-smtp-in"; \
+		echo "From: RES <system@feedsubscription.com>"; \
+		echo; \
+	) - \
+	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+
+# cron @weekly
+restart-postilion:
+	@docker restart postilion | \
+	cat <( \
+		echo "Subject: RES restart-postilion"; \
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
@@ -1081,6 +1118,9 @@ ufw-config:
 	ufw allow 80/tcp
 	ufw allow 443/tcp
 
+	# postilion mail submission
+	ufw allow 587/tcp
+
 delivery-duration:
 	@echo $${DELIVERY_DIR:?Missing envar}
 
@@ -1128,7 +1168,7 @@ docker-image-check:
 		docker scout cves --exit-code "$$image"
 	done
 
-all-images: app certbot delmon logger smtp-in smtp-out website resolver
+all-images: app certbot delmon logger smtp-in smtp-out postilion website resolver
 
 fresh-images:
 	$(MAKE) DOCKER_BUILD_FLAGS=--no-cache all-images

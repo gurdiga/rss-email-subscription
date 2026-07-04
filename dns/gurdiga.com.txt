@@ -1,0 +1,28 @@
+# DNS records for gurdiga.com — mail-related records only.
+#
+# NOTE: gurdiga.com DNS is hosted on Cloudflare and these records are
+# applied MANUALLY in the dashboard — NOT managed by dns/update.sh
+# (which is DigitalOcean-only). This file is the reference copy.
+#
+# All records below must be DNS-only (grey cloud): proxying breaks SMTP
+# and would make SPF resolve to Cloudflare edge IPs.
+# The existing A/AAAA records (GitHub Pages website) must not be touched.
+# Cloudflare Email Routing must be disabled before adding the MX record.
+#
+# Format: TYPE NAME TTL PRIORITY DATA (same as feedsubscription.com.txt)
+
+# --- Mail ---
+A       mx               3600   0   207.154.253.211  # the feedsubscription.com droplet
+MX      @                3600   10  mx.gurdiga.com
+
+# --- Email authentication ---
+# SPF: a:mx.gurdiga.com keeps the A record above as the single in-zone
+# source of truth for the IP; include:_spf.google.com covers
+# Gmail-originated mail during the transition.
+# Tighten ~all to -all after 2-4 weeks of clean DMARC reports.
+TXT     @                3600   0   v=spf1 a:mx.gurdiga.com include:_spf.google.com ~all
+# DKIM public key: paste p= from prod .tmp/opendkim-keys/gurdiga.com.txt
+# (generated with `make dkim-key DKIM_DOMAIN=gurdiga.com`)
+TXT     mail._domainkey  3600   0   v=DKIM1; h=sha256; k=rsa; p=<PASTE-FROM-PROD>
+# DMARC: p=none initially; move to quarantine/reject after clean reports
+TXT     _dmarc           3600   0   v=DMARC1; p=none; rua=mailto:dmarc-reports@gurdiga.com; ri=604800

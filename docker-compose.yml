@@ -72,6 +72,30 @@ services:
       net:
         ipv4_address: 10.5.5.8
 
+  postilion:
+    depends_on:
+      logger:
+        condition: service_healthy
+      resolver:
+        condition: service_healthy
+    container_name: postilion
+    hostname: postilion
+    image: postilion
+    restart: always
+    ports: ['587:587']
+    volumes:
+      - ./.tmp/opendkim-keys:/mnt/opendkim-keys:ro
+      - ./.tmp/postilion-queue:/var/spool/postfix
+      - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
+      - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
+    environment:
+      TZ: UTC
+      POSTILION_SASL_PASSWORD: ${POSTILION_SASL_PASSWORD?}
+    <<: [*logging, *x-disable-ipv6, *x-dns]
+    networks:
+      net:
+        ipv4_address: 10.5.5.10
+
   app:
     depends_on:
       logger:
