@@ -413,13 +413,31 @@ ssl:
 			--webroot --webroot-path /var/www/certbot \
 			--domains feedsubscription.com \
 			--domains www.feedsubscription.com \
-			--domains localhost.feedsubscription.com \
 			--expand \
 			--rsa-key-size 4096 \
 			--agree-tos \
 			--non-interactive \
 			--email gurdiga@gmail.com" certbot
 	docker kill --signal=SIGHUP website
+
+# Local-dev TLS for https://localhost.feedsubscription.com. Rerunnable; run
+# once on a new Mac. Installs mkcert, creates and trusts a local CA, and
+# writes the cert to the same paths where the website container expects the
+# prod LE cert. api-test trusts the CA via NODE_EXTRA_CA_CERTS.
+LOCAL_CERT_DIR=./.tmp/certbot/conf/live/feedsubscription.com
+
+local-ssl:
+	command -v mkcert > /dev/null || brew install mkcert
+	mkcert -install
+	mkdir -p $(LOCAL_CERT_DIR)
+	rm -f $(LOCAL_CERT_DIR)/fullchain.pem $(LOCAL_CERT_DIR)/privkey.pem
+	mkcert \
+		-cert-file $(LOCAL_CERT_DIR)/fullchain.pem \
+		-key-file $(LOCAL_CERT_DIR)/privkey.pem \
+		localhost.feedsubscription.com
+	grep -q 'localhost\.feedsubscription\.com' /etc/hosts \
+		|| echo '127.0.0.1	localhost.feedsubscription.com' | sudo tee -a /etc/hosts
+	docker kill --signal=SIGHUP website 2> /dev/null || true
 
 # NOTE: Eleventy manages the website’s /dist/, so I’m puting the compiled
 # scrips in its src/web-ui-scripts/ and let it take it from there. If I put
@@ -444,6 +462,7 @@ start-dev: web-ui-watch
 api-test:
 	@set -a; source ./.env; set +a; \
 	export TS_NODE_TRANSPILE_ONLY=true; \
+	export NODE_EXTRA_CA_CERTS="$$(mkcert -CAROOT)/rootCA.pem"; \
 	node_modules/.bin/mocha \
 		--require ts-node/register \
 		--reporter dot \
