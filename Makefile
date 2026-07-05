@@ -406,18 +406,19 @@ start-certbot: certbot
 	docker compose --project-name res up --remove-orphans --detach \
 		-- certbot
 
-# NOTE: When changing certificate domains, rm -rf ll ./.tmp/certbot/conf/ first.
+# NOTE: When changing certificate domains, clear or move ./.tmp/certbot/conf/
+# first; the restart below re-mounts it into the container.
 ssl:
-	docker compose --project-name res run --rm --entrypoint "\
-	  certbot certonly \
-			--webroot --webroot-path /var/www/certbot \
-			--domains feedsubscription.com \
-			--domains www.feedsubscription.com \
-			--expand \
-			--rsa-key-size 4096 \
-			--agree-tos \
-			--non-interactive \
-			--email gurdiga@gmail.com" certbot
+	docker restart certbot
+	docker exec certbot certbot certonly \
+		--webroot --webroot-path /var/www/certbot \
+		--domains feedsubscription.com \
+		--domains www.feedsubscription.com \
+		--expand \
+		--rsa-key-size 4096 \
+		--agree-tos \
+		--non-interactive \
+		--email gurdiga@gmail.com
 	docker kill --signal=SIGHUP website
 
 # Local-dev TLS for https://localhost.feedsubscription.com. Rerunnable; run
