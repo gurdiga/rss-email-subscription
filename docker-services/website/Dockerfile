@@ -6,7 +6,7 @@ RUN apk update --no-cache \
     'libxml2=2.13.9-r1' \
     'curl=8.14.1-r2' \
     'openssl=3.3.7-r0' \
-    'expat=2.7.5-r0' \
+    'expat=2.8.2-r0' \
     'tiff=4.7.1-r0' \
     'libpng=1.6.57-r0' \
-    'c-ares=1.34.6-r0'
+    'c-ares=1.34.8-r0'
