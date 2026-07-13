@@ -68,7 +68,7 @@ compile:
 
 compile-quiet:
 	@printf "Compile... "
-	$(TIME) $(MAKE) compile check-no-node-in-web-ui > /dev/null
+	$(TIME) $(MAKE) compile web-ui check-no-node-in-web-ui > /dev/null
 
 check-no-node-in-web-ui:
 	@set +o pipefail
@@ -445,17 +445,12 @@ local-ssl:
 # them directly in /dist/, Eleventy removes them as extraneous.
 WEB_UI_DEST_DIR=$(DOCUMENT_ROOT)/../src/web-ui-scripts/
 
-web-ui-systemjs:
-	mkdir -p $(WEB_UI_DEST_DIR)
-	cp --target-directory=$(WEB_UI_DEST_DIR) \
-		./node_modules/systemjs/dist/system.min.js*
-	cat ./src/web-ui/systemjs-resolve-patch.js >> $(WEB_UI_DEST_DIR)/system.min.js
-
 web-ui:
-	node_modules/.bin/tsc --project src/web-ui/tsconfig.json
+	./src/web-ui/build-web-ui.sh dist/api/web-ui-scripts
 
-web-ui-watch: web-ui-systemjs
-	node_modules/.bin/tsc --watch --project src/web-ui/tsconfig.json --outDir $(WEB_UI_DEST_DIR) &
+web-ui-watch:
+	mkdir -p $(WEB_UI_DEST_DIR)
+	./src/web-ui/build-web-ui.sh $(WEB_UI_DEST_DIR) --watch=forever &
 
 start-dev: web-ui-watch
 	node_modules/.bin/nodemon src/api/server.ts
