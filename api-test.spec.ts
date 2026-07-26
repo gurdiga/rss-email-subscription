@@ -838,6 +838,7 @@ describe('API', () => {
 
       const [secret, secretData] = loadPasswordResetConfirmationSecret(emailAddress);
       const expectedSecretData: PasswordResetConfirmationSecretData = {
+        kind: 'PasswordResetConfirmationSecretData',
         accountId: getAccountIdByEmail(emailAddress, appSettings.hashingSalt).value,
       };
       expect(secretData, JSON.stringify(secretData)).to.deep.include(expectedSecretData);
@@ -969,7 +970,7 @@ describe('API', () => {
     const accountId = getAccountIdByEmail(email, appSettings.hashingSalt);
 
     return findStoredConfirmationSecret<PasswordResetConfirmationSecretData>(
-      (data) => data?.accountId === accountId.value
+      (data) => data?.kind === 'PasswordResetConfirmationSecretData' && data?.accountId === accountId.value
     );
   }
 

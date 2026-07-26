@@ -1,8 +1,14 @@
-import { isErr, Result } from '../shared/lang';
+import { basename } from 'node:path/posix';
+import { attempt, Err, isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
-import { ConfirmationSecret, ConfirmationSecretNotFound, makeConfirmationSecretNotFound } from './confirmation-secrets';
+import {
+  ConfirmationSecret,
+  ConfirmationSecretNotFound,
+  makeConfirmationSecret,
+  makeConfirmationSecretNotFound,
+} from './confirmation-secrets';
 
 export function loadConfirmationSecret<T>(
   storage: AppStorage,
@@ -37,6 +43,63 @@ export function deleteConfirmationSecret(storage: AppStorage, secret: Confirmati
   const storageKey = getConfirmationSecretStorageKey(secret);
 
   return storage.removeItem(storageKey);
+}
+
+export function listConfirmationSecrets(storage: AppStorage): Result<ConfirmationSecretList> {
+  const items = storage.listItems(confirmationSecretsStorageKey);
+
+  if (isErr(items)) {
+    return makeErr(si`Failed to list confirmation secrets from ${confirmationSecretsStorageKey}`);
+  }
+
+  const results: ConfirmationSecretList = {
+    basenameErrs: [],
+    validConfirmationSecrets: [],
+    invalidConfirmationSecrets: [],
+  };
+
+  const hashes: string[] = [];
+
+  items.forEach((x) => {
+    const result = attempt(() => basename(x, '.json'));
+
+    if (isErr(result)) {
+      results.basenameErrs.push({ input: x, err: result });
+    } else {
+      hashes.push(result);
+    }
+  });
+
+  hashes.forEach((x) => {
+    const result = makeConfirmationSecret(x);
+
+    if (isErr(result)) {
+      results.invalidConfirmationSecrets.push({
+        input: x,
+        err: result,
+      });
+    } else {
+      results.validConfirmationSecrets.push(result);
+    }
+  });
+
+  return results;
+}
+
+export interface ConfirmationSecretList {
+  basenameErrs: BasenameErr[];
+  validConfirmationSecrets: ConfirmationSecret[];
+  invalidConfirmationSecrets: InvalidConfirmationSecret[];
+}
+
+interface BasenameErr {
+  input: string;
+  err: Err;
+}
+
+interface InvalidConfirmationSecret {
+  input: string;
+  err: Err;
 }
 
 export const confirmationSecretsStorageKey = '/confirmation-secrets';

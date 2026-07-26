@@ -8,11 +8,13 @@ import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
   humanConfirmationSecretLifetime,
+  isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
+  listConfirmationSecrets,
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
@@ -30,7 +32,7 @@ import {
 } from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { Result, isErr, makeErr, makeValues } from '../shared/lang';
+import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie, setDemoCookie } from './app-cookie';
@@ -64,6 +66,18 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
   if (isAccountNotFound(account)) {
     logError('Account not found', { accountId: accountId.value, email: request.email });
     return makeInputError<keyof PasswordResetRequest>('We don’t have an account registered with this email', 'email');
+  }
+
+  // Issuing a new reset link invalidates the account’s older ones, so that a link
+  // the user has reason to distrust stops working once they request a replacement.
+  // A failure here is logged rather than fatal: leaving a stale link alive is worse
+  // than nothing, but refusing the reset outright would leave the user locked out.
+  const revokeResult = revokePasswordResetSecrets(storage, accountId);
+
+  if (isErr(revokeResult)) {
+    logWarning(si`Failed to ${revokePasswordResetSecrets.name}: ${revokeResult.reason}`, {
+      accountId: accountId.value,
+    });
   }
 
   const secret = makeRandomConfirmationSecret();
@@ -124,12 +138,47 @@ function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: st
   };
 }
 
+export function revokePasswordResetSecrets(storage: AppStorage, accountId: AccountId): Result<void> {
+  const secrets = listConfirmationSecrets(storage);
+
+  if (isErr(secrets)) {
+    return secrets;
+  }
+
+  for (const secret of secrets.validConfirmationSecrets) {
+    const secretData = loadConfirmationSecret(storage, secret);
+
+    if (isErr(secretData) || isConfirmationSecretNotFound(secretData)) {
+      continue;
+    }
+
+    if (!isPasswordResetSecretFor(secretData, accountId)) {
+      continue;
+    }
+
+    const deleteResult = deleteConfirmationSecret(storage, secret);
+
+    if (isErr(deleteResult)) {
+      return makeErr(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
+    }
+  }
+}
+
+function isPasswordResetSecretFor(secretData: unknown, accountId: AccountId): boolean {
+  if (!hasKind(secretData, 'PasswordResetConfirmationSecretData')) {
+    return false;
+  }
+
+  return (secretData as PasswordResetConfirmationSecretData).accountId === accountId.value;
+}
+
 function storeForgotPasswordConfirmationSecret(
   storage: AppStorage,
   secret: ConfirmationSecret,
   accountId: AccountId
 ): Result<void> {
   const secretData: PasswordResetConfirmationSecretData = {
+    kind: 'PasswordResetConfirmationSecretData',
     accountId: accountId.value,
   };
   const result = storeConfirmationSecret(storage, secret, secretData);
@@ -230,8 +279,11 @@ function sendPasswordResetConfirmationEmail(accountEmail: EmailAddress, settings
   return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
+// makeValues stamps the kind rather than reading it from the input, so secrets
+// stored before the field existed still redeem cleanly.
 function makeForgotPasswordSecret(data: unknown): Result<PasswordResetConfirmationSecret> {
   return makeValues<PasswordResetConfirmationSecret>(data, {
+    kind: 'PasswordResetConfirmationSecretData',
     accountId: makeAccountId,
   });
 }
