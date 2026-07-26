@@ -33,13 +33,13 @@ import {
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { hashPassword, verifyPassword } from '../domain/hashed-password';
+import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
 import { isSubscriptionPlan, makePlanId, PlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { isErr, makeValues, Result } from '../shared/lang';
+import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
@@ -262,7 +262,7 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
 
   const storeAccountResult = isDemoSession(reqSession)
     ? undefined
-    : storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+    : storeNewPassword(storage, accountId, account.hashedPassword, newHashedPassword);
 
   if (isErr(storeAccountResult)) {
     logError(si`Failed to ${storeAccount.name}`, {
@@ -277,6 +277,33 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
 
   return makeSuccess();
 };
+
+// Hashing the new password yields to the event loop, so the account is re-read here and
+// written only if its stored hash is still the one whose plaintext the caller verified.
+// Writing the pre-hash snapshot would silently revert a plan change, email change or
+// password reset that completed while the hash was being computed.
+function storeNewPassword(
+  storage: AppStorage,
+  accountId: AccountId,
+  verifiedHashedPassword: HashedPassword,
+  newHashedPassword: HashedPassword
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return account;
+  }
+
+  if (isAccountNotFound(account)) {
+    return makeErr('Account not found when storing the new password');
+  }
+
+  if (account.hashedPassword.value !== verifiedHashedPassword.value) {
+    return makeErr('Stored password changed while hashing the new one');
+  }
+
+  return storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+}
 
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {
   const emailContent = {

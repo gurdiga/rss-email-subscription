@@ -57,6 +57,37 @@ describe(authentication.name, () => {
     );
   });
 
+  // The login holds an account snapshot across the scrypt call. If it wrote that snapshot
+  // back unconditionally it would revert a password reset that completed meanwhile — and
+  // revert it to the password the user was resetting away from.
+  it('does not revert a password reset that lands while the rehash is hashing', async () => {
+    const email = 'racing-user@test.com';
+    const password = 'a-long-enough-password';
+    const app = makeTestApp();
+    storeLegacyAccount(app, email, password);
+
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+    const resetHashedPassword = await hashPassword('an-entirely-different-password');
+
+    const loginPromise = authentication('req', { email, password }, {}, makeReqSession(), app);
+
+    // Let the login reach the scrypt call, then land the reset while it is in flight.
+    // scrypt runs for ~135ms, so a synchronous write here is comfortably inside it.
+    await new Promise((resolve) => setImmediate(resolve));
+    storeAccount(app.storage, accountId, {
+      ...loadStoredAccount(app, email),
+      hashedPassword: resetHashedPassword,
+    });
+
+    const response = await loginPromise;
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
+      resetHashedPassword.value,
+      'the concurrent reset must survive the login’s rehash'
+    );
+  });
+
   it('does not rehash the demo account (its stored data stays static)', async () => {
     const password = 'a-long-enough-password';
     const app = makeTestApp();

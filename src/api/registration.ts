@@ -247,8 +247,29 @@ async function initAccount(
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: initAccount.name });
 
   const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
+  const exists = accountExists(storage, accountId);
 
-  if (accountExists(storage, accountId)) {
+  if (isErr(exists)) {
+    return exists;
+  }
+
+  // Cheap pre-check, so a registration flood doesn’t pay for a scrypt hash per attempt.
+  if (exists) {
+    logWarning('Account already exists', { email: request.email.value });
+    return makeAccountAlreadyExists();
+  }
+
+  const hashedPassword = await hashPassword(request.password.value);
+
+  // Hashing yields to the event loop, so check again with nothing between here and the
+  // store: two concurrent registrations for one email must not both write the account.
+  const existsAfterHashing = accountExists(storage, accountId);
+
+  if (isErr(existsAfterHashing)) {
+    return existsAfterHashing;
+  }
+
+  if (existsAfterHashing) {
     logWarning('Account already exists', { email: request.email.value });
     return makeAccountAlreadyExists();
   }
@@ -256,7 +277,7 @@ async function initAccount(
   const account: Account = {
     planId: PlanId.PendingPayment,
     email: request.email,
-    hashedPassword: await hashPassword(request.password.value),
+    hashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
     isAdmin: false,

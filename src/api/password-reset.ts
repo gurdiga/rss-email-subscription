@@ -232,6 +232,18 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
+  // Consume the secret before hashing, which is where this handler yields to the event
+  // loop. Deleting it afterwards would let two concurrent submissions of one link both
+  // load it and both reset the password. A failure after this point costs the user their
+  // link and they have to request a new one, which is the right side to err on for a
+  // single-use token.
+  const deleteResult = deleteConfirmationSecret(storage, request.secret);
+
+  if (isErr(deleteResult)) {
+    logError(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
+    return makeAppError();
+  }
+
   const newHashedPassword = await hashPassword(request.newPassword.value);
   const isDemoAccount = account.email.value === demoAccountEmail;
   const resetResult = isDemoAccount ? undefined : resetAccountPassword(storage, accountId, newHashedPassword);
@@ -239,12 +251,6 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   if (isErr(resetResult)) {
     logError(si`Failed to ${resetAccountPassword.name}: ${resetResult.reason}`);
     return makeAppError();
-  }
-
-  const deleteResult = deleteConfirmationSecret(storage, request.secret);
-
-  if (isErr(deleteResult)) {
-    logError(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
   }
 
   initSession(reqSession, accountId, account.email);

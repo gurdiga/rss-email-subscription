@@ -1,14 +1,8 @@
 import { makeEmailAddress } from '../domain/email-address-making';
-import {
-  Account,
-  AccountId,
-  AuthenticationResponseData,
-  AuthenticationRequest,
-  isAccountNotFound,
-} from '../domain/account';
+import { AccountId, AuthenticationResponseData, AuthenticationRequest, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
-import { hashPassword, verifyPassword } from '../domain/hashed-password';
+import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
 import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
 import { makeInputError, makeSuccess } from '../shared/api-response';
@@ -98,7 +92,7 @@ async function checkCredentials(
   }
 
   if (verification.needsRehash && request.email.value !== demoAccountEmail) {
-    await rehashLegacyPassword(storage, accountId, account, request.password.value);
+    await rehashLegacyPassword(storage, accountId, account.hashedPassword, request.password.value);
   }
 
   logInfo('User logged in');
@@ -108,17 +102,42 @@ async function checkCredentials(
 
 // Upgrade a legacy password hash to the current algorithm on successful login. A
 // failure here must not fail an otherwise-valid login, so it is logged and swallowed.
+//
+// Hashing yields to the event loop, so the account is re-read afterwards and written
+// only if its stored hash is still the one that was verified. Writing a snapshot taken
+// before the hash would revert a password reset that completed in the meantime — and
+// revert it to the very password the user was resetting away from.
 async function rehashLegacyPassword(
   storage: AppStorage,
   accountId: AccountId,
-  account: Account,
+  verifiedHashedPassword: HashedPassword,
   plainPassword: string
 ): Promise<void> {
-  const { logError } = makeCustomLoggers({ accountId: accountId.value, module: rehashLegacyPassword.name });
+  const { logError, logInfo, logWarning } = makeCustomLoggers({
+    accountId: accountId.value,
+    module: rehashLegacyPassword.name,
+  });
   const rehashed = await asyncAttempt(() => hashPassword(plainPassword));
 
   if (isErr(rehashed)) {
     logError('Failed to rehash legacy password on login', { reason: rehashed.reason });
+    return;
+  }
+
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name} before storing rehashed password`, { reason: account.reason });
+    return;
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account disappeared before storing rehashed password');
+    return;
+  }
+
+  if (account.hashedPassword.value !== verifiedHashedPassword.value) {
+    logInfo('Skipped rehash: stored password changed while hashing');
     return;
   }
 
