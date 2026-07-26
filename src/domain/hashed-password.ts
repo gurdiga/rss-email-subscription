@@ -1,6 +1,6 @@
 import { randomBytes, scrypt } from 'node:crypto';
 import { hash, timingSafeEqualHex } from '../shared/crypto';
-import { getTypeName, isErr, makeErr, Result } from '../shared/lang';
+import { asyncAttempt, getTypeName, isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 
 export interface HashedPassword {
@@ -23,7 +23,12 @@ const scryptKeyLength = 64;
 const scryptSaltLength = 16;
 
 const legacyHashedPasswordRe = /^[0-9a-f]{64}$/;
-const scryptHashedPasswordRe = /^scrypt\$v1\$N=(\d+),r=(\d+),p=(\d+)\$([0-9a-f]+)\$([0-9a-f]+)$/;
+
+// v1 pins the salt to 16 bytes and the digest to 64 bytes, so their hex lengths are exact
+// rather than open-ended: 32 and 128. An odd-length digest would make the derived key
+// length fractional and scrypt throw rather than simply fail to match, and any other
+// length is by definition a different format version.
+const scryptHashedPasswordRe = /^scrypt\$v1\$N=(\d+),r=(\d+),p=(\d+)\$([0-9a-f]{32})\$([0-9a-f]{128})$/;
 
 export function makeHashedPassword(hashedPasswordString: unknown): Result<HashedPassword> {
   if (typeof hashedPasswordString !== 'string') {
@@ -80,14 +85,16 @@ export async function verifyPassword(
     return { isMatch: false, needsRehash: false };
   }
 
-  const derivedKey = await scryptDerive(
-    plainPassword,
-    Buffer.from(parsed.saltHex, 'hex'),
-    parsed.keyLength,
-    parsed.n,
-    parsed.r,
-    parsed.p
+  // A rejection from scrypt itself — a parameter combination Node declines, say — is a
+  // failed verification, not an exception for the caller to deal with.
+  const derivedKey = await asyncAttempt(() =>
+    scryptDerive(plainPassword, Buffer.from(parsed.saltHex, 'hex'), parsed.keyLength, parsed.n, parsed.r, parsed.p)
   );
+
+  if (isErr(derivedKey)) {
+    return { isMatch: false, needsRehash: false };
+  }
+
   const isMatch = timingSafeEqualHex(derivedKey.toString('hex'), parsed.hashHex);
 
   return { isMatch, needsRehash: false };

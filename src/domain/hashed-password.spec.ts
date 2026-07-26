@@ -26,6 +26,18 @@ describe(makeHashedPassword.name, () => {
     expect(isErr(makeHashedPassword('X'.repeat(64)))).to.be.true; // 64 chars but not hex
     expect(isErr(makeHashedPassword('scrypt$v1$N=16384,r=8,p=1$nothex$deadbeef'))).to.be.true;
   });
+
+  // An odd-length digest used to pass the shape check and then make scrypt throw on a
+  // fractional key length, rather than failing to verify.
+  it('rejects a scrypt value whose salt or digest is not the exact v1 length', () => {
+    const salt = 'a'.repeat(32);
+    const digest = 'b'.repeat(128);
+
+    expect(isErr(makeHashedPassword(si`scrypt$v1$N=32768,r=8,p=1$${salt}$${digest}`)), 'exact lengths').to.be.false;
+    expect(isErr(makeHashedPassword(si`scrypt$v1$N=32768,r=8,p=1$a$b`)), 'odd single-char').to.be.true;
+    expect(isErr(makeHashedPassword(si`scrypt$v1$N=32768,r=8,p=1$${salt}$${digest}b`)), 'digest too long').to.be.true;
+    expect(isErr(makeHashedPassword(si`scrypt$v1$N=32768,r=8,p=1$${salt}a$${digest}`)), 'salt too long').to.be.true;
+  });
 });
 
 describe(hashPassword.name, () => {
