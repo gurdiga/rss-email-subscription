@@ -1351,10 +1351,19 @@ open-ports-report:
 
 	mkdir -p $$report_dir
 
+	# Without a global IPv6 address the [::] binds have no internet-routable
+	# address to be reached on, so they say nothing about exposure. They come
+	# back on their own if IPv6 connectivity ever appears.
+	if ip -6 addr show scope global | grep -q .; then
+		ss_flags=-tlnpH
+	else
+		ss_flags=-4tlnpH
+	fi
+
 	# Keep only state, addresses, and program name: PIDs, fds, and the
 	# accept-queue counters change on their own and would report as a diff.
 	report_body=$$(
-		ss -tlnpH |
+		ss $$ss_flags |
 		sed -E 's#users:\(\("([^"]+)".*#\1#' |
 		awk '{print $$1, $$4, $$5, $$6}' |
 		sed -E 's/[[:space:]]+$$//' |
