@@ -91,6 +91,10 @@ describe(verifyPassword.name, () => {
       si`scrypt$v1$N=1073741824,r=8,p=1$${salt}$${digest}`, // 2^30 — would demand ~1 TiB
       si`scrypt$v1$N=16385,r=8,p=1$${salt}$${digest}`, // not a power of two
       si`scrypt$v1$N=0,r=8,p=1$${salt}$${digest}`, // zero
+      // Each parameter used to be bounded on its own, which let this combination through
+      // at ~4 GiB of working memory. The bound is on 128*N*r now.
+      si`scrypt$v1$N=1048576,r=32,p=1$${salt}$${digest}`,
+      si`scrypt$v1$N=32768,r=8,p=64$${salt}$${digest}`, // p far above the current cost
     ];
 
     for (const value of hostileValues) {

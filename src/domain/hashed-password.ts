@@ -151,24 +151,38 @@ function parseScryptHashedPassword(value: string): Result<ParsedScryptHashedPass
   };
 }
 
-// Generous ceilings — production uses N=32768 (2^15), r=8, p=1. Anything beyond these is
-// either corruption or an attempt to make one verify allocate excessive memory.
-const maxScryptN = 2 ** 20;
-const maxScryptR = 32;
-const maxScryptP = 16;
+// A stored hash is only ever written by this module, so verification never needs to accept
+// parameters costlier than the current ones. The headroom is there so a rolling deploy can
+// still read a hash written by a newer instance.
+//
+// The bound is on the product, not on each parameter separately: independent ceilings for
+// N and r would let N=2^20 with r=32 through, and 128*N*r is then about 4 GiB — the very
+// allocation the check exists to prevent.
+const scryptCostHeadroom = 4;
+const maxScryptMemoryBytes = scryptMemoryBytes(scryptN, scryptR) * scryptCostHeadroom;
+const maxScryptP = scryptP * scryptCostHeadroom;
 
 function isValidScryptCost(n: number, r: number, p: number): boolean {
   if (![n, r, p].every((value) => Number.isSafeInteger(value) && value > 0)) {
     return false;
   }
 
-  if (r > maxScryptR || p > maxScryptP) {
+  if (p > maxScryptP) {
     return false;
   }
 
-  // N must be a power of two (scrypt itself requires it). The range check runs first, so
+  if (scryptMemoryBytes(n, r) > maxScryptMemoryBytes) {
+    return false;
+  }
+
+  // N must be a power of two (scrypt itself requires it). The memory bound runs first, so
   // the bitwise test only ever sees values small enough for 32-bit operators.
-  return n >= 2 && n <= maxScryptN && (n & (n - 1)) === 0;
+  return n >= 2 && (n & (n - 1)) === 0;
+}
+
+// scrypt’s working set, per its own documented formula.
+function scryptMemoryBytes(n: number, r: number): number {
+  return 128 * n * r;
 }
 
 function scryptDerive(
@@ -180,9 +194,10 @@ function scryptDerive(
   p: number
 ): Promise<Buffer> {
   return new Promise((resolve, reject) => {
-    // maxmem must exceed 128 * N * r; give headroom so a future parameter bump
-    // doesn't trip the default 32 MiB cap when verifying older hashes.
-    const maxmem = 128 * n * r * 2;
+    // maxmem must exceed the working set; give headroom so a future parameter bump
+    // doesn't trip the default 32 MiB cap when verifying older hashes. isValidScryptCost
+    // has already bounded this for stored hashes.
+    const maxmem = scryptMemoryBytes(n, r) * 2;
 
     scrypt(password, salt, keyLength, { N: n, r, p, maxmem }, (err, derivedKey) => {
       if (err) {
