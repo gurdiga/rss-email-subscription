@@ -92,7 +92,7 @@ async function checkCredentials(
   }
 
   if (verification.needsRehash && request.email.value !== demoAccountEmail) {
-    await rehashLegacyPassword(storage, accountId, account.hashedPassword, request.password.value);
+    await rehashPassword(storage, accountId, account.hashedPassword, request.password.value);
   }
 
   logInfo('User logged in');
@@ -100,14 +100,15 @@ async function checkCredentials(
   return accountId;
 }
 
-// Upgrade a legacy password hash to the current algorithm on successful login. A
-// failure here must not fail an otherwise-valid login, so it is logged and swallowed.
+// Upgrade a password hash to the current algorithm and cost on successful login — either
+// from the legacy format or from out-of-date scrypt parameters. A failure here must not
+// fail an otherwise-valid login, so it is logged and swallowed.
 //
 // Hashing yields to the event loop, so the account is re-read afterwards and written
 // only if its stored hash is still the one that was verified. Writing a snapshot taken
 // before the hash would revert a password reset that completed in the meantime — and
 // revert it to the very password the user was resetting away from.
-async function rehashLegacyPassword(
+async function rehashPassword(
   storage: AppStorage,
   accountId: AccountId,
   verifiedHashedPassword: HashedPassword,
@@ -115,12 +116,12 @@ async function rehashLegacyPassword(
 ): Promise<void> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     accountId: accountId.value,
-    module: rehashLegacyPassword.name,
+    module: rehashPassword.name,
   });
   const rehashed = await asyncAttempt(() => hashPassword(plainPassword));
 
   if (isErr(rehashed)) {
-    logError('Failed to rehash legacy password on login', { reason: rehashed.reason });
+    logError('Failed to rehash password on login', { reason: rehashed.reason });
     return;
   }
 

@@ -60,8 +60,10 @@ export async function hashPassword(plainPassword: string): Promise<HashedPasswor
 
 export interface PasswordVerification {
   isMatch: boolean;
-  // True when the password matched but is stored in the legacy format and should be
-  // re-hashed with the current algorithm.
+  // True when the password matched but the stored hash is not at the current algorithm
+  // and cost — either the legacy format, or scrypt with out-of-date parameters. This is
+  // what the self-describing N/r/p prefix exists for: bumping the cost constants below
+  // makes existing hashes upgrade on their owners’ next login.
   needsRehash: boolean;
 }
 
@@ -97,7 +99,11 @@ export async function verifyPassword(
 
   const isMatch = timingSafeEqualHex(derivedKey.toString('hex'), parsed.hashHex);
 
-  return { isMatch, needsRehash: false };
+  return { isMatch, needsRehash: isMatch && !isCurrentScryptCost(parsed) };
+}
+
+function isCurrentScryptCost({ n, r, p, keyLength }: ParsedScryptHashedPassword): boolean {
+  return n === scryptN && r === scryptR && p === scryptP && keyLength === scryptKeyLength;
 }
 
 function isLegacyHashedPassword(value: string): boolean {

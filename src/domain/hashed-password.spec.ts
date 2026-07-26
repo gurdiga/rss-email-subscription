@@ -1,4 +1,5 @@
 import { expect } from 'chai';
+import { randomBytes, scrypt } from 'node:crypto';
 import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -79,6 +80,25 @@ describe(verifyPassword.name, () => {
     expect(result.needsRehash).to.be.false;
   });
 
+  // This is what the self-describing N/r/p prefix is for: raising the cost constants has
+  // to make existing hashes upgrade on their owners’ next login, or the format is inert.
+  it('flags a match against out-of-date cost parameters for rehashing', async () => {
+    const plain = 'a-good-long-password';
+    const stored = makeHashedPassword(await hashWithScryptN(plain, 16384)) as HashedPassword;
+
+    const match = await verifyPassword(plain, stored, legacySalt);
+    expect(match.isMatch, 'an older-cost hash still verifies').to.be.true;
+    expect(match.needsRehash, 'an older-cost hash is flagged for upgrade').to.be.true;
+  });
+
+  it('does not flag a wrong password against an out-of-date hash for rehashing', async () => {
+    const stored = makeHashedPassword(await hashWithScryptN('a-good-long-password', 16384)) as HashedPassword;
+
+    const result = await verifyPassword('wrong', stored, legacySalt);
+    expect(result.isMatch).to.be.false;
+    expect(result.needsRehash).to.be.false;
+  });
+
   // A stored hash with out-of-range parameters (corruption, or an attacker who can write
   // account.json trying to force a huge scrypt allocation) must fail cleanly, not throw
   // or exhaust memory. makeHashedPassword accepts the shape; the parameter guard lives in
@@ -107,3 +127,21 @@ describe(verifyPassword.name, () => {
     }
   });
 });
+
+// Produces a v1-format hash at a cost other than the module's current one, which
+// hashPassword can't do — it always uses the current parameters.
+function hashWithScryptN(plainPassword: string, n: number): Promise<string> {
+  const r = 8;
+  const p = 1;
+  const salt = randomBytes(16);
+
+  return new Promise((resolve, reject) => {
+    scrypt(plainPassword, salt, 64, { N: n, r, p, maxmem: 128 * n * r * 2 }, (err, derivedKey) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(si`scrypt$v1$N=${n},r=${r},p=${p}$${salt.toString('hex')}$${derivedKey.toString('hex')}`);
+      }
+    });
+  });
+}
