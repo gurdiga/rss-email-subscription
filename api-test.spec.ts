@@ -15,17 +15,15 @@ import {
   isAccountId,
   PasswordChangeRequestData,
 } from './src/domain/account';
-import {
-  getAccountIdByEmail,
-  makeEmailChangeConfirmationSecretHash,
-  makePasswordResetConfirmationSecretHash,
-  makeRegistrationConfirmationSecretHash,
-} from './src/domain/account-crypto';
+import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
 import { ApiPath, getFullApiPath } from './src/domain/api-path';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
-import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
+import {
+  confirmationSecretsStorageKey,
+  getConfirmationSecretStorageKey,
+} from './src/domain/confirmation-secrets-storage';
 import { defaultFeedPattern } from './src/domain/cron-pattern';
 import { domainAndLocalPart, EmailAddress } from './src/domain/email-address';
 import {
@@ -52,7 +50,7 @@ import {
   getFeedJsonStorageKey,
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
-import { deleteFile, fileExists, readFile, writeFile } from './src/domain/io-isolation';
+import { deleteFile, fileExists, listFiles, readFile, writeFile } from './src/domain/io-isolation';
 import {
   PasswordResetConfirmationData,
   PasswordResetConfirmationSecretData,
@@ -61,7 +59,7 @@ import {
 import { PlanId } from './src/domain/plan';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
-import { hash } from './src/shared/crypto';
+import { HashedPassword, makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
 import { isErr } from './src/shared/lang';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
@@ -760,9 +758,15 @@ describe('API', () => {
         const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
         expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
 
-        const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
         const [storedAccount] = loadStoredAccountByEmail(userEmail);
-        expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+        const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
+        expect(isErr(storedHashedPassword), JSON.stringify(storedHashedPassword)).to.be.false;
+        const verification = await verifyPassword(
+          newPassword,
+          storedHashedPassword as HashedPassword,
+          appSettings.hashingSalt
+        );
+        expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
         await changeBackPasswordFrom(newPassword);
       });
@@ -852,8 +856,14 @@ describe('API', () => {
       expect(responseBody).to.deep.equal(expectedResponse);
 
       const [storedAccount] = loadStoredAccountByEmail(emailAddress.value);
-      const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
-      expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+      const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
+      expect(isErr(storedHashedPassword), JSON.stringify(storedHashedPassword)).to.be.false;
+      const verification = await verifyPassword(
+        newPassword,
+        storedHashedPassword as HashedPassword,
+        appSettings.hashingSalt
+      );
+      expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
       const result = doesConfirmationSecretExist(confirmationSecret);
       expect(result, 'confirmation secred has been deleted').to.be.false;
@@ -925,10 +935,12 @@ describe('API', () => {
   }
 
   async function registrationConfirmationSend(email: string) {
-    const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
-    const secret = makeRegistrationConfirmationSecretHash(makeTestEmailAddress(email), appSettings.hashingSalt);
+    const accountId = getAccountId(email);
+    const [secret] = findStoredConfirmationSecret(
+      (data) => data?.kind === 'RegistrationConfirmationSecretData' && data?.accountId?.value === accountId.value
+    );
 
-    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret });
+    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret: secret.value });
   }
 
   function getAccountId(email: string): AccountId {
@@ -946,25 +958,36 @@ describe('API', () => {
   function loadStoredEmailChangeConfirmationSecret(
     email: EmailAddress
   ): [ConfirmationSecret, EmailChangeRequestSecretData] {
-    const hashingSalt = appSettings.hashingSalt;
-    const hash = makeEmailChangeConfirmationSecretHash(email, hashingSalt);
-
-    return loadConfirmationSecret<EmailChangeRequestSecretData>(hash);
+    return findStoredConfirmationSecret<EmailChangeRequestSecretData>(
+      (data) => data?.kind === 'EmailChangeRequestSecretData' && data?.newEmail?.value === email.value
+    );
   }
 
   function loadPasswordResetConfirmationSecret(
     email: EmailAddress
   ): [ConfirmationSecret, PasswordResetConfirmationSecretData] {
-    const hashingSalt = appSettings.hashingSalt;
-    const hash = makePasswordResetConfirmationSecretHash(email, hashingSalt);
+    const accountId = getAccountIdByEmail(email, appSettings.hashingSalt);
 
-    return loadConfirmationSecret<PasswordResetConfirmationSecretData>(hash);
+    return findStoredConfirmationSecret<PasswordResetConfirmationSecretData>(
+      (data) => data?.accountId === accountId.value
+    );
   }
 
-  function loadConfirmationSecret<T>(hash: string): [ConfirmationSecret, T] {
-    const secret = makeTestConfirmationSecret(hash);
+  // Confirmation secrets are now random, so a test can't recompute one; instead it
+  // scans the confirmation-secret store for the entry whose stored data it expects.
+  function findStoredConfirmationSecret<T>(matches: (data: any) => boolean): [ConfirmationSecret, T] {
+    const dirPath = makePath(dataDirRoot, confirmationSecretsStorageKey);
 
-    return [secret, loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as T];
+    for (const fileName of listFiles(dirPath)) {
+      const secret = makeTestConfirmationSecret(fileName.replace(/\.json$/, ''));
+      const data = loadJSON(makePath(getConfirmationSecretStorageKey(secret)));
+
+      if (matches(data)) {
+        return [secret, data as T];
+      }
+    }
+
+    return die(si`No confirmation secret found in ${dirPath} matching the predicate`);
   }
 
   function doesConfirmationSecretExist(secret: ConfirmationSecret): boolean {

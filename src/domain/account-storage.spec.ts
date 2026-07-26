@@ -60,7 +60,7 @@ describe(loadAccount.name, () => {
     const accountData: AccountData = {
       planId: PlanId.Free,
       email: 'test@test.com',
-      hashedPassword: 'x'.repeat(hashedPasswordLength),
+      hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
@@ -95,7 +95,7 @@ describe(loadAccount.name, () => {
     const accountData: AccountData = {
       planId: PlanId.Free,
       email: 'not-an-email-really',
-      hashedPassword: 'x'.repeat(hashedPasswordLength),
+      hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
@@ -124,10 +124,7 @@ describe(loadAccount.name, () => {
     const result = loadAccount(storage, accountId);
 
     expect(result).to.deep.equal(
-      makeErr(
-        si`Invalid stored data for account ${accountId.value}: Invalid hashed password length: 8`,
-        'hashedPassword'
-      )
+      makeErr(si`Invalid stored data for account ${accountId.value}: Invalid hashed password format`, 'hashedPassword')
     );
   });
 });
@@ -137,7 +134,7 @@ describe(storeAccount.name, () => {
     const account: Account = {
       planId: PlanId.Free,
       email: makeTestEmailAddress('test@test.com'),
-      hashedPassword: makeHashedPassword('x'.repeat(hashedPasswordLength)) as HashedPassword,
+      hashedPassword: makeHashedPassword('a'.repeat(hashedPasswordLength)) as HashedPassword,
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
@@ -158,7 +155,7 @@ describe(confirmAccount.name, () => {
     const accountData: AccountData = {
       planId: PlanId.Free,
       email: 'test@test.com',
-      hashedPassword: 'x'.repeat(hashedPasswordLength),
+      hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: true,

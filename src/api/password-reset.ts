@@ -2,13 +2,14 @@ import { EmailContent, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import { FullEmailAddress } from '../app/email-sending/emails';
 import { AccountId, isAccountNotFound, makeAccountId } from '../domain/account';
-import { getAccountIdByEmail, makePasswordResetConfirmationSecretHash } from '../domain/account-crypto';
+import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, resetAccountPassword } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
   humanConfirmationSecretLifetime,
   makeConfirmationSecret,
+  makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -18,7 +19,7 @@ import {
 import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { makeHashedPassword } from '../domain/hashed-password';
+import { hashPassword } from '../domain/hashed-password';
 import { makeNewPassword } from '../domain/new-password';
 import { PagePath } from '../domain/page-path';
 import {
@@ -29,7 +30,6 @@ import {
 } from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { hash } from '../shared/crypto';
 import { Result, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -66,11 +66,7 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
     return makeInputError<keyof PasswordResetRequest>('We don’t have an account registered with this email', 'email');
   }
 
-  const secret: ConfirmationSecret = {
-    kind: 'ConfirmationSecret',
-    value: makePasswordResetConfirmationSecretHash(account.email, settings.hashingSalt),
-  };
-
+  const secret = makeRandomConfirmationSecret();
   const storeResult = storeForgotPasswordConfirmationSecret(storage, secret, accountId);
 
   if (isErr(storeResult)) {
@@ -187,13 +183,7 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  const newHashedPassword = makeHashedPassword(hash(request.newPassword.value, settings.hashingSalt));
-
-  if (isErr(newHashedPassword)) {
-    logError(si`Failed to ${makeHashedPassword.name}: ${newHashedPassword.reason}`);
-    return makeAppError();
-  }
-
+  const newHashedPassword = await hashPassword(request.newPassword.value);
   const isDemoAccount = account.email.value === demoAccountEmail;
   const resetResult = isDemoAccount ? undefined : resetAccountPassword(storage, accountId, newHashedPassword);
 

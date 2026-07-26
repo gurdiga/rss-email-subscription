@@ -9,6 +9,19 @@ export const hash: HashFn = function hash(input: string, salt: string): string {
     .digest('hex');
 };
 
+// Constant-time comparison of two hex-encoded digests. Returns false on a length
+// mismatch instead of throwing (crypto.timingSafeEqual requires equal lengths).
+export function timingSafeEqualHex(a: string, b: string): boolean {
+  const bufferA = Buffer.from(a, 'hex');
+  const bufferB = Buffer.from(b, 'hex');
+
+  if (bufferA.length !== bufferB.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(bufferA, bufferB);
+}
+
 export function rssItemHash(input: string): string {
   return md5(input);
 }

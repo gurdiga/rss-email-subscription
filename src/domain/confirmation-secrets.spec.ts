@@ -1,6 +1,6 @@
 import { expect } from 'chai';
-import { makeErr } from '../shared/lang';
-import { ConfirmationSecret, makeConfirmationSecret } from './confirmation-secrets';
+import { isErr, makeErr } from '../shared/lang';
+import { ConfirmationSecret, makeConfirmationSecret, makeRandomConfirmationSecret } from './confirmation-secrets';
 
 describe(makeConfirmationSecret.name, () => {
   const field = 'secret';
@@ -29,5 +29,18 @@ describe(makeConfirmationSecret.name, () => {
     expect(traversalPayload).to.have.lengthOf(64);
     expect(makeConfirmationSecret(traversalPayload)).to.deep.equal(makeErr('Input contains invalid characters', field));
     expect(makeConfirmationSecret('X'.repeat(64))).to.deep.equal(makeErr('Input contains invalid characters', field));
+  });
+});
+
+describe(makeRandomConfirmationSecret.name, () => {
+  it('generates a random value that makeConfirmationSecret accepts', () => {
+    const secret = makeRandomConfirmationSecret();
+
+    expect(secret.kind).to.equal('ConfirmationSecret');
+    expect(isErr(makeConfirmationSecret(secret.value))).to.be.false;
+  });
+
+  it('generates a different value on each call', () => {
+    expect(makeRandomConfirmationSecret().value).to.not.equal(makeRandomConfirmationSecret().value);
   });
 });

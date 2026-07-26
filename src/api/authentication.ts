@@ -1,11 +1,18 @@
 import { makeEmailAddress } from '../domain/email-address-making';
-import { AccountId, AuthenticationResponseData, AuthenticationRequest, isAccountNotFound } from '../domain/account';
+import {
+  Account,
+  AccountId,
+  AuthenticationResponseData,
+  AuthenticationRequest,
+  isAccountNotFound,
+} from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { loadAccount } from '../domain/account-storage';
+import { loadAccount, storeAccount } from '../domain/account-storage';
+import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { makePassword } from '../domain/password';
+import { AppStorage } from '../domain/storage';
 import { makeInputError, makeSuccess } from '../shared/api-response';
-import { hash } from '../shared/crypto';
-import { isErr, makeErr, makeValues, Result } from '../shared/lang';
+import { asyncAttempt, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -27,7 +34,7 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(request.reason, request.field);
   }
 
-  const accountId = checkCredentials(app, request);
+  const accountId = await checkCredentials(app, request);
 
   if (isErr(accountId)) {
     return makeInputError(accountId.reason, accountId.field);
@@ -51,7 +58,10 @@ function makeAuthenticationRequest(data: unknown): Result<AuthenticationRequest>
   });
 }
 
-function checkCredentials({ settings, storage }: App, request: AuthenticationRequest): Result<AccountId> {
+async function checkCredentials(
+  { settings, storage }: App,
+  request: AuthenticationRequest
+): Promise<Result<AccountId>> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: request.email.value,
     module: checkCredentials.name,
@@ -80,15 +90,41 @@ function checkCredentials({ settings, storage }: App, request: AuthenticationReq
     );
   }
 
-  const inputHashedPassword = hash(request.password.value, settings.hashingSalt);
-  const storedHashedPassword = account.hashedPassword.value;
+  const verification = await verifyPassword(request.password.value, account.hashedPassword, settings.hashingSalt);
 
-  if (inputHashedPassword !== storedHashedPassword) {
+  if (!verification.isMatch) {
     logWarning('Incorrect password');
     return makeErr('Password doesn’t match… 🤔', 'password');
+  }
+
+  if (verification.needsRehash && request.email.value !== demoAccountEmail) {
+    await rehashLegacyPassword(storage, accountId, account, request.password.value);
   }
 
   logInfo('User logged in');
 
   return accountId;
+}
+
+// Upgrade a legacy password hash to the current algorithm on successful login. A
+// failure here must not fail an otherwise-valid login, so it is logged and swallowed.
+async function rehashLegacyPassword(
+  storage: AppStorage,
+  accountId: AccountId,
+  account: Account,
+  plainPassword: string
+): Promise<void> {
+  const { logError } = makeCustomLoggers({ accountId: accountId.value, module: rehashLegacyPassword.name });
+  const rehashed = await asyncAttempt(() => hashPassword(plainPassword));
+
+  if (isErr(rehashed)) {
+    logError('Failed to rehash legacy password on login', { reason: rehashed.reason });
+    return;
+  }
+
+  const storeResult = storeAccount(storage, accountId, { ...account, hashedPassword: rehashed });
+
+  if (isErr(storeResult)) {
+    logError('Failed to store rehashed password on login', { reason: storeResult.reason });
+  }
 }
