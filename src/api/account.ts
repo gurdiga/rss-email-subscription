@@ -265,10 +265,11 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     : storeNewPassword(storage, accountId, account.hashedPassword, newHashedPassword);
 
   if (isErr(storeAccountResult)) {
-    logError(si`Failed to ${storeAccount.name}`, {
+    // The hash itself is deliberately not logged: the logger only masks keys containing
+    // "password", so it would go to disk in the clear.
+    logError(si`Failed to ${storeNewPassword.name}`, {
       reason: storeAccountResult.reason,
       accountId: accountId.value,
-      newHash: newHashedPassword.value,
     });
     return makeAppError();
   }
