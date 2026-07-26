@@ -1351,11 +1351,16 @@ open-ports-report:
 
 	mkdir -p $$report_dir
 
+	# Keep only state, addresses, and program name: PIDs, fds, and the
+	# accept-queue counters change on their own and would report as a diff.
 	report_body=$$(
-		netstat -tnlp |
+		ss -tlnpH |
+		sed -E 's#users:\(\("([^"]+)".*#\1#' |
+		awk '{print $$1, $$4, $$5, $$6}' |
+		sed -E 's/[[:space:]]+$$//' |
 		sort |
 		tee >(
-			grep '^tcp' |
+			grep '^LISTEN' |
 			wc -l | ts "
 			total:"
 		)
