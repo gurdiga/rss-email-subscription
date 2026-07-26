@@ -1351,19 +1351,20 @@ open-ports-report:
 
 	mkdir -p $$report_dir
 
-	# Without a global IPv6 address the [::] binds have no internet-routable
-	# address to be reached on, so they say nothing about exposure. They come
-	# back on their own if IPv6 connectivity ever appears.
+	# Report only what the internet can reach: loopback binds are excluded,
+	# and so are the [::] ones while there is no global IPv6 address to reach
+	# them on -- those come back on their own if IPv6 connectivity appears.
+	# A bind that moves off loopback still shows up, under its new address.
 	if ip -6 addr show scope global | grep -q .; then
-		ss_flags=-tlnpH
+		ss_args=(-tlnpH 'not src 127.0.0.0/8 and not src [::1]')
 	else
-		ss_flags=-4tlnpH
+		ss_args=(-4tlnpH 'not src 127.0.0.0/8')
 	fi
 
 	# Keep only state, addresses, and program name: PIDs, fds, and the
 	# accept-queue counters change on their own and would report as a diff.
 	report_body=$$(
-		ss $$ss_flags |
+		ss "$${ss_args[@]}" |
 		sed -E 's#users:\(\("([^"]+)".*#\1#' |
 		awk '{print $$1, $$4, $$5, $$6}' |
 		sed -E 's/[[:space:]]+$$//' |
