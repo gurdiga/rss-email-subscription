@@ -210,6 +210,26 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   }
 
   const secretData = loadConfirmationSecret(storage, request.secret);
+
+  if (isErr(secretData)) {
+    logError(si`Failed to ${loadConfirmationSecret.name}: ${secretData.reason}`);
+    return makeAppError();
+  }
+
+  // A consumed or expired link is an ordinary thing for a user to hit — they bookmarked
+  // it, or requested a newer one — so it gets a message they can act on rather than the
+  // 500 that fell out of trying to parse the not-found marker as secret data.
+  //
+  // The field must be set: the page’s error handling runs exhaustivenessCheck over it, so
+  // a field-less input error would throw there instead of displaying anything.
+  if (isConfirmationSecretNotFound(secretData)) {
+    logWarning('Password reset secret not found', { secret: request.secret.value });
+    return makeInputError<keyof PasswordResetConfirmation>(
+      'This password reset link has expired or has already been used. Please request a new one.',
+      'secret'
+    );
+  }
+
   const forgotPasswordSecret = makeForgotPasswordSecret(secretData);
 
   if (isErr(forgotPasswordSecret)) {

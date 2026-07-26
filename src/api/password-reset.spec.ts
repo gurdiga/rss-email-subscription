@@ -8,8 +8,9 @@ import {
   makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import { loadConfirmationSecret, storeConfirmationSecret } from '../domain/confirmation-secrets-storage';
-import { PasswordResetConfirmationSecretData } from '../domain/password-reset';
+import { PasswordResetConfirmation, PasswordResetConfirmationSecretData } from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
+import { InputError } from '../shared/api-response';
 import { isErr } from '../shared/lang';
 import {
   makeTestAccount,
@@ -130,12 +131,28 @@ describe(confirmPasswordReset.name, () => {
     const second = confirmPasswordReset('req', reqBody, {}, makeReqSession(), app);
 
     expect((await first).kind, 'the first submission wins').to.equal('Success');
-    // Fails closed. The message is unhelpful for a genuinely already-used link, which is
-    // pre-existing and worth improving separately; what matters here is that it is not
-    // a second successful reset.
-    expect((await second).kind, 'the second submission does not also reset').to.equal('AppError');
+    expect((await second).kind, 'the second submission does not also reset').to.equal('InputError');
 
     expect(secretExists(app.storage, secret), 'the link is consumed').to.be.false;
+  });
+
+  it('tells the user when a link has already been used, rather than failing with a 500', async () => {
+    const app = makeTestApp();
+    const unknownSecret = makeRandomConfirmationSecret();
+
+    const response = await confirmPasswordReset(
+      'req',
+      { secret: unknownSecret.value, newPassword: 'a-brand-new-s3cret' },
+      {},
+      makeReqSession(),
+      app
+    );
+
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+    expect((response as InputError).message).to.match(/expired or has already been used/);
+    // The page runs exhaustivenessCheck over the field, so a field-less error would throw
+    // there instead of rendering the message.
+    expect((response as InputError<keyof PasswordResetConfirmation>).field).to.equal('secret');
   });
 });
 
