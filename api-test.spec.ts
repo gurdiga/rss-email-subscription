@@ -976,19 +976,30 @@ describe('API', () => {
 
   // Confirmation secrets are now random, so a test can't recompute one; instead it
   // scans the confirmation-secret store for the entry whose stored data it expects.
+  //
+  // Takes the newest match rather than the first in directory order: this data directory
+  // is not wiped between runs, and `make api-test` bails on first failure, so a secret
+  // left behind by an aborted run can otherwise shadow the one the test just created.
   function findStoredConfirmationSecret<T>(matches: (data: any) => boolean): [ConfirmationSecret, T] {
     const dirPath = makePath(dataDirRoot, confirmationSecretsStorageKey);
+    const found: [ConfirmationSecret, any][] = [];
 
     for (const fileName of listFiles(dirPath)) {
       const secret = makeTestConfirmationSecret(fileName.replace(/\.json$/, ''));
       const data = loadJSON(makePath(getConfirmationSecretStorageKey(secret)));
 
       if (matches(data)) {
-        return [secret, data as T];
+        found.push([secret, data]);
       }
     }
 
-    return die(si`No confirmation secret found in ${dirPath} matching the predicate`);
+    if (found.length === 0) {
+      return die(si`No confirmation secret found in ${dirPath} matching the predicate`);
+    }
+
+    found.sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    return found[0] as [ConfirmationSecret, T];
   }
 
   function doesConfirmationSecretExist(secret: ConfirmationSecret): boolean {
