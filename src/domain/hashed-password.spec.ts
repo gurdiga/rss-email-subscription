@@ -91,6 +91,17 @@ describe(verifyPassword.name, () => {
     expect(match.needsRehash, 'an older-cost hash is flagged for upgrade').to.be.true;
   });
 
+  // A rollback, or a rolling deploy with both versions briefly live, must not let the
+  // older instance rewrite a stronger hash down to its own cost.
+  it('does not flag a match against stronger-than-current cost parameters', async () => {
+    const plain = 'a-good-long-password';
+    const stored = makeHashedPassword(await hashWithScryptN(plain, 65536)) as HashedPassword;
+
+    const match = await verifyPassword(plain, stored, legacySalt);
+    expect(match.isMatch, 'a stronger hash still verifies').to.be.true;
+    expect(match.needsRehash, 'a stronger hash is left alone').to.be.false;
+  });
+
   it('does not flag a wrong password against an out-of-date hash for rehashing', async () => {
     const stored = makeHashedPassword(await hashWithScryptN('a-good-long-password', 16384)) as HashedPassword;
 

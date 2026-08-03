@@ -99,11 +99,22 @@ export async function verifyPassword(
 
   const isMatch = timingSafeEqualHex(derivedKey.toString('hex'), parsed.hashHex);
 
-  return { isMatch, needsRehash: isMatch && !isCurrentScryptCost(parsed) };
+  return { isMatch, needsRehash: isMatch && isWeakerThanCurrentScryptCost(parsed) };
 }
 
-function isCurrentScryptCost({ n, r, p, keyLength }: ParsedScryptHashedPassword): boolean {
-  return n === scryptN && r === scryptR && p === scryptP && keyLength === scryptKeyLength;
+// Only a *weaker* stored cost is worth rewriting. Flagging any difference would mean an
+// older instance downgrades hashes written by a newer one — during a rollback, or a
+// rolling deploy where both versions are briefly live — quietly undoing a cost increase.
+function isWeakerThanCurrentScryptCost({ n, r, p, keyLength }: ParsedScryptHashedPassword): boolean {
+  return scryptWork(n, r, p) < scryptWork(scryptN, scryptR, scryptP) || keyLength < scryptKeyLength;
+}
+
+// scrypt's CPU cost scales with N*r*p. Comparing the product rather than the individual
+// parameters keeps equivalent-work profiles equivalent — OWASP's N=2^15,r=8,p=3 and
+// N=2^17,r=8,p=1 are both stronger than this module's current setting, and neither is
+// rewritten in favour of it.
+function scryptWork(n: number, r: number, p: number): number {
+  return n * r * p;
 }
 
 function isLegacyHashedPassword(value: string): boolean {
