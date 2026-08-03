@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { Account, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
+import { demoAccountEmail } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
@@ -32,6 +33,36 @@ describe(requestAccountPasswordChange.name, () => {
     const verification = await verifyPassword(newPassword, loadStoredAccount(app).hashedPassword, hashingSalt);
     expect(verification.isMatch, 'the new password verifies').to.be.true;
     expect(accountId.value).to.be.a('string');
+  });
+
+  // The demo credentials are public, so this endpoint is reachable by anyone. It stores
+  // nothing for a demo session, so it must not spend a scrypt hash on one either.
+  it('does not hash or store anything for a demo session', async () => {
+    const app = makeTestApp();
+    const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
+    const storedHashedPassword = await hashPassword(currentPassword);
+
+    storeAccount(app.storage, demoAccountId, {
+      ...makeTestAccount({ email: demoAccountEmail }),
+      hashedPassword: storedHashedPassword,
+      confirmationTimestamp: new Date(),
+    });
+
+    const reqSession = { cookie: {}, accountId: demoAccountId.value, email: demoAccountEmail } as any;
+    const started = Date.now();
+    const response = await requestAccountPasswordChange('req', { currentPassword, newPassword }, {}, reqSession, app);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    const account = loadAccount(app.storage, demoAccountId);
+    expect(isErr(account) || isAccountNotFound(account)).to.be.false;
+    expect((account as Account).hashedPassword.value, 'the demo hash is untouched').to.equal(
+      storedHashedPassword.value
+    );
+
+    // One scrypt call is ~135ms. Verifying the current password costs one; hashing the
+    // new one would cost a second. Well under two means the second was skipped.
+    expect(Date.now() - started, 'no second scrypt call').to.be.lessThan(200);
   });
 
   // Hashing the new password yields to the event loop. The handler re-reads the account

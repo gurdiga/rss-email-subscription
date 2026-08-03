@@ -258,11 +258,17 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeInputError<keyof PasswordChangeRequest>('New password can’t be the same as the old one', 'newPassword');
   }
 
-  const newHashedPassword = await hashPassword(request.newPassword.value);
+  // The demo credentials are published in demo-account.ts, so anyone can reach this point
+  // — it is authenticated in name only. A demo session stores nothing, so returning here
+  // costs it nothing, and it stops a public endpoint from spending a scrypt hash and an
+  // outbound email per request. The current-password check above still runs, so the demo
+  // keeps showing a real validation error for a wrong password.
+  if (isDemoSession(reqSession)) {
+    return makeSuccess();
+  }
 
-  const storeAccountResult = isDemoSession(reqSession)
-    ? undefined
-    : storeNewPassword(storage, accountId, account.hashedPassword, newHashedPassword);
+  const newHashedPassword = await hashPassword(request.newPassword.value);
+  const storeAccountResult = storeNewPassword(storage, accountId, account.hashedPassword, newHashedPassword);
 
   if (isErr(storeAccountResult)) {
     // The hash itself is deliberately not logged: the logger only masks keys containing
