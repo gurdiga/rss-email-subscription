@@ -16,20 +16,20 @@ describe(expireConfirmationSecrets.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
   // Registration secrets used to be exempt from expiry altogether, so the store only ever
-  // grew — and issuing a password reset scans all of it. They expire now, but later than
-  // everything else, because a signup email can sit unread for days.
-  it('keeps a registration secret past the default lifetime but not past a week', async () => {
+  // grew — and issuing a password reset scans all of it. They expire like everything else
+  // now, on the same 48-hour clock the registration email has always advertised.
+  it('expires a registration secret, which used to be exempt', async () => {
     const storage = makeTestStorageFromSnapshot({});
-    const recent = storeRegistrationSecret(storage, daysAgo(3));
-    const stale = storeRegistrationSecret(storage, daysAgo(8));
+    const fresh = storeRegistrationSecret(storage, hoursAgo(1));
+    const stale = storeRegistrationSecret(storage, daysAgo(3));
 
     await runExpiry(storage);
 
-    expect(secretExists(storage, recent), 'three days old — still valid').to.be.true;
-    expect(secretExists(storage, stale), 'eight days old — expired').to.be.false;
+    expect(secretExists(storage, fresh), 'an hour old — still valid').to.be.true;
+    expect(secretExists(storage, stale), 'three days old — expired').to.be.false;
   });
 
-  it('still expires other kinds after the default 48 hours', async () => {
+  it('expires other kinds on the same clock', async () => {
     const storage = makeTestStorageFromSnapshot({});
     const fresh = storeResetSecret(storage, hoursAgo(1));
     const stale = storeResetSecret(storage, daysAgo(3));

@@ -10,16 +10,11 @@ export interface ConfirmationSecret {
   value: string;
 }
 
+// Applies to every kind of confirmation secret. Registration secrets used to be exempt
+// from expiration altogether, which meant the store only ever grew — and every password
+// reset request scans all of it.
 export const confirmationSecretLifetimeMs = 48 * 3600 * 1000;
 export const humanConfirmationSecretLifetime = si`${getHoursFromMs(confirmationSecretLifetimeMs)} hours`;
-
-// Registration links get longer than the rest: a signup email can sit unread for days,
-// and an expired one leaves an account that can neither be confirmed nor re-registered.
-// They used to be exempt from expiration altogether, which meant the confirmation-secret
-// store only ever grew — and every reset request scans it.
-export const registrationConfirmationSecretLifetimeDays = 7;
-export const registrationConfirmationSecretLifetimeMs = registrationConfirmationSecretLifetimeDays * 24 * 3600 * 1000;
-export const humanRegistrationConfirmationSecretLifetime = si`${registrationConfirmationSecretLifetimeDays} days`;
 
 export const confirmationSecretLength = 64;
 

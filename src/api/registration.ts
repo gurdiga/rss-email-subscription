@@ -12,7 +12,7 @@ import { accountExists, confirmAccount, storeAccount } from '../domain/account-s
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
-  humanRegistrationConfirmationSecretLifetime,
+  humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeRandomConfirmationSecret,
@@ -201,7 +201,7 @@ export function makeRegistrationConfirmationEmailContent(
         Once you have clicked on the link above, you will have completed the
         registration process and will be able to register your blog feed and
         embed the Subscribe Form. Please note that this registration link expires
-        in ${humanRegistrationConfirmationSecretLifetime}.
+        in ${humanConfirmationSecretLifetime}.
       </p>
 
       <p>

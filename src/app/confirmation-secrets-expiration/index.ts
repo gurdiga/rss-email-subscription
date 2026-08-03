@@ -1,8 +1,4 @@
-import {
-  confirmationSecretLifetimeMs,
-  isConfirmationSecretNotFound,
-  registrationConfirmationSecretLifetimeMs,
-} from '../../domain/confirmation-secrets';
+import { confirmationSecretLifetimeMs, isConfirmationSecretNotFound } from '../../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
   listConfirmationSecrets,
@@ -14,16 +10,9 @@ import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { isNotEmpty } from '../../shared/array-utils';
 import { makeDate } from '../../shared/date-utils';
-import { RegistrationConfirmationSecretData } from '../../api/registration';
 
-const registrationKind: RegistrationConfirmationSecretData['kind'] = 'RegistrationConfirmationSecretData';
-
-// Registration secrets used to be exempt from expiration entirely, so the store only ever
-// grew — and issuing a password reset scans all of it. They now expire, just later than
-// the rest, because a signup email can sit unread for days.
-function lifetimeMsForKind(kind: unknown): number {
-  return kind === registrationKind ? registrationConfirmationSecretLifetimeMs : confirmationSecretLifetimeMs;
-}
+// Every kind expires on the same clock now. Registration secrets used to be exempt, so
+// the store only ever grew — and issuing a password reset scans all of it.
 
 export function expireConfirmationSecrets(storage: AppStorage) {
   const logData = { module: expireConfirmationSecrets.name };
@@ -63,9 +52,8 @@ export function expireConfirmationSecrets(storage: AppStorage) {
         continue;
       }
 
-      const lifetimeMs = lifetimeMsForKind((secretData as any).kind);
       const { timestamp } = parsedData;
-      const isExpired = timestamp.getTime() < Date.now() - lifetimeMs;
+      const isExpired = timestamp.getTime() < Date.now() - confirmationSecretLifetimeMs;
 
       if (!isExpired) {
         continue;
