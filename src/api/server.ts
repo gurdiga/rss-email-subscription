@@ -77,7 +77,10 @@ async function main() {
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
   router.get(ApiPath.sessionTest, makeAppRequestHandler(sessionTest, app));
-  router.post(ApiPath.subscription, makeAppRequestHandler(subscription, app));
+  // Mails an address the caller supplies, so the limit is about sending
+  // reputation rather than CPU. Subscribing is a once-per-feed action, and the
+  // form is embedded on customer sites where visitors arrive from their own IPs.
+  router.post(ApiPath.subscription, makeRateLimiter(10, hour), makeAppRequestHandler(subscription, app));
   router.post(ApiPath.subscriptionConfirmation, makeAppRequestHandler(subscriptionConfirmation, app));
   router.post(ApiPath.unsubscription, makeAppRequestHandler(unsubscription, app));
   // The unauthenticated endpoints are rate-limited per client IP: the password
@@ -99,7 +102,13 @@ async function main() {
   );
   router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app));
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
-  router.post(ApiPath.requestAccountEmailChange, makeAppRequestHandler(requestAccountEmailChange, app));
+  // Mails the caller-supplied new address, and the published demo login reaches
+  // it, so the session in front of it is not much of a gate.
+  router.post(
+    ApiPath.requestAccountEmailChange,
+    makeRateLimiter(10, hour),
+    makeAppRequestHandler(requestAccountEmailChange, app)
+  );
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
   // Limited despite requiring a session: both verify a password, so both spend a
   // scrypt hash before anything else gates them, and a session costs an attacker
@@ -130,7 +139,12 @@ async function main() {
   router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
-  router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
+  // Also mails a caller-supplied address, and needs no account at all.
+  router.post(
+    ApiPath.showSampleEmailPublic,
+    makeRateLimiter(5, hour),
+    makeAppRequestHandler(showSampleEmailPublic, app)
+  );
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
   router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
