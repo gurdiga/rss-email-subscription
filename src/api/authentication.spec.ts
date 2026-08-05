@@ -6,16 +6,10 @@ import { demoAccountEmail } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
-import {
-  makeTestAccount,
-  makeTestEmailAddress,
-  makeTestStorageFromSnapshot,
-  purgeTestStorageFromSnapshot,
-} from '../shared/test-utils';
+import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { App } from './init-app';
+import { hashingSalt, makeTestApp } from './test-utils';
 import { authentication } from './authentication';
-
-const hashingSalt = 'test-hashing-salt';
 
 describe(authentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
@@ -127,23 +121,4 @@ function loadStoredAccount(app: App, email: string): Account {
 
 function makeReqSession() {
   return { cookie: {} } as any;
-}
-
-function makeTestApp(): App {
-  return {
-    storage: makeTestStorageFromSnapshot({}),
-    settings: {
-      kind: 'AppSettings',
-      hashingSalt,
-      fullEmailAddress: {
-        kind: 'FullEmailAddress',
-        emailAddress: makeTestEmailAddress('noreply@test.com'),
-        displayName: 'Test',
-      },
-    } as any,
-    env: {
-      DOMAIN_NAME: 'test.feedsubscription.com',
-      SMTP_CONNECTION_STRING: 'smtp://localhost:1587',
-    } as any,
-  };
 }

@@ -6,16 +6,11 @@ import { demoAccountEmail } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
-import {
-  makeTestAccount,
-  makeTestEmailAddress,
-  makeTestStorageFromSnapshot,
-  purgeTestStorageFromSnapshot,
-} from '../shared/test-utils';
+import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { hashingSalt, makeTestApp } from './test-utils';
 import { requestAccountPasswordChange } from './account';
 import { App } from './init-app';
 
-const hashingSalt = 'test-hashing-salt';
 const email = 'password-change@test.com';
 const currentPassword = 'the-current-s3cret';
 const newPassword = 'the-brand-new-s3cret';
@@ -122,23 +117,4 @@ function loadStoredAccount(app: App): Account {
   }
 
   return account;
-}
-
-function makeTestApp(): App {
-  return {
-    storage: makeTestStorageFromSnapshot({}),
-    settings: {
-      kind: 'AppSettings',
-      hashingSalt,
-      fullEmailAddress: {
-        kind: 'FullEmailAddress',
-        emailAddress: makeTestEmailAddress('noreply@test.com'),
-        displayName: 'Test',
-      },
-    } as any,
-    env: {
-      DOMAIN_NAME: 'test.feedsubscription.com',
-      SMTP_CONNECTION_STRING: 'smtp://localhost:1587',
-    } as any,
-  };
 }

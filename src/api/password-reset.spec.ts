@@ -18,11 +18,9 @@ import {
   makeTestStorageFromSnapshot,
   purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
+import { hashingSalt, makeTestApp } from './test-utils';
 import { confirmPasswordReset, revokePasswordResetSecrets } from './password-reset';
 import { RegistrationConfirmationSecretData } from './registration';
-import { App } from './init-app';
-
-const hashingSalt = 'test-hashing-salt';
 
 const accountId = makeAccountId('a'.repeat(64)) as AccountId;
 const otherAccountId = makeAccountId('b'.repeat(64)) as AccountId;
@@ -158,23 +156,4 @@ describe(confirmPasswordReset.name, () => {
 
 function makeReqSession() {
   return { cookie: {} } as any;
-}
-
-function makeTestApp(): App {
-  return {
-    storage: makeTestStorageFromSnapshot({}),
-    settings: {
-      kind: 'AppSettings',
-      hashingSalt,
-      fullEmailAddress: {
-        kind: 'FullEmailAddress',
-        emailAddress: makeTestEmailAddress('noreply@test.com'),
-        displayName: 'Test',
-      },
-    } as any,
-    env: {
-      DOMAIN_NAME: 'test.feedsubscription.com',
-      SMTP_CONNECTION_STRING: 'smtp://localhost:1587',
-    } as any,
-  };
 }
