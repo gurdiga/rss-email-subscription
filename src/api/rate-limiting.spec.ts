@@ -69,14 +69,24 @@ describe(makeRateLimiter.name, () => {
     }
   });
 
-  it('counts an hour-long window separately from a shorter one', async () => {
+  // Registration and password-reset use hour-long windows, so the message must not
+  // send someone back after a few minutes to collect a second 429.
+  it('quotes a wait that matches the window', async () => {
     const hourly = await startServer(makeRateLimiter(1, hour));
+    const brief = await startServer(makeRateLimiter(1, 15 * minute));
 
     try {
-      expect((await post(hourly, '203.0.113.5')).status).to.equal(200);
-      expect((await post(hourly, '203.0.113.5')).status).to.equal(429);
+      await post(hourly, '203.0.113.5');
+      await post(brief, '203.0.113.5');
+
+      const hourlyBody = (await (await post(hourly, '203.0.113.5')).json()) as { message: string };
+      const briefBody = (await (await post(brief, '203.0.113.5')).json()) as { message: string };
+
+      expect(hourlyBody.message).to.contain('hour');
+      expect(briefBody.message).to.contain('minutes');
     } finally {
       await hourly.close();
+      await brief.close();
     }
   });
 

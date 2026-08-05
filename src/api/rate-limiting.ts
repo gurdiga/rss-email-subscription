@@ -2,6 +2,7 @@ import { RequestHandler } from 'express';
 import { ipKeyGenerator, rateLimit } from 'express-rate-limit';
 import { makeAppError } from '../shared/api-response';
 import { makeCustomLoggers } from '../shared/logging';
+import { si } from '../shared/string-utils';
 
 export const minute = 60 * 1000;
 export const hour = 60 * minute;
@@ -24,7 +25,7 @@ export function makeRateLimiter(limit: number, windowMs: number): RequestHandler
     windowMs,
     limit,
     keyGenerator: getClientKey,
-    handler: sendTooManyRequests,
+    handler: sendTooManyRequests(windowMs),
     standardHeaders: true,
     legacyHeaders: false,
   });
@@ -44,18 +45,25 @@ export function isRateLimitingDisabled(): boolean {
   return process.env['RATE_LIMITING_DISABLED'] === 'true';
 }
 
-function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
-  const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
+function sendTooManyRequests(windowMs: number): RequestHandler {
+  // Overstating the wait is the safe direction — the alternative tells someone on
+  // an hour-long window to retry in minutes and collect another 429. Retry-After
+  // carries the exact value for anyone reading headers.
+  const retryHint = windowMs >= hour ? 'in about an hour' : 'in a few minutes';
 
-  logWarning('Rate limit exceeded', {
-    path: req.originalUrl,
-    key: getClientKey(req),
-    reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
-  });
+  return (req, res) => {
+    const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
 
-  // AppError rather than a new kind: several web-ui pages exhaustiveness-check
-  // the response and would throw on one they don’t know.
-  res.status(429).json(makeAppError('Too many attempts. Please wait a few minutes and try again.'));
+    logWarning('Rate limit exceeded', {
+      path: req.originalUrl,
+      key: getClientKey(req),
+      reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
+    });
+
+    // AppError rather than a new kind: several web-ui pages exhaustiveness-check
+    // the response and would throw on one they don’t know.
+    res.status(429).json(makeAppError(si`Too many attempts. Please try again ${retryHint}.`));
+  };
 }
 
 /**
