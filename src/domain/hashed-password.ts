@@ -48,9 +48,12 @@ export function makeHashedPassword(hashedPasswordString: unknown): Result<Hashed
 export async function hashPassword(plainPassword: string): Promise<HashedPassword> {
   const salt = randomBytes(scryptSaltLength);
   const derivedKey = await scryptDerive(plainPassword, salt, scryptKeyLength, scryptN, scryptR, scryptP);
-  const value = si`scrypt$v1$N=${scryptN},r=${scryptR},p=${scryptP}$${salt.toString('hex')}$${derivedKey.toString(
-    'hex'
-  )}`;
+
+  // Named to match what parseScryptHashedPassword destructures, so the two halves of the
+  // format can be checked against each other by eye.
+  const saltHex = salt.toString('hex');
+  const hashHex = derivedKey.toString('hex');
+  const value = si`scrypt$v1$N=${scryptN},r=${scryptR},p=${scryptP}$${saltHex}$${hashHex}`;
 
   return {
     kind: 'HashedPassword',
