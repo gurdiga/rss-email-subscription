@@ -59,7 +59,7 @@ import {
 import { PlanId } from './src/domain/plan';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
-import { HashedPassword, makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
+import { makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
 import { isErr } from './src/shared/lang';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
@@ -760,12 +760,15 @@ describe('API', () => {
 
         const [storedAccount] = loadStoredAccountByEmail(userEmail);
         const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
-        expect(isErr(storedHashedPassword), JSON.stringify(storedHashedPassword)).to.be.false;
-        const verification = await verifyPassword(
-          newPassword,
-          storedHashedPassword as HashedPassword,
-          appSettings.hashingSalt
-        );
+
+        // Not a formality: the API wrote this file, so an unparsable value here is the
+        // regression. Failing separately says the format is wrong rather than letting the
+        // verification below fail and point at the password logic instead.
+        if (isErr(storedHashedPassword)) {
+          return die(si`API stored an unparsable hashed password: ${storedHashedPassword.reason}`);
+        }
+
+        const verification = await verifyPassword(newPassword, storedHashedPassword, appSettings.hashingSalt);
         expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
         await changeBackPasswordFrom(newPassword);
@@ -858,12 +861,12 @@ describe('API', () => {
 
       const [storedAccount] = loadStoredAccountByEmail(emailAddress.value);
       const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
-      expect(isErr(storedHashedPassword), JSON.stringify(storedHashedPassword)).to.be.false;
-      const verification = await verifyPassword(
-        newPassword,
-        storedHashedPassword as HashedPassword,
-        appSettings.hashingSalt
-      );
+
+      if (isErr(storedHashedPassword)) {
+        return die(si`API stored an unparsable hashed password: ${storedHashedPassword.reason}`);
+      }
+
+      const verification = await verifyPassword(newPassword, storedHashedPassword, appSettings.hashingSalt);
       expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
       const result = doesConfirmationSecretExist(confirmationSecret);
