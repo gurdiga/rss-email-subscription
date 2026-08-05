@@ -35,39 +35,13 @@ export function makeRateLimiter(limit: number, windowMs: number): RequestHandler
  * a single IP. Unset means enabled: the test stack also runs NODE_ENV=production
  * off the same docker-compose.yml, so this flag is the only thing telling it
  * from prod and has to fail safe.
- */
-function isRateLimitingDisabled(): boolean {
-  return process.env['RATE_LIMITING_DISABLED'] === 'true';
-}
-
-/**
- * req.ip is nginx’s container address for every request — the api is reachable
- * only through nginx, which sets X-Real-IP and no X-Forwarded-For — so keying on
- * it would put the whole internet in one bucket. Enabling trust proxy would not
- * help either: express reads X-Forwarded-For.
  *
- * nginx overwrites X-Real-IP with the connecting address, so it is not
- * client-controlled, unless the api container is ever given a published port.
+ * Exported because the Make target is not a reliable tell — start-website
+ * inherits the flag through its start-api prerequisite — so the server logs the
+ * state it started in.
  */
-function getClientKey(req: Parameters<RequestHandler>[0]): string {
-  const ip = resolveClientIp(req);
-
-  if (!ip) {
-    // Everything landing here shares one bucket and would 429 unrelated
-    // clients. A custom keyGenerator opts out of the library’s own check for
-    // this, so warn rather than key silently.
-    const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
-
-    logWarning('Could not identify the client; falling back to a shared bucket', {
-      path: req.originalUrl,
-      hasRealIpHeader: 'x-real-ip' in req.headers,
-      reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
-    });
-
-    return unidentifiedClientKey;
-  }
-
-  return ipKeyGenerator(ip);
+export function isRateLimitingDisabled(): boolean {
+  return process.env['RATE_LIMITING_DISABLED'] === 'true';
 }
 
 function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
@@ -75,7 +49,7 @@ function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
 
   logWarning('Rate limit exceeded', {
     path: req.originalUrl,
-    ip: resolveClientIp(req) || unidentifiedClientKey,
+    key: getClientKey(req),
     reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
   });
 
@@ -84,8 +58,50 @@ function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
   res.status(429).json(makeAppError('Too many attempts. Please wait a few minutes and try again.'));
 }
 
-function resolveClientIp(req: Parameters<RequestHandler>[0]): string | undefined {
+/**
+ * nginx sets X-Real-IP and no X-Forwarded-For, and the api is reachable only
+ * through nginx. So req.ip is nginx’s own address, and keying on it would put
+ * the whole internet in one bucket; trust proxy would not help either, since
+ * express reads X-Forwarded-For.
+ *
+ * nginx overwrites X-Real-IP with the connecting address, so it is not
+ * client-controlled, unless the api container is ever given a published port.
+ */
+function getClientKey(req: Parameters<RequestHandler>[0]): string {
+  const realIp = getRealIpHeader(req);
+
+  if (realIp) {
+    return ipKeyGenerator(realIp);
+  }
+
+  warnMissingRealIp(req);
+
+  // Right under start-dev, where there is no proxy and req.ip is the client.
+  // Behind nginx it is the one-bucket failure above, hence the warning.
+  return req.ip ? ipKeyGenerator(req.ip) : unidentifiedClientKey;
+}
+
+// Once per process: a missing header is a deployment-wide condition, and
+// start-dev has no proxy at all, so per-request warnings would be noise.
+let missingRealIpWasLogged = false;
+
+function warnMissingRealIp(req: Parameters<RequestHandler>[0]): void {
+  if (missingRealIpWasLogged) {
+    return;
+  }
+
+  missingRealIpWasLogged = true;
+
+  const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
+
+  logWarning('No X-Real-IP: keying on req.ip, which behind nginx is one shared bucket', {
+    path: req.originalUrl,
+    reqIp: req.ip || 'EMPTY_req.ip',
+  });
+}
+
+function getRealIpHeader(req: Parameters<RequestHandler>[0]): string | undefined {
   const realIp = req.headers['x-real-ip'];
 
-  return (Array.isArray(realIp) ? realIp[0] : realIp) || req.ip;
+  return Array.isArray(realIp) ? realIp[0] : realIp;
 }

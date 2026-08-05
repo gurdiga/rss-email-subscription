@@ -313,8 +313,9 @@ start-logger: logger
 
 # RATE_LIMITING_DISABLED: api-test replays the whole register→confirm→login→reset
 # flow from a single IP, so the per-IP limits would bite on a second `make api-test`
-# within the window. Only this target sets it — prod deploys with `make app start`,
-# and an unset value means rate limiting is on.
+# within the window. `start-website` inherits this through its `start-api`
+# prerequisite; the prod deploy path (`make app start`) does not, and an unset
+# value means rate limiting is on. The api logs which state it started in.
 start-api: compile test build-website website app
 	export NODE_ENV="production"
 	export RATE_LIMITING_DISABLED="true"

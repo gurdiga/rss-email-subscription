@@ -40,7 +40,7 @@ import { manageFeed } from './feeds/manage-feed';
 import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
 import { initApp } from './init-app';
 import { confirmPasswordReset, requestPasswordReset } from './password-reset';
-import { hour, makeRateLimiter, minute } from './rate-limiting';
+import { hour, isRateLimitingDisabled, makeRateLimiter, minute } from './rate-limiting';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
@@ -162,6 +162,7 @@ async function main() {
 
     logInfo(si`Starting API server in ${envName} environment as PID ${process.pid}`);
     logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
+    logInfo(si`Rate limiting is ${isRateLimitingDisabled() ? 'DISABLED' : 'enabled'}`);
   });
 
   const heartBeat = startCronJob('5 5 * * *', () => logHeartbeat(logInfo));
