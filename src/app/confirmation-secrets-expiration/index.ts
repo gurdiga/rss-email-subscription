@@ -1,34 +1,28 @@
-import { basename } from 'node:path/posix';
+import { confirmationSecretLifetimeMs, isConfirmationSecretNotFound } from '../../domain/confirmation-secrets';
 import {
-  ConfirmationSecret,
-  confirmationSecretLifetimeMs,
-  isConfirmationSecretNotFound,
-  makeConfirmationSecret,
-} from '../../domain/confirmation-secrets';
-import {
-  confirmationSecretsStorageKey,
   deleteConfirmationSecret,
+  listConfirmationSecrets,
   loadConfirmationSecret,
 } from '../../domain/confirmation-secrets-storage';
 import { AppStorage } from '../../domain/storage';
-import { Err, Result, attempt, isErr, makeErr, makeValues } from '../../shared/lang';
+import { Result, isErr, makeValues } from '../../shared/lang';
 import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { isNotEmpty } from '../../shared/array-utils';
 import { makeDate } from '../../shared/date-utils';
-import { RegistrationConfirmationSecretData } from '../../api/registration';
 
-const unexpirableKinds: [RegistrationConfirmationSecretData['kind']] = ['RegistrationConfirmationSecretData'];
+// Every kind expires on the same clock now. Registration secrets used to be exempt, so
+// the store only ever grew — and issuing a password reset scans all of it.
 
 export function expireConfirmationSecrets(storage: AppStorage) {
   const logData = { module: expireConfirmationSecrets.name };
 
   logDuration('Confirmation secrets expiration', logData, async () => {
     const { logError, logWarning, logInfo } = makeCustomLoggers(logData);
-    const secrets = getAllConfirmationSecrets(storage);
+    const secrets = listConfirmationSecrets(storage);
 
     if (isErr(secrets)) {
-      logError(si`Failed to ${getAllConfirmationSecrets.name}: ${secrets.reason}`);
+      logError(si`Failed to ${listConfirmationSecrets.name}: ${secrets.reason}`);
       return;
     }
 
@@ -48,12 +42,6 @@ export function expireConfirmationSecrets(storage: AppStorage) {
 
       if (isConfirmationSecretNotFound(secretData)) {
         logWarning(si`Confirmation secred not found for expiration: ${secret.value}`);
-        continue;
-      }
-
-      const kind = (secretData as any).kind;
-
-      if (unexpirableKinds.includes(kind)) {
         continue;
       }
 
@@ -96,61 +84,4 @@ function makeConfirmationSecretTimestamp(data: unknown): Result<ConfirmationSecr
   return makeValues<ConfirmationSecretTimestamp>(data, {
     timestamp: makeDate,
   });
-}
-
-interface ConfirmationSecretList {
-  basenameErrs: BasenameErr[];
-  validConfirmationSecrets: ConfirmationSecret[];
-  invalidConfirmationSecrets: InvalidConfirmationSecret[];
-}
-
-interface BasenameErr {
-  input: string;
-  err: Err;
-}
-
-interface InvalidConfirmationSecret {
-  input: string;
-  err: Err;
-}
-
-function getAllConfirmationSecrets(storage: AppStorage): Result<ConfirmationSecretList> {
-  const items = storage.listItems(confirmationSecretsStorageKey);
-
-  if (isErr(items)) {
-    return makeErr(si`Failed to list confirmation secrets from ${confirmationSecretsStorageKey}`);
-  }
-
-  const results: ConfirmationSecretList = {
-    basenameErrs: [],
-    validConfirmationSecrets: [],
-    invalidConfirmationSecrets: [],
-  };
-
-  const hashes: string[] = [];
-
-  items.forEach((x) => {
-    const result = attempt(() => basename(x, '.json'));
-
-    if (isErr(result)) {
-      results.basenameErrs.push({ input: x, err: result });
-    } else {
-      hashes.push(result);
-    }
-  });
-
-  hashes.forEach((x) => {
-    const result = makeConfirmationSecret(x);
-
-    if (isErr(result)) {
-      results.invalidConfirmationSecrets.push({
-        input: x,
-        err: result,
-      });
-    } else {
-      results.validConfirmationSecrets.push(result);
-    }
-  });
-
-  return results;
 }

@@ -149,7 +149,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
   const accountData: AccountData = {
     planId: PlanId.Free,
     email: 'test@test.com',
-    hashedPassword: 'x'.repeat(hashedPasswordLength),
+    hashedPassword: 'a'.repeat(hashedPasswordLength),
     creationTimestamp: new Date(),
     confirmationTimestamp: undefined,
     isAdmin: false,

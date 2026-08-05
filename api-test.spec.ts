@@ -15,17 +15,15 @@ import {
   isAccountId,
   PasswordChangeRequestData,
 } from './src/domain/account';
-import {
-  getAccountIdByEmail,
-  makeEmailChangeConfirmationSecretHash,
-  makePasswordResetConfirmationSecretHash,
-  makeRegistrationConfirmationSecretHash,
-} from './src/domain/account-crypto';
+import { getAccountIdByEmail } from './src/domain/account-crypto';
 import { getAccountStorageKey } from './src/domain/account-storage';
 import { ApiPath, getFullApiPath } from './src/domain/api-path';
 import { AppSettings, appSettingsStorageKey } from './src/domain/app-settings';
 import { ConfirmationSecret, EmailChangeRequestSecretData } from './src/domain/confirmation-secrets';
-import { getConfirmationSecretStorageKey } from './src/domain/confirmation-secrets-storage';
+import {
+  confirmationSecretsStorageKey,
+  getConfirmationSecretStorageKey,
+} from './src/domain/confirmation-secrets-storage';
 import { defaultFeedPattern } from './src/domain/cron-pattern';
 import { domainAndLocalPart, EmailAddress } from './src/domain/email-address';
 import {
@@ -52,7 +50,7 @@ import {
   getFeedJsonStorageKey,
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
-import { deleteFile, fileExists, readFile, writeFile } from './src/domain/io-isolation';
+import { deleteFile, fileExists, listFiles, readFile, writeFile } from './src/domain/io-isolation';
 import {
   PasswordResetConfirmationData,
   PasswordResetConfirmationSecretData,
@@ -61,7 +59,7 @@ import {
 import { PlanId } from './src/domain/plan';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
-import { hash } from './src/shared/crypto';
+import { makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
 import { isErr } from './src/shared/lang';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
@@ -760,9 +758,18 @@ describe('API', () => {
         const { responseBody } = await requestAccountPasswordChangeSend(userPassword, newPassword);
         expect(responseBody).to.deep.equal({ kind: 'Success', message: 'Success' });
 
-        const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
         const [storedAccount] = loadStoredAccountByEmail(userEmail);
-        expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+        const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
+
+        // Not a formality: the API wrote this file, so an unparsable value here is the
+        // regression. Failing separately says the format is wrong rather than letting the
+        // verification below fail and point at the password logic instead.
+        if (isErr(storedHashedPassword)) {
+          return die(si`API stored an unparsable hashed password: ${storedHashedPassword.reason}`);
+        }
+
+        const verification = await verifyPassword(newPassword, storedHashedPassword, appSettings.hashingSalt);
+        expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
         await changeBackPasswordFrom(newPassword);
       });
@@ -834,6 +841,7 @@ describe('API', () => {
 
       const [secret, secretData] = loadPasswordResetConfirmationSecret(emailAddress);
       const expectedSecretData: PasswordResetConfirmationSecretData = {
+        kind: 'PasswordResetConfirmationSecretData',
         accountId: getAccountIdByEmail(emailAddress, appSettings.hashingSalt).value,
       };
       expect(secretData, JSON.stringify(secretData)).to.deep.include(expectedSecretData);
@@ -852,8 +860,14 @@ describe('API', () => {
       expect(responseBody).to.deep.equal(expectedResponse);
 
       const [storedAccount] = loadStoredAccountByEmail(emailAddress.value);
-      const newPasswordHash = hash(newPassword, appSettings.hashingSalt);
-      expect(storedAccount.hashedPassword).to.equal(newPasswordHash);
+      const storedHashedPassword = makeHashedPassword(storedAccount.hashedPassword);
+
+      if (isErr(storedHashedPassword)) {
+        return die(si`API stored an unparsable hashed password: ${storedHashedPassword.reason}`);
+      }
+
+      const verification = await verifyPassword(newPassword, storedHashedPassword, appSettings.hashingSalt);
+      expect(verification.isMatch, 'stored password hash verifies against the new password').to.be.true;
 
       const result = doesConfirmationSecretExist(confirmationSecret);
       expect(result, 'confirmation secred has been deleted').to.be.false;
@@ -925,10 +939,12 @@ describe('API', () => {
   }
 
   async function registrationConfirmationSend(email: string) {
-    const appSettings = loadJSON(makePath('settings.json')) as AppSettings;
-    const secret = makeRegistrationConfirmationSecretHash(makeTestEmailAddress(email), appSettings.hashingSalt);
+    const accountId = getAccountId(email);
+    const [secret] = findStoredConfirmationSecret(
+      (data) => data?.kind === 'RegistrationConfirmationSecretData' && data?.accountId?.value === accountId.value
+    );
 
-    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret });
+    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret: secret.value });
   }
 
   function getAccountId(email: string): AccountId {
@@ -946,25 +962,47 @@ describe('API', () => {
   function loadStoredEmailChangeConfirmationSecret(
     email: EmailAddress
   ): [ConfirmationSecret, EmailChangeRequestSecretData] {
-    const hashingSalt = appSettings.hashingSalt;
-    const hash = makeEmailChangeConfirmationSecretHash(email, hashingSalt);
-
-    return loadConfirmationSecret<EmailChangeRequestSecretData>(hash);
+    return findStoredConfirmationSecret<EmailChangeRequestSecretData>(
+      (data) => data?.kind === 'EmailChangeRequestSecretData' && data?.newEmail?.value === email.value
+    );
   }
 
   function loadPasswordResetConfirmationSecret(
     email: EmailAddress
   ): [ConfirmationSecret, PasswordResetConfirmationSecretData] {
-    const hashingSalt = appSettings.hashingSalt;
-    const hash = makePasswordResetConfirmationSecretHash(email, hashingSalt);
+    const accountId = getAccountIdByEmail(email, appSettings.hashingSalt);
 
-    return loadConfirmationSecret<PasswordResetConfirmationSecretData>(hash);
+    return findStoredConfirmationSecret<PasswordResetConfirmationSecretData>(
+      (data) => data?.kind === 'PasswordResetConfirmationSecretData' && data?.accountId === accountId.value
+    );
   }
 
-  function loadConfirmationSecret<T>(hash: string): [ConfirmationSecret, T] {
-    const secret = makeTestConfirmationSecret(hash);
+  // Confirmation secrets are now random, so a test can't recompute one; instead it
+  // scans the confirmation-secret store for the entry whose stored data it expects.
+  //
+  // Takes the newest match rather than the first in directory order: this data directory
+  // is not wiped between runs, and `make api-test` bails on first failure, so a secret
+  // left behind by an aborted run can otherwise shadow the one the test just created.
+  function findStoredConfirmationSecret<T>(matches: (data: any) => boolean): [ConfirmationSecret, T] {
+    const dirPath = makePath(dataDirRoot, confirmationSecretsStorageKey);
+    const found: [ConfirmationSecret, any][] = [];
 
-    return [secret, loadJSON(makePath(getConfirmationSecretStorageKey(secret))) as T];
+    for (const fileName of listFiles(dirPath)) {
+      const secret = makeTestConfirmationSecret(fileName.replace(/\.json$/, ''));
+      const data = loadJSON(makePath(getConfirmationSecretStorageKey(secret)));
+
+      if (matches(data)) {
+        found.push([secret, data]);
+      }
+    }
+
+    if (found.length === 0) {
+      return die(si`No confirmation secret found in ${dirPath} matching the predicate`);
+    }
+
+    found.sort(([, a], [, b]) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    return found[0] as [ConfirmationSecret, T];
   }
 
   function doesConfirmationSecretExist(secret: ConfirmationSecret): boolean {

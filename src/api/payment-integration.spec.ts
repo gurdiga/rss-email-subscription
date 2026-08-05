@@ -4,17 +4,10 @@ import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
-import {
-  makeTestAccount,
-  makeTestEmailAddress,
-  makeTestStorageFromSnapshot,
-  purgeTestStorageFromSnapshot,
-} from '../shared/test-utils';
+import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
 import { handleTransactionCompleted, handleSubscriptionCanceled } from './payment-integration';
-import { App } from './init-app';
-
-const hashingSalt = 'test-hashing-salt';
+import { hashingSalt, makeTestApp } from './test-utils';
 
 describe(handleTransactionCompleted.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
@@ -160,27 +153,6 @@ describe(handleSubscriptionCanceled.name, () => {
     expect((account as any).planId).to.equal(PlanId.Free);
   });
 });
-
-function makeTestApp(storageSnapshot: Record<string, string> = {}): App {
-  const storage = makeTestStorageFromSnapshot(storageSnapshot);
-
-  return {
-    storage,
-    settings: {
-      kind: 'AppSettings',
-      hashingSalt,
-      fullEmailAddress: {
-        kind: 'FullEmailAddress',
-        emailAddress: makeTestEmailAddress('noreply@test.com'),
-        displayName: 'Test',
-      },
-    } as any,
-    env: {
-      DOMAIN_NAME: 'test.feedsubscription.com',
-      SMTP_CONNECTION_STRING: 'smtp://localhost:1587',
-    } as any,
-  };
-}
 
 function makeFakeTransaction(customData: Record<string, unknown> = {}, card = false): TransactionNotification {
   return {

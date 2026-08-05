@@ -7,7 +7,7 @@ import {
   RegistrationRequest,
   RegistrationResponseData,
 } from '../domain/account';
-import { getAccountIdByEmail, makeRegistrationConfirmationSecretHash } from '../domain/account-crypto';
+import { getAccountIdByEmail } from '../domain/account-crypto';
 import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
@@ -15,6 +15,7 @@ import {
   humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
+  makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -23,13 +24,12 @@ import {
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { HashedPassword, makeHashedPassword } from '../domain/hashed-password';
+import { hashPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
 import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { hash } from '../shared/crypto';
 import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -68,7 +68,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError<keyof RegistrationRequest>('The Free plan has been discontinued', 'planId');
   }
 
-  const accountId = initAccount(storage, settings, request);
+  const accountId = await initAccount(storage, settings, request);
 
   if (isErr(accountId)) {
     logError(si`Failed to ${initAccount.name}`, { reason: accountId.reason, request });
@@ -81,14 +81,14 @@ export const registration: AppRequestHandler = async function registration(
   }
 
   const { email, planId } = request;
-  const sendResult = await sendConfirmationEmail(email, settings, env);
+  const confirmationSecret = makeRandomConfirmationSecret();
+  const sendResult = await sendConfirmationEmail(email, confirmationSecret, settings, env);
 
   if (isErr(sendResult)) {
     logError(si`Failed to ${sendConfirmationEmail.name}`, { reason: sendResult.reason, email: email.value });
     return makeAppError(sendResult.reason);
   }
 
-  const confirmationSecret = makeRegistrationConfirmationSecretHash(email, settings.hashingSalt);
   const result = storeRegistrationConfirmationSecret(storage, email, accountId, confirmationSecret);
 
   if (isErr(result)) {
@@ -125,14 +125,8 @@ function storeRegistrationConfirmationSecret(
   storage: AppStorage,
   email: EmailAddress,
   accountId: AccountId,
-  secret: string
+  confirmationSecret: ConfirmationSecret
 ): Result<void> {
-  const confirmationSecret = makeConfirmationSecret(secret);
-
-  if (isErr(confirmationSecret)) {
-    return makeErr(si`Couldn’t make confirmation secret: ${confirmationSecret.reason}`);
-  }
-
   const confirmationSecretData = makeRegistrationConfirmationSecretData(accountId, email);
   const result = storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 
@@ -160,6 +154,7 @@ function makeRegistrationConfirmationSecretData(
 
 async function sendConfirmationEmail(
   recipient: EmailAddress,
+  confirmationSecret: ConfirmationSecret,
   settings: AppSettings,
   env: AppEnv
 ): Promise<Result<void | AppError>> {
@@ -168,7 +163,7 @@ async function sendConfirmationEmail(
 
   const from = settings.fullEmailAddress;
   const replyTo = settings.fullEmailAddress.emailAddress;
-  const emailContent = makeRegistrationConfirmationEmailContent(recipient, settings.hashingSalt, env.DOMAIN_NAME);
+  const emailContent = makeRegistrationConfirmationEmailContent(confirmationSecret, env.DOMAIN_NAME);
   const sendEmailResult = await sendEmail(from, recipient, replyTo, emailContent, env);
 
   if (isErr(sendEmailResult)) {
@@ -180,14 +175,12 @@ async function sendConfirmationEmail(
 }
 
 export function makeRegistrationConfirmationEmailContent(
-  email: EmailAddress,
-  hashingSalt: string,
+  confirmationSecret: ConfirmationSecret,
   domainName: string
 ): EmailContent {
   const confirmationLink = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
-  const secret = makeRegistrationConfirmationSecretHash(email, hashingSalt);
 
-  confirmationLink.searchParams.set('secret', secret);
+  confirmationLink.searchParams.set('secret', confirmationSecret.value);
 
   return {
     subject: 'Please confirm FeedSubscription.com registration',
@@ -246,29 +239,49 @@ export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
   return hasKind(x, 'AccountAlreadyExists');
 }
 
-function initAccount(
+async function initAccount(
   storage: AppStorage,
   settings: AppSettings,
   request: RegistrationRequest
-): Result<AccountId | AccountAlreadyExists> {
+): Promise<Result<AccountId | AccountAlreadyExists>> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: initAccount.name });
 
-  const hashedPassword = hash(request.password.value, settings.hashingSalt);
+  const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
+  const exists = accountExists(storage, accountId);
+
+  if (isErr(exists)) {
+    return exists;
+  }
+
+  // Cheap pre-check, so a registration flood doesn’t pay for a scrypt hash per attempt.
+  if (exists) {
+    logWarning('Account already exists', { email: request.email.value });
+    return makeAccountAlreadyExists();
+  }
+
+  const hashedPassword = await hashPassword(request.password.value);
+
+  // Hashing yields to the event loop, so check again with nothing between here and the
+  // store: two concurrent registrations for one email must not both write the account.
+  const existsAfterHashing = accountExists(storage, accountId);
+
+  if (isErr(existsAfterHashing)) {
+    return existsAfterHashing;
+  }
+
+  if (existsAfterHashing) {
+    logWarning('Account already exists', { email: request.email.value });
+    return makeAccountAlreadyExists();
+  }
+
   const account: Account = {
     planId: PlanId.PendingPayment,
     email: request.email,
-    hashedPassword: makeHashedPassword(hashedPassword) as HashedPassword,
+    hashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
     isAdmin: false,
   };
-
-  const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
-
-  if (accountExists(storage, accountId)) {
-    logWarning('Account already exists', { email: request.email.value });
-    return makeAccountAlreadyExists();
-  }
 
   const storeAccountResult = storeAccount(storage, accountId, account);
 

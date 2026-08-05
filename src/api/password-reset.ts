@@ -2,23 +2,26 @@ import { EmailContent, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import { FullEmailAddress } from '../app/email-sending/emails';
 import { AccountId, isAccountNotFound, makeAccountId } from '../domain/account';
-import { getAccountIdByEmail, makePasswordResetConfirmationSecretHash } from '../domain/account-crypto';
+import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, resetAccountPassword } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
   humanConfirmationSecretLifetime,
+  isConfirmationSecretNotFound,
   makeConfirmationSecret,
+  makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
+  listConfirmationSecrets,
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { makeHashedPassword } from '../domain/hashed-password';
+import { hashPassword } from '../domain/hashed-password';
 import { makeNewPassword } from '../domain/new-password';
 import { PagePath } from '../domain/page-path';
 import {
@@ -29,8 +32,7 @@ import {
 } from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { hash } from '../shared/crypto';
-import { Result, isErr, makeErr, makeValues } from '../shared/lang';
+import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie, setDemoCookie } from './app-cookie';
@@ -66,11 +68,19 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
     return makeInputError<keyof PasswordResetRequest>('We don’t have an account registered with this email', 'email');
   }
 
-  const secret: ConfirmationSecret = {
-    kind: 'ConfirmationSecret',
-    value: makePasswordResetConfirmationSecretHash(account.email, settings.hashingSalt),
-  };
+  // Issuing a new reset link invalidates the account’s older ones, so that a link
+  // the user has reason to distrust stops working once they request a replacement.
+  // A failure here is logged rather than fatal: leaving a stale link alive is worse
+  // than nothing, but refusing the reset outright would leave the user locked out.
+  const revokeResult = revokePasswordResetSecrets(storage, accountId);
 
+  if (isErr(revokeResult)) {
+    logWarning(si`Failed to ${revokePasswordResetSecrets.name}: ${revokeResult.reason}`, {
+      accountId: accountId.value,
+    });
+  }
+
+  const secret = makeRandomConfirmationSecret();
   const storeResult = storeForgotPasswordConfirmationSecret(storage, secret, accountId);
 
   if (isErr(storeResult)) {
@@ -128,12 +138,47 @@ function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: st
   };
 }
 
+export function revokePasswordResetSecrets(storage: AppStorage, accountId: AccountId): Result<void> {
+  const secrets = listConfirmationSecrets(storage);
+
+  if (isErr(secrets)) {
+    return secrets;
+  }
+
+  for (const secret of secrets.validConfirmationSecrets) {
+    const secretData = loadConfirmationSecret(storage, secret);
+
+    if (isErr(secretData) || isConfirmationSecretNotFound(secretData)) {
+      continue;
+    }
+
+    if (!isPasswordResetSecretFor(secretData, accountId)) {
+      continue;
+    }
+
+    const deleteResult = deleteConfirmationSecret(storage, secret);
+
+    if (isErr(deleteResult)) {
+      return makeErr(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
+    }
+  }
+}
+
+function isPasswordResetSecretFor(secretData: unknown, accountId: AccountId): boolean {
+  if (!hasKind(secretData, 'PasswordResetConfirmationSecretData')) {
+    return false;
+  }
+
+  return (secretData as PasswordResetConfirmationSecretData).accountId === accountId.value;
+}
+
 function storeForgotPasswordConfirmationSecret(
   storage: AppStorage,
   secret: ConfirmationSecret,
   accountId: AccountId
 ): Result<void> {
   const secretData: PasswordResetConfirmationSecretData = {
+    kind: 'PasswordResetConfirmationSecretData',
     accountId: accountId.value,
   };
   const result = storeConfirmationSecret(storage, secret, secretData);
@@ -165,6 +210,26 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   }
 
   const secretData = loadConfirmationSecret(storage, request.secret);
+
+  if (isErr(secretData)) {
+    logError(si`Failed to ${loadConfirmationSecret.name}: ${secretData.reason}`);
+    return makeAppError();
+  }
+
+  // A consumed or expired link is an ordinary thing for a user to hit — they bookmarked
+  // it, or requested a newer one — so it gets a message they can act on rather than the
+  // 500 that fell out of trying to parse the not-found marker as secret data.
+  //
+  // The field must be set: the page’s error handling runs exhaustivenessCheck over it, so
+  // a field-less input error would throw there instead of displaying anything.
+  if (isConfirmationSecretNotFound(secretData)) {
+    logWarning('Password reset secret not found', { secret: request.secret.value });
+    return makeInputError<keyof PasswordResetConfirmation>(
+      'This password reset link has expired or has already been used. Please request a new one.',
+      'secret'
+    );
+  }
+
   const forgotPasswordSecret = makeForgotPasswordSecret(secretData);
 
   if (isErr(forgotPasswordSecret)) {
@@ -187,25 +252,25 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  const newHashedPassword = makeHashedPassword(hash(request.newPassword.value, settings.hashingSalt));
+  // Consume the secret before hashing, which is where this handler yields to the event
+  // loop. Deleting it afterwards would let two concurrent submissions of one link both
+  // load it and both reset the password. A failure after this point costs the user their
+  // link and they have to request a new one, which is the right side to err on for a
+  // single-use token.
+  const deleteResult = deleteConfirmationSecret(storage, request.secret);
 
-  if (isErr(newHashedPassword)) {
-    logError(si`Failed to ${makeHashedPassword.name}: ${newHashedPassword.reason}`);
+  if (isErr(deleteResult)) {
+    logError(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
     return makeAppError();
   }
 
+  const newHashedPassword = await hashPassword(request.newPassword.value);
   const isDemoAccount = account.email.value === demoAccountEmail;
   const resetResult = isDemoAccount ? undefined : resetAccountPassword(storage, accountId, newHashedPassword);
 
   if (isErr(resetResult)) {
     logError(si`Failed to ${resetAccountPassword.name}: ${resetResult.reason}`);
     return makeAppError();
-  }
-
-  const deleteResult = deleteConfirmationSecret(storage, request.secret);
-
-  if (isErr(deleteResult)) {
-    logError(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
   }
 
   initSession(reqSession, accountId, account.email);
@@ -240,8 +305,11 @@ function sendPasswordResetConfirmationEmail(accountEmail: EmailAddress, settings
   return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
+// makeValues stamps the kind rather than reading it from the input, so secrets
+// stored before the field existed still redeem cleanly.
 function makeForgotPasswordSecret(data: unknown): Result<PasswordResetConfirmationSecret> {
   return makeValues<PasswordResetConfirmationSecret>(data, {
+    kind: 'PasswordResetConfirmationSecretData',
     accountId: makeAccountId,
   });
 }

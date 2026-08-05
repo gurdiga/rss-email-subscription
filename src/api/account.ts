@@ -15,7 +15,6 @@ import {
   PlanChangeResponseData,
   UiAccount,
 } from '../domain/account';
-import { makeEmailChangeConfirmationSecretHash } from '../domain/account-crypto';
 import { deleteAccount, loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
@@ -25,6 +24,7 @@ import {
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeEmailChangeRequestSecretData,
+  makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -33,14 +33,13 @@ import {
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { makeHashedPassword } from '../domain/hashed-password';
+import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
 import { isSubscriptionPlan, makePlanId, PlanId, Plans } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
 import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import { hash } from '../shared/crypto';
-import { isErr, makeValues, Result } from '../shared/lang';
+import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
@@ -245,9 +244,13 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
-  const currentHashedPassword = hash(request.currentPassword.value, settings.hashingSalt);
+  const verification = await verifyPassword(
+    request.currentPassword.value,
+    account.hashedPassword,
+    settings.hashingSalt
+  );
 
-  if (currentHashedPassword !== account.hashedPassword.value) {
+  if (!verification.isMatch) {
     return makeInputError<keyof PasswordChangeRequest>('Current password doesn’t match', 'currentPassword');
   }
 
@@ -255,22 +258,24 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeInputError<keyof PasswordChangeRequest>('New password can’t be the same as the old one', 'newPassword');
   }
 
-  const newHashedPassword = makeHashedPassword(hash(request.newPassword.value, settings.hashingSalt));
-
-  if (isErr(newHashedPassword)) {
-    logError(si`Failed to ${makeHashedPassword.name}`, { reason: newHashedPassword.reason });
-    return makeAppError();
+  // The demo credentials are published in demo-account.ts, so anyone can reach this point
+  // — it is authenticated in name only. A demo session stores nothing, so returning here
+  // costs it nothing, and it stops a public endpoint from spending a scrypt hash and an
+  // outbound email per request. The current-password check above still runs, so the demo
+  // keeps showing a real validation error for a wrong password.
+  if (isDemoSession(reqSession)) {
+    return makeSuccess();
   }
 
-  const storeAccountResult = isDemoSession(reqSession)
-    ? undefined
-    : storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+  const newHashedPassword = await hashPassword(request.newPassword.value);
+  const storeAccountResult = storeNewPassword(storage, accountId, account.hashedPassword, newHashedPassword);
 
   if (isErr(storeAccountResult)) {
-    logError(si`Failed to ${storeAccount.name}`, {
+    // The hash itself is deliberately not logged: the logger only masks keys containing
+    // "password", so it would go to disk in the clear.
+    logError(si`Failed to ${storeNewPassword.name}`, {
       reason: storeAccountResult.reason,
       accountId: accountId.value,
-      newHash: newHashedPassword.value,
     });
     return makeAppError();
   }
@@ -279,6 +284,33 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
 
   return makeSuccess();
 };
+
+// Hashing the new password yields to the event loop, so the account is re-read here and
+// written only if its stored hash is still the one whose plaintext the caller verified.
+// Writing the pre-hash snapshot would silently revert a plan change, email change or
+// password reset that completed while the hash was being computed.
+function storeNewPassword(
+  storage: AppStorage,
+  accountId: AccountId,
+  verifiedHashedPassword: HashedPassword,
+  newHashedPassword: HashedPassword
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return account;
+  }
+
+  if (isAccountNotFound(account)) {
+    return makeErr('Account not found when storing the new password');
+  }
+
+  if (account.hashedPassword.value !== verifiedHashedPassword.value) {
+    return makeErr('Stored password changed while hashing the new one');
+  }
+
+  return storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+}
 
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {
   const emailContent = {
@@ -332,16 +364,7 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
     return makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail');
   }
 
-  const confirmationSecret = makeEmailChangeConfirmationSecret(newEmail, settings.hashingSalt);
-
-  if (isErr(confirmationSecret)) {
-    logError(si`Failed to ${makeConfirmationSecret.name}`, {
-      reason: confirmationSecret.reason,
-      newEmail: newEmail.value,
-    });
-    return makeAppError();
-  }
-
+  const confirmationSecret = makeRandomConfirmationSecret();
   const sendEmailResult = await sendEmailChangeConfirmationEmail(newEmail, confirmationSecret, settings, env);
 
   if (isErr(sendEmailResult)) {
@@ -399,12 +422,6 @@ async function sendEmailChangeConfirmationEmail(
   );
 }
 
-function makeEmailChangeConfirmationSecret(newEmail: EmailAddress, hashingSalt: string): Result<ConfirmationSecret> {
-  const secret = makeEmailChangeConfirmationSecretHash(newEmail, hashingSalt);
-
-  return makeConfirmationSecret(secret);
-}
-
 function storeEmailChangeRequestSecret(
   accountId: AccountId,
   newEmail: EmailAddress,
@@ -452,9 +469,9 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
-  const currentHashedPassword = hash(request.password.value, settings.hashingSalt);
+  const verification = await verifyPassword(request.password.value, account.hashedPassword, settings.hashingSalt);
 
-  if (currentHashedPassword !== account.hashedPassword.value) {
+  if (!verification.isMatch) {
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 

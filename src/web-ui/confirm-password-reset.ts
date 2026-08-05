@@ -72,12 +72,12 @@ function initForm(uiElements: RequiredUiElements, queryStringParams: RequiredPar
         return;
       }
 
-      if (field === 'secret') {
-        displayApiResponse(response, apiResponseMessage);
-        return;
-      }
-
-      exhaustivenessCheck(field);
+      // Everything else — an error about the secret, or one carrying no field at all —
+      // is shown as a general message. This deliberately does not exhaustiveness-check
+      // the field: that threw, so an input error the API added without a field would
+      // leave the user looking at an unchanged form with no explanation at all.
+      displayApiResponse(response, apiResponseMessage);
+      return;
     }
 
     if (isAppError(response)) {

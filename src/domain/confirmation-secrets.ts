@@ -1,3 +1,4 @@
+import { getRandomString } from '../shared/crypto';
 import { getHoursFromMs } from '../shared/date-utils';
 import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
@@ -9,6 +10,9 @@ export interface ConfirmationSecret {
   value: string;
 }
 
+// Applies to every kind of confirmation secret. Registration secrets used to be exempt
+// from expiration altogether, which meant the store only ever grew — and every password
+// reset request scans all of it.
 export const confirmationSecretLifetimeMs = 48 * 3600 * 1000;
 export const humanConfirmationSecretLifetime = si`${getHoursFromMs(confirmationSecretLifetimeMs)} hours`;
 
@@ -21,6 +25,16 @@ const confirmationSecretCharsetRe = /^[a-f0-9]+$/;
 
 export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {
   return hasKind(value, 'ConfirmationSecret');
+}
+
+// Confirmation secrets are opaque, single-use lookup keys into the confirmation-secret
+// store; generate them randomly rather than deriving them from the email + global salt,
+// so that a leaked salt can't be used to forge a valid link for an arbitrary account.
+export function makeRandomConfirmationSecret(): ConfirmationSecret {
+  return {
+    kind: 'ConfirmationSecret',
+    value: getRandomString(confirmationSecretLength),
+  };
 }
 
 export function makeConfirmationSecret(input: unknown, field = 'secret'): Result<ConfirmationSecret> {
