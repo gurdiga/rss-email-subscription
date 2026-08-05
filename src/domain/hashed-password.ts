@@ -107,8 +107,8 @@ export async function verifyPassword(
 // Only a *weaker* stored cost is worth rewriting. Flagging any difference would mean an
 // older instance downgrades hashes written by a newer one — during a rollback, or a
 // rolling deploy where both versions are briefly live — quietly undoing a cost increase.
-function isWeakerThanCurrentScryptCost({ n, r, p, keyLength }: ParsedScryptHashedPassword): boolean {
-  return scryptWork(n, r, p) < scryptWork(scryptN, scryptR, scryptP) || keyLength < scryptKeyLength;
+function isWeakerThanCurrentScryptCost({ n, r, p }: ParsedScryptHashedPassword): boolean {
+  return scryptWork(n, r, p) < scryptWork(scryptN, scryptR, scryptP);
 }
 
 // scrypt's CPU cost scales with N*r*p. Comparing the product rather than the individual
