@@ -22,7 +22,11 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
     store,
     secret: settings.hashingSalt,
     resave: false,
-    saveUninitialized: true,
+    // Anonymous requests that write nothing to the session leave no file behind.
+    // Saving them let any unauthenticated flood — including one the rate limiter
+    // answers with a 429, since this middleware runs first — put a file per
+    // request on the volume, which the hourly reap then reads back one by one.
+    saveUninitialized: false,
     rolling: isSessionCookieRolling,
   });
 }

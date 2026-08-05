@@ -40,6 +40,7 @@ import { manageFeed } from './feeds/manage-feed';
 import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
 import { initApp } from './init-app';
 import { confirmPasswordReset, requestPasswordReset } from './password-reset';
+import { hour, isRateLimitingDisabled, makeRateLimiter, minute } from './rate-limiting';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
@@ -76,22 +77,54 @@ async function main() {
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
   router.get(ApiPath.sessionTest, makeAppRequestHandler(sessionTest, app));
-  router.post(ApiPath.subscription, makeAppRequestHandler(subscription, app));
+  // Mails an address the caller supplies, so the limit is about sending
+  // reputation rather than CPU. Subscribing is a once-per-feed action, and the
+  // form is embedded on customer sites where visitors arrive from their own IPs.
+  router.post(ApiPath.subscription, makeRateLimiter(10, hour), makeAppRequestHandler(subscription, app));
   router.post(ApiPath.subscriptionConfirmation, makeAppRequestHandler(subscriptionConfirmation, app));
   router.post(ApiPath.unsubscription, makeAppRequestHandler(unsubscription, app));
-  router.post(ApiPath.registration, makeAppRequestHandler(registration, app));
-  router.post(ApiPath.registrationConfirmation, makeAppRequestHandler(registrationConfirmation, app));
-  router.post(ApiPath.authentication, makeAppRequestHandler(authentication, app));
-  router.post(ApiPath.requestPasswordReset, makeAppRequestHandler(requestPasswordReset, app));
-  router.post(ApiPath.confirmPasswordReset, makeAppRequestHandler(confirmPasswordReset, app));
+  // The unauthenticated endpoints are rate-limited per client IP: the password
+  // paths each cost ~135ms of scrypt on a one-vCPU box, and request-password-reset
+  // sends mail to a third party. See rate-limiting.ts for how the client IP is
+  // resolved and why the in-memory store assumes a single api process.
+  router.post(ApiPath.registration, makeRateLimiter(5, hour), makeAppRequestHandler(registration, app));
+  router.post(
+    ApiPath.registrationConfirmation,
+    makeRateLimiter(20, 15 * minute),
+    makeAppRequestHandler(registrationConfirmation, app)
+  );
+  router.post(ApiPath.authentication, makeRateLimiter(20, 15 * minute), makeAppRequestHandler(authentication, app));
+  router.post(ApiPath.requestPasswordReset, makeRateLimiter(5, hour), makeAppRequestHandler(requestPasswordReset, app));
+  router.post(
+    ApiPath.confirmPasswordReset,
+    makeRateLimiter(20, 15 * minute),
+    makeAppRequestHandler(confirmPasswordReset, app)
+  );
   router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app));
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
-  router.post(ApiPath.requestAccountEmailChange, makeAppRequestHandler(requestAccountEmailChange, app));
+  // Mails the caller-supplied new address, and the published demo login reaches
+  // it, so the session in front of it is not much of a gate.
+  router.post(
+    ApiPath.requestAccountEmailChange,
+    makeRateLimiter(10, hour),
+    makeAppRequestHandler(requestAccountEmailChange, app)
+  );
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
-  router.post(ApiPath.requestAccountPasswordChange, makeAppRequestHandler(requestAccountPasswordChange, app));
+  // Limited despite requiring a session: both verify a password, so both spend a
+  // scrypt hash before anything else gates them, and a session costs an attacker
+  // one self-confirmed registration.
+  router.post(
+    ApiPath.requestAccountPasswordChange,
+    makeRateLimiter(10, 15 * minute),
+    makeAppRequestHandler(requestAccountPasswordChange, app)
+  );
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
   router.post(ApiPath.requestPaymentMethodUpdate, makeAppRequestHandler(requestPaymentMethodUpdate, app));
-  router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
+  router.post(
+    ApiPath.deleteAccountWithPassword,
+    makeRateLimiter(5, 15 * minute),
+    makeAppRequestHandler(deleteAccountWithPassword, app)
+  );
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
   router.get(ApiPath.loadFeedDisplayName, makeAppRequestHandler(loadFeedDisplayName, app));
@@ -106,7 +139,12 @@ async function main() {
   router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
   router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
-  router.post(ApiPath.showSampleEmailPublic, makeAppRequestHandler(showSampleEmailPublic, app));
+  // Also mails a caller-supplied address, and needs no account at all.
+  router.post(
+    ApiPath.showSampleEmailPublic,
+    makeRateLimiter(5, hour),
+    makeAppRequestHandler(showSampleEmailPublic, app)
+  );
   router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
   router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
@@ -149,6 +187,7 @@ async function main() {
 
     logInfo(si`Starting API server in ${envName} environment as PID ${process.pid}`);
     logInfo(si`Listening on ${scheme}://${app.env.DOMAIN_NAME}:${port}`);
+    logInfo(si`Rate limiting is ${isRateLimitingDisabled() ? 'DISABLED' : 'enabled'}`);
   });
 
   const heartBeat = startCronJob('5 5 * * *', () => logHeartbeat(logInfo));
