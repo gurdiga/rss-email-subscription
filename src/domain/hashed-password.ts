@@ -63,10 +63,9 @@ export async function hashPassword(plainPassword: string): Promise<HashedPasswor
 
 export interface PasswordVerification {
   isMatch: boolean;
-  // True when the password matched but the stored hash is not at the current algorithm
-  // and cost — either the legacy format, or scrypt with out-of-date parameters. This is
-  // what the self-describing N/r/p prefix exists for: bumping the cost constants below
-  // makes existing hashes upgrade on their owners’ next login.
+  // True when the password matched but the stored hash is below current policy — either
+  // the legacy format, or scrypt with weaker parameters. Rehashing on login is what makes
+  // a cost increase actually take effect.
   needsRehash: boolean;
 }
 
