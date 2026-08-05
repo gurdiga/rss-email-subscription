@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import express, { RequestHandler } from 'express';
 import { Server } from 'http';
 import { AddressInfo } from 'net';
+import { AppError } from '../shared/api-response';
 import { si } from '../shared/string-utils';
 import { hour, makeRateLimiter, minute } from './rate-limiting';
 
@@ -79,8 +80,8 @@ describe(makeRateLimiter.name, () => {
       await post(hourly, '203.0.113.5');
       await post(brief, '203.0.113.5');
 
-      const hourlyBody = (await (await post(hourly, '203.0.113.5')).json()) as { message: string };
-      const briefBody = (await (await post(brief, '203.0.113.5')).json()) as { message: string };
+      const hourlyBody = (await (await post(hourly, '203.0.113.5')).json()) as AppError;
+      const briefBody = (await (await post(brief, '203.0.113.5')).json()) as AppError;
 
       expect(hourlyBody.message).to.contain('hour');
       expect(briefBody.message).to.contain('minutes');
