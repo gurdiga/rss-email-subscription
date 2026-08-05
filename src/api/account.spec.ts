@@ -2,7 +2,7 @@ import { expect } from 'chai';
 import { Account, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
-import { demoAccountEmail } from '../domain/demo-account';
+import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
@@ -31,11 +31,13 @@ describe(requestAccountPasswordChange.name, () => {
   });
 
   // The demo credentials are public, so this endpoint is reachable by anyone. It stores
-  // nothing for a demo session, so it must not spend a scrypt hash on one either.
-  it('does not hash or store anything for a demo session', async () => {
+  // nothing for a demo session, so it must not spend a scrypt hash on one either — the
+  // demo password is a published constant, so comparing it answers the same question
+  // verifyPassword would.
+  it('does not hash, verify, or store anything for a demo session', async () => {
     const app = makeTestApp();
     const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
-    const storedHashedPassword = await hashPassword(currentPassword);
+    const storedHashedPassword = await hashPassword(demoAccountPassword);
 
     storeAccount(app.storage, demoAccountId, {
       ...makeTestAccount({ email: demoAccountEmail }),
@@ -45,7 +47,13 @@ describe(requestAccountPasswordChange.name, () => {
 
     const reqSession = { cookie: {}, accountId: demoAccountId.value, email: demoAccountEmail } as any;
     const started = Date.now();
-    const response = await requestAccountPasswordChange('req', { currentPassword, newPassword }, {}, reqSession, app);
+    const response = await requestAccountPasswordChange(
+      'req',
+      { currentPassword: demoAccountPassword, newPassword },
+      {},
+      reqSession,
+      app
+    );
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
@@ -55,9 +63,33 @@ describe(requestAccountPasswordChange.name, () => {
       storedHashedPassword.value
     );
 
-    // One scrypt call is ~135ms. Verifying the current password costs one; hashing the
-    // new one would cost a second. Well under two means the second was skipped.
-    expect(Date.now() - started, 'no second scrypt call').to.be.lessThan(200);
+    // One scrypt call is ~135ms: verifying the current password would cost one, hashing
+    // the new one a second. Comfortably under a single call means neither ran.
+    expect(Date.now() - started, 'no scrypt call at all').to.be.lessThan(100);
+  });
+
+  // Skipping the hash must not skip the validation: a demo visitor who types the wrong
+  // current password still gets the real error rather than a silent Success.
+  it('still rejects a wrong current password for a demo session', async () => {
+    const app = makeTestApp();
+    const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
+
+    storeAccount(app.storage, demoAccountId, {
+      ...makeTestAccount({ email: demoAccountEmail }),
+      hashedPassword: await hashPassword(demoAccountPassword),
+      confirmationTimestamp: new Date(),
+    });
+
+    const reqSession = { cookie: {}, accountId: demoAccountId.value, email: demoAccountEmail } as any;
+    const response = await requestAccountPasswordChange(
+      'req',
+      { currentPassword: 'not-the-demo-password', newPassword },
+      {},
+      reqSession,
+      app
+    );
+
+    expect(response).to.include({ kind: 'InputError', field: 'currentPassword' }, JSON.stringify(response));
   });
 
   // Hashing the new password yields to the event loop. The handler re-reads the account

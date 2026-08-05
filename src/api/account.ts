@@ -31,6 +31,7 @@ import {
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
+import { demoAccountPassword } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
@@ -232,6 +233,26 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeInputError(request.reason, request.field);
   }
 
+  // The demo credentials are published in demo-account.ts, so this endpoint is
+  // authenticated in name only. Answer before loading the account and verifying:
+  // the demo password is a known constant, so comparing it gives the same answer
+  // that verifyPassword would, without spending a scrypt hash per public request.
+  // A demo session stores nothing, so there is nothing else to do.
+  if (isDemoSession(reqSession)) {
+    if (request.currentPassword.value !== demoAccountPassword) {
+      return makeInputError<keyof PasswordChangeRequest>('Current password doesn’t match', 'currentPassword');
+    }
+
+    if (request.currentPassword.value === request.newPassword.value) {
+      return makeInputError<keyof PasswordChangeRequest>(
+        'New password can’t be the same as the old one',
+        'newPassword'
+      );
+    }
+
+    return makeSuccess();
+  }
+
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
@@ -256,15 +277,6 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
 
   if (request.currentPassword.value === request.newPassword.value) {
     return makeInputError<keyof PasswordChangeRequest>('New password can’t be the same as the old one', 'newPassword');
-  }
-
-  // The demo credentials are published in demo-account.ts, so anyone can reach this point
-  // — it is authenticated in name only. A demo session stores nothing, so returning here
-  // costs it nothing, and it stops a public endpoint from spending a scrypt hash and an
-  // outbound email per request. The current-password check above still runs, so the demo
-  // keeps showing a real validation error for a wrong password.
-  if (isDemoSession(reqSession)) {
-    return makeSuccess();
   }
 
   const newHashedPassword = await hashPassword(request.newPassword.value);
@@ -457,6 +469,20 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError(request.reason, request.field);
   }
 
+  // As in requestAccountPasswordChange: the demo credentials are published, so
+  // answer before loading the account, verifying, or calling Paddle — a demo
+  // deletion cancels no subscription and removes nothing. The session and cookies
+  // still clear, so the demo behaves like the real thing.
+  if (isDemoSession(reqSession)) {
+    if (request.password.value !== demoAccountPassword) {
+      return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
+    }
+
+    deinitSession(reqSession);
+
+    return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, unsetDemoCookie]);
+  }
+
   const account = loadAccount(storage, accountId);
 
   if (isErr(account)) {
@@ -490,8 +516,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     }
   }
 
-  const isDemoAccount = isDemoSession(reqSession);
-  const deleteAccountResult = isDemoAccount ? undefined : deleteAccount(storage, accountId);
+  const deleteAccountResult = deleteAccount(storage, accountId);
 
   if (isErr(deleteAccountResult)) {
     logError(si`Failed to ${deleteAccount.name}`, { reason: deleteAccountResult.reason, accountId: accountId.value });
@@ -504,16 +529,10 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
   }
 
   deinitSession(reqSession);
+  logInfo('Account deleted', { account });
+  sendAccountDeletionConfirmationEmail(account.email, settings, env);
 
-  if (!isDemoAccount) {
-    logInfo('Account deleted', { account });
-    sendAccountDeletionConfirmationEmail(account.email, settings, env);
-  }
-
-  const maybeUnsetDemoCookie = isDemoAccount ? [unsetDemoCookie] : [];
-  const cookies = [disablePrivateNavbarCookie, ...maybeUnsetDemoCookie];
-
-  return makeSuccess('Success', {}, {}, cookies);
+  return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie]);
 };
 
 function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settings: AppSettings, env: AppEnv) {
