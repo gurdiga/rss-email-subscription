@@ -101,10 +101,21 @@ async function main() {
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
   router.post(ApiPath.requestAccountEmailChange, makeAppRequestHandler(requestAccountEmailChange, app));
   router.post(ApiPath.confirmAccountEmailChange, makeAppRequestHandler(confirmAccountEmailChange, app));
-  router.post(ApiPath.requestAccountPasswordChange, makeAppRequestHandler(requestAccountPasswordChange, app));
+  // Limited despite requiring a session: both verify a password, so both spend a
+  // scrypt hash before anything else gates them, and a session costs an attacker
+  // one self-confirmed registration.
+  router.post(
+    ApiPath.requestAccountPasswordChange,
+    makeRateLimiter(10, 15 * minute),
+    makeAppRequestHandler(requestAccountPasswordChange, app)
+  );
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
   router.post(ApiPath.requestPaymentMethodUpdate, makeAppRequestHandler(requestPaymentMethodUpdate, app));
-  router.post(ApiPath.deleteAccountWithPassword, makeAppRequestHandler(deleteAccountWithPassword, app));
+  router.post(
+    ApiPath.deleteAccountWithPassword,
+    makeRateLimiter(5, 15 * minute),
+    makeAppRequestHandler(deleteAccountWithPassword, app)
+  );
   router.get(ApiPath.loadFeeds, makeAppRequestHandler(loadFeeds, app));
   router.get(ApiPath.loadFeedById, makeAppRequestHandler(loadFeedById, app));
   router.get(ApiPath.loadFeedDisplayName, makeAppRequestHandler(loadFeedDisplayName, app));
