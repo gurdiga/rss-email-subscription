@@ -11,6 +11,8 @@ x-app-env: &app-env
   DOMAIN_NAME: ${DOMAIN_NAME?}
   DATA_DIR_ROOT: /data
   NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+  # Unset means rate limiting is ON. Only `make start-api` sets it, for api-test.
+  RATE_LIMITING_DISABLED: ${RATE_LIMITING_DISABLED:-}
   # DEBUG: '*' # Useful for debuggind Express.js routing
   SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
   PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT?}

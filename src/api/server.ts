@@ -40,6 +40,7 @@ import { manageFeed } from './feeds/manage-feed';
 import { showSampleEmail, showSampleEmailPublic } from './feeds/show-sample-email';
 import { initApp } from './init-app';
 import { confirmPasswordReset, requestPasswordReset } from './password-reset';
+import { hour, makeRateLimiter, minute } from './rate-limiting';
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
@@ -79,11 +80,23 @@ async function main() {
   router.post(ApiPath.subscription, makeAppRequestHandler(subscription, app));
   router.post(ApiPath.subscriptionConfirmation, makeAppRequestHandler(subscriptionConfirmation, app));
   router.post(ApiPath.unsubscription, makeAppRequestHandler(unsubscription, app));
-  router.post(ApiPath.registration, makeAppRequestHandler(registration, app));
-  router.post(ApiPath.registrationConfirmation, makeAppRequestHandler(registrationConfirmation, app));
-  router.post(ApiPath.authentication, makeAppRequestHandler(authentication, app));
-  router.post(ApiPath.requestPasswordReset, makeAppRequestHandler(requestPasswordReset, app));
-  router.post(ApiPath.confirmPasswordReset, makeAppRequestHandler(confirmPasswordReset, app));
+  // The unauthenticated endpoints are rate-limited per client IP: the password
+  // paths each cost ~135ms of scrypt on a one-vCPU box, and request-password-reset
+  // sends mail to a third party. See rate-limiting.ts for how the client IP is
+  // resolved and why the in-memory store assumes a single api process.
+  router.post(ApiPath.registration, makeRateLimiter(5, hour), makeAppRequestHandler(registration, app));
+  router.post(
+    ApiPath.registrationConfirmation,
+    makeRateLimiter(20, 15 * minute),
+    makeAppRequestHandler(registrationConfirmation, app)
+  );
+  router.post(ApiPath.authentication, makeRateLimiter(20, 15 * minute), makeAppRequestHandler(authentication, app));
+  router.post(ApiPath.requestPasswordReset, makeRateLimiter(5, hour), makeAppRequestHandler(requestPasswordReset, app));
+  router.post(
+    ApiPath.confirmPasswordReset,
+    makeRateLimiter(20, 15 * minute),
+    makeAppRequestHandler(confirmPasswordReset, app)
+  );
   router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app));
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
   router.post(ApiPath.requestAccountEmailChange, makeAppRequestHandler(requestAccountEmailChange, app));
