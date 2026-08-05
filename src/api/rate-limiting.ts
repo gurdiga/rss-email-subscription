@@ -6,6 +6,10 @@ import { makeCustomLoggers } from '../shared/logging';
 export const minute = 60 * 1000;
 export const hour = 60 * minute;
 
+// Shared bucket for requests whose client could not be identified. Not a valid
+// IP, so it can never collide with a real client’s key.
+const unidentifiedClientKey = 'EMPTY_ip';
+
 /**
  * Per-IP rate limiter for the unauthenticated endpoints.
  *
@@ -26,7 +30,7 @@ export function makeRateLimiter(limit: number, windowMs: number): RequestHandler
   return rateLimit({
     windowMs,
     limit,
-    keyGenerator: getClientIp,
+    keyGenerator: getClientKey,
     handler: sendTooManyRequests,
     standardHeaders: true,
     legacyHeaders: false,
@@ -47,6 +51,10 @@ function isRateLimitingDisabled(): boolean {
 }
 
 /**
+ * The bucket key for a request, which is not always an address: ipKeyGenerator
+ * masks IPv6 down to a /56 subnet, and an unidentifiable client gets the shared
+ * sentinel below.
+ *
  * Express’s req.ip is nginx’s container address for every request: the api is
  * only reachable through nginx, which sets X-Real-IP to $remote_addr and sets
  * no X-Forwarded-For (website/nginx/conf.d/website.conf). Keying on req.ip
@@ -57,9 +65,26 @@ function isRateLimitingDisabled(): boolean {
  * client-controlled — as long as the api container publishes no host port. The
  * req.ip fallback is for local dev, where there is no proxy.
  */
-function getClientIp(req: Parameters<RequestHandler>[0]): string {
-  const realIp = req.headers['x-real-ip'];
-  const ip = (Array.isArray(realIp) ? realIp[0] : realIp) || req.ip || 'EMPTY_ip';
+function getClientKey(req: Parameters<RequestHandler>[0]): string {
+  const ip = resolveClientIp(req);
+
+  if (!ip) {
+    // Should not happen behind nginx, which always sets X-Real-IP, nor locally,
+    // where express fills in req.ip from the socket. Warn rather than key
+    // silently: everything landing here shares one bucket, so unrelated clients
+    // would start 429ing each other for no visible reason. This is also the
+    // diagnostic express-rate-limit raises as ERR_ERL_UNDEFINED_IP_ADDRESS from
+    // its default keyGenerator — a custom keyGenerator opts out of that check.
+    const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
+
+    logWarning('Could not identify the client; falling back to a shared bucket', {
+      path: req.originalUrl,
+      hasRealIpHeader: 'x-real-ip' in req.headers,
+      reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
+    });
+
+    return unidentifiedClientKey;
+  }
 
   return ipKeyGenerator(ip);
 }
@@ -69,7 +94,7 @@ function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
 
   logWarning('Rate limit exceeded', {
     path: req.originalUrl,
-    ip: getClientIp(req),
+    ip: resolveClientIp(req) || unidentifiedClientKey,
     reqId: req.get('X-Request-ID') || 'EMPTY_X-Request-ID',
   });
 
@@ -77,4 +102,10 @@ function sendTooManyRequests(...[req, res]: Parameters<RequestHandler>): void {
   // on it, and several exhaustiveness-check the response and would throw on a
   // shape they don’t know.
   res.status(429).json(makeAppError('Too many attempts. Please wait a few minutes and try again.'));
+}
+
+function resolveClientIp(req: Parameters<RequestHandler>[0]): string | undefined {
+  const realIp = req.headers['x-real-ip'];
+
+  return (Array.isArray(realIp) ? realIp[0] : realIp) || req.ip;
 }
