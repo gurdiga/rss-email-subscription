@@ -34,6 +34,20 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 The working directory is always the project root. Use plain `git` commands without `-C`; no need for absolute path workarounds in git operations.
 
+## Running the Integration Tests
+
+`make test` runs the unit suite only — it does **not** cover `api-test.spec.ts`. A green unit run says nothing about the integration tests.
+
+Those need the containerized stack:
+
+```bash
+make start-api   # blocks — run it in its own terminal
+make api-test
+make stop        # tear the stack down afterwards
+```
+
+`start-api` runs `docker compose up` without `--detach`, so it stays in the foreground rather than returning. Nothing brings the containers down when the tests finish, which makes `make stop` required cleanup rather than a nicety.
+
 ## SSH Connections to Production
 
 When operating on prod (feedsubscription.com), always use persistent SSH connections via ControlMaster to improve performance and reduce authentication overhead.
