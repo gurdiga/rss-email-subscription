@@ -98,14 +98,14 @@ function warnMissingRealIp(req: Parameters<RequestHandler>[0]): void {
     return;
   }
 
-  missingRealIpWasLogged = true;
-
   const { logWarning } = makeCustomLoggers({ module: 'rate-limiting' });
 
   logWarning('No X-Real-IP: keying on req.ip, which behind nginx is one shared bucket', {
     path: req.originalUrl,
     reqIp: req.ip || 'EMPTY_req.ip',
   });
+
+  missingRealIpWasLogged = true;
 }
 
 function getRealIpHeader(req: Parameters<RequestHandler>[0]): string | undefined {
