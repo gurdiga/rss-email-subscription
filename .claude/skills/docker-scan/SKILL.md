@@ -176,7 +176,7 @@ For Python packages, check if the application actually uses them:
 
 ### Step 5: Generate report
 
-Create `image-check-YYYY-MM-DD.md` with today's date.
+Create `docker-scan-YYYY-MM-DD.md` with today's date, in the repo root.
 
 **Summary table**:
 ```markdown
@@ -198,9 +198,11 @@ Create `image-check-YYYY-MM-DD.md` with today's date.
 
 ### Step 6: Compare with previous scan (optional)
 
-Look for the most recent previous report:
+Look for the most recent previous report. Reports were named `image-check-*.md`
+before 2026-08-08, so match both, and check `.tmp/` — the one pre-2026-08-08
+report that survives sits there and is gitignored:
 ```bash
-ls -1t image-check-*.md | head -5
+ls -1t docker-scan-*.md image-check-*.md .tmp/image-check-*.md 2>/dev/null | head -5
 ```
 
 Identify new CVEs, fixed CVEs, and count changes since last scan.
