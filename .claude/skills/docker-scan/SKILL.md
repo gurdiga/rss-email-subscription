@@ -20,10 +20,61 @@ Use this skill when the user:
 **Always scan the prod server images directly** — images are built on prod and some
 update system packages at build time, so a local rebuild would not reflect prod state.
 
+The script takes an optional `prod` (default) or `local` argument. `local` scans
+the local Docker daemon's images; use it only to exercise the script or when prod
+is unreachable, and label any report produced from it as non-authoritative.
+
+## Prod prerequisites
+
+Two independent things must hold on prod. Both were broken until 2026-08-08, and
+each fails with a message that does not name the real cause.
+
+**1. Docker Hub credentials.** `docker scout` uploads an image index to Docker's
+backend and gets advisories back, so it needs an authenticated account. Without
+it: `please login using Docker Desktop or 'docker login' command`.
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  "grep -q index.docker.io ~/.docker/config.json && echo 'logged in' || echo 'NOT logged in'"
+```
+
+Prod has no credential helper, so the token is stored base64-encoded (not
+encrypted) in `/root/.docker/config.json`.
+
+**2. A current scout binary.** It is hand-installed at
+`~/.docker/cli-plugins/docker-scout` and does not auto-update. v0.15.0 sat there
+from 2023 to 2026 and could not export images from Docker 29, failing with
+`could not read image: ... blobs/sha256/...: no such file or directory` — which
+looks like a disk problem and is not one. The script warns when prod reports v0.x.
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com "docker scout version"
+```
+
+To upgrade (check the latest tag at `docker/scout-cli/releases`):
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com 'set -e
+cd /tmp
+V=1.24.0
+curl -fsSL -O https://github.com/docker/scout-cli/releases/download/v$V/docker-scout_${V}_linux_amd64.tar.gz
+curl -fsSL -O https://github.com/docker/scout-cli/releases/download/v$V/docker-scout_${V}_checksums.txt
+grep docker-scout_${V}_linux_amd64.tar.gz docker-scout_${V}_checksums.txt | sha256sum -c -
+mkdir -p scout-extract && tar -xzf docker-scout_${V}_linux_amd64.tar.gz -C scout-extract
+install -m 0755 scout-extract/docker-scout ~/.docker/cli-plugins/docker-scout
+docker scout version
+rm -rf scout-extract docker-scout_${V}_*'
+```
+
+The asset is named `docker-scout_<version>_checksums.txt`, not `checksums.txt`.
+
 ## Scan results
 
 The bundled script handles SSH ControlMaster setup, image discovery from the Makefile,
-and running scans in batches of 4 to avoid BuildKit cache conflicts:
+and running scans in batches of 4 to limit cache contention. Images whose scan
+produced no summary are retried once sequentially (reported as `[retry] <image>`
+on stderr), which clears the scout index-cache lock conflicts that concurrency
+causes:
 
 ```!
 ${CLAUDE_SKILL_DIR}/scripts/scan-images.sh
@@ -42,11 +93,16 @@ Each image section shows counts in this format:
   LOW       3
 ```
 
-If any image shows `(no output)`, re-run that image's scan manually:
+If an image shows `(no summary — scan failed)`, the last lines of the raw scout
+output are printed underneath it — read those first. If they are inconclusive,
+re-run that image's scan manually without the filter:
 ```bash
 ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
-  "docker scout cves <image>:latest 2>&1 | grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' | tail -5"
+  "docker scout cves <image>:latest 2>&1 | tail -30"
 ```
+
+If *every* image failed, it is an environment problem, not an image problem —
+see the Docker Hub login prerequisite above.
 
 ### Step 2: Get HIGH/CRITICAL package details
 
@@ -202,9 +258,23 @@ RUN apt-get update && apt-get upgrade -y && rm -rf /var/lib/apt/lists/*
 ssh -M -S ~/.ssh/control-feedsubscription -o ControlPersist=10m -fN feedsubscription.com
 ```
 
+**All scans fail with `please login`**: prod has no Docker Hub credentials — see
+the prerequisites section above.
+
+**Scans fail with `could not read image: ... no such file or directory`**: prod's
+scout binary is too old for the running Docker daemon. Not a disk-space problem.
+Upgrade it — see the prerequisites section above.
+
+**Editing `scan-images.sh`**: it runs under macOS `/bin/bash`, which is 3.2. No
+associative arrays (`declare -A`), and never use `(( i++ ))` as a statement — it
+returns 1 when `i` is 0 and `set -e` aborts the run. Syntax-check with
+`/bin/bash -n scripts/scan-images.sh`.
+
 **Cache conflict / empty output from background scan**:
-Run at most 4 scans concurrently. If a scan produces empty output, re-run it
-sequentially after the others complete.
+`failed to index image: failed to initialize cache: cache may be in use by
+another process` means concurrent scans fought over scout's single-writer index
+cache. The script already retries those sequentially; if a retry also fails,
+lower `BATCH_SIZE` in `scripts/scan-images.sh`.
 
 **`grep "vulnerabilities │"` produces no output**:
 Scout's output format does not use `│` in the summary line. Use instead:
