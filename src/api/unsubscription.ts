@@ -69,7 +69,7 @@ export const unsubscription: AppRequestHandler = async function unsubscription(
     return makeAppError();
   }
 
-  logInfo('Unsubscribed', { feedId: feedId.value, email: existingEmail.emailAddress.value, emailHash });
+  logInfo('Unsubscribed', { feedId: feedId.value, email: existingEmail.emailAddress.value });
 
   return makeSuccess('Your have been unsubscribed. Sorry to see you go! 👋🙂');
 };
