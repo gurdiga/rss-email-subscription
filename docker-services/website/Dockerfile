@@ -1,5 +1,10 @@
 FROM nginx:1.27.5-alpine3.21
 
+# curl ships in the nginx base image, so dropping it from the apk add below is
+# not enough — it has to be deleted explicitly. Nothing here uses it: nginx does
+# not link libcurl, no healthcheck or script calls it, and libcurl's only
+# reverse dependency is curl itself, so both go. Alpine 3.21 has no fix for its
+# CVEs (2 CRITICAL, 4 HIGH), which is why removal rather than a pin is the fix.
 RUN apk update --no-cache \
  && apk upgrade --no-cache \
  && apk add --no-cache --upgrade \
@@ -8,4 +13,5 @@ RUN apk update --no-cache \
     'expat=2.8.2-r0' \
     'tiff=4.7.1-r0' \
     'libpng=1.6.57-r0' \
-    'c-ares=1.34.8-r0'
+    'c-ares=1.34.8-r0' \
+ && apk del curl
