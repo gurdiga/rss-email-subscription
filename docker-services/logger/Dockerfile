@@ -5,11 +5,15 @@ EXPOSE 514/udp 601/tcp 6514/tcp
 
 RUN apk update --no-cache && apk upgrade --no-cache
 
-# curl is deliberately absent: its CVEs are unfixed upstream at every version
-# alpine ships, and nothing here invokes it. Scout scores the CLI and the
-# library separately — the CLI held 3C/3H while libcurl is clean. syslog-ng
-# needs only libcurl, for its http() destination, and apk pulls that in as a
-# dependency.
+# curl is deliberately absent: nothing here invokes it, and syslog-ng needs only
+# libcurl (for its http() destination), which apk pulls in as a dependency.
+#
+# This does NOT reduce the CVE count, so don't "fix" it by reinstalling curl and
+# pinning: Scout attributes libcurl's vulnerabilities to the curl source
+# package, so the findings persist as long as libcurl does. They are unfixed
+# upstream at every version alpine ships — 8.20.0-r0 carries three CRITICALs,
+# two of which 8.14.1-r2 also had. Omitting the binary only trims attack
+# surface. website:latest can reach zero here because nginx needs no libcurl.
 RUN apk add --no-cache \
   busybox=1.37.0-r30 \
   openssl=3.5.7-r0 \
