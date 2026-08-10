@@ -42,9 +42,9 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     expect(accountExists(storage, accountId)).to.be.true;
   });
 
-  // Accounts predating confirmationTimestamp have no such field while being perfectly
-  // legitimate — prod has four, two of them paying subscribers. The plan check is what
-  // keeps the age check from sweeping them up.
+  // Accounts predating confirmationTimestamp have no such field while carrying a real
+  // plan ID rather than PendingPayment — prod has four. The plan check is what keeps the
+  // age check from sweeping them up.
   it('never deletes an old unconfirmed account on a plan other than PendingPayment', async () => {
     const storage = makeTestStorageFromSnapshot({});
     const legacy = staleUnconfirmed({ planId: PlanId.Courage, creationTimestamp: daysAgo(900) });

@@ -80,7 +80,7 @@ Two things follow, and they set the shape of the whole change.
 
 **A secret-driven sweep has nothing to iterate.** Since `176efb1`, `expireConfirmationSecrets` has been deleting registration secrets at 48 hours without touching accounts. Every unconfirmed registration since then is now an account with no secret, and no secret-keyed sweep will ever reach it again. Extending `expireConfirmationSecrets` would leave all 68 stuck accounts in place and only help future registrations. So sweep `/accounts` by age instead.
 
-**`confirmationTimestamp === undefined` is not a safe predicate on its own.** The four pre-2026 unconfirmed accounts predate the confirmation flow; two are on `courage`. An age-based sweep keyed only on the missing timestamp would delete a paying subscriber. The sweep must also require `planId === PlanId.PendingPayment`, which excludes all four.
+**`confirmationTimestamp === undefined` is not a safe predicate on its own.** The four pre-2026 unconfirmed accounts predate the confirmation flow and carry real plan IDs — two on `courage`, two on `free` — rather than `pending_payment`. Two of them have a stored card. An age-based sweep keyed only on the missing timestamp would delete accounts that have nothing to do with the flow this job exists to clean up. The sweep must also require `planId === PlanId.PendingPayment`, which excludes all four.
 
 ### Three corrections to the sections above
 
@@ -170,16 +170,18 @@ The first cron tick after deploy deletes 68 prod accounts irreversibly.
 
 None of these is caused by this change, and none is fixed by it.
 
-**Three real users cannot log in.** `checkCredentials` refuses any account without a `confirmationTimestamp` (`authentication.ts:76-85`), and four accounts predate the field:
+**Four accounts have no `confirmationTimestamp` and so can never be logged into.** `checkCredentials` refuses any such account (`authentication.ts:76-85`). Checked against Stripe on 2026-08-10 — these predate Paddle, which replaced Stripe in `4c63080` on 2026-05-19 with no customer migration, so Paddle knows nothing about any of them:
 
-| plan | created | email |
-| --- | --- | --- |
-| courage | 2024-02-13 | don-san-talks@pm.me |
-| free | 2023-06-13 | aglae25@hotmail.com |
-| free | 2023-06-07 | jokaing@outlook.com |
-| courage | 2023-06-23 | test@gurdiga.com (own test account) |
+| plan | created | email | Stripe |
+| --- | --- | --- | --- |
+| courage | 2024-02-13 | don-san-talks@pm.me | customer + cancelled subscription, **no charges ever** |
+| free | 2023-06-13 | aglae25@hotmail.com | no customer |
+| free | 2023-06-07 | jokaing@outlook.com | no customer |
+| courage | 2023-06-23 | test@gurdiga.com | own test account |
 
-So one paying Courage subscriber and two Free users are locked out of their accounts and have been for years. None has any feed, which is consistent with never having got in. This wants a one-off backfill of `confirmationTimestamp`, not a code change.
+None of them is a locked-out paying customer, which was the initial reading and was wrong. `don-san-talks@pm.me` is a typo: that address registered at 23:26:35, and `don-san-talk@pm.me` — same Mastercard ••••9634 — registered at 23:29:27 and confirmed 18 seconds later. The working account paid twice, $5 in March and $5 in April 2024, and its subscription is cancelled now. The unconfirmed twin was never charged. Its `courage` planId is stale local state from a Stripe subscription that was created and cancelled without ever billing.
+
+So there is nothing to repair here. If anything these four are deletion candidates, not backfill candidates — and the sweep will not touch them, because none is on `pending_payment`.
 
 **`confirmAccountBySecret` reports success on a deleted account.** It checks `isErr(confirmAccountResult)` at `registration.ts:361` but not `isAccountNotFound` — and `confirmAccount` returns `AccountNotFound`, which is not an `Err`. So a confirmation link whose account is gone deletes the secret, calls `initSession` on a dead `accountId`, and tells the user “Account registration confirmed.” Scheduling the sweep after the secret expiry keeps this change from widening the window, but the missing check is independently wrong.
 
