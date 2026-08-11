@@ -1,4 +1,3 @@
-import { Paddle } from '@paddle/paddle-node-sdk';
 import { expect } from 'chai';
 import { Account, AccountData, AccountId } from '../../domain/account';
 import { accountExists, storeAccount } from '../../domain/account-storage';
@@ -17,7 +16,9 @@ import {
 } from '../../shared/test-utils';
 import { deleteStaleUnconfirmedAccounts, unconfirmedAccountLifetimeMs } from './index';
 
-const paddle = {} as Paddle;
+// The Paddle constructor only wires up resource objects, so a dummy key costs nothing and
+// reaches no network; every test stubs the one call that would.
+const env = { PADDLE_API_KEY: 'test-api-key', PADDLE_ENVIRONMENT: 'sandbox' } as const;
 
 describe(deleteStaleUnconfirmedAccounts.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
@@ -26,7 +27,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const storage = makeTestStorageFromSnapshot({});
     const accountId = storeTestAccount(storage, staleUnconfirmed());
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, nothingToCancel);
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel);
 
     expect(accountExists(storage, accountId)).to.be.false;
   });
@@ -37,7 +38,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const storage = makeTestStorageFromSnapshot({});
     const accountId = storeTestAccount(storage, staleUnconfirmed({ confirmationTimestamp: daysAgo(2) }));
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, nothingToCancel);
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -50,7 +51,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const legacy = staleUnconfirmed({ planId: PlanId.Courage, creationTimestamp: daysAgo(900) });
     const accountId = storeTestAccount(storage, legacy);
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, nothingToCancel);
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -59,7 +60,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const storage = makeTestStorageFromSnapshot({});
     const accountId = storeTestAccount(storage, staleUnconfirmed({ creationTimestamp: hoursAgo(1) }));
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, nothingToCancel);
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -72,7 +73,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
 
     storage.storeItem(getFeedJsonStorageKey(accountId, feedId), { displayName: 'Test' });
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, nothingToCancel);
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -82,7 +83,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const accountId = storeTestAccount(storage, staleUnconfirmed());
     const cancelFails = async () => makeErr('Paddle is down');
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, cancelFails);
+    await deleteStaleUnconfirmedAccounts(storage, env, cancelFails);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -95,7 +96,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     const accountId = storeTestAccount(storage, staleUnconfirmed());
     const cancelSucceeds = async () => undefined;
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, cancelSucceeds);
+    await deleteStaleUnconfirmedAccounts(storage, env, cancelSucceeds);
 
     expect(accountExists(storage, accountId)).to.be.true;
   });
@@ -107,7 +108,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
 
     storeTestAccount(storage, account);
 
-    await deleteStaleUnconfirmedAccounts(storage, paddle, async (_paddle, email: EmailAddress) => {
+    await deleteStaleUnconfirmedAccounts(storage, env, async (_paddle, email: EmailAddress) => {
       askedAbout.push(email.value);
       return { kind: 'NothingToCancel' as const };
     });

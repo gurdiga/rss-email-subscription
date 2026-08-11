@@ -15,7 +15,6 @@ import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
 import { deleteStaleUnconfirmedAccounts } from './unconfirmed-accounts-cleanup';
 import { startCronJob } from '../shared/cron-utils';
-import { makePaddle } from '../api/payment-integration';
 import { makePaddleEnvironment } from '../domain/payment';
 
 function main() {
@@ -36,6 +35,8 @@ function main() {
     return;
   }
 
+  // requireEnv types PADDLE_ENVIRONMENT without checking it, so validate here rather than
+  // let a typo surface six hours later as a failing sweep.
   const paddleEnvironment = makePaddleEnvironment(env.PADDLE_ENVIRONMENT);
 
   if (isErr(paddleEnvironment)) {
@@ -52,15 +53,13 @@ function main() {
     return;
   }
 
-  const paddle = makePaddle(env.PADDLE_API_KEY, paddleEnvironment);
-
   const jobs = [
     startCronJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startCronJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
     // After the secret expiry above, deliberately. The other order would leave a window
     // where the account is gone but its secret is not, and confirmAccountBySecret reports
     // success on a missing account.
-    startCronJob('52 */6 * * *', () => deleteStaleUnconfirmedAccounts(storage, paddle)),
+    startCronJob('52 */6 * * *', () => deleteStaleUnconfirmedAccounts(storage, env)),
     startCronJob('5 5 * * *', () => logHeartbeat(logInfo)),
   ];
 

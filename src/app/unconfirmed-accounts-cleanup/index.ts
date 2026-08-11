@@ -1,5 +1,6 @@
 import { Paddle } from '@paddle/paddle-node-sdk';
-import { cancelCustomerSubscription, isNothingToCancel } from '../../api/payment-integration';
+import { AppEnv } from '../../api/init-app';
+import { cancelCustomerSubscription, isNothingToCancel, makePaddle } from '../../api/payment-integration';
 import { Account, AccountId, isAccountNotFound } from '../../domain/account';
 import { deleteAccount, getAccountIdList, loadAccount } from '../../domain/account-storage';
 import { confirmationSecretLifetimeMs } from '../../domain/confirmation-secrets';
@@ -21,15 +22,20 @@ import { si } from '../../shared/string-utils';
 // secret-driven sweep would have nothing to iterate.
 export const unconfirmedAccountLifetimeMs = confirmationSecretLifetimeMs;
 
+// Only the two fields the Paddle client needs, rather than the whole AppEnv: the sweep
+// touches nothing else, and a spec shouldn't have to invent an SMTP string to call it.
+type PaddleEnv = Pick<AppEnv, 'PADDLE_API_KEY' | 'PADDLE_ENVIRONMENT'>;
+
 // Awaits and returns, unlike expireConfirmationSecrets, which leaves logDuration dangling
 // and forces its spec to drain the microtask queue instead. This one awaits Paddle, so a
 // caller that can't await it would observe the sweep before it has deleted anything.
 export async function deleteStaleUnconfirmedAccounts(
   storage: AppStorage,
-  paddle: Paddle,
+  env: PaddleEnv,
   cancelFn = cancelCustomerSubscription
 ): Promise<void> {
   const logData = { module: deleteStaleUnconfirmedAccounts.name };
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
 
   await logDuration('Unconfirmed accounts cleanup', logData, async () => {
     const { logError, logWarning, logInfo } = makeCustomLoggers(logData);
