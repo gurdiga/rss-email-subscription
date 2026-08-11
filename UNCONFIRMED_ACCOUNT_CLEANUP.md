@@ -80,7 +80,7 @@ Two things follow, and they set the shape of the whole change.
 
 **A secret-driven sweep has nothing to iterate.** Since `176efb1`, `expireConfirmationSecrets` has been deleting registration secrets at 48 hours without touching accounts. Every unconfirmed registration since then is now an account with no secret, and no secret-keyed sweep will ever reach it again. Extending `expireConfirmationSecrets` would leave all 68 stuck accounts in place and only help future registrations. So sweep `/accounts` by age instead.
 
-**`confirmationTimestamp === undefined` is not a safe predicate on its own.** The four pre-2026 unconfirmed accounts predate the confirmation flow and carry real plan IDs — two on `courage`, two on `free` — rather than `pending_payment`. Two of them have a stored card. An age-based sweep keyed only on the missing timestamp would delete accounts that have nothing to do with the flow this job exists to clean up. The sweep must also require `planId === PlanId.PendingPayment`, which excludes all four.
+**`confirmationTimestamp === undefined` is not a safe predicate on its own.** The four pre-2026 unconfirmed accounts predate the confirmation flow and carry real plan IDs — two on `courage`, two on `free` — rather than `pending_payment`. An age-based sweep keyed only on the missing timestamp would delete accounts that have nothing to do with the flow this job exists to clean up. The sweep must also require `planId === PlanId.PendingPayment`, which excludes all four.
 
 ### Three corrections to the sections above
 

@@ -155,8 +155,8 @@ async function deleteAccountIfStaleUnconfirmed(
 
 // PendingPayment is what registration writes and what the payment webhook clears, so it
 // pins the account to the post-176efb1 registration flow. Accounts predating
-// confirmationTimestamp also lack the field, while carrying real plan IDs and in some
-// cases a stored card; the missing timestamp alone would sweep them up too.
+// confirmationTimestamp also lack the field while carrying a real plan ID, which puts
+// them outside that flow entirely; the missing timestamp alone would sweep them up too.
 function isStaleUnconfirmed(account: Account): boolean {
   return (
     account.confirmationTimestamp === undefined &&
