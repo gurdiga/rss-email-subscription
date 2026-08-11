@@ -13,17 +13,34 @@ import { isErr } from '../shared/lang';
 import { logDuration, logHeartbeat, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
+import { deleteStaleUnconfirmedAccounts } from './unconfirmed-accounts-cleanup';
 import { startCronJob } from '../shared/cron-utils';
+import { makePaddleEnvironment } from '../domain/payment';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
 
   logInfo(si`Starting cron in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
 
-  const env = requireEnv<AppEnv>(['DATA_DIR_ROOT', 'DOMAIN_NAME', 'SMTP_CONNECTION_STRING']);
+  const env = requireEnv<AppEnv>([
+    'DATA_DIR_ROOT',
+    'DOMAIN_NAME',
+    'SMTP_CONNECTION_STRING',
+    'PADDLE_API_KEY',
+    'PADDLE_ENVIRONMENT',
+  ]);
 
   if (isErr(env)) {
     logError('Invalid environment', { reason: env.reason });
+    return;
+  }
+
+  // requireEnv types PADDLE_ENVIRONMENT without checking it, so validate here rather than
+  // let a typo surface six hours later as a failing sweep.
+  const paddleEnvironment = makePaddleEnvironment(env.PADDLE_ENVIRONMENT);
+
+  if (isErr(paddleEnvironment)) {
+    logError(paddleEnvironment.reason);
     return;
   }
 
@@ -39,6 +56,10 @@ function main() {
   const jobs = [
     startCronJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startCronJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
+    // After the secret expiry above, deliberately. The other order would leave a window
+    // where the account is gone but its secret is not, and confirmAccountBySecret reports
+    // success on a missing account.
+    startCronJob('52 */6 * * *', () => deleteStaleUnconfirmedAccounts(storage, env)),
     startCronJob('5 5 * * *', () => logHeartbeat(logInfo)),
   ];
 

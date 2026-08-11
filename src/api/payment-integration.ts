@@ -380,7 +380,14 @@ export async function getPaymentMethodUpdateTransaction(
   return makePaddleTransactionId(transaction.id);
 }
 
-export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAddress): Promise<Result<void>> {
+// Absence of anything to cancel is reported as NothingToCancel rather than Err. Callers
+// differ on what it means: for a user-initiated deletion it is the expected case, but on
+// the paid-to-free path a missing subscription is a real problem. Folding both into Err
+// made every caller guess from the message text.
+export async function cancelCustomerSubscription(
+  paddle: Paddle,
+  email: EmailAddress
+): Promise<Result<NothingToCancel | void>> {
   const customer = await findPaddleCustomerByEmail(paddle, email);
 
   if (isErr(customer)) {
@@ -388,7 +395,7 @@ export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAdd
   }
 
   if (isCustomerNotFound(customer)) {
-    return makeErr(si`Customer not found for email "${email.value}"`);
+    return makeNothingToCancel();
   }
 
   const subscriptionsPage = await asyncAttempt(() =>
@@ -407,7 +414,7 @@ export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAdd
   const subscription = subscriptionsPage[0];
 
   if (!subscription) {
-    return makeErr(si`No active subscription found to cancel for "${email.value}"`);
+    return makeNothingToCancel();
   }
 
   const result = await asyncAttempt(() =>
@@ -417,6 +424,18 @@ export async function cancelCustomerSubscription(paddle: Paddle, email: EmailAdd
   if (isErr(result)) {
     return makeErr(si`Failed to paddle.subscriptions.cancel("${subscription.id}"): ${result.reason}`);
   }
+}
+
+export interface NothingToCancel {
+  kind: 'NothingToCancel';
+}
+
+function makeNothingToCancel(): NothingToCancel {
+  return { kind: 'NothingToCancel' };
+}
+
+export function isNothingToCancel(value: unknown): value is NothingToCancel {
+  return hasKind(value, 'NothingToCancel');
 }
 
 type PaddlePriceId = string;

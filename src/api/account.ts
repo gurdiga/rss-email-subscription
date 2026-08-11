@@ -53,6 +53,7 @@ import {
   changeCustomerSubscription,
   createCustomerWithSubscription,
   getPaymentMethodUpdateTransaction,
+  isNothingToCancel,
   loadCardDescription,
   makePaddle,
 } from './payment-integration';
@@ -511,6 +512,8 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
         reason: cancelResult.reason,
         email: email.value,
       });
+    } else if (isNothingToCancel(cancelResult)) {
+      logInfo('No Paddle subscription to cancel for account deletion', { email: email.value });
     } else {
       logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, { email: email.value });
     }
@@ -663,6 +666,14 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
         reason: cancelResult.reason,
         email: email.value,
       });
+      return makeAppError();
+    }
+
+    // Downgrading a paid plan with no subscription behind it means the local plan and
+    // Paddle disagree; letting it report success would leave the account paid forever,
+    // since the plan only drops on the subscription.canceled webhook.
+    if (isNothingToCancel(cancelResult)) {
+      logError('No Paddle subscription to cancel on plan downgrade', { email: email.value, oldPlanId });
       return makeAppError();
     }
 
