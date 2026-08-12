@@ -1,6 +1,6 @@
 # Create the Paddle customer at confirmation, not at registration
 
-Plan written 2026-08-12. Everything below was checked against the tree and against prod; re-check anything that looks stale.
+Plan written 2026-08-12, revised after review. Everything below was checked against the tree and against prod; re-check anything that looks stale.
 
 ## What this changes for users, first
 
@@ -18,6 +18,10 @@ One thing not understood: customers track registrations about 1:1, but there are
 
 Scope note: this addresses the Paddle residue, not the signups themselves. 63 junk registrations in June 2026 would still be created and still be swept, just without costing a Paddle record. Signup abuse is separate follow-up work.
 
+## The invariant
+
+**No Paddle object exists for an email address until that address has been confirmed.** Everything below either implements that or protects it. The most valuable thing a reviewer can do is look for another route that reaches `createCustomerWithSubscription` without a `confirmationTimestamp`.
+
 ## The blocking gap: the chosen plan is stored nowhere
 
 `initAccount` writes `planId: PlanId.PendingPayment`. The plan the user actually picked survives only in Paddle’s transaction `customData.res_plan_id`, which is read back by `handleTransactionCompleted`. Defer the Paddle call and that information has to live somewhere of ours between registration and confirmation.
@@ -25,74 +29,97 @@ Scope note: this addresses the Paddle residue, not the signups themselves. 63 ju
 Two options:
 
 1. **In `RegistrationConfirmationSecretData`.** It already carries `accountId` and `email`, is written at registration and read at confirmation, and `makeRegistrationConfirmationSecretData` is a two-line change. But `confirmAccountBySecret` deletes the secret, so a user who confirms and then abandons checkout leaves no record of what they wanted.
-2. **A `requestedPlanId` field on the account.** Heavier — an `AccountData` addition, a `makeValues` entry in `loadAccount`, and tolerance for the 32 existing records that lack it — but it survives confirmation.
+2. **A `requestedPlanId` field on the account.** Heavier — an `AccountData` addition, a parse in `loadAccount`, and tolerance for the 32 existing records that lack it — but it survives confirmation.
 
-**Take option 2.** Under the new flow, “confirmed but not yet paid” stops being a rare accident and becomes the normal intermediate state that every single registration passes through. The record of what the user chose has to outlive the secret, or that state is a dead end.
+**Take option 2.** Under the new flow, “confirmed but not yet paid” stops being a rare accident and becomes the normal intermediate state that every registration passes through. The record of what the user chose has to outlive the secret, or that state is a dead end.
 
-## The dead end that has to be fixed in the same change
+## Four things that have to ship with this, not after it
 
-A confirmed `pending_payment` account currently cannot pay. In `requestAccountPlanChange`:
+These are not asides. Each one is load-bearing, and three of them were missed in the first draft of this plan.
+
+### 1. The plan-change endpoint is a dead end for pending accounts
+
+In `requestAccountPlanChange`:
 
 ```
 const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;   // account.ts:657
 ```
 
-With `oldPlanId` of `pending_payment` that is true, so the request takes the paid-to-paid branch at account.ts:681 and calls `changeCustomerSubscription`, which looks for an `active` or `trialing` subscription, finds none, and returns an `AppError`. The route is not behind `requirePaymentConfirmed` — it is registered at server.ts:121, before the middleware is even constructed at server.ts:134 — so the user reaches the endpoint and simply gets an error.
+With `oldPlanId` of `pending_payment` that is true, so the request takes the paid-to-paid branch at account.ts:681 and calls `changeCustomerSubscription`, which looks for an `active` or `trialing` subscription, finds none, and returns an `AppError`. The route is not behind `requirePaymentConfirmed` — it is registered at server.ts:121, before the middleware is constructed at server.ts:134 — so the user reaches the endpoint and simply gets an error.
 
-Today that is a rare corner. Under the new flow it is the only way back for anyone who confirms and abandons checkout, which will be a steady trickle. `requirePaymentConfirmed` also locks `pending_payment` accounts out of the feed endpoints, so such a user is shut out of the product with no route to pay.
+Today that is a rare corner. Under the new flow it is the only way back for anyone who confirms and abandons checkout. Fix: treat `PendingPayment` like `Free` here — no subscription exists yet, so it belongs on the `createCustomerWithSubscription` branch.
 
-Fix: treat `PendingPayment` like `Free` for this decision — no subscription exists yet, so it belongs on the `createCustomerWithSubscription` branch that returns a fresh checkout token, not the change-existing-subscription branch.
+### 2. …and fixing it opens a hole straight through the invariant
+
+`registration` calls `initSession` (registration.ts:116), so an unconfirmed registrant is *already authenticated*. `requestAccountPlanChange` never checks `confirmationTimestamp`. So the moment `PendingPayment` is routed to `createCustomerWithSubscription`, any client that registers and then POSTs the plan-change endpoint provisions a Paddle customer without ever opening the confirmation email — which is exactly the behaviour this whole change exists to stop, reachable by a bot in two requests.
+
+Fix: reject that branch when `confirmationTimestamp` is absent. Worth a test whose name says so, because the fix and the hole are one line apart.
+
+### 3. The account page hides the only control that reaches it
+
+`fillUi` hides `changePlanButton` whenever the plan is `PendingPayment` (web-ui/account.ts:442-446) and labels the plan “Payment pending”. So the recovery path in item 1 has no UI at all — the endpoint would be correct and unreachable. `web-ui/account.ts` has to expose a checkout for confirmed pending accounts, or the retry story is fiction.
+
+### 4. The confirmation email tells users they are finished
+
+`makeRegistrationConfirmationEmailContent` says that clicking the link completes registration and that they will then be able to register a feed (registration.ts:201-204). After the cutover the link starts a checkout, and feeds stay blocked by `requirePaymentConfirmed` until payment lands. The copy has to change in the same phase as the behaviour.
 
 ## The change
 
-### Repo 1 — rss-email-subscription (API and web-ui TypeScript, manual deploy)
+### Repo 1 — rss-email-subscription: API *and* the web-ui bundle
 
-1. **`domain/account.ts` / `domain/account-storage.ts`** — add `requestedPlanId` to `Account` and `AccountData`, persist it in `storeAccount`, parse it in `loadAccount`. Must tolerate absence: all 32 existing accounts predate the field.
-2. **`api/registration.ts`, `registration`** — store `requestedPlanId` from the request in `initAccount`. Leave the `createCustomerWithSubscription` block and the returned `paymentToken` alone for now; removing them is Phase 3, and doing it earlier is the silent-revenue-loss trap described under Sequencing.
-3. **`api/registration.ts`, `registrationConfirmation`** — after `confirmAccountBySecret` succeeds, load the account, call `createCustomerWithSubscription` with `requestedPlanId`, and return the token in the response. A Paddle failure here must not un-confirm the account: confirm first, then attempt payment setup, and let the user retry through the account page if it fails.
-4. **`domain/account.ts`** — add `paymentToken` to the registration-confirmation response type.
-5. **`api/account.ts`** — route `PendingPayment` to the `createCustomerWithSubscription` branch in `requestAccountPlanChange`.
-6. **`web-ui/registration.ts`** — remove `makePaymentSubformHandle` and `maybeConfirmPayment`; on success just reveal the “check your email” message.
-7. **`web-ui/registration-confirmation.ts`** — add the subform handle and `maybeConfirmPayment`, driven by the token from the confirmation response. This page is currently a spinner and a message, so this is the largest single piece of new UI work.
-8. **Specs** — `registration.spec.ts` for the response shape and the stored `requestedPlanId`; `account.spec.ts` for the `PendingPayment` plan-change branch; `account-storage.spec.ts` for round-tripping an account with and without `requestedPlanId`.
+The web-ui JS is **not** served by the website repo. `/web-ui-scripts/` is proxied to the API container (`website/nginx/conf.d/website.conf:56-59`), so the bundle ships with `make app start` from here, atomically with the API. The copy under the Eleventy repo’s `src/web-ui-scripts/` is not what production serves. This is the single most important fact for sequencing, and the first draft of this plan got it wrong.
 
-### Repo 2 — feedsubscription.com (markup, auto-deploys on push)
+1. **`domain/plan.ts`** — add `makeOptionalPlanId` alongside `makePlanId`, shaped like `makeOptionalEmailAddress` (email-address-making.ts:8).
+2. **`domain/account.ts` / `domain/account-storage.ts`** — add `requestedPlanId` to `Account` (`PlanId | undefined`) and `AccountData` (`string | undefined`); persist in `storeAccount`, parse in `loadAccount` with the optional parser. `loadAccount` parses field by field rather than through `makeValues`. Must tolerate absence: all 32 existing accounts predate the field.
+3. **`api/registration.ts`, `registration`** — store `requestedPlanId` in `initAccount`; remove the `createCustomerWithSubscription` block and stop returning a real `paymentToken`.
+4. **`api/registration.ts`, `registrationConfirmation`** — after `confirmAccountBySecret` succeeds, load the account and call `createCustomerWithSubscription` with `requestedPlanId`. Return **both** `paymentToken` and `requestedPlanId`: `maybeConfirmPayment` takes a plan and silently no-ops when it is not a subscription plan (payment-integration.ts:156-168), and the account’s own `planId` is `pending_payment`, which would fail that test. Returning only the token would produce a page that opens no checkout and reports success.
+   - **Legacy branch:** a confirmation secret issued before this deploys names an account with no `requestedPlanId`. Confirmation must still succeed — confirm, delete the secret, return no token — because those users were already charged at registration under the old flow. Never fail the confirmation over a missing plan; the secret is single-use and the user cannot retry.
+   - A Paddle failure must not un-confirm the account. Confirm first, provision second, and let the user recover through the account page.
+5. **`api/account.ts`** — route `PendingPayment` to the `createCustomerWithSubscription` branch, **and** reject it when `confirmationTimestamp` is absent (items 1 and 2 above).
+6. **`web-ui/registration.ts`** — drop the payment subform handling and the `paymentSubform` entries from `requireUiElements`; on success just reveal the “check your email” message.
+7. **`web-ui/registration-confirmation.ts`** — add the subform handle and `maybeConfirmPayment`, driven by the `paymentToken` and `requestedPlanId` from the response. Currently a spinner and a message, so this is the largest piece of new UI work.
+8. **`web-ui/account.ts`** — expose a checkout control for confirmed `PendingPayment` accounts (item 3).
+9. **`api/registration.ts`** — update the confirmation email copy (item 4).
+10. **Specs** — `registration.spec.ts` for the response shape, the stored `requestedPlanId`, and the legacy no-plan confirmation path; `account.spec.ts` for the `PendingPayment` branch *and* its rejection when unconfirmed; `account-storage.spec.ts` for round-tripping with and without `requestedPlanId`.
 
-`website/html/` is gitignored here; the pages live in the sibling Eleventy repo at `~/src/feedsubscription.com`.
+### Repo 2 — feedsubscription.com: markup only (auto-deploys on push)
 
-9. **`src/pages/user/registration-confirmation.njk`** — add the subform markup, mirroring registration.html:297-300 (`#payment-subform-container` hidden, `#payment-subform.paddle-checkout`). The confirmation page’s CSP already allows `https://*.paddle.com` in `script-src` and `frame-src`, so no CSP change is needed — verified, do not re-check.
-10. **`src/pages/user/registration.njk`** — remove the subform markup.
-11. **`src/web-ui-scripts/`** — copy the rebuilt web-ui JS across. Eleventy passes this directory through (`.eleventy.js:28`); confirm what performs the copy, because it is a manual step in the runbook.
+`website/html/` is gitignored here; pages live at `~/src/feedsubscription.com/src/pages/user/`.
+
+11. **`registration-confirmation.njk`** — add the subform markup, mirroring registration.html:297-300 (`#payment-subform-container` hidden, `#payment-subform.paddle-checkout`). The page’s CSP already allows `https://*.paddle.com` in `script-src` and `frame-src` — verified, do not re-check.
+12. **`registration.njk`** — remove the subform markup, *after* the cutover.
 
 ## Sequencing
 
-The two repos deploy differently — this one by hand, the website repo automatically on push — so the phases have to be independently safe. The governing rule: **the switch-over must be the last and smallest step, not the first.**
+Two repos, two deploy models: this one by hand and atomically (API and bundle together), the website repo automatically on push. Both directions of mismatch break something, because `requireUiElements` fails hard on a missing element and calls `displayInitError`:
 
-There is a trap that makes the obvious ordering wrong. `maybeConfirmPayment` returns early on a falsy token (payment-integration.ts:166-168), so it is tempting to have registration return `paymentToken: ''` early and call that graceful. It is not graceful. The old registration page does not distinguish a skipped checkout from a completed one — after `maybeConfirmPayment` returns it runs `hideElement(form)` and `unhideElement(confirmationMessage)` regardless (web-ui/registration.ts:146-163). The user is told they are signed up, and no payment is ever collected. Nothing errors and nothing is logged. That is silent revenue loss, and it would last for however long the confirmation-page UI takes to build — which this plan already identifies as the largest piece of work here.
+- new JS + old markup → the confirmation page cannot find `#payment-subform` and dies on init
+- old JS + markup already removed from the registration page → the registration page dies on init
 
-So the phases are arranged to keep user-visible behavior unchanged until everything is in place:
+So the markup goes first, additively, and is removed last:
 
-**Phase 1 — API, deployed from here. No behavior change.** Land `requestedPlanId` persistence, the `requestAccountPlanChange` fix, and the confirmation endpoint creating the Paddle objects and returning a token. **Registration keeps calling `createCustomerWithSubscription` exactly as it does today.** The old registration page behaves identically; the old confirmation page ignores the new token field. Residue keeps accruing through this phase, which is fine — it has been accruing for months.
+**Step A — website repo, auto-deploys.** *Add* the subform markup to the confirmation page. Do not touch the registration page. The old confirmation JS never looks for the element, so this is inert in production.
 
-**Phase 2 — website repo, auto-deploys on push.** Subform markup moves from the registration page to the confirmation page, and the rebuilt web-ui JS goes across. The new flow now works end to end. Registration is still provisioning Paddle at this point, so between Phase 2 and Phase 3 each signup creates one customer and *two* draft transactions: one at registration that nobody opens, and one at confirmation that the user actually pays. `getOrCreatePaddleCustomer` reuses the existing customer by email rather than creating a second (payment-integration.ts:245-263), so this is one extra abandoned draft per signup and nothing worse. Keep the window short anyway.
+**Step B — this repo, one atomic deploy.** Everything in items 1-10: the API changes and the rebuilt bundle ship together in the same image. Registration stops provisioning Paddle, confirmation starts, both pages get their new JS, the account page gets its recovery control, the email copy changes. This is the moment behaviour changes, and it reverts by redeploying the previous image.
 
-**Phase 3 — one line, deployed from here.** Remove the `createCustomerWithSubscription` block from `registration`. This is the moment behavior actually changes, and it is a minutes-long deploy that can be reverted just as fast.
+**Step C — website repo, auto-deploys.** Remove the now-unused subform markup from the registration page.
 
-**Phase 4 — tidy-up.** Drop `paymentToken` from `RegistrationResponseData` once nothing reads it.
+There is no window in which Paddle is provisioned twice, and no window in which a page loads JS that its markup cannot satisfy. The cost is that Step B is a single big-bang switch of the money path rather than a gradual one — which is why the sandbox rehearsal below is not optional.
 
 ## Interaction with the cleanup sweep
 
-The sweep needs no change and stays correct. Unconfirmed accounts will simply have no Paddle objects, so `cancelCustomerSubscription` returns `NothingToCancel` trivially and the skip-on-live-subscription guard never fires.
+The sweep needs no change and stays correct. Unconfirmed accounts will have no Paddle objects at all, so `cancelCustomerSubscription` returns `NothingToCancel` trivially and the skip-on-live-subscription guard never fires.
 
-Known non-goal: the new **confirmed + `pending_payment` + never paid** population sits outside the sweep’s predicate, which requires `confirmationTimestamp === undefined`. Those accounts will accumulate. Deleting them is a different and more aggressive policy — they proved they own the address — so leave them, but expect them and decide later whether they deserve a nudge email rather than a sweep.
+Known non-goal: the **confirmed + `pending_payment` + never paid** population sits outside the sweep’s predicate, which requires `confirmationTimestamp === undefined`. Those accounts will accumulate. Deleting them is a different and more aggressive policy — they proved they own the address — so leave them, but expect them and decide later whether they deserve a nudge email rather than a sweep.
 
 ## Verification
 
-`make pre-commit`, and `make app` before committing. Beyond that, the parts worth exercising by hand, because no unit test covers them:
+`make pre-commit` and `make app` before committing. Then rehearse the whole flow in the Paddle sandbox before Step B, because Step B switches the money path in one go:
 
-- Register on a real plan and confirm the account is created with `requestedPlanId` and **no** Paddle customer appears.
-- Confirm by email and check that the checkout opens on the confirmation page and that `transaction.completed` upgrades the plan off `pending_payment`.
-- Abandon checkout at the confirmation step, then pay from the account page — this is the path that is broken today and the one most likely to regress.
-- Round-trip an existing account that has no `requestedPlanId` and confirm `loadAccount` still parses it.
+- Register on a real plan; confirm the account stores `requestedPlanId` and that **no Paddle customer exists** for that email.
+- Confirm by email; the checkout opens on the confirmation page and `transaction.completed` upgrades the plan off `pending_payment`.
+- Abandon the checkout, then pay from the account page — broken today, and the path most likely to regress.
+- Register, do **not** confirm, then POST the plan-change endpoint with the session registration handed out. No Paddle customer may appear. This is the invariant; test it deliberately.
+- Confirm an account created before the deploy, with no `requestedPlanId`: confirmation must succeed rather than error on a consumed secret.
 
-Sandbox is available: `PADDLE_ENVIRONMENT` supports it and the webhook already points at prod.
+`PADDLE_ENVIRONMENT` supports sandbox and the webhook already points at prod.
