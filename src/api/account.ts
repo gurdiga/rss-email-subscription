@@ -664,6 +664,19 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     );
   }
 
+  // Unhiding the change-plan button for PendingPayment put these accounts in front of the
+  // plan dropdown for the first time, and that dropdown offers Free. Switching to Free
+  // means cancelling a subscription, and a pending account has none, so it would reach
+  // cancelCustomerSubscription, come back NothingToCancel, and surface as an opaque
+  // AppError. There is nothing to cancel because there is nothing to pay yet.
+  if (oldPlanId === PlanId.PendingPayment && request.planId === PlanId.Free) {
+    logWarning('Attempting to switch to Free before paying', { email: email.value });
+    return makeInputError<keyof PlanChangeRequest>(
+      'There is no subscription to cancel yet. Pick a plan to finish signing up, or just leave it.',
+      'planId'
+    );
+  }
+
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   // PendingPayment means no subscription exists yet, so it needs a fresh checkout like Free

@@ -6,6 +6,7 @@ import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { hashingSalt, makeTestApp } from './test-utils';
 import { requestAccountPasswordChange, requestAccountPlanChange } from './account';
@@ -225,3 +226,25 @@ function loadPendingAccount(app: App): Account {
 
   return account;
 }
+
+// The change-plan button is newly visible for these accounts, and the dropdown it opens
+// offers Free. Without this branch the request would reach cancelCustomerSubscription,
+// find nothing to cancel, and surface as an opaque AppError.
+describe(si`${requestAccountPlanChange.name} switching to Free before paying`, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
+  it('explains there is nothing to cancel instead of failing opaquely', async () => {
+    const app = makeTestApp();
+    const accountId = storePendingAccount(app, { confirmationTimestamp: new Date() });
+
+    const response = await requestAccountPlanChange(
+      'req',
+      { planId: PlanId.Free },
+      {},
+      sessionFor(accountId.value, pendingEmail),
+      app
+    );
+
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+  });
+});
