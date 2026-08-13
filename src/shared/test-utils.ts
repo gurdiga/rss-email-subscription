@@ -28,7 +28,7 @@ import {
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
-import { PlanId, makePlanId } from '../domain/plan';
+import { PlanId, makeOptionalPlanId, makePlanId } from '../domain/plan';
 import { AppStorage, StorageKey, StorageValue, makeStorage } from '../domain/storage';
 import { si } from './string-utils';
 import { createElement } from '../web-ui/dom-isolation';
@@ -152,6 +152,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     hashedPassword: 'a'.repeat(hashedPasswordLength),
     creationTimestamp: new Date(),
     confirmationTimestamp: undefined,
+    requestedPlanId: undefined,
     isAdmin: false,
     ...customAccountData,
   };
@@ -162,6 +163,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
     confirmationTimestamp: accountData.confirmationTimestamp,
     creationTimestamp: accountData.creationTimestamp,
+    requestedPlanId: makeOptionalPlanId(accountData.requestedPlanId) as PlanId | undefined,
     isAdmin: !!accountData.isAdmin,
   };
 

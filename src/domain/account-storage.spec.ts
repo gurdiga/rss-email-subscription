@@ -55,6 +55,24 @@ describe(getAccountIdList.name, () => {
 });
 
 describe(loadAccount.name, () => {
+  // Every account that existed before registration started recording the requested plan
+  // has no such key on disk. Rejecting those would lock out every pre-existing user.
+  it('loads an account stored before requestedPlanId existed', () => {
+    const legacyAccountData = {
+      planId: PlanId.Free,
+      email: 'legacy@test.com',
+      hashedPassword: 'a'.repeat(hashedPasswordLength),
+      confirmationTimestamp: undefined,
+      creationTimestamp,
+      isAdmin: false,
+    };
+    const storage = makeTestStorage({ hasItem: makeStub(() => true), loadItem: makeStub(() => legacyAccountData) });
+    const result = loadAccount(storage, accountId, '/account');
+
+    expect(isErr(result), si`result: ${JSON.stringify(result)}`).to.be.false;
+    expect((result as Account).requestedPlanId).to.be.undefined;
+  });
+
   it('returns an Account value for the given account ID', () => {
     const storageKey = '/account';
     const accountData: AccountData = {
@@ -62,6 +80,7 @@ describe(loadAccount.name, () => {
       email: 'test@test.com',
       hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       creationTimestamp,
       isAdmin: false,
     };
@@ -76,6 +95,7 @@ describe(loadAccount.name, () => {
       hashedPassword: makeHashedPassword(accountData.hashedPassword) as HashedPassword,
       creationTimestamp,
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       isAdmin: false,
     };
 
@@ -97,6 +117,7 @@ describe(loadAccount.name, () => {
       email: 'not-an-email-really',
       hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       creationTimestamp,
       isAdmin: false,
     };
@@ -117,6 +138,7 @@ describe(loadAccount.name, () => {
       email: 'test@test.com',
       hashedPassword: 'la-la-la',
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       creationTimestamp,
       isAdmin: false,
     };
@@ -136,6 +158,7 @@ describe(storeAccount.name, () => {
       email: makeTestEmailAddress('test@test.com'),
       hashedPassword: makeHashedPassword('a'.repeat(hashedPasswordLength)) as HashedPassword,
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       creationTimestamp,
       isAdmin: false,
     };
@@ -157,6 +180,7 @@ describe(confirmAccount.name, () => {
       email: 'test@test.com',
       hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
+      requestedPlanId: undefined,
       creationTimestamp,
       isAdmin: true,
     };
@@ -178,6 +202,7 @@ describe(confirmAccount.name, () => {
       hashedPassword: accountData.hashedPassword,
       confirmationTimestamp,
       creationTimestamp,
+      requestedPlanId: undefined,
       isAdmin: true,
     };
 
@@ -215,6 +240,7 @@ describe(setAccountEmail.name, () => {
           email: newEmail.value,
           hashedPassword: account.hashedPassword.value,
           confirmationTimestamp: account.confirmationTimestamp,
+          requestedPlanId: undefined,
           creationTimestamp: account.creationTimestamp,
           isAdmin: account.isAdmin,
         },
@@ -277,6 +303,7 @@ function getAccountData(account: Account): AccountData {
     email: account.email.value,
     hashedPassword: account.hashedPassword.value,
     confirmationTimestamp: account.confirmationTimestamp,
+    requestedPlanId: undefined,
     creationTimestamp: account.creationTimestamp,
     isAdmin: account.isAdmin,
   };

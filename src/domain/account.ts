@@ -32,6 +32,10 @@ export interface Account {
   hashedPassword: HashedPassword;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
+  // The plan chosen at registration. planId stays PendingPayment until Paddle confirms
+  // payment, so without this the choice would be lost between registration and the
+  // checkout that now happens after email confirmation.
+  requestedPlanId: PlanId | undefined;
   isAdmin: boolean;
 }
 
@@ -41,6 +45,7 @@ export interface AccountData {
   hashedPassword: string;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
+  requestedPlanId: string | undefined;
   isAdmin: boolean | undefined;
 }
 
@@ -76,8 +81,13 @@ export interface RegistrationRequest {
 
 export type RegistrationRequestData = Record<keyof RegistrationRequest, string>;
 
-export interface RegistrationResponseData {
+export interface RegistrationConfirmationResponseData {
+  sessionId: string;
+  // Both are empty when there is nothing to pay for: a registration predating
+  // requestedPlanId, or a checkout that could not be started. The page treats that as
+  // "confirmed, no checkout" rather than as a failure.
   paymentToken: string;
+  planId: string;
 }
 
 export interface AuthenticationRequest {

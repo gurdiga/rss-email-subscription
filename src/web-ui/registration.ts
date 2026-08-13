@@ -1,8 +1,8 @@
-import { RegistrationRequest, RegistrationRequestData, RegistrationResponseData } from '../domain/account';
+import { RegistrationRequest, RegistrationRequestData } from '../domain/account';
 import { ApiPath } from '../domain/api-path';
 import { PagePath } from '../domain/page-path';
-import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
-import { isAppError, isInputError, isSuccess, makeInputError } from '../shared/api-response';
+import { PlanId, makePlanId } from '../domain/plan';
+import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import {
   AppStatusUiElements,
@@ -16,19 +16,13 @@ import {
   hideElement,
   isAuthenticated,
   onSubmit,
-  reportUnexpectedEmptyResponseData,
   requireQueryParams,
   requireUiElements,
   scrollToTop,
   sendApiRequest,
   unhideElement,
 } from './shared';
-import {
-  PaymentSubformHandle,
-  buildPlanDropdownOptions,
-  makePaymentSubformHandle,
-  maybeConfirmPayment,
-} from './payment-integration';
+import { buildPlanDropdownOptions } from './payment-integration';
 
 async function main() {
   if (isAuthenticated()) {
@@ -54,8 +48,6 @@ async function main() {
     submitButton: '#submit-button',
     appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
-    paymentSubform: '#payment-subform',
-    paymentSubformContainer: '#payment-subform-container',
     additionalActionsSection: '#additional-actions-section',
   });
 
@@ -64,19 +56,10 @@ async function main() {
     return;
   }
 
-  let planId = queryStringParams.plan ? makePlanId(queryStringParams.plan) : PlanId.Courage;
+  const planId = queryStringParams.plan ? makePlanId(queryStringParams.plan) : PlanId.Courage;
 
   if (isErr(planId)) {
     displayInitError(planId.reason);
-    return;
-  }
-
-  const paymentSubformHandle = await makePaymentSubformHandle(planId, uiElements.paymentSubform, () =>
-    clearValidationErrors(uiElements)
-  );
-
-  if (isErr(paymentSubformHandle)) {
-    displayInitError(paymentSubformHandle.reason);
     return;
   }
 
@@ -87,10 +70,10 @@ async function main() {
     return;
   }
 
-  initSubmitButton(uiElements, paymentSubformHandle);
+  initSubmitButton(uiElements);
 }
 
-function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: PaymentSubformHandle): void {
+function initSubmitButton(uiElements: RequiredUiElements): void {
   const { planDropdown, emailField, passwordField, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
   const { form, confirmationMessage, additionalActionsSection } = uiElements;
 
@@ -107,7 +90,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     };
 
     const path = ApiPath.registration;
-    const response = await asyncAttempt(() => sendApiRequest<RegistrationResponseData>(path, HttpMethod.POST, request));
+    const response = await asyncAttempt(() => sendApiRequest(path, HttpMethod.POST, request));
 
     if (isErr(response)) {
       displayCommunicationError(response, apiResponseMessage);
@@ -129,33 +112,13 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
       return;
     }
 
-    if (!response.responseData) {
-      const inputError = makeInputError('Error: Empty response');
-      displayValidationError(inputError, uiElements);
-      reportUnexpectedEmptyResponseData(path);
-      return;
-    }
-
     if (!isSuccess(response)) {
       exhaustivenessCheck(response);
     }
 
-    const { paymentToken } = response.responseData;
-    unhideElement(uiElements.paymentSubformContainer);
-    hideElement(uiElements.submitButton);
-    const finishPaymentResult = await maybeConfirmPayment<keyof RequiredUiElements>(
-      paymentSubformHandle,
-      planId,
-      paymentToken,
-      'paymentSubform'
-    );
-
-    if (isInputError(finishPaymentResult)) {
-      displayValidationError(finishPaymentResult, uiElements);
-      paymentSubformHandle.focus();
-      return;
-    }
-
+    // Payment has moved to the confirmation page: nothing is charged until the address is
+    // confirmed, so registration now ends at "check your email".
+    hideElement(submitButton);
     hideElement(form);
     hideElement(additionalActionsSection);
 
@@ -165,7 +128,7 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
 }
 
 export async function initPlanDropdown(uiElements: RequiredUiElements, selectedPlanId: string): Promise<Result<void>> {
-  const { planDropdown, paymentSubformContainer } = uiElements;
+  const { planDropdown } = uiElements;
   const options = await buildPlanDropdownOptions(selectedPlanId);
 
   if (isErr(options)) {
@@ -174,32 +137,13 @@ export async function initPlanDropdown(uiElements: RequiredUiElements, selectedP
 
   planDropdown.replaceChildren(...options);
 
-  const togglePaymentSubform = async (planIdString: string) => {
-    const planId = makePlanId(planIdString);
-
-    if (isErr(planId)) {
-      displayInitError(planId.reason);
-      return;
-    }
-
-    if (!isSubscriptionPlan(planId)) {
-      hideElement(paymentSubformContainer);
-    }
-    // paymentSubformContainer stays hidden until openCheckout is called
-  };
-
   planDropdown.addEventListener('change', () => {
     clearValidationErrors(uiElements);
-    togglePaymentSubform(planDropdown.value);
   });
-
-  togglePaymentSubform(planDropdown.value);
 }
 
 interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
   confirmationMessage: HTMLElement;
-  paymentSubform: HTMLElement;
-  paymentSubformContainer: HTMLElement;
   additionalActionsSection: HTMLElement;
 }
 

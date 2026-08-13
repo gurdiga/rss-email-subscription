@@ -652,9 +652,23 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeInputError<keyof PlanChangeRequest>('Plan did not change', 'planId');
   }
 
+  // Registration opens a session before the email is confirmed, and this endpoint sits
+  // ahead of requirePaymentConfirmed, so without this check anyone could register and then
+  // POST here to create a Paddle customer for an address they have not proved they own —
+  // exactly what moving provisioning to confirmation is meant to prevent.
+  if (!account.confirmationTimestamp) {
+    logWarning('Attempting to change plan before confirming registration', { email: email.value });
+    return makeInputError<keyof PlanChangeRequest>(
+      'Please confirm your registration first — check your email for the link.',
+      'planId'
+    );
+  }
+
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
-  const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
+  // PendingPayment means no subscription exists yet, so it needs a fresh checkout like Free
+  // does, not changeCustomerSubscription, which looks for a subscription and fails.
+  const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free && oldPlanId !== PlanId.PendingPayment;
 
   if (changingFromPaidPlanToFree) {
     // Cancel in Paddle with next_billing_period; local plan stays paid until
@@ -690,8 +704,9 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
   } else {
-    // Changing from Free to a paid plan: create a checkout transaction and
-    // defer the plan upgrade to the transaction.completed webhook.
+    // Free or PendingPayment to a paid plan: create a checkout transaction and defer the
+    // plan upgrade to the transaction.completed webhook. For PendingPayment this is the
+    // route back for someone who confirmed and then abandoned the checkout.
     const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
 
     if (isErr(createResult)) {

@@ -60,6 +60,20 @@ export function isPlanId(planId: unknown): planId is PlanId {
   return typeof planId === 'string' && Object.values(PlanId).includes(planId as any);
 }
 
+// Accounts created before registration started recording the requested plan have no such
+// field at all, so absence has to parse as undefined rather than as an error.
+export function makeOptionalPlanId(input: unknown, field = 'planId'): Result<PlanId | undefined> {
+  if (!input) {
+    return undefined;
+  }
+
+  if (typeof input !== 'string') {
+    return makeErr(si`Invalid plan ID: expected string, got ${typeof input}`, field);
+  }
+
+  return makePlanId(input, field);
+}
+
 export function makePlanId(planId: string, field = 'planId'): Result<PlanId> {
   const validPlanIds = Object.values(PlanId);
 

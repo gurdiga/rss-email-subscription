@@ -441,8 +441,13 @@ async function submitNewEmail(uiElements: EmailUiElements) {
 async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
   const isPendingPayment = uiAccount.planId === PlanId.PendingPayment;
 
+  // The button used to be hidden here. Since payment moved to after email confirmation,
+  // PendingPayment is the state of anyone who confirmed and then closed the checkout, and
+  // this button is their only way back to it — requestAccountPlanChange now routes them to
+  // a fresh checkout rather than to changeCustomerSubscription, which had no subscription
+  // to change and always failed.
   if (isPendingPayment) {
-    hideElement(uiElements.changePlanButton);
+    uiElements.changePlanButton.textContent = 'Complete payment';
   }
 
   const currentPlanLabel = isPendingPayment ? 'Payment pending' : await getPlanTitleAndPrice(uiAccount.planId);

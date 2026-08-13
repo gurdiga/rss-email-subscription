@@ -8,7 +8,7 @@ import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { hashingSalt, makeTestApp } from './test-utils';
-import { requestAccountPasswordChange } from './account';
+import { requestAccountPasswordChange, requestAccountPlanChange } from './account';
 import { App } from './init-app';
 
 const email = 'password-change@test.com';
@@ -143,6 +143,81 @@ function accountIdFor() {
 
 function loadStoredAccount(app: App): Account {
   const account = loadAccount(app.storage, accountIdFor());
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    throw new Error('Expected a stored account');
+  }
+
+  return account;
+}
+
+const pendingEmail = 'pending-payment@test.com';
+
+describe(requestAccountPlanChange.name, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
+  // Registration opens a session before the email is confirmed, and this endpoint sits
+  // ahead of requirePaymentConfirmed. Without this check, registering and then POSTing
+  // here would create a Paddle customer for an unproven address — the exact thing that
+  // moving provisioning to confirmation is meant to prevent. The check has to come before
+  // makePaddle, so an InputError here is also the proof that Paddle was never reached.
+  it('refuses to start a checkout for an account that has not confirmed its email', async () => {
+    const app = makeTestApp();
+    const accountId = storePendingAccount(app, { confirmationTimestamp: undefined });
+
+    const response = await requestAccountPlanChange(
+      'req',
+      { planId: PlanId.Courage },
+      {},
+      sessionFor(accountId.value, pendingEmail),
+      app
+    );
+
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+    expect(loadPendingAccount(app).planId).to.equal(PlanId.PendingPayment, 'plan is untouched');
+  });
+
+  // Only that the guard admits a confirmed account — not which Paddle call it then makes.
+  // Both branches fail identically without credentials, and requestAccountPlanChange
+  // builds its own Paddle client, so no unit test here can tell createCustomerWithSubscription
+  // from changeCustomerSubscription. The routing itself is covered by the sandbox rehearsal.
+  it('admits a confirmed pending-payment account past the guard', async () => {
+    const app = makeTestApp();
+    const accountId = storePendingAccount(app, { confirmationTimestamp: new Date() });
+
+    const response = await requestAccountPlanChange(
+      'req',
+      { planId: PlanId.Courage },
+      {},
+      sessionFor(accountId.value, pendingEmail),
+      app
+    );
+
+    expect(response.kind).to.not.equal('InputError', JSON.stringify(response));
+  });
+});
+
+function storePendingAccount(app: App, overrides: Partial<Account>) {
+  const accountId = getAccountIdByEmail(makeTestEmailAddress(pendingEmail), hashingSalt);
+  const account: Account = {
+    ...makeTestAccount({ email: pendingEmail }),
+    planId: PlanId.PendingPayment,
+    requestedPlanId: PlanId.Courage,
+    ...overrides,
+  };
+
+  storeAccount(app.storage, accountId, account);
+
+  return accountId;
+}
+
+function sessionFor(accountId: string, sessionEmail: string) {
+  return { cookie: {}, accountId, email: sessionEmail } as any;
+}
+
+function loadPendingAccount(app: App): Account {
+  const accountId = getAccountIdByEmail(makeTestEmailAddress(pendingEmail), hashingSalt);
+  const account = loadAccount(app.storage, accountId);
 
   if (isErr(account) || isAccountNotFound(account)) {
     throw new Error('Expected a stored account');

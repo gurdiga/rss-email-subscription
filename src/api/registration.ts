@@ -4,11 +4,12 @@ import {
   Account,
   AccountId,
   RegistrationConfirmationRequest,
+  RegistrationConfirmationResponseData,
   RegistrationRequest,
-  RegistrationResponseData,
+  isAccountNotFound,
 } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
+import { accountExists, confirmAccount, loadAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
   ConfirmationSecret,
@@ -80,7 +81,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError<keyof RegistrationRequest>('Email already taken', 'email');
   }
 
-  const { email, planId } = request;
+  const { email } = request;
   const confirmationSecret = makeRandomConfirmationSecret();
   const sendResult = await sendConfirmationEmail(email, confirmationSecret, settings, env);
 
@@ -99,26 +100,14 @@ export const registration: AppRequestHandler = async function registration(
     return makeAppError(result.reason);
   }
 
-  let paymentToken = '';
-
-  if (isSubscriptionPlan(request.planId)) {
-    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
-    const result = await createCustomerWithSubscription(paddle, email, planId);
-
-    if (isErr(result)) {
-      logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`, { email: email.value });
-      return makeAppError();
-    }
-
-    paymentToken = result.value;
-  }
-
+  // Paddle is deliberately not touched here. Provisioning a customer before the address is
+  // confirmed left one behind for every registration that was never confirmed — 68 of 69 on
+  // prod — and nothing reclaims them. The checkout now happens in registrationConfirmation.
   initSession(reqSession, accountId, request.email);
 
   const logData = {};
-  const responseData: RegistrationResponseData = { paymentToken };
 
-  return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
+  return makeSuccess('Account created. Welcome aboard! 🙂', logData);
 };
 
 function storeRegistrationConfirmationSecret(
@@ -198,10 +187,10 @@ export function makeRegistrationConfirmationEmailContent(
       </a>
 
       <p>
-        Once you have clicked on the link above, you will have completed the
-        registration process and will be able to register your blog feed and
-        embed the Subscribe Form. Please note that this registration link expires
-        in ${humanConfirmationSecretLifetime}.
+        The link above takes you to the payment step. Once that goes through,
+        you will be able to register your blog feed and embed the Subscribe
+        Form. Please note that this registration link expires in
+        ${humanConfirmationSecretLifetime}.
       </p>
 
       <p>
@@ -280,6 +269,7 @@ async function initAccount(
     hashedPassword,
     confirmationTimestamp: undefined,
     creationTimestamp: new Date(),
+    requestedPlanId: request.planId,
     isAdmin: false,
   };
 
@@ -300,7 +290,7 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   reqBody,
   _reqParams,
   reqSession,
-  { storage }
+  { storage, env }
 ) {
   const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
   const request = makeRegistrationConfirmationRequest(reqBody);
@@ -321,12 +311,68 @@ export const registrationConfirmation: AppRequestHandler = async function regist
 
   initSession(reqSession, accountId, email);
 
+  // Confirmation has already succeeded and the secret is spent, so nothing below may turn
+  // into a failed response: a single-use link the user cannot replay must not strand them.
+  // A missing token leaves the account on PendingPayment, recoverable from the account page.
+  const checkout = await startCheckout(storage, env, accountId, email);
   const logData = {};
-  const responseData = { sessionId: reqSession.id };
+  const responseData: RegistrationConfirmationResponseData = {
+    sessionId: reqSession.id,
+    paymentToken: checkout.paymentToken,
+    // maybeConfirmPayment no-ops on a non-subscription plan, and the account reads
+    // PendingPayment until Paddle pays out, so the page needs the requested plan instead.
+    planId: checkout.planId,
+  };
   const cookies = [enablePrivateNavbarCookie];
 
   return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
 };
+
+interface Checkout {
+  paymentToken: string;
+  planId: string;
+}
+
+async function startCheckout(
+  storage: AppStorage,
+  env: AppEnv,
+  accountId: AccountId,
+  email: EmailAddress
+): Promise<Checkout> {
+  const { logError, logInfo } = makeCustomLoggers({ module: startCheckout.name, email: email.value });
+  const empty: Checkout = { paymentToken: '', planId: '' };
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    logError('Couldn’t load the just-confirmed account to start checkout');
+    return empty;
+  }
+
+  const { requestedPlanId } = account;
+
+  // Registrations from before requestedPlanId was recorded were charged at registration
+  // under the old flow, so they need no checkout here. Remove this branch once every
+  // secret issued under that flow has expired — confirmationSecretLifetimeMs after deploy.
+  if (!requestedPlanId) {
+    logInfo('Confirmed a registration that predates requestedPlanId; no checkout to start');
+    return empty;
+  }
+
+  if (!isSubscriptionPlan(requestedPlanId)) {
+    logError(si`Requested plan is not a subscription plan: ${requestedPlanId}`);
+    return empty;
+  }
+
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+  const result = await createCustomerWithSubscription(paddle, email, requestedPlanId);
+
+  if (isErr(result)) {
+    logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`);
+    return empty;
+  }
+
+  return { paymentToken: result.value, planId: requestedPlanId };
+}
 
 function makeRegistrationConfirmationRequest(data: unknown): Result<RegistrationConfirmationRequest> {
   return makeValues<RegistrationConfirmationRequest>(data, {

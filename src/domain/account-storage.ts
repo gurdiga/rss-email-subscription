@@ -17,7 +17,7 @@ import { getAccountIdByEmail } from './account-crypto';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
 import { HashedPassword, makeHashedPassword } from './hashed-password';
-import { makePlanId } from './plan';
+import { makeOptionalPlanId, makePlanId } from './plan';
 import { AppStorage, StorageKey } from './storage';
 
 export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
@@ -175,6 +175,15 @@ export function loadAccount(
     );
   }
 
+  const requestedPlanId = makeOptionalPlanId(item.requestedPlanId, 'requestedPlanId');
+
+  if (isErr(requestedPlanId)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${requestedPlanId.reason}`,
+      'requestedPlanId'
+    );
+  }
+
   const isAdmin = !!item.isAdmin;
 
   return {
@@ -183,6 +192,7 @@ export function loadAccount(
     hashedPassword,
     creationTimestamp,
     confirmationTimestamp,
+    requestedPlanId,
     isAdmin,
   };
 }
@@ -195,6 +205,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
     hashedPassword: account.hashedPassword.value,
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
+    requestedPlanId: account.requestedPlanId,
     isAdmin: account.isAdmin,
   };
 
