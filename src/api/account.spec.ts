@@ -1,15 +1,16 @@
 import { expect } from 'chai';
-import { Account, isAccountNotFound } from '../domain/account';
+import { Account, UiAccount, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
 import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
+import { Success } from '../shared/api-response';
 import { si } from '../shared/string-utils';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { hashingSalt, makeTestApp } from './test-utils';
-import { requestAccountPasswordChange, requestAccountPlanChange } from './account';
+import { loadCurrentAccount, requestAccountPasswordChange, requestAccountPlanChange } from './account';
 import { App } from './init-app';
 
 const email = 'password-change@test.com';
@@ -246,5 +247,25 @@ describe(si`${requestAccountPlanChange.name} switching to Free before paying`, (
     );
 
     expect(response.kind).to.equal('InputError', JSON.stringify(response));
+  });
+});
+
+// The account page preselects the plan dropdown from this. PendingPayment matches no
+// option, so without requestedPlanId the dropdown falls back to Free and the recovery
+// flow submits a plan the user never chose.
+describe(loadCurrentAccount.name, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
+  it('carries requestedPlanId so a pending account can resume its own plan', async () => {
+    const app = makeTestApp();
+    const accountId = storePendingAccount(app, { confirmationTimestamp: new Date() });
+
+    const response = await loadCurrentAccount('req', {}, {}, sessionFor(accountId.value, pendingEmail), app);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    const uiAccount = (response as Success).responseData as unknown as UiAccount;
+    expect(uiAccount.planId).to.equal(PlanId.PendingPayment);
+    expect(uiAccount.requestedPlanId).to.equal(PlanId.Courage);
   });
 });

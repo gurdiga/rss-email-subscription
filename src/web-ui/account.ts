@@ -79,9 +79,19 @@ async function main() {
 
   addEmailChangeEventHandlers(uiElements);
   addPasswordChangeEventHandlers(uiElements);
-  addPlanChangeEventHandlers(uiElements, uiAccount.planId);
+  // PendingPayment matches no option in the plan dropdown, so passing it would leave the
+  // browser on the first entry — Free — and clicking "Complete payment" would submit Free,
+  // which requestAccountPlanChange rejects for an account that has never paid. Preselect
+  // what the user actually asked for at registration.
+  addPlanChangeEventHandlers(uiElements, planToPreselect(uiAccount));
   addCardUpdateEventHandlers(uiElements);
   addDeleteAccountEventHandlers(uiElements);
+}
+
+function planToPreselect(uiAccount: UiAccount): PlanId {
+  const isPendingPayment = uiAccount.planId === PlanId.PendingPayment;
+
+  return isPendingPayment ? (uiAccount.requestedPlanId ?? PlanId.Courage) : uiAccount.planId;
 }
 
 function addDeleteAccountEventHandlers(uiElements: DeleteAccountUiElements): void {

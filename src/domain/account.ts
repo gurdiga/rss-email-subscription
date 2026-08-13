@@ -52,6 +52,10 @@ export interface AccountData {
 export interface UiAccount {
   email: string;
   planId: PlanId;
+  // What the user picked at registration. planId reads PendingPayment until Paddle pays
+  // out, and PendingPayment matches no entry in the plan dropdown, so without this the
+  // dropdown would fall back to its first option and forget the choice.
+  requestedPlanId: PlanId | undefined;
   isAdmin: boolean;
   cardDescription: string;
 }

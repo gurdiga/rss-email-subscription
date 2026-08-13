@@ -103,6 +103,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
   const responseData: UiAccount = {
     email: account.email.value,
     planId: account.planId,
+    requestedPlanId: account.requestedPlanId,
     isAdmin: !!account.isAdmin,
     cardDescription,
   };
