@@ -133,9 +133,12 @@ services:
         condition: service_healthy
     container_name: delmon
     hostname: delmon
-    image: delmon
+    image: app
     init: true # This is to tell Node process to stop when the container is asked to stop.
     restart: always
+    # Doubled $$ so Compose passes the guard into the container instead of
+    # resolving it against the host environment at parse time.
+    command: sh -c 'tail -n 0 -F "$${SMTP_OUT_LOG:?SMTP_OUT_LOG is not set}" | node dist/app/delivery-monitoring'
     volumes:
       - .tmp/logs/feedsubscription:/logs:ro
       - ${DATA_DIR_ROOT?}:/data
