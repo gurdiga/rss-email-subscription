@@ -161,6 +161,7 @@ app:
 	docker build \
 		--progress=plain \
 		$(DOCKER_BUILD_FLAGS) \
+		--build-arg GIT_REVISION="$$(git rev-parse HEAD)" \
 		--tag app \
 		-f docker-services/app/Dockerfile \
 		. |&
