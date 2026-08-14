@@ -166,17 +166,6 @@ app:
 		. |&
 	log_to .tmp/logs/feedsubscription/docker-build-app.log
 
-delmon: app
-	@$(call include_log_to)
-
-	set -euo pipefail
-	docker build \
-		--progress=plain \
-		$(DOCKER_BUILD_FLAGS) \
-		--tag delmon \
-		docker-services/delmon |&
-	log_to .tmp/logs/feedsubscription/docker-build-delmon.log
-
 # This is targeted after the log rotation in logger, which happens around 01:02, but sometimes later
 delmon-restart:
 	@docker restart delmon |
@@ -303,7 +292,7 @@ start-app: app
 	docker compose --project-name res up --remove-orphans --detach \
 		-- app
 
-start-delmon: delmon
+start-delmon: app
 	docker compose --project-name res up --remove-orphans --detach \
 		-- delmon
 
@@ -901,7 +890,7 @@ clean:
 	rm -rf website/html/ src/api/web-ui-scripts/ dist/
 
 clean-docker: stop
-	docker image rm --force app delmon smtp-out smtp-in website certbot logger
+	docker image rm --force app smtp-out smtp-in website certbot logger
 
 init-data-dir:
 	@require=$${DATA_DIR_ROOT:?envar is missing}
@@ -1189,7 +1178,7 @@ docker-image-check:
 		docker scout cves --exit-code "$$image"
 	done
 
-all-images: app certbot delmon logger smtp-in smtp-out postilion website resolver
+all-images: app certbot logger smtp-in smtp-out postilion website resolver
 
 fresh-images:
 	$(MAKE) DOCKER_BUILD_FLAGS=--no-cache all-images

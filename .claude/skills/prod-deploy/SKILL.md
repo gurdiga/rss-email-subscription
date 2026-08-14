@@ -37,17 +37,27 @@ Replace `<targets>` with the services to rebuild before restarting.
 
 | Service      | Target     | Notes                          |
 |--------------|------------|--------------------------------|
-| app          | `app`      | Also rebuilds delmon (FROM app) |
+| app          | `app`      | Also recreates delmon and api  |
 | certbot      | `certbot`  |                                |
 | logger       | `logger`   |                                |
 | website      | `website`  |                                |
 | smtp-in      | `smtp-in`  |                                |
 | smtp-out     | `smtp-out` |                                |
 | resolver     | `resolver` |                                |
-| delmon       | `delmon`   | Or just rebuild app            |
+
+There is no delmon target: delmon runs the app image with a different command,
+so `make app start` is what deploys it.
 
 `make start` (always included) runs `docker compose up --remove-orphans --detach`
 and restarts only the containers whose images changed.
+
+Recreating delmon restarts its `tail -n 0`, so smtp-out lines written while it
+was down are never seen. After any app deploy, replay them:
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  'cd ~/src/rss-email-subscription && make delmon-catch-up'
+```
 
 ## Examples
 
