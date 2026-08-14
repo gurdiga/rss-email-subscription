@@ -1,4 +1,4 @@
-FROM certbot/certbot:v4.2.0
+FROM certbot/certbot:v4.2.0@sha256:9626d72120577cf72da4fc7948806e9993598981720a4cbe04340a502468d67b
 
 RUN apk update --no-cache && apk upgrade --no-cache
 RUN apk add --no-cache --upgrade \

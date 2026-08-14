@@ -1,9 +1,13 @@
 ARG NODE_VERSION=22.22-alpine3.23
+# Index digest, not per-arch: it still resolves per-arch, so the same pin works
+# on an arm64 laptop and an amd64 server. Must be re-measured whenever
+# NODE_VERSION moves, otherwise the tag is decorative and the digest wins.
+ARG NODE_DIGEST=sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920
 ARG OPENSSL_VERSION=3.5.7-r0
 ARG BUSYBOX_VERSION=1.37.0-r30
 
 ### --- build
-FROM node:${NODE_VERSION} AS build
+FROM node:${NODE_VERSION}@${NODE_DIGEST} AS build
 ARG OPENSSL_VERSION
 ARG BUSYBOX_VERSION
 
@@ -41,7 +45,7 @@ RUN ./node_modules/.bin/esbuild \
 RUN npm prune --omit=dev
 
 ### --- run
-FROM node:${NODE_VERSION}
+FROM node:${NODE_VERSION}@${NODE_DIGEST}
 ARG OPENSSL_VERSION
 ARG BUSYBOX_VERSION
 
