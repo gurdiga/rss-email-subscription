@@ -26,7 +26,8 @@ maillog_file = /dev/stdout
 # image moves to a Postfix that carries the fixes.
 smtpd_discard_ehlo_keywords = chunking
 # Require CRLF.CRLF for end-of-data, closing the SMTP-smuggling gap that the
-# 3.7 legacy release notes say is still unpatched. This build is the 3.9-era
-# enum backport, where "normalize" rewrites bare LF instead of rejecting the
-# connection outright as the older boolean "yes" did.
+# 3.7 legacy release notes say is still unpatched. Not "reject", which is the
+# only value that refuses the message: this is the MX for three domains, and
+# rejecting strangers over a bare LF costs real delivery. In this build "yes"
+# is a migration alias for "normalize", not a third behaviour.
 smtpd_forbid_bare_newline = normalize

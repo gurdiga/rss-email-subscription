@@ -2,7 +2,7 @@
 
 Triaged 2026-08-11 against the [postfix-announce mail of 2026-08-10](https://www.postfix.org/announcements/postfix-3.11.6.html), which shipped stable 3.11.6 plus legacy releases 3.10.13, 3.9.14, 3.8.20, 3.7.22, 3.6.20, 3.5.27 — 16 fixes, found by Qualys and OpenAI Security, more than half dating back 20+ years.
 
-Both mitigations below were applied to smtp-in on 2026-08-15 and verified against the built image. postilion and smtp-out are unchanged.
+Updated 2026-08-15: the package landscape was rechecked, both mitigations below were applied to smtp-in and verified against the built image, and the claims that turned out to be wrong are corrected in place. postilion and smtp-out are unchanged.
 
 ## Where we stand
 
@@ -21,7 +21,7 @@ Confirmed live on prod (`docker exec <c> postconf mail_version` → `3.7.11` on 
 Two things make waiting a weak plan, both rechecked 2026-08-15:
 
 - **The trixie move is not a fix today.** Trixie is at `3.10.11-0+deb13u1` and the fixes below shipped in 3.10.13, so moving the base image now lands on an unpatched 3.10. Trixie is stable and will get the update; bookworm is oldstable heading into LTS, so the ordering still favors trixie — but the `TODO(debian-upgrade)` in the smtp-out and smtp-in Dockerfiles is not a substitute for the config change.
-- **The fixes carry no CVEs.** Neither the announcement nor [the Debian security tracker](https://security-tracker.debian.org/tracker/source-package/postfix) assigns identifiers to any of the 16. Debian tracks by CVE, so watching the tracker will most likely never surface them — bookworm’s only open postfix CVE is the unrelated CVE-2026-43964. Sid carries `3.11.6-1`.
+- **No CVEs have surfaced for the fixes as of 2026-08-15.** Neither the announcement nor [the Debian security tracker](https://security-tracker.debian.org/tracker/source-package/postfix) assigns identifiers to any of the 16; bookworm’s only open postfix CVE is the unrelated CVE-2026-43964, and sid carries `3.11.6-1`. Debian tracks by CVE, so absent an assignment the tracker will not surface them. Worth rechecking rather than treating as permanent — this is absence of evidence on two secondary sources.
 
 ## What applies: the two BDAT bugs
 
@@ -38,7 +38,18 @@ smtp-in is the MX and accepts RCPT for `feedsubscription.com`, `gurdiga.com`, an
 
 Severity is modest. Both bugs kill or bloat a single `smtpd` child that `master` respawns. The memory-exhaustion one is the only item with reach beyond the connection: the containers run without memory limits, so an unbounded command history pressures the droplet itself. That is the reason to act on this rather than wait for Debian.
 
-postilion requires valid SASL credentials before RCPT succeeds (`smtpd_relay_restrictions = permit_sasl_authenticated, reject`), so it is credentialed-attacker-only. smtp-out is not internet-reachable at all.
+The growth is real, not theoretical. One connection to the pre-change smtp-in image, with a valid recipient and 1-byte chunks:
+
+| BDAT commands | `smtpd` RSS |
+|---|---|
+| 0 | 12380 kB |
+| 1000 | 12512 kB |
+| 2000 | 12644 kB |
+| 3000 | 12792 kB |
+
+All 3000 answered `250 Ok`. Successful BDAT never counts against `smtpd_hard_error_limit`, so nothing bounds the connection — the client just keeps going at roughly 140 bytes per command.
+
+postilion is credentialed-attacker-only for this bug, for a more specific reason than “SASL is required” — see the scoping note below. smtp-out is not internet-reachable at all.
 
 ## What does not apply
 
@@ -51,7 +62,7 @@ Checked against each item’s own preconditions, using `postconf -n` and `master
 | #4 Address verification cache poisoning | Address verification not enabled; no untrusted local users in a container |
 | #6 Dovecot AUTH null-pointer crash | `smtpd_sasl_type = cyrus` everywhere |
 | #7, #9, #10 postscreen read-after-free / uninitialized reads | postscreen not enabled — `master.cf` wires `smtp inet` straight to `smtpd` |
-| #11 DNS client MX/SRV over-read | Applies to smtp-out’s outbound lookups; ≤6 bytes, no crash claimed |
+| #11 DNS client MX/SRV over-read | Applies to all three: `relayhost` is empty and `default_transport = smtp` on smtp-in and postilion too, so each runs its own MX lookups through `smtp(8)`. ≤6 bytes, no crash claimed |
 | #12, #13, #16 postsuper / record.c / postdrop | Local-user attacks; no untrusted local users |
 | #14 non-transitive IPv4 comparison | Hygiene |
 | #15 ETRN duplicate suppression | Hygiene; costs unnecessary queue scans, not security |
@@ -85,7 +96,16 @@ postfix/smtpd: discarding EHLO keywords: CHUNKING
 postfix/smtpd: disconnect from ... ehlo=1 bdat=0/1 commands=1/2
 ```
 
-**postilion is left alone.** The earlier draft of this document suggested it for defense in depth, but it needs valid credentials before RCPT, so on its own it does not justify the change — and BDAT_README names submission services as the ones you would normally *keep* CHUNKING on for client compatibility, which is exactly what postilion is: the MUA submission path for two personal domains. Adding the line there is one commit away if that ever changes.
+**postilion is left alone**, and the reason is not simply that it requires SASL. The EHLO discard mask is evaluated before authentication, so an unauthenticated stranger on `587` can reach `bdat_cmd()`. What stops the memory-exhaustion bug there is that BDAT must *succeed* to append to the command history, and succeeding needs a valid recipient — which `smtpd_recipient_restrictions = permit_sasl_authenticated, reject` denies. Every attempt is therefore an error, and the hard error limit closes the connection at 20. Measured against the postilion image, unauthenticated, with the TLS requirement removed so the probe is strictly more permissive than prod:
+
+```
+BDAT #1  -> 554 5.5.1 Error: no valid recipients      RSS=9224 kB
+BDAT #5  -> 551 5.0.0 Discarded 1 bytes after error   RSS=9228 kB
+BDAT #20 -> 551 5.0.0 Discarded 1 bytes after error   RSS=9228 kB
+BDAT #21 -> 421 4.7.0 Error: too many errors          (dropped)
+```
+
+4 kB across 21 commands is page granularity, not history growth, and `smtpd_client_connection_rate_limit = 10` caps the reconnect loop. BDAT_README also names submission services as the ones you would normally *keep* CHUNKING on for client compatibility, which is exactly what postilion is: the MUA submission path for two personal domains. Adding the line there is one commit away if that changes.
 
 smtp-out is excluded because it has no internet path to protect. (The standing do-not-touch policy on it was lifted 2026-08-14; it is not the reason.)
 
@@ -110,7 +130,15 @@ smtpd_forbid_bare_newline_exclusions = $mynetworks
 smtpd_forbid_bare_newline_reject_code = 550
 ```
 
-So `smtpd_forbid_bare_newline = normalize` requires `CRLF.CRLF` for end-of-data without rejecting bare-LF senders — which is why `normalize` and not `yes`: on an MX taking mail from strangers, rejecting is the change that costs real delivery.
+The real choice is `normalize` versus `reject`, not versus `yes` — in this build `yes` is a migration alias for `normalize`, confirmed by running all three:
+
+| Value | Session | Log |
+|---|---|---|
+| `normalize` | `data=1` — accepted | — |
+| `yes` | `data=1` — accepted, identical to `normalize` | — |
+| `reject` | `data=0/1` — refused | `reject: END-OF-MESSAGE ...: bare <LF> received` |
+
+`normalize` requires `CRLF.CRLF` for end-of-data without rejecting bare-LF senders. On an MX taking mail from strangers, `reject` is the setting that would cost real delivery.
 
 Verified by A/B against the built image, sending one DATA body that contains a bare-LF `.` line followed by a complete second transaction:
 
