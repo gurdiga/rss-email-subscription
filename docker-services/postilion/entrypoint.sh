@@ -94,7 +94,7 @@ configure_opendkim() {
 
   log "Starting opendkim"
   opendkim -x /etc/opendkim/opendkim.conf
-  sleep 0.5 # small buffer to let opendkim bind the milter socket
+  wait_for_milter || fail "opendkim did not bind 127.0.0.1:8891"
 
   # tempfail, not accept: when the milter is unreachable, hold the mail
   # instead of delivering it unsigned. sandradodd.com is DMARC p=reject
@@ -106,6 +106,18 @@ configure_opendkim() {
     'milter_protocol=6' \
     'smtpd_milters=inet:127.0.0.1:8891' \
     'non_smtpd_milters=inet:127.0.0.1:8891'
+}
+
+# opendkim daemonizes before it binds, and it exits 0 on its way to
+# failing, so a bad key or config used to leave postfix running
+# milterless.
+wait_for_milter() {
+  for _ in $(seq 1 50); do
+    netstat -lnt | grep -q '127\.0\.0\.1:8891' && return 0
+    sleep 0.1
+  done
+
+  return 1
 }
 
 main() {
