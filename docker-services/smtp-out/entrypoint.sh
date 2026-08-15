@@ -54,16 +54,36 @@ configure_opendkim() {
     'non_smtpd_milters=inet:127.0.0.1:8891'
 }
 
-# opendkim daemonizes before it binds, and it exits 0 on its way to
-# failing, so a bad key or config used to leave postfix running
-# milterless.
+# opendkim daemonizes before it binds, and the parent exits 0 whether or
+# not the child gets there, so a socket it can’t bind used to leave
+# postfix running with nothing on 8891.
 wait_for_milter() {
   for _ in $(seq 1 50); do
-    netstat -lnt | grep -q '127\.0\.0\.1:8891' && return 0
+    if milter_is_listening; then
+      return 0
+    fi
+
     sleep 0.1
   done
 
   return 1
+}
+
+milter_is_listening() {
+  netstat -lnt | grep -q '127\.0\.0\.1:8891'
+}
+
+# Postfix becomes PID 1 below, so opendkim dying afterwards leaves the
+# container up and every message tempfailing until a human looks. Take
+# postfix down instead and let restart: always bring the pair back.
+supervise_milter() {
+  while sleep 30; do
+    if ! milter_is_listening; then
+      log "opendkim is gone, stopping postfix to force a restart"
+      kill 1
+      return
+    fi
+  done
 }
 
 main() {
@@ -79,6 +99,8 @@ main() {
 
   apply_postfix_config
   configure_opendkim
+
+  supervise_milter &
 
   log "Starting postfix in foreground"
   exec postfix start-fg
