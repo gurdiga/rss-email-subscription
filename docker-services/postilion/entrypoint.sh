@@ -96,8 +96,13 @@ configure_opendkim() {
   opendkim -x /etc/opendkim/opendkim.conf
   sleep 0.5 # small buffer to let opendkim bind the milter socket
 
+  # tempfail, not accept: when the milter is unreachable, hold the mail
+  # instead of delivering it unsigned. sandradodd.com is DMARC p=reject
+  # with strict alignment, and the clients here are interactive
+  # submitters, so a 451 surfaces to whoever sent it, where accept would
+  # spend the message unsigned and say nothing.
   postconf -e \
-    'milter_default_action=accept' \
+    'milter_default_action=tempfail' \
     'milter_protocol=6' \
     'smtpd_milters=inet:127.0.0.1:8891' \
     'non_smtpd_milters=inet:127.0.0.1:8891'
