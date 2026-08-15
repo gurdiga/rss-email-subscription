@@ -7,11 +7,9 @@ smtpd_tls_eckey_file =
 inet_protocols = ipv4
 smtp_address_preference = ipv4
 
-# NOT feedsubscription.com: smtp-out's loop detection compares the EHLO
-# reply hostname (always $myhostname) against its own myhostname and
-# bounces droplet-origin mail to the hosted personal domains ("mail for
-# <domain> loops back to myself"). smtp_helo_name below keeps the
-# outbound HELO (PTR-matching, used for SPF on bounces) unchanged.
+# NOT feedsubscription.com: smtp-out matches our EHLO hostname against its own
+# and bounces droplet-origin mail ("mail for <domain> loops back to myself").
+# smtp_helo_name keeps outbound HELO PTR-matching, which SPF uses on bounces.
 myhostname = mx.feedsubscription.com
 smtp_helo_name = feedsubscription.com
 mydestination = localhost
