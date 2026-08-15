@@ -71,7 +71,7 @@ Checked against each item’s own preconditions, using `postconf -n` and `master
 
 ## Mitigation: CHUNKING disabled on smtp-in
 
-Disable CHUNKING. This is a real disable, not a hidden EHLO keyword — from `bdat_cmd()` in the Postfix 3.7 source, the command is refused and the connection dropped before any chunk is read:
+Disable CHUNKING. This is a real disable, not a hidden EHLO keyword — from [`bdat_cmd()` in the source of the pinned package](https://sources.debian.org/src/postfix/3.7.11-0%2Bdeb12u1/src/smtpd/smtpd.c/#L3946), the command is refused and the connection dropped before any chunk is read:
 
 ```c
 if (state->ehlo_discard_mask & EHLO_MASK_CHUNKING) {
