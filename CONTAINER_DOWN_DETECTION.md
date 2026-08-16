@@ -117,6 +117,8 @@ Not covered: `Up (unhealthy)` still counts as running, restart loops are invisib
 
 ### What it does not fix
 
-Detection still leaves the stack down until someone reads the mail, and the trigger is untouched: dockerd still brings up every `restart: always` container in parallel and still loses whoever races `logger`. A `systemd` unit ordered `After=docker.service` and `PartOf=docker.service`, re-running `make start` on every daemon start, would reconcile that automatically — a second ordered pass, not a fix for the race. Genuinely closing it means taking `logger` off the task-creation critical path, i.e. a host-side syslog listener instead of a container.
+Detection still leaves the stack down until someone reads the mail, and the trigger is untouched: dockerd still brings up every `restart: always` container in parallel and still loses whoever races `logger`.
+
+A `systemd` unit ordered `After=docker.service` and `PartOf=docker.service`, re-running `make start` on every daemon start, would reconcile that automatically. Considered and not taken: it would be a second ordered pass rather than a fix for the race, it lives in `/etc/systemd/system/` where this repo has no home for host configuration, and its own failures would land in a journal nothing on this box watches. Genuinely closing the race means taking `logger` off the task-creation critical path — a host-side syslog listener instead of a container — which is a much larger change.
 
 Until then the manual workaround still applies: run `apt-get dist-upgrade` attended, follow immediately with `make start`, and confirm with `docker ps -a` that nothing sits in `Exited (128)`. The difference is that forgetting now costs five minutes rather than a night.
