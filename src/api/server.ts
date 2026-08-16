@@ -145,7 +145,9 @@ async function main() {
     makeRateLimiter(5, hour),
     makeAppRequestHandler(showSampleEmailPublic, app)
   );
-  router.post(ApiPath.checkFeedUrl, makeAppRequestHandler(checkFeedUrl, app));
+  // Public, and one call can fan out to nine upstream fetches when it falls
+  // through to guessing the feed URL.
+  router.post(ApiPath.checkFeedUrl, makeRateLimiter(20, hour), makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
   router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));

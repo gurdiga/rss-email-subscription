@@ -6,7 +6,7 @@ import {
   parseEmails,
   storeEmails,
 } from '../app/email-sending/emails';
-import { fetch } from '../app/rss-checking/fetch';
+import { discardResponseBody, fetch } from '../app/rss-checking/fetch';
 import { fetchRss, isValidFeedContentType } from '../app/rss-checking/rss-response';
 import { isAccountNotFound } from '../domain/account';
 import {
@@ -397,6 +397,10 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const isProbablyFeedUrl = isValidFeedContentType(contentType);
 
   if (isProbablyFeedUrl) {
+    // Nothing here reads the body, and getFeedInfo fetches the URL again:
+    // without this, the first response holds a socket until it times out.
+    discardResponseBody(response);
+
     const feedInfo = await getFeedInfo(blogUrl);
     let blogTitle = isErr(feedInfo) ? '' : feedInfo.title;
 
@@ -405,6 +409,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   }
 
   if (!contentType.startsWith('text/html')) {
+    discardResponseBody(response);
     logWarning('Invalid blog Content-Type', { blogUrl, contentType });
     return makeInputError('This seems not to be a blog. 🤔', fieldName);
   }
