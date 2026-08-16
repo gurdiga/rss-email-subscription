@@ -191,11 +191,12 @@ const maxHops = maxRedirects + 1;
 // One Agent for the whole process, so that connections are pooled. The lookup
 // guard is baked in and never relaxed: the addresses it approves are the ones
 // the socket connects to, which leaves no window for DNS rebinding.
+//
+// It carries no timeouts of its own: the abort signal above now covers the
+// body as well as the headers, and a second set of bounds here would quietly
+// cap whatever a caller passes as timeoutMs.
 const guardedAgent = new Agent({
   connect: {
     lookup: makeGuardedLookup(),
-    timeout: 5_000,
   },
-  headersTimeout: defaultFetchOptions.timeoutMs,
-  bodyTimeout: defaultFetchOptions.timeoutMs,
 });

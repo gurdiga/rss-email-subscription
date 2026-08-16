@@ -101,6 +101,25 @@ describe(fetch.name, () => {
     expect(reason).to.match(/Refusing to follow more than \d+ redirects/);
   });
 
+  it('leaves the connection pool usable after a refusal', async () => {
+    await startServer((req, res) => {
+      if (req.url === '/redirect') {
+        res.writeHead(302, { location: 'http://10.5.5.5:3000/' });
+        res.end();
+      } else {
+        res.end('the feed');
+      }
+    });
+
+    // The guard refuses mid-redirect, where undici is holding the socket of
+    // the hop before, so this is about what that leaves behind.
+    await getFetchErrorReason(new URL(si`${origin}/redirect`), allowLoopback);
+
+    const response = await fetch(new URL(si`${origin}/feed.xml`), allowLoopback);
+
+    expect(await response.text()).to.equal('the feed');
+  });
+
   it('cancels the upstream body when the size cap trips', async () => {
     let isUpstreamBodyCancelled = false;
 
