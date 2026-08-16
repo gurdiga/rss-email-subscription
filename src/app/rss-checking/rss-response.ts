@@ -1,6 +1,6 @@
 import { isObject, makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
-import { fetch, FetchFn } from './fetch';
+import { discardResponseBody, fetch, FetchFn } from './fetch';
 
 export interface RssResponse {
   kind: 'RssResponse';
@@ -19,6 +19,7 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
     const response = await fetchFn(url);
 
     if (response.statusText !== 'OK') {
+      discardResponseBody(response);
       return makeErr(si`${response.status} ${response.statusText}`);
     }
 
@@ -31,6 +32,7 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
         baseURL: url,
       };
     } else {
+      discardResponseBody(response);
       return makeErr(si`Invalid response content-type: ${contentType}`);
     }
   } catch (e) {

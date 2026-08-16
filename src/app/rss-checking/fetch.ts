@@ -30,6 +30,7 @@ export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}):
 
   const abortController = new AbortController();
   const abortControllerTimeoutId = setTimeout(() => abortController.abort(), options.timeoutMs);
+  const clearAbortControllerTimeout = () => clearTimeout(abortControllerTimeoutId);
 
   // Imitate a local Chrome browser to improve compatibility with
   // servers that gate responses based on User-Agent.
@@ -45,28 +46,53 @@ export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}):
     dispatcher: makeGuardedDispatcher(options.isAddressAllowed),
   };
 
-  const response = await globalThis.fetch(url, request).then((response) => {
-    const limitedStream = getLimitedReadableStream(response.body, options.maxResponseBytes);
+  try {
+    const response = await globalThis.fetch(url, request);
+
+    // The timeout has to outlive the headers: clearing it here, where the
+    // fetch promise resolves, would leave the body to trickle in unbounded.
+    const limitedStream = getLimitedReadableStream(
+      response.body,
+      options.maxResponseBytes,
+      clearAbortControllerTimeout
+    );
 
     return new Response(limitedStream, {
       headers: response.headers,
       status: response.status,
       statusText: response.statusText,
     });
-  });
-
-  clearTimeout(abortControllerTimeoutId);
-
-  return response;
+  } catch (error) {
+    clearAbortControllerTimeout();
+    throw error;
+  }
 }
 
 export type FetchFn = typeof fetch;
 
+/** For the branches that decide on the headers alone: releases the socket and the timeout. */
+export function discardResponseBody(response: Response): void {
+  // Rejects when the body is already gone, which is precisely the case where
+  // there is nothing left to release.
+  void response.body?.cancel().catch(() => {});
+}
+
 export function getLimitedReadableStream(
   inputStream: ReadableStream<Uint8Array> | null,
-  maxBytes: number
+  maxBytes: number,
+  onSettled: () => void = () => {}
 ): ReadableStream<Uint8Array> | null {
+  let isSettled = false;
+
+  const settle = () => {
+    if (!isSettled) {
+      isSettled = true;
+      onSettled();
+    }
+  };
+
   if (!inputStream) {
+    settle();
     return null;
   }
 
@@ -76,23 +102,51 @@ export function getLimitedReadableStream(
   return new ReadableStream({
     start(controller) {
       function push() {
-        reader.read().then(({ done, value }) => {
-          if (done || bytesRead >= maxBytes) {
-            controller.close();
-            return;
-          }
+        reader
+          .read()
+          .then(({ done, value }) => {
+            if (isSettled) {
+              return;
+            }
 
-          const bytesLeftToRead = maxBytes - bytesRead;
-          const chunk = value.slice(0, bytesLeftToRead);
+            if (done) {
+              settle();
+              controller.close();
+              return;
+            }
 
-          controller.enqueue(chunk);
-          bytesRead += chunk.length;
+            const bytesLeftToRead = maxBytes - bytesRead;
+            const chunk = value.slice(0, bytesLeftToRead);
 
-          push();
-        });
+            controller.enqueue(chunk);
+            bytesRead += chunk.length;
+
+            if (bytesRead >= maxBytes) {
+              // Closing the stream only caps what the caller sees; without
+              // cancelling, the upstream body keeps coming over the wire.
+              void reader.cancel();
+              settle();
+              controller.close();
+              return;
+            }
+
+            push();
+          })
+          .catch((error) => {
+            if (isSettled) {
+              return;
+            }
+
+            settle();
+            controller.error(error);
+          });
       }
 
       push();
+    },
+    cancel(reason) {
+      void reader.cancel(reason);
+      settle();
     },
   });
 }

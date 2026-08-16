@@ -100,6 +100,48 @@ describe(fetch.name, () => {
 
     expect(reason).to.match(/Refusing to follow more than \d+ redirects/);
   });
+
+  it('cancels the upstream body when the size cap trips', async () => {
+    let isUpstreamBodyCancelled = false;
+
+    await startServer((_req, res) => {
+      res.on('close', () => (isUpstreamBodyCancelled = !res.writableFinished));
+
+      const sendChunk = () => {
+        if (res.writableEnded || res.closed) {
+          return;
+        }
+
+        res.write('x'.repeat(1024), () => setTimeout(sendChunk, 1));
+      };
+
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      sendChunk();
+    });
+
+    const maxResponseBytes = 4096;
+    const response = await fetch(new URL(origin), { ...allowLoopback, maxResponseBytes });
+    const text = await response.text();
+
+    expect(text.length).to.equal(maxResponseBytes);
+    await waitFor(() => isUpstreamBodyCancelled);
+    expect(isUpstreamBodyCancelled, 'the upstream body was left running').to.be.true;
+  });
+
+  it('times out a body that trickles in after the headers', async () => {
+    await startServer((_req, res) => {
+      res.writeHead(200, { 'content-type': 'text/plain' });
+      res.write('the first byte');
+    });
+
+    const response = await fetch(new URL(origin), { ...allowLoopback, timeoutMs: 100 });
+    const bodyResult = await response.text().then(
+      () => 'the body was read to the end',
+      (error: Error) => error.name
+    );
+
+    expect(bodyResult).to.equal('AbortError');
+  });
 });
 
 describe(getLimitedReadableStream.name, () => {
@@ -119,6 +161,15 @@ describe(getLimitedReadableStream.name, () => {
   it('returns null for null input', () => {
     expect(getLimitedReadableStream(null, 42)).to.be.null;
   });
+
+  it('settles once, whichever way the stream ends', async () => {
+    let settledCount = 0;
+
+    const stream = getLimitedReadableStream(new Response('sample response').body, 4, () => settledCount++);
+
+    expect(await new Response(stream).text()).to.equal('samp');
+    expect(settledCount).to.equal(1);
+  });
 });
 
 async function getFetchErrorReason(url: URL, options: Parameters<typeof fetch>[1] = {}): Promise<string> {
@@ -130,5 +181,13 @@ async function getFetchErrorReason(url: URL, options: Parameters<typeof fetch>[1
     const causeMessage = error instanceof Error && error.cause instanceof Error ? error.cause.message : '';
 
     return si`${(error as Error).message} ${causeMessage}`;
+  }
+}
+
+async function waitFor(condition: () => boolean, timeoutMs = 1000): Promise<void> {
+  const startTime = Date.now();
+
+  while (!condition() && Date.now() - startTime < timeoutMs) {
+    await new Promise((resolve) => setTimeout(resolve, 10));
   }
 }
