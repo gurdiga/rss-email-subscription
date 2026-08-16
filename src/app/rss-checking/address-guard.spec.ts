@@ -63,7 +63,7 @@ describe(isPublicIpAddress.name, () => {
     }
   });
 
-  it('rejects IPv4 addresses embedded in IPv6 ones', () => {
+  it('rejects special-use IPv4 addresses embedded in IPv6 ones', () => {
     const embeddingAddresses = [
       '::ffff:10.0.0.1', // IPv4-mapped
       '::ffff:a00:1', // the same, as URL normalizes it
