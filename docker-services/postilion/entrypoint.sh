@@ -94,13 +94,50 @@ configure_opendkim() {
 
   log "Starting opendkim"
   opendkim -x /etc/opendkim/opendkim.conf
-  sleep 0.5 # small buffer to let opendkim bind the milter socket
+  wait_for_milter || fail "opendkim did not bind 127.0.0.1:8891"
 
+  # tempfail, not accept: when the milter is unreachable, hold the mail
+  # instead of delivering it unsigned. sandradodd.com is DMARC p=reject
+  # with strict alignment, and the clients here are interactive
+  # submitters, so a 451 surfaces to whoever sent it, where accept would
+  # spend the message unsigned and say nothing.
   postconf -e \
-    'milter_default_action=accept' \
+    'milter_default_action=tempfail' \
     'milter_protocol=6' \
     'smtpd_milters=inet:127.0.0.1:8891' \
     'non_smtpd_milters=inet:127.0.0.1:8891'
+}
+
+# opendkim daemonizes before it binds, and the parent exits 0 whether or
+# not the child gets there, so a socket it can’t bind used to leave
+# postfix running with nothing on 8891.
+wait_for_milter() {
+  for _ in $(seq 1 50); do
+    if milter_is_listening; then
+      return 0
+    fi
+
+    sleep 0.1
+  done
+
+  return 1
+}
+
+milter_is_listening() {
+  netstat -lnt | grep -q '127\.0\.0\.1:8891'
+}
+
+# Postfix becomes PID 1 below, so opendkim dying afterwards leaves the
+# container up and every message tempfailing until a human looks. Take
+# postfix down instead and let restart: always bring the pair back.
+supervise_milter() {
+  while sleep 30; do
+    if ! milter_is_listening; then
+      log "opendkim is gone, stopping postfix to force a restart"
+      kill 1
+      return
+    fi
+  done
 }
 
 main() {
@@ -118,6 +155,8 @@ main() {
   configure_sasl
   configure_tls
   configure_opendkim
+
+  supervise_milter &
 
   log "Starting postfix in foreground"
   exec postfix start-fg
