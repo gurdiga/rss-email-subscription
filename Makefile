@@ -123,11 +123,12 @@ lint-dockerfile:
 	# tee /dev/stderr | # DEBUG
 	xargs hadolint
 
+# From the index rather than from find: the scripts in bin/ have no
+# extension, and a find wide enough to catch them also caught the .sh
+# files git leaves under .git during a rebase and a vendored
+# playwright-core under .tmp — neither ours to lint.
 lint-shell-scripts:
-	@find . \
-		-not -path './node_modules/*' \
-		-name '*.sh' \
-	| xargs shellcheck
+	@git ls-files -z '*.sh' 'bin/*' | xargs -0 shellcheck
 
 lsh: lint-shell-scripts
 
