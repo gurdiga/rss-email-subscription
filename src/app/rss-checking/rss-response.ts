@@ -1,4 +1,4 @@
-import { isObject, makeErr, Result } from '../../shared/lang';
+import { makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { discardResponseBody, fetch, FetchFn } from './fetch';
 
@@ -35,11 +35,8 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
       discardResponseBody(response);
       return makeErr(si`Invalid response content-type: ${contentType}`);
     }
-  } catch (e) {
-    if (isObject(e) && 'cause' in e) {
-      return makeErr(e.cause);
-    } else {
-      return makeErr((e as Error).message);
-    }
+  } catch (error) {
+    // The cause is where fetch keeps the reason, and makeErr now carries it.
+    return makeErr(error);
   }
 }

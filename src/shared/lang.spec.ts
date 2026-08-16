@@ -53,6 +53,36 @@ describe(getErrorMessage.name, () => {
 
       expect(getErrorMessage(error)).to.equal('[NO ERROR MESSAGE]');
     });
+
+    it('appends the cause, which is where fetch keeps the reason', () => {
+      const error = new Error('fetch failed', { cause: new Error('Refusing to connect') });
+
+      expect(getErrorMessage(error)).to.equal('fetch failed: Refusing to connect');
+    });
+
+    it('appends a cause that is not an Error', () => {
+      const error = new Error('Oops!', { cause: 'a string' });
+
+      expect(getErrorMessage(error)).to.equal('Oops!: a string');
+    });
+
+    it('tells a falsy cause from no cause', () => {
+      expect(getErrorMessage(new Error('Oops!', { cause: 0 }))).to.equal('Oops!: [EMPTY ERROR OBJECT]');
+      expect(getErrorMessage(new Error('Oops!', { cause: '' }))).to.equal('Oops!: [EMPTY ERROR OBJECT]');
+      expect(getErrorMessage(new Error('Oops!'))).to.equal('Oops!');
+    });
+
+    it('stops before a cause chain can run away', () => {
+      const error = new Error('1', { cause: new Error('2', { cause: new Error('3', { cause: new Error('4') }) }) });
+
+      expect(getErrorMessage(error)).to.equal('1: 2: 3: 4');
+
+      const selfCausingError = new Error('Round');
+
+      selfCausingError.cause = selfCausingError;
+
+      expect(getErrorMessage(selfCausingError)).to.equal('Round: Round: Round: Round');
+    });
   });
 
   context('when falsy', () => {
