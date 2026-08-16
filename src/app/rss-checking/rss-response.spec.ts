@@ -44,7 +44,7 @@ describe(fetchRss.name, () => {
     expect(response).to.deep.equal(makeErr(mockException.message));
   });
 
-  it('returns an Err value from fetch’s error cause when any', async () => {
+  it('returns an Err value that keeps fetch’s error cause when any', async () => {
     const errorCause = new Error('DNS is down!');
     const mockException = new Error('Flaky wifi?!', { cause: errorCause });
     const mockFetchFn = async () => {
@@ -52,7 +52,7 @@ describe(fetchRss.name, () => {
     };
     const response = await fetchRss(mockUrl, mockFetchFn);
 
-    expect(response).to.deep.equal(makeErr(errorCause.message));
+    expect(response).to.deep.equal(makeErr('Flaky wifi?!: DNS is down!'));
   });
 
   describe('content type validation', () => {

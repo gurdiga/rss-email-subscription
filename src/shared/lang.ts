@@ -55,7 +55,7 @@ export function getErrorMessage(error: unknown): string {
   }
 
   if (error instanceof Error) {
-    return error.message || '[NO ERROR MESSAGE]';
+    return [error.message || '[NO ERROR MESSAGE]', ...getCauseMessages(error)].join(': ');
   }
 
   if (error instanceof Object && error.toString instanceof Function) {
@@ -63,6 +63,44 @@ export function getErrorMessage(error: unknown): string {
   }
 
   return si`[UNEXPECTED ERROR OBJECT: ${Object.prototype.toString.call(error)}]`;
+}
+
+const maxCauseDepth = 3;
+
+/**
+ * Node's fetch reports every failure as “fetch failed” and puts the reason in
+ * the cause, so the message on its own says nothing about what went wrong.
+ * The depth cap is because a cause chain is not guaranteed to end: it can
+ * loop back on itself.
+ */
+function getCauseMessages(error: Error): string[] {
+  const messages: string[] = [];
+  let cause = getCause(error);
+
+  while (cause && messages.length < maxCauseDepth) {
+    messages.push(getCauseMessage(cause));
+    cause = cause instanceof Error ? getCause(cause) : undefined;
+  }
+
+  return messages;
+}
+
+function getCauseMessage(cause: unknown): string {
+  if (cause instanceof Error) {
+    return cause.message || '[NO ERROR MESSAGE]';
+  }
+
+  if (typeof cause === 'string') {
+    return cause;
+  }
+
+  return getErrorMessage(cause);
+}
+
+// web-ui compiles against ES2018, where Error has no cause, so the property
+// has to be reached through a check rather than named outright.
+function getCause(error: Error): unknown {
+  return 'cause' in error ? error.cause : undefined;
 }
 
 type AnyFunction = (...args: any[]) => any;
