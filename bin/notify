@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# Mails an alert read from stdin. Replaces `ssmtp gurdiga@gmail.com`, which
+# relayed through smtp-out — the monitoring sent its alerts with the very
+# container it was watching, so a mail outage silenced the alert about it.
+# msmtp talks to Gmail directly, sharing nothing with the stack: see
+# /etc/msmtprc on prod, which logs every attempt to /var/log/msmtp.
+
+set -euo pipefail
+
+recipient="${NOTIFY_TO:-gurdiga@gmail.com}"
+
+# Injection seam: tests point this at a stub rather than mailing anything.
+msmtp="${NOTIFY_MSMTP:-msmtp}"
+
+# Gmail rewrites the From header to the authenticated account, so alerts
+# cannot be filtered by sender. This is the handle that survives:
+# list:(res-alerts.feedsubscription.com). Sub-addressing does not work —
+# deliveredto: matches nothing.
+list_id='RES alerts <res-alerts.feedsubscription.com>'
+
+main() {
+  if [ -t 1 ] || [ -n "${MAKE_DEBUG:-}" ]; then
+    exec cat
+  fi
+
+  local message
+  message=$(cat)
+
+  # Replaces `ifne`, slightly more strictly: whitespace-only counts as
+  # nothing to report, where ifne would have mailed a lone newline.
+  [[ $message =~ [^[:space:]] ]] || exit 0
+
+  # Prepended rather than appended: the callers emit their own Subject and
+  # From lines first, and a header has to land inside that block.
+  if ! printf 'List-Id: %s\n%s\n' "$list_id" "$message" | "$msmtp" "$recipient"; then
+    # Nothing catches this: the crontab sets MAILTO="", so cron discards
+    # what a job writes to stderr. The alert is lost, and the only record
+    # is msmtp's own line in /var/log/msmtp. Echo it anyway for the
+    # interactive case.
+    echo "notify: msmtp failed, alert not delivered:" >&2
+    printf '%s\n' "$message" >&2
+    exit 1
+  fi
+}
+
+main "$@"

@@ -4,6 +4,7 @@
 SHELL = bash
 TIME=gtime -f '%es'
 DOCKER_BUILD_FLAGS ?=
+NOTIFY := $(CURDIR)/bin/notify
 
 RED='\e[0;31m'
 NC='\033[0m' # No Color
@@ -175,7 +176,7 @@ delmon-restart:
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 logger:
 	@$(call include_log_to)
@@ -222,7 +223,7 @@ resolver-report:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - | \
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 logger-list-packages:
 	docker exec -it logger apk list -a |
@@ -351,7 +352,7 @@ update-tor-exit-node-blocklist:
 			echo "Could not refresh the Tor exit-node blocklist (fetch, validation, move, or reload failed)."; \
 			echo; \
 			echo "Please try running the make command manually."; \
-		) | if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		) | $(NOTIFY)
 	fi
 
 # cron @weekly
@@ -362,7 +363,7 @@ reload-website:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
-	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	| $(NOTIFY)
 
 # cron @weekly
 restart-smtp-in:
@@ -372,7 +373,7 @@ restart-smtp-in:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
-	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	| $(NOTIFY)
 
 # cron @weekly
 restart-postilion:
@@ -382,7 +383,7 @@ restart-postilion:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - \
-	| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	| $(NOTIFY)
 
 purge-smtp-queue:
 	docker exec -it smtp postsuper -d ALL
@@ -517,7 +518,7 @@ watch-app:
 				jq -r .data.diff <<<"$$json"
 			fi
 		) |
-		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
+		$(NOTIFY);
 	done \
 	& disown
 
@@ -540,7 +541,7 @@ watch-website:
 	while read -r timestamp _2 _3 client_ip _5 _6 _7 _8 _9 url _11 _12 _13 referrer rest; do
 		(
 			echo "Subject: RES website error-log"
-			echo "From: RES <system@feedsubscription.com>"; `# needs FromLineOverride=YES in /etc/ssmtp/ssmtp.conf`
+			echo "From: RES <system@feedsubscription.com>"; `# Gmail rewrites this to the authenticated account; filter on List-Id instead`
 			echo ""
 			echo "User-Agent: $$rest"
 			echo "Client IP: $$client_ip"
@@ -551,7 +552,7 @@ watch-website:
 			whois $$client_ip | grep -iE '^(Address|StateProv|PostalCode|Country):' | sort -u | head -10 | sed 's/^/    /'
 			echo "https://whois.com/whois/$$client_ip"
 		) |
-		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi;
+		$(NOTIFY);
 	done \
 	& disown
 
@@ -592,6 +593,29 @@ watch-smtp-out:
 
 			fi
 		) |
+		$(NOTIFY)
+	done \
+	& disown
+
+# cron @reboot
+#
+# Watches the alert channel itself. This is the one place that still mails
+# through ssmtp, and deliberately so: an alert about msmtp being broken
+# cannot go out through msmtp. The two channels watch each other, since
+# ssmtp relays through smtp-out, which msmtp does not touch.
+watch-msmtp:
+	@tail -n0 --follow=name --retry /var/log/msmtp |
+	grep --line-buffered -v 'exitcode=EX_OK' |
+	while read -r line; do
+		(
+			echo "Subject: RES msmtp failed to send an alert"
+			echo "From: RES <system@feedsubscription.com>"
+			echo ""
+			echo "$$line"
+			echo
+			echo "The alert that failed is lost: cron discards job output"
+			echo "(MAILTO=\"\"), so /var/log/msmtp is the only record."
+		) |
 		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
 	done \
 	& disown
@@ -616,7 +640,7 @@ certbot-report:
 		echo
 		echo "$$output"
 	) 2>&1 |
-	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 # cron @reboot
 watch-delmon:
@@ -641,7 +665,7 @@ watch-delmon:
 				echo "$$json"
 			fi
 		) |
-		if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+		$(NOTIFY)
 	done \
 	& disown
 
@@ -671,7 +695,7 @@ list-qid-index:
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 delmon-dev:
 	@DATA_DIR_ROOT=.tmp/docker-data ts-node ./src/app/delivery-monitoring
@@ -685,7 +709,7 @@ delivery-report:
 			echo ""
 			cat
 		) \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		| $(NOTIFY)
 	}
 
 	export -f send_report
@@ -708,7 +732,7 @@ mailq-report:
 			echo ""
 			cat
 		) \
-		| if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+		| $(NOTIFY)
 	}
 
 	export -f send_report
@@ -785,7 +809,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		echo ""
 		echo "$$DATA_DESTINATION"
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 	rm $$DATA_ARCHIVE
 
@@ -804,7 +828,7 @@ backup-purge:
 		cat .tmp/logs/feedsubscription/backup-purge.log |
 		ifne -n echo '(empty)'
 	) |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 # cron @daily
 backup-purge-gfs:
@@ -869,7 +893,7 @@ backup-purge-gfs:
 		cat .tmp/logs/feedsubscription/backup-purge-gfs.log |
 		ifne -n echo '(empty)'
 	) |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 ${RCLONE_BINARY}:
 	curl https://rclone.org/install.sh | sudo bash
@@ -937,7 +961,7 @@ docker-prune:
 		docker system df
 		echo
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 git-pre-commit-hook:
 	echo "#!/bin/sh" > .git/hooks/pre-commit
@@ -957,7 +981,7 @@ list-sessions:
 		echo "From: RES <system@feedsubscription.com>"
 		echo ""
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 # cron 59 23 * * *
 404-report:
@@ -971,7 +995,7 @@ list-sessions:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
-	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 deno-notes:
 	# Sat Dec 24 16:36:11 EET 2022
@@ -999,7 +1023,7 @@ unique-ips-report:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
-	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 # brew install goaccess
 # geoip comes from https://www.maxmind.com/en/accounts/852003/geoip/downloads
@@ -1092,7 +1116,7 @@ tracking-report: bot-list.txt
 		echo "From: RES <system@feedsubscription.com>"
 		echo
 	) - |
-	if [ -t 1 ] || [ -v MAKE_DEBUG ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 bot-list.txt: .tmp/logs/feedsubscription/website.log*
 	@base_re='\w*(bot|crawler|spider)\w*'
@@ -1271,7 +1295,7 @@ purge-demo-feeds:
 		echo "From: RES <system@feedsubscription.com>"; \
 		echo; \
 	) - |
-	if [ -t 1 ]; then cat; else ifne ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 show-certificate-date:
 	echo | openssl s_client -connect feedsubscription.com:443 | openssl x509 -noout -dates
@@ -1382,7 +1406,7 @@ open-ports-report:
 				echo "Subject: RES open-ports-report"
 				echo "From: RES <system@feedsubscription.com>"
 				echo ""
-			) $$current_report | ssmtp gurdiga@gmail.com
+			) $$current_report | $(NOTIFY)
 		fi
 	fi
 
@@ -1437,7 +1461,7 @@ archive-old-deliveries:
 		echo "month $$month"
 		echo ""
 	) - |
-	if [ -t 1 ]; then cat; else ssmtp gurdiga@gmail.com; fi
+	$(NOTIFY)
 
 rsync-certbot:
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/certbot/ .tmp/certbot/

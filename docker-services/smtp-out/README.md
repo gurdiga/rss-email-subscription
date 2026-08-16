@@ -13,7 +13,7 @@ Debian-based Postfix + OpenDKIM container for outbound email delivery.
 
 ### `/etc/ssmtp/ssmtp.conf`
 
-The host uses `ssmtp` to send cron job notifications (watch-app, watch-smtp-out, etc.). It must relay through smtp-out:
+Alerts now go out through `bin/notify`, which uses msmtp and Gmail directly, so that a mail outage cannot silence the alert about itself. `ssmtp` is left with exactly one caller — `watch-msmtp`, which reports failures of that channel and therefore must not use it — and relays through smtp-out:
 
 ```
 mailhub=localhost:1587
