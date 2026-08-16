@@ -77,12 +77,15 @@ export function isPublicIpAddress(ip: string): boolean {
 }
 
 function isPublicIpv4(ip: string): boolean {
-  const [a, b] = ip.split('.').map(Number);
+  const [a, b, c] = ip.split('.').map(Number);
 
-  if (a === undefined || b === undefined) {
+  if (a === undefined || b === undefined || c === undefined) {
     return false;
   }
 
+  // The documentation and protocol-assignment ranges are /24s, and matching
+  // them by the first two octets would take down the routable rest of the /16
+  // — 203.0.112.1 is somebody's server.
   const isSpecialUse =
     a === 0 || // this network
     a === 10 || // private
@@ -90,11 +93,12 @@ function isPublicIpv4(ip: string): boolean {
     (a === 100 && b >= 64 && b <= 127) || // carrier-grade NAT
     (a === 169 && b === 254) || // link-local, including the cloud metadata service
     (a === 172 && b >= 16 && b <= 31) || // private
-    (a === 192 && b === 0) || // IETF protocol assignments and documentation
+    (a === 192 && b === 0 && c === 0) || // IETF protocol assignments
+    (a === 192 && b === 0 && c === 2) || // documentation
     (a === 192 && b === 168) || // private
     (a === 198 && b >= 18 && b <= 19) || // benchmarking
-    (a === 198 && b === 51) || // documentation
-    (a === 203 && b === 0) || // documentation
+    (a === 198 && b === 51 && c === 100) || // documentation
+    (a === 203 && b === 0 && c === 113) || // documentation
     a >= 224; // multicast, reserved, and broadcast
 
   return !isSpecialUse;
@@ -126,7 +130,10 @@ function isPublicIpv6(ip: string): boolean {
     (firstByte & 0xfe) === 0xfc || // unique local
     (first >= 0xfe80 && first <= 0xfebf) || // link-local
     firstByte === 0xff || // multicast
-    first === 0x2002; // 6to4, deprecated, and it tunnels to an arbitrary IPv4 address
+    first === 0x2002 || // 6to4, deprecated, and it tunnels to an arbitrary IPv4 address
+    (first === 0x2001 && groups[1] === 0) || // Teredo, which tunnels the same way
+    (first === 0x2001 && groups[1] === 0xdb8) || // documentation
+    (first === 0x64 && groups[1] === 0xff9b); // the NAT64 prefixes left over from the unwrapping above
 
   return !isSpecialUse;
 }
@@ -138,10 +145,11 @@ function isPublicIpv6(ip: string): boolean {
 function getEmbeddedIpv4(groups: number[]): string | undefined {
   const leadingGroups = groups.slice(0, 6);
   const isIpv4Mapped = leadingGroups.slice(0, 5).every((x) => x === 0) && groups[5] === 0xffff;
+  const isIpv4Translated = leadingGroups.slice(0, 4).every((x) => x === 0) && groups[4] === 0xffff && groups[5] === 0;
   const isIpv4Compatible = leadingGroups.every((x) => x === 0) && !(groups[6] === 0 && (groups[7] || 0) <= 1);
   const isNat64 = groups[0] === 0x64 && groups[1] === 0xff9b && groups.slice(2, 6).every((x) => x === 0);
 
-  if (!(isIpv4Mapped || isIpv4Compatible || isNat64)) {
+  if (!(isIpv4Mapped || isIpv4Translated || isIpv4Compatible || isNat64)) {
     return undefined;
   }
 
