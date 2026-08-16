@@ -75,11 +75,11 @@ const maxCauseDepth = 3;
  */
 function getCauseMessages(error: Error): string[] {
   const messages: string[] = [];
-  let cause = getCause(error);
+  let current: unknown = error;
 
-  while (cause && messages.length < maxCauseDepth) {
-    messages.push(getCauseMessage(cause));
-    cause = cause instanceof Error ? getCause(cause) : undefined;
+  while (hasCause(current) && messages.length < maxCauseDepth) {
+    current = current.cause;
+    messages.push(getCauseMessage(current));
   }
 
   return messages;
@@ -91,16 +91,17 @@ function getCauseMessage(cause: unknown): string {
   }
 
   if (typeof cause === 'string') {
-    return cause;
+    return cause || '[EMPTY ERROR OBJECT]';
   }
 
   return getErrorMessage(cause);
 }
 
 // web-ui compiles against ES2018, where Error has no cause, so the property
-// has to be reached through a check rather than named outright.
-function getCause(error: Error): unknown {
-  return 'cause' in error ? error.cause : undefined;
+// is reached through a check rather than named outright. The check is also
+// what tells a cause of 0 or '' from no cause at all.
+function hasCause(error: unknown): error is { cause: unknown } {
+  return error instanceof Error && 'cause' in error;
 }
 
 type AnyFunction = (...args: any[]) => any;

@@ -66,6 +66,12 @@ describe(getErrorMessage.name, () => {
       expect(getErrorMessage(error)).to.equal('Oops!: a string');
     });
 
+    it('tells a falsy cause from no cause', () => {
+      expect(getErrorMessage(new Error('Oops!', { cause: 0 }))).to.equal('Oops!: [EMPTY ERROR OBJECT]');
+      expect(getErrorMessage(new Error('Oops!', { cause: '' }))).to.equal('Oops!: [EMPTY ERROR OBJECT]');
+      expect(getErrorMessage(new Error('Oops!'))).to.equal('Oops!');
+    });
+
     it('stops before a cause chain can run away', () => {
       const error = new Error('1', { cause: new Error('2', { cause: new Error('3', { cause: new Error('4') }) }) });
 
