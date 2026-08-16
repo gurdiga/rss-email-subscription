@@ -9,16 +9,6 @@ describe(fetch.name, () => {
   let server: Server;
   let origin: string;
 
-  async function startServer(requestListener: RequestListener): Promise<void> {
-    server = createServer(requestListener);
-
-    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
-
-    const { port } = server.address() as AddressInfo;
-
-    origin = si`http://127.0.0.1:${port.toString()}`;
-  }
-
   afterEach(() => server?.close());
 
   // The guard would refuse the loopback test server, and relaxing it is the
@@ -161,6 +151,16 @@ describe(fetch.name, () => {
 
     expect(bodyResult).to.equal('AbortError');
   });
+
+  async function startServer(requestListener: RequestListener): Promise<void> {
+    server = createServer(requestListener);
+
+    await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+
+    const { port } = server.address() as AddressInfo;
+
+    origin = si`http://127.0.0.1:${port.toString()}`;
+  }
 });
 
 describe(getLimitedReadableStream.name, () => {
