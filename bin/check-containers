@@ -1,0 +1,194 @@
+#!/usr/bin/env bash
+
+# cron */5 * * * *
+#
+# Reports containers that should be running and are not. Exists because
+# every other alerting path on prod is a log tailer, and a container that
+# fails to start writes no lines — its silence is indistinguishable from
+# a quiet night. See CONTAINER_DOWN_DETECTION.md.
+#
+# No set -e, deliberately. Everywhere else an early exit is a safe
+# default; here it is indistinguishable from an all-clear, so every step
+# that can fail either alerts or fails towards alerting.
+set -uo pipefail
+
+project=res
+
+# Resolved from the script rather than the cwd, so that a hand-run from
+# anywhere reads the state cron does, and Compose reads the same
+# docker-compose.yml and .env.
+repo_root=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+
+# Injection seams: tests point these at stubs rather than needing a real
+# stack or mailing anything.
+docker="${CHECK_CONTAINERS_DOCKER:-docker}"
+notify="${CHECK_CONTAINERS_NOTIFY:-$repo_root/bin/notify}"
+
+state_dir="$repo_root/.tmp/check-containers"
+observed="$state_dir/observed"
+reported="$state_dir/reported"
+config_err="$state_dir/config.err"
+
+# Filed in place of the status when a mail could not be delivered. Holds
+# a byte that no service name and no error text can contain, so the next
+# run always sees a difference and tries again.
+undelivered=$'\x01undelivered'
+
+main() {
+  cd -- "$repo_root" || fail "cannot cd to $repo_root"
+
+  ensure_state_dir
+
+  local status
+  status=$(current_status)
+
+  local now=healthy
+  [ -n "$status" ] && now=unhealthy
+
+  local was
+  was=$(cat "$observed")
+
+  # Unnoticed, a failed write here is permanent inertness: observed stays
+  # healthy, so every future outage stops at the debounce below.
+  if ! save "$observed" "$now"; then
+    fail "cannot write $observed"
+  fi
+
+  # One confirming sample before bad news goes out, so that a docker
+  # restart or a deploy landing between two polls does not page. Keyed on
+  # the verdict and not on the set: a set that keeps changing — one
+  # container flapping while another stays down — would never settle, and
+  # the standing failure would never be reported at all.
+  if [ "$now" = unhealthy ] && [ "$was" != unhealthy ]; then
+    exit 0
+  fi
+
+  local last
+  last=$(cat "$reported")
+
+  if [ "$status" = "$last" ]; then
+    exit 0
+  fi
+
+  local subject body
+
+  if [ -n "$status" ]; then
+    subject="containers NOT RUNNING"
+
+    # In a substitution rather than in the pipeline below, because this
+    # fails exactly when dockerd is down — when the mail matters most —
+    # and pipefail would then report a failure for a mail that went out
+    # fine.
+    body=$(
+      printf '%s\n\n' "$status"
+      run "$docker" compose --project-name "$project" ps --all 2>&1
+    )
+  else
+    subject="containers recovered"
+    body="All expected containers are running again."
+  fi
+
+  if [ "$last" = "$undelivered" ]; then
+    body+=$'\n\nAn earlier alert could not be delivered; see /var/log/msmtp.'
+  fi
+
+  # A tty means a human is watching rather than cron, and notify prints
+  # instead of mailing. Filing that as delivered would let a hand-run
+  # swallow the alert the next cron run owed us.
+  if [ -t 1 ] || [ -n "${MAKE_DEBUG:-}" ]; then
+    report "$subject" <<<"$body"
+    exit 0
+  fi
+
+  # Filed as delivered only once it is: notify exits non-zero when msmtp
+  # fails, and a status recorded as reported is never sent again. The
+  # marker rather than leaving the file alone, because a stack that
+  # recovers before the next poll would otherwise match the untouched
+  # file and bury the outage and the recovery both.
+  if report "$subject" <<<"$body"; then
+    save "$reported" "$status" || fail "cannot write $reported"
+    exit 0
+  fi
+
+  save "$reported" "$undelivered"
+  exit 1
+}
+
+ensure_state_dir() {
+  # report() touches no disk, so it still works when this is what failed.
+  if ! mkdir -p "$state_dir" || ! touch "$observed" "$reported"; then
+    fail "cannot write $state_dir"
+  fi
+
+  # touch is happy to be handed a directory, and save would then move the
+  # replacement inside it rather than over it, freezing the state.
+  if [ ! -f "$observed" ] || [ ! -f "$reported" ]; then
+    fail "$observed and $reported must be regular files"
+  fi
+}
+
+fail() {
+  report "check-containers BROKEN" <<<"$1"
+  exit 1
+}
+
+# Empty means everything is where it should be. Anything else is both the
+# mail body and the key that decides whether this has been said already.
+current_status() {
+  local expected running status
+
+  # Compose's stderr is kept out of expected: a warning emitted while
+  # succeeding — obsolete key, unset variable, deprecated attribute —
+  # would sort in among the service names and read as a missing
+  # container. It goes to a file, read only on failure.
+  if ! expected=$(run "$docker" compose --project-name "$project" config --services 2>"$config_err" | sort); then
+    printf 'cannot list expected services:\n%s\n' "$(cat "$config_err")"
+    return
+  fi
+
+  if [ -z "$expected" ]; then
+    echo "docker compose config --services listed nothing"
+    return
+  fi
+
+  # Emptied explicitly on failure: a timed-out ps can leave a partial list
+  # on stdout, and a partial list reads as a partial outage. Empty makes
+  # every service missing, which is the right answer when dockerd is what
+  # died.
+  if ! running=$(run "$docker" compose --project-name "$project" ps --services --status running 2>/dev/null | sort); then
+    running=""
+  fi
+
+  # Both sides sorted above: comm on unsorted input warns to stderr,
+  # which cron discards, and is wrong quietly.
+  if ! status=$(comm -23 <(printf '%s\n' "$expected") <(printf '%s\n' "$running")); then
+    echo "comm failed comparing expected against running"
+    return
+  fi
+
+  printf '%s\n' "$status"
+}
+
+# Bounded, so that a wedged Docker API cannot leave one run of this still
+# hanging when the next one starts. --kill-after covers a process that
+# ignores the TERM.
+run() {
+  timeout --kill-after=10s 60s "$@"
+}
+
+# Atomic, so an interrupted run cannot leave a half-written state file
+# that the next run reads as a different verdict.
+save() {
+  printf '%s\n' "$2" > "$1.new" && mv "$1.new" "$1"
+}
+
+report() {
+  {
+    echo "Subject: RES $1"
+    echo "From: RES <system@feedsubscription.com>"
+    echo
+    cat
+  } | "$notify"
+}
+
+main "$@"
