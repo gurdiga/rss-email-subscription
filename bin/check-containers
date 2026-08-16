@@ -169,13 +169,6 @@ current_status() {
   printf '%s\n' "$status"
 }
 
-# Bounded, so that a wedged Docker API cannot leave one run of this still
-# hanging when the next one starts. --kill-after covers a process that
-# ignores the TERM.
-run() {
-  timeout --kill-after=10s 60s "$@"
-}
-
 # Atomic, so an interrupted run cannot leave a half-written state file
 # that the next run reads as a different verdict.
 save() {
@@ -188,7 +181,16 @@ report() {
     echo "From: RES <system@feedsubscription.com>"
     echo
     cat
-  } | "$notify"
+  } | run "$notify"
+}
+
+# Bounded, so that neither a wedged Docker API nor a stuck msmtp can
+# leave one run of this still hanging when the next one starts, five
+# minutes later, with nothing to notice the pile-up. A timed-out send
+# reads as a failed one, so it is retried rather than filed as sent.
+# --kill-after covers a process that ignores the TERM.
+run() {
+  timeout --kill-after=10s 60s "$@"
 }
 
 main "$@"
