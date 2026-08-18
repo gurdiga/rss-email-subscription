@@ -32,8 +32,10 @@ main() {
   [[ $message =~ [^[:space:]] ]] || exit 0
 
   # Prepended rather than appended: the callers emit their own Subject and
-  # From lines first, and a header has to land inside that block.
-  if ! printf 'List-Id: %s\n%s\n' "$list_id" "$message" | "$msmtp" "$recipient"; then
+  # From lines first, and a header has to land inside that block. No caller
+  # sets To, and the recipient is otherwise only an envelope address, which
+  # makes Gmail stamp the delivered copy Bcc.
+  if ! printf 'List-Id: %s\nTo: %s\n%s\n' "$list_id" "$recipient" "$message" | "$msmtp" "$recipient"; then
     # Nothing catches this: the crontab sets MAILTO="", so cron discards
     # what a job writes to stderr. The alert is lost, and the only record
     # is msmtp's own line in /var/log/msmtp. Echo it anyway for the
