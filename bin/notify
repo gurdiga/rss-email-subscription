@@ -19,6 +19,22 @@ msmtp="${NOTIFY_MSMTP:-msmtp}"
 # deliveredto: matches nothing.
 list_id='RES alerts <res-alerts.feedsubscription.com>'
 
+# Alerts used to arrive with no Message-ID at all — postfix logged
+# `message-id=<>` — and Gmail grouped them by subject. Sending through
+# Gmail's own submission service mints a unique Message-ID per message,
+# which ends the grouping. Pointing every alert with the same subject at
+# one synthetic parent restores it, and does not depend on the heuristic.
+# The parent need not exist. A subject carrying a timestamp threads alone,
+# exactly as it did before.
+thread_id_for() {
+  local subject slug
+
+  subject=$(sed -n 's/^Subject: *//p' <<<"$1" | head -1)
+  slug=$(tr '[:upper:]' '[:lower:]' <<<"$subject" | tr -cs '[:alnum:]' '-' | sed 's/^-*//; s/-*$//')
+
+  printf '%s@feedsubscription.com' "${slug:-res-alert}"
+}
+
 main() {
   if [ -t 1 ] || [ -n "${MAKE_DEBUG:-}" ]; then
     exec cat
@@ -31,11 +47,15 @@ main() {
   # nothing to report, where ifne would have mailed a lone newline.
   [[ $message =~ [^[:space:]] ]] || exit 0
 
+  local thread
+  thread=$(thread_id_for "$message")
+
   # Prepended rather than appended: the callers emit their own Subject and
   # From lines first, and a header has to land inside that block. No caller
   # sets To, and the recipient is otherwise only an envelope address, which
   # makes Gmail stamp the delivered copy Bcc.
-  if ! printf 'List-Id: %s\nTo: %s\n%s\n' "$list_id" "$recipient" "$message" | "$msmtp" "$recipient"; then
+  if ! printf 'List-Id: %s\nTo: %s\nIn-Reply-To: <%s>\nReferences: <%s>\n%s\n' \
+    "$list_id" "$recipient" "$thread" "$thread" "$message" | "$msmtp" "$recipient"; then
     # Nothing catches this: the crontab sets MAILTO="", so cron discards
     # what a job writes to stderr. The alert is lost, and the only record
     # is msmtp's own line in /var/log/msmtp. Echo it anyway for the
