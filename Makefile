@@ -795,6 +795,7 @@ backup: ${RCLONE_BINARY} ${RCLONE_CONFIG}
 		du -sh $$LOGS_DIR
 
 		rclone \
+			--local-no-check-updated \
 			--stats=0 \
 			--verbose \
 			copy --no-traverse $$LOGS_DIR $$LOGS_DESTINATION
