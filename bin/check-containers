@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 
 # cron */5 * * * *
+# cron @reboot (CHECK_CONTAINERS_FORCE=1, after `make start`)
 #
 # Reports containers that should be running and are not. Exists because
 # every other alerting path on prod is a log tailer, and a container that
 # fails to start writes no lines — its silence is indistinguishable from
 # a quiet night. See CONTAINER_DOWN_DETECTION.md.
+#
+# The @reboot run forces a report of the first sample: a boot mail is a
+# confirmation, not an anomaly report, so it must arrive whether or not
+# anything is wrong, and must not wait for a second poll to confirm.
 #
 # No set -e, deliberately. Everywhere else an early exit is a safe
 # default; here it is indistinguishable from an all-clear, so every step
@@ -54,19 +59,25 @@ main() {
     fail "cannot write $observed"
   fi
 
+  # Set by the @reboot invocation, which wants a report of the very first
+  # sample rather than the debounced, deduplicated verdict the five-minute
+  # poll reports on: a boot confirmation is only useful if it always
+  # arrives.
+  local force="${CHECK_CONTAINERS_FORCE:-}"
+
   # One confirming sample before bad news goes out, so that a docker
   # restart or a deploy landing between two polls does not page. Keyed on
   # the verdict and not on the set: a set that keeps changing — one
   # container flapping while another stays down — would never settle, and
   # the standing failure would never be reported at all.
-  if [ "$now" = unhealthy ] && [ "$was" != unhealthy ]; then
+  if [ -z "$force" ] && [ "$now" = unhealthy ] && [ "$was" != unhealthy ]; then
     exit 0
   fi
 
   local last
   last=$(cat "$reported")
 
-  if [ "$status" = "$last" ]; then
+  if [ -z "$force" ] && [ "$status" = "$last" ]; then
     exit 0
   fi
 
@@ -74,6 +85,7 @@ main() {
 
   if [ -n "$status" ]; then
     subject="containers NOT RUNNING"
+    [ -n "$force" ] && subject="boot check: $subject"
 
     # In a substitution rather than in the pipeline below, because this
     # fails exactly when dockerd is down — when the mail matters most —
@@ -83,6 +95,13 @@ main() {
       printf '%s\n\n' "$status"
       run "$docker" compose --project-name "$project" ps --all 2>&1
     )
+  elif [ -n "$force" ]; then
+    subject="boot check: all containers running"
+
+    # Same substitution-not-pipe reasoning as the NOT RUNNING branch above:
+    # isolates a `docker` failure from pipefail so it cannot masquerade as
+    # a mail delivery failure.
+    body=$(run "$docker" compose --project-name "$project" ps --all 2>&1)
   else
     subject="containers recovered"
     body="All expected containers are running again."
