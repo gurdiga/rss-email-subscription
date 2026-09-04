@@ -16,7 +16,7 @@ RUN apk update --no-cache && apk upgrade --no-cache
 # surface. website:latest can reach zero here because nginx needs no libcurl.
 RUN apk add --no-cache \
   busybox=1.37.0-r30 \
-  openssl=3.5.7-r0 \
+  openssl=3.5.8-r0 \
   c-ares=1.34.8-r0 \
   tini=0.19.0-r3 \
   syslog-ng=4.10.2-r1 \
