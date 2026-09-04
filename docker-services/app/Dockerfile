@@ -3,7 +3,7 @@
 # Index digest, not per-arch: it still resolves per-arch, so the same pin works
 # on an arm64 laptop and an amd64 server.
 ARG NODE_IMAGE=node:22.22-alpine3.23@sha256:968df39aedcea65eeb078fb336ed7191baf48f972b4479711397108be0966920
-ARG OPENSSL_VERSION=3.5.7-r0
+ARG OPENSSL_VERSION=3.5.8-r0
 ARG BUSYBOX_VERSION=1.37.0-r30
 ARG GIT_REVISION
 
