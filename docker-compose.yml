@@ -71,6 +71,13 @@ services:
     environment:
       SMTP_IN_SASL_PASSWORD: ${SMTP_IN_SASL_PASSWORD?}
     <<: [*logging, *x-disable-ipv6, *x-dns]
+    # net-tools has netstat but no nc, and there's no wget/curl here either
+    # — postfix's own status check needs neither.
+    healthcheck:
+      test: ['CMD-SHELL', 'postfix status']
+      interval: 5s
+      timeout: 3s
+      retries: 2
     networks:
       net:
         ipv4_address: 10.5.5.8
@@ -96,6 +103,11 @@ services:
       POSTILION_SASL_PASSWORD_GURDIGA_COM: ${POSTILION_SASL_PASSWORD_GURDIGA_COM?}
       POSTILION_SASL_PASSWORD_SANDRADODD_COM: ${POSTILION_SASL_PASSWORD_SANDRADODD_COM?}
     <<: [*logging, *x-disable-ipv6, *x-dns]
+    healthcheck:
+      test: ['CMD-SHELL', 'postfix status']
+      interval: 5s
+      timeout: 3s
+      retries: 2
     networks:
       net:
         ipv4_address: 10.5.5.10
@@ -169,6 +181,12 @@ services:
       # TS_NODE_DEBUG: 'true'
       <<: *app-env
     <<: [*logging, *x-disable-ipv6, *x-dns]
+    # /cors-test is the cheapest unauthenticated route the router has.
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://localhost:3000/cors-test']
+      interval: 5s
+      timeout: 3s
+      retries: 2
     networks:
       net:
         ipv4_address: 10.5.5.5
@@ -190,6 +208,13 @@ services:
     environment:
       NGINX_HOST: feedsubscription.com
     <<: [*logging, *x-disable-ipv6, *x-dns]
+    # wget, not curl: the image deletes curl deliberately (see Dockerfile),
+    # and /track is a fixed 200 with no upstream or redirect involved.
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null --no-check-certificate https://localhost/track']
+      interval: 5s
+      timeout: 3s
+      retries: 2
     networks:
       net:
         ipv4_address: 10.5.5.4
