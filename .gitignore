@@ -3,6 +3,7 @@ src/api/web-ui-scripts/
 website/html/
 .tmp/
 .env
+docker-compose.override.yml
 dist/
 .goaccess/
 bot-list.txt

@@ -1,3 +1,5 @@
+# Memento: docker-compose.override.yml, git-ignored, may be silently merged in.
+
 x-logging: &logging
   logging:
     driver: syslog
