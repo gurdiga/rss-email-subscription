@@ -5,12 +5,13 @@ import { Feed } from '../../domain/feed';
 import { AppStorage } from '../../domain/storage';
 import { isEmpty, isNotEmpty } from '../../shared/array-utils';
 import { isErr } from '../../shared/lang';
-import { makeCustomLoggers } from '../../shared/logging';
+import { LoggerFunction, makeCustomLoggers } from '../../shared/logging';
 import { humanSize } from '../../shared/number-utils';
 import { si } from '../../shared/string-utils';
 import { EmailContent, htmlBody } from '../email-sending/email-content';
 import { sendEmail } from '../email-sending/email-delivery';
 import { FullEmailAddress } from '../email-sending/emails';
+import { markFeedCheckFailureAlerted, recordFeedCheckFailure, resetFeedCheckFailures } from './feed-check-failures';
 import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
@@ -18,6 +19,7 @@ import { parseRssFeed } from './rss-parsing';
 import { fetchRss } from './rss-response';
 
 const suppressAlertPatterns = [/getaddrinfo ENOTFOUND/, /Connect Timeout Error/];
+const alertAfterConsecutiveFailures = 10;
 
 export async function checkRss(
   accountId: AccountId,
@@ -41,11 +43,9 @@ export async function checkRss(
   if (isErr(rssResponse)) {
     logError('Failed fetching RSS', { url, reason: rssResponse.reason, durationMs });
 
-    const shouldAlert = !suppressAlertPatterns.some((x) => x.test(rssResponse.reason));
+    const isSuppressed = suppressAlertPatterns.some((x) => x.test(rssResponse.reason));
 
-    if (shouldAlert) {
-      await sendAlertEmail(feed, env, settings.fullEmailAddress);
-    }
+    await recordFailureAndMaybeAlert(accountId, feed, storage, env, settings, isSuppressed, logError);
 
     return 1;
   }
@@ -54,8 +54,16 @@ export async function checkRss(
 
   if (isErr(rssParsingResult)) {
     logError('Failed parsing RSS items', { reason: rssParsingResult.reason });
-    await sendAlertEmail(feed, env, settings.fullEmailAddress);
+
+    await recordFailureAndMaybeAlert(accountId, feed, storage, env, settings, false, logError);
+
     return 1;
+  }
+
+  const resetResult = resetFeedCheckFailures(accountId, feed.id, storage);
+
+  if (isErr(resetResult)) {
+    logError('Failed resetting feed check failures', { reason: resetResult.reason });
   }
 
   const { validItems, invalidItems } = rssParsingResult;
@@ -116,6 +124,42 @@ export async function checkRss(
   }
 
   return 0;
+}
+
+async function recordFailureAndMaybeAlert(
+  accountId: AccountId,
+  feed: Feed,
+  storage: AppStorage,
+  env: AppEnv,
+  settings: AppSettings,
+  isSuppressed: boolean,
+  logError: LoggerFunction
+): Promise<void> {
+  const failureState = recordFeedCheckFailure(accountId, feed.id, storage);
+
+  if (isErr(failureState)) {
+    logError('Failed recording feed check failure', { reason: failureState.reason });
+    return;
+  }
+
+  const shouldAlert = !isSuppressed && !failureState.alerted && failureState.count >= alertAfterConsecutiveFailures;
+
+  if (!shouldAlert) {
+    return;
+  }
+
+  const sendResult = await sendAlertEmail(feed, env, settings.fullEmailAddress);
+
+  if (isErr(sendResult)) {
+    logError('Failed sending alert email', { reason: sendResult.reason });
+    return;
+  }
+
+  const markResult = markFeedCheckFailureAlerted(accountId, feed.id, storage);
+
+  if (isErr(markResult)) {
+    logError('Failed marking feed check alert as sent', { reason: markResult.reason });
+  }
 }
 
 async function sendAlertEmail(feed: Feed, env: AppEnv, from: FullEmailAddress) {
