@@ -95,7 +95,6 @@ lint-quiet:
 	$(TIME) $(MAKE) lint > /dev/null
 
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # plus, comment out irrelevant pieces
-# sudo cp -r ./.tmp/certbot/conf/live/feedsubscription.com /etc/letsencrypt/live/
 lint-nginx-config:
 	@if git diff --cached --name-only | grep -q '^website/nginx/'; then \
 		nginx_image=`yq -r .services.website.image docker-compose.yml`; \
@@ -434,6 +433,7 @@ local-ssl:
 		-cert-file $(LOCAL_CERT_DIR)/fullchain.pem \
 		-key-file $(LOCAL_CERT_DIR)/privkey.pem \
 		localhost.feedsubscription.com
+	cp $(LOCAL_CERT_DIR)/fullchain.pem $(LOCAL_CERT_DIR)/cert.pem
 	grep -q 'localhost\.feedsubscription\.com' /etc/hosts \
 		|| echo '127.0.0.1	localhost.feedsubscription.com' | sudo tee -a /etc/hosts
 	docker kill --signal=SIGHUP website 2> /dev/null || true
@@ -1464,9 +1464,6 @@ archive-old-deliveries:
 		echo ""
 	) - |
 	$(NOTIFY)
-
-rsync-certbot:
-	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/certbot/ .tmp/certbot/
 
 .PHONY: dns-update
 dns-update:
