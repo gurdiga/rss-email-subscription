@@ -21,14 +21,9 @@
   "license": "",
   "overrides": {
     "diff": "^9.0.0",
-    "form-data": "^4.0.6",
-    "glob": "^11.1.0",
-    "path-to-regexp": "^8.4.2",
-    "qs": "^6.16.0",
-    "serialize-javascript": "^7.0.5",
-    "tar": "^7.5.6"
+    "serialize-javascript": "^7.0.5"
   },
-  "comment:overrides": "Security fixes: diff (GHSA-73rr-hh4g-fpgx), form-data (CVE-2026-12143), glob (CVE-2025-64756), path-to-regexp (CVE-2026-4926), qs (CVE-2025-15284, GHSA-q8mj-m7cp-5q26, GHSA-x5fp-wj9c-mxmx, GHSA-4mjr-xmp4-gh2g), serialize-javascript (GHSA-5c6j-r48x-rmvq, GHSA-qj8w-gfj5-8c6v), tar (CVE-2026-23950, CVE-2026-23745)",
+  "comment:overrides": "Security fixes for mocha's transitive deps, which mocha itself hasn't updated yet: diff (GHSA-73rr-hh4g-fpgx), serialize-javascript (GHSA-5c6j-r48x-rmvq, GHSA-qj8w-gfj5-8c6v)",
   "devDependencies": {
     "@paddle/paddle-js": "^1.6.4",
     "@types/chai": "^5.2.2",
