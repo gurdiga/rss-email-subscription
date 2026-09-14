@@ -21,7 +21,10 @@ apply_postfix_config() {
     "virtual_alias_maps=texthash:/etc/postfix/virtual" \
     "transport_maps=texthash:/etc/postfix/transport" \
     "smtpd_tls_security_level=none" \
-    "smtp_tls_security_level=may"
+    "smtp_tls_security_level=may" \
+    "ms-throttle_destination_concurrency_limit=1" \
+    "ms-throttle_destination_rate_delay=5s" \
+    "ms-throttle_destination_concurrency_failed_cohort_limit=10"
 }
 
 configure_opendkim() {
