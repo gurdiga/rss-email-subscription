@@ -7,6 +7,12 @@
 #
 #  https://www.postfix.org/QSHAPE_README.html#backlog
 #
+# The destination_concurrency/rate_delay overrides below only affect
+# each transport's own smtp(8) process, not queue-manager scheduling —
+# that's controlled by the matching <transport>_destination_* settings
+# in main.cf (see entrypoint.sh), which is what actually caps
+# concurrency and paces deliveries.
+#
 #######################################################################
 
 # service type  private unpriv  chroot  wakeup  maxproc command
@@ -19,9 +25,6 @@ yahoo-throttle unix  -       -       n       -       -       smtp
 # currently timing out at the TCP level for our sending IP (2026-09) — a
 # short timeout plus a bigger address sample means an attempt is much more
 # likely to reach one of the still-reachable front-ends before giving up.
-# The destination_concurrency/rate_delay overrides below only affect this
-# transport's own smtp(8) process, not queue-manager scheduling — that's
-# controlled by the ms-throttle_destination_* settings in main.cf instead.
 ms-throttle unix  -       -       n       -       -       smtp
   -o smtp_destination_concurrency_limit=1
   -o smtp_destination_rate_delay=5s

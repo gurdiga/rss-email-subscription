@@ -24,7 +24,13 @@ apply_postfix_config() {
     "smtp_tls_security_level=may" \
     "ms-throttle_destination_concurrency_limit=1" \
     "ms-throttle_destination_rate_delay=5s" \
-    "ms-throttle_destination_concurrency_failed_cohort_limit=10"
+    "ms-throttle_destination_concurrency_failed_cohort_limit=10" \
+    "yahoo-throttle_destination_concurrency_limit=1" \
+    "yahoo-throttle_destination_rate_delay=5s" \
+    "yahoo-throttle_destination_concurrency_failed_cohort_limit=10" \
+    "comcast-throttle_destination_concurrency_limit=1" \
+    "comcast-throttle_destination_rate_delay=15s" \
+    "comcast-throttle_destination_concurrency_failed_cohort_limit=10"
 }
 
 configure_opendkim() {
