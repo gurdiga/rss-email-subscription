@@ -1,13 +1,49 @@
 import { expect } from 'chai';
-import { EmailHashFn, makeHashedEmail } from '../app/email-sending/emails';
+import { EmailHashFn, loadEmailAddresses, makeHashedEmail } from '../app/email-sending/emails';
+import { getAccountIdByEmail } from '../domain/account-crypto';
+import { storeFeed } from '../domain/feed-storage';
+import { isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { encodeSearchParamValue, makeTestEmailAddress, makeTestFeedId } from '../shared/test-utils';
-import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl } from './subscription';
+import {
+  encodeSearchParamValue,
+  makeTestEmailAddress,
+  makeTestFeed,
+  makeTestFeedId,
+  purgeTestStorageFromSnapshot,
+} from '../shared/test-utils';
+import { hashingSalt, makeTestApp } from './test-utils';
+import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl, subscription } from './subscription';
 
 describe('subscription', () => {
   const domainName = 'test.feedsubscription.com';
   const emailAddress = makeTestEmailAddress('a@test.com');
   const emailHashFn: EmailHashFn = (e) => si`#${e.value}#`;
+
+  describe(subscription.name, () => {
+    afterEach(purgeTestStorageFromSnapshot);
+
+    // The finding this guards: a comma-separated pair used to pass validation as one
+    // stored address but expand into two SMTP recipients sharing a single confirmation
+    // link, so confirming one mailbox confirmed delivery to the other too. Closed at the
+    // validation layer (email-address-making.ts), verified here at the subscribe entry
+    // point rather than only at the validator's own unit tests.
+    it('rejects a comma-injected email instead of storing it as one subscriber', async () => {
+      const app = makeTestApp();
+      const feed = makeTestFeed();
+      const accountId = getAccountIdByEmail(makeTestEmailAddress('feed-owner@test.com'), hashingSalt);
+      const storeFeedResult = storeFeed(accountId, feed, app.storage);
+      expect(isErr(storeFeedResult)).to.be.false;
+
+      const reqBody = { email: 'a@x.com,b@y.com', feedId: feed.id.value };
+      const response = await subscription('req', reqBody, {}, {}, app);
+
+      expect(response.kind).to.equal('InputError', JSON.stringify(response));
+
+      const storedEmails = loadEmailAddresses(accountId, feed.id, app.storage);
+      expect(isErr(storedEmails)).to.be.false;
+      expect((storedEmails as any).validEmails).to.deep.equal([]);
+    });
+  });
 
   describe(makeSubscriptionConfirmationEmailContent.name, () => {
     it('prepares the confirmation email contents', () => {
