@@ -56,6 +56,11 @@ describe(log.name, () => {
       data: {
         password: 'some-secret',
         newPassword: 'some-new-secret',
+        secret: 'a-confirmation-secret',
+        paymentToken: 'ptxn_123',
+        // reqBody, as app-request-handler.ts logs it on every request: password-reset,
+        // email-change and registration confirmation all carry the bearer secret here.
+        reqBody: { secret: 'a-confirmation-secret-in-reqBody' },
       },
     };
 
@@ -64,11 +69,13 @@ describe(log.name, () => {
     log(record, mockStdOutPrinter);
 
     const loggedRecord = JSON.parse(mockStdOutPrinter.calls[0]![0]) as LogRecord;
-    const loggedDataPassword = (loggedRecord.data as any)['password']!;
-    const loggedDataNewPassword = (loggedRecord.data as any)['newPassword']!;
+    const loggedData = loggedRecord.data as any;
 
-    expect(loggedDataPassword).to.equal('[**masked**]');
-    expect(loggedDataNewPassword).to.equal('[**masked**]');
+    expect(loggedData['password']).to.equal('[**masked**]');
+    expect(loggedData['newPassword']).to.equal('[**masked**]');
+    expect(loggedData['secret']).to.equal('[**masked**]');
+    expect(loggedData['paymentToken']).to.equal('[**masked**]');
+    expect(loggedData['reqBody']['secret']).to.equal('[**masked**]');
   });
 });
 
