@@ -85,4 +85,33 @@ describe(makeEmailAddress.name, () => {
     expect(makeEmailAddress({})).to.deep.equal(makeErr('Email must be a string', field));
     expect(makeEmailAddress([])).to.deep.equal(makeErr('Email must be a string', field));
   });
+
+  it('rejects inputs that would expand into more than one SMTP recipient', () => {
+    expect(makeEmailAddress('a@x.com,b@y.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@x.com,b@y.com"', field)
+    );
+    expect(makeEmailAddress('a@b@c.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@b@c.com"', field)
+    );
+    expect(makeEmailAddress('a@x.com,y.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@x.com,y.com"', field)
+    );
+  });
+
+  it('resolves quickly for adversarial local parts instead of backtracking exponentially', () => {
+    // The vulnerable regex took ~9.7s on a 30-character adversarial input;
+    // this generous bound still catches a regression without flaking on a
+    // loaded CI runner.
+    const elapsedMs = timeMakeEmailAddress(si`${'a'.repeat(40)}!@test.com`);
+
+    expect(elapsedMs).to.be.lessThan(1000);
+  });
 });
+
+function timeMakeEmailAddress(email: string): number {
+  const startTime = Date.now();
+
+  makeEmailAddress(email);
+
+  return Date.now() - startTime;
+}

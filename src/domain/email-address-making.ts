@@ -14,7 +14,17 @@ export function makeOptionalEmailAddress(input: unknown, field = 'email'): Resul
 }
 
 export const allowedCharacters = '[a-z0-9-_]';
-const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)?${allowedCharacters}+)*$`, 'i');
+
+// Mandatory (not optional) separator between allowedCharacters+ runs keeps
+// the two character classes disjoint, so there's exactly one way to parse
+// any input — no backtracking blowup on pathological strings.
+const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)${allowedCharacters}+)*$`, 'i');
+
+// Only the characters an address-list parser could split on are rejected
+// here; domain syntax is left as loose as before, since this function also
+// re-validates addresses already on file, and a stricter allowlist could
+// silently drop existing subscribers.
+const recipientListSeparatorsRe = /[,;<>\s]/;
 
 export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailAddress> {
   if (!input) {
@@ -45,7 +55,16 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
     return err;
   }
 
+  if (recipientListSeparatorsRe.test(email)) {
+    return err;
+  }
+
   const parts = email.split('@');
+
+  if (parts.length !== 2) {
+    return err;
+  }
+
   const [localPart = '', domain = ''] = parts.map((s) => s.trim());
   const doesLocalPartLookReasonable = localPart.length > 0 && localPartRe.test(localPart);
 
