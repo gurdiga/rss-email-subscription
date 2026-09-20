@@ -1,11 +1,13 @@
 import { basename } from 'node:path/posix';
 import { attempt, Err, isErr, makeErr, Result } from '../shared/lang';
 import { AppStorage, StorageKey } from './storage';
+import { makeDate } from '../shared/date-utils';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import {
   ConfirmationSecret,
   ConfirmationSecretNotFound,
+  confirmationSecretLifetimeMs,
   makeConfirmationSecret,
   makeConfirmationSecretNotFound,
 } from './confirmation-secrets';
@@ -25,7 +27,25 @@ export function loadConfirmationSecret<T>(
     return makeConfirmationSecretNotFound(secret);
   }
 
-  return storage.loadItem(storageKey);
+  const data = storage.loadItem(storageKey);
+
+  if (isErr(data)) {
+    return data;
+  }
+
+  // The cleanup cron (expireConfirmationSecrets) enforces this same lifetime, but only
+  // every few hours — redemption checked it too, so a token isn't usable in the gap
+  // between when it should have expired and when cleanup next runs. A record with no
+  // parseable timestamp is treated as not-yet-expired rather than rejected: this
+  // function is generic over the caller's own data shape, some of which predate this
+  // check, and cleanup already handles a malformed record on its own schedule.
+  const timestamp = makeDate(data?.timestamp);
+
+  if (!isErr(timestamp) && timestamp.getTime() < Date.now() - confirmationSecretLifetimeMs) {
+    return makeConfirmationSecretNotFound(secret);
+  }
+
+  return data;
 }
 
 export function storeConfirmationSecret<D>(

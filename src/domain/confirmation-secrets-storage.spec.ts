@@ -8,7 +8,11 @@ import {
   makeTestConfirmationSecret,
   makeTestAccountId,
 } from '../shared/test-utils';
-import { confirmationSecretLength, makeConfirmationSecretNotFound } from './confirmation-secrets';
+import {
+  confirmationSecretLength,
+  confirmationSecretLifetimeMs,
+  makeConfirmationSecretNotFound,
+} from './confirmation-secrets';
 import {
   storeConfirmationSecret,
   deleteConfirmationSecret,
@@ -90,5 +94,44 @@ describe(loadConfirmationSecret.name, () => {
 
     expect(hasItem.calls).to.have.lengthOf(1);
     expect(result).to.deep.equal(storageErr);
+  });
+
+  // Only the 6-hourly cleanup cron enforced the advertised 48h lifetime before this,
+  // so a token stayed redeemable for however long it took cleanup to catch up.
+  it('returns ConfirmationSecretNotFound for a secret past its lifetime, ahead of cleanup', () => {
+    const justPastLifetime = new Date(Date.now() - confirmationSecretLifetimeMs - 1000);
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
+    const loadItem = makeStub(() => ({ ...accountId, timestamp: justPastLifetime }));
+    const storage = makeTestStorage({ hasItem, loadItem });
+
+    const result = loadConfirmationSecret(storage, secret);
+
+    expect(result).to.deep.equal(makeConfirmationSecretNotFound(secret));
+  });
+
+  // Real storage round-trips the stored Date through JSON, so loadItem hands back an
+  // ISO string, not a Date instance — unlike the raw-Date stub above. Covering that
+  // shape confirms the expiry check also works on what actually comes off disk.
+  it('returns ConfirmationSecretNotFound for a JSON-round-tripped timestamp past its lifetime', () => {
+    const justPastLifetime = new Date(Date.now() - confirmationSecretLifetimeMs - 1000);
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
+    const loadItem = makeStub(() => ({ ...accountId, timestamp: justPastLifetime.toISOString() }));
+    const storage = makeTestStorage({ hasItem, loadItem });
+
+    const result = loadConfirmationSecret(storage, secret);
+
+    expect(result).to.deep.equal(makeConfirmationSecretNotFound(secret));
+  });
+
+  it('still returns the content for a secret within its lifetime', () => {
+    const justWithinLifetime = new Date(Date.now() - confirmationSecretLifetimeMs + 60_000);
+    const storedData = { ...accountId, timestamp: justWithinLifetime };
+    const hasItem = makeStub<AppStorage['hasItem']>(() => true);
+    const loadItem = makeStub(() => storedData);
+    const storage = makeTestStorage({ hasItem, loadItem });
+
+    const result = loadConfirmationSecret(storage, secret);
+
+    expect(result).to.deep.equal(storedData);
   });
 });
