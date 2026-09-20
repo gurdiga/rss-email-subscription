@@ -2,6 +2,8 @@ import { expect } from 'chai';
 import { Account, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, storeAccount } from '../domain/account-storage';
+import { makeEmailChangeRequestSecretData, makeRandomConfirmationSecret } from '../domain/confirmation-secrets';
+import { storeConfirmationSecret } from '../domain/confirmation-secrets-storage';
 import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
@@ -9,7 +11,7 @@ import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { invalidateSessionIfPasswordChanged } from './app-request-handler';
 import { hashingSalt, makeTestApp } from './test-utils';
-import { requestAccountPasswordChange } from './account';
+import { confirmAccountEmailChange, requestAccountPasswordChange } from './account';
 import { initSession } from './session';
 import { App } from './init-app';
 
@@ -135,6 +137,61 @@ describe(requestAccountPasswordChange.name, () => {
 
     const verification = await verifyPassword(newPassword, stored.hashedPassword, hashingSalt);
     expect(verification.isMatch, 'and the password change still took effect').to.be.true;
+  });
+});
+
+describe(confirmAccountEmailChange.name, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
+  // The link is mailed to newEmail and opened from whatever browser happens to have
+  // it, so "is this the demo account" has to come from the token's own target
+  // account rather than from the redeeming request's session, which a fresh or
+  // logged-out browser simply won't have.
+  it('does not rename the demo account regardless of the redeeming session', async () => {
+    const app = makeTestApp();
+    const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
+
+    storeAccount(
+      app.storage,
+      demoAccountId,
+      makeTestAccount({ email: demoAccountEmail, confirmationTimestamp: new Date() })
+    );
+
+    const newEmail = makeTestEmailAddress('not-demo-anymore@test.com');
+    const secret = makeRandomConfirmationSecret();
+    storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(demoAccountId, newEmail));
+
+    const reqSession = {} as any; // no session at all, as when opened in a fresh browser
+    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    const account = loadAccount(app.storage, demoAccountId);
+    expect(isErr(account) || isAccountNotFound(account)).to.be.false;
+    expect((account as Account).email.value).to.equal(demoAccountEmail);
+  });
+
+  it('renames a non-demo account as usual', async () => {
+    const app = makeTestApp();
+    const oldEmail = makeTestEmailAddress('real-user@test.com');
+    const accountId = getAccountIdByEmail(oldEmail, hashingSalt);
+
+    storeAccount(app.storage, accountId, makeTestAccount({ email: oldEmail.value, confirmationTimestamp: new Date() }));
+
+    const newEmail = makeTestEmailAddress('real-user-new@test.com');
+    const secret = makeRandomConfirmationSecret();
+    storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(accountId, newEmail));
+
+    const reqSession = {} as any;
+    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    // setAccountEmail renames the storage tree to a path derived from the new email.
+    const newAccountId = getAccountIdByEmail(newEmail, hashingSalt);
+    const account = loadAccount(app.storage, newAccountId);
+    expect(isErr(account) || isAccountNotFound(account)).to.be.false;
+    expect((account as Account).email.value).to.equal(newEmail.value);
   });
 });
 

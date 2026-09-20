@@ -31,7 +31,7 @@ import {
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
-import { demoAccountPassword } from '../domain/demo-account';
+import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
@@ -139,7 +139,24 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
   }
 
   const { accountId, newEmail } = data;
-  const oldEmail = isDemoSession(reqSession)
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: currentAccount.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(currentAccount)) {
+    logError(si`Account to set email not found`, { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  // Whether to skip the real mutation is decided from the token's own target account,
+  // not from whatever session happens to redeem it: the link is mailed to newEmail and
+  // can be opened from any browser, so a session-based check is trivially bypassed by
+  // opening it logged out.
+  const isProtectedDemoAccount = currentAccount.email.value === demoAccountEmail;
+  const oldEmail = isProtectedDemoAccount
     ? newEmail
     : setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
 
