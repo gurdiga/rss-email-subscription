@@ -245,6 +245,12 @@ services:
       net:
         ipv4_address: 10.5.5.3
 
+  # logger is the root of the depends_on: condition: service_healthy chain
+  # (resolver waits on it, api and most others wait on both). None of these
+  # healthchecks run their first probe until one interval after the container
+  # starts, so a cold `make start-api` needs one 30s round for logger, then
+  # another 30s for resolver, then another 30s for api/website — upwards of
+  # 90-100s before anything reports healthy, not because startup itself is slow.
   logger:
     container_name: logger
     hostname: logger
