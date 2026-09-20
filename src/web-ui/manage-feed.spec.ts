@@ -40,7 +40,7 @@ describe(makeUiData.name, () => {
 
 describe(makeStatusField.name, () => {
   it('returns DOM elements appropriate for feed status', () => {
-    const resultApproved = makeStatusField(FeedStatus.Approved, makeCreateElementStub());
+    const resultApproved = makeStatusField(FeedStatus.Approved, false, makeCreateElementStub());
 
     expect(resultApproved, 'when approved').to.deep.equal([
       { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
@@ -58,7 +58,7 @@ describe(makeStatusField.name, () => {
       },
     ]);
 
-    const resultAwaitingReview = makeStatusField(FeedStatus.AwaitingReview, makeCreateElementStub());
+    const resultAwaitingReview = makeStatusField(FeedStatus.AwaitingReview, false, makeCreateElementStub());
 
     expect(resultAwaitingReview, 'when awaiting review').to.deep.equal([
       { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
@@ -79,7 +79,7 @@ describe(makeStatusField.name, () => {
       },
     ]);
 
-    const resultRejected = makeStatusField(FeedStatus.Rejected, makeCreateElementStub());
+    const resultRejected = makeStatusField(FeedStatus.Rejected, false, makeCreateElementStub());
 
     expect(resultRejected, 'when rejected').to.deep.equal([
       { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
@@ -92,6 +92,31 @@ describe(makeStatusField.name, () => {
             tagName: 'i',
             attributes: { class: 'fa-solid fa-circle-xmark ms-1 text-danger' },
             children: [],
+          },
+        ],
+      },
+    ]);
+  });
+
+  // A demo feed is never reviewed or scheduled for delivery (see add-new-feed.ts), so
+  // the real-account review promise would be false for it.
+  it('tells a demo account that its feed will not be reviewed, instead of promising review', () => {
+    const result = makeStatusField(FeedStatus.AwaitingReview, true, makeCreateElementStub());
+
+    expect(result).to.deep.equal([
+      { tagName: 'dt', attributes: { class: 'res-feed-attribute-label' }, children: ['Status:'] },
+      {
+        tagName: 'dd',
+        attributes: { class: 'res-feed-attribute-value' },
+        children: [
+          'Awaiting Review',
+          {
+            tagName: 'p',
+            attributes: { class: 'form-text m-0 text-success' },
+            children: [
+              { tagName: 'i', attributes: { class: 'fa-solid fa-circle-info me-1 ' }, children: [] },
+              'Demo feeds aren’t reviewed or delivered on a schedule. Use “Send me sample email” below to see what the email looks like.',
+            ],
           },
         ],
       },
