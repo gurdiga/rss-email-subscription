@@ -76,7 +76,11 @@ async function main() {
   });
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
-  router.get(ApiPath.sessionTest, makeAppRequestHandler(sessionTest, app));
+  // Unauthenticated and writes a session file on every call, even for a caller with
+  // no cookie yet (saveUninitialized:false doesn't help — this handler itself writes
+  // to the session). Rate-limited so a flood can't outrun the hourly reap and fill
+  // the volume with files in the meantime.
+  router.get(ApiPath.sessionTest, makeRateLimiter(10, hour), makeAppRequestHandler(sessionTest, app));
   // Mails an address the caller supplies, so the limit is about sending
   // reputation rather than CPU. Subscribing is a once-per-feed action, and the
   // form is embedded on customer sites where visitors arrive from their own IPs.
