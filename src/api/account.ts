@@ -47,7 +47,7 @@ import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { sendPlanChangeInformationEmail } from './plan-change-email';
-import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
+import { checkSession, deinitSession, initSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
   cancelCustomerSubscription,
   changeCustomerSubscription,
@@ -293,6 +293,16 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
+  // Refreshes this session's own passwordChangedAt snapshot: every session is compared
+  // against the account's current value on the next request, and without this the caller
+  // would get logged out by the very change they just made.
+  const sessionInitResult = initSession(storage, reqSession, accountId, account.email);
+
+  if (isErr(sessionInitResult)) {
+    logError(si`Failed to ${initSession.name}`, { reason: sessionInitResult.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
   sendPasswordChangeInformationEmail(account.email, settings, env);
 
   return makeSuccess();
@@ -322,7 +332,11 @@ function storeNewPassword(
     return makeErr('Stored password changed while hashing the new one');
   }
 
-  return storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+  return storeAccount(storage, accountId, {
+    ...account,
+    hashedPassword: newHashedPassword,
+    passwordChangedAt: new Date(),
+  });
 }
 
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {

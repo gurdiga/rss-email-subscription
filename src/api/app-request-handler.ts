@@ -9,7 +9,14 @@ import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
 import { App } from './init-app';
-import { ReqSession, SessionFieldName, checkSession, isSessionCookieRolling } from './session';
+import {
+  ReqSession,
+  SessionFieldName,
+  checkSession,
+  deinitSession,
+  isAuthenticatedSession,
+  isSessionCookieRolling,
+} from './session';
 
 export function requirePaymentConfirmed(app: App): RequestHandler {
   return (req, res, next) => {
@@ -46,6 +53,8 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqParams = req.query || {};
     const reqSession = req.session || {};
     const action = handler.name;
+
+    invalidateSessionIfPasswordChanged(app, reqSession);
 
     const ua = getUaInfo(req.get('User-Agent'));
 
@@ -99,6 +108,29 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
         exhaustivenessCheck(result);
     }
   };
+}
+
+// Clears the session's credentials when its passwordChangedAt snapshot is
+// stale, so every handler's own checkSession call sees an UnauthenticatedSession
+// exactly as it would for a session that was never logged in. This is the one
+// place that check needs to happen, since every route is registered through
+// makeAppRequestHandler.
+export function invalidateSessionIfPasswordChanged(app: App, reqSession: ReqSession): void {
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    return;
+  }
+
+  const account = loadAccount(app.storage, session.accountId);
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    return;
+  }
+
+  if (account.passwordChangedAt.getTime() !== session.passwordChangedAt.getTime()) {
+    deinitSession(reqSession);
+  }
 }
 
 function getUaInfo(uaString: string | undefined) {

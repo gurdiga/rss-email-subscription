@@ -5,7 +5,7 @@ import { loadAccount, storeAccount } from '../domain/account-storage';
 import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
 import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
-import { makeInputError, makeSuccess } from '../shared/api-response';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -34,7 +34,11 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(accountId.reason, accountId.field);
   }
 
-  initSession(reqSession, accountId, request.email);
+  const sessionInitResult = initSession(app.storage, reqSession, accountId, request.email);
+
+  if (isErr(sessionInitResult)) {
+    return makeAppError(sessionInitResult.reason);
+  }
 
   const logData = {};
   const responseData: AuthenticationResponseData = { sessionId: reqSession.id };
@@ -88,6 +92,23 @@ async function checkCredentials(
 
   if (!verification.isMatch) {
     logWarning('Incorrect password');
+    return makeErr('Password doesn’t match… 🤔', 'password');
+  }
+
+  // Verifying yields to the event loop (scrypt). Re-read and compare rather than trusting
+  // the snapshot: a password change or reset landing in that window must not hand out a
+  // session for a credential that no longer applies — initSession reads the account fresh,
+  // so such a session would otherwise carry the reset's own passwordChangedAt and look
+  // current to every future revocation check.
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount) || isAccountNotFound(currentAccount)) {
+    logWarning('Account disappeared while verifying password');
+    return makeErr('Could not find your account', 'email');
+  }
+
+  if (currentAccount.hashedPassword.value !== account.hashedPassword.value) {
+    logWarning('Stored password changed while verifying it');
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
 

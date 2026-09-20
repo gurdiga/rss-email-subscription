@@ -177,6 +177,20 @@ export function loadAccount(
 
   const isAdmin = !!item.isAdmin;
 
+  // Missing for an account stored before this field existed: treat it as never
+  // changed since creation, which is also correct — no session could predate
+  // both this field and the account itself.
+  const passwordChangedAtResult = parseOptionalDate(item.passwordChangedAt);
+
+  if (isErr(passwordChangedAtResult)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${passwordChangedAtResult.reason}`,
+      'passwordChangedAt'
+    );
+  }
+
+  const passwordChangedAt = passwordChangedAtResult ?? creationTimestamp;
+
   return {
     planId,
     email,
@@ -184,6 +198,7 @@ export function loadAccount(
     creationTimestamp,
     confirmationTimestamp,
     isAdmin,
+    passwordChangedAt,
   };
 }
 
@@ -196,6 +211,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
     isAdmin: account.isAdmin,
+    passwordChangedAt: account.passwordChangedAt,
   };
 
   const storeItemResult = storage.storeItem(storageKey, data);
@@ -242,6 +258,7 @@ export function resetAccountPassword(
   const storeResult = storeAccount(storage, accountId, {
     ...account,
     hashedPassword: newHashedPassword,
+    passwordChangedAt: new Date(),
   });
 
   if (isErr(storeResult)) {

@@ -7,8 +7,10 @@ import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { invalidateSessionIfPasswordChanged } from './app-request-handler';
 import { hashingSalt, makeTestApp } from './test-utils';
 import { requestAccountPasswordChange } from './account';
+import { initSession } from './session';
 import { App } from './init-app';
 
 const email = 'password-change@test.com';
@@ -30,6 +32,25 @@ describe(requestAccountPasswordChange.name, () => {
     expect(accountId.value).to.be.a('string');
   });
 
+  // Every session, including this one, is checked against the account's passwordChangedAt
+  // on the next request (see invalidateSessionIfPasswordChanged). Without refreshing this
+  // session's own snapshot after a successful change, the caller would be logged out by
+  // the very request that changed their password.
+  it('keeps the current session alive after its own password change', async () => {
+    const app = makeTestApp();
+    const accountId = await storeTestAccount(app);
+    const session = { cookie: {} } as any;
+    const sessionInitResult = initSession(app.storage, session, accountId, makeTestEmailAddress(email));
+    expect(isErr(sessionInitResult)).to.be.false;
+
+    const response = await requestAccountPasswordChange('req', { currentPassword, newPassword }, {}, session, app);
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+
+    invalidateSessionIfPasswordChanged(app, session);
+
+    expect(session.accountId).to.equal(accountId.value);
+  });
+
   // The demo credentials are public, so this endpoint is reachable by anyone. It stores
   // nothing for a demo session, so it must not spend a scrypt hash on one either — the
   // demo password is a published constant, so comparing it answers the same question
@@ -45,7 +66,7 @@ describe(requestAccountPasswordChange.name, () => {
       confirmationTimestamp: new Date(),
     });
 
-    const reqSession = { cookie: {}, accountId: demoAccountId.value, email: demoAccountEmail } as any;
+    const reqSession = makeReqSession(demoAccountId.value, demoAccountEmail);
     const started = Date.now();
     const response = await requestAccountPasswordChange(
       'req',
@@ -80,7 +101,7 @@ describe(requestAccountPasswordChange.name, () => {
       confirmationTimestamp: new Date(),
     });
 
-    const reqSession = { cookie: {}, accountId: demoAccountId.value, email: demoAccountEmail } as any;
+    const reqSession = makeReqSession(demoAccountId.value, demoAccountEmail);
     const response = await requestAccountPasswordChange(
       'req',
       { currentPassword: 'not-the-demo-password', newPassword },
@@ -119,9 +140,13 @@ describe(requestAccountPasswordChange.name, () => {
 
 function changePassword(app: App) {
   const reqBody = { currentPassword, newPassword };
-  const reqSession = { cookie: {}, accountId: accountIdFor().value, email } as any;
+  const reqSession = makeReqSession(accountIdFor().value, email);
 
   return requestAccountPasswordChange('req', reqBody, {}, reqSession, app);
+}
+
+function makeReqSession(accountId: string, email: string) {
+  return { cookie: {}, accountId, email, passwordChangedAt: new Date().toISOString() } as any;
 }
 
 async function storeTestAccount(app: App) {

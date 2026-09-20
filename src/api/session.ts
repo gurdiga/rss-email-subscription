@@ -1,9 +1,13 @@
-import { AccountId, makeAccountId } from '../domain/account';
+import { AccountId, isAccountNotFound, makeAccountId } from '../domain/account';
+import { loadAccount } from '../domain/account-storage';
 import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
-import { Err, hasKind, isErr, makeValues } from '../shared/lang';
+import { AppStorage } from '../domain/storage';
+import { makeDate } from '../shared/date-utils';
+import { Err, hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
+import { si } from '../shared/string-utils';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -34,6 +38,7 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
 export interface SessionFields {
   accountId: unknown | AccountId;
   email: unknown | EmailAddress;
+  passwordChangedAt: unknown | Date;
   works: unknown | boolean;
 }
 
@@ -58,21 +63,43 @@ function setSessionConfig(reqSession: ReqSession): void {
   reqSession.cookie.sameSite = 'strict';
 }
 
-export function initSession(reqSession: ReqSession, accountId: AccountId, email: EmailAddress): void {
+// Reads the account's current passwordChangedAt rather than taking it as a
+// parameter, so every caller — including one that just wrote a new password
+// moments earlier — gets the value actually on disk instead of a snapshot
+// that might predate that write.
+export function initSession(
+  storage: AppStorage,
+  reqSession: ReqSession,
+  accountId: AccountId,
+  email: EmailAddress
+): Result<void> {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
+  }
+
+  if (isAccountNotFound(account)) {
+    return makeErr('Account not found when initializing session');
+  }
+
   storeSessionValue(reqSession, 'accountId', accountId.value);
   storeSessionValue(reqSession, 'email', email.value);
+  storeSessionValue(reqSession, 'passwordChangedAt', account.passwordChangedAt.toISOString());
   setSessionConfig(reqSession);
 }
 
 export function deinitSession(reqSession: ReqSession): void {
   deleteSessionValue(reqSession, 'accountId');
   deleteSessionValue(reqSession, 'email');
+  deleteSessionValue(reqSession, 'passwordChangedAt');
 }
 
-export interface AuthenticatedSession extends Pick<SessionFields, 'accountId' | 'email'> {
+export interface AuthenticatedSession extends Pick<SessionFields, 'accountId' | 'email' | 'passwordChangedAt'> {
   kind: 'AuthenticatedSession';
   accountId: AccountId;
   email: EmailAddress;
+  passwordChangedAt: Date;
 }
 
 export function isAuthenticatedSession(x: any): x is AuthenticatedSession {
@@ -88,6 +115,7 @@ export function checkSession(reqSession: unknown): AuthenticatedSession | Unauth
   const values = makeValues<AuthenticatedSessionValues>(reqSession, {
     accountId: makeAccountId,
     email: makeEmailAddress,
+    passwordChangedAt: makeDate,
   });
 
   if (isErr(values)) {

@@ -113,7 +113,12 @@ export const registration: AppRequestHandler = async function registration(
     paymentToken = result.value;
   }
 
-  initSession(reqSession, accountId, request.email);
+  const sessionInitResult = initSession(storage, reqSession, accountId, request.email);
+
+  if (isErr(sessionInitResult)) {
+    logError(si`Failed to ${initSession.name}`, { reason: sessionInitResult.reason });
+    return makeAppError(sessionInitResult.reason);
+  }
 
   const logData = {};
   const responseData: RegistrationResponseData = { paymentToken };
@@ -274,13 +279,15 @@ async function initAccount(
     return makeAccountAlreadyExists();
   }
 
+  const now = new Date();
   const account: Account = {
     planId: PlanId.PendingPayment,
     email: request.email,
     hashedPassword,
     confirmationTimestamp: undefined,
-    creationTimestamp: new Date(),
+    creationTimestamp: now,
     isAdmin: false,
+    passwordChangedAt: now,
   };
 
   const storeAccountResult = storeAccount(storage, accountId, account);
@@ -318,8 +325,12 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   }
 
   const { accountId, email } = confirmationSecretData;
+  const sessionInitResult = initSession(storage, reqSession, accountId, email);
 
-  initSession(reqSession, accountId, email);
+  if (isErr(sessionInitResult)) {
+    logWarning(si`Failed to ${initSession.name}: ${sessionInitResult.reason}`);
+    return makeAppError(sessionInitResult.reason);
+  }
 
   const logData = {};
   const responseData = { sessionId: reqSession.id };

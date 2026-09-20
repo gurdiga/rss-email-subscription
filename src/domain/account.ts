@@ -33,6 +33,7 @@ export interface Account {
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean;
+  passwordChangedAt: Date;
 }
 
 export interface AccountData {
@@ -42,6 +43,7 @@ export interface AccountData {
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean | undefined;
+  passwordChangedAt: Date | undefined;
 }
 
 export interface UiAccount {

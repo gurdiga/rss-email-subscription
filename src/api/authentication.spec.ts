@@ -82,6 +82,37 @@ describe(authentication.name, () => {
     );
   });
 
+  // verifyPassword itself yields to the event loop. Without a re-check afterward, a
+  // password change landing in that window would let a login succeed against a hash
+  // that is no longer current — and the resulting session, initialized with the
+  // account's now-current passwordChangedAt, would look unrevoked to every future check.
+  it('rejects a login when the password changes while verification is in flight', async () => {
+    const email = 'race-during-verify@test.com';
+    const oldPassword = 'the-old-long-enough-password';
+    const newPassword = 'the-new-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(oldPassword),
+      confirmationTimestamp: new Date(),
+    });
+
+    // Computed upfront so the concurrent write below is a synchronous storeAccount call,
+    // landing well inside the login's own ~135ms verifyPassword scrypt call rather than
+    // racing a second scrypt call of its own against it.
+    const newHashedPassword = await hashPassword(newPassword);
+
+    const loginPromise = authentication('req', { email, password: oldPassword }, {}, makeReqSession(), app);
+
+    await new Promise((resolve) => setImmediate(resolve));
+    storeAccount(app.storage, accountId, { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword });
+
+    const response = await loginPromise;
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+  });
+
   it('does not rehash the demo account (its stored data stays static)', async () => {
     const password = 'a-long-enough-password';
     const app = makeTestApp();

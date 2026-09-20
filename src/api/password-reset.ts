@@ -273,7 +273,13 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  initSession(reqSession, accountId, account.email);
+  const sessionInitResult = initSession(storage, reqSession, accountId, account.email);
+
+  if (isErr(sessionInitResult)) {
+    logError(si`Failed to ${initSession.name}: ${sessionInitResult.reason}`);
+    return makeAppError();
+  }
+
   sendPasswordResetConfirmationEmail(account.email, settings, env);
 
   const logData = {};
