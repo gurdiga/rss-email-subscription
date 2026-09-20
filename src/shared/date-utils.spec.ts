@@ -23,6 +23,14 @@ describe(makeDate.name, () => {
   it('parses gov.md pubDate format', () => {
     expect(makeDate('Vin, 04/24/2026 - 13:58')).to.deep.equal(new Date(2026, 3, 24, 13, 58));
   });
+
+  // Real callers often pass this an unknown value straight from parsed JSON, despite
+  // the string type above — e.g. a missing field destructures to undefined. new
+  // Date(undefined) is an Invalid Date, so it falls through to the gov.md fallback,
+  // whose regex .match call threw on non-string input instead of returning an Err.
+  it('returns an Err rather than throwing when given undefined', () => {
+    expect(makeDate(undefined as any, field)).to.deep.equal(makeErr('Not a date string', field));
+  });
 });
 
 describe(getDateBefore.name, () => {
