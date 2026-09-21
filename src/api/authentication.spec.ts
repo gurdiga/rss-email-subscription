@@ -49,6 +49,55 @@ describe(authentication.name, () => {
     );
   });
 
+  // regenerateSession() does real disk I/O and yields to the event loop, opening a
+  // window between checkCredentials validating the password and initSession
+  // establishing the session. A reset landing in that window must not slip through:
+  // initSession reads the account fresh, so the resulting session would otherwise
+  // read the reset's own passwordChangedAt and look unrevoked despite being
+  // established with a password that's no longer valid.
+  it('rejects a login when the password changes while the session is regenerating', async () => {
+    const email = 'regen-race@test.com';
+    const oldPassword = 'the-old-long-enough-password';
+    const newPassword = 'the-new-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(oldPassword),
+      confirmationTimestamp: new Date(),
+    });
+
+    const newHashedPassword = await hashPassword(newPassword);
+    const regenerateSession = async () => {
+      // Stands in for a password reset completing while regenerateSession's own
+      // disk I/O (destroying the pre-login session record) is in flight.
+      storeAccount(app.storage, accountId, {
+        ...(loadAccount(app.storage, accountId) as Account),
+        hashedPassword: newHashedPassword,
+      });
+
+      return { cookie: {} } as any;
+    };
+
+    const response = await authentication(
+      'req',
+      { email, password: oldPassword },
+      {},
+      { cookie: {} } as any,
+      app,
+      regenerateSession
+    );
+
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+
+    const account = loadAccount(app.storage, accountId);
+    expect(isErr(account) || isAccountNotFound(account)).to.be.false;
+    expect((account as Account).hashedPassword.value, 'the concurrent reset must survive').to.equal(
+      newHashedPassword.value
+    );
+  });
+
   it('upgrades a legacy password hash to the current format on successful login', async () => {
     const email = 'legacy-user@test.com';
     const password = 'a-long-enough-password';
