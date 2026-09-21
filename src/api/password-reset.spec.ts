@@ -18,7 +18,7 @@ import {
   makeTestStorageFromSnapshot,
   purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
-import { hashingSalt, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
 import { confirmPasswordReset, revokePasswordResetSecrets } from './password-reset';
 import { RegistrationConfirmationSecretData } from './registration';
 
@@ -125,8 +125,17 @@ describe(confirmPasswordReset.name, () => {
     storeConfirmationSecret(app.storage, secret, secretData);
 
     const reqBody = { secret: secret.value, newPassword };
-    const first = confirmPasswordReset('req', reqBody, {}, makeReqSession(), app);
-    const second = confirmPasswordReset('req', reqBody, {}, makeReqSession(), app);
+    const firstSession = makeReqSession();
+    const secondSession = makeReqSession();
+    const first = confirmPasswordReset('req', reqBody, {}, firstSession, app, makeMockRegenerateSession(firstSession));
+    const second = confirmPasswordReset(
+      'req',
+      reqBody,
+      {},
+      secondSession,
+      app,
+      makeMockRegenerateSession(secondSession)
+    );
 
     expect((await first).kind, 'the first submission wins').to.equal('Success');
     expect((await second).kind, 'the second submission does not also reset').to.equal('InputError');
@@ -138,12 +147,14 @@ describe(confirmPasswordReset.name, () => {
     const app = makeTestApp();
     const unknownSecret = makeRandomConfirmationSecret();
 
+    const reqSession = makeReqSession();
     const response = await confirmPasswordReset(
       'req',
       { secret: unknownSecret.value, newPassword: 'a-brand-new-s3cret' },
       {},
-      makeReqSession(),
-      app
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
     );
 
     expect(response.kind).to.equal('InputError', JSON.stringify(response));

@@ -11,7 +11,7 @@ import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { sessionCookieName } from './app-cookie';
 import { invalidateSessionIfPasswordChanged } from './app-request-handler';
-import { hashingSalt, makeMockSessionMethods, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeMockSessionMethods, makeTestApp } from './test-utils';
 import { confirmAccountEmailChange, requestAccountPasswordChange } from './account';
 import { initSession } from './session';
 import { App } from './init-app';
@@ -46,7 +46,14 @@ describe(requestAccountPasswordChange.name, () => {
     const sessionInitResult = initSession(app.storage, session, accountId, makeTestEmailAddress(email));
     expect(isErr(sessionInitResult)).to.be.false;
 
-    const response = await requestAccountPasswordChange('req', { currentPassword, newPassword }, {}, session, app);
+    const response = await requestAccountPasswordChange(
+      'req',
+      { currentPassword, newPassword },
+      {},
+      session,
+      app,
+      makeMockRegenerateSession(session)
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     invalidateSessionIfPasswordChanged(app, session);
@@ -76,7 +83,8 @@ describe(requestAccountPasswordChange.name, () => {
       { currentPassword: demoAccountPassword, newPassword },
       {},
       reqSession,
-      app
+      app,
+      makeMockRegenerateSession(reqSession)
     );
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
@@ -110,7 +118,8 @@ describe(requestAccountPasswordChange.name, () => {
       { currentPassword: 'not-the-demo-password', newPassword },
       {},
       reqSession,
-      app
+      app,
+      makeMockRegenerateSession(reqSession)
     );
 
     expect(response).to.include({ kind: 'InputError', field: 'currentPassword' }, JSON.stringify(response));
@@ -164,7 +173,14 @@ describe(confirmAccountEmailChange.name, () => {
 
     // no session at all, as when opened in a fresh browser
     const reqSession = makeMockSessionMethods() as any;
-    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+    const response = await confirmAccountEmailChange(
+      'req',
+      { secret: secret.value },
+      {},
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
+    );
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
@@ -185,7 +201,14 @@ describe(confirmAccountEmailChange.name, () => {
     storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(accountId, newEmail));
 
     const reqSession = makeMockSessionMethods() as any;
-    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+    const response = await confirmAccountEmailChange(
+      'req',
+      { secret: secret.value },
+      {},
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
+    );
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
@@ -210,7 +233,14 @@ describe(confirmAccountEmailChange.name, () => {
     storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(accountId, newEmail));
 
     const reqSession = makeMockSessionMethods() as any;
-    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+    const response = await confirmAccountEmailChange(
+      'req',
+      { secret: secret.value },
+      {},
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
+    );
     const cookies = (response as any).cookies;
     const sessionCookie = cookies.find((c: any) => c.name === sessionCookieName);
 
@@ -223,7 +253,7 @@ function changePassword(app: App) {
   const reqBody = { currentPassword, newPassword };
   const reqSession = makeReqSession(accountIdFor().value, email);
 
-  return requestAccountPasswordChange('req', reqBody, {}, reqSession, app);
+  return requestAccountPasswordChange('req', reqBody, {}, reqSession, app, makeMockRegenerateSession(reqSession));
 }
 
 function makeReqSession(accountId: string, email: string) {

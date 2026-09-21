@@ -194,6 +194,7 @@ describe('API', () => {
 
       let sessionId = (registrationConfirmationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
+      const sessionIdAfterConfirmation = sessionId;
 
       const sessionDataAfterConfirmation = loadSessionData(sessionId!);
       expect(sessionDataAfterConfirmation.accountId).to.equal(
@@ -217,6 +218,12 @@ describe('API', () => {
 
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
+
+      // The cookie jar carries the confirmation-established session cookie into this
+      // login. A session ID that survived login unrotated would let anyone who set it
+      // beforehand (e.g. by planting a cookie ahead of the victim) ride in on it.
+      expect(sessionId, 'authentication rotates the session ID').not.to.equal(sessionIdAfterConfirmation);
+      expect(sessionFileExists(sessionIdAfterConfirmation!), 'the pre-login session record is gone').to.be.false;
 
       const sessionData = loadSessionData(sessionId!);
       const sessionCookie = sessionData.cookie!;

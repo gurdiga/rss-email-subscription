@@ -14,7 +14,7 @@ import {
   purgeTestStorageFromSnapshot,
 } from '../../shared/test-utils';
 import { initSession } from '../session';
-import { hashingSalt, makeTestApp } from '../test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeTestApp } from '../test-utils';
 import { addNewFeed } from './add-new-feed';
 
 const feedId = makeTestFeedId('demo-feed');
@@ -30,7 +30,14 @@ describe(addNewFeed.name, () => {
   it('does not auto-approve a feed created from a demo session', async () => {
     const { app, session, accountId } = await setUpDemoSession();
 
-    const response = await addNewFeed('req', makeAddNewFeedRequest(), {}, session, app);
+    const response = await addNewFeed(
+      'req',
+      makeAddNewFeedRequest(),
+      {},
+      session,
+      app,
+      makeMockRegenerateSession(session)
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const feed = loadFeed(accountId, feedId, app.storage);
@@ -45,7 +52,14 @@ describe(addNewFeed.name, () => {
   it('does not add the feed’s replyTo as a confirmed subscriber for a demo session', async () => {
     const { app, session, accountId } = await setUpDemoSession();
 
-    const response = await addNewFeed('req', makeAddNewFeedRequest(), {}, session, app);
+    const response = await addNewFeed(
+      'req',
+      makeAddNewFeedRequest(),
+      {},
+      session,
+      app,
+      makeMockRegenerateSession(session)
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const storedEmails = loadEmailAddresses(accountId, feedId, app.storage);

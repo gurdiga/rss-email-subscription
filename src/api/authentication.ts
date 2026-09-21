@@ -19,8 +19,9 @@ export const authentication: AppRequestHandler = async function authentication(
   _reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  app
+  _reqSession,
+  app,
+  regenerateSession
 ) {
   const request = makeAuthenticationRequest(reqBody);
 
@@ -34,6 +35,10 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(accountId.reason, accountId.field);
   }
 
+  // A pre-login session ID — anonymous, or authenticated as someone else — must not
+  // survive into this one: reusing it would let whoever set it (e.g. by planting a
+  // cookie before the victim logs in) ride in on the session this login establishes.
+  const reqSession = await regenerateSession();
   const sessionInitResult = initSession(app.storage, reqSession, accountId, request.email);
 
   if (isErr(sessionInitResult)) {

@@ -11,7 +11,7 @@ import {
   makeTestFeedId,
   purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
-import { hashingSalt, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
 import { makeSubscriptionConfirmationEmailContent, makeEmailConfirmationUrl, subscription } from './subscription';
 
 describe('subscription', () => {
@@ -35,7 +35,7 @@ describe('subscription', () => {
       expect(isErr(storeFeedResult)).to.be.false;
 
       const reqBody = { email: 'a@x.com,b@y.com', feedId: feed.id.value };
-      const response = await subscription('req', reqBody, {}, {}, app);
+      const response = await subscription('req', reqBody, {}, {}, app, makeMockRegenerateSession({}));
 
       expect(response.kind).to.equal('InputError', JSON.stringify(response));
 

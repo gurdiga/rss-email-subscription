@@ -4,7 +4,7 @@ import { isAccountNotFound } from '../domain/account';
 import { loadAccount } from '../domain/account-storage';
 import { PlanId } from '../domain/plan';
 import { ApiResponse, Success } from '../shared/api-response';
-import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
+import { asyncAttempt, exhaustivenessCheck, getErrorMessage, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
@@ -38,12 +38,15 @@ export function requirePaymentConfirmed(app: App): RequestHandler {
   };
 }
 
+export type RegenerateSession = () => Promise<ReqSession>;
+
 export type AppRequestHandler = (
   reqId: string,
   reqBody: Request['body'],
   reqParams: Request['query'],
   reqSession: ReqSession,
-  app: App
+  app: App,
+  regenerateSession: RegenerateSession
 ) => Promise<ApiResponse>;
 
 export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
@@ -72,8 +75,26 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 
     logInfo(action, { reqId, reqBody, reqParams });
 
+    // Every store here (session-file-store included) inherits express-session's base
+    // Store.prototype.regenerate, which calls its generate() unconditionally after
+    // destroy() — even when destroy() itself errors — so req.session is already a
+    // fresh, live session under a new ID by the time this resolves either way. A
+    // destroy error only means the old record may be left behind in the store; it
+    // expires out through the store's own TTL like any other abandoned session, so
+    // it's logged here but never treated as a failure to rotate.
+    const regenerateSession: RegenerateSession = () =>
+      new Promise((resolve) => {
+        req.session.regenerate((err: unknown) => {
+          if (err) {
+            logError('Failed to destroy the pre-regeneration session', { reason: getErrorMessage(err) });
+          }
+
+          resolve(req.session);
+        });
+      });
+
     const start = new Date();
-    const result = await asyncAttempt(() => handler(reqId, reqBody, reqParams, reqSession, app));
+    const result = await asyncAttempt(() => handler(reqId, reqBody, reqParams, reqSession, app, regenerateSession));
     const durationMs = new Date().getTime() - start.getTime();
 
     if (isErr(result)) {

@@ -8,11 +8,46 @@ import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { App } from './init-app';
-import { hashingSalt, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
 import { authentication } from './authentication';
 
 describe(authentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
+
+  // A pre-login session ID must not survive into the authenticated one: reusing it
+  // would let whoever set it (e.g. by planting a cookie before the victim logs in)
+  // ride in on the session this login establishes.
+  it('regenerates the session and reports the new ID, not the pre-login one', async () => {
+    const email = 'fixation-check@test.com';
+    const password = 'a-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(password),
+      confirmationTimestamp: new Date(),
+    });
+
+    const preLoginSession = { cookie: {}, id: 'pre-login-session-id' } as any;
+    const postLoginSession = { cookie: {}, id: 'post-login-session-id' } as any;
+    let regenerateSessionWasCalled = false;
+    const regenerateSession = async () => {
+      regenerateSessionWasCalled = true;
+      return postLoginSession;
+    };
+
+    const response = await authentication('req', { email, password }, {}, preLoginSession, app, regenerateSession);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+    expect(regenerateSessionWasCalled, 'authentication must call regenerateSession').to.be.true;
+    expect(preLoginSession.accountId, 'the pre-login session must stay untouched').to.be.undefined;
+    expect(postLoginSession.accountId).to.equal(accountId.value);
+    expect((response as any).responseData.sessionId).to.equal(
+      postLoginSession.id,
+      'the response must report the regenerated ID, not the pre-login one'
+    );
+  });
 
   it('upgrades a legacy password hash to the current format on successful login', async () => {
     const email = 'legacy-user@test.com';
@@ -20,7 +55,14 @@ describe(authentication.name, () => {
     const app = makeTestApp();
     storeLegacyAccount(app, email, password);
 
-    const response = await authentication('req', { email, password }, {}, makeReqSession(), app);
+    const response = await authentication(
+      'req',
+      { email, password },
+      {},
+      makeReqSession(),
+      app,
+      makeMockRegenerateSession(makeReqSession())
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const reloaded = loadStoredAccount(app, email);
@@ -42,7 +84,14 @@ describe(authentication.name, () => {
       confirmationTimestamp: new Date(),
     });
 
-    const response = await authentication('req', { email, password }, {}, makeReqSession(), app);
+    const response = await authentication(
+      'req',
+      { email, password },
+      {},
+      makeReqSession(),
+      app,
+      makeMockRegenerateSession(makeReqSession())
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
@@ -63,7 +112,14 @@ describe(authentication.name, () => {
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
     const resetHashedPassword = await hashPassword('an-entirely-different-password');
 
-    const loginPromise = authentication('req', { email, password }, {}, makeReqSession(), app);
+    const loginPromise = authentication(
+      'req',
+      { email, password },
+      {},
+      makeReqSession(),
+      app,
+      makeMockRegenerateSession(makeReqSession())
+    );
 
     // Let the login reach the scrypt call, then land the reset while it is in flight.
     // scrypt runs for ~135ms, so a synchronous write here is comfortably inside it.
@@ -104,7 +160,14 @@ describe(authentication.name, () => {
     // racing a second scrypt call of its own against it.
     const newHashedPassword = await hashPassword(newPassword);
 
-    const loginPromise = authentication('req', { email, password: oldPassword }, {}, makeReqSession(), app);
+    const loginPromise = authentication(
+      'req',
+      { email, password: oldPassword },
+      {},
+      makeReqSession(),
+      app,
+      makeMockRegenerateSession(makeReqSession())
+    );
 
     await new Promise((resolve) => setImmediate(resolve));
     storeAccount(app.storage, accountId, { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword });
@@ -119,7 +182,14 @@ describe(authentication.name, () => {
     const legacyHash = hash(password, hashingSalt);
     storeLegacyAccount(app, demoAccountEmail, password);
 
-    const response = await authentication('req', { email: demoAccountEmail, password }, {}, makeReqSession(), app);
+    const response = await authentication(
+      'req',
+      { email: demoAccountEmail, password },
+      {},
+      makeReqSession(),
+      app,
+      makeMockRegenerateSession(makeReqSession())
+    );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     expect(loadStoredAccount(app, demoAccountEmail).hashedPassword.value).to.equal(

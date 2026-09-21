@@ -1,6 +1,8 @@
 import { StorageKey, StorageValue } from '../domain/storage';
 import { makeTestEmailAddress, makeTestStorageFromSnapshot } from '../shared/test-utils';
+import { RegenerateSession } from './app-request-handler';
 import { App } from './init-app';
+import { ReqSession } from './session';
 
 // Specs derive account IDs with this to match what the handlers compute from
 // settings.hashingSalt, so it is part of the fixture rather than an arbitrary string.
@@ -43,4 +45,12 @@ export function makeMockSessionMethods(): MockSessionMethods {
       callback();
     },
   };
+}
+
+// Stands in for the closure makeAppRequestHandler wires up around the real
+// express-session regenerate() call. Defaults to echoing back the same session
+// object, so specs that don’t care about rotation see no behavior change; pass a
+// distinct session to specs that need to assert a handler switched to the new one.
+export function makeMockRegenerateSession(newReqSession: ReqSession): RegenerateSession {
+  return async () => newReqSession;
 }

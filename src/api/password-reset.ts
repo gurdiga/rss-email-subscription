@@ -198,8 +198,9 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  { settings, storage, env }
+  _reqSession,
+  { settings, storage, env },
+  regenerateSession
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: resetPassword.name, reqId });
   const request = makePasswordResetConfirmation(reqBody);
@@ -273,6 +274,9 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
+  // See authentication.ts: whatever session this link is redeemed from must not
+  // carry into the one this reset establishes.
+  const reqSession = await regenerateSession();
   const sessionInitResult = initSession(storage, reqSession, accountId, account.email);
 
   if (isErr(sessionInitResult)) {

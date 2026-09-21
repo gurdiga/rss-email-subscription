@@ -43,8 +43,9 @@ export const registration: AppRequestHandler = async function registration(
   reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  { env, storage, settings }
+  _reqSession,
+  { env, storage, settings },
+  regenerateSession
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
   const request = makeRegistrationRequest(reqBody);
@@ -113,6 +114,9 @@ export const registration: AppRequestHandler = async function registration(
     paymentToken = result.value;
   }
 
+  // See authentication.ts: whatever session this anonymous request arrived with must
+  // not carry over into the one now being authenticated.
+  const reqSession = await regenerateSession();
   const sessionInitResult = initSession(storage, reqSession, accountId, request.email);
 
   if (isErr(sessionInitResult)) {
@@ -306,8 +310,9 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   _reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  { storage }
+  _reqSession,
+  { storage },
+  regenerateSession
 ) {
   const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
   const request = makeRegistrationConfirmationRequest(reqBody);
@@ -325,6 +330,11 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   }
 
   const { accountId, email } = confirmationSecretData;
+
+  // The link is mailed and can be opened from a different browser than the one that
+  // registered, so whatever session it's redeemed from — someone else's, or one an
+  // attacker planted — must not carry into the session this confirmation establishes.
+  const reqSession = await regenerateSession();
   const sessionInitResult = initSession(storage, reqSession, accountId, email);
 
   if (isErr(sessionInitResult)) {

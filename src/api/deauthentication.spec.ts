@@ -7,7 +7,7 @@ import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } f
 import { sessionCookieName } from './app-cookie';
 import { deauthentication } from './deauthentication';
 import { initSession } from './session';
-import { hashingSalt, makeMockSessionMethods, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeMockSessionMethods, makeTestApp } from './test-utils';
 
 describe(deauthentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
@@ -22,7 +22,7 @@ describe(deauthentication.name, () => {
       callback();
     };
 
-    const response = await deauthentication('req', {}, {}, session, app);
+    const response = await deauthentication('req', {}, {}, session, app, makeMockRegenerateSession(session));
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
     expect(destroyWasCalled).to.be.true;
@@ -39,14 +39,14 @@ describe(deauthentication.name, () => {
     const { app, session } = await setUpSession('logout-failure@test.com');
     session.destroy = (callback: (err?: unknown) => void) => callback(new Error('disk full'));
 
-    const response = await deauthentication('req', {}, {}, session, app);
+    const response = await deauthentication('req', {}, {}, session, app, makeMockRegenerateSession(session));
 
     expect(response.kind).to.equal('AppError', JSON.stringify(response));
   });
 
   it('expires the connect.sid cookie so the client stops presenting it', async () => {
     const { app, session } = await setUpSession('logging-out@test.com');
-    const response = await deauthentication('req', {}, {}, session, app);
+    const response = await deauthentication('req', {}, {}, session, app, makeMockRegenerateSession(session));
     const cookies = (response as any).cookies;
     const sessionCookie = cookies.find((c: any) => c.name === sessionCookieName);
 
@@ -56,13 +56,27 @@ describe(deauthentication.name, () => {
 
   it('unsets the demo cookie for a demo session, and leaves it out otherwise', async () => {
     const demoLogout = await setUpSession(demoAccountEmail);
-    const demoResponse = await deauthentication('req', {}, {}, demoLogout.session, demoLogout.app);
+    const demoResponse = await deauthentication(
+      'req',
+      {},
+      {},
+      demoLogout.session,
+      demoLogout.app,
+      makeMockRegenerateSession(demoLogout.session)
+    );
     const demoCookieNames = (demoResponse as any).cookies.map((c: any) => c.name);
 
     expect(demoCookieNames).to.include('isDemo');
 
     const realLogout = await setUpSession('real-user@test.com');
-    const realResponse = await deauthentication('req', {}, {}, realLogout.session, realLogout.app);
+    const realResponse = await deauthentication(
+      'req',
+      {},
+      {},
+      realLogout.session,
+      realLogout.app,
+      makeMockRegenerateSession(realLogout.session)
+    );
     const realCookieNames = (realResponse as any).cookies.map((c: any) => c.name);
 
     expect(realCookieNames).not.to.include('isDemo');
