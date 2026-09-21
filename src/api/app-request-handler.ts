@@ -13,7 +13,7 @@ import {
   ReqSession,
   SessionFieldName,
   checkSession,
-  deinitSession,
+  clearSessionFields,
   isAuthenticatedSession,
   isSessionCookieRolling,
 } from './session';
@@ -129,7 +129,7 @@ export function invalidateSessionIfPasswordChanged(app: App, reqSession: ReqSess
   }
 
   if (account.passwordChangedAt.getTime() !== session.passwordChangedAt.getTime()) {
-    deinitSession(reqSession);
+    clearSessionFields(reqSession);
   }
 }
 

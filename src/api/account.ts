@@ -180,7 +180,12 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
     return makeAppError();
   }
 
-  deinitSession(reqSession);
+  const deinitResult = await deinitSession(reqSession);
+
+  if (isErr(deinitResult)) {
+    logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+  }
+
   sendEmailChangeInformationEmail(oldEmail, settings, env, newEmail);
 
   const logData = {
@@ -510,7 +515,11 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
       return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
     }
 
-    deinitSession(reqSession);
+    const deinitResult = await deinitSession(reqSession);
+
+    if (isErr(deinitResult)) {
+      logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+    }
 
     return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, unsetDemoCookie]);
   }
@@ -562,7 +571,12 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
-  deinitSession(reqSession);
+  const deinitResult = await deinitSession(reqSession);
+
+  if (isErr(deinitResult)) {
+    logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+  }
+
   logInfo('Account deleted', { account });
   sendAccountDeletionConfirmationEmail(account.email, settings, env);
 

@@ -242,9 +242,10 @@ describe('API', () => {
       navbarCookie = getCookie(deauthenticationResponseHeaders, navbarCookieName);
       expect(navbarCookie).to.include({ [navbarCookieName]: 'false' }, 'unsets the navbar cookie');
 
-      const sessionDataAfterDeauthentication = loadSessionData(sessionId);
-      expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
-        .exist;
+      // Logout destroys the session store record outright rather than just clearing
+      // its fields, so a copy of the cookie taken before logout can't still address
+      // a live, if now-anonymous, session.
+      expect(sessionFileExists(sessionId), 'deauthentication destroys the session file').to.be.false;
     }).timeout(5000);
   });
 
@@ -1015,6 +1016,10 @@ describe('API', () => {
 
   function loadSessionData(sessionId: string) {
     return loadJSON(makePath('sessions', si`${sessionId}.json`));
+  }
+
+  function sessionFileExists(sessionId: string): boolean {
+    return fileExists(makePath(dataDirRoot, 'sessions', si`${sessionId}.json`));
   }
 
   interface ApiResponseTuple {

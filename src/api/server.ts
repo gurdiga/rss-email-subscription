@@ -62,6 +62,17 @@ async function main() {
   const router = express.Router();
   const app = initApp();
 
+  // Trusts only nginx's own address on the internal docker network (never a
+  // client-supplied header) so Express reads X-Forwarded-Proto to know a request
+  // was HTTPS end-to-end, even though nginx forwards to this container in plain
+  // HTTP internally. Needed for the session cookie's Secure flag: without this,
+  // issuing a fresh session cookie (a new login, or after destroying a stale one)
+  // gets silently suppressed because Express otherwise sees every request as
+  // plain HTTP. Doesn't affect the X-Real-IP-based rate limiting in
+  // rate-limiting.ts, which reads that header directly rather than through
+  // Express's trust-proxy-derived req.ip.
+  expressServer.set('trust proxy', '10.5.5.4');
+
   router.use(
     ApiPath.webUiScripts,
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),

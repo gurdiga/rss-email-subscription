@@ -10,7 +10,7 @@ import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { invalidateSessionIfPasswordChanged } from './app-request-handler';
-import { hashingSalt, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockSessionMethods, makeTestApp } from './test-utils';
 import { confirmAccountEmailChange, requestAccountPasswordChange } from './account';
 import { initSession } from './session';
 import { App } from './init-app';
@@ -161,7 +161,8 @@ describe(confirmAccountEmailChange.name, () => {
     const secret = makeRandomConfirmationSecret();
     storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(demoAccountId, newEmail));
 
-    const reqSession = {} as any; // no session at all, as when opened in a fresh browser
+    // no session at all, as when opened in a fresh browser
+    const reqSession = makeMockSessionMethods() as any;
     const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));
@@ -182,7 +183,7 @@ describe(confirmAccountEmailChange.name, () => {
     const secret = makeRandomConfirmationSecret();
     storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(accountId, newEmail));
 
-    const reqSession = {} as any;
+    const reqSession = makeMockSessionMethods() as any;
     const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
 
     expect(response.kind).to.equal('Success', JSON.stringify(response));

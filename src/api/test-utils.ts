@@ -27,3 +27,20 @@ export function makeTestApp(storageSnapshot: Record<StorageKey, StorageValue> = 
     } as any,
   };
 }
+
+interface MockSessionMethods {
+  destroy(callback: (err?: unknown) => void): void;
+}
+
+// A bare {} or { cookie: {} } stands in for req.session fine until a handler calls
+// deinitSession, which calls the real express-session Session.prototype.destroy —
+// absent on a plain object literal. Spread this in wherever a test's session gets
+// logged out or otherwise terminated (not needed for clearSessionFields, which
+// never calls destroy).
+export function makeMockSessionMethods(): MockSessionMethods {
+  return {
+    destroy(callback: (err?: unknown) => void) {
+      callback();
+    },
+  };
+}

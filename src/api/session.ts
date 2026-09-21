@@ -5,7 +5,7 @@ import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { AppStorage } from '../domain/storage';
 import { makeDate } from '../shared/date-utils';
-import { Err, hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
+import { Err, getErrorMessage, hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { App } from './init-app';
@@ -62,10 +62,13 @@ function setSessionConfig(reqSession: ReqSession): void {
   reqSession.cookie.maxAge = sessionCookieMaxage;
   reqSession.cookie.sameSite = 'strict';
 
-  // Hardcoded rather than 'auto' (which needs Express's trust-proxy setting plus
-  // nginx forwarding X-Forwarded-Proto to detect HTTPS correctly): nginx redirects
-  // every plain-HTTP request to HTTPS in both prod and local dev, so there's no
-  // legitimate request this could ever block the cookie on.
+  // A client only ever sends this cookie back over HTTPS, since nginx redirects
+  // every plain-HTTP request in both prod and local dev — but Express itself still
+  // needs to agree the current request is HTTPS (via the trust-proxy setting in
+  // server.ts and nginx's X-Forwarded-Proto) before it will issue a *fresh*
+  // Secure-flagged cookie, e.g. on login or session regeneration. Without that,
+  // Express silently drops the Set-Cookie instead of sending one it doesn't
+  // believe the connection can carry.
   reqSession.cookie.secure = true;
 }
 
@@ -95,10 +98,26 @@ export function initSession(
   setSessionConfig(reqSession);
 }
 
-export function deinitSession(reqSession: ReqSession): void {
+export function clearSessionFields(reqSession: ReqSession): void {
   deleteSessionValue(reqSession, 'accountId');
   deleteSessionValue(reqSession, 'email');
   deleteSessionValue(reqSession, 'passwordChangedAt');
+}
+
+// For an explicit, terminal logout (the caller's response is being built right
+// after this runs, nothing downstream in the same request reuses reqSession).
+// destroy() detaches req.session synchronously, so a mid-request revocation that a
+// later handler in the *same* request still needs to write into — see
+// invalidateSessionIfPasswordChanged — must use clearSessionFields instead: writing
+// into a session object destroy() already detached from req never gets saved.
+export function deinitSession(reqSession: ReqSession): Promise<Result<void>> {
+  clearSessionFields(reqSession);
+
+  return new Promise((resolve) => {
+    reqSession.destroy((err: unknown) => {
+      resolve(err ? makeErr(si`Failed to destroy session: ${getErrorMessage(err)}`) : undefined);
+    });
+  });
 }
 
 export interface AuthenticatedSession extends Pick<SessionFields, 'accountId' | 'email' | 'passwordChangedAt'> {

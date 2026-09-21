@@ -9,7 +9,14 @@ import {
   purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
 import { hashingSalt, makeTestApp } from './test-utils';
-import { AuthenticatedSession, checkSession, deinitSession, initSession, SessionFields } from './session';
+import {
+  AuthenticatedSession,
+  checkSession,
+  clearSessionFields,
+  deinitSession,
+  initSession,
+  SessionFields,
+} from './session';
 import { UnauthenticatedSession } from './session';
 
 const testPasswordChangedAt = new Date('2024-01-01T00:00:00.000Z');
@@ -87,14 +94,49 @@ describe(initSession.name, () => {
 });
 
 describe(deinitSession.name, () => {
-  it('removes accountId, email and passwordChangedAt from session', () => {
+  it('removes accountId, email and passwordChangedAt, and destroys the session', async () => {
+    let destroyWasCalled = false;
+    const session = {
+      accountId: 'test'.repeat(16),
+      email: 'test@test.com',
+      passwordChangedAt: new Date().toISOString(),
+      destroy(callback: (err?: unknown) => void) {
+        destroyWasCalled = true;
+        callback();
+      },
+    };
+
+    const result = await deinitSession(session as any);
+
+    expect(result).to.be.undefined;
+    expect(session.accountId).to.not.exist;
+    expect((session as any).email).to.not.exist;
+    expect((session as any).passwordChangedAt).to.not.exist;
+    expect(destroyWasCalled, 'the store record should be destroyed, not just the fields cleared').to.be.true;
+  });
+
+  it('returns an Err when the store fails to destroy the session', async () => {
+    const session = {
+      destroy(callback: (err?: unknown) => void) {
+        callback(new Error('disk full'));
+      },
+    };
+
+    const result = await deinitSession(session as any);
+
+    expect(isErr(result)).to.be.true;
+  });
+});
+
+describe(clearSessionFields.name, () => {
+  it('removes accountId, email and passwordChangedAt without touching the store', () => {
     const session = {
       accountId: 'test'.repeat(16),
       email: 'test@test.com',
       passwordChangedAt: new Date().toISOString(),
     };
 
-    deinitSession(session);
+    clearSessionFields(session);
 
     expect(session.accountId).to.not.exist;
     expect((session as any).email).to.not.exist;
