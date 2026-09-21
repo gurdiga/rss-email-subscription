@@ -8,6 +8,7 @@ import { makeDate } from '../shared/date-utils';
 import { Err, getErrorMessage, hasKind, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
+import { sessionCookieName } from './app-cookie';
 import { App } from './init-app';
 
 const session = require('express-session');
@@ -23,6 +24,7 @@ export function makeExpressSession({ env, settings }: App): ReqSession {
   });
 
   return session({
+    name: sessionCookieName,
     store,
     secret: settings.hashingSalt,
     resave: false,

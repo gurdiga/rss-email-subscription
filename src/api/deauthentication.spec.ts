@@ -4,6 +4,7 @@ import { storeAccount } from '../domain/account-storage';
 import { demoAccountEmail } from '../domain/demo-account';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { sessionCookieName } from './app-cookie';
 import { deauthentication } from './deauthentication';
 import { initSession } from './session';
 import { hashingSalt, makeMockSessionMethods, makeTestApp } from './test-utils';
@@ -28,6 +29,29 @@ describe(deauthentication.name, () => {
     expect(session.accountId).to.be.undefined;
     expect(session.email).to.be.undefined;
     expect(session.passwordChangedAt).to.be.undefined;
+  });
+
+  // Logout is the one endpoint whose only job is destroying the session, so unlike
+  // the other deinitSession callers, it has no completed mutation to weigh against
+  // a store failure — reporting Success here would tell the browser it's logged
+  // out while the stored credentials are still live.
+  it('reports failure instead of Success when the store fails to destroy the session', async () => {
+    const { app, session } = await setUpSession('logout-failure@test.com');
+    session.destroy = (callback: (err?: unknown) => void) => callback(new Error('disk full'));
+
+    const response = await deauthentication('req', {}, {}, session, app);
+
+    expect(response.kind).to.equal('AppError', JSON.stringify(response));
+  });
+
+  it('expires the connect.sid cookie so the client stops presenting it', async () => {
+    const { app, session } = await setUpSession('logging-out@test.com');
+    const response = await deauthentication('req', {}, {}, session, app);
+    const cookies = (response as any).cookies;
+    const sessionCookie = cookies.find((c: any) => c.name === sessionCookieName);
+
+    expect(sessionCookie, JSON.stringify(cookies)).to.exist;
+    expect(sessionCookie.options.maxAge).to.equal(0);
   });
 
   it('unsets the demo cookie for a demo session, and leaves it out otherwise', async () => {

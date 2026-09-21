@@ -9,6 +9,7 @@ import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { sessionCookieName } from './app-cookie';
 import { invalidateSessionIfPasswordChanged } from './app-request-handler';
 import { hashingSalt, makeMockSessionMethods, makeTestApp } from './test-utils';
 import { confirmAccountEmailChange, requestAccountPasswordChange } from './account';
@@ -193,6 +194,28 @@ describe(confirmAccountEmailChange.name, () => {
     const account = loadAccount(app.storage, newAccountId);
     expect(isErr(account) || isAccountNotFound(account)).to.be.false;
     expect((account as Account).email.value).to.equal(newEmail.value);
+  });
+
+  // The forced re-login after an email change destroys the session, but that alone
+  // doesn't tell the browser to stop sending the now-deleted cookie.
+  it('expires the connect.sid cookie on the redeeming session', async () => {
+    const app = makeTestApp();
+    const oldEmail = makeTestEmailAddress('cookie-clearing@test.com');
+    const accountId = getAccountIdByEmail(oldEmail, hashingSalt);
+
+    storeAccount(app.storage, accountId, makeTestAccount({ email: oldEmail.value, confirmationTimestamp: new Date() }));
+
+    const newEmail = makeTestEmailAddress('cookie-clearing-new@test.com');
+    const secret = makeRandomConfirmationSecret();
+    storeConfirmationSecret(app.storage, secret, makeEmailChangeRequestSecretData(accountId, newEmail));
+
+    const reqSession = makeMockSessionMethods() as any;
+    const response = await confirmAccountEmailChange('req', { secret: secret.value }, {}, reqSession, app);
+    const cookies = (response as any).cookies;
+    const sessionCookie = cookies.find((c: any) => c.name === sessionCookieName);
+
+    expect(sessionCookie, JSON.stringify(cookies)).to.exist;
+    expect(sessionCookie.options.maxAge).to.equal(0);
   });
 });
 

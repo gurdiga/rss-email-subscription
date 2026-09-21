@@ -43,7 +43,7 @@ import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } 
 import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
+import { clearSessionCookie, disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { sendPlanChangeInformationEmail } from './plan-change-email';
@@ -182,8 +182,12 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
 
   const deinitResult = await deinitSession(reqSession);
 
+  // The email change itself already committed above, so a deinitSession failure
+  // here doesn't get to veto it — only the post-change forced-relogin step failed.
+  // Still surface it at error level and clear the cookie regardless, so the browser
+  // stops presenting one session-file-store can no longer find.
   if (isErr(deinitResult)) {
-    logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+    logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
   }
 
   sendEmailChangeInformationEmail(oldEmail, settings, env, newEmail);
@@ -193,7 +197,7 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
     accountId: accountId.value,
   };
 
-  return makeSuccess('Confirmed email change', logData);
+  return makeSuccess('Confirmed email change', logData, undefined, [clearSessionCookie]);
 };
 
 export function makeEmailChangeConfirmationRequest(data: unknown): Result<EmailChangeConfirmationRequest> {
@@ -518,10 +522,10 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     const deinitResult = await deinitSession(reqSession);
 
     if (isErr(deinitResult)) {
-      logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+      logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
     }
 
-    return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, unsetDemoCookie]);
+    return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, clearSessionCookie, unsetDemoCookie]);
   }
 
   const account = loadAccount(storage, accountId);
@@ -573,14 +577,17 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
 
   const deinitResult = await deinitSession(reqSession);
 
+  // The account is already gone from storage at this point, so a deinitSession
+  // failure can't leave anyone authenticated as it — every handler already treats
+  // a missing account as unauthenticated. Report it and clear the cookie anyway.
   if (isErr(deinitResult)) {
-    logWarning(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+    logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
   }
 
   logInfo('Account deleted', { account });
   sendAccountDeletionConfirmationEmail(account.email, settings, env);
 
-  return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie]);
+  return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, clearSessionCookie]);
 };
 
 function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settings: AppSettings, env: AppEnv) {
