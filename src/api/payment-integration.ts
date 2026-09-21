@@ -607,7 +607,11 @@ export async function handleTransactionCompleted(
     }
 
     if (isAccountNotFound(account)) {
-      logWarning(si`Account not found for transaction.completed: ${email.value}`);
+      // A paying customer's account stays PendingPayment silently here — Paddle
+      // treats this handler's 200 response as delivered and never retries, so
+      // this is the only signal a mismatch (e.g. the buyer edited their email at
+      // Paddle checkout) ever produces. Error level so it surfaces, not warning.
+      logError(si`Account not found for transaction.completed: ${email.value}`);
       return;
     }
 
