@@ -1,12 +1,7 @@
 import { expect } from 'chai';
-import {
-  ConfirmationSecret,
-  isConfirmationSecretNotFound,
-  makeRandomConfirmationSecret,
-} from '../../domain/confirmation-secrets';
-import { loadConfirmationSecret, storeConfirmationSecret } from '../../domain/confirmation-secrets-storage';
+import { ConfirmationSecret, makeRandomConfirmationSecret } from '../../domain/confirmation-secrets';
+import { getConfirmationSecretStorageKey, storeConfirmationSecret } from '../../domain/confirmation-secrets-storage';
 import { AppStorage } from '../../domain/storage';
-import { isErr } from '../../shared/lang';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../../shared/test-utils';
 import { expireConfirmationSecrets } from './index';
 
@@ -65,10 +60,13 @@ function storeResetSecret(storage: AppStorage, timestamp: Date): ConfirmationSec
   return secret;
 }
 
+// Checks storage directly rather than through loadConfirmationSecret: that loader
+// itself now reports an expired record as not-found (for redemption), which would
+// make this assertion pass whether or not cleanup actually deleted the file.
 function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean {
-  const result = loadConfirmationSecret(storage, secret);
+  const result = storage.hasItem(getConfirmationSecretStorageKey(secret));
 
-  return !isErr(result) && !isConfirmationSecretNotFound(result);
+  return result === true;
 }
 
 function daysAgo(days: number): Date {

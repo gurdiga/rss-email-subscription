@@ -2,7 +2,7 @@ import { confirmationSecretLifetimeMs, isConfirmationSecretNotFound } from '../.
 import {
   deleteConfirmationSecret,
   listConfirmationSecrets,
-  loadConfirmationSecret,
+  loadConfirmationSecretRegardlessOfExpiry,
 } from '../../domain/confirmation-secrets-storage';
 import { AppStorage } from '../../domain/storage';
 import { Result, isErr, makeValues } from '../../shared/lang';
@@ -33,10 +33,14 @@ export function expireConfirmationSecrets(storage: AppStorage) {
     let expiredSecretsCount = 0;
 
     for (const secret of secrets.validConfirmationSecrets) {
-      const secretData = loadConfirmationSecret(storage, secret);
+      // Not loadConfirmationSecret: that one already reports an expired record as
+      // not-found (for redemption), which would make this loop see it as already
+      // gone and skip the delete below — the record would then never actually be
+      // removed from disk.
+      const secretData = loadConfirmationSecretRegardlessOfExpiry(storage, secret);
 
       if (isErr(secretData)) {
-        logWarning(si`Failed to ${loadConfirmationSecret.name}: ${secretData.reason}`);
+        logWarning(si`Failed to ${loadConfirmationSecretRegardlessOfExpiry.name}: ${secretData.reason}`);
         continue;
       }
 
