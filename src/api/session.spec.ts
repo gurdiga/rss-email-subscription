@@ -70,7 +70,7 @@ describe(initSession.name, () => {
     expect(session.accountId).to.equal(accountId.value);
     expect(session.email).to.equal(email.value);
     expect(session.passwordChangedAt).to.equal(testPasswordChangedAt.toISOString());
-    expect(session.cookie).to.deep.equal({ maxAge: 172800000, sameSite: 'strict' });
+    expect(session.cookie).to.deep.equal({ maxAge: 172800000, sameSite: 'strict', secure: true });
   });
 
   it('returns an Err when the account can’t be found', () => {

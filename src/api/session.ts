@@ -61,6 +61,12 @@ export const sessionCookieMaxage = 2 * 24 * 3600 * 1000;
 function setSessionConfig(reqSession: ReqSession): void {
   reqSession.cookie.maxAge = sessionCookieMaxage;
   reqSession.cookie.sameSite = 'strict';
+
+  // Hardcoded rather than 'auto' (which needs Express's trust-proxy setting plus
+  // nginx forwarding X-Forwarded-Proto to detect HTTPS correctly): nginx redirects
+  // every plain-HTTP request to HTTPS in both prod and local dev, so there's no
+  // legitimate request this could ever block the cookie on.
+  reqSession.cookie.secure = true;
 }
 
 // Reads the account's current passwordChangedAt rather than taking it as a
