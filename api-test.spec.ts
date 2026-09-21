@@ -553,7 +553,7 @@ describe('API', () => {
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
-        <Success>{ kind: 'Success', message: 'This email is already subscribed! 👍' },
+        { kind: 'Success', message: 'This email is already subscribed! 👍' } as Success,
         'repeated subscription result'
       );
 
@@ -624,7 +624,7 @@ describe('API', () => {
       it('loads the account information for the authenticated user', async () => {
         const { responseBody } = await loadCurrentAccountSend();
 
-        expect(responseBody).to.deep.equal(<Success>{
+        expect(responseBody).to.deep.equal({
           kind: 'Success',
           message: 'Success',
           responseData: {
@@ -633,7 +633,7 @@ describe('API', () => {
             cardDescription,
             isAdmin: false,
           },
-        });
+        } as Success);
       });
 
       function storeCardDescription(accountId: AccountId): void {
