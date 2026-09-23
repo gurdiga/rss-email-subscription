@@ -58,8 +58,7 @@ describe(log.name, () => {
         newPassword: 'some-new-secret',
         secret: 'a-confirmation-secret',
         paymentToken: 'ptxn_123',
-        // reqBody, as app-request-handler.ts logs it on every request: password-reset,
-        // email-change and registration confirmation all carry the bearer secret here.
+        // as app-request-handler.ts logs it on every request
         reqBody: { secret: 'a-confirmation-secret-in-reqBody' },
       },
     };

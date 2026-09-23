@@ -60,9 +60,8 @@ function storeResetSecret(storage: AppStorage, timestamp: Date): ConfirmationSec
   return secret;
 }
 
-// Checks storage directly rather than through loadConfirmationSecret: that loader
-// itself now reports an expired record as not-found (for redemption), which would
-// make this assertion pass whether or not cleanup actually deleted the file.
+// Not via loadConfirmationSecret: it reports an expired record as not-found even
+// while the file is still on disk.
 function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean {
   const result = storage.hasItem(getConfirmationSecretStorageKey(secret));
 

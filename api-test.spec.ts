@@ -219,9 +219,7 @@ describe('API', () => {
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
 
-      // The cookie jar carries the confirmation-established session cookie into this
-      // login. A session ID that survived login unrotated would let anyone who set it
-      // beforehand (e.g. by planting a cookie ahead of the victim) ride in on it.
+      // The cookie jar carries the confirmation session's cookie into this login.
       expect(sessionId, 'authentication rotates the session ID').not.to.equal(sessionIdAfterConfirmation);
       expect(sessionFileExists(sessionIdAfterConfirmation!), 'the pre-login session record is gone').to.be.false;
 
@@ -249,9 +247,6 @@ describe('API', () => {
       navbarCookie = getCookie(deauthenticationResponseHeaders, navbarCookieName);
       expect(navbarCookie).to.include({ [navbarCookieName]: 'false' }, 'unsets the navbar cookie');
 
-      // Logout destroys the session store record outright rather than just clearing
-      // its fields, so a copy of the cookie taken before logout can't still address
-      // a live, if now-anonymous, session.
       expect(sessionFileExists(sessionId), 'deauthentication destroys the session file').to.be.false;
     }).timeout(5000);
   });

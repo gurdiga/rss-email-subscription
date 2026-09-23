@@ -96,8 +96,6 @@ describe(loadConfirmationSecret.name, () => {
     expect(result).to.deep.equal(storageErr);
   });
 
-  // Only the 6-hourly cleanup cron enforced the advertised 48h lifetime before this,
-  // so a token stayed redeemable for however long it took cleanup to catch up.
   it('returns ConfirmationSecretNotFound for a secret past its lifetime, ahead of cleanup', () => {
     const justPastLifetime = new Date(Date.now() - confirmationSecretLifetimeMs - 1000);
     const hasItem = makeStub<AppStorage['hasItem']>(() => true);
@@ -109,9 +107,6 @@ describe(loadConfirmationSecret.name, () => {
     expect(result).to.deep.equal(makeConfirmationSecretNotFound(secret));
   });
 
-  // Real storage round-trips the stored Date through JSON, so loadItem hands back an
-  // ISO string, not a Date instance — unlike the raw-Date stub above. Covering that
-  // shape confirms the expiry check also works on what actually comes off disk.
   it('returns ConfirmationSecretNotFound for a JSON-round-tripped timestamp past its lifetime', () => {
     const justPastLifetime = new Date(Date.now() - confirmationSecretLifetimeMs - 1000);
     const hasItem = makeStub<AppStorage['hasItem']>(() => true);

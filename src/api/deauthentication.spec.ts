@@ -12,8 +12,6 @@ import { hashingSalt, makeMockRegenerateSession, makeMockSessionMethods, makeTes
 describe(deauthentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // Clearing fields alone left the session record alive under the same ID, so a
-  // copy of the cookie taken before logout still worked against it afterward.
   it('destroys the session outright, not just its fields', async () => {
     const { app, session } = await setUpSession('logging-out@test.com');
     let destroyWasCalled = false;
@@ -31,10 +29,6 @@ describe(deauthentication.name, () => {
     expect(session.passwordChangedAt).to.be.undefined;
   });
 
-  // Logout is the one endpoint whose only job is destroying the session, so unlike
-  // the other deinitSession callers, it has no completed mutation to weigh against
-  // a store failure — reporting Success here would tell the browser it's logged
-  // out while the stored credentials are still live.
   it('reports failure instead of Success when the store fails to destroy the session', async () => {
     const { app, session } = await setUpSession('logout-failure@test.com');
     session.destroy = (callback: (err?: unknown) => void) => callback(new Error('disk full'));

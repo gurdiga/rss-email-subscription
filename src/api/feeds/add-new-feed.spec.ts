@@ -23,10 +23,6 @@ const victimReplyTo = 'victim@example.com';
 describe(addNewFeed.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // A demo feed used to be auto-approved with its caller-chosen replyTo added as a
-  // confirmed subscriber. Approved feeds are picked up by the ordinary delivery cron,
-  // so that handed the published demo login a way to mail an arbitrary address,
-  // repeatedly and indefinitely, every time the linked RSS feed published a new post.
   it('does not auto-approve a feed created from a demo session', async () => {
     const { app, session, accountId } = await setUpDemoSession();
 

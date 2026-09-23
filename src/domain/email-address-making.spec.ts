@@ -99,9 +99,7 @@ describe(makeEmailAddress.name, () => {
   });
 
   it('resolves quickly for adversarial local parts instead of backtracking exponentially', () => {
-    // The vulnerable regex took ~9.7s on a 30-character adversarial input;
-    // this generous bound still catches a regression without flaking on a
-    // loaded CI runner.
+    // The vulnerable regex took ~9.7s on a 30-character input; 1s won't flake on a loaded CI.
     const elapsedMs = timeMakeEmailAddress(si`${'a'.repeat(40)}!@test.com`);
 
     expect(elapsedMs).to.be.lessThan(1000);

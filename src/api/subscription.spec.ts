@@ -22,11 +22,6 @@ describe('subscription', () => {
   describe(subscription.name, () => {
     afterEach(purgeTestStorageFromSnapshot);
 
-    // The finding this guards: a comma-separated pair used to pass validation as one
-    // stored address but expand into two SMTP recipients sharing a single confirmation
-    // link, so confirming one mailbox confirmed delivery to the other too. Closed at the
-    // validation layer (email-address-making.ts), verified here at the subscribe entry
-    // point rather than only at the validator's own unit tests.
     it('rejects a comma-injected email instead of storing it as one subscriber', async () => {
       const app = makeTestApp();
       const feed = makeTestFeed();

@@ -98,8 +98,6 @@ describe(makeStatusField.name, () => {
     ]);
   });
 
-  // A demo feed is never reviewed or scheduled for delivery (see add-new-feed.ts), so
-  // the real-account review promise would be false for it.
   it('tells a demo account that its feed will not be reviewed, instead of promising review', () => {
     const result = makeStatusField(FeedStatus.AwaitingReview, true, makeCreateElementStub());
 

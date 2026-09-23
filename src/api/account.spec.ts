@@ -35,10 +35,6 @@ describe(requestAccountPasswordChange.name, () => {
     expect(accountId.value).to.be.a('string');
   });
 
-  // Every session, including this one, is checked against the account's passwordChangedAt
-  // on the next request (see invalidateSessionIfPasswordChanged). Without refreshing this
-  // session's own snapshot after a successful change, the caller would be logged out by
-  // the very request that changed their password.
   it('keeps the current session alive after its own password change', async () => {
     const app = makeTestApp();
     const accountId = await storeTestAccount(app);
@@ -153,10 +149,6 @@ describe(requestAccountPasswordChange.name, () => {
 describe(confirmAccountEmailChange.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // The link is mailed to newEmail and opened from whatever browser happens to have
-  // it, so "is this the demo account" has to come from the token's own target
-  // account rather than from the redeeming request's session, which a fresh or
-  // logged-out browser simply won't have.
   it('does not rename the demo account regardless of the redeeming session', async () => {
     const app = makeTestApp();
     const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
@@ -219,8 +211,6 @@ describe(confirmAccountEmailChange.name, () => {
     expect((account as Account).email.value).to.equal(newEmail.value);
   });
 
-  // The forced re-login after an email change destroys the session, but that alone
-  // doesn't tell the browser to stop sending the now-deleted cookie.
   it('expires the connect.sid cookie on the redeeming session', async () => {
     const app = makeTestApp();
     const oldEmail = makeTestEmailAddress('cookie-clearing@test.com');
