@@ -75,13 +75,11 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 
     logInfo(action, { reqId, reqBody, reqParams });
 
-    // Every store here (session-file-store included) inherits express-session's base
-    // Store.prototype.regenerate, which calls its generate() unconditionally after
-    // destroy() — even when destroy() itself errors — so req.session is already a
-    // fresh, live session under a new ID by the time this resolves either way. A
-    // destroy error only means the old record may be left behind in the store; it
-    // expires out through the store's own TTL like any other abandoned session, so
-    // it's logged here but never treated as a failure to rotate.
+    // regenerate() reassigns req.session to a fresh, live session under a new ID
+    // before its callback fires, even if destroy() of the old record errors — that
+    // error just means the old record might still be on disk, not a failed
+    // rotation. So resolve(req.session) below always runs; the error is only
+    // logged.
     const regenerateSession: RegenerateSession = () =>
       new Promise((resolve) => {
         req.session.regenerate((err: unknown) => {
