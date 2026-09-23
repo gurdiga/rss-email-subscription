@@ -67,8 +67,6 @@ describe(revokePasswordResetSecrets.name, () => {
     expect(secretExists(storage, registration), 'registration secret untouched').to.be.true;
   });
 
-  // Secrets written before the "kind" field existed can’t be identified by the scan.
-  // They stay put and age out with the usual expiration rather than breaking it.
   it('skips legacy reset secrets stored without a kind', () => {
     const storage = makeTestStorageFromSnapshot({});
     const legacy = makeRandomConfirmationSecret();
@@ -103,9 +101,6 @@ function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean 
 describe(confirmPasswordReset.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // The handler consumes the secret before it yields into scrypt, so starting a second
-  // submission of the same link — synchronously, while the first is still hashing — must
-  // find the secret already gone. Deleting it after the store instead let both through.
   it('rejects a second redemption of one link submitted while the first is in flight', async () => {
     const email = 'reset-race@test.com';
     const newPassword = 'a-brand-new-s3cret';

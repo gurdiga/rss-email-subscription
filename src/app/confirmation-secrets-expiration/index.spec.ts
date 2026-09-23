@@ -10,9 +10,6 @@ const oneDayMs = 24 * 3600 * 1000;
 describe(expireConfirmationSecrets.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // Registration secrets used to be exempt from expiry altogether, so the store only ever
-  // grew — and issuing a password reset scans all of it. They expire like everything else
-  // now, on the same 48-hour clock the registration email has always advertised.
   it('expires a registration secret, which used to be exempt', async () => {
     const storage = makeTestStorageFromSnapshot({});
     const fresh = storeRegistrationSecret(storage, hoursAgo(1));

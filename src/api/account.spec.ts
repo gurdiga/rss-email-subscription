@@ -57,10 +57,6 @@ describe(requestAccountPasswordChange.name, () => {
     expect(session.accountId).to.equal(accountId.value);
   });
 
-  // The demo credentials are public, so this endpoint is reachable by anyone. It stores
-  // nothing for a demo session, so it must not spend a scrypt hash on one either — the
-  // demo password is a published constant, so comparing it answers the same question
-  // verifyPassword would.
   it('does not hash, verify, or store anything for a demo session', async () => {
     const app = makeTestApp();
     const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
@@ -91,13 +87,10 @@ describe(requestAccountPasswordChange.name, () => {
       storedHashedPassword.value
     );
 
-    // One scrypt call is ~135ms: verifying the current password would cost one, hashing
-    // the new one a second. Comfortably under a single call means neither ran.
+    // One scrypt call is ~135ms, so under 100ms means neither verify nor hash ran.
     expect(Date.now() - started, 'no scrypt call at all').to.be.lessThan(100);
   });
 
-  // Skipping the hash must not skip the validation: a demo visitor who types the wrong
-  // current password still gets the real error rather than a silent Success.
   it('still rejects a wrong current password for a demo session', async () => {
     const app = makeTestApp();
     const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
@@ -121,9 +114,6 @@ describe(requestAccountPasswordChange.name, () => {
     expect(response).to.include({ kind: 'InputError', field: 'currentPassword' }, JSON.stringify(response));
   });
 
-  // Hashing the new password yields to the event loop. The handler re-reads the account
-  // afterwards instead of writing the snapshot it took before hashing, so an unrelated
-  // update that lands in that window survives instead of being silently reverted.
   it('does not revert a concurrent account update that lands while hashing', async () => {
     const app = makeTestApp();
     await storeTestAccount(app);
