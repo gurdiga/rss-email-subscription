@@ -14,9 +14,6 @@ import { authentication } from './authentication';
 describe(authentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // A pre-login session ID must not survive into the authenticated one: reusing it
-  // would let whoever set it (e.g. by planting a cookie before the victim logs in)
-  // ride in on the session this login establishes.
   it('regenerates the session and reports the new ID, not the pre-login one', async () => {
     const email = 'fixation-check@test.com';
     const password = 'a-long-enough-password';
@@ -49,12 +46,6 @@ describe(authentication.name, () => {
     );
   });
 
-  // regenerateSession() does real disk I/O and yields to the event loop, opening a
-  // window between checkCredentials validating the password and initSession
-  // establishing the session. A reset landing in that window must not slip through:
-  // initSession reads the account fresh, so the resulting session would otherwise
-  // read the reset's own passwordChangedAt and look unrevoked despite being
-  // established with a password that's no longer valid.
   it('rejects a login when the password changes while the session is regenerating', async () => {
     const email = 'regen-race@test.com';
     const oldPassword = 'the-old-long-enough-password';
@@ -69,9 +60,7 @@ describe(authentication.name, () => {
     });
 
     const newHashedPassword = await hashPassword(newPassword);
-    const regenerateSession = async () => {
-      // Stands in for a password reset completing while regenerateSession's own
-      // disk I/O (destroying the pre-login session record) is in flight.
+    const regenerateSessionWhileResetLands = async () => {
       storeAccount(app.storage, accountId, {
         ...(loadAccount(app.storage, accountId) as Account),
         hashedPassword: newHashedPassword,
@@ -86,7 +75,7 @@ describe(authentication.name, () => {
       {},
       { cookie: {} } as any,
       app,
-      regenerateSession
+      regenerateSessionWhileResetLands
     );
 
     expect(response.kind).to.equal('InputError', JSON.stringify(response));
@@ -149,9 +138,6 @@ describe(authentication.name, () => {
     );
   });
 
-  // The login holds an account snapshot across the scrypt call. If it wrote that snapshot
-  // back unconditionally it would revert a password reset that completed meanwhile — and
-  // revert it to the password the user was resetting away from.
   it('does not revert a password reset that lands while the rehash is hashing', async () => {
     const email = 'racing-user@test.com';
     const password = 'a-long-enough-password';
@@ -187,10 +173,6 @@ describe(authentication.name, () => {
     );
   });
 
-  // verifyPassword itself yields to the event loop. Without a re-check afterward, a
-  // password change landing in that window would let a login succeed against a hash
-  // that is no longer current — and the resulting session, initialized with the
-  // account's now-current passwordChangedAt, would look unrevoked to every future check.
   it('rejects a login when the password changes while verification is in flight', async () => {
     const email = 'race-during-verify@test.com';
     const oldPassword = 'the-old-long-enough-password';
@@ -204,9 +186,8 @@ describe(authentication.name, () => {
       confirmationTimestamp: new Date(),
     });
 
-    // Computed upfront so the concurrent write below is a synchronous storeAccount call,
-    // landing well inside the login's own ~135ms verifyPassword scrypt call rather than
-    // racing a second scrypt call of its own against it.
+    // Hashed upfront so the concurrent write below is synchronous and lands inside the
+    // login's own scrypt call, instead of racing a second one.
     const newHashedPassword = await hashPassword(newPassword);
 
     const loginPromise = authentication(
