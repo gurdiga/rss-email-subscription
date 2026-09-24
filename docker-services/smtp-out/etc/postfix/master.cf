@@ -20,16 +20,16 @@ yahoo-throttle unix  -       -       n       -       -       smtp
   -o smtp_destination_concurrency_limit=1
   -o smtp_destination_rate_delay=5s
 
-# smtp_connect_timeout/smtp_mx_address_limit are raised here because most
-# of Microsoft's hotmail-com.olc.protection.outlook.com front-end pool is
-# currently timing out at the TCP level for our sending IP (2026-09) — a
-# short timeout plus a bigger address sample means an attempt is much more
-# likely to reach one of the still-reachable front-ends before giving up.
+# Most of Microsoft's hotmail-com.olc.protection.outlook.com front-end pool
+# drops our TCP connections (2026-09: 3 of 57 reachable), so an attempt
+# needs a wide address sample to find a live one. Live front-ends connect
+# in under 200ms, so 2s per address loses nothing and keeps the worst-case
+# attempt (40 × 2s) short enough not to stall the serialized queue.
 ms-throttle unix  -       -       n       -       -       smtp
   -o smtp_destination_concurrency_limit=1
   -o smtp_destination_rate_delay=5s
-  -o smtp_connect_timeout=5s
-  -o smtp_mx_address_limit=15
+  -o smtp_connect_timeout=2s
+  -o smtp_mx_address_limit=40
 
 comcast-throttle unix  -       -       n       -       -       smtp
   -o smtp_destination_concurrency_limit=1
