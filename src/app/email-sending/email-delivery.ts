@@ -40,13 +40,18 @@ export async function deliverEmail({
 
   const messageInfo = await transporter.sendMail({
     from: makeMailAddress(from),
-    to,
-    replyTo,
+    to: toMailAddress(to),
+    replyTo: toMailAddress(replyTo),
     subject,
     html: htmlBody,
     envelope: {
       from: makeReturnPath(to, env.DOMAIN_NAME),
-      to,
+      // @types/nodemailer types envelope.to as a plain string, but nodemailer's
+      // own address handling (mime-node's _parseEnvelopeAddresses) accepts the
+      // same { address } shape as the to field above and, unlike a string,
+      // never runs it through the comma/semicolon-splitting addressparser —
+      // the type declaration just hasn't caught up with that.
+      to: toMailAddress(to) as unknown as string,
     },
   });
 
@@ -72,6 +77,10 @@ function makeMailAddress(fullEmailAddress: FullEmailAddress): Mail.Address {
     name: fullEmailAddress.displayName,
     address: fullEmailAddress.emailAddress.value,
   };
+}
+
+function toMailAddress(address: string): Mail.Address {
+  return { name: '', address };
 }
 
 export function makeReturnPath(to: string, domainName: string, uid = Date.now().toString()): string {

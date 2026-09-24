@@ -62,6 +62,17 @@ async function main() {
   const router = express.Router();
   const app = initApp();
 
+  // Trusts only nginx's own address on the internal docker network (never a
+  // client-supplied header) so Express reads X-Forwarded-Proto to know a request
+  // was HTTPS end-to-end, even though nginx forwards to this container in plain
+  // HTTP internally. Needed for the session cookie's Secure flag: without this,
+  // issuing a fresh session cookie (a new login, or after destroying a stale one)
+  // gets silently suppressed because Express otherwise sees every request as
+  // plain HTTP. Doesn't affect the X-Real-IP-based rate limiting in
+  // rate-limiting.ts, which reads that header directly rather than through
+  // Express's trust-proxy-derived req.ip.
+  expressServer.set('trust proxy', '10.5.5.4');
+
   router.use(
     ApiPath.webUiScripts,
     helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }),
@@ -76,7 +87,11 @@ async function main() {
   });
   router.use(express.urlencoded({ extended: true }));
   router.use(makeExpressSession(app));
-  router.get(ApiPath.sessionTest, makeAppRequestHandler(sessionTest, app));
+  // Unauthenticated and writes a session file on every call, even for a caller with
+  // no cookie yet (saveUninitialized:false doesn't help — this handler itself writes
+  // to the session). Rate-limited so a flood can't outrun the hourly reap and fill
+  // the volume with files in the meantime.
+  router.get(ApiPath.sessionTest, makeRateLimiter(10, hour), makeAppRequestHandler(sessionTest, app));
   // Mails an address the caller supplies, so the limit is about sending
   // reputation rather than CPU. Subscribing is a once-per-feed action, and the
   // form is embedded on customer sites where visitors arrive from their own IPs.
@@ -138,7 +153,9 @@ async function main() {
   router.post(ApiPath.addNewFeed, paymentConfirmed, makeAppRequestHandler(addNewFeed, app));
   router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
-  router.post(ApiPath.showSampleEmail, makeAppRequestHandler(showSampleEmail, app));
+  // For a demo session, mails the feed's own replyTo — caller-controlled at feed
+  // creation — same as the public variant below mails a caller-supplied address.
+  router.post(ApiPath.showSampleEmail, makeRateLimiter(1, minute), makeAppRequestHandler(showSampleEmail, app));
   // Also mails a caller-supplied address, and needs no account at all.
   router.post(
     ApiPath.showSampleEmailPublic,

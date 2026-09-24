@@ -821,7 +821,11 @@ backup-purge:
 	rclone lsf $$RCLONE_PATH |
 	sort |
 	head --lines=-21 | # exlude last N days
-	xargs --no-run-if-empty -I {} sh -c "echo {}; rclone purge $$RCLONE_PATH/{} 2>&1" > .tmp/logs/feedsubscription/backup-purge.log
+	while IFS= read -r name; do
+		name=$${name%/}
+		echo "$$name"
+		rclone purge "$$RCLONE_PATH/$$name" 2>&1
+	done > .tmp/logs/feedsubscription/backup-purge.log
 	cat <(
 		echo "Subject: RES backup-purge"
 		echo "From: RES <system@feedsubscription.com>"

@@ -4,12 +4,19 @@ import { isAccountNotFound } from '../domain/account';
 import { loadAccount } from '../domain/account-storage';
 import { PlanId } from '../domain/plan';
 import { ApiResponse, Success } from '../shared/api-response';
-import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
+import { asyncAttempt, exhaustivenessCheck, getErrorMessage, isErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
 import { App } from './init-app';
-import { ReqSession, SessionFieldName, checkSession, isSessionCookieRolling } from './session';
+import {
+  ReqSession,
+  SessionFieldName,
+  checkSession,
+  clearSessionFields,
+  isAuthenticatedSession,
+  isSessionCookieRolling,
+} from './session';
 
 export function requirePaymentConfirmed(app: App): RequestHandler {
   return (req, res, next) => {
@@ -31,12 +38,15 @@ export function requirePaymentConfirmed(app: App): RequestHandler {
   };
 }
 
+export type RegenerateSession = () => Promise<ReqSession>;
+
 export type AppRequestHandler = (
   reqId: string,
   reqBody: Request['body'],
   reqParams: Request['query'],
   reqSession: ReqSession,
-  app: App
+  app: App,
+  regenerateSession: RegenerateSession
 ) => Promise<ApiResponse>;
 
 export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
@@ -46,6 +56,8 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqParams = req.query || {};
     const reqSession = req.session || {};
     const action = handler.name;
+
+    invalidateSessionIfPasswordChanged(app, reqSession);
 
     const ua = getUaInfo(req.get('User-Agent'));
 
@@ -63,8 +75,24 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 
     logInfo(action, { reqId, reqBody, reqParams });
 
+    // regenerate() reassigns req.session to a fresh, live session under a new ID
+    // before its callback fires, even if destroy() of the old record errors — that
+    // error just means the old record might still be on disk, not a failed
+    // rotation. So resolve(req.session) below always runs; the error is only
+    // logged.
+    const regenerateSession: RegenerateSession = () =>
+      new Promise((resolve) => {
+        req.session.regenerate((err: unknown) => {
+          if (err) {
+            logError('Failed to destroy the pre-regeneration session', { reason: getErrorMessage(err) });
+          }
+
+          resolve(req.session);
+        });
+      });
+
     const start = new Date();
-    const result = await asyncAttempt(() => handler(reqId, reqBody, reqParams, reqSession, app));
+    const result = await asyncAttempt(() => handler(reqId, reqBody, reqParams, reqSession, app, regenerateSession));
     const durationMs = new Date().getTime() - start.getTime();
 
     if (isErr(result)) {
@@ -99,6 +127,29 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
         exhaustivenessCheck(result);
     }
   };
+}
+
+// Clears the session's credentials when its passwordChangedAt snapshot is stale,
+// so every AppRequestHandler-typed route's own checkSession call sees an
+// UnauthenticatedSession exactly as it would for a session that was never logged
+// in. Runs once here, inside makeAppRequestHandler, instead of being repeated in
+// each handler.
+export function invalidateSessionIfPasswordChanged(app: App, reqSession: ReqSession): void {
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    return;
+  }
+
+  const account = loadAccount(app.storage, session.accountId);
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    return;
+  }
+
+  if (account.passwordChangedAt.getTime() !== session.passwordChangedAt.getTime()) {
+    clearSessionFields(reqSession);
+  }
 }
 
 function getUaInfo(uaString: string | undefined) {

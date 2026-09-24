@@ -205,7 +205,7 @@ function displayFeedAttributeList(
 
   const feedAttributeElements = uiData.feedAttributes.flatMap(makeFeedAttributeElement);
 
-  const feedStatusElements = makeStatusField(response.status);
+  const feedStatusElements = makeStatusField(response.status, isDemoAccount());
   const subscriberCountElements = makeSubscriberCountField(response.subscriberCount, uiData.manageSubscribersLinkHref);
 
   feedAttributeList.append(...feedAttributeElements, ...feedStatusElements, ...subscriberCountElements);
@@ -216,14 +216,18 @@ function displayFeedAttributeList(
   deliveryReportsLink.href = uiData.deliveryReportsLinkHref;
 }
 
-export function makeStatusField(status: FeedStatus, createElementFn = createElement): HTMLElement[] {
+export function makeStatusField(status: FeedStatus, isDemo: boolean, createElementFn = createElement): HTMLElement[] {
   const dtElement = createElementFn('dt', 'Status:', { class: 'res-feed-attribute-label' });
   const ddElement = createElementFn('dd', status, { class: 'res-feed-attribute-value' });
 
   if (status === FeedStatus.AwaitingReview) {
-    const message =
-      'It should take less than 24 hours to review and approve your feed.' +
-      ' We’ll send you a notification at the account email.';
+    // Demo feeds are never reviewed or scheduled for delivery, so the real review
+    // promise below would be a promise this account can’t keep.
+    const message = isDemo
+      ? 'Demo feeds aren’t reviewed or delivered on a schedule.' +
+        ' Use “Send me sample email” below to see what the email looks like.'
+      : 'It should take less than 24 hours to review and approve your feed.' +
+        ' We’ll send you a notification at the account email.';
 
     const approvalInfo = createElementFn('p', message, {
       class: 'form-text m-0 text-success',

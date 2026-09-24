@@ -514,7 +514,7 @@ export function paddleWebhookHandler(app: App): RequestHandler {
     let result: Result<void>;
 
     if (event.eventType === EventName.TransactionCompleted) {
-      result = await handleTransactionCompleted(app, event.data);
+      result = await handleTransactionCompleted(app, paddle, event.data);
     } else if (event.eventType === EventName.SubscriptionCanceled) {
       result = await handleSubscriptionCanceled(app, paddle, event.data.customerId);
     } else {
@@ -532,36 +532,71 @@ export function paddleWebhookHandler(app: App): RequestHandler {
 
 export async function handleTransactionCompleted(
   app: App,
+  paddle: Paddle,
   transaction: TransactionNotification
 ): Promise<Result<void>> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
-  const customerEmail = transaction.customData?.['res_customer_email'];
-  const rawPlanId = transaction.customData?.['res_plan_id'];
 
-  if (typeof customerEmail !== 'string') {
-    logWarning('transaction.completed webhook has non-string res_customer_email in customData');
+  if (!transaction.customerId) {
+    logWarning('transaction.completed webhook has no customerId');
     return;
   }
 
-  const email = makeEmailAddress(customerEmail);
+  const customerId = transaction.customerId;
+  const customer = await asyncAttempt(() => paddle.customers.get(customerId));
+
+  if (isErr(customer)) {
+    logError(si`Failed to paddle.customers.get("${customerId}"): ${customer.reason}`);
+    return makeErr(si`Failed to get Paddle customer ${customerId}: ${customer.reason}`);
+  }
+
+  const email = makeEmailAddress(customer.email);
 
   if (isErr(email)) {
-    logError(si`Invalid customer email in webhook customData: "${customerEmail}"`);
-    return;
+    logError(si`Invalid customer email from Paddle: "${customer.email}": ${email.reason}`);
+    return; // non-retriable: bad data from Paddle
   }
 
   const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
 
-  if (typeof rawPlanId === 'string') {
+  // The plan comes from the price Paddle actually billed (each Price is
+  // tagged with its plan via its own customData, set from the Paddle
+  // dashboard), not from the transaction's checkout customData — Paddle lets
+  // the buyer's browser set that value, so trusting it would let a cheap
+  // purchase claim an expensive plan.
+  const purchasedPlanIds = [
+    ...new Set(
+      transaction.items
+        .map((item) => item.price?.customData?.['res_plan_id'])
+        .filter((planId): planId is string => typeof planId === 'string')
+    ),
+  ];
+
+  if (purchasedPlanIds.length > 1) {
+    logError(si`transaction.completed webhook has items for multiple plans: ${purchasedPlanIds.join(', ')}`);
+    return;
+  }
+
+  const rawPlanId = purchasedPlanIds[0];
+
+  if (!rawPlanId) {
+    // Legitimate for a payment-method-update transaction, which has no plan
+    // price; logged at info level so it stays distinguishable in prod from a
+    // real plan price that unexpectedly lost its res_plan_id tag.
+    const priceIds = transaction.items.map((item) => item.price?.id ?? '[no price]').join(', ');
+    logInfo(si`No plan tag on purchased prices for ${email.value}: ${priceIds}`);
+  }
+
+  if (rawPlanId) {
     const newPlanId = makePlanId(rawPlanId);
 
     if (isErr(newPlanId)) {
-      logError(si`Invalid res_plan_id in webhook customData: "${rawPlanId}"`);
+      logError(si`Invalid res_plan_id on purchased price: "${rawPlanId}"`);
       return;
     }
 
     if (!Plans[newPlanId].isSubscription) {
-      logError(si`Non-subscription res_plan_id in webhook customData: "${rawPlanId}"`);
+      logError(si`Non-subscription res_plan_id on purchased price: "${rawPlanId}"`);
       return;
     }
 
@@ -572,7 +607,11 @@ export async function handleTransactionCompleted(
     }
 
     if (isAccountNotFound(account)) {
-      logWarning(si`Account not found for transaction.completed: ${email.value}`);
+      // A paying customer's account stays PendingPayment silently here — Paddle
+      // treats this handler's 200 response as delivered and never retries, so
+      // this is the only signal a mismatch (e.g. the buyer edited their email at
+      // Paddle checkout) ever produces. Error level so it surfaces, not warning.
+      logError(si`Account not found for transaction.completed: ${email.value}`);
       return;
     }
 
