@@ -35,7 +35,8 @@ configure_sasl() {
     'smtpd_sasl_local_domain=' \
     'broken_sasl_auth_clients=yes' \
     'smtpd_sasl_type=cyrus' \
-    'smtpd_sasl_path=smtpd'
+    'smtpd_sasl_path=smtpd' \
+    'smtpd_tls_auth_only=yes'
 }
 
 configure_tls() {

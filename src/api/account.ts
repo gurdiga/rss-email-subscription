@@ -31,7 +31,7 @@ import {
   loadConfirmationSecret,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
-import { demoAccountPassword } from '../domain/demo-account';
+import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { makeEmailAddress } from '../domain/email-address-making';
 import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
@@ -43,11 +43,11 @@ import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } 
 import { isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
-import { disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
+import { clearSessionCookie, disablePrivateNavbarCookie, unsetDemoCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { sendPlanChangeInformationEmail } from './plan-change-email';
-import { checkSession, deinitSession, isAuthenticatedSession, isDemoSession } from './session';
+import { checkSession, deinitSession, initSession, isAuthenticatedSession, isDemoSession } from './session';
 import {
   cancelCustomerSubscription,
   changeCustomerSubscription,
@@ -139,7 +139,24 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
   }
 
   const { accountId, newEmail } = data;
-  const oldEmail = isDemoSession(reqSession)
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: currentAccount.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(currentAccount)) {
+    logError(si`Account to set email not found`, { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  // Whether to skip the real mutation is decided from the token's own target account,
+  // not from whatever session happens to redeem it: the link is mailed to newEmail and
+  // can be opened from any browser, so a session-based check is trivially bypassed by
+  // opening it logged out.
+  const isProtectedDemoAccount = currentAccount.email.value === demoAccountEmail;
+  const oldEmail = isProtectedDemoAccount
     ? newEmail
     : setAccountEmail(storage, accountId, newEmail, settings.hashingSalt);
 
@@ -163,7 +180,16 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
     return makeAppError();
   }
 
-  deinitSession(reqSession);
+  const deinitResult = await deinitSession(reqSession);
+
+  // The email change itself already committed above, so a deinitSession failure
+  // here doesn't get to veto it — only the post-change forced-relogin step failed.
+  // Still surface it at error level and clear the cookie regardless, so the browser
+  // stops presenting one session-file-store can no longer find.
+  if (isErr(deinitResult)) {
+    logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+  }
+
   sendEmailChangeInformationEmail(oldEmail, settings, env, newEmail);
 
   const logData = {
@@ -171,7 +197,7 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
     accountId: accountId.value,
   };
 
-  return makeSuccess('Confirmed email change', logData);
+  return makeSuccess('Confirmed email change', logData, undefined, [clearSessionCookie]);
 };
 
 export function makeEmailChangeConfirmationRequest(data: unknown): Result<EmailChangeConfirmationRequest> {
@@ -293,6 +319,16 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
+  // Refreshes this session's own passwordChangedAt snapshot: every session is compared
+  // against the account's current value on the next request, and without this the caller
+  // would get logged out by the very change they just made.
+  const sessionInitResult = initSession(storage, reqSession, accountId, account.email);
+
+  if (isErr(sessionInitResult)) {
+    logError(si`Failed to ${initSession.name}`, { reason: sessionInitResult.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
   sendPasswordChangeInformationEmail(account.email, settings, env);
 
   return makeSuccess();
@@ -322,7 +358,11 @@ function storeNewPassword(
     return makeErr('Stored password changed while hashing the new one');
   }
 
-  return storeAccount(storage, accountId, { ...account, hashedPassword: newHashedPassword });
+  return storeAccount(storage, accountId, {
+    ...account,
+    hashedPassword: newHashedPassword,
+    passwordChangedAt: new Date(),
+  });
 }
 
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {
@@ -479,9 +519,13 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
       return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
     }
 
-    deinitSession(reqSession);
+    const deinitResult = await deinitSession(reqSession);
 
-    return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, unsetDemoCookie]);
+    if (isErr(deinitResult)) {
+      logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+    }
+
+    return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, clearSessionCookie, unsetDemoCookie]);
   }
 
   const account = loadAccount(storage, accountId);
@@ -531,11 +575,19 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
-  deinitSession(reqSession);
+  const deinitResult = await deinitSession(reqSession);
+
+  // The account is already gone from storage at this point, so a deinitSession
+  // failure can't leave anyone authenticated as it — every handler already treats
+  // a missing account as unauthenticated. Report it and clear the cookie anyway.
+  if (isErr(deinitResult)) {
+    logError(si`Failed to ${deinitSession.name}`, { reason: deinitResult.reason });
+  }
+
   logInfo('Account deleted', { account });
   sendAccountDeletionConfirmationEmail(account.email, settings, env);
 
-  return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie]);
+  return makeSuccess('Success', {}, {}, [disablePrivateNavbarCookie, clearSessionCookie]);
 };
 
 function sendAccountDeletionConfirmationEmail(accountEmail: EmailAddress, settings: AppSettings, env: AppEnv) {

@@ -198,8 +198,9 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  { settings, storage, env }
+  _reqSession,
+  { settings, storage, env },
+  regenerateSession
 ) {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: resetPassword.name, reqId });
   const request = makePasswordResetConfirmation(reqBody);
@@ -273,7 +274,14 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  initSession(reqSession, accountId, account.email);
+  const newReqSession = await regenerateSession();
+  const sessionInitResult = initSession(storage, newReqSession, accountId, account.email);
+
+  if (isErr(sessionInitResult)) {
+    logError(si`Failed to ${initSession.name}: ${sessionInitResult.reason}`);
+    return makeAppError();
+  }
+
   sendPasswordResetConfirmationEmail(account.email, settings, env);
 
   const logData = {};

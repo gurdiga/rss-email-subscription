@@ -6,13 +6,81 @@ import { demoAccountEmail } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { RegenerateSessionFn } from './app-request-handler';
 import { App } from './init-app';
-import { hashingSalt, makeTestApp } from './test-utils';
+import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
 import { authentication } from './authentication';
 
 describe(authentication.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
+
+  it('regenerates the session and reports the new ID, not the pre-login one', async () => {
+    const email = 'fixation-check@test.com';
+    const password = 'a-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(password),
+      confirmationTimestamp: new Date(),
+    });
+
+    const preLoginSession = { cookie: {}, id: 'pre-login-session-id' } as any;
+    const postLoginSession = { cookie: {}, id: 'post-login-session-id' } as any;
+    let regenerateSessionWasCalled = false;
+    const regenerateSession = async () => {
+      regenerateSessionWasCalled = true;
+      return postLoginSession;
+    };
+
+    const response = await authentication('req', { email, password }, {}, preLoginSession, app, regenerateSession);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+    expect(regenerateSessionWasCalled, 'authentication must call regenerateSession').to.be.true;
+    expect(preLoginSession.accountId, 'the pre-login session must stay untouched').to.be.undefined;
+    expect(postLoginSession.accountId).to.equal(accountId.value);
+    expect((response as any).responseData.sessionId).to.equal(
+      postLoginSession.id,
+      'the response must report the regenerated ID, not the pre-login one'
+    );
+  });
+
+  it('rejects a login when the password changes while the session is regenerating', async () => {
+    const email = 'regen-race@test.com';
+    const oldPassword = 'the-old-long-enough-password';
+    const newPassword = 'the-new-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(oldPassword),
+      confirmationTimestamp: new Date(),
+    });
+
+    const newHashedPassword = await hashPassword(newPassword);
+    const regenerateSessionWhileResetLands = async () => {
+      storeAccount(app.storage, accountId, {
+        ...(loadAccount(app.storage, accountId) as Account),
+        hashedPassword: newHashedPassword,
+      });
+
+      return { cookie: {} } as any;
+    };
+
+    const response = await login(app, { email, password: oldPassword }, regenerateSessionWhileResetLands);
+
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+
+    const account = loadAccount(app.storage, accountId);
+    expect(isErr(account) || isAccountNotFound(account)).to.be.false;
+    expect((account as Account).hashedPassword.value, 'the concurrent reset must survive').to.equal(
+      newHashedPassword.value
+    );
+  });
 
   it('upgrades a legacy password hash to the current format on successful login', async () => {
     const email = 'legacy-user@test.com';
@@ -20,7 +88,7 @@ describe(authentication.name, () => {
     const app = makeTestApp();
     storeLegacyAccount(app, email, password);
 
-    const response = await authentication('req', { email, password }, {}, makeReqSession(), app);
+    const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const reloaded = loadStoredAccount(app, email);
@@ -36,13 +104,15 @@ describe(authentication.name, () => {
     const app = makeTestApp();
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
     const hashedPassword = await hashPassword(password);
-    storeAccount(app.storage, accountId, {
+
+    const newAccount = {
       ...makeTestAccount({ email }),
       hashedPassword,
       confirmationTimestamp: new Date(),
-    });
+    };
+    storeAccount(app.storage, accountId, newAccount);
 
-    const response = await authentication('req', { email, password }, {}, makeReqSession(), app);
+    const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
@@ -51,9 +121,6 @@ describe(authentication.name, () => {
     );
   });
 
-  // The login holds an account snapshot across the scrypt call. If it wrote that snapshot
-  // back unconditionally it would revert a password reset that completed meanwhile — and
-  // revert it to the password the user was resetting away from.
   it('does not revert a password reset that lands while the rehash is hashing', async () => {
     const email = 'racing-user@test.com';
     const password = 'a-long-enough-password';
@@ -63,15 +130,17 @@ describe(authentication.name, () => {
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
     const resetHashedPassword = await hashPassword('an-entirely-different-password');
 
-    const loginPromise = authentication('req', { email, password }, {}, makeReqSession(), app);
+    const loginPromise = login(app, { email, password });
 
     // Let the login reach the scrypt call, then land the reset while it is in flight.
     // scrypt runs for ~135ms, so a synchronous write here is comfortably inside it.
     await new Promise((resolve) => setImmediate(resolve));
-    storeAccount(app.storage, accountId, {
+
+    const newAccount = {
       ...loadStoredAccount(app, email),
       hashedPassword: resetHashedPassword,
-    });
+    };
+    storeAccount(app.storage, accountId, newAccount);
 
     const response = await loginPromise;
     expect(response.kind).to.equal('Success', JSON.stringify(response));
@@ -82,19 +151,48 @@ describe(authentication.name, () => {
     );
   });
 
+  it('rejects a login when the password changes while verification is in flight', async () => {
+    const email = 'race-during-verify@test.com';
+    const oldPassword = 'the-old-long-enough-password';
+    const newPassword = 'the-new-long-enough-password';
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+
+    storeAccount(app.storage, accountId, {
+      ...makeTestAccount({ email }),
+      hashedPassword: await hashPassword(oldPassword),
+      confirmationTimestamp: new Date(),
+    });
+
+    // Hashed upfront so the concurrent write below is synchronous and lands inside the
+    // login's own scrypt call, instead of racing a second one.
+    const newHashedPassword = await hashPassword(newPassword);
+
+    const loginPromise = login(app, { email, password: oldPassword });
+
+    // Let the login reach its scrypt verification, then land the password change
+    // while it's in flight. scrypt runs for ~135ms, so a synchronous write here is
+    // comfortably inside it.
+    await new Promise((resolve) => setImmediate(resolve));
+
+    const newAccount = { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword };
+    storeAccount(app.storage, accountId, newAccount);
+
+    const response = await loginPromise;
+    expect(response.kind).to.equal('InputError', JSON.stringify(response));
+  });
+
   it('does not rehash the demo account (its stored data stays static)', async () => {
     const password = 'a-long-enough-password';
     const app = makeTestApp();
     const legacyHash = hash(password, hashingSalt);
     storeLegacyAccount(app, demoAccountEmail, password);
 
-    const response = await authentication('req', { email: demoAccountEmail, password }, {}, makeReqSession(), app);
+    const response = await login(app, { email: demoAccountEmail, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
-    expect(loadStoredAccount(app, demoAccountEmail).hashedPassword.value).to.equal(
-      legacyHash,
-      'the demo account must keep its legacy hash'
-    );
+    const account = loadStoredAccount(app, demoAccountEmail);
+    expect(account.hashedPassword.value).to.equal(legacyHash, 'the demo account must keep its legacy hash');
   });
 });
 
@@ -112,11 +210,23 @@ function loadStoredAccount(app: App, email: string): Account {
   const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
   const account = loadAccount(app.storage, accountId);
 
-  if (isErr(account) || isAccountNotFound(account)) {
-    throw new Error('Expected a stored account');
+  if (isErr(account)) {
+    throw new Error(si`Failed to ${loadAccount.name} for ${email}: ${account.reason}`);
+  }
+
+  if (isAccountNotFound(account)) {
+    throw new Error(si`Account not found for ${email}`);
   }
 
   return account;
+}
+
+function login(
+  app: App,
+  request: { email: string; password: string },
+  regenerateSession: RegenerateSessionFn = makeMockRegenerateSession(makeReqSession())
+) {
+  return authentication('req', request, {}, makeReqSession(), app, regenerateSession);
 }
 
 function makeReqSession() {

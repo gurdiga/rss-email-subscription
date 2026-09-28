@@ -153,6 +153,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     creationTimestamp: new Date(),
     confirmationTimestamp: undefined,
     isAdmin: false,
+    passwordChangedAt: undefined,
     ...customAccountData,
   };
 
@@ -163,6 +164,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     confirmationTimestamp: accountData.confirmationTimestamp,
     creationTimestamp: accountData.creationTimestamp,
     isAdmin: !!accountData.isAdmin,
+    passwordChangedAt: accountData.passwordChangedAt ?? accountData.creationTimestamp,
   };
 
   return result;

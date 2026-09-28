@@ -69,8 +69,9 @@ function sendTooManyRequests(windowMs: number): RequestHandler {
 /**
  * nginx sets X-Real-IP and no X-Forwarded-For, and the api is reachable only
  * through nginx. So req.ip is nginx’s own address, and keying on it would put
- * the whole internet in one bucket; trust proxy would not help either, since
- * express reads X-Forwarded-For.
+ * the whole internet in one bucket. trust proxy is on (see server.ts, for the
+ * session cookie's Secure flag) but doesn't help here either: express derives
+ * req.ip from X-Forwarded-For, which nginx never sends.
  *
  * nginx overwrites X-Real-IP with the connecting address, so it is not
  * client-controlled, unless the api container is ever given a published port.

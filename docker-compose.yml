@@ -22,6 +22,11 @@ x-app-env: &app-env
   PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN?}
   PADDLE_API_KEY: ${PADDLE_API_KEY?}
   PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET?}
+  # nginx's own static address on this file's network (the website service,
+  # below) — api needs it for Express's trust-proxy setting (see server.ts).
+  # Sourced from the same variable as that service's ipv4_address so the two
+  # can't drift apart silently.
+  NGINX_IP_ADDRESS: ${NGINX_IP_ADDRESS?}
 
 x-disable-ipv6: &x-disable-ipv6
   sysctls:
@@ -227,7 +232,7 @@ services:
       start_interval: 2s
     networks:
       net:
-        ipv4_address: 10.5.5.4
+        ipv4_address: ${NGINX_IP_ADDRESS?}
 
   # Thanks to https://github.com/wmnnd/nginx-certbot
   certbot:

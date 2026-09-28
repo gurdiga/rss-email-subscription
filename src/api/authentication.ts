@@ -5,7 +5,7 @@ import { loadAccount, storeAccount } from '../domain/account-storage';
 import { HashedPassword, hashPassword, verifyPassword } from '../domain/hashed-password';
 import { makePassword } from '../domain/password';
 import { AppStorage } from '../domain/storage';
-import { makeInputError, makeSuccess } from '../shared/api-response';
+import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { asyncAttempt, isErr, makeErr, makeValues, Result } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -19,8 +19,9 @@ export const authentication: AppRequestHandler = async function authentication(
   _reqId,
   reqBody,
   _reqParams,
-  reqSession,
-  app
+  _reqSession,
+  app,
+  regenerateSession
 ) {
   const request = makeAuthenticationRequest(reqBody);
 
@@ -28,16 +29,33 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError(request.reason, request.field);
   }
 
-  const accountId = await checkCredentials(app, request);
+  const checkedCredentials = await checkCredentials(app, request);
 
-  if (isErr(accountId)) {
-    return makeInputError(accountId.reason, accountId.field);
+  if (isErr(checkedCredentials)) {
+    return makeInputError(checkedCredentials.reason, checkedCredentials.field);
   }
 
-  initSession(reqSession, accountId, request.email);
+  const { accountId, hashedPassword } = checkedCredentials;
+
+  const newReqSession = await regenerateSession();
+  const accountAfterRegenerate = loadAccount(app.storage, accountId);
+
+  if (isErr(accountAfterRegenerate) || isAccountNotFound(accountAfterRegenerate)) {
+    return makeAppError('Could not find your account');
+  }
+
+  if (accountAfterRegenerate.hashedPassword.value !== hashedPassword.value) {
+    return makeInputError<keyof AuthenticationRequest>('Password doesn’t match… 🤔', 'password');
+  }
+
+  const sessionInitResult = initSession(app.storage, newReqSession, accountId, request.email);
+
+  if (isErr(sessionInitResult)) {
+    return makeAppError(sessionInitResult.reason);
+  }
 
   const logData = {};
-  const responseData: AuthenticationResponseData = { sessionId: reqSession.id };
+  const responseData: AuthenticationResponseData = { sessionId: newReqSession.id };
 
   const maybeSetDemoCookie = request.email.value === demoAccountEmail ? [setDemoCookie] : [];
   const cookies = [enablePrivateNavbarCookie, ...maybeSetDemoCookie];
@@ -52,10 +70,15 @@ function makeAuthenticationRequest(data: unknown): Result<AuthenticationRequest>
   });
 }
 
+interface CheckedCredentials {
+  accountId: AccountId;
+  hashedPassword: HashedPassword;
+}
+
 async function checkCredentials(
   { settings, storage }: App,
   request: AuthenticationRequest
-): Promise<Result<AccountId>> {
+): Promise<Result<CheckedCredentials>> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({
     email: request.email.value,
     module: checkCredentials.name,
@@ -91,13 +114,42 @@ async function checkCredentials(
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
 
+  // Verifying yields to the event loop (scrypt). Re-read and compare rather than trusting
+  // the snapshot: a password change or reset landing in that window must not hand out a
+  // session for a credential that no longer applies — initSession reads the account fresh,
+  // so such a session would otherwise carry the reset's own passwordChangedAt and look
+  // current to every future revocation check.
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount) || isAccountNotFound(currentAccount)) {
+    logWarning('Account disappeared while verifying password');
+    return makeErr('Could not find your account', 'email');
+  }
+
+  if (currentAccount.hashedPassword.value !== account.hashedPassword.value) {
+    logWarning('Stored password changed while verifying it');
+    return makeErr('Password doesn’t match… 🤔', 'password');
+  }
+
   if (verification.needsRehash && request.email.value !== demoAccountEmail) {
     await rehashPassword(storage, accountId, account.hashedPassword, request.password.value);
   }
 
   logInfo('User logged in');
 
-  return accountId;
+  // rehashPassword may have just rewritten the stored hash (a format/cost upgrade,
+  // same bytes-different-encoding password). Re-read rather than returning the
+  // pre-rehash snapshot, so the caller's own post-regeneration freshness check
+  // compares against what's actually on disk instead of false-flagging a rehash
+  // as if the password itself had changed.
+  const finalAccount = loadAccount(storage, accountId);
+
+  if (isErr(finalAccount) || isAccountNotFound(finalAccount)) {
+    logWarning('Account disappeared after rehash');
+    return makeErr('Could not find your account', 'email');
+  }
+
+  return { accountId, hashedPassword: finalAccount.hashedPassword };
 }
 
 // Upgrade a password hash to the current algorithm and cost on successful login — either

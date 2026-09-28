@@ -7,6 +7,15 @@ export function makeDate(dateString: string, field = 'date'): Result<Date> {
     return date;
   }
 
+  // Callers often hand this an unknown/any value straight from parsed storage or
+  // request data, despite the string type above — new Date() above already copes
+  // with non-string input (a Date instance, a number, null/undefined all just fail
+  // isValidDate above without throwing), but parseGovMdDate's regex .match call
+  // doesn't, so this needs its own guard.
+  if (typeof dateString !== 'string') {
+    return makeErr('Not a date string', field);
+  }
+
   const fallback = parseGovMdDate(dateString);
 
   if (fallback) {

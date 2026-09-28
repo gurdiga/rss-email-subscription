@@ -11,7 +11,9 @@ export interface LogRecord {
 }
 
 export const maxStringValue = 1024;
-export const sensibleKeywords = ['password'];
+// "secret" catches password-reset/email-change/registration confirmation tokens
+// (all named "secret" on the wire); "token" catches bearer values like paymentToken.
+export const sensibleKeywords = ['password', 'secret', 'token'];
 
 export function log(record: LogRecord, stdOutPrinterFn: StdOutPrinterFn = stdOutPrinter) {
   if (stdOutPrinterFn === stdOutPrinter && process.env['LOG_LEVEL'] === 'silent') return;

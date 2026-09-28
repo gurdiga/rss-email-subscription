@@ -64,6 +64,7 @@ describe(loadAccount.name, () => {
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
+      passwordChangedAt: creationTimestamp,
     };
     const hasItem = makeStub(() => true);
     const loadItem = makeStub(() => accountData);
@@ -77,6 +78,7 @@ describe(loadAccount.name, () => {
       creationTimestamp,
       confirmationTimestamp: undefined,
       isAdmin: false,
+      passwordChangedAt: creationTimestamp,
     };
 
     expect(hasItem.calls).to.deep.equal([[storageKey]]);
@@ -99,6 +101,7 @@ describe(loadAccount.name, () => {
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
+      passwordChangedAt: creationTimestamp,
     };
     const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
@@ -119,6 +122,7 @@ describe(loadAccount.name, () => {
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
+      passwordChangedAt: creationTimestamp,
     };
     const storage = makeTestStorage({ loadItem: () => accountData, hasItem: () => true });
     const result = loadAccount(storage, accountId);
@@ -138,6 +142,7 @@ describe(storeAccount.name, () => {
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: false,
+      passwordChangedAt: creationTimestamp,
     };
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const loadItem = makeStub(() => getAccountData(account));
@@ -159,6 +164,7 @@ describe(confirmAccount.name, () => {
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: true,
+      passwordChangedAt: creationTimestamp,
     };
 
     const loadItem = makeStub(() => accountData);
@@ -179,6 +185,7 @@ describe(confirmAccount.name, () => {
       confirmationTimestamp,
       creationTimestamp,
       isAdmin: true,
+      passwordChangedAt: creationTimestamp,
     };
 
     expect(hasItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
@@ -217,6 +224,7 @@ describe(setAccountEmail.name, () => {
           confirmationTimestamp: account.confirmationTimestamp,
           creationTimestamp: account.creationTimestamp,
           isAdmin: account.isAdmin,
+          passwordChangedAt: account.passwordChangedAt,
         },
       ],
     ]);
@@ -279,5 +287,6 @@ function getAccountData(account: Account): AccountData {
     confirmationTimestamp: account.confirmationTimestamp,
     creationTimestamp: account.creationTimestamp,
     isAdmin: account.isAdmin,
+    passwordChangedAt: account.passwordChangedAt,
   };
 }

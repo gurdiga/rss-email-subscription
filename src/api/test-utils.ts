@@ -1,6 +1,8 @@
 import { StorageKey, StorageValue } from '../domain/storage';
 import { makeTestEmailAddress, makeTestStorageFromSnapshot } from '../shared/test-utils';
+import { RegenerateSessionFn } from './app-request-handler';
 import { App } from './init-app';
+import { ReqSession } from './session';
 
 // Specs derive account IDs with this to match what the handlers compute from
 // settings.hashingSalt, so it is part of the fixture rather than an arbitrary string.
@@ -26,4 +28,29 @@ export function makeTestApp(storageSnapshot: Record<StorageKey, StorageValue> = 
       SMTP_CONNECTION_STRING: 'smtp://localhost:1587',
     } as any,
   };
+}
+
+interface MockSessionMethods {
+  destroy(callback: (err?: unknown) => void): void;
+}
+
+// A bare {} or { cookie: {} } stands in for req.session fine until a handler calls
+// deinitSession, which calls the real express-session Session.prototype.destroy —
+// absent on a plain object literal. Spread this in wherever a test's session gets
+// logged out or otherwise terminated (not needed for clearSessionFields, which
+// never calls destroy).
+export function makeMockSessionMethods(): MockSessionMethods {
+  return {
+    destroy(callback: (err?: unknown) => void) {
+      callback();
+    },
+  };
+}
+
+// Stands in for the closure makeAppRequestHandler wires up around the real
+// express-session regenerate() call. Pass the spec's existing session when it
+// doesn't care about rotation, so nothing changes; pass a distinct one when it
+// needs to assert a handler switched to it.
+export function makeMockRegenerateSession(newReqSession: ReqSession): RegenerateSessionFn {
+  return async () => newReqSession;
 }

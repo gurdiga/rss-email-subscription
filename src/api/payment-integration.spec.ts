@@ -6,42 +6,52 @@ import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
-import { handleTransactionCompleted, handleSubscriptionCanceled } from './payment-integration';
+import { handleTransactionCompleted, handleSubscriptionCanceled, loadCardDescription } from './payment-integration';
 import { hashingSalt, makeTestApp } from './test-utils';
 
 describe(handleTransactionCompleted.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  it('returns undefined when res_customer_email is missing', async () => {
-    const result = await handleTransactionCompleted(makeTestApp(), makeFakeTransaction());
+  it('returns undefined when transaction has no customerId', async () => {
+    const paddle = makeFakePaddle('test@test.com');
+    const result = await handleTransactionCompleted(makeTestApp(), paddle, makeFakeTransaction({ customerId: null }));
     expect(result).to.be.undefined;
   });
 
-  it('returns undefined when res_customer_email is not a string', async () => {
-    const result = await handleTransactionCompleted(makeTestApp(), makeFakeTransaction({ res_customer_email: 42 }));
+  it('returns an Err when Paddle customer lookup fails', async () => {
+    const paddle = makeFakePaddle(new Error('network error'));
+    const result = await handleTransactionCompleted(makeTestApp(), paddle, makeFakeTransaction());
+    expect(isErr(result)).to.be.true;
+  });
+
+  it('returns undefined when customer email is invalid', async () => {
+    const paddle = makeFakePaddle('not-an-email');
+    const result = await handleTransactionCompleted(makeTestApp(), paddle, makeFakeTransaction());
     expect(result).to.be.undefined;
   });
 
-  it('returns undefined when res_customer_email is an invalid email', async () => {
+  it('returns undefined when the purchased price is not a subscription plan', async () => {
+    const paddle = makeFakePaddle('test@test.com');
+    const result = await handleTransactionCompleted(makeTestApp(), paddle, makeFakeTransaction({ planIds: ['free'] }));
+    expect(result).to.be.undefined;
+  });
+
+  it('returns undefined when items reference more than one plan', async () => {
+    const paddle = makeFakePaddle('test@test.com');
     const result = await handleTransactionCompleted(
       makeTestApp(),
-      makeFakeTransaction({ res_customer_email: 'not-an-email' })
-    );
-    expect(result).to.be.undefined;
-  });
-
-  it('returns undefined when res_plan_id is not a subscription plan', async () => {
-    const result = await handleTransactionCompleted(
-      makeTestApp(),
-      makeFakeTransaction({ res_customer_email: 'test@test.com', res_plan_id: 'free' })
+      paddle,
+      makeFakeTransaction({ planIds: ['courage', 'mastery'] })
     );
     expect(result).to.be.undefined;
   });
 
   it('returns undefined when account not found', async () => {
+    const paddle = makeFakePaddle('notfound@test.com');
     const result = await handleTransactionCompleted(
       makeTestApp(),
-      makeFakeTransaction({ res_customer_email: 'notfound@test.com', res_plan_id: 'courage' })
+      paddle,
+      makeFakeTransaction({ planIds: ['courage'] })
     );
     expect(result).to.be.undefined;
   });
@@ -53,10 +63,8 @@ describe(handleTransactionCompleted.name, () => {
     storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
     (app.storage as any).storeItem = () => ({ kind: 'Err', reason: 'disk full' });
 
-    const result = await handleTransactionCompleted(
-      app,
-      makeFakeTransaction({ res_customer_email: 'test@test.com', res_plan_id: 'courage' })
-    );
+    const paddle = makeFakePaddle('test@test.com');
+    const result = await handleTransactionCompleted(app, paddle, makeFakeTransaction({ planIds: ['courage'] }));
     expect(isErr(result)).to.be.true;
   });
 
@@ -66,14 +74,30 @@ describe(handleTransactionCompleted.name, () => {
     const accountId = getAccountIdByEmail(email, hashingSalt);
     storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
 
-    const result = await handleTransactionCompleted(
-      app,
-      makeFakeTransaction({ res_customer_email: 'test@test.com', res_plan_id: 'courage' })
-    );
+    const paddle = makeFakePaddle('test@test.com');
+    const result = await handleTransactionCompleted(app, paddle, makeFakeTransaction({ planIds: ['courage'] }));
     expect(result).to.be.undefined;
 
     const account = loadAccount(app.storage, accountId);
     expect(isErr(account)).to.be.false;
+    expect((account as any).planId).to.equal(PlanId.Courage);
+  });
+
+  it('grants the plan actually paid for, ignoring the transaction customData', async () => {
+    const email = makeTestEmailAddress('test@test.com');
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(email, hashingSalt);
+    storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
+
+    const paddle = makeFakePaddle('test@test.com');
+    const transaction = {
+      ...makeFakeTransaction({ planIds: ['courage'] }),
+      customData: { res_customer_email: 'victim@test.com', res_plan_id: 'mastery' },
+    } as any;
+
+    await handleTransactionCompleted(app, paddle, transaction);
+
+    const account = loadAccount(app.storage, accountId);
     expect((account as any).planId).to.equal(PlanId.Courage);
   });
 
@@ -83,15 +107,46 @@ describe(handleTransactionCompleted.name, () => {
     const accountId = getAccountIdByEmail(email, hashingSalt);
     storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
 
-    await handleTransactionCompleted(
-      app,
-      makeFakeTransaction({ res_customer_email: 'test@test.com', res_plan_id: 'courage' }, true)
-    );
+    const paddle = makeFakePaddle('test@test.com');
+    await handleTransactionCompleted(app, paddle, makeFakeTransaction({ planIds: ['courage'], card: true }));
 
     const cardKey = si`accounts/${accountId.value}/card-description.json`;
     const card = app.storage.loadItem(cardKey);
     expect(card).to.include('Visa');
     expect(card).to.include('4242');
+  });
+
+  it('skips storing a card description when Paddle omits a card field', async () => {
+    const email = makeTestEmailAddress('test@test.com');
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(email, hashingSalt);
+    storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
+
+    const paddle = makeFakePaddle('test@test.com');
+    await handleTransactionCompleted(
+      app,
+      paddle,
+      makeFakeTransaction({ planIds: ['courage'], card: { last4: undefined } })
+    );
+
+    expect(loadCardDescription(app.storage, accountId)).to.be.undefined;
+  });
+
+  it('leaves a prior card description in place when a later transaction has an invalid field', async () => {
+    const email = makeTestEmailAddress('test@test.com');
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(email, hashingSalt);
+    storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
+
+    const paddle = makeFakePaddle('test@test.com');
+    await handleTransactionCompleted(app, paddle, makeFakeTransaction({ planIds: ['courage'], card: true }));
+    await handleTransactionCompleted(
+      app,
+      paddle,
+      makeFakeTransaction({ planIds: ['courage'], card: { last4: undefined } })
+    );
+
+    expect(loadCardDescription(app.storage, accountId)).to.include('4242');
   });
 });
 
@@ -154,11 +209,28 @@ describe(handleSubscriptionCanceled.name, () => {
   });
 });
 
-function makeFakeTransaction(customData: Record<string, unknown> = {}, card = false): TransactionNotification {
+function makeFakeTransaction(
+  options: {
+    customerId?: string | null;
+    planIds?: string[];
+    card?: boolean | Partial<{ type: string; last4: string; expiryMonth: number; expiryYear: number }>;
+  } = {}
+): TransactionNotification {
+  const { customerId = 'ctm_123', planIds = [], card = false } = options;
+  const cardOverrides = card === true || card === false ? {} : card;
+
   return {
-    customData,
+    customerId,
+    items: planIds.map((planId) => ({ price: { customData: { res_plan_id: planId } } })),
     payments: card
-      ? [{ methodDetails: { type: 'card', card: { type: 'visa', last4: '4242', expiryMonth: 12, expiryYear: 2030 } } }]
+      ? [
+          {
+            methodDetails: {
+              type: 'card',
+              card: { type: 'visa', last4: '4242', expiryMonth: 12, expiryYear: 2030, ...cardOverrides },
+            },
+          },
+        ]
       : [],
   } as any;
 }

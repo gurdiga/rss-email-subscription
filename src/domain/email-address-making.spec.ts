@@ -85,4 +85,52 @@ describe(makeEmailAddress.name, () => {
     expect(makeEmailAddress({})).to.deep.equal(makeErr('Email must be a string', field));
     expect(makeEmailAddress([])).to.deep.equal(makeErr('Email must be a string', field));
   });
+
+  it('rejects inputs that would expand into more than one SMTP recipient', () => {
+    expect(makeEmailAddress('a@x.com,b@y.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@x.com,b@y.com"', field)
+    );
+    expect(makeEmailAddress('a@b@c.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@b@c.com"', field)
+    );
+    expect(makeEmailAddress('a@x.com,y.com')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@x.com,y.com"', field)
+    );
+  });
+
+  it('resolves quickly for adversarial local parts instead of backtracking exponentially', () => {
+    // The vulnerable regex took ~9.7s on a 30-character input; 1s won't flake on a loaded CI.
+    const elapsedMs = timeMakeEmailAddress(si`${'a'.repeat(40)}!@test.com`);
+
+    expect(elapsedMs).to.be.lessThan(1000);
+  });
+
+  // Nodemailer rewrites a NUL to a space rather than rejecting it, so one
+  // surviving validation here would deliver to a different address than the
+  // one this app stored and thinks it sent to.
+  it('rejects control characters', () => {
+    expect(makeEmailAddress('a@example.com\u0000evil')).to.deep.equal(
+      makeErr(si`Email is syntactically incorrect: "a@example.com\u0000evil"`, field)
+    );
+    expect(makeEmailAddress('a@example.com\u007fevil')).to.deep.equal(
+      makeErr(si`Email is syntactically incorrect: "a@example.com\u007fevil"`, field)
+    );
+  });
+
+  it('rejects a garbage suffix after an otherwise-valid final domain label', () => {
+    expect(makeEmailAddress('a@example.com!')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@example.com!"', field)
+    );
+    expect(makeEmailAddress('a@example.1ab1')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@example.1ab1"', field)
+    );
+  });
 });
+
+function timeMakeEmailAddress(email: string): number {
+  const startTime = Date.now();
+
+  makeEmailAddress(email);
+
+  return Date.now() - startTime;
+}

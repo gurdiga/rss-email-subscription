@@ -1,12 +1,7 @@
 import { expect } from 'chai';
-import {
-  ConfirmationSecret,
-  isConfirmationSecretNotFound,
-  makeRandomConfirmationSecret,
-} from '../../domain/confirmation-secrets';
-import { loadConfirmationSecret, storeConfirmationSecret } from '../../domain/confirmation-secrets-storage';
+import { ConfirmationSecret, makeRandomConfirmationSecret } from '../../domain/confirmation-secrets';
+import { getConfirmationSecretStorageKey, storeConfirmationSecret } from '../../domain/confirmation-secrets-storage';
 import { AppStorage } from '../../domain/storage';
-import { isErr } from '../../shared/lang';
 import { makeTestStorageFromSnapshot, purgeTestStorageFromSnapshot } from '../../shared/test-utils';
 import { expireConfirmationSecrets } from './index';
 
@@ -15,9 +10,6 @@ const oneDayMs = 24 * 3600 * 1000;
 describe(expireConfirmationSecrets.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
-  // Registration secrets used to be exempt from expiry altogether, so the store only ever
-  // grew — and issuing a password reset scans all of it. They expire like everything else
-  // now, on the same 48-hour clock the registration email has always advertised.
   it('expires a registration secret, which used to be exempt', async () => {
     const storage = makeTestStorageFromSnapshot({});
     const fresh = storeRegistrationSecret(storage, hoursAgo(1));
@@ -65,10 +57,12 @@ function storeResetSecret(storage: AppStorage, timestamp: Date): ConfirmationSec
   return secret;
 }
 
+// Not via loadConfirmationSecret: it reports an expired record as not-found even
+// while the file is still on disk.
 function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean {
-  const result = loadConfirmationSecret(storage, secret);
+  const result = storage.hasItem(getConfirmationSecretStorageKey(secret));
 
-  return !isErr(result) && !isConfirmationSecretNotFound(result);
+  return result === true;
 }
 
 function daysAgo(days: number): Date {

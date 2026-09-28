@@ -194,6 +194,7 @@ describe('API', () => {
 
       let sessionId = (registrationConfirmationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'registration confirmation response sessionId').to.exist;
+      const sessionIdAfterConfirmation = sessionId;
 
       const sessionDataAfterConfirmation = loadSessionData(sessionId!);
       expect(sessionDataAfterConfirmation.accountId).to.equal(
@@ -217,6 +218,10 @@ describe('API', () => {
 
       sessionId = (authenticationResponse as Success).responseData!['sessionId'];
       expect(sessionId, 'authentication response sessionId').to.exist;
+
+      // The cookie jar carries the confirmation session's cookie into this login.
+      expect(sessionId, 'authentication rotates the session ID').not.to.equal(sessionIdAfterConfirmation);
+      expect(sessionFileExists(sessionIdAfterConfirmation!), 'the pre-login session record is gone').to.be.false;
 
       const sessionData = loadSessionData(sessionId!);
       const sessionCookie = sessionData.cookie!;
@@ -242,9 +247,7 @@ describe('API', () => {
       navbarCookie = getCookie(deauthenticationResponseHeaders, navbarCookieName);
       expect(navbarCookie).to.include({ [navbarCookieName]: 'false' }, 'unsets the navbar cookie');
 
-      const sessionDataAfterDeauthentication = loadSessionData(sessionId);
-      expect(sessionDataAfterDeauthentication.accountId, 'deauthentication removes accountId from session').not.to
-        .exist;
+      expect(sessionFileExists(sessionId), 'deauthentication destroys the session file').to.be.false;
     }).timeout(5000);
   });
 
@@ -552,7 +555,7 @@ describe('API', () => {
 
       const { responseBody: repeatedSubscriptionResult } = await subscriptionSend(testFeedId, subscriberEmail);
       expect(repeatedSubscriptionResult).to.deep.equal(
-        <Success>{ kind: 'Success', message: 'This email is already subscribed! 👍' },
+        { kind: 'Success', message: 'This email is already subscribed! 👍' } as Success,
         'repeated subscription result'
       );
 
@@ -623,7 +626,7 @@ describe('API', () => {
       it('loads the account information for the authenticated user', async () => {
         const { responseBody } = await loadCurrentAccountSend();
 
-        expect(responseBody).to.deep.equal(<Success>{
+        expect(responseBody).to.deep.equal({
           kind: 'Success',
           message: 'Success',
           responseData: {
@@ -632,7 +635,7 @@ describe('API', () => {
             cardDescription,
             isAdmin: false,
           },
-        });
+        } as Success);
       });
 
       function storeCardDescription(accountId: AccountId): void {
@@ -1015,6 +1018,10 @@ describe('API', () => {
 
   function loadSessionData(sessionId: string) {
     return loadJSON(makePath('sessions', si`${sessionId}.json`));
+  }
+
+  function sessionFileExists(sessionId: string): boolean {
+    return fileExists(makePath(dataDirRoot, 'sessions', si`${sessionId}.json`));
   }
 
   interface ApiResponseTuple {
