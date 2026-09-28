@@ -110,7 +110,7 @@ export function clearSessionFields(reqSession: ReqSession): void {
 // after this runs, nothing downstream in the same request reuses reqSession).
 // destroy() detaches req.session synchronously, so a mid-request revocation that a
 // later handler in the *same* request still needs to write into — see
-// invalidateSessionIfPasswordChanged — must use clearSessionFields instead: writing
+// clearSessionFieldsIfPasswordChanged — must use clearSessionFields instead: writing
 // into a session object destroy() already detached from req never gets saved.
 export function deinitSession(reqSession: ReqSession): Promise<Result<void>> {
   clearSessionFields(reqSession);

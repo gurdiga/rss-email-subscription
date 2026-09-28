@@ -3,17 +3,17 @@ import { getAccountIdByEmail } from '../domain/account-crypto';
 import { storeAccount } from '../domain/account-storage';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
-import { invalidateSessionIfPasswordChanged } from './app-request-handler';
+import { clearSessionFieldsIfPasswordChanged } from './app-request-handler';
 import { initSession } from './session';
 import { hashingSalt, makeTestApp } from './test-utils';
 
-describe(invalidateSessionIfPasswordChanged.name, () => {
+describe(clearSessionFieldsIfPasswordChanged.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
 
   it('leaves a session alone when its passwordChangedAt still matches the account', () => {
     const { app, session, accountId } = setUp();
 
-    invalidateSessionIfPasswordChanged(app, session);
+    clearSessionFieldsIfPasswordChanged(app, session);
 
     expect(session.accountId).to.equal(accountId.value);
   });
@@ -24,7 +24,7 @@ describe(invalidateSessionIfPasswordChanged.name, () => {
     const storeResult = storeAccount(app.storage, accountId, { ...account, passwordChangedAt: new Date() });
     expect(isErr(storeResult)).to.be.false;
 
-    invalidateSessionIfPasswordChanged(app, session);
+    clearSessionFieldsIfPasswordChanged(app, session);
 
     expect(session.accountId).to.be.undefined;
     expect(session.email).to.be.undefined;
@@ -35,7 +35,7 @@ describe(invalidateSessionIfPasswordChanged.name, () => {
     const app = makeTestApp();
     const session = { cookie: {} } as any;
 
-    invalidateSessionIfPasswordChanged(app, session);
+    clearSessionFieldsIfPasswordChanged(app, session);
 
     expect(session.accountId).to.be.undefined;
   });

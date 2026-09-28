@@ -57,7 +57,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqSession = req.session || {};
     const action = handler.name;
 
-    invalidateSessionIfPasswordChanged(app, reqSession);
+    clearSessionFieldsIfPasswordChanged(app, reqSession);
 
     const ua = getUaInfo(req.get('User-Agent'));
 
@@ -132,9 +132,8 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
 // Clears the session's credentials when its passwordChangedAt snapshot is stale,
 // so every AppRequestHandler-typed route's own checkSession call sees an
 // UnauthenticatedSession exactly as it would for a session that was never logged
-// in. Runs once here, inside makeAppRequestHandler, instead of being repeated in
-// each handler.
-export function invalidateSessionIfPasswordChanged(app: App, reqSession: ReqSession): void {
+// in.
+export function clearSessionFieldsIfPasswordChanged(app: App, reqSession: ReqSession): void {
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
