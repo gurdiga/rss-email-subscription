@@ -6,6 +6,7 @@ import { demoAccountEmail } from '../domain/demo-account';
 import { hashPassword, verifyPassword } from '../domain/hashed-password';
 import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
+import { si } from '../shared/string-utils';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { App } from './init-app';
 import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
@@ -211,8 +212,12 @@ function loadStoredAccount(app: App, email: string): Account {
   const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
   const account = loadAccount(app.storage, accountId);
 
-  if (isErr(account) || isAccountNotFound(account)) {
-    throw new Error('Expected a stored account');
+  if (isErr(account)) {
+    throw new Error(si`Failed to ${loadAccount.name} for ${email}: ${account.reason}`);
+  }
+
+  if (isAccountNotFound(account)) {
+    throw new Error(si`Account not found for ${email}`);
   }
 
   return account;
