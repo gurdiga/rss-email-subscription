@@ -8,6 +8,7 @@ import { hash } from '../shared/crypto';
 import { isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
+import { RegenerateSessionFn } from './app-request-handler';
 import { App } from './init-app';
 import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
 import { authentication } from './authentication';
@@ -70,14 +71,7 @@ describe(authentication.name, () => {
       return { cookie: {} } as any;
     };
 
-    const response = await authentication(
-      'req',
-      { email, password: oldPassword },
-      {},
-      { cookie: {} } as any,
-      app,
-      regenerateSessionWhileResetLands
-    );
+    const response = await login(app, { email, password: oldPassword }, regenerateSessionWhileResetLands);
 
     expect(response.kind).to.equal('InputError', JSON.stringify(response));
 
@@ -110,11 +104,13 @@ describe(authentication.name, () => {
     const app = makeTestApp();
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
     const hashedPassword = await hashPassword(password);
-    storeAccount(app.storage, accountId, {
+
+    const newAccount = {
       ...makeTestAccount({ email }),
       hashedPassword,
       confirmationTimestamp: new Date(),
-    });
+    };
+    storeAccount(app.storage, accountId, newAccount);
 
     const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
@@ -139,10 +135,12 @@ describe(authentication.name, () => {
     // Let the login reach the scrypt call, then land the reset while it is in flight.
     // scrypt runs for ~135ms, so a synchronous write here is comfortably inside it.
     await new Promise((resolve) => setImmediate(resolve));
-    storeAccount(app.storage, accountId, {
+
+    const newAccount = {
       ...loadStoredAccount(app, email),
       hashedPassword: resetHashedPassword,
-    });
+    };
+    storeAccount(app.storage, accountId, newAccount);
 
     const response = await loginPromise;
     expect(response.kind).to.equal('Success', JSON.stringify(response));
@@ -176,7 +174,9 @@ describe(authentication.name, () => {
     // while it's in flight. scrypt runs for ~135ms, so a synchronous write here is
     // comfortably inside it.
     await new Promise((resolve) => setImmediate(resolve));
-    storeAccount(app.storage, accountId, { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword });
+
+    const newAccount = { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword };
+    storeAccount(app.storage, accountId, newAccount);
 
     const response = await loginPromise;
     expect(response.kind).to.equal('InputError', JSON.stringify(response));
@@ -191,10 +191,8 @@ describe(authentication.name, () => {
     const response = await login(app, { email: demoAccountEmail, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
-    expect(loadStoredAccount(app, demoAccountEmail).hashedPassword.value).to.equal(
-      legacyHash,
-      'the demo account must keep its legacy hash'
-    );
+    const account = loadStoredAccount(app, demoAccountEmail);
+    expect(account.hashedPassword.value).to.equal(legacyHash, 'the demo account must keep its legacy hash');
   });
 });
 
@@ -223,8 +221,12 @@ function loadStoredAccount(app: App, email: string): Account {
   return account;
 }
 
-function login(app: App, request: { email: string; password: string }) {
-  return authentication('req', request, {}, makeReqSession(), app, makeMockRegenerateSession(makeReqSession()));
+function login(
+  app: App,
+  request: { email: string; password: string },
+  regenerateSession: RegenerateSessionFn = makeMockRegenerateSession(makeReqSession())
+) {
+  return authentication('req', request, {}, makeReqSession(), app, regenerateSession);
 }
 
 function makeReqSession() {
