@@ -1,6 +1,6 @@
 import { StorageKey, StorageValue } from '../domain/storage';
 import { makeTestEmailAddress, makeTestStorageFromSnapshot } from '../shared/test-utils';
-import { RegenerateSession } from './app-request-handler';
+import { RegenerateSessionFn } from './app-request-handler';
 import { App } from './init-app';
 import { ReqSession } from './session';
 
@@ -51,6 +51,6 @@ export function makeMockSessionMethods(): MockSessionMethods {
 // express-session regenerate() call. Defaults to echoing back the same session
 // object, so specs that don’t care about rotation see no behavior change; pass a
 // distinct session to specs that need to assert a handler switched to the new one.
-export function makeMockRegenerateSession(newReqSession: ReqSession): RegenerateSession {
+export function makeMockRegenerateSession(newReqSession: ReqSession): RegenerateSessionFn {
   return async () => newReqSession;
 }

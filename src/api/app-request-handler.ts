@@ -38,7 +38,7 @@ export function requirePaymentConfirmed(app: App): RequestHandler {
   };
 }
 
-export type RegenerateSession = () => Promise<ReqSession>;
+export type RegenerateSessionFn = () => Promise<ReqSession>;
 
 export type AppRequestHandler = (
   reqId: string,
@@ -46,7 +46,7 @@ export type AppRequestHandler = (
   reqParams: Request['query'],
   reqSession: ReqSession,
   app: App,
-  regenerateSession: RegenerateSession
+  regenerateSession: RegenerateSessionFn
 ) => Promise<ApiResponse>;
 
 export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
@@ -80,7 +80,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     // error just means the old record might still be on disk, not a failed
     // rotation. So resolve(req.session) below always runs; the error is only
     // logged.
-    const regenerateSession: RegenerateSession = () =>
+    const regenerateSession: RegenerateSessionFn = () =>
       new Promise((resolve) => {
         req.session.regenerate((err: unknown) => {
           if (err) {
