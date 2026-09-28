@@ -602,7 +602,7 @@ async function applyPurchasedPlan(
 
   if (purchasedPlanIds.length > 1) {
     logError(si`transaction.completed webhook has items for multiple plans: ${purchasedPlanIds.join(', ')}`);
-    return { shouldProcessCardDetails: false };
+    return planDataAnomaly();
   }
 
   const rawPlanId = purchasedPlanIds[0];
@@ -613,19 +613,19 @@ async function applyPurchasedPlan(
     // real plan price that unexpectedly lost its res_plan_id tag.
     const priceIds = transaction.items.map((item) => item.price?.id ?? '[no price]').join(', ');
     logInfo(si`No plan tag on purchased prices for ${email.value}: ${priceIds}`);
-    return { shouldProcessCardDetails: true };
+    return planResolved();
   }
 
   const newPlanId = makePlanId(rawPlanId);
 
   if (isErr(newPlanId)) {
     logError(si`Invalid res_plan_id on purchased price: "${rawPlanId}"`);
-    return { shouldProcessCardDetails: false };
+    return planDataAnomaly();
   }
 
   if (!Plans[newPlanId].isSubscription) {
     logError(si`Non-subscription res_plan_id on purchased price: "${rawPlanId}"`);
-    return { shouldProcessCardDetails: false };
+    return planDataAnomaly();
   }
 
   const account = loadAccount(app.storage, accountId);
@@ -640,7 +640,7 @@ async function applyPurchasedPlan(
     // this is the only signal a mismatch (e.g. the buyer edited their email at
     // Paddle checkout) ever produces. Error level so it surfaces, not warning.
     logError(si`Account not found for transaction.completed: ${email.value}`);
-    return { shouldProcessCardDetails: false };
+    return planDataAnomaly();
   }
 
   if (account.planId !== newPlanId) {
@@ -661,6 +661,14 @@ async function applyPurchasedPlan(
     }
   }
 
+  return planResolved();
+}
+
+function planDataAnomaly(): PlanApplication {
+  return { shouldProcessCardDetails: false };
+}
+
+function planResolved(): PlanApplication {
   return { shouldProcessCardDetails: true };
 }
 
