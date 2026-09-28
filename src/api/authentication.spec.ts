@@ -199,6 +199,9 @@ describe(authentication.name, () => {
       makeMockRegenerateSession(makeReqSession())
     );
 
+    // Let the login reach its scrypt verification, then land the password change
+    // while it's in flight. scrypt runs for ~135ms, so a synchronous write here is
+    // comfortably inside it.
     await new Promise((resolve) => setImmediate(resolve));
     storeAccount(app.storage, accountId, { ...loadStoredAccount(app, email), hashedPassword: newHashedPassword });
 
