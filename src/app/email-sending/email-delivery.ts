@@ -46,11 +46,12 @@ export async function deliverEmail({
     html: htmlBody,
     envelope: {
       from: makeReturnPath(to, env.DOMAIN_NAME),
-      // @types/nodemailer types envelope.to as a plain string, but nodemailer's
-      // own address handling (mime-node's _parseEnvelopeAddresses) accepts the
-      // same { address } shape as the to field above and, unlike a string,
-      // never runs it through the comma/semicolon-splitting addressparser —
-      // the type declaration just hasn't caught up with that.
+      // @types/nodemailer types envelope.to as string | string[], with no object
+      // form, but nodemailer's own address handling (mime-node's
+      // _parseEnvelopeAddresses, via _parseAddresses) accepts the same
+      // { address } shape as the to field above and, unlike a string, never
+      // runs it through the comma/semicolon-splitting addressparser — the type
+      // declaration just hasn't caught up with that.
       to: toMailAddress(to) as unknown as string,
     },
   });
