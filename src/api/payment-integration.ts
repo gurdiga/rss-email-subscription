@@ -542,7 +542,7 @@ export async function handleTransactionCompleted(
     return;
   }
 
-  const customerId = transaction.customerId;
+  const { customerId } = transaction;
   const customer = await asyncAttempt(() => paddle.customers.get(customerId));
 
   if (isErr(customer)) {
