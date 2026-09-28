@@ -48,9 +48,9 @@ export function makeMockSessionMethods(): MockSessionMethods {
 }
 
 // Stands in for the closure makeAppRequestHandler wires up around the real
-// express-session regenerate() call. Defaults to echoing back the same session
-// object, so specs that don’t care about rotation see no behavior change; pass a
-// distinct session to specs that need to assert a handler switched to the new one.
+// express-session regenerate() call. Pass the spec's existing session when it
+// doesn't care about rotation, so nothing changes; pass a distinct one when it
+// needs to assert a handler switched to it.
 export function makeMockRegenerateSession(newReqSession: ReqSession): RegenerateSessionFn {
   return async () => newReqSession;
 }
