@@ -93,14 +93,7 @@ describe(authentication.name, () => {
     const app = makeTestApp();
     storeLegacyAccount(app, email, password);
 
-    const response = await authentication(
-      'req',
-      { email, password },
-      {},
-      makeReqSession(),
-      app,
-      makeMockRegenerateSession(makeReqSession())
-    );
+    const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const reloaded = loadStoredAccount(app, email);
@@ -122,14 +115,7 @@ describe(authentication.name, () => {
       confirmationTimestamp: new Date(),
     });
 
-    const response = await authentication(
-      'req',
-      { email, password },
-      {},
-      makeReqSession(),
-      app,
-      makeMockRegenerateSession(makeReqSession())
-    );
+    const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
@@ -147,14 +133,7 @@ describe(authentication.name, () => {
     const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
     const resetHashedPassword = await hashPassword('an-entirely-different-password');
 
-    const loginPromise = authentication(
-      'req',
-      { email, password },
-      {},
-      makeReqSession(),
-      app,
-      makeMockRegenerateSession(makeReqSession())
-    );
+    const loginPromise = login(app, { email, password });
 
     // Let the login reach the scrypt call, then land the reset while it is in flight.
     // scrypt runs for ~135ms, so a synchronous write here is comfortably inside it.
@@ -190,14 +169,7 @@ describe(authentication.name, () => {
     // login's own scrypt call, instead of racing a second one.
     const newHashedPassword = await hashPassword(newPassword);
 
-    const loginPromise = authentication(
-      'req',
-      { email, password: oldPassword },
-      {},
-      makeReqSession(),
-      app,
-      makeMockRegenerateSession(makeReqSession())
-    );
+    const loginPromise = login(app, { email, password: oldPassword });
 
     // Let the login reach its scrypt verification, then land the password change
     // while it's in flight. scrypt runs for ~135ms, so a synchronous write here is
@@ -215,14 +187,7 @@ describe(authentication.name, () => {
     const legacyHash = hash(password, hashingSalt);
     storeLegacyAccount(app, demoAccountEmail, password);
 
-    const response = await authentication(
-      'req',
-      { email: demoAccountEmail, password },
-      {},
-      makeReqSession(),
-      app,
-      makeMockRegenerateSession(makeReqSession())
-    );
+    const response = await login(app, { email: demoAccountEmail, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     expect(loadStoredAccount(app, demoAccountEmail).hashedPassword.value).to.equal(
@@ -251,6 +216,10 @@ function loadStoredAccount(app: App, email: string): Account {
   }
 
   return account;
+}
+
+function login(app: App, request: { email: string; password: string }) {
+  return authentication('req', request, {}, makeReqSession(), app, makeMockRegenerateSession(makeReqSession()));
 }
 
 function makeReqSession() {
