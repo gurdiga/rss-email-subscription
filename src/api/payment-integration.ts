@@ -535,7 +535,7 @@ export async function handleTransactionCompleted(
   paddle: Paddle,
   transaction: TransactionNotification
 ): Promise<Result<void>> {
-  const { logError, logInfo, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
+  const { logError, logWarning } = makeCustomLoggers({ module: handleTransactionCompleted.name });
 
   if (!transaction.customerId) {
     logWarning('transaction.completed webhook has no customerId');
@@ -558,6 +558,34 @@ export async function handleTransactionCompleted(
   }
 
   const accountId = getAccountIdByEmail(email, app.settings.hashingSalt);
+  const planResult = await applyPurchasedPlan(app, transaction, accountId, email);
+
+  if (isErr(planResult)) {
+    return planResult;
+  }
+
+  if (!planResult.shouldProcessCardDetails) {
+    return;
+  }
+
+  return maybeStoreCardDetails(app, transaction, accountId, email);
+}
+
+interface PlanApplication {
+  // False when the transaction's plan data was anomalous (multiple plans tagged,
+  // an invalid or non-subscription res_plan_id, or the account not found) — that
+  // leaves the plan data unresolved, so treating the same transaction's card data
+  // as trustworthy is a separate judgment call the caller doesn't make either.
+  shouldProcessCardDetails: boolean;
+}
+
+async function applyPurchasedPlan(
+  app: App,
+  transaction: TransactionNotification,
+  accountId: AccountId,
+  email: EmailAddress
+): Promise<Result<PlanApplication>> {
+  const { logError, logInfo } = makeCustomLoggers({ module: applyPurchasedPlan.name });
 
   // The plan comes from the price Paddle actually billed (each Price is
   // tagged with its plan via its own customData, set from the Paddle
@@ -574,7 +602,7 @@ export async function handleTransactionCompleted(
 
   if (purchasedPlanIds.length > 1) {
     logError(si`transaction.completed webhook has items for multiple plans: ${purchasedPlanIds.join(', ')}`);
-    return;
+    return { shouldProcessCardDetails: false };
   }
 
   const rawPlanId = purchasedPlanIds[0];
@@ -585,74 +613,101 @@ export async function handleTransactionCompleted(
     // real plan price that unexpectedly lost its res_plan_id tag.
     const priceIds = transaction.items.map((item) => item.price?.id ?? '[no price]').join(', ');
     logInfo(si`No plan tag on purchased prices for ${email.value}: ${priceIds}`);
+    return { shouldProcessCardDetails: true };
   }
 
-  if (rawPlanId) {
-    const newPlanId = makePlanId(rawPlanId);
+  const newPlanId = makePlanId(rawPlanId);
 
-    if (isErr(newPlanId)) {
-      logError(si`Invalid res_plan_id on purchased price: "${rawPlanId}"`);
-      return;
-    }
-
-    if (!Plans[newPlanId].isSubscription) {
-      logError(si`Non-subscription res_plan_id on purchased price: "${rawPlanId}"`);
-      return;
-    }
-
-    const account = loadAccount(app.storage, accountId);
-
-    if (isErr(account)) {
-      return makeErr(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
-    }
-
-    if (isAccountNotFound(account)) {
-      // A paying customer's account stays PendingPayment silently here — Paddle
-      // treats this handler's 200 response as delivered and never retries, so
-      // this is the only signal a mismatch (e.g. the buyer edited their email at
-      // Paddle checkout) ever produces. Error level so it surfaces, not warning.
-      logError(si`Account not found for transaction.completed: ${email.value}`);
-      return;
-    }
-
-    if (account.planId !== newPlanId) {
-      const oldPlanTitle = Plans[account.planId].title;
-      const newPlanTitle = Plans[newPlanId].title;
-      const storeResult = storeAccount(app.storage, accountId, { ...account, planId: newPlanId });
-
-      if (isErr(storeResult)) {
-        return makeErr(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
-      }
-
-      logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
-
-      if (account.planId === PlanId.PendingPayment) {
-        await sendWelcomeEmail(email, app.settings, app.env);
-      } else {
-        await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
-      }
-    }
+  if (isErr(newPlanId)) {
+    logError(si`Invalid res_plan_id on purchased price: "${rawPlanId}"`);
+    return { shouldProcessCardDetails: false };
   }
 
-  const methodDetails = transaction.payments?.[0]?.methodDetails;
+  if (!Plans[newPlanId].isSubscription) {
+    logError(si`Non-subscription res_plan_id on purchased price: "${rawPlanId}"`);
+    return { shouldProcessCardDetails: false };
+  }
 
-  if (methodDetails?.type === 'card' && methodDetails.card) {
-    const { type, last4, expiryMonth, expiryYear } = methodDetails.card;
-    const card: Card = {
-      brand: type ?? 'unknown',
-      last4: last4 ?? '0000',
-      exp_month: expiryMonth ?? 1,
-      exp_year: expiryYear ?? 2099,
-    };
-    const description = makeCardDescription(card);
-    const storeResult = app.storage.storeItem(getCardDescriptionStorageKey(accountId), description);
+  const account = loadAccount(app.storage, accountId);
+
+  if (isErr(account)) {
+    return makeErr(si`Failed to ${loadAccount.name} for ${email.value}: ${account.reason}`);
+  }
+
+  if (isAccountNotFound(account)) {
+    // A paying customer's account stays PendingPayment silently here — Paddle
+    // treats this handler's 200 response as delivered and never retries, so
+    // this is the only signal a mismatch (e.g. the buyer edited their email at
+    // Paddle checkout) ever produces. Error level so it surfaces, not warning.
+    logError(si`Account not found for transaction.completed: ${email.value}`);
+    return { shouldProcessCardDetails: false };
+  }
+
+  if (account.planId !== newPlanId) {
+    const oldPlanTitle = Plans[account.planId].title;
+    const newPlanTitle = Plans[newPlanId].title;
+    const storeResult = storeAccount(app.storage, accountId, { ...account, planId: newPlanId });
 
     if (isErr(storeResult)) {
-      return makeErr(si`Failed to store card description for ${email.value}: ${storeResult.reason}`);
+      return makeErr(si`Failed to ${storeAccount.name} for ${email.value}: ${storeResult.reason}`);
     }
 
-    logInfo(si`Stored card description for ${email.value}`);
+    logInfo(si`Upgraded ${email.value} from ${account.planId} to ${newPlanId}`);
+
+    if (account.planId === PlanId.PendingPayment) {
+      await sendWelcomeEmail(email, app.settings, app.env);
+    } else {
+      await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
+    }
   }
+
+  return { shouldProcessCardDetails: true };
+}
+
+function maybeStoreCardDetails(
+  app: App,
+  transaction: TransactionNotification,
+  accountId: AccountId,
+  email: EmailAddress
+): Result<void> {
+  const { logError, logInfo } = makeCustomLoggers({ module: maybeStoreCardDetails.name });
+  const methodDetails = transaction.payments?.[0]?.methodDetails;
+
+  if (!(methodDetails?.type === 'card' && methodDetails.card)) {
+    return;
+  }
+
+  const { type, last4, expiryMonth, expiryYear } = methodDetails.card;
+
+  // The SDK types these as always present, but that's a claim about the response
+  // shape it expects, not a guarantee about what Paddle actually sends. A
+  // fabricated last4 or expiry would look exactly like a real one to a customer
+  // checking which card is on file — worse than showing nothing — so an invalid
+  // field skips storing a description entirely rather than filling one in. On an
+  // account with an existing description this leaves the old one in place rather
+  // than clearing it: it's more likely still accurate than not, since this is
+  // Paddle sending bad data, not necessarily evidence the card itself changed.
+  const invalidCardFields = [
+    !type && 'type',
+    !last4 && 'last4',
+    !expiryMonth && 'expiryMonth',
+    !expiryYear && 'expiryYear',
+  ].filter((field): field is string => field !== false);
+
+  if (invalidCardFields.length > 0) {
+    logError(si`Skipping card description, Paddle sent invalid card fields: ${invalidCardFields.join(', ')}`);
+    return;
+  }
+
+  const card: Card = { brand: type, last4, exp_month: expiryMonth, exp_year: expiryYear };
+  const description = makeCardDescription(card);
+  const storeResult = app.storage.storeItem(getCardDescriptionStorageKey(accountId), description);
+
+  if (isErr(storeResult)) {
+    return makeErr(si`Failed to store card description for ${email.value}: ${storeResult.reason}`);
+  }
+
+  logInfo(si`Stored card description for ${email.value}`);
 }
 
 export async function handleSubscriptionCanceled(app: App, paddle: Paddle, customerId: string): Promise<Result<void>> {

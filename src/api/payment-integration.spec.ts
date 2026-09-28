@@ -6,7 +6,7 @@ import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { si } from '../shared/string-utils';
-import { handleTransactionCompleted, handleSubscriptionCanceled } from './payment-integration';
+import { handleTransactionCompleted, handleSubscriptionCanceled, loadCardDescription } from './payment-integration';
 import { hashingSalt, makeTestApp } from './test-utils';
 
 describe(handleTransactionCompleted.name, () => {
@@ -115,6 +115,39 @@ describe(handleTransactionCompleted.name, () => {
     expect(card).to.include('Visa');
     expect(card).to.include('4242');
   });
+
+  it('skips storing a card description when Paddle omits a card field', async () => {
+    const email = makeTestEmailAddress('test@test.com');
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(email, hashingSalt);
+    storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
+
+    const paddle = makeFakePaddle('test@test.com');
+    await handleTransactionCompleted(
+      app,
+      paddle,
+      makeFakeTransaction({ planIds: ['courage'], card: { last4: undefined } })
+    );
+
+    expect(loadCardDescription(app.storage, accountId)).to.be.undefined;
+  });
+
+  it('leaves a prior card description in place when a later transaction has an invalid field', async () => {
+    const email = makeTestEmailAddress('test@test.com');
+    const app = makeTestApp();
+    const accountId = getAccountIdByEmail(email, hashingSalt);
+    storeAccount(app.storage, accountId, { ...makeTestAccount({ email: email.value }), planId: PlanId.PendingPayment });
+
+    const paddle = makeFakePaddle('test@test.com');
+    await handleTransactionCompleted(app, paddle, makeFakeTransaction({ planIds: ['courage'], card: true }));
+    await handleTransactionCompleted(
+      app,
+      paddle,
+      makeFakeTransaction({ planIds: ['courage'], card: { last4: undefined } })
+    );
+
+    expect(loadCardDescription(app.storage, accountId)).to.include('4242');
+  });
 });
 
 describe(handleSubscriptionCanceled.name, () => {
@@ -177,15 +210,27 @@ describe(handleSubscriptionCanceled.name, () => {
 });
 
 function makeFakeTransaction(
-  options: { customerId?: string | null; planIds?: string[]; card?: boolean } = {}
+  options: {
+    customerId?: string | null;
+    planIds?: string[];
+    card?: boolean | Partial<{ type: string; last4: string; expiryMonth: number; expiryYear: number }>;
+  } = {}
 ): TransactionNotification {
   const { customerId = 'ctm_123', planIds = [], card = false } = options;
+  const cardOverrides = card === true || card === false ? {} : card;
 
   return {
     customerId,
     items: planIds.map((planId) => ({ price: { customData: { res_plan_id: planId } } })),
     payments: card
-      ? [{ methodDetails: { type: 'card', card: { type: 'visa', last4: '4242', expiryMonth: 12, expiryYear: 2030 } } }]
+      ? [
+          {
+            methodDetails: {
+              type: 'card',
+              card: { type: 'visa', last4: '4242', expiryMonth: 12, expiryYear: 2030, ...cardOverrides },
+            },
+          },
+        ]
       : [],
   } as any;
 }
