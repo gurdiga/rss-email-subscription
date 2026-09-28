@@ -26,6 +26,13 @@ const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)${allowedChara
 // silently drop existing subscribers.
 const recipientListSeparatorsRe = /[,;<>\s]/;
 
+// Nodemailer silently rewrites some control characters (a NUL becomes a
+// space, confirmed by sending through it directly) rather than rejecting
+// them, so one surviving validation here would mean the value this app
+// treats as the subscriber's address and the one actually used for
+// delivery quietly diverge.
+const controlCharactersRe = /[\x00-\x1f\x7f]/;
+
 export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailAddress> {
   if (!input) {
     return makeErr('Email is empty', field);
@@ -59,6 +66,10 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
     return err;
   }
 
+  if (controlCharactersRe.test(email)) {
+    return err;
+  }
+
   const parts = email.split('@');
 
   if (parts.length !== 2) {
@@ -73,7 +84,7 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
   }
 
   const domainLevels = domain.split(/\./).reverse();
-  const doDomainPartsLookReasonable = /[a-z]{2,}/i.test(domainLevels[0]!) && domainLevels.every((l) => l.length >= 1);
+  const doDomainPartsLookReasonable = /^[a-z]{2,}$/i.test(domainLevels[0]!) && domainLevels.every((l) => l.length >= 1);
 
   if (!doDomainPartsLookReasonable) {
     return err;

@@ -104,6 +104,27 @@ describe(makeEmailAddress.name, () => {
 
     expect(elapsedMs).to.be.lessThan(1000);
   });
+
+  // Nodemailer rewrites a NUL to a space rather than rejecting it, so one
+  // surviving validation here would deliver to a different address than the
+  // one this app stored and thinks it sent to.
+  it('rejects control characters', () => {
+    expect(makeEmailAddress('a@example.com\u0000evil')).to.deep.equal(
+      makeErr(si`Email is syntactically incorrect: "a@example.com\u0000evil"`, field)
+    );
+    expect(makeEmailAddress('a@example.com\u007fevil')).to.deep.equal(
+      makeErr(si`Email is syntactically incorrect: "a@example.com\u007fevil"`, field)
+    );
+  });
+
+  it('rejects a garbage suffix after an otherwise-valid final domain label', () => {
+    expect(makeEmailAddress('a@example.com!')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@example.com!"', field)
+    );
+    expect(makeEmailAddress('a@example.1ab1')).to.deep.equal(
+      makeErr('Email is syntactically incorrect: "a@example.1ab1"', field)
+    );
+  });
 });
 
 function timeMakeEmailAddress(email: string): number {
