@@ -20,6 +20,7 @@ export interface AppEnv {
   PADDLE_API_KEY: string;
   PADDLE_WEBHOOK_SECRET: string;
   PADDLE_ENVIRONMENT: PaddleEnvironment;
+  NGINX_IP_ADDRESS: string;
 }
 
 export function initApp(): App {
@@ -32,6 +33,7 @@ export function initApp(): App {
     'PADDLE_API_KEY',
     'PADDLE_WEBHOOK_SECRET',
     'PADDLE_ENVIRONMENT',
+    'NGINX_IP_ADDRESS',
   ]);
 
   if (isErr(env)) {

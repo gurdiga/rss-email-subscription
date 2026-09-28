@@ -71,7 +71,12 @@ async function main() {
   // plain HTTP. Doesn't affect the X-Real-IP-based rate limiting in
   // rate-limiting.ts, which reads that header directly rather than through
   // Express's trust-proxy-derived req.ip.
-  expressServer.set('trust proxy', '10.5.5.4');
+  //
+  // Read from the environment (NGINX_IP_ADDRESS, sourced from the same
+  // docker-compose.yml variable as the website service's own ipv4_address)
+  // rather than hardcoded here a second time, so the two can't drift apart
+  // silently — the exact failure mode this comment used to warn about.
+  expressServer.set('trust proxy', app.env.NGINX_IP_ADDRESS);
 
   router.use(
     ApiPath.webUiScripts,
