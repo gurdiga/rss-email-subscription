@@ -37,18 +37,7 @@ export const authentication: AppRequestHandler = async function authentication(
 
   const { accountId, hashedPassword } = checkedCredentials;
 
-  // A pre-login session ID — anonymous, or authenticated as someone else — must not
-  // survive into this one: reusing it would let whoever set it (e.g. by planting a
-  // cookie before the victim logs in) ride in on the session this login establishes.
-  //
-  // regenerateSession() destroys the pre-login session's store record — real disk I/O
-  // that yields to the event loop, the same kind of window checkCredentials already
-  // guards its own scrypt call against below. Re-check the stored hash is still the
-  // one just validated: initSession reads the account fresh, so a password reset
-  // landing in this window would otherwise hand out a session that looks current to
-  // every future revocation check despite being established with a password that's
-  // no longer valid.
-  const reqSession = await regenerateSession();
+  const newReqSession = await regenerateSession();
   const accountAfterRegenerate = loadAccount(app.storage, accountId);
 
   if (isErr(accountAfterRegenerate) || isAccountNotFound(accountAfterRegenerate)) {
@@ -59,14 +48,14 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeInputError<keyof AuthenticationRequest>('Password doesn’t match… 🤔', 'password');
   }
 
-  const sessionInitResult = initSession(app.storage, reqSession, accountId, request.email);
+  const sessionInitResult = initSession(app.storage, newReqSession, accountId, request.email);
 
   if (isErr(sessionInitResult)) {
     return makeAppError(sessionInitResult.reason);
   }
 
   const logData = {};
-  const responseData: AuthenticationResponseData = { sessionId: reqSession.id };
+  const responseData: AuthenticationResponseData = { sessionId: newReqSession.id };
 
   const maybeSetDemoCookie = request.email.value === demoAccountEmail ? [setDemoCookie] : [];
   const cookies = [enablePrivateNavbarCookie, ...maybeSetDemoCookie];

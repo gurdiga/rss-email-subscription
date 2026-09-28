@@ -274,10 +274,8 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
-  // See authentication.ts: whatever session this link is redeemed from must not
-  // carry into the one this reset establishes.
-  const reqSession = await regenerateSession();
-  const sessionInitResult = initSession(storage, reqSession, accountId, account.email);
+  const newReqSession = await regenerateSession();
+  const sessionInitResult = initSession(storage, newReqSession, accountId, account.email);
 
   if (isErr(sessionInitResult)) {
     logError(si`Failed to ${initSession.name}: ${sessionInitResult.reason}`);

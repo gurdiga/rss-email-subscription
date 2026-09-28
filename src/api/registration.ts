@@ -114,10 +114,8 @@ export const registration: AppRequestHandler = async function registration(
     paymentToken = result.value;
   }
 
-  // See authentication.ts: whatever session this anonymous request arrived with must
-  // not carry over into the one now being authenticated.
-  const reqSession = await regenerateSession();
-  const sessionInitResult = initSession(storage, reqSession, accountId, request.email);
+  const newReqSession = await regenerateSession();
+  const sessionInitResult = initSession(storage, newReqSession, accountId, request.email);
 
   if (isErr(sessionInitResult)) {
     logError(si`Failed to ${initSession.name}`, { reason: sessionInitResult.reason });
@@ -331,11 +329,8 @@ export const registrationConfirmation: AppRequestHandler = async function regist
 
   const { accountId, email } = confirmationSecretData;
 
-  // The link is mailed and can be opened from a different browser than the one that
-  // registered, so whatever session it's redeemed from — someone else's, or one an
-  // attacker planted — must not carry into the session this confirmation establishes.
-  const reqSession = await regenerateSession();
-  const sessionInitResult = initSession(storage, reqSession, accountId, email);
+  const newReqSession = await regenerateSession();
+  const sessionInitResult = initSession(storage, newReqSession, accountId, email);
 
   if (isErr(sessionInitResult)) {
     logWarning(si`Failed to ${initSession.name}: ${sessionInitResult.reason}`);
@@ -343,7 +338,7 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   }
 
   const logData = {};
-  const responseData = { sessionId: reqSession.id };
+  const responseData = { sessionId: newReqSession.id };
   const cookies = [enablePrivateNavbarCookie];
 
   return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
