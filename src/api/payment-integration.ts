@@ -564,19 +564,28 @@ export async function handleTransactionCompleted(
     return planResult;
   }
 
-  if (!planResult.shouldProcessCardDetails) {
+  // The transaction's plan data was anomalous (multiple plans tagged, an invalid
+  // or non-subscription res_plan_id, or the account not found), already logged
+  // inside applyPurchasedPlan — that leaves the plan data unresolved, so treating
+  // the same transaction's card data as trustworthy is a separate judgment call
+  // this function doesn't make either.
+  if (isPlanDataAnomaly(planResult)) {
     return;
   }
 
   return maybeStoreCardDetails(app, transaction, accountId, email);
 }
 
-interface PlanApplication {
-  // False when the transaction's plan data was anomalous (multiple plans tagged,
-  // an invalid or non-subscription res_plan_id, or the account not found) — that
-  // leaves the plan data unresolved, so treating the same transaction's card data
-  // as trustworthy is a separate judgment call the caller doesn't make either.
-  shouldProcessCardDetails: boolean;
+interface PlanDataAnomaly {
+  kind: 'PlanDataAnomaly';
+}
+
+function makePlanDataAnomaly(): PlanDataAnomaly {
+  return { kind: 'PlanDataAnomaly' };
+}
+
+function isPlanDataAnomaly(value: unknown): value is PlanDataAnomaly {
+  return hasKind(value, 'PlanDataAnomaly');
 }
 
 async function applyPurchasedPlan(
@@ -584,7 +593,7 @@ async function applyPurchasedPlan(
   transaction: TransactionNotification,
   accountId: AccountId,
   email: EmailAddress
-): Promise<Result<PlanApplication>> {
+): Promise<Result<PlanDataAnomaly | void>> {
   const { logError, logInfo } = makeCustomLoggers({ module: applyPurchasedPlan.name });
 
   // The plan comes from the price Paddle actually billed (each Price is
@@ -602,7 +611,7 @@ async function applyPurchasedPlan(
 
   if (purchasedPlanIds.length > 1) {
     logError(si`transaction.completed webhook has items for multiple plans: ${purchasedPlanIds.join(', ')}`);
-    return planDataAnomaly();
+    return makePlanDataAnomaly();
   }
 
   const rawPlanId = purchasedPlanIds[0];
@@ -613,19 +622,19 @@ async function applyPurchasedPlan(
     // real plan price that unexpectedly lost its res_plan_id tag.
     const priceIds = transaction.items.map((item) => item.price?.id ?? '[no price]').join(', ');
     logInfo(si`No plan tag on purchased prices for ${email.value}: ${priceIds}`);
-    return planResolved();
+    return;
   }
 
   const newPlanId = makePlanId(rawPlanId);
 
   if (isErr(newPlanId)) {
     logError(si`Invalid res_plan_id on purchased price: "${rawPlanId}"`);
-    return planDataAnomaly();
+    return makePlanDataAnomaly();
   }
 
   if (!Plans[newPlanId].isSubscription) {
     logError(si`Non-subscription res_plan_id on purchased price: "${rawPlanId}"`);
-    return planDataAnomaly();
+    return makePlanDataAnomaly();
   }
 
   const account = loadAccount(app.storage, accountId);
@@ -640,7 +649,7 @@ async function applyPurchasedPlan(
     // this is the only signal a mismatch (e.g. the buyer edited their email at
     // Paddle checkout) ever produces. Error level so it surfaces, not warning.
     logError(si`Account not found for transaction.completed: ${email.value}`);
-    return planDataAnomaly();
+    return makePlanDataAnomaly();
   }
 
   if (account.planId !== newPlanId) {
@@ -660,16 +669,6 @@ async function applyPurchasedPlan(
       await sendPlanChangeInformationEmail(oldPlanTitle, newPlanTitle, email, app.settings, app.env);
     }
   }
-
-  return planResolved();
-}
-
-function planDataAnomaly(): PlanApplication {
-  return { shouldProcessCardDetails: false };
-}
-
-function planResolved(): PlanApplication {
-  return { shouldProcessCardDetails: true };
 }
 
 function maybeStoreCardDetails(
