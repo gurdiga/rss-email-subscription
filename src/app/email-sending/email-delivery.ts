@@ -35,7 +35,7 @@ export async function deliverEmail({
   env,
 }: EmailDeliveryRequest): Promise<DeliveryInfo> {
   if (!transporter) {
-    transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING, { socketTimeout: SOCKET_TIMEOUT_MS });
+    transporter = nodemailer.createTransport({ url: env.SMTP_CONNECTION_STRING, socketTimeout: SOCKET_TIMEOUT_MS });
   }
 
   const messageInfo = await transporter.sendMail({
