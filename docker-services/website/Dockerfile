@@ -9,9 +9,9 @@ RUN apk update --no-cache \
  && apk upgrade --no-cache \
  && apk add --no-cache --upgrade \
     'libxml2=2.13.9-r1' \
-    'openssl=3.3.7-r0' \
+    'openssl=3.3.7-r2' \
     'expat=2.8.4-r0' \
     'tiff=4.7.1-r0' \
-    'libpng=1.6.57-r0' \
+    'libpng=1.6.59-r0' \
     'c-ares=1.34.8-r0' \
  && apk del curl
