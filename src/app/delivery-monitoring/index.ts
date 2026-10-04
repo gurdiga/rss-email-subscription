@@ -26,7 +26,16 @@ async function main() {
   }
 
   process.stdin.on('data', (data: Buffer) => processData(data, status, storage));
-  process.stdin.on('end', () => logWarning('End of STDIN'));
+  process.stdin.on('end', () => {
+    logWarning('End of STDIN, exiting');
+
+    // Without input there is nothing left to do, but the cron job below
+    // would keep the process alive, looking healthy while recording
+    // nothing. Exiting lets the restart policy bring up a fresh tail. The
+    // code is 0 because make delmon-catch-up ends the same way, and there
+    // a drained pipe is the success case.
+    process.exit(0);
+  });
 
   logInfo(si`Started watching Postfix logs in ${process.env['NODE_ENV'] || 'MISSING_NODE_ENV'} environment`);
 
