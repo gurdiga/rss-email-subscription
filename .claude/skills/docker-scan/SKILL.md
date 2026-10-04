@@ -278,6 +278,16 @@ another process` means concurrent scans fought over scout's single-writer index
 cache. The script already retries those sequentially; if a retry also fails,
 lower `BATCH_SIZE` in `scripts/scan-images.sh`.
 
+**`[timeout] scan of <image> killed after 300s`**:
+Each prod scan runs under `timeout` on the server, 300 seconds by default
+(`SCAN_TIMEOUT=600 scripts/scan-images.sh` to change it). The limit exists
+because on 2026-10-04 three concurrent scans ran for 13 minutes on the 1 GB
+droplet, filled swap, and took the site down until a reboot. A scan that hits
+the limit is retried once on its own; if it times out again, check `free -m`
+on prod before raising the limit, and do not start a second scan while one is
+still running there. Stopping the local script does not stop scans already
+running on prod.
+
 **`grep "vulnerabilities │"` produces no output**:
 Scout's output format does not use `│` in the summary line. Use instead:
 ```bash
