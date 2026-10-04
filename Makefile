@@ -333,23 +333,37 @@ reload-app:
 
 # cron @daily
 update-tor-exit-node-blocklist:
-	@new=.tmp/nginx-blocklists/tor-exit-nodes.conf.new
+	@raw=.tmp/nginx-blocklists/tor-exit-nodes.txt
+	new=.tmp/nginx-blocklists/tor-exit-nodes.conf.new
 	current=.tmp/nginx-blocklists/tor-exit-nodes.conf
 	mkdir -p .tmp/nginx-blocklists
 
-	if curl -fsS https://check.torproject.org/torbulkexitlist | awk '{print "deny " $$0 ";"}' > $$new \
-		&& [ "$$(wc -l < $$new)" -gt 100 ] \
-		&& mv $$new $$current \
-		&& docker kill --signal=HUP website > /dev/null
+	function refresh_blocklist {
+		# curl writes to a file rather than a pipe because a retry truncates the
+		# file, whereas a pipe would keep the partial output of the failed attempt.
+		curl -fsS --retry 3 --retry-all-errors --max-time 30 -o $$raw https://check.torproject.org/torbulkexitlist \
+			|| { echo "Failed step: fetch"; return 1; }
+		awk '{print "deny " $$0 ";"}' $$raw > $$new && [ "$$(wc -l < $$new)" -gt 100 ] \
+			|| { echo "Failed step: validation ($$(wc -l < $$new) lines)"; return 1; }
+		mv $$new $$current \
+			|| { echo "Failed step: move"; return 1; }
+		docker kill --signal=HUP website > /dev/null \
+			|| { echo "Failed step: reload"; return 1; }
+	}
+
+	# The crontab sets MAILTO="", so stderr has to travel in the alert itself.
+	if error=$$(refresh_blocklist 2>&1)
 	then
-		true
+		rm -f $$raw
 	else
-		rm -f $$new
+		rm -f $$raw $$new
 		cat <( \
 			echo "Subject: RES update-tor-exit-node-blocklist FAILED"; \
 			echo "From: RES <system@feedsubscription.com>"; \
 			echo; \
-			echo "Could not refresh the Tor exit-node blocklist (fetch, validation, move, or reload failed)."; \
+			echo "Could not refresh the Tor exit-node blocklist."; \
+			echo; \
+			echo "$$error"; \
 			echo; \
 			echo "Please try running the make command manually."; \
 		) | $(NOTIFY)
