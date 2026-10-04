@@ -161,7 +161,17 @@ services:
     restart: always
     # Doubled $$ so Compose passes the guard into the container instead of
     # resolving it against the host environment at parse time.
-    command: sh -c 'tail -n 0 -F "$${SMTP_OUT_LOG:?SMTP_OUT_LOG is not set}" | node dist/app/delivery-monitoring'
+    #
+    # exec with tail in a process substitution, not `tail | node`: in a
+    # pipeline sh stays the child of docker-init and takes the signals, so
+    # `docker kill -s HUP delmon` kills the container instead of reaching
+    # node's heartbeat handler. <(…) is not POSIX; busybox ash has it.
+    #
+    # The guard runs on its own first because inside <(…) it would only
+    # fail the subshell, and node would start anyway with nothing to read.
+    command: >-
+      sh -c ': "$${SMTP_OUT_LOG:?SMTP_OUT_LOG is not set}";
+      exec node dist/app/delivery-monitoring < <(tail -n 0 -F "$$SMTP_OUT_LOG")'
     volumes:
       - .tmp/logs/feedsubscription:/logs:ro
       - ${DATA_DIR_ROOT?}:/data
