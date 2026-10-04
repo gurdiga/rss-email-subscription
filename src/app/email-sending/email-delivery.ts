@@ -15,6 +15,7 @@ export interface EmailDeliveryEnv {
 export type DeliverEmailFn = (emailDeliveryRequest: EmailDeliveryRequest) => Promise<DeliveryInfo>;
 
 let transporter: Transporter<SMTPTransport.SentMessageInfo>;
+const SOCKET_TIMEOUT_MS = 5000;
 
 export interface EmailDeliveryRequest {
   from: FullEmailAddress;
@@ -34,7 +35,7 @@ export async function deliverEmail({
   env,
 }: EmailDeliveryRequest): Promise<DeliveryInfo> {
   if (!transporter) {
-    transporter = nodemailer.createTransport(env.SMTP_CONNECTION_STRING);
+    transporter = nodemailer.createTransport({ url: env.SMTP_CONNECTION_STRING, socketTimeout: SOCKET_TIMEOUT_MS });
   }
 
   const messageInfo = await transporter.sendMail({
