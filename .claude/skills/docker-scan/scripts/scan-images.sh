@@ -51,13 +51,12 @@ main() {
     fi
   fi
 
-  # The compose file rather than the Makefile's all-images: what runs on prod is
-  # what needs scanning, and the same yq query already feeds docker-image-check.
-  # Deduplicated because app, api and delmon share one image.
   local images
   local -a image_list
 
-  images=$(yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' ')
+  # In two steps so that a failing list_images stops the script; inside the
+  # here-string its exit status would be lost.
+  images=$(list_images)
   read -ra image_list <<< "$images"
 
   echo "Images to scan ($TARGET): ${image_list[*]}" >&2
@@ -156,6 +155,14 @@ ensure_master() {
   # multiplexing instead of replacing it.
   rm -f "$SSH_SOCKET"
   ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com
+}
+
+# Prints the image names on one line. The compose file rather than the
+# Makefile's all-images: what runs on prod is what needs scanning, and the same
+# yq query already feeds docker-image-check. Deduplicated because app, api and
+# delmon share one image.
+list_images() {
+  yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
 }
 
 # Keeps the whole scout output alongside the summary: when scout errors out
