@@ -1,7 +1,10 @@
 #!/bin/bash
 # Scans all production Docker images for HIGH/CRITICAL vulnerabilities with
-# docker scout. Runs up to 4 scans concurrently, retries any that produced no
-# summary, and prints a per-image block.
+# docker scout. Runs the scans in batches of BATCH_SIZE, retries any that
+# produced no summary, and prints a per-image block.
+#
+# Run it from the repo root: it reads docker-compose.yml for the image list,
+# which needs yq.
 #
 # Usage: scan-images.sh [prod|local]
 #   prod  (default) scan the images on feedsubscription.com — the authoritative
@@ -24,10 +27,8 @@ BATCH_SIZE=4
 # site down until a reboot; nothing was going to stop them.
 SCAN_TIMEOUT=${SCAN_TIMEOUT:-300}
 
-# Called from the last line of the file, so that the functions it uses can be
-# defined below it and the script reads top to bottom.
 main() {
-  # Not local: ensure_master and scan_image read it.
+  # Not local: the functions below read it.
   TARGET=${1:-prod}
 
   if [[ $TARGET != prod && $TARGET != local ]]; then
@@ -108,7 +109,6 @@ list_images() {
   yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
 }
 
-# Run scans in batches of BATCH_SIZE
 scan_in_batches() {
   local outdir=$1
   shift
@@ -129,12 +129,14 @@ scan_in_batches() {
     fi
   done
 
-  # Wait for remaining
+  # The last batch can be shorter than BATCH_SIZE.
   wait || true
 }
 
 # Scout's image-index cache is single-writer, so concurrent scans can lose the
-# lock and abort. Give the losers one sequential retry before calling them failed.
+# lock and abort. Give the losers one sequential retry before calling them
+# failed. A scan that timed out has no summary either, so it is retried too,
+# for up to another SCAN_TIMEOUT.
 retry_failed() {
   local outdir=$1
   shift
@@ -153,7 +155,6 @@ retry_failed() {
   done
 }
 
-# Output results
 print_results() {
   local outdir=$1
   shift
@@ -198,7 +199,8 @@ scan_to() {
 
   scan_image "$image" > "$output_path_prefix.raw" 2>&1 || status=$?
 
-  # 124 is timeout's own exit code; 137 means it had to follow up with KILL.
+  # 124 is timeout's own exit code. 137 means the scan was killed, normally by
+  # timeout's follow-up KILL, though anything else killing it looks the same.
   if (( status == 124 || status == 137 )); then
     echo "[timeout] scan of $image killed after ${SCAN_TIMEOUT}s" >> "$output_path_prefix.raw"
   fi
