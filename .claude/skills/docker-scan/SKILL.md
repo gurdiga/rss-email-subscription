@@ -70,7 +70,8 @@ The asset is named `docker-scout_<version>_checksums.txt`, not `checksums.txt`.
 
 ## Scan results
 
-The bundled script handles SSH ControlMaster setup, image discovery from the Makefile,
+The bundled script handles SSH ControlMaster setup, image discovery from
+`docker-compose.yml` (it needs `yq`, as the Makefile does),
 and running scans in batches of 4 to limit cache contention. Images whose scan
 produced no summary are retried once sequentially (reported as `[retry] <image>`
 on stderr), which clears the scout index-cache lock conflicts that concurrency

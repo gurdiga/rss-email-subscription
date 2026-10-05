@@ -51,11 +51,13 @@ main() {
     fi
   fi
 
-  # Get image list from Makefile (space-separated after "all-images:")
+  # The compose file rather than the Makefile's all-images: what runs on prod is
+  # what needs scanning, and the same yq query already feeds docker-image-check.
+  # Deduplicated because app, api and delmon share one image.
   local images
   local -a image_list
 
-  images=$(grep "^all-images:" Makefile | sed 's/^all-images:[[:space:]]*//')
+  images=$(yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' ')
   read -ra image_list <<< "$images"
 
   echo "Images to scan ($TARGET): ${image_list[*]}" >&2
@@ -177,15 +179,23 @@ scan_to() {
 
 scan_image() {
   local image=$1
+  local ref=$image
+
+  # Every image in the compose file is a bare name today. One that names its
+  # own tag or digest must be scanned as written; only the last path component
+  # is checked because a registry host can carry a port.
+  if [[ ${image##*/} != *[:@]* ]]; then
+    ref=$image:latest
+  fi
 
   if [[ $TARGET == local ]]; then
-    docker scout cves "$image:latest"
+    docker scout cves "$ref"
   else
     # The timeout runs on prod, not around the local ssh: cutting the ssh
     # session leaves the remote scan running. timeout signals its whole process
     # group, which is what reaches the docker-scout plugin, a child of the
     # docker CLI.
-    $SSH "timeout --kill-after=10 $SCAN_TIMEOUT docker scout cves $image:latest"
+    $SSH "timeout --kill-after=10 $SCAN_TIMEOUT docker scout cves $ref"
   fi
 }
 
