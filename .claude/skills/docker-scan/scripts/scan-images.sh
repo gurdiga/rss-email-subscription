@@ -58,16 +58,32 @@ scan_image() {
   fi
 }
 
+# Called before every batch and every retry, not only at startup: when the
+# master is gone, ssh -S does not fail, it quietly opens a new connection per
+# command. Prod's ufw refuses a source that opens 6 connections to port 22 in
+# 30 seconds, so a batch without a master can lock this machine out, as
+# happened on 2026-10-03.
+ensure_master() {
+  [[ $TARGET == prod ]] || return 0
+
+  if ssh -S "$SSH_SOCKET" -O check feedsubscription.com 2>/dev/null; then
+    return 0
+  fi
+
+  echo "[ssh] Establishing ControlMaster..." >&2
+
+  # A dead master leaves its socket file behind, and ssh -M then gives up on
+  # multiplexing instead of replacing it.
+  rm -f "$SSH_SOCKET"
+  ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com
+}
+
 if [[ $TARGET != prod && $TARGET != local ]]; then
   echo "usage: $(basename "$0") [prod|local]" >&2
   exit 2
 fi
 
-# Establish ControlMaster if not already active
-if [[ $TARGET == prod ]] && ! ssh -S "$SSH_SOCKET" -O check feedsubscription.com 2>/dev/null; then
-  echo "[ssh] Establishing ControlMaster..." >&2
-  ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com
-fi
+ensure_master
 
 # Prod's scout is a hand-installed binary, so it drifts. v0.15.0 sat there from
 # 2023 until 2026 and failed against Docker 29 with an unreadable blob error
@@ -94,6 +110,10 @@ trap 'rm -rf "$outdir"' EXIT
 # Run scans in batches of BATCH_SIZE
 i=0
 for image in "${image_list[@]}"; do
+  if (( i % BATCH_SIZE == 0 )); then
+    ensure_master
+  fi
+
   scan_to "$image" "$outdir/$i" &
   i=$((i + 1))
 
@@ -111,6 +131,7 @@ i=0
 for image in "${image_list[@]}"; do
   if [[ ! -s "$outdir/$i.summary" ]]; then
     echo "[retry] $image" >&2
+    ensure_master
     scan_to "$image" "$outdir/$i"
   fi
   i=$((i + 1))
