@@ -3,7 +3,7 @@
 # docker scout, one image at a time, and prints a per-image block.
 #
 # Run it from the repo root: it reads docker-compose.yml for the image list,
-# which needs yq.
+# which needs the docker CLI with its compose plugin, even for a prod scan.
 #
 # Usage: scan-images.sh [prod|local]
 #   prod  (default) scan the images on feedsubscription.com — the authoritative
@@ -108,12 +108,12 @@ warn_if_scout_outdated() {
 }
 
 # Prints the image names on one line. The compose file rather than the
-# Makefile's all-images: what runs on prod is what needs scanning, and the same
-# yq query already feeds docker-image-check. Deduplicated because app, api and
-# delmon share one image.
+# Makefile's all-images: what runs on prod is what needs scanning, and
+# docker-image-check lists them the same way. Deduplicated because app, api
+# and delmon share one image.
 list_images() {
-  if ! command -v yq > /dev/null; then
-    echo "yq is required to read the image list from docker-compose.yml." >&2
+  if ! docker compose version > /dev/null 2>&1; then
+    echo "docker with the compose plugin is required to read the image list from docker-compose.yml." >&2
     return 1
   fi
 
@@ -122,7 +122,10 @@ list_images() {
     return 1
   fi
 
-  yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
+  # Without the two flags compose refuses to print anything until every
+  # required variable from .env has a value, and none of them is part of an
+  # image name. Neither flag needs a running daemon.
+  docker compose config --no-interpolate --no-consistency --images | sort -u | tr '\n' ' '
 }
 
 # One at a time, deliberately. This used to run four scans at once and retry
