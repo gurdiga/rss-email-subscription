@@ -36,7 +36,7 @@ main() {
     exit 2
   fi
 
-  ensure_master
+  ensure_shared_ssh_connection
   warn_if_scout_outdated
 
   local images
@@ -65,21 +65,22 @@ main() {
   print_results "$outdir" "${image_list[@]}"
 }
 
-# Called before every batch and every retry, not only at startup: when the
-# master is gone, ssh -S does not fail, it quietly opens a new connection per
-# command. Prod's ufw refuses a source that opens 6 connections to port 22 in
-# 30 seconds, so a batch without a master can lock this machine out, as
-# happened on 2026-10-03.
-ensure_master() {
+# The shared connection is ssh's ControlMaster: every $SSH command rides on it
+# instead of logging in again. Called before every batch and every retry, not
+# only at startup: when it is gone, ssh -S does not fail, it quietly opens a
+# new connection per command. Prod's ufw refuses a source that opens 6
+# connections to port 22 in 30 seconds, so a batch without it can lock this
+# machine out, as happened on 2026-10-03.
+ensure_shared_ssh_connection() {
   [[ $TARGET == prod ]] || return 0
 
   if ssh -S "$SSH_SOCKET" -O check feedsubscription.com 2>/dev/null; then
     return 0
   fi
 
-  echo "[ssh] Establishing ControlMaster..." >&2
+  echo "[ssh] Opening the shared connection..." >&2
 
-  # A dead master leaves its socket file behind, and ssh -M then gives up on
+  # A dead one leaves its socket file behind, and ssh -M then gives up on
   # multiplexing instead of replacing it.
   rm -f "$SSH_SOCKET"
 
@@ -136,7 +137,7 @@ scan_in_batches() {
 
   for image in "$@"; do
     if (( i % BATCH_SIZE == 0 )); then
-      ensure_master
+      ensure_shared_ssh_connection
     fi
 
     scan_to "$image" "$outdir/$i" &
@@ -165,7 +166,7 @@ retry_failed() {
   for image in "$@"; do
     if [[ ! -s "$outdir/$i.summary" ]]; then
       echo "[retry] $image" >&2
-      ensure_master
+      ensure_shared_ssh_connection
       scan_to "$image" "$outdir/$i"
     fi
 
