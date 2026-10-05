@@ -82,7 +82,15 @@ ensure_master() {
   # A dead master leaves its socket file behind, and ssh -M then gives up on
   # multiplexing instead of replacing it.
   rm -f "$SSH_SOCKET"
-  ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com
+
+  if ! ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com; then
+    echo "[ssh] Cannot connect to feedsubscription.com, so nothing was scanned." >&2
+    echo "      If port 22 is refused while the site is up, this address has probably" >&2
+    echo "      hit prod's ufw limit of 6 connections in 30 seconds. Every new attempt" >&2
+    echo "      extends the block: wait 30 seconds without connecting, then rerun." >&2
+
+    return 1
+  fi
 }
 
 # Prod's scout is a hand-installed binary, so it drifts. v0.15.0 sat there from
@@ -106,6 +114,16 @@ warn_if_scout_outdated() {
 # yq query already feeds docker-image-check. Deduplicated because app, api and
 # delmon share one image.
 list_images() {
+  if ! command -v yq > /dev/null; then
+    echo "yq is required to read the image list from docker-compose.yml." >&2
+    return 1
+  fi
+
+  if [[ ! -f docker-compose.yml ]]; then
+    echo "No docker-compose.yml in $PWD: run this from the repo root." >&2
+    return 1
+  fi
+
   yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
 }
 
