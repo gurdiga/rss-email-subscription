@@ -191,7 +191,9 @@ print_results() {
 
 # Keeps the whole scout output alongside the summary: when scout errors out
 # (expired Docker Hub login, a timeout) the summary grep matches nothing, and
-# without the raw text that is indistinguishable from a clean image.
+# the raw text is what says why. A clean image is not that case: scout prints
+# "No vulnerable packages detected" in place of the counts, so that line is
+# matched as a summary too.
 scan_to() {
   local image=$1
   local output_path_prefix=$2
@@ -205,7 +207,7 @@ scan_to() {
     echo "[timeout] scan of $image killed after ${SCAN_TIMEOUT}s" >> "$output_path_prefix.raw"
   fi
 
-  grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' \
+  grep -E 'vulnerabilities found|No vulnerable packages? detected|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' \
     "$output_path_prefix.raw" | tail -5 > "$output_path_prefix.summary" || true
 }
 
