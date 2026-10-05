@@ -124,10 +124,15 @@ list_images() {
     return 1
   fi
 
-  # Without the two flags compose refuses to print anything until every
+  # -f because compose otherwise merges the gitignored
+  # docker-compose.override.yml, and a local override of a service's image
+  # would replace the prod image in this list.
+  #
+  # Without the two --no flags compose refuses to print anything until every
   # required variable from .env has a value, and none of them is part of an
   # image name. Neither flag needs a running daemon.
-  docker compose config --no-interpolate --no-consistency --images | sort -u | tr '\n' ' '
+  docker compose -f docker-compose.yml config --no-interpolate --no-consistency --images |
+    sort -u | tr '\n' ' '
 }
 
 # One at a time, deliberately. This used to run four scans at once and retry

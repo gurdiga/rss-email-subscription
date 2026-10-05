@@ -6,10 +6,11 @@ TIME=gtime -f '%es'
 DOCKER_BUILD_FLAGS ?=
 NOTIFY := $(CURDIR)/bin/notify
 
-# The two flags let compose read docker-compose.yml without the required
-# variables from .env, which matter to none of the targets that only look up
-# image names.
-COMPOSE_CONFIG := docker compose config --no-interpolate --no-consistency
+# -f keeps the gitignored docker-compose.override.yml out: compose merges it
+# by default, and these targets want the image names as committed. The two
+# --no flags let compose read the file without the required variables from
+# .env, which matter to none of the targets that only look up image names.
+COMPOSE_CONFIG := docker compose -f docker-compose.yml config --no-interpolate --no-consistency
 
 RED='\e[0;31m'
 NC='\033[0m' # No Color
