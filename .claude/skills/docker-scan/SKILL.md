@@ -70,12 +70,11 @@ The asset is named `docker-scout_<version>_checksums.txt`, not `checksums.txt`.
 
 ## Scan results
 
-The bundled script handles SSH ControlMaster setup, image discovery from
-`docker-compose.yml` (it needs `yq`, as the Makefile does),
-and running scans in batches of 4 to limit cache contention. Images whose scan
-produced no summary are retried once sequentially (reported as `[retry] <image>`
-on stderr), which clears the scout index-cache lock conflicts that concurrency
-causes:
+The bundled script handles the shared SSH connection, image discovery from
+`docker-compose.yml` (it needs `yq`, as the Makefile does), and running the
+scans one image at a time. It does not run them concurrently: scout's index
+cache is single-writer, and several scans at once can exhaust the memory of the
+1 GB droplet. A full run takes roughly 8 minutes when nothing is cached:
 
 ```!
 ${CLAUDE_SKILL_DIR}/scripts/scan-images.sh || echo "scan-images.sh failed with exit code $?; see its output above."
@@ -277,21 +276,21 @@ associative arrays (`declare -A`), and never use `(( i++ ))` as a statement — 
 returns 1 when `i` is 0 and `set -e` aborts the run. Syntax-check with
 `/bin/bash -n scripts/scan-images.sh`.
 
-**Cache conflict / empty output from background scan**:
+**Cache conflict / empty output from a scan**:
 `failed to index image: failed to initialize cache: cache may be in use by
-another process` means concurrent scans fought over scout's single-writer index
-cache. The script already retries those sequentially; if a retry also fails,
-lower `BATCH_SIZE` in `scripts/scan-images.sh`.
+another process` means two scans ran on prod at the same time: scout's index
+cache is single-writer. The script scans one image at a time, so this points
+at a second scan started alongside it, by another run of the script or by hand.
+Wait for that one to finish and rerun.
 
 **`[timeout] scan of <image> killed after 300s`**:
 Each prod scan runs under `timeout` on the server, 300 seconds by default
 (`SCAN_TIMEOUT=600 scripts/scan-images.sh` to change it). The limit exists
 because on 2026-10-04 three concurrent scans ran for 13 minutes on the 1 GB
 droplet, filled swap, and took the site down until a reboot. A scan that hits
-the limit is retried once on its own; if it times out again, check `free -m`
-on prod before raising the limit, and do not start a second scan while one is
-still running there. Stopping the local script does not stop scans already
-running on prod.
+the limit is not retried; check `free -m` on prod before rerunning or raising
+the limit, and do not start a second scan while one is still running there.
+Stopping the local script does not stop a scan already running on prod.
 
 **`grep "vulnerabilities │"` produces no output**:
 Scout's output format does not use `│` in the summary line. Use instead:

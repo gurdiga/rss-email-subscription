@@ -1,7 +1,6 @@
 #!/bin/bash
 # Scans all production Docker images for HIGH/CRITICAL vulnerabilities with
-# docker scout. Runs the scans in batches of BATCH_SIZE, retries any that
-# produced no summary, and prints a per-image block.
+# docker scout, one image at a time, and prints a per-image block.
 #
 # Run it from the repo root: it reads docker-compose.yml for the image list,
 # which needs yq.
@@ -20,7 +19,6 @@ set -euo pipefail
 
 SSH_SOCKET=~/.ssh/control-feedsubscription
 SSH="ssh -S $SSH_SOCKET feedsubscription.com"
-BATCH_SIZE=4
 
 # Seconds one scan may run on prod before it is killed. On 2026-10-04 three
 # concurrent scans sat for 13 minutes on a 1 GB box, filled swap, and took the
@@ -60,17 +58,16 @@ main() {
   # shellcheck disable=SC2064
   trap "rm -rf '$outdir'" EXIT
 
-  scan_in_batches "$outdir" "${image_list[@]}"
-  retry_failed "$outdir" "${image_list[@]}"
+  scan_all "$outdir" "${image_list[@]}"
   print_results "$outdir" "${image_list[@]}"
 }
 
 # The shared connection is ssh's ControlMaster: every $SSH command rides on it
-# instead of logging in again. Called before every batch and every retry, not
-# only at startup: when it is gone, ssh -S does not fail, it quietly opens a
-# new connection per command. Prod's ufw refuses a source that opens 6
-# connections to port 22 in 30 seconds, so a batch without it can lock this
-# machine out, as happened on 2026-10-03.
+# instead of logging in again. Called before every scan, not only at startup:
+# when it is gone, ssh -S does not fail, it quietly opens a new connection per
+# command. Prod's ufw refuses a source that opens 6 connections to port 22 in
+# 30 seconds, and scans whose results scout has cached return within seconds,
+# so a run without it can lock this machine out, as happened on 2026-10-03.
 ensure_shared_ssh_connection() {
   [[ $TARGET == prod ]] || return 0
 
@@ -128,7 +125,11 @@ list_images() {
   yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
 }
 
-scan_in_batches() {
+# One at a time, deliberately. This used to run four scans at once and retry
+# the ones that failed: scout's image-index cache is single-writer, so
+# concurrent scans lose the lock and abort, and four of them together can use
+# more memory than the 1 GB droplet has. Concurrent runs were no faster either.
+scan_all() {
   local outdir=$1
   shift
 
@@ -136,40 +137,9 @@ scan_in_batches() {
   local i=0
 
   for image in "$@"; do
-    if (( i % BATCH_SIZE == 0 )); then
-      ensure_shared_ssh_connection
-    fi
-
-    scan_to "$image" "$outdir/$i" &
-    i=$((i + 1))
-
-    if (( i % BATCH_SIZE == 0 )); then
-      wait || true
-    fi
-  done
-
-  # The last batch can be shorter than BATCH_SIZE.
-  wait || true
-}
-
-# Scout's image-index cache is single-writer, so concurrent scans can lose the
-# lock and abort. Give the losers one sequential retry before calling them
-# failed. A scan that timed out has no summary either, so it is retried too,
-# for up to another SCAN_TIMEOUT.
-retry_failed() {
-  local outdir=$1
-  shift
-
-  local image
-  local i=0
-
-  for image in "$@"; do
-    if [[ ! -s "$outdir/$i.summary" ]]; then
-      echo "[retry] $image" >&2
-      ensure_shared_ssh_connection
-      scan_to "$image" "$outdir/$i"
-    fi
-
+    echo "[scan] $image" >&2
+    ensure_shared_ssh_connection
+    scan_to "$image" "$outdir/$i"
     i=$((i + 1))
   done
 }
@@ -208,7 +178,7 @@ print_results() {
 }
 
 # Keeps the whole scout output alongside the summary: when scout errors out
-# (expired Docker Hub login, cache lock) the summary grep matches nothing, and
+# (expired Docker Hub login, a timeout) the summary grep matches nothing, and
 # without the raw text that is indistinguishable from a clean image.
 scan_to() {
   local image=$1
