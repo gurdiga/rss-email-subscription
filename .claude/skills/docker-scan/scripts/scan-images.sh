@@ -178,14 +178,13 @@ print_results() {
     i=$((i + 1))
   done
 
-  # Every image failing points at the environment, not at the images. Report it on
-  # stdout and still exit 0: this runs as a SKILL.md `!` block, and a nonzero exit
-  # makes the harness abort the skill load, so the diagnosis below would never
-  # reach the reader.
+  # Every image failing points at the environment, not at the images.
   if (( failed == $# )); then
     echo "ALL ${failed} SCANS FAILED — do not report these as clean images."
     echo "If the raw output says 'please login', run 'docker login' on the $TARGET host:"
     echo "docker scout queries Docker Hub and needs credentials there."
+
+    return 1
   fi
 }
 

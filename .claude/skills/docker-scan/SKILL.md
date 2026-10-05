@@ -78,8 +78,12 @@ on stderr), which clears the scout index-cache lock conflicts that concurrency
 causes:
 
 ```!
-${CLAUDE_SKILL_DIR}/scripts/scan-images.sh
+${CLAUDE_SKILL_DIR}/scripts/scan-images.sh || echo "scan-images.sh failed with exit code $?; see its output above."
 ```
+
+The `|| echo` is there because a nonzero exit from this block aborts the skill
+load, and then nothing the script printed about the failure reaches the reader.
+The script itself exits nonzero when it cannot run or when every scan fails.
 
 ## Workflow
 
