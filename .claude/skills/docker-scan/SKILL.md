@@ -74,8 +74,11 @@ The bundled script handles the shared SSH connection, image discovery from
 `docker-compose.yml` (through `docker compose config`, so it needs the docker
 CLI locally even for a prod scan, but no `.env`), and running the
 scans one image at a time. It does not run them concurrently: scout's index
-cache is single-writer, and several scans at once can exhaust the memory of the
-1 GB droplet. A full run takes roughly 8 minutes when nothing is cached:
+cache is single-writer, and a single scan with an empty scout cache peaks at
+about 640 MB on the 957 MB droplet, so even two at once do not fit. For the
+same reason, do not scan while an image build or another heavy job is running
+on prod. A full run takes roughly 10 minutes when nothing is cached, and well
+under a minute when scout has the results cached from an earlier run:
 
 ```!
 ${CLAUDE_SKILL_DIR}/scripts/scan-images.sh || echo "scan-images.sh failed with exit code $?; see its output above."

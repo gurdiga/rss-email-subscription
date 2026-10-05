@@ -22,7 +22,9 @@ SSH="ssh -S $SSH_SOCKET feedsubscription.com"
 
 # Seconds one scan may run on prod before it is killed. On 2026-10-04 three
 # concurrent scans sat for 13 minutes on a 1 GB box, filled swap, and took the
-# site down until a reboot; nothing was going to stop them.
+# site down until a reboot; nothing was going to stop them. The slowest scan
+# with an empty scout cache took about 145 seconds on 2026-10-05, so 300 is
+# roughly twice what a healthy scan needs.
 SCAN_TIMEOUT=${SCAN_TIMEOUT:-300}
 
 main() {
@@ -130,8 +132,10 @@ list_images() {
 
 # One at a time, deliberately. This used to run four scans at once and retry
 # the ones that failed: scout's image-index cache is single-writer, so
-# concurrent scans lose the lock and abort, and four of them together can use
-# more memory than the 1 GB droplet has. Concurrent runs were no faster either.
+# concurrent scans lose the lock and abort. Memory rules it out as well: one
+# scan with an empty scout cache peaks at about 640 MB on a droplet with 957 MB,
+# leaving under 50 MB available, so even two at once do not fit. Concurrent
+# runs were no faster either.
 scan_all() {
   local outdir=$1
   shift
