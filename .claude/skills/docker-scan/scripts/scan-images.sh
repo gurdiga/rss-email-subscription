@@ -28,33 +28,36 @@ SCAN_TIMEOUT=${SCAN_TIMEOUT:-300}
 # Defined up front because bash resolves function names at call time, so these
 # cannot follow the loops that use them.
 
-# $1 = image, $2 = output path prefix. Keeps the whole scout output alongside
-# the summary: when scout errors out (expired Docker Hub login, cache lock) the
-# summary grep matches nothing, and without the raw text that is
-# indistinguishable from a clean image.
+# Keeps the whole scout output alongside the summary: when scout errors out
+# (expired Docker Hub login, cache lock) the summary grep matches nothing, and
+# without the raw text that is indistinguishable from a clean image.
 scan_to() {
+  local image=$1
+  local output_path_prefix=$2
   local status=0
 
-  scan_image "$1" > "$2.raw" 2>&1 || status=$?
+  scan_image "$image" > "$output_path_prefix.raw" 2>&1 || status=$?
 
   # 124 is timeout's own exit code; 137 means it had to follow up with KILL.
   if (( status == 124 || status == 137 )); then
-    echo "[timeout] scan of $1 killed after ${SCAN_TIMEOUT}s" >> "$2.raw"
+    echo "[timeout] scan of $image killed after ${SCAN_TIMEOUT}s" >> "$output_path_prefix.raw"
   fi
 
   grep -E 'vulnerabilities found|^  CRITICAL|^  HIGH|^  MEDIUM|^  LOW' \
-    "$2.raw" | tail -5 > "$2.summary" || true
+    "$output_path_prefix.raw" | tail -5 > "$output_path_prefix.summary" || true
 }
 
 scan_image() {
+  local image=$1
+
   if [[ $TARGET == local ]]; then
-    docker scout cves "$1:latest"
+    docker scout cves "$image:latest"
   else
     # The timeout runs on prod, not around the local ssh: cutting the ssh
     # session leaves the remote scan running. timeout signals its whole process
     # group, which is what reaches the docker-scout plugin, a child of the
     # docker CLI.
-    $SSH "timeout --kill-after=10 $SCAN_TIMEOUT docker scout cves $1:latest"
+    $SSH "timeout --kill-after=10 $SCAN_TIMEOUT docker scout cves $image:latest"
   fi
 }
 
