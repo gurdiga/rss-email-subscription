@@ -36,20 +36,7 @@ main() {
   fi
 
   ensure_master
-
-  # Prod's scout is a hand-installed binary, so it drifts. v0.15.0 sat there from
-  # 2023 until 2026 and failed against Docker 29 with an unreadable blob error
-  # rather than anything naming the real cause. Warn on a major version behind.
-  if [[ $TARGET == prod ]]; then
-    local prod_scout
-
-    prod_scout=$($SSH "docker scout version 2>/dev/null" | sed -n 's/^version: v\([0-9]*\).*/\1/p')
-
-    if [[ -n $prod_scout ]] && (( prod_scout < 1 )); then
-      echo "[warn] prod docker scout is v0.x — too old for Docker 29+. Reinstall from" >&2
-      echo "       https://github.com/docker/scout-cli/releases into ~/.docker/cli-plugins/" >&2
-    fi
-  fi
+  warn_if_scout_outdated
 
   local images
   local -a image_list
@@ -72,69 +59,9 @@ main() {
   # shellcheck disable=SC2064
   trap "rm -rf '$outdir'" EXIT
 
-  # Run scans in batches of BATCH_SIZE
-  local image
-  local i=0
-
-  for image in "${image_list[@]}"; do
-    if (( i % BATCH_SIZE == 0 )); then
-      ensure_master
-    fi
-
-    scan_to "$image" "$outdir/$i" &
-    i=$((i + 1))
-
-    if (( i % BATCH_SIZE == 0 )); then
-      wait || true
-    fi
-  done
-
-  # Wait for remaining
-  wait || true
-
-  # Scout's image-index cache is single-writer, so concurrent scans can lose the
-  # lock and abort. Give the losers one sequential retry before calling them failed.
-  i=0
-
-  for image in "${image_list[@]}"; do
-    if [[ ! -s "$outdir/$i.summary" ]]; then
-      echo "[retry] $image" >&2
-      ensure_master
-      scan_to "$image" "$outdir/$i"
-    fi
-
-    i=$((i + 1))
-  done
-
-  # Output results
-  local failed=0
-
-  i=0
-
-  for image in "${image_list[@]}"; do
-    echo "### $image"
-
-    if [[ -s "$outdir/$i.summary" ]]; then
-      cat "$outdir/$i.summary"
-    else
-      failed=$((failed + 1))
-      echo "(no summary — scan failed; last lines of raw output:)"
-      tail -3 "$outdir/$i.raw" | sed 's/^/    /'
-    fi
-
-    echo ""
-    i=$((i + 1))
-  done
-
-  # Every image failing points at the environment, not at the images. Report it on
-  # stdout and still exit 0: this runs as a SKILL.md `!` block, and a nonzero exit
-  # makes the harness abort the skill load, so the diagnosis below would never
-  # reach the reader.
-  if (( failed == ${#image_list[@]} )); then
-    echo "ALL ${failed} SCANS FAILED — do not report these as clean images."
-    echo "If the raw output says 'please login', run 'docker login' on the $TARGET host:"
-    echo "docker scout queries Docker Hub and needs credentials there."
-  fi
+  scan_in_batches "$outdir" "${image_list[@]}"
+  retry_failed "$outdir" "${image_list[@]}"
+  print_results "$outdir" "${image_list[@]}"
 }
 
 # Called before every batch and every retry, not only at startup: when the
@@ -157,12 +84,108 @@ ensure_master() {
   ssh -M -S "$SSH_SOCKET" -o ControlPersist=10m -fN feedsubscription.com
 }
 
+# Prod's scout is a hand-installed binary, so it drifts. v0.15.0 sat there from
+# 2023 until 2026 and failed against Docker 29 with an unreadable blob error
+# rather than anything naming the real cause. Warn on a major version behind.
+warn_if_scout_outdated() {
+  [[ $TARGET == prod ]] || return 0
+
+  local prod_scout
+
+  prod_scout=$($SSH "docker scout version 2>/dev/null" | sed -n 's/^version: v\([0-9]*\).*/\1/p')
+
+  if [[ -n $prod_scout ]] && (( prod_scout < 1 )); then
+    echo "[warn] prod docker scout is v0.x — too old for Docker 29+. Reinstall from" >&2
+    echo "       https://github.com/docker/scout-cli/releases into ~/.docker/cli-plugins/" >&2
+  fi
+}
+
 # Prints the image names on one line. The compose file rather than the
 # Makefile's all-images: what runs on prod is what needs scanning, and the same
 # yq query already feeds docker-image-check. Deduplicated because app, api and
 # delmon share one image.
 list_images() {
   yq -r '.services[].image' docker-compose.yml | sort -u | tr '\n' ' '
+}
+
+# Run scans in batches of BATCH_SIZE
+scan_in_batches() {
+  local outdir=$1
+  shift
+
+  local image
+  local i=0
+
+  for image in "$@"; do
+    if (( i % BATCH_SIZE == 0 )); then
+      ensure_master
+    fi
+
+    scan_to "$image" "$outdir/$i" &
+    i=$((i + 1))
+
+    if (( i % BATCH_SIZE == 0 )); then
+      wait || true
+    fi
+  done
+
+  # Wait for remaining
+  wait || true
+}
+
+# Scout's image-index cache is single-writer, so concurrent scans can lose the
+# lock and abort. Give the losers one sequential retry before calling them failed.
+retry_failed() {
+  local outdir=$1
+  shift
+
+  local image
+  local i=0
+
+  for image in "$@"; do
+    if [[ ! -s "$outdir/$i.summary" ]]; then
+      echo "[retry] $image" >&2
+      ensure_master
+      scan_to "$image" "$outdir/$i"
+    fi
+
+    i=$((i + 1))
+  done
+}
+
+# Output results
+print_results() {
+  local outdir=$1
+  shift
+
+  local image
+  local i=0
+  local failed=0
+
+  for image in "$@"; do
+    echo "### $image"
+
+    if [[ -s "$outdir/$i.summary" ]]; then
+      cat "$outdir/$i.summary"
+    else
+      failed=$((failed + 1))
+      echo "(no summary — scan failed; last lines of raw output:)"
+      tail -3 "$outdir/$i.raw" | sed 's/^/    /'
+    fi
+
+    echo ""
+    i=$((i + 1))
+  done
+
+  # Every image failing points at the environment, not at the images. Report it on
+  # stdout and still exit 0: this runs as a SKILL.md `!` block, and a nonzero exit
+  # makes the harness abort the skill load, so the diagnosis below would never
+  # reach the reader.
+  if (( failed == $# )); then
+    echo "ALL ${failed} SCANS FAILED — do not report these as clean images."
+    echo "If the raw output says 'please login', run 'docker login' on the $TARGET host:"
+    echo "docker scout queries Docker Hub and needs credentials there."
+  fi
 }
 
 # Keeps the whole scout output alongside the summary: when scout errors out
