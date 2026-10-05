@@ -6,6 +6,11 @@ TIME=gtime -f '%es'
 DOCKER_BUILD_FLAGS ?=
 NOTIFY := $(CURDIR)/bin/notify
 
+# The two flags let compose read docker-compose.yml without the required
+# variables from .env, which matter to none of the targets that only look up
+# image names.
+COMPOSE_CONFIG := docker compose config --no-interpolate --no-consistency
+
 RED='\e[0;31m'
 NC='\033[0m' # No Color
 ERROR="${RED}ERROR${NC}"
@@ -97,7 +102,7 @@ lint-quiet:
 # docker cp website:/etc/nginx/nginx.conf website/nginx/ # plus, comment out irrelevant pieces
 lint-nginx-config:
 	@if git diff --cached --name-only | grep -q '^website/nginx/'; then \
-		nginx_image=`yq -r .services.website.image docker-compose.yml`; \
+		nginx_image=`$(COMPOSE_CONFIG) --format json | jq -r .services.website.image`; \
 		docker run --rm \
 			-v $$PWD/website/nginx/nginx.conf:/etc/nginx/nginx.conf:ro \
 			-v $$PWD/website/nginx/conf.d/website.conf:/etc/nginx/conf.d/website.conf:ro \
@@ -1209,7 +1214,7 @@ logins-in-last-month:
 
 # run weekly in dev env
 docker-image-check:
-	@yq -r '.services[].image' docker-compose.yml |
+	@$(COMPOSE_CONFIG) --images |
 	sort -u |
 	if [ -v ONLY ]; then
 		grep -E "$${ONLY}";
