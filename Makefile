@@ -133,7 +133,7 @@ lint-dockerfile:
 # files git leaves under .git during a rebase and a vendored
 # playwright-core under .tmp — neither ours to lint.
 lint-shell-scripts:
-	@git ls-files -z '*.sh' 'bin/*' | xargs -0 shellcheck
+	@git ls-files -z '*.sh' 'bin/*' ':!bin/delivery-report' | xargs -0 shellcheck # delivery-report is awk
 
 lsh: lint-shell-scripts
 
@@ -735,12 +735,7 @@ delivery-report:
 
 	export -f send_report
 
-	( \
-		grep -P "^`date +%F`" .tmp/logs/feedsubscription/smtp-out.log \
-		| ( tee /dev/stderr 2> >(grep -P "status=(deferred|bounced)" > /dev/stderr) ) \
-		| grep -Po '(?<= status=)\S+' \
-		| sort | uniq -c \
-	) 2>&1 |
+	bin/delivery-report day=`date +%F` .tmp/logs/feedsubscription/smtp-out.log 2>&1 |
 	ifne -n echo '(empty)' |
 	send_report
 

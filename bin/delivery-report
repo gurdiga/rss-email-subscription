@@ -1,0 +1,102 @@
+#!/usr/bin/env -S gawk -f
+
+# Reads smtp-out log lines and prints what still needs a look: every
+# bounce, and the deferrals of messages that had been neither delivered nor
+# bounced by the end of the input. See `make delivery-report`.
+#
+#   bin/delivery-report day=2026-10-04 .tmp/logs/feedsubscription/smtp-out.log
+#
+# The day operand narrows the input to the lines of that day. Without it
+# every line counts, which is what a caller piping in its own selection
+# wants.
+#
+# A deferral that a later retry delivered is dropped. Those are nearly all
+# Microsoft throttling the morning send, 50 to 60 a day, and they buried
+# the one subscriber who was really stuck.
+#
+# A message is a queue ID plus a recipient, not a queue ID alone, because
+# postfix reports each recipient of a multi-recipient message separately.
+#
+# The counts at the end cover every line, dropped ones included, so the
+# deferral volume stays visible as a trend.
+#
+# gawk rather than POSIX awk, for mktime and strftime: without them the
+# queue time took forty lines of calendar arithmetic. On macOS that means
+# `brew install gawk`; env -S is there because Homebrew and Ubuntu put it
+# in different places.
+
+day != "" && index($0, day) != 1 { next }
+
+{ status = "" }
+
+match($0, / status=([^ ]+)/, found) {
+  status = found[1]
+  count[status]++
+}
+
+match($0, /postfix\/[a-z]+\[[0-9]+\]: ([0-9A-Za-z]+: to=<[^>]+>)/, found) {
+  message = found[1]
+
+  if (status == "sent") {
+    resolved[message] = 1
+  } else if (status == "bounced") {
+    resolved[message] = 1
+    shown[NR] = $0
+  } else if (status == "deferred") {
+    deferrals[message]++
+    last_deferral[message] = $0
+    last_deferral_at[message] = NR
+  }
+}
+
+END {
+  for (message in deferrals) {
+    if (message in resolved) {
+      continue
+    }
+
+    at = last_deferral_at[message]
+    shown[at] = last_deferral[message]
+
+    # A lone deferral is its own summary.
+    if (deferrals[message] > 1) {
+      summary[at] = sprintf("  %d retries today, queued since %s", deferrals[message], queued_at(shown[at]))
+    }
+  }
+
+  PROCINFO["sorted_in"] = "@ind_num_asc"
+
+  for (at in shown) {
+    print shown[at]
+
+    if (at in summary) {
+      print summary[at]
+    }
+  }
+
+  PROCINFO["sorted_in"] = "@ind_str_asc"
+
+  # Same shape as the `sort | uniq -c` this replaces.
+  for (status in count) {
+    printf "%7d %s\n", count[status], status
+  }
+}
+
+# The input is normally one day, so the first deferral in it says nothing
+# about a message that has been retrying since last week. The delay postfix
+# reports is measured from when the message was queued, which gives the
+# real start.
+function queued_at(deferral,    found, timestamp, offset, queued) {
+  # The trailing digit keeps the delay pattern off the delays= field.
+  match(deferral, /^([^ ]{19})([^ ]*) .* delay=([0-9.]+)/, found)
+
+  timestamp = gensub(/[-T:]/, " ", "g", found[1])
+  offset = found[2]
+
+  # Both calls are told the time is UTC whatever its offset says, so the
+  # arithmetic happens on the wall-clock time and the offset still fits
+  # the result.
+  queued = mktime(timestamp, 1) - int(found[3] + 0.5)
+
+  return strftime("%Y-%m-%dT%H:%M:%S", queued, 1) offset
+}
