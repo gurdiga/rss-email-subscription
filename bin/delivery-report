@@ -43,6 +43,14 @@ match($0, /postfix\/[a-z]+\[[0-9]+\]: ([0-9A-Za-z]+: to=<[^>]+>)/, found) {
     resolved[message] = 1
     shown[NR] = $0
   } else if (status == "deferred") {
+
+    # Postfix reuses a queue ID once its message has left the queue, so a
+    # deferral after a delivery or a bounce belongs to a new message.
+    if (message in resolved) {
+      delete resolved[message]
+      deferrals[message] = 0
+    }
+
     deferrals[message]++
     last_deferral[message] = $0
     last_deferral_at[message] = NR

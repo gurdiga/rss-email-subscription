@@ -65,6 +65,24 @@ describe('bin/delivery-report', () => {
     expect(output).to.deep.equal([stuck, '      1 deferred', '      1 sent']);
   });
 
+  it('treats a deferral after a delivery as a new message reusing the queue ID', () => {
+    const lastDeferral = smtpLine('09:10:00', 'EEEE000006', 'a@example.com', 'deferred', '451 4.7.1 try later', '600');
+
+    const output = report([
+      smtpLine('06:00:00', 'EEEE000006', 'a@example.com', 'deferred', '451 4.7.1 try later'),
+      smtpLine('06:10:00', 'EEEE000006', 'a@example.com', 'sent', '250 2.0.0 OK'),
+      smtpLine('09:00:00', 'EEEE000006', 'a@example.com', 'deferred', '451 4.7.1 try later'),
+      lastDeferral,
+    ]);
+
+    expect(output).to.deep.equal([
+      lastDeferral,
+      '  2 retries today, queued since 2026-10-04T09:00:00+00:00',
+      '      3 deferred',
+      '      1 sent',
+    ]);
+  });
+
   it('prints stuck messages and bounces in log order', () => {
     const firstStuck = smtpLine('07:00:00', 'FFFF000006', 'a@example.com', 'deferred', '451 4.7.1 try later');
     const bounce = smtpLine('08:00:00', 'FFFF000007', 'b@example.com', 'bounced', '550 5.1.1 no such user');
