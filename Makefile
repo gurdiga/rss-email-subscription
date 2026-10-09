@@ -133,7 +133,11 @@ lint-dockerfile:
 # files git leaves under .git during a rebase and a vendored
 # playwright-core under .tmp — neither ours to lint.
 lint-shell-scripts:
-	@git ls-files -z '*.sh' 'bin/*' ':!bin/delivery-report' | xargs -0 shellcheck # delivery-report is awk
+	@git ls-files -z \
+		'*.sh' \
+		'bin/*' \
+		':!bin/delivery-report' `# delivery-report is awk` \
+	|	xargs -0 shellcheck
 
 lsh: lint-shell-scripts
 
