@@ -1,6 +1,6 @@
 import { AccountId } from '../../domain/account';
 import { FeedId } from '../../domain/feed-id';
-import { getFeedRootStorageKey } from '../../domain/feed-storage';
+import { accountHasFeed, getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { makePath } from '../../shared/path-utils';
@@ -16,6 +16,19 @@ export function recordFeedCheckFailure(
   feedId: FeedId,
   storage: AppStorage
 ): Result<FeedCheckFailureState> {
+  // A check that was already in flight when the feed got deleted would
+  // otherwise recreate its directory here, as a lone feedCheckFailureCount.json
+  // that loadFeedsByAccountId then reports as a missing feed forever after.
+  const existsResult = feedExists(accountId, feedId, storage);
+
+  if (isErr(existsResult)) {
+    return existsResult;
+  }
+
+  if (!existsResult) {
+    return { count: 0, alerted: false };
+  }
+
   const previousState = loadState(accountId, feedId, storage);
 
   if (isErr(previousState)) {
@@ -33,6 +46,16 @@ export function recordFeedCheckFailure(
 }
 
 export function markFeedCheckFailureAlerted(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<void> {
+  const existsResult = feedExists(accountId, feedId, storage);
+
+  if (isErr(existsResult)) {
+    return existsResult;
+  }
+
+  if (!existsResult) {
+    return;
+  }
+
   const previousState = loadState(accountId, feedId, storage);
 
   if (isErr(previousState)) {
@@ -51,6 +74,10 @@ export function resetFeedCheckFailures(accountId: AccountId, feedId: FeedId, sto
   const storageKey = getStorageKey(accountId, feedId);
 
   return storage.removeItem(storageKey);
+}
+
+function feedExists(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<boolean> {
+  return accountHasFeed(accountId, feedId, storage);
 }
 
 function loadState(accountId: AccountId, feedId: FeedId, storage: AppStorage): Result<FeedCheckFailureState> {

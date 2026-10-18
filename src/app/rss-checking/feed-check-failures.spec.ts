@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { getFeedRootStorageKey } from '../../domain/feed-storage';
+import { getFeedJsonStorageKey, getFeedRootStorageKey } from '../../domain/feed-storage';
 import { AppStorage } from '../../domain/storage';
 import { makeErr } from '../../shared/lang';
 import { makePath } from '../../shared/path-utils';
@@ -16,11 +16,12 @@ describe('Feed check failures', () => {
   const feedId = makeTestFeedId();
   const accountId = makeTestAccountId();
   const storageKey = makePath(getFeedRootStorageKey(accountId, feedId), 'feedCheckFailureCount.json');
+  const feedJsonStorageKey = getFeedJsonStorageKey(accountId, feedId);
 
   describe(recordFeedCheckFailure.name, () => {
     it('stores a count of 1 and alerted false when no failures were recorded before', () => {
       const storeItem = makeSpy<AppStorage['storeItem']>();
-      const storage = makeTestStorage({ hasItem: () => false, storeItem });
+      const storage = makeTestStorage({ hasItem: hasFeedButNoCountFile, storeItem });
 
       const result = recordFeedCheckFailure(accountId, feedId, storage);
 
@@ -41,9 +42,19 @@ describe('Feed check failures', () => {
       expect(storeItem.calls).to.deep.equal([[storageKey, expectedState]]);
     });
 
+    it('does nothing when the feed was deleted, instead of recreating its directory', () => {
+      const storeItem = makeSpy<AppStorage['storeItem']>();
+      const storage = makeTestStorage({ hasItem: () => false, storeItem });
+
+      const result = recordFeedCheckFailure(accountId, feedId, storage);
+
+      expect(result).to.deep.equal({ count: 0, alerted: false });
+      expect(storeItem.calls).to.be.empty;
+    });
+
     it('reports the error when can’t write file', () => {
       const mockError = 'No write access';
-      const storage = makeTestStorage({ hasItem: () => false, storeItem: () => makeErr(mockError) });
+      const storage = makeTestStorage({ hasItem: hasFeedButNoCountFile, storeItem: () => makeErr(mockError) });
 
       const result = recordFeedCheckFailure(accountId, feedId, storage);
 
@@ -72,6 +83,16 @@ describe('Feed check failures', () => {
 
       const expectedState: FeedCheckFailureState = { count: 10, alerted: true };
       expect(storeItem.calls).to.deep.equal([[storageKey, expectedState]]);
+    });
+
+    it('does nothing when the feed was deleted, instead of recreating its directory', () => {
+      const storeItem = makeSpy<AppStorage['storeItem']>();
+      const storage = makeTestStorage({ hasItem: () => false, storeItem });
+
+      const result = markFeedCheckFailureAlerted(accountId, feedId, storage);
+
+      expect(result).to.be.undefined;
+      expect(storeItem.calls).to.be.empty;
     });
 
     it('reports the error when can’t read the previously recorded state', () => {
@@ -103,4 +124,12 @@ describe('Feed check failures', () => {
       expect(result).to.deep.equal(makeErr(mockError));
     });
   });
+
+  // The feed-exists check and the failure-count lookup both go through
+  // storage.hasItem, keyed on different paths, so tests that mean "the
+  // feed exists, but has no previous failure count" need to tell the two
+  // calls apart instead of answering every hasItem call the same way.
+  function hasFeedButNoCountFile(key: string): boolean {
+    return key === feedJsonStorageKey;
+  }
 });
