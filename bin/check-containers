@@ -3,10 +3,11 @@
 # cron */5 * * * *
 # cron @reboot (CHECK_CONTAINERS_FORCE=1, after `make start`)
 #
-# Reports containers that should be running and are not. Exists because
-# every other alerting path on prod is a log tailer, and a container that
-# fails to start writes no lines — its silence is indistinguishable from
-# a quiet night. See CONTAINER_DOWN_DETECTION.md.
+# Reports containers that should be running and are not, or that run but
+# fail their healthcheck. Exists because every other alerting path on
+# prod is a log tailer, and a container that fails to start writes no
+# lines — its silence is indistinguishable from a quiet night. See
+# CONTAINER_DOWN_DETECTION.md.
 #
 # The @reboot run forces a report of the first sample: a boot mail is a
 # confirmation, not an anomaly report, so it must arrive whether or not
@@ -85,6 +86,7 @@ main() {
 
   if [ -n "$status" ]; then
     subject="containers NOT RUNNING"
+    grep -qv ' (unhealthy)$' <<<"$status" || subject="containers UNHEALTHY"
     [ -n "$force" ] && subject="boot check: $subject"
 
     # In a substitution rather than in the pipeline below, because this
@@ -183,7 +185,15 @@ current_status() {
     return
   fi
 
-  printf '%s\n' "$status"
+  # Running is not working: a container whose healthcheck fails stays up,
+  # and counts as running above. Only "unhealthy" is reported, because
+  # "starting" is what every deploy looks like for its first seconds.
+  local unhealthy
+  if ! unhealthy=$(run "$docker" compose --project-name "$project" ps --format '{{.Service}} {{.Health}}' 2>/dev/null | awk '$2 == "unhealthy" { print $1 " (unhealthy)" }'); then
+    unhealthy="cannot list container health"
+  fi
+
+  printf '%s\n' "$status" "$unhealthy" | grep -v '^$'
 }
 
 # Atomic, so an interrupted run cannot leave a half-written state file

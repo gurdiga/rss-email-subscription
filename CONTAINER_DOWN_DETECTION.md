@@ -98,7 +98,7 @@ Prod was fully down from 19:47:28 to 19:49:19 UTC — 1m51s — until the contai
 */5 * * * * bin/check-containers
 ```
 
-The whole of it is `comm -23` between `docker compose config --services` and `docker compose ps --services --status running`, both sorted, project pinned to `res`. It runs on the host rather than in a container, because a checker that shares fate with the stack it checks is the ssmtp mistake again — which is what [bin/notify](bin/notify) was written to undo, and why notify is the sink.
+The whole of it is `comm -23` between `docker compose config --services` and `docker compose ps --services --status running`, both sorted, project pinned to `res`, plus the running services whose `{{.Health}}` is `unhealthy` (added 2026-10-21: a resolver answering SERVFAIL for everything would stay up, with every other container up behind it). `starting` is not reported, since every deploy passes through it. It runs on the host rather than in a container, because a checker that shares fate with the stack it checks is the ssmtp mistake again — which is what [bin/notify](bin/notify) was written to undo, and why notify is the sink.
 
 It mails only when that answer *changes*, which is what makes the recovery mail fall out of the same mechanism that suppresses repeats. Bad news waits for one confirming sample, so a `docker restart` landing between two polls does not page. That sample is keyed on the healthy-or-not verdict rather than on the missing set: a set that keeps changing — one container flapping while another stays down — would never settle, and the standing failure would never be reported at all.
 
@@ -113,7 +113,7 @@ The rest of the script is about not lying in the other direction, since a monito
 - A hand-run does not record delivery at all, since notify prints instead of mailing when stdout is a tty. Otherwise a manual check would swallow the alert the next cron run owed us.
 - Every `docker` call is bounded by `timeout --kill-after`, so a wedged API cannot leave one run still hanging when the next starts.
 
-Not covered: `Up (unhealthy)` still counts as running, restart loops are invisible between samples, and a `docker compose run` one-off could mask a dead service of the same name.
+Not covered: a container is only as visible as its healthcheck is honest (resolver’s is `pidof dnsmasq`, which a running but useless dnsmasq passes), restart loops are invisible between samples, and a `docker compose run` one-off could mask a dead service of the same name.
 
 ### What it does not fix
 
