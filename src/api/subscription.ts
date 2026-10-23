@@ -15,6 +15,8 @@ import { AppStorage } from '../domain/storage';
 import { AppRequestHandler } from './app-request-handler';
 import { si } from '../shared/string-utils';
 import { AccountId, isAccountNotFound } from '../domain/account';
+import { loadAccount } from '../domain/account-storage';
+import { demoAccountEmail } from '../domain/demo-account';
 import { sendEmail } from '../app/email-sending/email-delivery';
 
 export const subscription: AppRequestHandler = async function subscription(
@@ -146,6 +148,21 @@ function processInput(input: Input, storage: AppStorage): ProcessedInput | Input
   if (isErr(feed)) {
     logError(si`Failed to ${loadFeed.name}`, { reason: feed.reason });
     return makeAppError('Failed to read feed settings');
+  }
+
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account) || isAccountNotFound(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { feedId: feedId.value });
+    return makeAppError('Failed to read feed settings');
+  }
+
+  // Anyone can sign into the demo and create a feed, so its confirmation
+  // emails would go to any address, from a sender name the stranger wrote
+  // and with replies going to them.
+  if (account.email.value === demoAccountEmail) {
+    logWarning('Refused subscription to a demo feed', { feedId: feedId.value });
+    return makeInputError('Demo feeds don’t accept subscriptions');
   }
 
   return {

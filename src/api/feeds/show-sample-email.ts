@@ -84,9 +84,26 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
     return makeAppError('Failed to get latest blog post');
   }
 
+  // The demo password is public and a demo feed's replyTo is whatever its
+  // creator typed, so a demo session gets the same fixed preview as an
+  // anonymous visitor: nothing it wrote may reach that inbox.
+  if (isDemoSession(reqSession)) {
+    const demoRecipient = makeRecipientForSampleEmail(feed.replyTo);
+    const { result } = await sendFixedSampleEmail(demoRecipient, env);
+
+    if (isErr(result)) {
+      logError(si`Failed to ${sendFixedSampleEmail.name}: ${result.reason}`);
+      return makeAppError('Failed to send the sample email');
+    }
+
+    return makeSuccess(
+      si`Please check ${feed.replyTo.value}.` + ' We’ve sent you a sample of the email your subscribers will get.'
+    );
+  }
+
   const feedEmailAddress = makeEmailAddressFromFeedId(feedId, env.DOMAIN_NAME);
   const sender = makeFullEmailAddress(feed.displayName, feedEmailAddress);
-  const recipient = makeRecipientForSampleEmail(isDemoSession(reqSession) ? feed.replyTo : account.email);
+  const recipient = makeRecipientForSampleEmail(account.email);
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, recipient, feed.displayName, env.DOMAIN_NAME);
 
   const result = await sendSampleEmail(
@@ -180,26 +197,31 @@ export const showSampleEmailPublic: AppRequestHandler = async function showSampl
   // address it is given, so feed content here would let anyone send their
   // own HTML from our domain.
   const recipient = makeRecipientForSampleEmail(recipientEmail);
-  const feedEmailAddress = makeEmailAddressFromFeedId(makeSampleFeedId(), env.DOMAIN_NAME);
-  const sender = makeFullEmailAddress(publicSampleSenderName, feedEmailAddress);
-  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, publicSampleSenderName, env.DOMAIN_NAME);
-  const placeholderPost = makePublicSamplePost(env.DOMAIN_NAME);
-
-  const result = await sendSampleEmail(env, recipient, sender, placeholderPost, unsubscribeUrl, makeItemTitle());
+  const { result, sender, subject } = await sendFixedSampleEmail(recipient, env);
 
   if (isErr(result)) {
-    logError(si`Failed to ${sendSampleEmail.name}: ${result.reason}`);
+    logError(si`Failed to ${sendFixedSampleEmail.name}: ${result.reason}`);
     return makeAppError('Failed to send the sample email');
   }
 
   const logData = {};
   const responseData: PublicShowSampleEmailResponse = {
-    emailSubject: placeholderPost.title,
+    emailSubject: subject,
     sender: si`${sender.displayName} <${sender.emailAddress.value}>`,
   };
 
   return makeSuccess('Email sent', logData, responseData);
 };
+
+async function sendFixedSampleEmail(recipient: HashedEmail, env: AppEnv) {
+  const feedEmailAddress = makeEmailAddressFromFeedId(makeSampleFeedId(), env.DOMAIN_NAME);
+  const sender = makeFullEmailAddress(publicSampleSenderName, feedEmailAddress);
+  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, publicSampleSenderName, env.DOMAIN_NAME);
+  const placeholderPost = makePublicSamplePost(env.DOMAIN_NAME);
+  const result = await sendSampleEmail(env, recipient, sender, placeholderPost, unsubscribeUrl, makeItemTitle());
+
+  return { result, sender, subject: placeholderPost.title };
+}
 
 const publicSampleSenderName = 'FeedSubscription preview';
 

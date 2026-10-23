@@ -12,7 +12,7 @@ import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } f
 import { sessionCookieName } from './app-cookie';
 import { clearSessionFieldsIfPasswordChanged } from './app-request-handler';
 import { hashingSalt, makeMockRegenerateSession, makeMockSessionMethods, makeTestApp } from './test-utils';
-import { confirmAccountEmailChange, requestAccountPasswordChange } from './account';
+import { confirmAccountEmailChange, requestAccountEmailChange, requestAccountPasswordChange } from './account';
 import { initSession } from './session';
 import { App } from './init-app';
 
@@ -226,6 +226,28 @@ describe(confirmAccountEmailChange.name, () => {
 
     expect(sessionCookie, JSON.stringify(cookies)).to.exist;
     expect(sessionCookie.options.maxAge).to.equal(0);
+  });
+});
+
+describe(requestAccountEmailChange.name, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
+  it('refuses a demo session before mailing the new address', async () => {
+    const app = makeTestApp();
+    const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
+    storeAccount(app.storage, demoAccountId, makeTestAccount({ email: demoAccountEmail }));
+
+    const reqSession = makeReqSession(demoAccountId.value, demoAccountEmail);
+    const response = await requestAccountEmailChange(
+      'req',
+      { newEmail: 'victim@example.com' },
+      {},
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
+    );
+
+    expect(response).to.include({ kind: 'InputError', field: 'newEmail' }, JSON.stringify(response));
   });
 });
 
