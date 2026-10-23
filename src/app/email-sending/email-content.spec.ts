@@ -57,6 +57,16 @@ describe(makeEmailContent.name, () => {
     expect(emailMessage.htmlBody).to.contain(unsubscribeUrl, 'the unsubscribe link');
     expect(emailMessage.htmlBody).to.contain(from.emailAddress.value, 'includes the list’s emai address');
   });
+
+  it('escapes the post title it puts in the body', () => {
+    const customSubject: FeedEmailSubjectSpec = { kind: 'CustomSubject', text: 'New post' };
+    const titledItem: RssItem = { ...item, title: 'Why <repositories> is not inherited & how to fix it' };
+    const unsubscribeUrl = new URL('https://example.com');
+
+    const emailMessage = makeEmailContent(titledItem, unsubscribeUrl, from.emailAddress, emailBodySpec, customSubject);
+
+    expect(emailMessage.htmlBody).to.contain('<h1>Why &lt;repositories&gt; is not inherited &amp; how to fix it</h1>');
+  });
 });
 
 describe(preprocessContent.name, () => {
