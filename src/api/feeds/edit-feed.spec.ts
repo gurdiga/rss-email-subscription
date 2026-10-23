@@ -22,6 +22,7 @@ describe('diffFeed', () => {
       status: FeedStatus.AwaitingReview,
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: false,
     };
 
     const updatedFeed = structuredClone(feed, { json: true });

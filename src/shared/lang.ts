@@ -323,4 +323,20 @@ export function makeNonEmptyString(value: unknown, field?: string): Result<strin
   return string;
 }
 
+export function makeBoolean(value: unknown, field?: string): Result<boolean> {
+  if (value === 'true') {
+    return true;
+  }
+
+  if (value === 'false') {
+    return false;
+  }
+
+  if (typeof value !== 'boolean') {
+    return makeErr('Value is not a boolean', field);
+  }
+
+  return value;
+}
+
 export type PickPartial<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>> & Partial<Pick<T, K>>;

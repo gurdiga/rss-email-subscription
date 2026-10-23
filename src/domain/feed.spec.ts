@@ -23,6 +23,7 @@ import {
   makeItemTitleString,
   makeOptionalFeedEmailBodySpec,
   makeOptionalFeedEmailSubjectSpec,
+  makeOptionalFeedNotifyOnSubscribe,
 } from './feed';
 import { FeedId } from './feed-id';
 
@@ -51,6 +52,7 @@ describe(makeEditFeedRequest.name, () => {
       id: 'just-add-light',
       emailBodySpec: '50 words',
       emailSubjectSpec: makeItemTitleString(),
+      notifyOnSubscribe: 'true',
       initialId: 'just-add-light',
       replyTo: 'just-add-light@test.com',
     };
@@ -69,6 +71,7 @@ describe(makeEditFeedRequest.name, () => {
       emailSubjectSpec: <FeedEmailSubjectSpec>{
         kind: 'ItemTitle',
       },
+      notifyOnSubscribe: true,
       initialId: <FeedId>{
         kind: 'FeedId',
         value: 'just-add-light',
@@ -198,6 +201,26 @@ describe(makeOptionalFeedEmailSubjectSpec.name, () => {
     expect(makeOptionalFeedEmailSubjectSpec('item-title')).to.deep.equal(makeFeedEmailSubjectSpec('item-title'));
     expect(makeOptionalFeedEmailSubjectSpec('A new post on my blog')).to.deep.equal(
       makeFeedEmailSubjectSpec('A new post on my blog')
+    );
+  });
+});
+
+describe(makeOptionalFeedNotifyOnSubscribe.name, () => {
+  it('returns false when no input', () => {
+    expect(makeOptionalFeedNotifyOnSubscribe(undefined)).to.equal(false);
+    expect(makeOptionalFeedNotifyOnSubscribe('')).to.equal(false);
+  });
+
+  it('accepts the stored boolean and the request string', () => {
+    expect(makeOptionalFeedNotifyOnSubscribe(true)).to.equal(true);
+    expect(makeOptionalFeedNotifyOnSubscribe(false)).to.equal(false);
+    expect(makeOptionalFeedNotifyOnSubscribe('true')).to.equal(true);
+    expect(makeOptionalFeedNotifyOnSubscribe('false')).to.equal(false);
+  });
+
+  it('returns an Err for a checkbox value', () => {
+    expect(makeOptionalFeedNotifyOnSubscribe('on')).to.deep.equal(
+      makeErr('Value is not a boolean', 'notifyOnSubscribe')
     );
   });
 });

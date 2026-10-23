@@ -5,7 +5,6 @@ import {
   FeedManageScreenResponse,
   FeedStatus,
   ShowSampleEmailRequestData,
-  UiFeed,
 } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import {
@@ -277,18 +276,19 @@ export interface UiData {
 }
 
 interface FeedAttribute {
-  name: keyof UiFeed;
+  name: keyof FeedManageScreenResponse;
   label: string;
   value: string;
 }
 
-export function makeUiData(uiFeed: UiFeed, feedId: FeedId): UiData {
+export function makeUiData(uiFeed: FeedManageScreenResponse, feedId: FeedId): UiData {
   const feedAttributes: FeedAttribute[] = [
     { label: 'Blog feed URL:', value: uiFeed.url, name: 'url' },
     { label: 'Name:', value: uiFeed.displayName, name: 'displayName' },
     { label: 'Email address:', value: uiFeed.email, name: 'email' },
     { label: 'Email body:', value: uiFeed.emailBodySpec, name: 'emailBodySpec' },
     { label: 'Email subject:', value: uiFeed.emailSubjectSpec, name: 'emailSubjectSpec' },
+    { label: 'Notify me of new subscribers:', value: uiFeed.notifyOnSubscribe, name: 'notifyOnSubscribe' },
     { label: 'Reply-to:', value: uiFeed.replyTo, name: 'replyTo' },
   ];
 

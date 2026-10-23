@@ -57,6 +57,7 @@ describe(loadFeed.name, () => {
     status: FeedStatus.Approved,
     emailBodySpec: makeFullItemTextString(),
     emailSubjectSpec: makeItemTitleString(),
+    notifyOnSubscribe: true,
   };
 
   it('returns a Feed value from feed.json', () => {
@@ -76,6 +77,7 @@ describe(loadFeed.name, () => {
       status: data.status,
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: true,
     };
 
     expect(result).to.deep.include(expectedResult, si`result: ${JSON.stringify(result)}`);
@@ -127,6 +129,7 @@ describe(loadFeedsByAccountId.name, () => {
       status: FeedStatus.AwaitingReview,
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: false,
     };
     const feeds: Record<string, ReturnType<typeof loadFeed>> = {
       validFeed,
@@ -210,6 +213,7 @@ describe(storeFeed.name, () => {
       status: feed.status,
       emailBodySpec: makeFullItemTextString(),
       emailSubjectSpec: makeItemTitleString(),
+      notifyOnSubscribe: false,
     };
 
     expect(isErr(result)).be.false;
@@ -292,6 +296,7 @@ describe(applyEditFeedRequest.name, () => {
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: true,
     };
     const loadFeedFn = () => feed;
     const storeItem = makeStub<AppStorage['storeItem']>();
@@ -310,6 +315,7 @@ describe(applyEditFeedRequest.name, () => {
     expect(storedFeed.displayName).to.equal(editFeedRequest.displayName);
     expect(storedFeed.replyTo).to.equal(editFeedRequest.replyTo.value);
     expect(storedFeed.url).to.equal(editFeedRequest.url.toString());
+    expect(storedFeed.notifyOnSubscribe).to.equal(editFeedRequest.notifyOnSubscribe);
 
     expect(renameItem.calls, 'renames the storage item based on the new feed ID').to.deep.equal([
       [
@@ -329,6 +335,7 @@ describe(applyEditFeedRequest.name, () => {
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: false,
     };
     const feed = makeTestFeed({ id: editFeedRequest.id.value });
     const loadFeedFn = () => feed;
@@ -358,6 +365,7 @@ describe(applyEditFeedRequest.name, () => {
       replyTo: makeTestEmailAddress('new-reply-to@test.com'),
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: false,
     };
     const loadFeedErr = makeErr('Loading failed');
     const failingLoadFeedFn = () => loadFeedErr;

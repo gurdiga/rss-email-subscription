@@ -10,6 +10,7 @@ import {
   isEmptyObject,
   isObject,
   makeArrayOfValues,
+  makeBoolean,
   makeErr,
   makeNonEmptyString,
   makeNumber,
@@ -319,6 +320,21 @@ describe(makeNonEmptyString.name, () => {
 
   it('returns an Err when input only contain white space', () => {
     expect(makeNonEmptyString('\n\t', field)).to.deep.equal(makeErr('Must not be empty', field));
+  });
+});
+
+describe(makeBoolean.name, () => {
+  it('accepts booleans and their string forms', () => {
+    expect(makeBoolean(true)).to.equal(true);
+    expect(makeBoolean(false)).to.equal(false);
+    expect(makeBoolean('true')).to.equal(true);
+    expect(makeBoolean('false')).to.equal(false);
+  });
+
+  it('returns an Err for anything else', () => {
+    expect(makeBoolean('on', 'field')).to.deep.equal(makeErr('Value is not a boolean', 'field'));
+    expect(makeBoolean(1)).to.deep.equal(makeErr('Value is not a boolean'));
+    expect(makeBoolean(undefined)).to.deep.equal(makeErr('Value is not a boolean'));
   });
 });
 

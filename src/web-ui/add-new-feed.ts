@@ -26,6 +26,7 @@ import {
 } from './shared';
 import {
   UiFeedFormFields,
+  makeCheckboxString,
   makeEmailBodySpecFromFromFields,
   makeEmailSubjectSpecFromFromFields,
   uiFeedFormFields,
@@ -134,6 +135,7 @@ function makeAddNewFeedRequestData(formFields: UiFeedFormFields): Result<AddNewF
     replyTo: formFields.replyTo.value,
     emailBodySpec,
     emailSubjectSpec,
+    notifyOnSubscribe: makeCheckboxString(formFields.notifyOnSubscribe),
   };
 
   return requestData;

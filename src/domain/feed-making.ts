@@ -9,6 +9,7 @@ import {
   makeFeedUrl,
   makeOptionalFeedEmailBodySpec,
   makeOptionalFeedEmailSubjectSpec,
+  makeOptionalFeedNotifyOnSubscribe,
 } from './feed';
 import { makeFeedId } from './feed-id';
 
@@ -24,5 +25,6 @@ export function makeFeed(input: unknown): Result<Feed> {
     status: makeFeedStatus,
     emailBodySpec: makeOptionalFeedEmailBodySpec,
     emailSubjectSpec: makeOptionalFeedEmailSubjectSpec,
+    notifyOnSubscribe: makeOptionalFeedNotifyOnSubscribe,
   });
 }

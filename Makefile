@@ -486,6 +486,13 @@ api-test:
 		--reporter dot \
 		--bail -R dot api-test.spec.ts
 
+# Writes straight to DATA_DIR_ROOT, so the stack needn’t be running and no
+# confirmation email goes out. Running it again leaves an existing account alone.
+local-demo-account:
+	@set -a; source ./.env; set +a; \
+	export TS_NODE_TRANSPILE_ONLY=true; \
+	node_modules/.bin/ts-node src/api/create-demo-account-cli.ts
+
 # Tunnel local dev server to a public URL for receiving Paddle sandbox webhooks.
 # Requires: brew install cloudflared
 # After getting the public URL, set it as the sandbox notification destination:

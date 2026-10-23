@@ -46,6 +46,7 @@ import {
   FeedEmailBodyFields,
   FeedEmailSubjectFields,
   UiFeedFormFields,
+  makeCheckboxString,
   makeEmailBodySpecFromFromFields,
   makeEmailSubjectSpecFromFromFields,
   uiFeedFormFields,
@@ -191,12 +192,13 @@ function bindSubmitButton(uiElements: RequiredUiElements, feedId: FeedId): void 
 }
 
 function fillForm(uiElements: UiFeedFormFields, uiFeed: UiFeed): Result<void> {
-  const { displayName, url, id, replyTo } = uiElements;
+  const { displayName, url, id, replyTo, notifyOnSubscribe } = uiElements;
 
   displayName.value = uiFeed.displayName;
   url.value = uiFeed.url;
   id.value = uiFeed.id;
   replyTo.value = uiFeed.replyTo;
+  notifyOnSubscribe.checked = uiFeed.notifyOnSubscribe;
 
   const fillEmailBodyResult = fillEmailBodyField(uiElements, uiFeed.emailBodySpec);
 
@@ -270,6 +272,7 @@ function makeEditFeedRequestData(formFields: UiFeedFormFields, initialId: FeedId
     id: formFields.id.value,
     emailBodySpec,
     emailSubjectSpec,
+    notifyOnSubscribe: makeCheckboxString(formFields.notifyOnSubscribe),
     initialId: initialId.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,

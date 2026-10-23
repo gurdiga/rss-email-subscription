@@ -96,6 +96,7 @@ function makeFeedManageScreenResponse(
     email: si`${feed.id.value}@${domainName}`,
     emailBodySpec: makeFeedEmailBodySpecUi(feed.emailBodySpec),
     emailSubjectSpec: makeFeedEmailSubjectSpecUi(feed.emailSubjectSpec),
+    notifyOnSubscribe: feed.notifyOnSubscribe ? 'Yes' : 'No',
     replyTo: feed.replyTo.value,
     status: feed.status,
     subscriberCount,
