@@ -1,4 +1,4 @@
-import { makeEmailContent, makeUnsubscribeUrl } from '../../app/email-sending/email-content';
+import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from '../../app/email-sending/email-content';
 import { sendEmail } from '../../app/email-sending/email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from '../../app/email-sending/emails';
 import { getFeedInfo } from '../../app/rss-checking/rss-parsing';
@@ -175,34 +175,53 @@ export const showSampleEmailPublic: AppRequestHandler = async function showSampl
     return makeAppError('Failed to get latest blog post');
   }
 
+  // The feed is fetched only to tell the visitor it works. Nothing from it
+  // goes into the email: this endpoint needs no account and mails any
+  // address it is given, so feed content here would let anyone send their
+  // own HTML from our domain.
   const recipient = makeRecipientForSampleEmail(recipientEmail);
   const feedEmailAddress = makeEmailAddressFromFeedId(makeSampleFeedId(), env.DOMAIN_NAME);
-  const sender = makeFullEmailAddress(feedInfo.title, feedEmailAddress);
-  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, feedInfo.title, env.DOMAIN_NAME);
-  const emailSubjectSpec = makeItemTitle();
+  const sender = makeFullEmailAddress(publicSampleSenderName, feedEmailAddress);
+  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, publicSampleSenderName, env.DOMAIN_NAME);
+  const emailContent = makePublicSampleEmailContent(unsubscribeUrl, feedEmailAddress, env.DOMAIN_NAME);
 
-  const result = await sendSampleEmail(
-    env,
-    recipient,
-    sender,
-    feedInfo.mostRecentItem,
-    unsubscribeUrl,
-    emailSubjectSpec
-  );
+  const result = await sendEmail(sender, recipient.emailAddress, feedEmailAddress, emailContent, env);
 
   if (isErr(result)) {
-    logError(si`Failed to ${sendSampleEmail.name}: ${result.reason}`);
+    logError(si`Failed to ${sendEmail.name}: ${result.reason}`);
     return makeAppError('Failed to send the sample email');
   }
 
   const logData = {};
   const responseData: PublicShowSampleEmailResponse = {
-    emailSubject: feedInfo.mostRecentItem.title,
+    emailSubject: emailContent.subject,
     sender: si`${sender.displayName} <${sender.emailAddress.value}>`,
   };
 
   return makeSuccess('Email sent', logData, responseData);
 };
+
+const publicSampleSenderName = 'FeedSubscription preview';
+
+export function makePublicSampleEmailContent(
+  unsubscribeUrl: URL,
+  fromAddress: EmailAddress,
+  domainName: string
+): EmailContent {
+  const placeholderPost: RssItem = {
+    title: 'Your post title goes here',
+    content: si`
+      <p>This is a sample of the email your subscribers will get when you publish a new post.</p>
+      <p>In the real email, this is where the full text of your post goes, with its images and links,
+      and the subject line is the post title. The sender name is your blog’s name.</p>`,
+    author: publicSampleSenderName,
+    pubDate: new Date(0),
+    link: new URL(si`https://${domainName}/`),
+    guid: 'public-sample-email',
+  };
+
+  return makeEmailContent(placeholderPost, unsubscribeUrl, fromAddress, makeFullItemText(), makeItemTitle());
+}
 
 function makePublicShowSampleEmailReques(data: unknown) {
   return makeValues<PublicShowSampleEmailRequest>(data, {
