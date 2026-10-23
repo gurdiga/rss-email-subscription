@@ -161,7 +161,7 @@ async function main() {
 
   // For a demo session, mails the fixed preview to the feed's own replyTo, which
   // is caller-controlled, as the public variant below does to any address.
-  router.post(ApiPath.showSampleEmail, makeRateLimiter(1, minute), makeAppRequestHandler(showSampleEmail, app));
+  router.post(ApiPath.showSampleEmail, makeRateLimiter(5, hour), makeAppRequestHandler(showSampleEmail, app));
   // Also mails a caller-supplied address, and needs no account at all.
   router.post(
     ApiPath.showSampleEmailPublic,

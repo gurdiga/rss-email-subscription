@@ -52,7 +52,7 @@ describe('subscription', () => {
       const reqBody = { email: 'victim@example.com', feedId: feed.id.value };
       const response = await subscription('req', reqBody, {}, {}, app, makeMockRegenerateSession({}));
 
-      expect(response.kind).to.equal('InputError', JSON.stringify(response));
+      expect(response).to.include({ kind: 'InputError', message: 'Demo feeds don’t accept subscriptions' });
 
       const storedEmails = loadEmailAddresses(demoAccountId, feed.id, app.storage);
       expect((storedEmails as any).validEmails).to.deep.equal([]);

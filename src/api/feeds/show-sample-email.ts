@@ -76,7 +76,7 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
 
   // The demo password is public and a demo feed's replyTo is whatever its
   // creator typed, so a demo session gets the same fixed preview as an
-  // anonymous visitor: nothing it wrote may reach that inbox.
+  // anonymous visitor: the address may be a stranger's, the content isn't.
   if (isDemoSession(reqSession)) {
     const demoRecipient = makeRecipientForSampleEmail(feed.replyTo);
     const { result } = await sendFixedSampleEmail(demoRecipient, env);
