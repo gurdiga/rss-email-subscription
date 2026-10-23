@@ -61,8 +61,8 @@ export function makeEmailSubjectSpecFromFromFields(
 }
 
 // A checkbox’s value is "on" whether it’s checked or not.
-export function makeNotifyOnSubscribeFromFormFields(formFields: Pick<UiFeedFormFields, 'notifyOnSubscribe'>): string {
-  return String(formFields.notifyOnSubscribe.checked);
+export function makeCheckboxString(checkbox: HTMLInputElement): string {
+  return String(checkbox.checked);
 }
 
 export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {

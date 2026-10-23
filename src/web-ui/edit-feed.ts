@@ -46,9 +46,9 @@ import {
   FeedEmailBodyFields,
   FeedEmailSubjectFields,
   UiFeedFormFields,
+  makeCheckboxString,
   makeEmailBodySpecFromFromFields,
   makeEmailSubjectSpecFromFromFields,
-  makeNotifyOnSubscribeFromFormFields,
   uiFeedFormFields,
 } from './feed-form-shared';
 
@@ -272,7 +272,7 @@ function makeEditFeedRequestData(formFields: UiFeedFormFields, initialId: FeedId
     id: formFields.id.value,
     emailBodySpec,
     emailSubjectSpec,
-    notifyOnSubscribe: makeNotifyOnSubscribeFromFormFields(formFields),
+    notifyOnSubscribe: makeCheckboxString(formFields.notifyOnSubscribe),
     initialId: initialId.value,
     url: formFields.url.value,
     replyTo: formFields.replyTo.value,
