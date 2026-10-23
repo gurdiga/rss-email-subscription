@@ -20,11 +20,17 @@ export const allowedCharacters = '[a-z0-9-_]';
 // any input — no backtracking blowup on pathological strings.
 const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)${allowedCharacters}+)*$`, 'i');
 
-// Only the characters an address-list parser could split on are rejected
-// here; domain syntax is left as loose as before, since this function also
-// re-validates addresses already on file, and a stricter allowlist could
-// silently drop existing subscribers.
+// Checked on the whole input, before the parts are split and trimmed below,
+// so that whitespace around the @ can't slip through.
 const recipientListSeparatorsRe = /[,;<>\s]/;
+
+// Hostname rules, so that no address can carry characters like & or # that
+// mean something in HTML. This function also re-validates addresses on file,
+// and parseEmails silently drops the ones that fail, so this was checked
+// against all stored addresses before tightening. Unicode domains are
+// rejected rather than converted to their xn-- form, by decision.
+const domainLabelRe = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
+const topLevelDomainRe = /^([a-z]{2,}|xn--[a-z0-9-]+)$/;
 
 // Nodemailer silently rewrites some control characters (a NUL becomes a
 // space, confirmed by sending through it directly) rather than rejecting
@@ -83,8 +89,11 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
     return err;
   }
 
-  const domainLevels = domain.split(/\./).reverse();
-  const doDomainPartsLookReasonable = /^[a-z]{2,}$/i.test(domainLevels[0]!) && domainLevels.every((l) => l.length >= 1);
+  const domainLabels = domain.split('.');
+  const doDomainPartsLookReasonable =
+    domainLabels.length >= 2 &&
+    domainLabels.every((label) => domainLabelRe.test(label)) &&
+    topLevelDomainRe.test(domainLabels[domainLabels.length - 1]!);
 
   if (!doDomainPartsLookReasonable) {
     return err;
