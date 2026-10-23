@@ -21,7 +21,7 @@ export function makeEmailContent(
   const sendFullText = isFullItemText(emailBodySpec);
   const subjectIsPostTitle = isItemTitle(emailSubjectSpec);
 
-  const contentPrefix = subjectIsPostTitle ? '' : si`<h1>${item.title}</h1>`;
+  const contentPrefix = subjectIsPostTitle ? '' : si`<h1>${escapeHtml(item.title)}</h1>`;
   const content = sendFullText
     ? item.content
     : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
