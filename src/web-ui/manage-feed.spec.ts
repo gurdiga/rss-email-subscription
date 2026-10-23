@@ -1,20 +1,22 @@
 import { expect } from 'chai';
-import { FeedStatus, UiFeed } from '../domain/feed';
+import { FeedManageScreenResponse, FeedStatus } from '../domain/feed';
 import { makeCreateElementStub, makeTestFeedId } from '../shared/test-utils';
 import { UiData, makeStatusField, makeUiData } from './manage-feed';
 
 describe(makeUiData.name, () => {
   it('returns the field list and link hrefs', () => {
     const feedId = makeTestFeedId('just-add-light');
-    const uiFeed: UiFeed = {
+    const uiFeed: FeedManageScreenResponse = {
       id: 'just-add-light',
       displayName: 'Just Add Light',
       url: 'https://test.com/just-add-light/feed.xml',
       email: 'just-add-light@test.com',
       emailBodySpec: 'Send full post',
       emailSubjectSpec: 'Is the post title',
+      notifyOnSubscribe: 'No',
       replyTo: 'reply-to@test.com',
       status: FeedStatus.AwaitingReview,
+      subscriberCount: 0,
     };
 
     const expectedUiData: UiData = {
@@ -24,6 +26,7 @@ describe(makeUiData.name, () => {
         { label: 'Email address:', value: 'just-add-light@test.com', name: 'email' },
         { label: 'Email body:', value: 'Send full post', name: 'emailBodySpec' },
         { label: 'Email subject:', value: 'Is the post title', name: 'emailSubjectSpec' },
+        { label: 'Notify me of new subscribers:', value: 'No', name: 'notifyOnSubscribe' },
         { label: 'Reply-to:', value: 'reply-to@test.com', name: 'replyTo' },
       ],
       editLinkHref: '/user/edit-feed.html?id=just-add-light',

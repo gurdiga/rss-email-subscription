@@ -3,6 +3,7 @@ import {
   hasKind,
   isErr,
   isString,
+  makeBoolean,
   makeErr,
   makeNonEmptyString,
   makePositiveInteger,
@@ -28,6 +29,7 @@ export interface Feed {
   status: FeedStatus;
   emailBodySpec: FeedEmailBodySpec;
   emailSubjectSpec: FeedEmailSubjectSpec;
+  notifyOnSubscribe: boolean;
 }
 
 export function isFeed(value: unknown): value is Feed {
@@ -214,6 +216,15 @@ export function makeOptionalFeedEmailSubjectSpec(value: unknown): Result<FeedEma
   }
 }
 
+// Feeds stored before this setting existed have no value, so they default to off.
+export function makeOptionalFeedNotifyOnSubscribe(value: unknown, field = 'notifyOnSubscribe'): Result<boolean> {
+  if (value === undefined || value === '') {
+    return false;
+  }
+
+  return makeBoolean(value, field);
+}
+
 export interface FeedHashingSalt {
   kind: 'FeedHashingSalt';
   value: string;
@@ -261,6 +272,7 @@ export interface UiFeed {
   email: string;
   emailBodySpec: FullItemTextString | ItemExcerptWordCountString;
   emailSubjectSpec: ItemTitleString | CustomSubjectString;
+  notifyOnSubscribe: boolean;
   replyTo: string;
   status: FeedStatus;
 }
@@ -299,6 +311,7 @@ export function makeUiFeed(feed: Feed, domain: string): UiFeed {
     email: si`${feed.id.value}@${domain}`,
     emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
     emailSubjectSpec: makeFeedEmailSubjectSpecString(feed.emailSubjectSpec),
+    notifyOnSubscribe: feed.notifyOnSubscribe,
     replyTo: feed.replyTo.value,
     status: feed.status,
   };
@@ -323,6 +336,7 @@ export interface EditFeedRequest {
   id: FeedId;
   emailBodySpec: FeedEmailBodySpec;
   emailSubjectSpec: FeedEmailSubjectSpec;
+  notifyOnSubscribe: boolean;
   initialId: FeedId;
   replyTo: EmailAddress;
 }
@@ -340,6 +354,7 @@ export function makeEditFeedRequest(data: unknown): Result<EditFeedRequest> {
     id: makeFeedId,
     emailBodySpec: makeFeedEmailBodySpec,
     emailSubjectSpec: makeFeedEmailSubjectSpec,
+    notifyOnSubscribe: makeOptionalFeedNotifyOnSubscribe,
     initialId: makeFeedId,
     replyTo: makeFeedReplyToEmailAddress,
   });
@@ -473,6 +488,7 @@ export interface FeedManageScreenResponse {
   email: string;
   emailBodySpec: string;
   emailSubjectSpec: string;
+  notifyOnSubscribe: string;
   replyTo: string;
   status: FeedStatus;
   subscriberCount: number;

@@ -12,6 +12,7 @@ export interface UiFeedFormFields extends FeedEmailBodyFields, FeedEmailSubjectF
   url: HTMLInputElement;
   id: HTMLInputElement;
   replyTo: HTMLInputElement;
+  notifyOnSubscribe: HTMLInputElement;
 }
 
 export interface FeedEmailBodyFields {
@@ -59,6 +60,11 @@ export function makeEmailSubjectSpecFromFromFields(
   }
 }
 
+// A checkbox’s value is "on" whether it’s checked or not.
+export function makeNotifyOnSubscribeFromFormFields(formFields: Pick<UiFeedFormFields, 'notifyOnSubscribe'>): string {
+  return String(formFields.notifyOnSubscribe.checked);
+}
+
 export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
   displayName: '#feed-name-field',
   url: '#feed-url-field',
@@ -70,4 +76,5 @@ export const uiFeedFormFields: Record<keyof UiFeedFormFields, string> = {
   emailSubjectPostTitle: '#email-subject-post-title',
   emailSubjectCustom: '#email-subject-custom',
   emailSubjectCustomText: '#email-subject-custom-text',
+  notifyOnSubscribe: '#notify-on-subscribe',
 };

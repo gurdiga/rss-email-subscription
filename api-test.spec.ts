@@ -93,6 +93,7 @@ describe('API', () => {
     replyTo: 'feed-replyto@api-test.com',
     emailBodySpec: makeFullItemTextString(),
     emailSubjectSpec: makeItemTitleString(),
+    notifyOnSubscribe: 'false',
   };
 
   const testFeedId = makeTestFeedId(testFeedProps.id);
@@ -272,6 +273,7 @@ describe('API', () => {
             replyTo: testFeedProps.replyTo,
             emailBodySpec: testFeedProps.emailBodySpec,
             emailSubjectSpec: testFeedProps.emailSubjectSpec,
+            notifyOnSubscribe: testFeedProps.notifyOnSubscribe,
           };
           const { responseBody } = await addNewFeedSend(addNewFeedRequest);
 
@@ -291,6 +293,7 @@ describe('API', () => {
           expect(storedFeed.cronPattern).to.equal(defaultFeedPattern.value);
           expect(storedFeed.replyTo).to.equal(testFeedProps.replyTo);
           expect(storedFeed.emailBodySpec).to.equal(testFeedProps.emailBodySpec);
+          expect(storedFeed.notifyOnSubscribe).to.equal(false);
 
           const loadFeedByIdResponse = await loadFeedByIdSend(testFeedId);
           const { responseData: loadedFeed } = loadFeedByIdResponse.responseBody as Success<Feed>;
@@ -302,6 +305,7 @@ describe('API', () => {
             email: 'api-test-feed@localhost.feedsubscription.com',
             emailBodySpec: 'full-item-text',
             emailSubjectSpec: 'item-title',
+            notifyOnSubscribe: false,
             replyTo: 'feed-replyto@api-test.com',
             status: FeedStatus.AwaitingReview,
           });
@@ -330,6 +334,7 @@ describe('API', () => {
             initialId: testFeedId.value,
             id: 'new-feed-id',
             displayName: displayNameUpdated,
+            notifyOnSubscribe: 'true',
           };
           const editResponse = await editFeedSend(editFeedRequest);
 
@@ -343,6 +348,7 @@ describe('API', () => {
           const newFeedId = makeTestFeedId(editFeedRequest.id);
           const editedFeed = loadStoredFeed(userEmail, newFeedId);
           expect(editedFeed.displayName).to.equal(displayNameUpdated);
+          expect(editedFeed.notifyOnSubscribe).to.equal(true);
           expect(editedFeed.hashingSalt).to.equal(initialSaltedHash, 'hashingSalt should not change on update');
 
           let expectedResponse: Success<LoadEmailsResponse> = {
@@ -423,6 +429,7 @@ describe('API', () => {
             replyTo: '',
             emailBodySpec: '',
             emailSubjectSpec: '',
+            notifyOnSubscribe: '',
           };
           const { responseBody } = await addNewFeedSend(invalidRequest);
 
@@ -446,6 +453,7 @@ describe('API', () => {
                 replyTo: 'reply-to-existing-feed@test.com',
                 emailBodySpec: makeFullItemTextString(),
                 emailSubjectSpec: makeItemTitleString(),
+                notifyOnSubscribe: 'false',
               });
               expect(addExistingFeed.responseBody.kind).to.equal('Success');
 
@@ -456,6 +464,7 @@ describe('API', () => {
                 replyTo: 'reply-to-feed-to-edit@test.com',
                 emailBodySpec: makeFullItemTextString(),
                 emailSubjectSpec: makeItemTitleString(),
+                notifyOnSubscribe: 'false',
               });
               expect(response.responseBody.kind).to.equal('Success');
             });
@@ -467,6 +476,7 @@ describe('API', () => {
                 replyTo: 'reply-to-feed-to-edit@test.com',
                 emailBodySpec: makeFullItemTextString(),
                 emailSubjectSpec: makeItemTitleString(),
+                notifyOnSubscribe: 'false',
                 initialId: 'feed-to-edit',
                 id: 'existing-feed',
               };
@@ -541,6 +551,7 @@ describe('API', () => {
         replyTo: testFeedProps.replyTo!,
         emailBodySpec: makeFullItemTextString(),
         emailSubjectSpec: makeItemTitleString(),
+        notifyOnSubscribe: 'false',
       };
       const addNewFeedResponse = await addNewFeedSend(addNewFeedRequest);
       expect(addNewFeedResponse.responseBody.kind).to.equal('Success', 'addNewFeed');

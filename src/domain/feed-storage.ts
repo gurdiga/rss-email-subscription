@@ -20,6 +20,7 @@ export interface FeedStoredData {
   status: FeedStatus;
   emailBodySpec: string;
   emailSubjectSpec: string;
+  notifyOnSubscribe: boolean;
 }
 
 export interface FeedNotFound {
@@ -102,6 +103,7 @@ export function storeFeed(accountId: AccountId, feed: Feed, storage: AppStorage)
     status: feed.status,
     emailBodySpec: makeFeedEmailBodySpecString(feed.emailBodySpec),
     emailSubjectSpec: makeFeedEmailSubjectSpecString(feed.emailSubjectSpec),
+    notifyOnSubscribe: feed.notifyOnSubscribe,
   };
 
   const result = storage.storeItem(storageKey, data);
@@ -245,6 +247,7 @@ export function applyEditFeedRequest(
   feed.replyTo = editFeedRequest.replyTo;
   feed.emailBodySpec = editFeedRequest.emailBodySpec;
   feed.emailSubjectSpec = editFeedRequest.emailSubjectSpec;
+  feed.notifyOnSubscribe = editFeedRequest.notifyOnSubscribe;
 
   const feedAfter = structuredClone(feed, { json: true });
   const storeFeedResult = storeFeed(accountId, feed, storage);

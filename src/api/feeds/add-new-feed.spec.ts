@@ -79,6 +79,7 @@ function makeAddNewFeedRequest(): AddNewFeedRequestData {
     replyTo: victimReplyTo,
     emailBodySpec: 'full-item-text',
     emailSubjectSpec: 'item-title',
+    notifyOnSubscribe: 'false',
   };
 }
 

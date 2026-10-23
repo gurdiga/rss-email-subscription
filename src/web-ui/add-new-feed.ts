@@ -28,6 +28,7 @@ import {
   UiFeedFormFields,
   makeEmailBodySpecFromFromFields,
   makeEmailSubjectSpecFromFromFields,
+  makeNotifyOnSubscribeFromFormFields,
   uiFeedFormFields,
 } from './feed-form-shared';
 
@@ -134,6 +135,7 @@ function makeAddNewFeedRequestData(formFields: UiFeedFormFields): Result<AddNewF
     replyTo: formFields.replyTo.value,
     emailBodySpec,
     emailSubjectSpec,
+    notifyOnSubscribe: makeNotifyOnSubscribeFromFormFields(formFields),
   };
 
   return requestData;

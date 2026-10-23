@@ -40,6 +40,7 @@ describe(makeFeed.name, () => {
       status: input.status!,
       emailBodySpec: makeFullItemText(),
       emailSubjectSpec: makeItemTitle(),
+      notifyOnSubscribe: false,
     };
 
     expect(makeFeed(input)).to.deep.equal(expectedResult);
