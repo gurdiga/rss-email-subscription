@@ -154,10 +154,8 @@ export function makeNewSubscriberEmailContent(
 
       <p>${subscriber.value} has just subscribed to <b>${feedDisplayName}</b>.</p>
 
-      <p>You can see all your subscribers at
-      <a href="${manageSubscribersUrl.toString()}">${manageSubscribersUrl.toString()}</a>.</p>
-
-      <p>You can turn these notifications off in the <a href="${feedManageUrl.toString()}">feed settings</a>.</p>
+      <p>You can see all your <a href="${manageSubscribersUrl.toString()}">subscribers</a>
+      or turn these notifications off in the <a href="${feedManageUrl.toString()}">settings</a>.</p>
 
       <p>Have a nice day.</p>
     `),

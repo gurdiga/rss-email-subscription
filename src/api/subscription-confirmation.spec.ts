@@ -94,7 +94,7 @@ describe(makeNewSubscriberEmailContent.name, () => {
     expect(emailContent.subject).to.equal('New subscriber to Just Add Light and Stir');
     expect(emailContent.htmlBody).to.include(subscriber.value);
     expect(emailContent.htmlBody).to.include('<b>Just Add Light and Stir</b>');
-    expect(emailContent.htmlBody).to.include(si`<a href="${subscribersUrl.toString()}">`);
-    expect(emailContent.htmlBody).to.include(si`<a href="${feedUrl.toString()}">feed settings</a>`);
+    expect(emailContent.htmlBody).to.include(si`<a href="${subscribersUrl.toString()}">subscribers</a>`);
+    expect(emailContent.htmlBody).to.include(si`<a href="${feedUrl.toString()}">settings</a>`);
   });
 });
