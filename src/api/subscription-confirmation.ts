@@ -64,7 +64,7 @@ export const subscriptionConfirmation: AppRequestHandler = async function subscr
 
   logInfo('Subscriber confirmed email', { feedId: feedId.value, email: registeredEmail.emailAddress.value });
 
-  return makeSuccess('Emai confirmed. Welcome aboard! 😎');
+  return makeSuccess('Email confirmed. Welcome aboard! 😎');
 };
 
 function makeSubscriptionConfirmationRequest(data: unknown) {
