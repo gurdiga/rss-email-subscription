@@ -1,17 +1,9 @@
-FROM nginx:1.27.5-alpine3.21@sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10
+FROM nginx:1.30.6-alpine3.24@sha256:47928bf67eb62a1863cb08d9ecb52d3e704304ba614eaee17884204677702951
 
-# curl ships in the nginx base image, so dropping it from the apk add below is
-# not enough — it has to be deleted explicitly. Nothing here uses it: nginx does
-# not link libcurl, no healthcheck or script calls it, and libcurl's only
-# reverse dependency is curl itself, so both go. Alpine 3.21 has no fix for its
-# CVEs (2 CRITICAL, 4 HIGH), which is why removal rather than a pin is the fix.
+# curl ships in the nginx base image, but nothing here uses it: nginx does not
+# link libcurl, no healthcheck or script calls it, and libcurl's only reverse
+# dependency is curl itself. Deleting both keeps their recurring CVEs out of
+# the image instead of chasing them with version pins.
 RUN apk update --no-cache \
  && apk upgrade --no-cache \
- && apk add --no-cache --upgrade \
-    'libxml2=2.13.9-r1' \
-    'openssl=3.3.7-r2' \
-    'expat=2.8.4-r0' \
-    'tiff=4.7.1-r0' \
-    'libpng=1.6.59-r0' \
-    'c-ares=1.34.8-r0' \
  && apk del curl
