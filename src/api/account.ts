@@ -417,6 +417,13 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
     return makeInputError<keyof EmailChangeRequestData>('Email did not change', 'newEmail');
   }
 
+  // The demo account's email never actually changes, so the only effect of
+  // going on would be mailing an address a stranger typed.
+  if (isDemoSession(reqSession)) {
+    logWarning('Refused email change for the demo account');
+    return makeInputError<keyof EmailChangeRequestData>('The demo account’s email can’t be changed', 'newEmail');
+  }
+
   const confirmationSecret = makeRandomConfirmationSecret();
   const sendEmailResult = await sendEmailChangeConfirmationEmail(newEmail, confirmationSecret, settings, env);
 

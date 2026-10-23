@@ -158,9 +158,10 @@ async function main() {
   router.post(ApiPath.addNewFeed, paymentConfirmed, makeAppRequestHandler(addNewFeed, app));
   router.post(ApiPath.editFeed, paymentConfirmed, makeAppRequestHandler(editFeed, app));
   router.post(ApiPath.deleteFeed, paymentConfirmed, makeAppRequestHandler(deleteFeed, app));
-  // For a demo session, mails the feed's own replyTo — caller-controlled at feed
-  // creation — same as the public variant below mails a caller-supplied address.
-  router.post(ApiPath.showSampleEmail, makeRateLimiter(1, minute), makeAppRequestHandler(showSampleEmail, app));
+
+  // For a demo session, mails the fixed preview to the feed's own replyTo, which
+  // is caller-controlled, as the public variant below does to any address.
+  router.post(ApiPath.showSampleEmail, makeRateLimiter(5, hour), makeAppRequestHandler(showSampleEmail, app));
   // Also mails a caller-supplied address, and needs no account at all.
   router.post(
     ApiPath.showSampleEmailPublic,

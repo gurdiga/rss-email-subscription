@@ -1,11 +1,14 @@
 import { expect } from 'chai';
 import { EmailHashFn, loadEmailAddresses, makeHashedEmail } from '../app/email-sending/emails';
 import { getAccountIdByEmail } from '../domain/account-crypto';
+import { storeAccount } from '../domain/account-storage';
+import { demoAccountEmail } from '../domain/demo-account';
 import { storeFeed } from '../domain/feed-storage';
 import { isErr } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import {
   encodeSearchParamValue,
+  makeTestAccount,
   makeTestEmailAddress,
   makeTestFeed,
   makeTestFeedId,
@@ -36,6 +39,22 @@ describe('subscription', () => {
 
       const storedEmails = loadEmailAddresses(accountId, feed.id, app.storage);
       expect(isErr(storedEmails)).to.be.false;
+      expect((storedEmails as any).validEmails).to.deep.equal([]);
+    });
+
+    it('refuses to subscribe anyone to a feed the demo account owns', async () => {
+      const app = makeTestApp();
+      const feed = makeTestFeed();
+      const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
+      storeAccount(app.storage, demoAccountId, makeTestAccount({ email: demoAccountEmail }));
+      storeFeed(demoAccountId, feed, app.storage);
+
+      const reqBody = { email: 'victim@example.com', feedId: feed.id.value };
+      const response = await subscription('req', reqBody, {}, {}, app, makeMockRegenerateSession({}));
+
+      expect(response).to.include({ kind: 'InputError', message: 'Demo feeds don’t accept subscriptions' });
+
+      const storedEmails = loadEmailAddresses(demoAccountId, feed.id, app.storage);
       expect((storedEmails as any).validEmails).to.deep.equal([]);
     });
   });
