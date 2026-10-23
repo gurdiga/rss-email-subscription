@@ -16,6 +16,7 @@ import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
 import { deleteStaleUnconfirmedAccounts } from './unconfirmed-accounts-cleanup';
 import { startCronJob } from '../shared/cron-utils';
 import { makePaddleEnvironment } from '../domain/payment';
+import { demoAccountEmail } from '../domain/demo-account';
 
 function main() {
   const { logError, logInfo, logWarning } = makeCustomLoggers({ module: 'cron' });
@@ -104,6 +105,14 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
         accountEmail: account.email.value,
         accountId: accountId.value,
       };
+
+      // Anyone can sign into the demo account and change its feeds, so
+      // nothing it owns is delivered on schedule, approved or not.
+      if (account.email.value === demoAccountEmail) {
+        logInfo('Skipped the demo account', logData);
+        continue;
+      }
+
       const feedsByAccountId = loadFeedsByAccountId(accountId, storage);
 
       if (isErr(feedsByAccountId)) {
