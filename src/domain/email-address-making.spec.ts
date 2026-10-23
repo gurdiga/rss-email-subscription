@@ -125,6 +125,33 @@ describe(makeEmailAddress.name, () => {
       makeErr('Email is syntactically incorrect: "a@example.1ab1"', field)
     );
   });
+
+  it('rejects domains that break hostname rules', () => {
+    const invalidEmails = [
+      'a@x&lt.com',
+      'a@x&#8238y.com',
+      'a@x"y.com',
+      "a@x'y.com",
+      'a@x/y.com',
+      'a@-x.com',
+      'a@x-.com',
+      'a.b@localhost',
+      si`a@${'x'.repeat(64)}.com`,
+      'a@münchen.de',
+    ];
+
+    for (const email of invalidEmails) {
+      expect(makeEmailAddress(email)).to.deep.equal(makeErr(si`Email is syntactically incorrect: "${email}"`, field));
+    }
+  });
+
+  it('accepts hyphens inside labels, 63-character labels, and xn-- labels', () => {
+    const validEmails = ['a@my-site.co.uk', si`a@${'x'.repeat(63)}.com`, 'a@xn--mnchen-3ya.de', 'a@example.xn--p1ai'];
+
+    for (const email of validEmails) {
+      expect(makeEmailAddress(email)).to.deep.equal({ kind: 'EmailAddress', value: email });
+    }
+  });
 });
 
 function timeMakeEmailAddress(email: string): number {
