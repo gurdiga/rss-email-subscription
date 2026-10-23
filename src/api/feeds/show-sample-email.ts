@@ -172,23 +172,20 @@ export const showSampleEmailPublic: AppRequestHandler = async function showSampl
 
   if (isErr(feedInfo)) {
     logError(si`Failed to ${getFeedInfo.name}: ${feedInfo.reason}`, { feedUrl: feedUrl.toString() });
-    return makeAppError('Failed to get latest blog post');
+    return makeAppError('Failed to read the blog feed');
   }
 
+  // The feed is fetched only to tell the visitor it works. Nothing from it
+  // goes into the email: this endpoint needs no account and mails any
+  // address it is given, so feed content here would let anyone send their
+  // own HTML from our domain.
   const recipient = makeRecipientForSampleEmail(recipientEmail);
   const feedEmailAddress = makeEmailAddressFromFeedId(makeSampleFeedId(), env.DOMAIN_NAME);
-  const sender = makeFullEmailAddress(feedInfo.title, feedEmailAddress);
-  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, feedInfo.title, env.DOMAIN_NAME);
-  const emailSubjectSpec = makeItemTitle();
+  const sender = makeFullEmailAddress(publicSampleSenderName, feedEmailAddress);
+  const unsubscribeUrl = makeUnsubscribeUrl(makeSampleFeedId(), recipient, publicSampleSenderName, env.DOMAIN_NAME);
+  const placeholderPost = makePublicSamplePost(env.DOMAIN_NAME);
 
-  const result = await sendSampleEmail(
-    env,
-    recipient,
-    sender,
-    feedInfo.mostRecentItem,
-    unsubscribeUrl,
-    emailSubjectSpec
-  );
+  const result = await sendSampleEmail(env, recipient, sender, placeholderPost, unsubscribeUrl, makeItemTitle());
 
   if (isErr(result)) {
     logError(si`Failed to ${sendSampleEmail.name}: ${result.reason}`);
@@ -197,12 +194,28 @@ export const showSampleEmailPublic: AppRequestHandler = async function showSampl
 
   const logData = {};
   const responseData: PublicShowSampleEmailResponse = {
-    emailSubject: feedInfo.mostRecentItem.title,
+    emailSubject: placeholderPost.title,
     sender: si`${sender.displayName} <${sender.emailAddress.value}>`,
   };
 
   return makeSuccess('Email sent', logData, responseData);
 };
+
+const publicSampleSenderName = 'FeedSubscription preview';
+
+export function makePublicSamplePost(domainName: string): RssItem {
+  return {
+    title: 'Your post title goes here',
+    content: si`
+      <p>This is a sample of the email your subscribers will get when you publish a new post.</p>
+      <p>In the real email, this is where the full text of your post goes, with its images and links,
+      and the subject line is the post title. The sender name is your blog’s name.</p>`,
+    author: publicSampleSenderName,
+    pubDate: new Date(0),
+    link: new URL(si`https://${domainName}/`),
+    guid: 'public-sample-email',
+  };
+}
 
 function makePublicShowSampleEmailReques(data: unknown) {
   return makeValues<PublicShowSampleEmailRequest>(data, {
