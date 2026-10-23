@@ -8,7 +8,7 @@ import { isErr } from '../../shared/lang';
 import { LoggerFunction, makeCustomLoggers } from '../../shared/logging';
 import { humanSize } from '../../shared/number-utils';
 import { si } from '../../shared/string-utils';
-import { EmailContent, htmlBody } from '../email-sending/email-content';
+import { EmailContent, escapeHtml, htmlBody } from '../email-sending/email-content';
 import { sendEmail } from '../email-sending/email-delivery';
 import { FullEmailAddress } from '../email-sending/emails';
 import { markFeedCheckFailureAlerted, recordFeedCheckFailure, resetFeedCheckFailures } from './feed-check-failures';
@@ -176,12 +176,12 @@ export function makeAlertEmailContent(feed: Feed): EmailContent {
       <p>Hello,</p>
 
       <p>
-        We had trouble checking your <b>${feed.displayName}</b> feed
+        We had trouble checking your <b>${escapeHtml(feed.displayName)}</b> feed
         and could not retrieve new items. We’ll keep trying automatically.
       </p>
 
       <p>Just for reference, this is the feed URL:</p>
-      <pre>${feed.url.toString()}</pre>
+      <pre>${escapeHtml(feed.url.toString())}</pre>
 
       <p>Have a nice day.</p>
     `),

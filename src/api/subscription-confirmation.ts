@@ -1,4 +1,4 @@
-import { EmailContent, htmlBody } from '../app/email-sending/email-content';
+import { EmailContent, escapeHtml, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import { loadEmailAddresses, storeEmails } from '../app/email-sending/emails';
 import { AccountId, isAccountNotFound } from '../domain/account';
@@ -152,7 +152,7 @@ export function makeNewSubscriberEmailContent(
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
-      <p>${subscriber.value} has just subscribed to <b>${feedDisplayName}</b>.</p>
+      <p>${escapeHtml(subscriber.value)} has just subscribed to <b>${escapeHtml(feedDisplayName)}</b>.</p>
 
       <p>You can see all your <a href="${manageSubscribersUrl.toString()}">subscribers</a>
       or turn these notifications off in the <a href="${feedManageUrl.toString()}">settings</a>.</p>

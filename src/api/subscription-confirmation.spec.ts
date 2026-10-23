@@ -97,4 +97,14 @@ describe(makeNewSubscriberEmailContent.name, () => {
     expect(emailContent.htmlBody).to.include(si`<a href="${subscribersUrl.toString()}">subscribers</a>`);
     expect(emailContent.htmlBody).to.include(si`<a href="${feedUrl.toString()}">settings</a>`);
   });
+
+  it('escapes the feed name', () => {
+    const subscriber = makeTestEmailAddress('subscriber@test.com');
+    const subscribersUrl = new URL('https://test.com/user/manage-feed-subscribers.html?id=test-feed-id');
+    const feedUrl = new URL('https://test.com/user/manage-feed.html?id=test-feed-id&idChanged=false');
+
+    const emailContent = makeNewSubscriberEmailContent('<b>x</b>', subscriber, subscribersUrl, feedUrl);
+
+    expect(emailContent.htmlBody).to.include('<b>&lt;b&gt;x&lt;/b&gt;</b>');
+  });
 });

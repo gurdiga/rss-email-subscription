@@ -53,6 +53,16 @@ describe('subscription', () => {
       expect(emailContent.htmlBody).to.include(feedDisplayName);
       expect(emailContent.htmlBody).to.include(listEmailAddress.value);
     });
+
+    it('escapes the feed name so that it cannot inject markup', () => {
+      const confirmationUrl = new URL('https://test.com/confirm');
+      const listEmailAddress = makeTestEmailAddress('list-address@test.com');
+
+      const emailContent = makeSubscriptionConfirmationEmailContent('<b>x</b>', confirmationUrl, listEmailAddress);
+
+      expect(emailContent.htmlBody).to.include('&lt;b&gt;x&lt;/b&gt;');
+      expect(emailContent.htmlBody).not.to.include('<b>x</b>');
+    });
   });
 
   describe(makeEmailConfirmationUrl.name, () => {

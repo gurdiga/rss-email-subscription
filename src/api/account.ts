@@ -1,4 +1,4 @@
-import { htmlBody } from '../app/email-sending/email-content';
+import { escapeHtml, htmlBody } from '../app/email-sending/email-content';
 import { sendEmail } from '../app/email-sending/email-delivery';
 import {
   AccountId,
@@ -218,7 +218,7 @@ async function sendEmailChangeInformationEmail(
       <p>Hello,</p>
 
       <p>Please note that the account email at FeedSubscription.com
-      has been changed from <b>${oldEmail.value}</b> to <b>${newEmail.value}</b>.</p>
+      has been changed from <b>${escapeHtml(oldEmail.value)}</b> to <b>${escapeHtml(newEmail.value)}</b>.</p>
 
       <p>Have a nice day.</p>
     `),

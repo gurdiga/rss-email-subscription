@@ -145,6 +145,15 @@ export function htmlBody(contents: string): string {
   </div>`;
 }
 
+export function escapeHtml(text: string): string {
+  return text
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
 function makeReadMoreLink(url: URL): string {
   return si`<p><a href="${url.toString()}">Read more on the blog</a></p>`;
 }

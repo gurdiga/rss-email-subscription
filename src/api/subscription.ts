@@ -3,7 +3,7 @@ import { makeEmailAddress } from '../domain/email-address-making';
 import { makeHashedEmail, makeFullEmailAddress } from '../app/email-sending/emails';
 import { EmailAddress, HashedEmail } from '../domain/email-address';
 import { storeEmails, addEmail } from '../app/email-sending/emails';
-import { EmailContent, htmlBody } from '../app/email-sending/email-content';
+import { EmailContent, escapeHtml, htmlBody } from '../app/email-sending/email-content';
 import { Feed } from '../domain/feed';
 import { FeedId, makeFeedId } from '../domain/feed-id';
 import { findFeedAccountId, loadFeed, isFeedNotFound } from '../domain/feed-storage';
@@ -174,7 +174,7 @@ export function makeSubscriptionConfirmationEmailContent(
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
-      <p>Please confirm subscription to <b>${feedDisplayName}</b> by clicking the link below:</p>
+      <p>Please confirm subscription to <b>${escapeHtml(feedDisplayName)}</b> by clicking the link below:</p>
 
       <p><a href="${confirmationLinkUrl.toString()}">${confirmationLinkUrl.toString()}</a></p>
 

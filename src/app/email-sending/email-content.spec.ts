@@ -9,7 +9,7 @@ import {
   makeTestEmailAddress,
   makeTestFeedId,
 } from '../../shared/test-utils';
-import { extractExcerpt, makeEmailContent, makeUnsubscribeUrl, preprocessContent } from './email-content';
+import { escapeHtml, extractExcerpt, makeEmailContent, makeUnsubscribeUrl, preprocessContent } from './email-content';
 import { makeFullEmailAddress } from './emails';
 
 const feedId = makeTestFeedId();
@@ -144,5 +144,13 @@ describe(extractExcerpt.name, () => {
       '<p>The words <b>one two</b></p>'
     );
     expect(extractExcerpt('<a><b><c><d>1</d><s>3 more words</s>', 2)).to.equal('<a><b><c><d>1</d><s>3</s></c></b></a>');
+  });
+});
+
+describe(escapeHtml.name, () => {
+  it('escapes the characters that can open a tag, an attribute, or an entity', () => {
+    expect(escapeHtml('</b><a href="x" title=\'y\'>Tom & Jerry</a>')).to.equal(
+      '&lt;/b&gt;&lt;a href=&quot;x&quot; title=&#39;y&#39;&gt;Tom &amp; Jerry&lt;/a&gt;'
+    );
   });
 });
