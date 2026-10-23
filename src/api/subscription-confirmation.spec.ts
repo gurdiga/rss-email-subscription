@@ -84,15 +84,17 @@ describe(notifyFeedOwner.name, () => {
 });
 
 describe(makeNewSubscriberEmailContent.name, () => {
-  it('names the subscriber and the feed, and links to the subscriber list', () => {
+  it('names the subscriber and the feed, and links to the subscriber list and the feed', () => {
     const subscriber = makeTestEmailAddress('subscriber@test.com');
-    const url = new URL('https://test.com/user/manage-feed-subscribers.html?id=test-feed-id');
+    const subscribersUrl = new URL('https://test.com/user/manage-feed-subscribers.html?id=test-feed-id');
+    const feedUrl = new URL('https://test.com/user/manage-feed.html?id=test-feed-id&idChanged=false');
 
-    const emailContent = makeNewSubscriberEmailContent('Just Add Light and Stir', subscriber, url);
+    const emailContent = makeNewSubscriberEmailContent('Just Add Light and Stir', subscriber, subscribersUrl, feedUrl);
 
     expect(emailContent.subject).to.equal('New subscriber to Just Add Light and Stir');
     expect(emailContent.htmlBody).to.include(subscriber.value);
     expect(emailContent.htmlBody).to.include('<b>Just Add Light and Stir</b>');
-    expect(emailContent.htmlBody).to.include(si`<a href="${url.toString()}">`);
+    expect(emailContent.htmlBody).to.include(si`<a href="${subscribersUrl.toString()}">`);
+    expect(emailContent.htmlBody).to.include(si`<a href="${feedUrl.toString()}">feed settings</a>`);
   });
 });

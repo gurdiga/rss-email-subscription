@@ -7,7 +7,7 @@ import { demoAccountEmail } from '../domain/demo-account';
 import { EmailAddress } from '../domain/email-address';
 import { FeedId } from '../domain/feed-id';
 import { findFeedAccountId, isFeedNotFound, loadFeed } from '../domain/feed-storage';
-import { ManageFeedSubscribersParams, PagePath, makePagePathWithParams } from '../domain/page-path';
+import { FeedManageParams, ManageFeedSubscribersParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { SubscriptionConfirmationRequest, makeSubscriptionId } from '../domain/subscription-id';
 import { makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { isErr, makeValues } from '../shared/lang';
@@ -128,7 +128,8 @@ export async function notifyFeedOwner(
   }
 
   const manageSubscribersUrl = makeManageSubscribersUrl(feedId, env.DOMAIN_NAME);
-  const emailContent = makeNewSubscriberEmailContent(feed.displayName, subscriber, manageSubscribersUrl);
+  const feedManageUrl = makeFeedManageUrl(feedId, env.DOMAIN_NAME);
+  const emailContent = makeNewSubscriberEmailContent(feed.displayName, subscriber, manageSubscribersUrl, feedManageUrl);
   const { fullEmailAddress } = settings;
   const result = await sendEmailFn(fullEmailAddress, account.email, fullEmailAddress.emailAddress, emailContent, env);
 
@@ -143,7 +144,8 @@ export async function notifyFeedOwner(
 export function makeNewSubscriberEmailContent(
   feedDisplayName: string,
   subscriber: EmailAddress,
-  manageSubscribersUrl: URL
+  manageSubscribersUrl: URL,
+  feedManageUrl: URL
 ): EmailContent {
   return {
     subject: si`New subscriber to ${feedDisplayName}`,
@@ -155,7 +157,7 @@ export function makeNewSubscriberEmailContent(
       <p>You can see all your subscribers at
       <a href="${manageSubscribersUrl.toString()}">${manageSubscribersUrl.toString()}</a>.</p>
 
-      <p>You can turn these notifications off in the feed settings.</p>
+      <p>You can turn these notifications off in the <a href="${feedManageUrl.toString()}">feed settings</a>.</p>
 
       <p>Have a nice day.</p>
     `),
@@ -165,6 +167,15 @@ export function makeNewSubscriberEmailContent(
 function makeManageSubscribersUrl(feedId: FeedId, domainName: string): URL {
   const path = makePagePathWithParams<ManageFeedSubscribersParams>(PagePath.manageFeedSubscribers, {
     id: feedId.value,
+  });
+
+  return new URL(path, si`https://${domainName}`);
+}
+
+function makeFeedManageUrl(feedId: FeedId, domainName: string): URL {
+  const path = makePagePathWithParams<FeedManageParams>(PagePath.feedManage, {
+    id: feedId.value,
+    idChanged: 'false',
   });
 
   return new URL(path, si`https://${domainName}`);
