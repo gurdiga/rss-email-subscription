@@ -983,7 +983,7 @@ sent-count-last-week: rsync-logs
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add'
 
-# cron @monthly
+# cron @weekly
 docker-prune:
 	@docker system prune --all --force |
 	cat <(
