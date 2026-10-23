@@ -235,8 +235,6 @@ describe(requestAccountEmailChange.name, () => {
   it('refuses a demo session before mailing the new address', async () => {
     const app = makeTestApp();
     const demoAccountId = getAccountIdByEmail(makeTestEmailAddress(demoAccountEmail), hashingSalt);
-    storeAccount(app.storage, demoAccountId, makeTestAccount({ email: demoAccountEmail }));
-
     const reqSession = makeReqSession(demoAccountId.value, demoAccountEmail);
     const response = await requestAccountEmailChange(
       'req',

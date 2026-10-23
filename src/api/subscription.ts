@@ -152,8 +152,13 @@ function processInput(input: Input, storage: AppStorage): ProcessedInput | Input
 
   const account = loadAccount(storage, accountId);
 
-  if (isErr(account) || isAccountNotFound(account)) {
-    logError(si`Failed to ${loadAccount.name}`, { feedId: feedId.value });
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, feedId: feedId.value });
+    return makeAppError('Failed to read feed settings');
+  }
+
+  if (isAccountNotFound(account)) {
+    logError('Feed owner account not found', { feedId: feedId.value });
     return makeAppError('Failed to read feed settings');
   }
 

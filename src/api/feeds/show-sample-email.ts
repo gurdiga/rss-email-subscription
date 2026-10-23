@@ -74,16 +74,6 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
     return makeAppError();
   }
 
-  const feedInfo = await getFeedInfo(feed.url);
-
-  if (isErr(feedInfo)) {
-    logError(si`Failed to ${getFeedInfo.name}: ${feedInfo.reason}`, {
-      feedId: feedId.value,
-      feedUrl: feed.url.toString(),
-    });
-    return makeAppError('Failed to get latest blog post');
-  }
-
   // The demo password is public and a demo feed's replyTo is whatever its
   // creator typed, so a demo session gets the same fixed preview as an
   // anonymous visitor: nothing it wrote may reach that inbox.
@@ -97,8 +87,19 @@ export const showSampleEmail: AppRequestHandler = async function showSampleEmail
     }
 
     return makeSuccess(
-      si`Please check ${feed.replyTo.value}.` + ' We’ve sent you a sample of the email your subscribers will get.'
+      si`Please check ${feed.replyTo.value}.` +
+        ' We’ve sent you a sample email. Demo feeds get a fixed preview, not their latest post.'
     );
+  }
+
+  const feedInfo = await getFeedInfo(feed.url);
+
+  if (isErr(feedInfo)) {
+    logError(si`Failed to ${getFeedInfo.name}: ${feedInfo.reason}`, {
+      feedId: feedId.value,
+      feedUrl: feed.url.toString(),
+    });
+    return makeAppError('Failed to get latest blog post');
   }
 
   const feedEmailAddress = makeEmailAddressFromFeedId(feedId, env.DOMAIN_NAME);
