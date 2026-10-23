@@ -20,15 +20,16 @@ export const allowedCharacters = '[a-z0-9-_]';
 // any input — no backtracking blowup on pathological strings.
 const localPartRe = new RegExp(si`^${allowedCharacters}+((\\+|\\.)${allowedCharacters}+)*$`, 'i');
 
-// Checked on the whole input, before the parts are split and trimmed below,
-// so that whitespace around the @ can't slip through.
+// The allowlists below exclude these too; this check is kept for the reason
+// it names: an address-list parser could split one input into several.
 const recipientListSeparatorsRe = /[,;<>\s]/;
 
 // Hostname rules, so that no address can carry characters like & or # that
-// mean something in HTML. This function also re-validates addresses on file,
-// and parseEmails silently drops the ones that fail, so this was checked
-// against all stored addresses before tightening. Unicode domains are
-// rejected rather than converted to their xn-- form, by decision.
+// mean something in HTML. Stored addresses (subscribers, account emails,
+// feed replyTo) go through this function on every load, and the ones that
+// fail are dropped, and for subscribers deleted on the next write, so any
+// further tightening must be checked against prod data first. Unicode
+// domains are rejected rather than converted to their xn-- form, by decision.
 const domainLabelRe = /^(?!-)[a-z0-9-]{1,63}(?<!-)$/;
 const topLevelDomainRe = /^([a-z]{2,}|xn--[a-z0-9-]+)$/;
 
@@ -61,13 +62,6 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
 
   const err = makeErr(si`Email is syntactically incorrect: "${emailString}"`, field);
 
-  const keyCharacters = ['.', '@'];
-  const containsKeyCharacters = keyCharacters.every((c) => email.includes(c));
-
-  if (!containsKeyCharacters) {
-    return err;
-  }
-
   if (recipientListSeparatorsRe.test(email)) {
     return err;
   }
@@ -82,7 +76,7 @@ export function makeEmailAddress(input: unknown, field = 'email'): Result<EmailA
     return err;
   }
 
-  const [localPart = '', domain = ''] = parts.map((s) => s.trim());
+  const [localPart = '', domain = ''] = parts;
   const doesLocalPartLookReasonable = localPart.length > 0 && localPartRe.test(localPart);
 
   if (!doesLocalPartLookReasonable) {
