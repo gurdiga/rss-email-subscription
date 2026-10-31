@@ -41,7 +41,7 @@ Replace `<targets>` with the services to rebuild before restarting.
 | certbot      | `certbot`  |                                |
 | logger       | `logger`   |                                |
 | website      | `website`  |                                |
-| smtp-in      | `smtp-in`  | Drain first, see below         |
+| smtp-in      | `smtp-in`  | Drains itself, see below       |
 | smtp-out     | `smtp-out` |                                |
 | postilion    | `postilion`|                                |
 | resolver     | `resolver` |                                |
@@ -64,14 +64,16 @@ The target exits by itself once the input is drained.
 
 ## Deploying smtp-in
 
-Its `/var/spool/postfix` is deliberately not on a volume: mail normally spends about a second there, and a volume would make the MX crash-loop if a rebuild ever shifted the postfix UID. So recreating the container deletes anything queued, and senders that got `250` will not retry. Build first, then stop it accepting and drain before `make start`. Senders retry on a refused connection, and the new container starts without the setting.
+Its `/var/spool/postfix` is deliberately not on a volume: mail normally spends about a second there, and a volume would make the MX crash-loop if a rebuild ever shifted the postfix UID. So recreating the container deletes anything queued, and senders that got `250` will not retry.
+
+The entrypoint handles this on stop: it closes port 25, flushes, waits up to 60 seconds for the queue to empty, then stops. Senders retry on a refused connection. A plain `make smtp-in start` is all a deploy needs, and the wait is normally a couple of seconds.
+
+Mail still queued after the limit goes with the container, and its queue IDs are logged. Gmail’s `421-4.7.28` rate limit can hold spam to `vlad@feedsubscription.com` for days, so that is the usual case and is fine. Before deploying, look at `docker exec smtp-in postqueue -p`. If real mail is stuck there, deal with it first. Afterwards, check for leftovers:
 
 ```bash
 ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
-  'docker exec smtp-in sh -c "postconf -e \"master_service_disable = inet\" && postfix reload && postqueue -f"'
+  'grep -A10 "Stopping with mail still queued" src/rss-email-subscription/.tmp/logs/feedsubscription/smtp-in.log | tail -15'
 ```
-
-Wait for `docker exec smtp-in postqueue -p` to report an empty queue, then run `make start`. If it will not empty, look at what is stuck. Gmail’s `421-4.7.28` rate limit can hold spam to `vlad@feedsubscription.com` for days, so if that is all that remains, run `make start` anyway. Otherwise set `master_service_disable =` and reload to reopen port 25, and decide what to do with the queued mail before going further.
 
 ## Examples
 

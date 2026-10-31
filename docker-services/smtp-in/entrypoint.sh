@@ -5,6 +5,7 @@ log() { printf '[smtp-in] %s\n' "$*" >&2; }
 fail() { log "ERROR: $*"; exit 1; }
 
 DOMAIN="feedsubscription.com"
+DRAIN_LIMIT_SECONDS=60
 
 apply_postfix_overrides() {
   local override="/etc/postfix/main.cf.override"
@@ -64,8 +65,50 @@ configure_postsrsd() {
   sleep 0.2 # brief wait to let postsrsd bind sockets
 }
 
+# The queue isn’t on a volume, so recreating the container deletes it. This
+# shell stays PID 1 to take docker stop’s SIGTERM, which would otherwise go to
+# master, and drains first. stop_grace_period in docker-compose.yml has to
+# outlast DRAIN_LIMIT_SECONDS plus the few seconds of postfix stop.
+run_postfix() {
+  trap drain_and_stop TERM
+  postfix start-fg &
+  local master=$!
+
+  # The trap interrupts the first wait, and master is still stopping then.
+  wait "$master" || true
+  wait "$master" || true
+}
+
+drain_and_stop() {
+  log "Stopping: closing port 25 and draining"
+  postconf -e 'master_service_disable = inet'
+  postfix reload
+  postqueue -f
+
+  for _ in $(seq 1 "$DRAIN_LIMIT_SECONDS"); do
+    queue_is_empty && break
+    sleep 1
+  done
+
+  # Mail held back by a Gmail rate limit won’t drain, and that must not block
+  # a deploy, so it’s left to go with the container. This names what was lost.
+  if ! queue_is_empty; then
+    log "Stopping with mail still queued:"
+    postqueue -p >&2
+  fi
+
+  postfix stop
+}
+
+queue_is_empty() {
+  [[ "$(postqueue -p)" == *"queue is empty"* ]]
+}
+
 main() {
   apply_postfix_overrides
+  # A drain writes this to main.cf, which survives docker restart, and port 25
+  # would come back closed.
+  postconf -e 'master_service_disable ='
   install -d /var/spool/postfix/etc/postfix/sasl
   cp -f /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
   cp -f /etc/hosts /var/spool/postfix/etc/hosts
@@ -79,8 +122,8 @@ main() {
 
   configure_postsrsd
 
-  log "Starting postfix in foreground"
-  exec postfix start-fg
+  log "Starting postfix"
+  run_postfix
 }
 
 main "$@"

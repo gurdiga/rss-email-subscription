@@ -72,6 +72,8 @@ services:
     image: smtp-in
     ports: ['25:25']
     restart: always
+    # Time for the entrypoint to drain the queue on stop, see run_postfix.
+    stop_grace_period: 90s
     volumes:
       - ./.tmp/certbot/conf/live/feedsubscription.com/fullchain.pem:/etc/postfix/cert/smtp.cert:ro
       - ./.tmp/certbot/conf/live/feedsubscription.com/privkey.pem:/etc/postfix/cert/smtp.key:ro
