@@ -9,9 +9,9 @@ RUN apt-get update \
     # Core mail services
     'postfix=3.7.11-0+deb12u1' \
     'opendkim=2.11.0~beta2-8+deb12u1' \
-    'ca-certificates=20230311+deb12u1' \
+    'ca-certificates=20250419~deb12u2' \
     # Utilities
-    'bind9-dnsutils=1:9.18.49-1~deb12u2' \
+    'bind9-dnsutils=1:9.18.49-1~deb12u3' \
     'procps=2:4.0.2-3' \
     'net-tools=2.10-0.1+deb12u2' \
  && rm -rf /var/lib/apt/lists/*
