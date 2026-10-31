@@ -41,8 +41,9 @@ Replace `<targets>` with the services to rebuild before restarting.
 | certbot      | `certbot`  |                                |
 | logger       | `logger`   |                                |
 | website      | `website`  |                                |
-| smtp-in      | `smtp-in`  |                                |
+| smtp-in      | `smtp-in`  | Drain first, see below         |
 | smtp-out     | `smtp-out` |                                |
+| postilion    | `postilion`|                                |
 | resolver     | `resolver` |                                |
 
 There is no delmon target: delmon runs the app image with a different command,
@@ -58,6 +59,19 @@ was down are never seen. After any app deploy, replay them:
 ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
   'cd ~/src/rss-email-subscription && make delmon-catch-up'
 ```
+
+The target exits by itself once the input is drained.
+
+## Deploying smtp-in
+
+Its `/var/spool/postfix` is not on a volume, so recreating the container deletes anything queued, and senders that got `250` will not retry. Until `HANDOFF_SMTP_IN_QUEUE_VOLUME.md` is done, build first, then stop it accepting and drain before `make start`. Senders retry on a refused connection, and the new container starts without the setting.
+
+```bash
+ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
+  'docker exec smtp-in sh -c "postconf -e \"master_service_disable = inet\" && postfix reload && postqueue -f"'
+```
+
+Wait for `docker exec smtp-in postqueue -p` to report an empty queue, then run `make start`. If it will not empty, set `master_service_disable =` and reload to reopen port 25, and decide what to do with the queued mail before going further.
 
 ## Examples
 
