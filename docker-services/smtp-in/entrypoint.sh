@@ -64,20 +64,6 @@ configure_postsrsd() {
   sleep 0.2 # brief wait to let postsrsd bind sockets
 }
 
-start_postgrey() {
-  local opts=(
-    "--inet=127.0.0.1:10023"
-    "--delay=300"
-    "--max-age=35"
-    "--auto-whitelist-clients=5"
-    "--pidfile=/var/run/postgrey/postgrey.pid"
-    "--dbdir=/var/lib/postgrey"
-  )
-  log "Starting postgrey ${opts[*]}"
-  postgrey "${opts[@]}" &
-  sleep 0.2 # brief wait to let postgrey bind socket
-}
-
 main() {
   apply_postfix_overrides
   install -d /var/spool/postfix/etc
@@ -88,7 +74,6 @@ main() {
   configure_sasl
   configure_tls
 
-  start_postgrey
   configure_postsrsd
 
   log "Starting postfix in foreground"

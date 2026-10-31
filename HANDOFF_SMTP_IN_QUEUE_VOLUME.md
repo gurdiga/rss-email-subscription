@@ -18,13 +18,9 @@ Add `./.tmp/smtp-in-queue:/var/spool/postfix` to the smtp-in service in `docker-
 
 - **A secret lands on the host.** `configure_sasl` in `docker-services/smtp-in/entrypoint.sh` copies `/etc/sasldb2` to `/var/spool/postfix/etc/sasldb2`, and sasldb stores passwords in plaintext. On a volume, that file sits under `.tmp/` on the host. postilion does the same today, so look at how it is handled there. Find out whether `make backup` and `make rsync-data` would pick up the new directory, and exclude it if so.
 - **First start on an empty directory.** A bind mount hides the spool layout from the image. Compare with smtp-out and postilion to confirm Postfix builds it itself at start, including ownership and modes. Check that the `postfix` user and `postdrop` group IDs are right for files that outlive a container, since they could change between image builds.
-- **Hidden image contents.** The Dockerfile creates `/var/spool/postfix/postgrey`, which the mount will hide. The entrypoint runs postgrey on `--inet=127.0.0.1:10023`, so that directory looks unused. Confirm before removing it. The entrypoint also writes `resolv.conf`, `hosts` and `nsswitch.conf` into the spool at every start, which is what keeps those current.
+- **Hidden image contents.** The entrypoint writes `resolv.conf`, `hosts` and `nsswitch.conf` into the spool at every start, which is what keeps those current.
 - **Stale state after an unclean stop.** Confirm `postfix start-fg` starts cleanly with a leftover `pid/master.pid` on the volume.
 - **The switch itself.** The first deploy with the volume starts from an empty directory, so the old container's queue is still lost unless it is drained first. Use the same drain as any smtp-in deploy: `postconf -e 'master_service_disable = inet'`, `postfix reload`, `postqueue -f`, wait until `postqueue -p` is empty, then `make start`.
-
-## Related, your call
-
-postgrey's database in `/var/lib/postgrey` is also not on a volume, so every recreate clears the greylist and known senders get delayed again. It is a similar one-line change, but a different kind of data. Decide whether it belongs here.
 
 ## Done means
 

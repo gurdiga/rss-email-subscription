@@ -7,7 +7,6 @@ RUN apt-get update \
  && apt-get install -y --no-install-recommends \
     'postfix=3.7.11-0+deb12u1' \
     'postfix-pcre=3.7.11-0+deb12u1' \
-    'postgrey=1.37-2' \
     'postsrsd=1.10-2+b1' \
     'sasl2-bin=2.1.28+dfsg-10+deb12u1' \
     'libsasl2-modules=2.1.28+dfsg-10+deb12u1' \
@@ -17,11 +16,7 @@ RUN apt-get update \
     'net-tools=2.10-0.1+deb12u2' \
  && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p \
-    /etc/sasl2 \
-    /var/spool/postfix/postgrey \
-    /var/lib/postgrey \
-    /var/run/postgrey
+RUN mkdir -p /etc/sasl2
 
 COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
 COPY etc/postfix/virtual /etc/postfix/virtual

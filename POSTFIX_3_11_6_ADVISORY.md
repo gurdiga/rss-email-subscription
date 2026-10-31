@@ -34,7 +34,7 @@ All three listeners advertise it. EHLO probe from inside each container:
 250 CHUNKING
 ```
 
-smtp-in is the MX and accepts RCPT for `feedsubscription.com`, `gurdiga.com`, and `sandradodd.com`, so any stranger can get past RCPT and then send BDAT. Postgrey defers first-contact triplets, which costs a prober one 300s retry — it is not a barrier to a persistent attacker.
+smtp-in is the MX and accepts RCPT for `feedsubscription.com`, `gurdiga.com`, and `sandradodd.com`, so any stranger can get past RCPT and then send BDAT.
 
 Severity is modest. Both bugs kill or bloat a single `smtpd` child that `master` respawns. The memory-exhaustion one is the only item with reach beyond the connection: the containers run without memory limits, so an unbounded command history pressures the droplet itself. That is the reason to act on this rather than wait for Debian.
 
