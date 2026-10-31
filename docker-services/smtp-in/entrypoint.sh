@@ -66,10 +66,13 @@ configure_postsrsd() {
 
 main() {
   apply_postfix_overrides
-  install -d /var/spool/postfix/etc
+  install -d /var/spool/postfix/etc/postfix/sasl
   cp -f /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
   cp -f /etc/hosts /var/spool/postfix/etc/hosts
   cp -f /etc/nsswitch.conf /var/spool/postfix/etc/nsswitch.conf
+  # Chrooted smtpd reads the SASL config from inside the chroot; without
+  # this copy mech_list is ignored and all mechanisms get advertised.
+  cp -f /etc/postfix/sasl/smtpd.conf /var/spool/postfix/etc/postfix/sasl/smtpd.conf
 
   configure_sasl
   configure_tls

@@ -16,9 +16,7 @@ RUN apt-get update \
     'net-tools=2.10-0.1+deb12u2' \
  && rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p /etc/sasl2
-
-COPY etc/sasl2/smtpd.conf /etc/sasl2/smtpd.conf
+COPY etc/postfix/sasl/smtpd.conf /etc/postfix/sasl/smtpd.conf
 COPY etc/postfix/virtual /etc/postfix/virtual
 COPY etc/postfix/main.cf.override /etc/postfix/main.cf.override
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
