@@ -64,14 +64,14 @@ The target exits by itself once the input is drained.
 
 ## Deploying smtp-in
 
-Its `/var/spool/postfix` is not on a volume, so recreating the container deletes anything queued, and senders that got `250` will not retry. Until `HANDOFF_SMTP_IN_QUEUE_VOLUME.md` is done, build first, then stop it accepting and drain before `make start`. Senders retry on a refused connection, and the new container starts without the setting.
+Its `/var/spool/postfix` is deliberately not on a volume: mail normally spends about a second there, and a volume would make the MX crash-loop if a rebuild ever shifted the postfix UID. So recreating the container deletes anything queued, and senders that got `250` will not retry. Build first, then stop it accepting and drain before `make start`. Senders retry on a refused connection, and the new container starts without the setting.
 
 ```bash
 ssh -S ~/.ssh/control-feedsubscription feedsubscription.com \
   'docker exec smtp-in sh -c "postconf -e \"master_service_disable = inet\" && postfix reload && postqueue -f"'
 ```
 
-Wait for `docker exec smtp-in postqueue -p` to report an empty queue, then run `make start`. If it will not empty, set `master_service_disable =` and reload to reopen port 25, and decide what to do with the queued mail before going further.
+Wait for `docker exec smtp-in postqueue -p` to report an empty queue, then run `make start`. If it will not empty, look at what is stuck. Gmail’s `421-4.7.28` rate limit can hold spam to `vlad@feedsubscription.com` for days, so if that is all that remains, run `make start` anyway. Otherwise set `master_service_disable =` and reload to reopen port 25, and decide what to do with the queued mail before going further.
 
 ## Examples
 

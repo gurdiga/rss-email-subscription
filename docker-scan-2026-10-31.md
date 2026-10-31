@@ -53,7 +53,7 @@ The unbound findings are `libunbound8`, a dependency of OpenDKIM. See `HANDOFF_U
 
 ## Deploy
 
-Deployed in two rounds, mail images last and one at a time. smtp-in was drained first, because its queue is not on a volume; see `HANDOFF_SMTP_IN_QUEUE_VOLUME.md`. A feed smoke test sent 5 of 5, with `dkim=pass`, `spf=pass` and `dmarc=pass` at Gmail.
+Deployed in two rounds, mail images last and one at a time. smtp-in was drained first, because its queue is not on a volume. A feed smoke test sent 5 of 5, with `dkim=pass`, `spf=pass` and `dmarc=pass` at Gmail.
 
 A rollback archive of the previous mail images is on prod at `.tmp/rollback-mail-images-2026-10-31.tar.gz`. Delete it after 2026-11-07.
 
