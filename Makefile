@@ -983,7 +983,12 @@ sent-count-last-week: rsync-logs
 	cut -d ' ' -f 4- | # skip timestamps and stuff to get to the JSON record
 	jq -s 'map(.data.report.sent) | add'
 
-# cron @weekly
+# cron 0 3 * * 0
+#
+# Kept clear of the @weekly restart-smtp-in and restart-postilion: --all
+# removes a container caught stopped mid-restart, then its now-unused
+# image, and the next make start fails for every service. On 2026-11-01
+# that took postilion down for five days.
 docker-prune:
 	@docker system prune --all --force |
 	cat <(
