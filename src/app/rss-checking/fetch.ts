@@ -32,17 +32,18 @@ export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}):
   const abortControllerTimeoutId = setTimeout(() => abortController.abort(), options.timeoutMs);
   const clearAbortControllerTimeout = () => clearTimeout(abortControllerTimeoutId);
 
-  // Imitate a local Chrome browser to improve compatibility with
-  // servers that gate responses based on User-Agent.
-  const chromeLikeUserAgent =
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+  // Cloudflare lets a verified bot past its challenges only when the
+  // User-Agent matches the registered one, so this must stay in step with the
+  // Cloudflare listing and feedsubscription.com/bot.html. A Chrome-like string
+  // gains nothing there: the challenge tells it apart from a real browser.
+  const userAgent = 'FeedSubscription/1.0 (+https://feedsubscription.com/bot.html)';
 
   // The dispatcher carries the SSRF guard, and fetch re-enters it on every
   // redirect hop, which is what keeps a 302 from reaching an internal address.
   const request: RequestInit & { dispatcher: Dispatcher } = {
     redirect: 'follow',
     signal: abortController.signal,
-    headers: { 'user-agent': chromeLikeUserAgent },
+    headers: { 'user-agent': userAgent },
     dispatcher: makeGuardedDispatcher(options.isAddressAllowed),
   };
 
