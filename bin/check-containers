@@ -2,6 +2,7 @@
 
 # cron */5 * * * *
 # cron @reboot (CHECK_CONTAINERS_FORCE=1, after `make start`)
+# cron 0 7 * * * (CHECK_CONTAINERS_REMIND=1)
 #
 # Reports containers that should be running and are not, or that run but
 # fail their healthcheck. Exists because every other alerting path on
@@ -12,6 +13,10 @@
 # The @reboot run forces a report of the first sample: a boot mail is a
 # confirmation, not an anomaly report, so it must arrive whether or not
 # anything is wrong, and must not wait for a second poll to confirm.
+#
+# The morning run re-sends a standing outage that was already reported.
+# Mailing only on change means one missed alert is the whole of the
+# warning: on 2026-11-01 that left postilion down for five days.
 #
 # No set -e, deliberately. Everywhere else an early exit is a safe
 # default; here it is indistinguishable from an all-clear, so every step
@@ -78,8 +83,12 @@ main() {
   local last
   last=$(cat "$reported")
 
+  # An unchanged answer is news only to the morning run, and only while
+  # something is down: recovery is never repeated.
+  local reminder=""
   if [ -z "$force" ] && [ "$status" = "$last" ]; then
-    exit 0
+    [ -n "${CHECK_CONTAINERS_REMIND:-}" ] && [ -n "$status" ] || exit 0
+    reminder=1
   fi
 
   local subject body
@@ -88,6 +97,7 @@ main() {
     subject="containers NOT RUNNING"
     grep -qv ' (unhealthy)$' <<<"$status" || subject="containers UNHEALTHY"
     [ -n "$force" ] && subject="boot check: $subject"
+    [ -n "$reminder" ] && subject="still: $subject"
 
     # In a substitution rather than in the pipeline below, because this
     # fails exactly when dockerd is down — when the mail matters most —

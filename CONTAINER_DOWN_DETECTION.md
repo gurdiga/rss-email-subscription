@@ -92,15 +92,18 @@ Prod was fully down from 19:47:28 to 19:49:19 UTC — 1m51s — until the contai
 
 ## What the check does
 
-[bin/check-containers](bin/check-containers), from cron every five minutes:
+[bin/check-containers](bin/check-containers), from cron every five minutes, plus a morning reminder run:
 
 ```
 */5 * * * * bin/check-containers
+0 7 * * * CHECK_CONTAINERS_REMIND=1 bin/check-containers
 ```
 
 The whole of it is `comm -23` between `docker compose config --services` and `docker compose ps --services --status running`, both sorted, project pinned to `res`, plus the running services whose `{{.Health}}` is `unhealthy` (added 2026-10-21: a resolver answering SERVFAIL for everything would stay up, with every other container up behind it). `starting` is not reported, since every deploy passes through it. It runs on the host rather than in a container, because a checker that shares fate with the stack it checks is the ssmtp mistake again — which is what [bin/notify](bin/notify) was written to undo, and why notify is the sink.
 
 It mails only when that answer *changes*, which is what makes the recovery mail fall out of the same mechanism that suppresses repeats. Bad news waits for one confirming sample, so a `docker restart` landing between two polls does not page. That sample is keyed on the healthy-or-not verdict rather than on the missing set: a set that keeps changing — one container flapping while another stays down — would never settle, and the standing failure would never be reported at all.
+
+Mailing only on change made one missed mail the whole of the warning: on 2026-11-01 the weekly `docker-prune` deleted postilion mid-restart, the single alert went unread, and it stayed down for five days. So the 07:00 UTC run re-sends a standing outage that was already delivered, as `still: containers NOT RUNNING`, every morning until it changes. Recovery is not repeated. A cron-timed run rather than a timestamp in the state directory, so the reminder arrives when mail gets read and the state stays the two files it was.
 
 The original sketch called for a sentinel file so the check stays quiet during intentional downtime. Decided against. The two mails a `make stop` produces, one down and one recovered, are the only routine evidence that the checker is alive — which matters here more than usual, because something edge-triggered on change looks exactly the same whether it is running or not, and a mistyped crontab line would be as silent as the outage it was meant to catch. It also removes the sentinel’s own hazard: every future build target would have had to remember to touch it, and the one that forgot would have made the check lie.
 
