@@ -22,6 +22,12 @@ const defaultFetchOptions: FetchOptions = {
   isAddressAllowed: isPublicIpAddress,
 };
 
+// For the paths that fetch on behalf of whoever is calling the API. The cap
+// is applied last so that no caller-supplied option can raise it.
+export function makeCappedFetch(maxResponseBytes: number): FetchFn {
+  return (url, inputOptions = {}) => fetch(url, { ...inputOptions, maxResponseBytes });
+}
+
 export async function fetch(url: URL, inputOptions: Partial<FetchOptions> = {}): Promise<Response> {
   const options: FetchOptions = {
     ...defaultFetchOptions,

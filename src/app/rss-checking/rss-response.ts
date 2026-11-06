@@ -2,6 +2,11 @@ import { makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { discardResponseBody, fetch, FetchFn } from './fetch';
 
+// For feeds fetched while someone waits on the API, as opposed to the hourly
+// cron check, which keeps the general 10 MiB. The largest approved feed was
+// about 400 KB in November 2026. A feed truncated at the cap fails to parse.
+export const interactiveFeedMaxBytes = 1024 * 1024;
+
 export interface RssResponse {
   kind: 'RssResponse';
   xml: string;

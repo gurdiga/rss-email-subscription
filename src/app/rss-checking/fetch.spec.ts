@@ -3,7 +3,7 @@ import { createServer, RequestListener, Server } from 'node:http';
 import { AddressInfo } from 'node:net';
 import { si } from '../../shared/string-utils';
 import { isPublicIpAddress } from './address-guard';
-import { fetch, getLimitedReadableStream } from './fetch';
+import { fetch, getLimitedReadableStream, makeCappedFetch } from './fetch';
 
 describe(fetch.name, () => {
   let server: Server;
@@ -135,6 +135,21 @@ describe(fetch.name, () => {
     expect(text.length).to.equal(maxResponseBytes);
     await waitFor(() => isUpstreamBodyCancelled);
     expect(isUpstreamBodyCancelled, 'the upstream body was left running').to.be.true;
+  });
+
+  describe(makeCappedFetch.name, () => {
+    it('keeps its cap when the caller asks for more', async () => {
+      await startServer((_req, res) => {
+        res.writeHead(200, { 'content-type': 'text/plain' });
+        res.end('x'.repeat(64 * 1024));
+      });
+
+      const cappedFetch = makeCappedFetch(4096);
+      const response = await cappedFetch(new URL(origin), { ...allowLoopback, maxResponseBytes: 1024 * 1024 });
+      const text = await response.text();
+
+      expect(text.length).to.equal(4096);
+    });
   });
 
   it('times out a body that trickles in after the headers', async () => {

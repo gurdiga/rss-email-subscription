@@ -6,8 +6,8 @@ import {
   parseEmails,
   storeEmails,
 } from '../app/email-sending/emails';
-import { discardResponseBody, fetch } from '../app/rss-checking/fetch';
-import { fetchRss, isValidFeedContentType } from '../app/rss-checking/rss-response';
+import { discardResponseBody, fetch, makeCappedFetch } from '../app/rss-checking/fetch';
+import { fetchRss, interactiveFeedMaxBytes, isValidFeedContentType } from '../app/rss-checking/rss-response';
 import { isAccountNotFound } from '../domain/account';
 import {
   AddEmailsRequest,
@@ -369,6 +369,11 @@ export const addFeedSubscribers: AppRequestHandler = async function addFeedSubsc
   return makeSuccess(si`Added ${newEmailsCount} subscribers`, logData, responseData);
 };
 
+// cheerio holds about 250 bytes of heap per byte of markup, so a page near the
+// general 10 MiB cap is enough to exhaust the heap. Discovery reads only the
+// head (feed links, title), so a page truncated at this cap still works.
+const blogPageMaxBytes = 256 * 1024;
+
 export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   reqId,
   reqBody,
@@ -386,7 +391,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   }
 
   const { blogUrl } = request;
-  const response = await asyncAttempt(() => fetch(blogUrl));
+  const response = await asyncAttempt(() => fetch(blogUrl, { maxResponseBytes: blogPageMaxBytes }));
 
   if (isErr(response)) {
     logWarning('Could not fetch blog URL', { blogUrl, reason: response.reason });
@@ -478,7 +483,7 @@ async function tryGuessingFeedUrl(blogUrl: URL): Promise<string | undefined> {
 
   for (const feedPath of feedPathsToTry) {
     const feedUrl = new URL(blogUrl.origin + feedPath);
-    const rssResponse = await fetchRss(feedUrl);
+    const rssResponse = await fetchRss(feedUrl, makeCappedFetch(interactiveFeedMaxBytes));
 
     if (!isErr(rssResponse)) {
       return feedUrl.toString();

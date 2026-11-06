@@ -5,7 +5,8 @@ import { getErrorMessage, hasKind, isErr, isObject, makeErr, Result } from '../.
 import { makeDate } from '../../shared/date-utils';
 import { si } from '../../shared/string-utils';
 import { makeHttpUrl } from '../../shared/url';
-import { fetchRss, RssResponse } from './rss-response';
+import { makeCappedFetch } from './fetch';
+import { fetchRss, interactiveFeedMaxBytes, RssResponse } from './rss-response';
 
 export interface RssFeed {
   kind: 'RssFeed';
@@ -159,7 +160,7 @@ interface FeedInfo {
 }
 
 export async function getFeedInfo(url: URL): Promise<Result<FeedInfo>> {
-  const rssResponse = await fetchRss(url);
+  const rssResponse = await fetchRss(url, makeCappedFetch(interactiveFeedMaxBytes));
 
   if (isErr(rssResponse)) {
     return makeErr(si`Failed to ${fetchRss.name}: ${rssResponse.reason}`);
