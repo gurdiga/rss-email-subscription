@@ -220,13 +220,24 @@ save() {
   printf '%s\n' "$2" > "$1.new" && mv "$1.new" "$1"
 }
 
+# HTML only for the <pre>: Gmail sets text/plain in a proportional font,
+# which misaligns the ps table's columns, and no plain-text header asks
+# for monospace.
 report() {
   {
     echo "Subject: RES $1"
     echo "From: RES <system@feedsubscription.com>"
+    echo "MIME-Version: 1.0"
+    echo "Content-Type: text/html; charset=UTF-8"
     echo
-    cat
+    echo "<pre>"
+    html_escape
+    echo "</pre>"
   } | run "$notify"
+}
+
+html_escape() {
+  sed 's/&/\&amp;/g; s/</\&lt;/g; s/>/\&gt;/g'
 }
 
 # Bounded, so that neither a wedged Docker API nor a stuck msmtp can
