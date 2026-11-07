@@ -2,7 +2,10 @@ FROM debian:bookworm-slim@sha256:abd67ffcfa541b485a3dff59865ab629aa048a6c613e639
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-RUN apt-get update \
+# Retries let an on-path attacker slip in an unsigned .deb (CVE-2026-109518),
+# and the pinned base image may predate the fix.
+RUN echo 'Acquire::Retries "0";' > /etc/apt/apt.conf.d/99no-retries \
+ && apt-get update \
  && apt-get upgrade -y \
  && apt-get install -y --no-install-recommends \
     'postfix=3.7.11-0+deb12u1' \
