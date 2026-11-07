@@ -8,7 +8,7 @@ RUN echo 'Acquire::Retries "0";' > /etc/apt/apt.conf.d/99no-retries \
   && apt-get upgrade -y \
   && apt-get install --no-install-recommends -y \
     dnsmasq=2.91-0ubuntu0.24.04.2 \
-    dnsutils=1:9.18.39-0ubuntu0.24.04.8 \
+    dnsutils=1:9.18.39-0ubuntu0.24.04.9 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
