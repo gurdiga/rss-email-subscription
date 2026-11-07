@@ -44,13 +44,7 @@ import { hour, isRateLimitingDisabled, makeRateLimiter, minute } from './rate-li
 import { registration, registrationConfirmation } from './registration';
 import { makeExpressSession } from './session';
 import { sessionTest } from './session-test';
-import {
-  accountSupportProduct,
-  paddleData,
-  paddleKeys,
-  paddleWebhookHandler,
-  storeCardDescription,
-} from './payment-integration';
+import { accountSupportProduct, paddleData, paddleKeys, paddleWebhookHandler } from './payment-integration';
 import { subscription } from './subscription';
 import { subscriptionConfirmation } from './subscription-confirmation';
 import { unsubscription } from './unsubscription';
@@ -172,7 +166,6 @@ async function main() {
   // through to guessing the feed URL.
   router.post(ApiPath.checkFeedUrl, makeRateLimiter(20, hour), makeAppRequestHandler(checkFeedUrl, app));
   router.get(ApiPath.paymentKeys, makeAppRequestHandler(paddleKeys, app));
-  router.post(ApiPath.storeCardDescription, makeAppRequestHandler(storeCardDescription, app));
   router.get(ApiPath.accountSupportProduct, makeAppRequestHandler(accountSupportProduct, app));
   router.get(ApiPath.paymentData, makeAppRequestHandler(paddleData, app));
   router.post(

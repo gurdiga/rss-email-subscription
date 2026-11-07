@@ -1,10 +1,11 @@
 import { expect } from 'chai';
-import { AccountId, makeAccountId } from '../domain/account';
+import { Account, AccountId, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { storeAccount } from '../domain/account-storage';
+import { loadAccount, storeAccount } from '../domain/account-storage';
 import {
   ConfirmationSecret,
   isConfirmationSecretNotFound,
+  makeEmailChangeRequestSecretData,
   makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import { loadConfirmationSecret, storeConfirmationSecret } from '../domain/confirmation-secrets-storage';
@@ -12,91 +13,9 @@ import { PasswordResetConfirmation, PasswordResetConfirmationSecretData } from '
 import { AppStorage } from '../domain/storage';
 import { InputError } from '../shared/api-response';
 import { isErr } from '../shared/lang';
-import {
-  makeTestAccount,
-  makeTestEmailAddress,
-  makeTestStorageFromSnapshot,
-  purgeTestStorageFromSnapshot,
-} from '../shared/test-utils';
+import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { hashingSalt, makeMockRegenerateSession, makeTestApp } from './test-utils';
-import { confirmPasswordReset, revokePasswordResetSecrets } from './password-reset';
-import { RegistrationConfirmationSecretData } from './registration';
-
-const accountId = makeAccountId('a'.repeat(64)) as AccountId;
-const otherAccountId = makeAccountId('b'.repeat(64)) as AccountId;
-
-describe(revokePasswordResetSecrets.name, () => {
-  afterEach(purgeTestStorageFromSnapshot);
-
-  it('deletes every reset secret belonging to the account', () => {
-    const storage = makeTestStorageFromSnapshot({});
-    const first = storeResetSecret(storage, accountId);
-    const second = storeResetSecret(storage, accountId);
-
-    const result = revokePasswordResetSecrets(storage, accountId);
-    expect(isErr(result), JSON.stringify(result)).to.be.false;
-
-    expect(secretExists(storage, first), 'first reset link revoked').to.be.false;
-    expect(secretExists(storage, second), 'second reset link revoked').to.be.false;
-  });
-
-  it('leaves reset secrets belonging to other accounts alone', () => {
-    const storage = makeTestStorageFromSnapshot({});
-    const ours = storeResetSecret(storage, accountId);
-    const theirs = storeResetSecret(storage, otherAccountId);
-
-    revokePasswordResetSecrets(storage, accountId);
-
-    expect(secretExists(storage, ours), 'our reset link revoked').to.be.false;
-    expect(secretExists(storage, theirs), 'other account’s reset link untouched').to.be.true;
-  });
-
-  it('leaves confirmation secrets of other kinds alone', () => {
-    const storage = makeTestStorageFromSnapshot({});
-    const registration = makeRandomConfirmationSecret();
-
-    const secretData: RegistrationConfirmationSecretData = {
-      kind: 'RegistrationConfirmationSecretData',
-      accountId,
-      email: makeTestEmailAddress('test@test.com'),
-    };
-
-    storeConfirmationSecret(storage, registration, secretData);
-    revokePasswordResetSecrets(storage, accountId);
-
-    expect(secretExists(storage, registration), 'registration secret untouched').to.be.true;
-  });
-
-  it('skips legacy reset secrets stored without a kind', () => {
-    const storage = makeTestStorageFromSnapshot({});
-    const legacy = makeRandomConfirmationSecret();
-
-    storeConfirmationSecret(storage, legacy, { accountId: accountId.value });
-
-    const result = revokePasswordResetSecrets(storage, accountId);
-    expect(isErr(result), JSON.stringify(result)).to.be.false;
-
-    expect(secretExists(storage, legacy), 'legacy secret left in place').to.be.true;
-  });
-});
-
-function storeResetSecret(storage: AppStorage, id: AccountId): ConfirmationSecret {
-  const secret = makeRandomConfirmationSecret();
-  const secretData: PasswordResetConfirmationSecretData = {
-    kind: 'PasswordResetConfirmationSecretData',
-    accountId: id.value,
-  };
-
-  storeConfirmationSecret(storage, secret, secretData);
-
-  return secret;
-}
-
-function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean {
-  const result = loadConfirmationSecret(storage, secret);
-
-  return !isErr(result) && !isConfirmationSecretNotFound(result);
-}
+import { confirmPasswordReset } from './password-reset';
 
 describe(confirmPasswordReset.name, () => {
   afterEach(purgeTestStorageFromSnapshot);
@@ -107,17 +26,10 @@ describe(confirmPasswordReset.name, () => {
     const app = makeTestApp();
     const resetAccountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
 
-    storeAccount(app.storage, resetAccountId, {
-      ...makeTestAccount({ email }),
-      confirmationTimestamp: new Date(),
-    });
+    const account = makeTestAccount({ email, confirmationTimestamp: new Date() });
+    storeAccount(app.storage, resetAccountId, account);
 
-    const secret = makeRandomConfirmationSecret();
-    const secretData: PasswordResetConfirmationSecretData = {
-      kind: 'PasswordResetConfirmationSecretData',
-      accountId: resetAccountId.value,
-    };
-    storeConfirmationSecret(app.storage, secret, secretData);
+    const secret = storeResetSecret(app.storage, resetAccountId, account.creationTimestamp);
 
     const reqBody = { secret: secret.value, newPassword };
     const firstSession = makeReqSession();
@@ -158,8 +70,91 @@ describe(confirmPasswordReset.name, () => {
     // there instead of rendering the message.
     expect((response as InputError<keyof PasswordResetConfirmation>).field).to.equal('secret');
   });
+
+  it('revokes a pending email change when the reset completes', async () => {
+    const app = makeTestApp();
+    const [accountId, account] = storeTestAccount(app.storage, 'reset-revokes@test.com');
+    const newEmail = makeTestEmailAddress('whoever-asked@test.com');
+    const emailChange = makeRandomConfirmationSecret();
+    const emailChangeData = makeEmailChangeRequestSecretData(accountId, account.creationTimestamp, newEmail);
+    storeConfirmationSecret(app.storage, emailChange, emailChangeData);
+
+    const secret = storeResetSecret(app.storage, accountId, account.creationTimestamp);
+    const response = await resetWith(app, secret);
+
+    expect(response.kind).to.equal('Success', JSON.stringify(response));
+    expect(secretExists(app.storage, emailChange), 'the pending email change is revoked').to.be.false;
+  });
+
+  it('refuses a link issued to an earlier account at the same address', async () => {
+    const app = makeTestApp();
+    const [accountId, account] = storeTestAccount(app.storage, 'reregistered@test.com');
+    const earlierCreation = new Date(account.creationTimestamp.getTime() - 60_000);
+
+    const secret = storeResetSecret(app.storage, accountId, earlierCreation);
+    const response = await resetWith(app, secret);
+
+    expect(response).to.include({ kind: 'InputError', field: 'secret' }, JSON.stringify(response));
+    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword.value);
+  });
+
+  it('refuses a secret minted for another purpose', async () => {
+    const app = makeTestApp();
+    const [accountId, account] = storeTestAccount(app.storage, 'cross-purpose@test.com');
+    const newEmail = makeTestEmailAddress('cross-purpose-new@test.com');
+    const emailChange = makeRandomConfirmationSecret();
+    const emailChangeData = makeEmailChangeRequestSecretData(accountId, account.creationTimestamp, newEmail);
+    storeConfirmationSecret(app.storage, emailChange, emailChangeData);
+
+    const response = await resetWith(app, emailChange);
+
+    expect(response).to.include({ kind: 'InputError', field: 'secret' }, JSON.stringify(response));
+    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword.value);
+    expect(secretExists(app.storage, emailChange), 'the email-change secret is not consumed').to.be.true;
+  });
+
+  function storeTestAccount(storage: AppStorage, email: string): [AccountId, Account] {
+    const accountId = getAccountIdByEmail(makeTestEmailAddress(email), hashingSalt);
+    const account = makeTestAccount({ email, confirmationTimestamp: new Date() });
+
+    storeAccount(storage, accountId, account);
+
+    return [accountId, account];
+  }
+
+  function resetWith(app: ReturnType<typeof makeTestApp>, secret: ConfirmationSecret) {
+    const reqSession = makeReqSession();
+    const reqBody = { secret: secret.value, newPassword: 'a-brand-new-s3cret' };
+
+    return confirmPasswordReset('req', reqBody, {}, reqSession, app, makeMockRegenerateSession(reqSession));
+  }
+
+  function storedHash(storage: AppStorage, accountId: AccountId): string {
+    const account = loadAccount(storage, accountId);
+
+    return isErr(account) || isAccountNotFound(account) ? '' : account.hashedPassword.value;
+  }
 });
+
+function storeResetSecret(storage: AppStorage, accountId: AccountId, accountCreatedAt: Date): ConfirmationSecret {
+  const secret = makeRandomConfirmationSecret();
+  const secretData: PasswordResetConfirmationSecretData = {
+    kind: 'PasswordResetConfirmationSecretData',
+    accountId: accountId.value,
+    accountCreatedAt,
+  };
+
+  storeConfirmationSecret(storage, secret, secretData);
+
+  return secret;
+}
 
 function makeReqSession() {
   return { cookie: {} } as any;
+}
+
+function secretExists(storage: AppStorage, secret: ConfirmationSecret): boolean {
+  const result = loadConfirmationSecret(storage, secret);
+
+  return !isErr(result) && !isConfirmationSecretNotFound(result);
 }

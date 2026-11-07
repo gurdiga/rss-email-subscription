@@ -11,29 +11,17 @@ import {
   PaddleDataResponseData,
   PaddleEnvironment,
   PaddleKeysResponseData,
-  StoreCardRequest,
   makeCardDescription,
 } from '../domain/payment';
 import { AppStorage, StorageKey } from '../domain/storage';
-import { makeAppError, makeInputError, makeNotAuthenticatedError, makeSuccess } from '../shared/api-response';
-import {
-  Result,
-  asyncAttempt,
-  hasKind,
-  isErr,
-  makeErr,
-  makeNonEmptyString,
-  makeNumber,
-  makeString,
-  makeValues,
-} from '../shared/lang';
+import { makeAppError, makeSuccess } from '../shared/api-response';
+import { Result, asyncAttempt, hasKind, isErr, makeErr, makeNumber, makeString, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { makePath } from '../shared/path-utils';
 import { si } from '../shared/string-utils';
 import { AppRequestHandler } from './app-request-handler';
 import { App } from './init-app';
 import { sendPlanChangeInformationEmail, sendWelcomeEmail } from './plan-change-email';
-import { checkSession, isAuthenticatedSession } from './session';
 import { getAccountIdByEmail } from '../domain/account-crypto';
 
 // Must match trial_period configured on Paddle subscription prices.
@@ -66,44 +54,6 @@ export const paddleData: AppRequestHandler = async function paddleData(
   return makeSuccess('Paddle data', {}, responseData);
 };
 
-export const storeCardDescription: AppRequestHandler = async function storeCardDescription(
-  reqId,
-  reqBody,
-  _reqParams,
-  reqSession,
-  { storage }
-) {
-  const { logWarning, logError } = makeCustomLoggers({ module: storeCardDescription.name, reqId });
-  const session = checkSession(reqSession);
-
-  if (!isAuthenticatedSession(session)) {
-    logWarning('Not authenticated', { reason: session.err.reason });
-    return makeNotAuthenticatedError();
-  }
-
-  const request = makeStoreCardRequest(reqBody);
-
-  if (isErr(request)) {
-    logError(si`Failed to ${makeStoreCardRequest.name}: ${request.reason}`);
-    return makeInputError('Invalid request');
-  }
-
-  const cardDescription = makeCardDescription(request);
-  const { accountId } = session;
-  const storeResult = storeCardDescriptionItem(storage, accountId, cardDescription);
-
-  if (isErr(storeResult)) {
-    logError(si`Failed to ${storeCardDescriptionItem.name}: ${storeResult.reason}`);
-    return makeAppError();
-  }
-
-  return makeSuccess('Card description stored', {}, {});
-};
-
-function storeCardDescriptionItem(storage: AppStorage, accountId: AccountId, cardDescription: string): Result<void> {
-  return storage.storeItem(getCardDescriptionStorageKey(accountId), cardDescription);
-}
-
 export function loadCardDescription(storage: AppStorage, accountId: AccountId): Result<string | undefined> {
   const storageKey = getCardDescriptionStorageKey(accountId);
   const exists = storage.hasItem(storageKey);
@@ -121,15 +71,6 @@ export function loadCardDescription(storage: AppStorage, accountId: AccountId): 
 
 export function getCardDescriptionStorageKey(accountId: AccountId): StorageKey {
   return makePath(getAccountRootStorageKey(accountId), 'card-description.json');
-}
-
-function makeStoreCardRequest(data: unknown): Result<StoreCardRequest> {
-  return makeValues<StoreCardRequest>(data, {
-    brand: makeNonEmptyString,
-    exp_month: makeNumber,
-    exp_year: makeNumber,
-    last4: makeNonEmptyString,
-  });
 }
 
 export const accountSupportProduct: AppRequestHandler = async function accountSupportProduct(

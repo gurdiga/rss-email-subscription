@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import { rmdirRecursively, listFiles, mkdirp, writeFile } from './io-isolation';
 import { makePath } from '../shared/path-utils';
@@ -45,6 +45,17 @@ describe(writeFile.name, () => {
     expect(existsSync(filePath)).to.be.true;
     expect(readFileSync(filePath, 'utf8')).to.equal(fileContent);
   });
+
+  it('replaces an existing file whole, leaving no temporary behind', () => {
+    const dirPath = mkdtempSync(makePath(os.tmpdir(), 'res-test-writeFile-replace-'));
+    const filePath = makePath(dirPath, 'item.json');
+
+    writeFile(filePath, 'the old content');
+    writeFile(filePath, 'the new content');
+
+    expect(readFileSync(filePath, 'utf8')).to.equal('the new content');
+    expect(readdirSync(dirPath)).to.deep.equal(['item.json']);
+  });
 });
 
 describe(listFiles.name, () => {
@@ -60,5 +71,14 @@ describe(listFiles.name, () => {
     mkdirSync(makePath(tmpWorkDir, 'subdir'));
 
     expect(listFiles(tmpWorkDir)).to.deep.equal(fileNames);
+  });
+
+  it('leaves out a temporary that writeFile has not yet renamed', () => {
+    const dirPath = mkdtempSync(makePath(os.tmpdir(), 'res-test-listFiles-temp-'));
+
+    writeFileSync(makePath(dirPath, 'item.json'), 'content');
+    writeFileSync(makePath(dirPath, 'item.json.0123456789ab.tmp'), 'half-written');
+
+    expect(listFiles(dirPath)).to.deep.equal(['item.json']);
   });
 });

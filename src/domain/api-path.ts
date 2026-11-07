@@ -40,7 +40,6 @@ export enum ApiPath {
   checkFeedUrl = '/check-feed-url',
   paymentKeys = '/payment-keys',
   paymentData = '/payment-data',
-  storeCardDescription = '/store-card-description',
   accountSupportProduct = '/account-support-product',
   paymentWebhook = '/webhook/payment',
 }

@@ -131,23 +131,42 @@ async function checkCredentials(
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
 
+  let expectedHashedPassword = account.hashedPassword;
+
   if (verification.needsRehash && request.email.value !== demoAccountEmail) {
-    await rehashPassword(storage, accountId, account.hashedPassword, request.password.value);
+    const rehashed = await rehashPassword(storage, accountId, account.hashedPassword, request.password.value);
+
+    if (rehashed) {
+      expectedHashedPassword = rehashed;
+    }
   }
 
-  logInfo('User logged in');
-
-  // rehashPassword may have just rewritten the stored hash (a format/cost upgrade,
-  // same bytes-different-encoding password). Re-read rather than returning the
-  // pre-rehash snapshot, so the caller's own post-regeneration freshness check
-  // compares against what's actually on disk instead of false-flagging a rehash
-  // as if the password itself had changed.
+  // Rehashing yields too, so a reset can land during it. Returning a hash this login
+  // never proved would let the caller's freshness check pass and stamp the session
+  // with the reset's own passwordChangedAt. A changed hash may also be a concurrent
+  // login's rehash of this same password, which is harmless, so a mismatch is settled
+  // by verifying against what is stored now rather than rejected outright.
   const finalAccount = loadAccount(storage, accountId);
 
   if (isErr(finalAccount) || isAccountNotFound(finalAccount)) {
     logWarning('Account disappeared after rehash');
     return makeErr('Could not find your account', 'email');
   }
+
+  if (finalAccount.hashedPassword.value !== expectedHashedPassword.value) {
+    const reverification = await verifyPassword(
+      request.password.value,
+      finalAccount.hashedPassword,
+      settings.hashingSalt
+    );
+
+    if (!reverification.isMatch) {
+      logWarning('Stored password changed while rehashing it');
+      return makeErr('Password doesn’t match… 🤔', 'password');
+    }
+  }
+
+  logInfo('User logged in');
 
   return { accountId, hashedPassword: finalAccount.hashedPassword };
 }
@@ -160,12 +179,14 @@ async function checkCredentials(
 // only if its stored hash is still the one that was verified. Writing a snapshot taken
 // before the hash would revert a password reset that completed in the meantime — and
 // revert it to the very password the user was resetting away from.
+//
+// Returns the hash it stored, or undefined when it stored nothing.
 async function rehashPassword(
   storage: AppStorage,
   accountId: AccountId,
   verifiedHashedPassword: HashedPassword,
   plainPassword: string
-): Promise<void> {
+): Promise<HashedPassword | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     accountId: accountId.value,
     module: rehashPassword.name,
@@ -198,5 +219,8 @@ async function rehashPassword(
 
   if (isErr(storeResult)) {
     logError('Failed to store rehashed password on login', { reason: storeResult.reason });
+    return undefined;
   }
+
+  return rehashed;
 }

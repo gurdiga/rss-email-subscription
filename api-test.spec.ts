@@ -854,11 +854,16 @@ describe('API', () => {
       expect(responseBody).to.deep.equal(expectedResponse);
 
       const [secret, secretData] = loadPasswordResetConfirmationSecret(emailAddress);
-      const expectedSecretData: PasswordResetConfirmationSecretData = {
+      const expectedSecretData: Omit<PasswordResetConfirmationSecretData, 'accountCreatedAt'> = {
         kind: 'PasswordResetConfirmationSecretData',
         accountId: getAccountIdByEmail(emailAddress, appSettings.hashingSalt).value,
       };
       expect(secretData, JSON.stringify(secretData)).to.deep.include(expectedSecretData);
+
+      const [storedAccount] = loadStoredAccountByEmail(emailAddress.value);
+      expect(String(secretData.accountCreatedAt), 'bound to this account’s creation').to.equal(
+        String(storedAccount.creationTimestamp)
+      );
       confirmationSecret = secret;
     }).timeout(5000);
 

@@ -13,6 +13,8 @@ import {
   makeAccountId,
   makeAccountNotFound,
 } from './account';
+import { allConfirmationSecretKinds } from './confirmation-secrets';
+import { revokeAccountSecrets } from './confirmation-secrets-storage';
 import { getAccountIdByEmail } from './account-crypto';
 import { EmailAddress } from './email-address';
 import { makeEmailAddress, makeOptionalEmailAddress } from './email-address-making';
@@ -231,6 +233,15 @@ export function deleteAccount(storage: AppStorage, accountId: AccountId): Result
 
   if (exists === false) {
     return makeAccountNotFound();
+  }
+
+  // The next account registered at this address gets the same ID, and must not
+  // inherit secrets issued to this one. Revoke first: if it fails, nothing is gone
+  // and the deletion can simply be retried.
+  const revokeResult = revokeAccountSecrets(storage, accountId, allConfirmationSecretKinds);
+
+  if (isErr(revokeResult)) {
+    return makeErr(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`);
   }
 
   const removeTreeResult = storage.removeTree(storageKey);

@@ -8,6 +8,8 @@ import {
   makeTestAccountId,
   makeTestEmailAddress,
   makeTestStorage,
+  makeTestStorageFromSnapshot,
+  purgeTestStorageFromSnapshot,
 } from '../shared/test-utils';
 import { Account, AccountData, AccountId, AccountIdList, makeAccountId, makeAccountNotFound } from './account';
 import { getAccountIdByEmail } from './account-crypto';
@@ -24,6 +26,8 @@ import {
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { PlanId } from './plan';
 import { AppStorage } from './storage';
+import { makeRandomConfirmationSecret } from './confirmation-secrets';
+import { getConfirmationSecretStorageKey, storeConfirmationSecret } from './confirmation-secrets-storage';
 
 const creationTimestamp = new Date();
 export const accountId = makeTestAccountId();
@@ -254,9 +258,11 @@ describe(setAccountEmail.name, () => {
 });
 
 describe(deleteAccount.name, () => {
+  afterEach(purgeTestStorageFromSnapshot);
+
   it('deletes the corresponding account directory', () => {
     const removeTree = makeSpy<AppStorage['removeTree']>();
-    const storage = makeTestStorage({ hasItem: () => true, removeTree });
+    const storage = makeTestStorage({ hasItem: () => true, listItems: () => [], removeTree });
 
     deleteAccount(storage, accountId);
 
@@ -276,6 +282,24 @@ describe(deleteAccount.name, () => {
     const result = deleteAccount(storage, accountId);
 
     expect(result).to.deep.equal(makeErr(si`Failed to check account exists: ${storageErr.reason}`));
+  });
+
+  it('revokes the account’s confirmation secrets, and only those', () => {
+    const storage = makeTestStorageFromSnapshot({});
+    const ownId = makeAccountId('c'.repeat(64)) as AccountId;
+    const otherId = makeAccountId('d'.repeat(64)) as AccountId;
+    storeAccount(storage, ownId, makeTestAccount({ email: 'deleted@test.com' }));
+
+    const own = makeRandomConfirmationSecret();
+    const other = makeRandomConfirmationSecret();
+    storeConfirmationSecret(storage, own, { kind: 'EmailChangeRequestSecretData', accountId: ownId });
+    storeConfirmationSecret(storage, other, { kind: 'EmailChangeRequestSecretData', accountId: otherId });
+
+    const result = deleteAccount(storage, ownId);
+    expect(isErr(result), JSON.stringify(result)).to.be.false;
+
+    expect(storage.hasItem(getConfirmationSecretStorageKey(own)), 'the deleted account’s secret').to.be.false;
+    expect(storage.hasItem(getConfirmationSecretStorageKey(other)), 'another account’s secret').to.be.true;
   });
 });
 

@@ -38,13 +38,6 @@ export interface Card {
   last4: string;
 }
 
-export interface StoreCardRequest {
-  brand: string;
-  exp_month: number;
-  exp_year: number;
-  last4: string;
-}
-
 const shortMonthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 export function makeCardDescription(card: Card): string {

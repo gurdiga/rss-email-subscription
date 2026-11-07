@@ -18,17 +18,21 @@ import {
 import { deleteAccount, loadAccount, setAccountEmail, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
+  accountControlSecretKinds,
+  allConfirmationSecretKinds,
   ConfirmationSecret,
   EmailChangeRequestSecretData,
   humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
+  isIssuedForAccount,
   makeConfirmationSecret,
   makeEmailChangeRequestSecretData,
   makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
-  loadConfirmationSecret,
+  loadConfirmationSecretOfKind,
+  revokeAccountSecrets,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { demoAccountEmail, demoAccountPassword } from '../domain/demo-account';
@@ -126,10 +130,14 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
   }
 
   const { secret } = request;
-  const data = loadConfirmationSecret<EmailChangeRequestSecretData>(storage, secret);
+  const data = loadConfirmationSecretOfKind<EmailChangeRequestSecretData>(
+    storage,
+    secret,
+    'EmailChangeRequestSecretData'
+  );
 
   if (isErr(data)) {
-    logError(si`Failed to ${loadConfirmationSecret.name}`, { reason: data.reason });
+    logError(si`Failed to ${loadConfirmationSecretOfKind.name}`, { reason: data.reason });
     return makeAppError();
   }
 
@@ -149,6 +157,12 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
   if (isAccountNotFound(currentAccount)) {
     logError(si`Account to set email not found`, { accountId: accountId.value });
     return makeAppError();
+  }
+
+  if (!isIssuedForAccount(data, currentAccount)) {
+    logWarning('Email change secret issued for another account at this ID', { accountId: accountId.value });
+    deleteConfirmationSecret(storage, secret);
+    return makeInputError('Confirmation has already been confirmed');
   }
 
   // Whether to skip the real mutation is decided from the token's own target account,
@@ -178,6 +192,17 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
       secret: secret.value,
     });
     return makeAppError();
+  }
+
+  // The account has moved to the ID of its new address. Secrets still filed under
+  // the old ID would otherwise redeem against whoever registers that address next.
+  // The change has committed, so a failure here is logged rather than reported.
+  const revokeResult = isProtectedDemoAccount
+    ? undefined
+    : revokeAccountSecrets(storage, accountId, allConfirmationSecretKinds);
+
+  if (isErr(revokeResult)) {
+    logError(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, { accountId: accountId.value });
   }
 
   const deinitResult = await deinitSession(reqSession);
@@ -319,6 +344,15 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     return makeAppError();
   }
 
+  // A reset link or a pending email change issued before this would outlive the
+  // change made to shut out whoever holds it. The change has committed, so a failure
+  // here is logged rather than reported.
+  const revokeResult = revokeAccountSecrets(storage, accountId, accountControlSecretKinds);
+
+  if (isErr(revokeResult)) {
+    logError(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, { accountId: accountId.value });
+  }
+
   // Refreshes this session's own passwordChangedAt snapshot: every session is compared
   // against the account's current value on the next request, and without this the caller
   // would get logged out by the very change they just made.
@@ -424,6 +458,18 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
     return makeInputError<keyof EmailChangeRequestData>('The demo account’s email can’t be changed', 'newEmail');
   }
 
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logError('Account not found', { accountId: accountId.value });
+    return makeAppError();
+  }
+
   const confirmationSecret = makeRandomConfirmationSecret();
   const sendEmailResult = await sendEmailChangeConfirmationEmail(newEmail, confirmationSecret, settings, env);
 
@@ -432,7 +478,13 @@ export const requestAccountEmailChange: AppRequestHandler = async function reque
     return makeAppError();
   }
 
-  const storeResult = storeEmailChangeRequestSecret(accountId, newEmail, confirmationSecret, storage);
+  const storeResult = storeEmailChangeRequestSecret(
+    accountId,
+    account.creationTimestamp,
+    newEmail,
+    confirmationSecret,
+    storage
+  );
 
   if (isErr(storeResult)) {
     logError(si`Failed to ${storeEmailChangeRequestSecret.name}`, { reason: storeResult.reason });
@@ -484,11 +536,12 @@ async function sendEmailChangeConfirmationEmail(
 
 function storeEmailChangeRequestSecret(
   accountId: AccountId,
+  accountCreatedAt: Date,
   newEmail: EmailAddress,
   confirmationSecret: ConfirmationSecret,
   storage: AppStorage
 ) {
-  const confirmationSecretData = makeEmailChangeRequestSecretData(accountId, newEmail);
+  const confirmationSecretData = makeEmailChangeRequestSecretData(accountId, accountCreatedAt, newEmail);
 
   return storeConfirmationSecret(storage, confirmationSecret, confirmationSecretData);
 }
@@ -568,6 +621,20 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     } else {
       logInfo(si`Succeeded to ${cancelCustomerSubscription.name}`, { email: email.value });
     }
+  }
+
+  // Verifying and cancelling both yield to the event loop. If the owner reset the
+  // password meanwhile, the one this request verified no longer authorizes deletion.
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount) || isAccountNotFound(currentAccount)) {
+    logWarning('Account changed or disappeared during deletion', { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (currentAccount.hashedPassword.value !== account.hashedPassword.value) {
+    logWarning('Password changed during deletion', { accountId: accountId.value });
+    return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
   const deleteAccountResult = deleteAccount(storage, accountId);
@@ -765,11 +832,23 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
     return makeSuccess('Success', {}, { paymentToken: createResult.value });
   }
 
-  // Paid-to-paid: commit the new plan immediately (no checkout required).
+  // Paid-to-paid: commit the new plan immediately (no checkout required). The Paddle
+  // call yielded, so re-read rather than write back the snapshot from before it:
+  // that would revert a password reset or revocation which landed in the meantime.
+  const currentAccount = loadAccount(storage, accountId);
+
+  if (isErr(currentAccount) || isAccountNotFound(currentAccount)) {
+    logError('Account changed or disappeared after the Paddle plan change', {
+      accountId: accountId.value,
+      planId: request.planId,
+    });
+    return makeAppError();
+  }
+
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
   const storeAccountResult = storeAccount(storage, accountId, {
-    ...account,
+    ...currentAccount,
     planId: request.planId,
   });
 

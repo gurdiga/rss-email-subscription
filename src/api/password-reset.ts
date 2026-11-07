@@ -6,16 +6,18 @@ import { getAccountIdByEmail } from '../domain/account-crypto';
 import { loadAccount, resetAccountPassword } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
+  accountControlSecretKinds,
   ConfirmationSecret,
   humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
+  isIssuedForAccount,
   makeConfirmationSecret,
   makeRandomConfirmationSecret,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
-  listConfirmationSecrets,
-  loadConfirmationSecret,
+  loadConfirmationSecretOfKind,
+  revokeAccountSecrets,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { demoAccountEmail } from '../domain/demo-account';
@@ -32,7 +34,7 @@ import {
 } from '../domain/password-reset';
 import { AppStorage } from '../domain/storage';
 import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
-import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
+import { Result, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { enablePrivateNavbarCookie, setDemoCookie } from './app-cookie';
@@ -72,16 +74,16 @@ export const requestPasswordReset: AppRequestHandler = async function forgotPass
   // the user has reason to distrust stops working once they request a replacement.
   // A failure here is logged rather than fatal: leaving a stale link alive is worse
   // than nothing, but refusing the reset outright would leave the user locked out.
-  const revokeResult = revokePasswordResetSecrets(storage, accountId);
+  const revokeResult = revokeAccountSecrets(storage, accountId, ['PasswordResetConfirmationSecretData']);
 
   if (isErr(revokeResult)) {
-    logWarning(si`Failed to ${revokePasswordResetSecrets.name}: ${revokeResult.reason}`, {
+    logWarning(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, {
       accountId: accountId.value,
     });
   }
 
   const secret = makeRandomConfirmationSecret();
-  const storeResult = storeForgotPasswordConfirmationSecret(storage, secret, accountId);
+  const storeResult = storeForgotPasswordConfirmationSecret(storage, secret, accountId, account.creationTimestamp);
 
   if (isErr(storeResult)) {
     logError(si`Failed to ${storeForgotPasswordConfirmationSecret.name}: ${storeResult.reason}`);
@@ -138,48 +140,16 @@ function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: st
   };
 }
 
-export function revokePasswordResetSecrets(storage: AppStorage, accountId: AccountId): Result<void> {
-  const secrets = listConfirmationSecrets(storage);
-
-  if (isErr(secrets)) {
-    return secrets;
-  }
-
-  for (const secret of secrets.validConfirmationSecrets) {
-    const secretData = loadConfirmationSecret(storage, secret);
-
-    if (isErr(secretData) || isConfirmationSecretNotFound(secretData)) {
-      continue;
-    }
-
-    if (!isPasswordResetSecretFor(secretData, accountId)) {
-      continue;
-    }
-
-    const deleteResult = deleteConfirmationSecret(storage, secret);
-
-    if (isErr(deleteResult)) {
-      return makeErr(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
-    }
-  }
-}
-
-function isPasswordResetSecretFor(secretData: unknown, accountId: AccountId): boolean {
-  if (!hasKind(secretData, 'PasswordResetConfirmationSecretData')) {
-    return false;
-  }
-
-  return (secretData as PasswordResetConfirmationSecretData).accountId === accountId.value;
-}
-
 function storeForgotPasswordConfirmationSecret(
   storage: AppStorage,
   secret: ConfirmationSecret,
-  accountId: AccountId
+  accountId: AccountId,
+  accountCreatedAt: Date
 ): Result<void> {
   const secretData: PasswordResetConfirmationSecretData = {
     kind: 'PasswordResetConfirmationSecretData',
     accountId: accountId.value,
+    accountCreatedAt,
   };
   const result = storeConfirmationSecret(storage, secret, secretData);
 
@@ -210,25 +180,19 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeInputError(si`Invalid ${request.field!}: ${request.reason}`, request.field);
   }
 
-  const secretData = loadConfirmationSecret(storage, request.secret);
+  const secretData = loadConfirmationSecretOfKind(storage, request.secret, 'PasswordResetConfirmationSecretData');
 
   if (isErr(secretData)) {
-    logError(si`Failed to ${loadConfirmationSecret.name}: ${secretData.reason}`);
+    logError(si`Failed to ${loadConfirmationSecretOfKind.name}: ${secretData.reason}`);
     return makeAppError();
   }
 
   // A consumed or expired link is an ordinary thing for a user to hit — they bookmarked
   // it, or requested a newer one — so it gets a message they can act on rather than the
   // 500 that fell out of trying to parse the not-found marker as secret data.
-  //
-  // The field must be set: the page’s error handling runs exhaustivenessCheck over it, so
-  // a field-less input error would throw there instead of displaying anything.
   if (isConfirmationSecretNotFound(secretData)) {
     logWarning('Password reset secret not found', { secret: request.secret.value });
-    return makeInputError<keyof PasswordResetConfirmation>(
-      'This password reset link has expired or has already been used. Please request a new one.',
-      'secret'
-    );
+    return makeUnusableLinkError();
   }
 
   const forgotPasswordSecret = makeForgotPasswordSecret(secretData);
@@ -253,6 +217,12 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
     return makeAppError();
   }
 
+  if (!isIssuedForAccount(secretData, account)) {
+    logWarning('Password reset secret issued for another account at this ID', { accountId: accountId.value });
+    deleteConfirmationSecret(storage, request.secret);
+    return makeUnusableLinkError();
+  }
+
   // Consume the secret before hashing, which is where this handler yields to the event
   // loop. Deleting it afterwards would let two concurrent submissions of one link both
   // load it and both reset the password. A failure after this point costs the user their
@@ -272,6 +242,15 @@ export const confirmPasswordReset: AppRequestHandler = async function resetPassw
   if (isErr(resetResult)) {
     logError(si`Failed to ${resetAccountPassword.name}: ${resetResult.reason}`);
     return makeAppError();
+  }
+
+  // A pending email change or another reset link could hand the account to whoever
+  // the owner is resetting away from. The reset itself has committed, so a failure
+  // here is logged rather than reported.
+  const revokeResult = isDemoAccount ? undefined : revokeAccountSecrets(storage, accountId, accountControlSecretKinds);
+
+  if (isErr(revokeResult)) {
+    logError(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, { accountId: accountId.value });
   }
 
   const newReqSession = await regenerateSession();
@@ -313,13 +292,21 @@ function sendPasswordResetConfirmationEmail(accountEmail: EmailAddress, settings
   return sendEmail(settings.fullEmailAddress, accountEmail, settings.fullEmailAddress.emailAddress, emailContent, env);
 }
 
-// makeValues stamps the kind rather than reading it from the input, so secrets
-// stored before the field existed still redeem cleanly.
+// The kind was checked when the secret was loaded; makeValues only stamps it.
 function makeForgotPasswordSecret(data: unknown): Result<PasswordResetConfirmationSecret> {
   return makeValues<PasswordResetConfirmationSecret>(data, {
     kind: 'PasswordResetConfirmationSecretData',
     accountId: makeAccountId,
   });
+}
+
+// The field must be set: the page’s error handling runs exhaustivenessCheck over it, so
+// a field-less input error would throw there instead of displaying anything.
+function makeUnusableLinkError() {
+  return makeInputError<keyof PasswordResetConfirmation>(
+    'This password reset link has expired or has already been used. Please request a new one.',
+    'secret'
+  );
 }
 
 function makePasswordResetConfirmation(data: unknown): Result<PasswordResetConfirmation> {

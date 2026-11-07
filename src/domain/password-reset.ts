@@ -17,12 +17,14 @@ export interface PasswordResetConfirmation {
 export type PasswordResetConfirmationData = Record<keyof PasswordResetConfirmation, string>;
 
 // The kind makes a stored reset secret identifiable when scanning the
-// confirmation-secret store, which is how issuing a new reset link revokes the
-// account’s older ones. Secrets stored before this field existed simply won’t be
-// matched by that scan; they age out with the usual expiration.
+// confirmation-secret store, which is how revokeAccountSecrets finds it, and is
+// checked on redemption. Records without it no longer redeem.
 export interface PasswordResetConfirmationSecret {
   kind: 'PasswordResetConfirmationSecretData';
   accountId: AccountId;
 }
 
-export type PasswordResetConfirmationSecretData = Record<keyof PasswordResetConfirmationSecret, string>;
+// accountCreatedAt is what isIssuedForAccount checks; see there.
+export type PasswordResetConfirmationSecretData = Record<keyof PasswordResetConfirmationSecret, string> & {
+  accountCreatedAt: Date;
+};

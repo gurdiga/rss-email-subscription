@@ -19,7 +19,7 @@ import {
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
-  loadConfirmationSecret,
+  loadConfirmationSecretOfKind,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
@@ -44,8 +44,7 @@ export const registration: AppRequestHandler = async function registration(
   reqBody,
   _reqParams,
   _reqSession,
-  { env, storage, settings },
-  regenerateSession
+  { env, storage, settings }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: registration.name, reqId });
   const request = makeRegistrationRequest(reqBody);
@@ -114,17 +113,12 @@ export const registration: AppRequestHandler = async function registration(
     paymentToken = result.value;
   }
 
-  const newReqSession = await regenerateSession();
-  const sessionInitResult = initSession(storage, newReqSession, accountId, request.email);
-
-  if (isErr(sessionInitResult)) {
-    logError(si`Failed to ${initSession.name}`, { reason: sessionInitResult.reason });
-    return makeAppError(sessionInitResult.reason);
-  }
-
   const logData = {};
   const responseData: RegistrationResponseData = { paymentToken };
 
+  // No session until the address is confirmed: an account at an address its holder
+  // doesn’t control must not be able to act. The checkout that follows calls only
+  // routes that need none.
   return makeSuccess('Account created. Welcome aboard! 🙂', logData, responseData);
 };
 
@@ -359,10 +353,14 @@ function confirmAccountBySecret(
     secret: secret.value,
   });
 
-  const data = loadConfirmationSecret<RegistrationConfirmationSecretData>(storage, secret);
+  const data = loadConfirmationSecretOfKind<RegistrationConfirmationSecretData>(
+    storage,
+    secret,
+    'RegistrationConfirmationSecretData'
+  );
 
   if (isErr(data)) {
-    logError(si`Failed to ${loadConfirmationSecret.name}`, { reason: data.reason });
+    logError(si`Failed to ${loadConfirmationSecretOfKind.name}`, { reason: data.reason });
     return makeErr('Invalid registration confirmation link');
   }
 

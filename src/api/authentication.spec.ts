@@ -121,7 +121,7 @@ describe(authentication.name, () => {
     );
   });
 
-  it('does not revert a password reset that lands while the rehash is hashing', async () => {
+  it('neither reverts nor logs in past a password reset that lands while the rehash is hashing', async () => {
     const email = 'racing-user@test.com';
     const password = 'a-long-enough-password';
     const app = makeTestApp();
@@ -142,13 +142,26 @@ describe(authentication.name, () => {
     };
     storeAccount(app.storage, accountId, newAccount);
 
+    // The login proved the old password only; a session for it would outlive the reset.
     const response = await loginPromise;
-    expect(response.kind).to.equal('Success', JSON.stringify(response));
+    expect(response).to.include({ kind: 'InputError', field: 'password' }, JSON.stringify(response));
 
     expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
       resetHashedPassword.value,
       'the concurrent reset must survive the login’s rehash'
     );
+  });
+
+  it('logs in both of two concurrent logins that upgrade the same legacy hash', async () => {
+    const email = 'double-submit@test.com';
+    const password = 'a-long-enough-password';
+    const app = makeTestApp();
+    storeLegacyAccount(app, email, password);
+
+    const [first, second] = await Promise.all([login(app, { email, password }), login(app, { email, password })]);
+
+    expect(first.kind, JSON.stringify(first)).to.equal('Success');
+    expect(second.kind, JSON.stringify(second)).to.equal('Success');
   });
 
   it('rejects a login when the password changes while verification is in flight', async () => {

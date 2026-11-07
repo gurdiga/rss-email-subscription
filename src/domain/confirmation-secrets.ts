@@ -2,13 +2,31 @@ import { getRandomString } from '../shared/crypto';
 import { getHoursFromMs } from '../shared/date-utils';
 import { getTypeName, hasKind, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
-import { AccountId } from './account';
+import { Account, AccountId } from './account';
 import { EmailAddress } from './email-address';
 
 export interface ConfirmationSecret {
   kind: 'ConfirmationSecret';
   value: string;
 }
+
+export type ConfirmationSecretKind =
+  | 'RegistrationConfirmationSecretData'
+  | 'EmailChangeRequestSecretData'
+  | 'PasswordResetConfirmationSecretData';
+
+export const allConfirmationSecretKinds: ConfirmationSecretKind[] = [
+  'RegistrationConfirmationSecretData',
+  'EmailChangeRequestSecretData',
+  'PasswordResetConfirmationSecretData',
+];
+
+// The secrets that hand control of an account to whoever holds them, as opposed to
+// registration confirmation, which goes to the very address it confirms.
+export const accountControlSecretKinds: ConfirmationSecretKind[] = [
+  'EmailChangeRequestSecretData',
+  'PasswordResetConfirmationSecretData',
+];
 
 // Applies to every kind of confirmation secret. Registration secrets used to be exempt
 // from expiration altogether, which meant the store only ever grew — and every password
@@ -79,18 +97,31 @@ export function makeConfirmationSecretNotFound(secret: ConfirmationSecret): Conf
 export interface EmailChangeRequestSecretData {
   kind: 'EmailChangeRequestSecretData';
   accountId: AccountId;
+  accountCreatedAt: Date;
   newEmail: EmailAddress;
   timestamp: Date;
 }
 
 export function makeEmailChangeRequestSecretData(
   accountId: AccountId,
+  accountCreatedAt: Date,
   newEmail: EmailAddress
 ): EmailChangeRequestSecretData {
   return {
     kind: 'EmailChangeRequestSecretData',
     accountId,
+    accountCreatedAt,
     newEmail,
     timestamp: new Date(),
   };
+}
+
+// Account IDs derive from the email address, so an account deleted and registered
+// again at the same address gets the same ID. The creation time tells the two apart
+// and keeps a secret issued to the first from redeeming against the second. A secret
+// without the field predates it and is treated as issued to some other account.
+export function isIssuedForAccount(secretData: unknown, account: Account): boolean {
+  const accountCreatedAt = (secretData as any)?.accountCreatedAt;
+
+  return accountCreatedAt instanceof Date && accountCreatedAt.getTime() === account.creationTimestamp.getTime();
 }

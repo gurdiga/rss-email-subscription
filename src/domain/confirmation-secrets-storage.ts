@@ -1,17 +1,87 @@
 import { basename } from 'node:path/posix';
-import { attempt, Err, isErr, makeErr, Result } from '../shared/lang';
+import { attempt, Err, hasKind, isErr, makeErr, Result } from '../shared/lang';
+import { AccountId } from './account';
 import { AppStorage, StorageKey } from './storage';
 import { makeDate } from '../shared/date-utils';
 import { si } from '../shared/string-utils';
 import { makePath } from '../shared/path-utils';
 import {
   ConfirmationSecret,
+  ConfirmationSecretKind,
   ConfirmationSecretNotFound,
   confirmationSecretLifetimeMs,
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeConfirmationSecretNotFound,
 } from './confirmation-secrets';
+
+// For the events that change who an account's secrets should answer to: deletion,
+// an email change, a password change or reset. Expired records go too, since they
+// are dead anyway. Records without a kind are left alone, as no kind matches them.
+export function revokeAccountSecrets(
+  storage: AppStorage,
+  accountId: AccountId,
+  kinds: ConfirmationSecretKind[]
+): Result<void> {
+  // No directory means no secrets yet, not a failure: deleteAccount depends on this
+  // returning cleanly.
+  const hasSecrets = storage.hasItem(confirmationSecretsStorageKey);
+
+  if (isErr(hasSecrets)) {
+    return hasSecrets;
+  }
+
+  if (!hasSecrets) {
+    return;
+  }
+
+  const secrets = listConfirmationSecrets(storage);
+
+  if (isErr(secrets)) {
+    return secrets;
+  }
+
+  for (const secret of secrets.validConfirmationSecrets) {
+    const data = loadConfirmationSecretRegardlessOfExpiry(storage, secret);
+
+    if (isErr(data) || isConfirmationSecretNotFound(data)) {
+      continue;
+    }
+
+    const isOfGivenKind = kinds.some((kind) => hasKind(data, kind));
+    const isOfGivenAccount = getSecretAccountIdValue(data) === accountId.value;
+
+    if (!isOfGivenKind || !isOfGivenAccount) {
+      continue;
+    }
+
+    const deleteResult = deleteConfirmationSecret(storage, secret);
+
+    if (isErr(deleteResult)) {
+      return makeErr(si`Failed to ${deleteConfirmationSecret.name}: ${deleteResult.reason}`);
+    }
+  }
+}
+
+// A secret minted for one purpose reads as unknown to every other, so it can be
+// neither redeemed nor consumed there.
+export function loadConfirmationSecretOfKind<T>(
+  storage: AppStorage,
+  secret: ConfirmationSecret,
+  kind: ConfirmationSecretKind
+): Result<ConfirmationSecretNotFound | T> {
+  const data = loadConfirmationSecret<T>(storage, secret);
+
+  if (isErr(data) || isConfirmationSecretNotFound(data)) {
+    return data;
+  }
+
+  if (!hasKind(data, kind)) {
+    return makeConfirmationSecretNotFound(secret);
+  }
+
+  return data;
+}
 
 export function loadConfirmationSecret<T>(
   storage: AppStorage,
@@ -38,10 +108,10 @@ export function loadConfirmationSecret<T>(
   return data;
 }
 
-// For the cleanup cron only: it needs to see an expired-but-still-on-disk record in
-// order to delete it, so it has to bypass the expiry gate loadConfirmationSecret
-// applies for redemption — otherwise an expired record reads back as already gone
-// and cleanup skips deleting it, leaving it on disk indefinitely.
+// For the cleanup cron and revokeAccountSecrets only: they need to see an
+// expired-but-still-on-disk record in order to delete it, so they have to bypass the
+// expiry gate loadConfirmationSecret applies for redemption — otherwise an expired
+// record reads back as already gone and is skipped, leaving it on disk indefinitely.
 export function loadConfirmationSecretRegardlessOfExpiry<T>(
   storage: AppStorage,
   secret: ConfirmationSecret
@@ -132,6 +202,13 @@ interface BasenameErr {
 interface InvalidConfirmationSecret {
   input: string;
   err: Err;
+}
+
+// Reset secrets store the bare ID string; the other kinds store the AccountId object.
+function getSecretAccountIdValue(data: unknown): unknown {
+  const accountId = (data as any)?.accountId;
+
+  return typeof accountId === 'string' ? accountId : accountId?.value;
 }
 
 export const confirmationSecretsStorageKey = '/confirmation-secrets';
