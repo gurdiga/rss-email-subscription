@@ -57,6 +57,9 @@ import {
   changeCustomerSubscription,
   createCustomerWithSubscription,
   getPaymentMethodUpdateTransaction,
+  isPaddleCustomerTaken,
+  makeContactSupportError,
+  updatePaddleCustomerEmail,
   isNothingToCancel,
   loadCardDescription,
   makePaddle,
@@ -203,6 +206,20 @@ export const confirmAccountEmailChange: AppRequestHandler = async function confi
 
   if (isErr(revokeResult)) {
     logError(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, { accountId: accountId.value });
+  }
+
+  // Best effort: the account no longer depends on the Paddle customer’s email, but
+  // receipts go to it. Expected to fail when an orphaned customer already holds the
+  // new address; that one is logged for cleanup by hand.
+  if (!isProtectedDemoAccount && currentAccount.paddleCustomerId) {
+    const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+    const updateResult = await updatePaddleCustomerEmail(paddle, currentAccount.paddleCustomerId, newEmail);
+
+    if (isErr(updateResult)) {
+      logError(si`Failed to ${updatePaddleCustomerEmail.name}: ${updateResult.reason}`, {
+        paddleCustomerId: currentAccount.paddleCustomerId.value,
+      });
+    }
   }
 
   const deinitResult = await deinitSession(reqSession);
@@ -606,16 +623,25 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
+  // Deleting without cancelling would leave Paddle billing a customer who no longer
+  // has an account here, so a failure stops the deletion rather than being logged.
   if (isSubscriptionPlan(account.planId)) {
+    const { email, paddleCustomerId } = account;
+
+    if (!paddleCustomerId) {
+      logError('No Paddle customer linked to a paid account; not deleting', { accountId: accountId.value });
+      return makeContactSupportError(settings);
+    }
+
     const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
-    const { email } = account;
-    const cancelResult = await cancelCustomerSubscription(paddle, email);
+    const cancelResult = await cancelCustomerSubscription(paddle, paddleCustomerId);
 
     if (isErr(cancelResult)) {
-      logWarning(si`Skipping Paddle cancellation for account deletion`, {
+      logError(si`Failed to ${cancelCustomerSubscription.name}; not deleting`, {
         reason: cancelResult.reason,
         email: email.value,
       });
+      return makeAppError('We couldn’t cancel your subscription. Please try again, or contact support.');
     } else if (isNothingToCancel(cancelResult)) {
       logInfo('No Paddle subscription to cancel for account deletion', { email: email.value });
     } else {
@@ -688,7 +714,7 @@ export const requestPaymentMethodUpdate: AppRequestHandler = async function requ
   _reqBody,
   _reqParams,
   reqSession,
-  { storage, env }
+  { storage, settings, env }
 ) {
   const { logWarning, logError } = makeCustomLoggers({ module: requestPaymentMethodUpdate.name, reqId });
   const session = checkSession(reqSession);
@@ -711,8 +737,13 @@ export const requestPaymentMethodUpdate: AppRequestHandler = async function requ
     return makeNotAuthenticatedError();
   }
 
+  if (!account.paddleCustomerId) {
+    logError('No Paddle customer linked to the account', { accountId: accountId.value });
+    return makeContactSupportError(settings);
+  }
+
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
-  const transaction = await getPaymentMethodUpdateTransaction(paddle, account.email);
+  const transaction = await getPaymentMethodUpdateTransaction(paddle, account.paddleCustomerId);
 
   if (isErr(transaction)) {
     logError(si`Failed to ${getPaymentMethodUpdateTransaction.name}`, { reason: transaction.reason });
@@ -781,11 +812,17 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
   const changingFromPaidPlanToFree = request.planId === PlanId.Free;
   const changingFromOnePaidPlanToAnother = oldPlanId !== PlanId.Free;
+  const { paddleCustomerId } = account;
 
   if (changingFromPaidPlanToFree) {
+    if (!paddleCustomerId) {
+      logError('No Paddle customer linked to a paid account', { accountId: accountId.value, oldPlanId });
+      return makeContactSupportError(settings);
+    }
+
     // Cancel in Paddle with next_billing_period; local plan stays paid until
     // subscription.canceled webhook fires at period end.
-    const cancelResult = await cancelCustomerSubscription(paddle, email);
+    const cancelResult = await cancelCustomerSubscription(paddle, paddleCustomerId);
 
     if (isErr(cancelResult)) {
       logError(si`Failed to ${cancelCustomerSubscription.name}`, {
@@ -805,7 +842,12 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
     return makeSuccess('Success', {}, { paymentToken: '' });
   } else if (changingFromOnePaidPlanToAnother) {
-    const changeResult = await changeCustomerSubscription(paddle, email, request.planId);
+    if (!paddleCustomerId) {
+      logError('No Paddle customer linked to a paid account', { accountId: accountId.value, oldPlanId });
+      return makeContactSupportError(settings);
+    }
+
+    const changeResult = await changeCustomerSubscription(paddle, paddleCustomerId, request.planId);
 
     if (isErr(changeResult)) {
       logError(si`Failed to ${changeCustomerSubscription.name}`, {
@@ -818,7 +860,7 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
   } else {
     // Changing from Free to a paid plan: create a checkout transaction and
     // defer the plan upgrade to the transaction.completed webhook.
-    const createResult = await createCustomerWithSubscription(paddle, email, request.planId);
+    const createResult = await createCustomerWithSubscription(paddle, storage, accountId, request.planId);
 
     if (isErr(createResult)) {
       logError(si`Failed to ${createCustomerWithSubscription.name}`, {
@@ -827,6 +869,14 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
         planId: request.planId,
       });
       return makeAppError();
+    }
+
+    if (isPaddleCustomerTaken(createResult)) {
+      logError('Refusing to adopt the Paddle customer for this email', {
+        reason: createResult.reason,
+        accountId: accountId.value,
+      });
+      return makeContactSupportError(settings);
     }
 
     return makeSuccess('Success', {}, { paymentToken: createResult.value });

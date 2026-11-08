@@ -28,6 +28,7 @@ import {
 import { FeedId, isFeedId, makeFeedId } from '../domain/feed-id';
 import { makeFeed } from '../domain/feed-making';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from '../domain/hashed-password';
+import { PaddleCustomerId, makePaddleCustomerId } from '../domain/payment';
 import { PlanId, makePlanId } from '../domain/plan';
 import { AppStorage, StorageKey, StorageValue, makeStorage } from '../domain/storage';
 import { si } from './string-utils';
@@ -165,6 +166,10 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
     creationTimestamp: accountData.creationTimestamp,
     isAdmin: !!accountData.isAdmin,
     passwordChangedAt: accountData.passwordChangedAt ?? accountData.creationTimestamp,
+    paddleCustomerId: accountData.paddleCustomerId
+      ? (makePaddleCustomerId(accountData.paddleCustomerId) as PaddleCustomerId)
+      : undefined,
+    lastPaddlePlanEventAt: accountData.lastPaddlePlanEventAt,
   };
 
   return result;

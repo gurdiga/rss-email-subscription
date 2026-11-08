@@ -4,6 +4,7 @@ import { ConfirmationSecret } from './confirmation-secrets';
 import { EmailAddress } from './email-address';
 import { HashedPassword } from './hashed-password';
 import { Password } from './password';
+import { PaddleCustomerId } from './payment';
 import { PlanId } from './plan';
 
 export interface AccountId {
@@ -34,6 +35,8 @@ export interface Account {
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean;
   passwordChangedAt: Date;
+  paddleCustomerId: PaddleCustomerId | undefined;
+  lastPaddlePlanEventAt: Date | undefined;
 }
 
 export interface AccountData {
@@ -44,6 +47,8 @@ export interface AccountData {
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean | undefined;
   passwordChangedAt: Date | undefined;
+  paddleCustomerId?: string;
+  lastPaddlePlanEventAt?: Date;
 }
 
 export interface UiAccount {

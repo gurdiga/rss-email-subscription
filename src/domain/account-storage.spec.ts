@@ -16,13 +16,18 @@ import { getAccountIdByEmail } from './account-crypto';
 import {
   confirmAccount,
   deleteAccount,
+  findAccountIdByPaddleCustomerId,
   getAccountIdList,
   getAccountRootStorageKey,
   getAccountStorageKey,
+  isPaddleCustomerNotLinked,
+  linkPaddleCustomer,
   loadAccount,
+  resetAccountPassword,
   setAccountEmail,
   storeAccount,
 } from './account-storage';
+import { makePaddleCustomerId, PaddleCustomerId } from './payment';
 import { HashedPassword, hashedPasswordLength, makeHashedPassword } from './hashed-password';
 import { PlanId } from './plan';
 import { AppStorage } from './storage';
@@ -83,6 +88,8 @@ describe(loadAccount.name, () => {
       confirmationTimestamp: undefined,
       isAdmin: false,
       passwordChangedAt: creationTimestamp,
+      paddleCustomerId: undefined,
+      lastPaddlePlanEventAt: undefined,
     };
 
     expect(hasItem.calls).to.deep.equal([[storageKey]]);
@@ -147,6 +154,8 @@ describe(storeAccount.name, () => {
       creationTimestamp,
       isAdmin: false,
       passwordChangedAt: creationTimestamp,
+      paddleCustomerId: undefined,
+      lastPaddlePlanEventAt: undefined,
     };
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const loadItem = makeStub(() => getAccountData(account));
@@ -190,6 +199,8 @@ describe(confirmAccount.name, () => {
       creationTimestamp,
       isAdmin: true,
       passwordChangedAt: creationTimestamp,
+      paddleCustomerId: undefined,
+      lastPaddlePlanEventAt: undefined,
     };
 
     expect(hasItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
@@ -229,6 +240,8 @@ describe(setAccountEmail.name, () => {
           creationTimestamp: account.creationTimestamp,
           isAdmin: account.isAdmin,
           passwordChangedAt: account.passwordChangedAt,
+          paddleCustomerId: undefined,
+          lastPaddlePlanEventAt: undefined,
         },
       ],
     ]);
@@ -262,7 +275,8 @@ describe(deleteAccount.name, () => {
 
   it('deletes the corresponding account directory', () => {
     const removeTree = makeSpy<AppStorage['removeTree']>();
-    const storage = makeTestStorage({ hasItem: () => true, listItems: () => [], removeTree });
+    const loadItem = () => getAccountData(makeTestAccount());
+    const storage = makeTestStorage({ hasItem: () => true, loadItem, listItems: () => [], removeTree });
 
     deleteAccount(storage, accountId);
 
@@ -303,6 +317,96 @@ describe(deleteAccount.name, () => {
   });
 });
 
+describe(findAccountIdByPaddleCustomerId.name, () => {
+  const hashingSalt = 'test-hashing-salt';
+  const customerId = makePaddleCustomerId('ctm_01aaaaaaaaaaaaaaaaaaaaaaaa') as PaddleCustomerId;
+  const email = makeTestEmailAddress('linked@test.com');
+  const linkedAccountId = getAccountIdByEmail(email, hashingSalt);
+
+  afterEach(purgeTestStorageFromSnapshot);
+
+  it('finds the account the customer is linked to', () => {
+    const storage = makeLinkedStorage();
+
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal(linkedAccountId);
+  });
+
+  it('keeps the link through the account’s other writes', () => {
+    const storage = makeLinkedStorage();
+
+    confirmAccount(storage, linkedAccountId);
+    resetAccountPassword(
+      storage,
+      linkedAccountId,
+      makeHashedPassword('b'.repeat(hashedPasswordLength)) as HashedPassword
+    );
+
+    expect((loadAccount(storage, linkedAccountId) as Account).paddleCustomerId).to.deep.equal(customerId);
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal(linkedAccountId);
+  });
+
+  it('follows the account to its new ID on an email change', () => {
+    const storage = makeLinkedStorage();
+    const newEmail = makeTestEmailAddress('moved@test.com');
+
+    setAccountEmail(storage, linkedAccountId, newEmail, hashingSalt);
+
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal(
+      getAccountIdByEmail(newEmail, hashingSalt)
+    );
+  });
+
+  it('leaves the customer unlinked when the account is deleted, even once the address is registered again', () => {
+    const storage = makeLinkedStorage();
+
+    deleteAccount(storage, linkedAccountId);
+    storeAccount(storage, linkedAccountId, makeTestAccount({ email: email.value }));
+
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal({
+      kind: 'PaddleCustomerNotLinked',
+      isOfDeletedAccount: true,
+    });
+  });
+
+  it('still resolves an account whose deletion failed after unlinking', () => {
+    const storage = makeLinkedStorage();
+    const removeTree = storage.removeTree;
+
+    storage.removeTree = () => makeErr('simulated removal failure');
+    expect(isErr(deleteAccount(storage, linkedAccountId))).to.be.true;
+    storage.removeTree = removeTree;
+
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal(linkedAccountId);
+  });
+
+  it('ignores an index entry whose account doesn’t link back', () => {
+    const storage = makeLinkedStorage();
+
+    // As after an email change whose index write was lost, once the old address is
+    // registered again: the entry still names the old ID.
+    storeAccount(storage, linkedAccountId, makeTestAccount({ email: email.value }));
+
+    expect(isPaddleCustomerNotLinked(findAccountIdByPaddleCustomerId(storage, customerId))).to.be.true;
+  });
+
+  it('refuses to relink an account to a different customer', () => {
+    const storage = makeLinkedStorage();
+    const otherCustomerId = makePaddleCustomerId('ctm_01bbbbbbbbbbbbbbbbbbbbbbbb') as PaddleCustomerId;
+
+    expect(isErr(linkPaddleCustomer(storage, linkedAccountId, otherCustomerId))).to.be.true;
+    expect(findAccountIdByPaddleCustomerId(storage, customerId)).to.deep.equal(linkedAccountId);
+  });
+
+  function makeLinkedStorage(): AppStorage {
+    const storage = makeTestStorageFromSnapshot({});
+
+    storeAccount(storage, linkedAccountId, makeTestAccount({ email: email.value }));
+    linkPaddleCustomer(storage, linkedAccountId, customerId);
+
+    return storage;
+  }
+});
+
 function getAccountData(account: Account): AccountData {
   return {
     planId: account.planId,
@@ -312,5 +416,7 @@ function getAccountData(account: Account): AccountData {
     creationTimestamp: account.creationTimestamp,
     isAdmin: account.isAdmin,
     passwordChangedAt: account.passwordChangedAt,
+    paddleCustomerId: account.paddleCustomerId?.value,
+    lastPaddlePlanEventAt: account.lastPaddlePlanEventAt,
   };
 }

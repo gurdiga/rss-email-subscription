@@ -16,6 +16,21 @@ function isPaddleEnvironment(value: string): value is PaddleEnvironment {
   return (Object.values(Environment) as string[]).includes(value);
 }
 
+export interface PaddleCustomerId {
+  kind: 'PaddleCustomerId';
+  value: string;
+}
+
+// The ID becomes a filename in the customer index, so nothing but Paddle’s own
+// shape gets through: “ctm_” and 26 lowercase base-32 characters.
+export function makePaddleCustomerId(value: unknown, field = 'paddleCustomerId'): Result<PaddleCustomerId> {
+  if (typeof value !== 'string' || !/^ctm_[a-z0-9]{26}$/.test(value)) {
+    return makeErr(si`Invalid Paddle customer ID: "${String(value)}"`, field);
+  }
+
+  return { kind: 'PaddleCustomerId', value };
+}
+
 export interface PaddleKeysResponseData {
   clientToken: string;
   environment: PaddleEnvironment;

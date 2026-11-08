@@ -37,7 +37,12 @@ import { enablePrivateNavbarCookie } from './app-cookie';
 import { AppRequestHandler } from './app-request-handler';
 import { AppEnv } from './init-app';
 import { initSession } from './session';
-import { createCustomerWithSubscription, makePaddle } from './payment-integration';
+import {
+  createCustomerWithSubscription,
+  isPaddleCustomerTaken,
+  makeContactSupportError,
+  makePaddle,
+} from './payment-integration';
 
 export const registration: AppRequestHandler = async function registration(
   reqId,
@@ -103,11 +108,16 @@ export const registration: AppRequestHandler = async function registration(
 
   if (isSubscriptionPlan(request.planId)) {
     const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
-    const result = await createCustomerWithSubscription(paddle, email, planId);
+    const result = await createCustomerWithSubscription(paddle, storage, accountId, planId);
 
     if (isErr(result)) {
       logError(si`Failed to ${createCustomerWithSubscription.name}: ${result.reason}`, { email: email.value });
       return makeAppError();
+    }
+
+    if (isPaddleCustomerTaken(result)) {
+      logError('Refusing to adopt the Paddle customer for this email', { reason: result.reason, email: email.value });
+      return makeContactSupportError(settings);
     }
 
     paymentToken = result.value;
@@ -284,6 +294,8 @@ async function initAccount(
     creationTimestamp: now,
     isAdmin: false,
     passwordChangedAt: now,
+    paddleCustomerId: undefined,
+    lastPaddlePlanEventAt: undefined,
   };
 
   const storeAccountResult = storeAccount(storage, accountId, account);

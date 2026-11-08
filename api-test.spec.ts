@@ -2,6 +2,7 @@
 import { expect } from 'chai';
 const cookie = require('cookie');
 import fetchCookie from 'fetch-cookie';
+import { writeFileSync } from 'node:fs';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
@@ -50,7 +51,7 @@ import {
   getFeedJsonStorageKey,
   getFeedRootStorageKey,
 } from './src/domain/feed-storage';
-import { deleteFile, fileExists, listFiles, readFile, writeFile } from './src/domain/io-isolation';
+import { deleteFile, fileExists, listFiles, readFile } from './src/domain/io-isolation';
 import {
   PasswordResetConfirmationData,
   PasswordResetConfirmationSecretData,
@@ -258,7 +259,9 @@ describe('API', () => {
     before(() => {
       const [account, accountId] = loadStoredAccountByEmail(userEmail);
       const upgraded = { ...account, planId };
-      writeFile(makePath(dataDirRoot, getAccountStorageKey(accountId)), JSON.stringify(upgraded));
+      // In place rather than through io-isolation’s temp-and-rename: on Docker Desktop
+      // a rename from the host leaves the container briefly seeing a file it can’t open.
+      writeFileSync(makePath(dataDirRoot, getAccountStorageKey(accountId)), JSON.stringify(upgraded));
     });
 
     context('when authenticated', () => {
@@ -652,7 +655,7 @@ describe('API', () => {
       function storeCardDescription(accountId: AccountId): void {
         const filePath = getCardDescriptionStorageKey(accountId);
 
-        writeFile(makePath(dataDirRoot, filePath), JSON.stringify(cardDescription));
+        writeFileSync(makePath(dataDirRoot, filePath), JSON.stringify(cardDescription));
       }
 
       function removeCardDescription(accountId: AccountId): void {

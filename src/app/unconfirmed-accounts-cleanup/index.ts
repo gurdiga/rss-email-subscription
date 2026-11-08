@@ -1,6 +1,11 @@
 import { Paddle } from '@paddle/paddle-node-sdk';
 import { AppEnv } from '../../api/init-app';
-import { cancelCustomerSubscription, isNothingToCancel, makePaddle } from '../../api/payment-integration';
+import {
+  cancelCustomerSubscription,
+  checkLiveSubscriptionByEmail,
+  isNothingToCancel,
+  makePaddle,
+} from '../../api/payment-integration';
 import { Account, AccountId, isAccountNotFound } from '../../domain/account';
 import { deleteAccount, getAccountIdList, loadAccount } from '../../domain/account-storage';
 import { confirmationSecretLifetimeMs } from '../../domain/confirmation-secrets';
@@ -32,7 +37,8 @@ type PaddleEnv = Pick<AppEnv, 'PADDLE_API_KEY' | 'PADDLE_ENVIRONMENT'>;
 export async function deleteStaleUnconfirmedAccounts(
   storage: AppStorage,
   env: PaddleEnv,
-  cancelFn = cancelCustomerSubscription
+  cancelFn = cancelCustomerSubscription,
+  checkByEmailFn = checkLiveSubscriptionByEmail
 ): Promise<void> {
   const logData = { module: deleteStaleUnconfirmedAccounts.name };
   const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
@@ -53,7 +59,7 @@ export async function deleteStaleUnconfirmedAccounts(
     let deletedAccountsCount = 0;
 
     for (const accountId of accountIdList.accountIds) {
-      const deleted = await deleteAccountIfStaleUnconfirmed(storage, paddle, cancelFn, accountId);
+      const deleted = await deleteAccountIfStaleUnconfirmed(storage, paddle, cancelFn, checkByEmailFn, accountId);
 
       if (deleted) {
         deletedAccountsCount++;
@@ -70,6 +76,7 @@ async function deleteAccountIfStaleUnconfirmed(
   storage: AppStorage,
   paddle: Paddle,
   cancelFn: typeof cancelCustomerSubscription,
+  checkByEmailFn: typeof checkLiveSubscriptionByEmail,
   accountId: AccountId
 ): Promise<boolean> {
   const logData = { module: deleteAccountIfStaleUnconfirmed.name, accountId: accountId.value };
@@ -110,10 +117,14 @@ async function deleteAccountIfStaleUnconfirmed(
     return false;
   }
 
-  const cancelResult = await cancelFn(paddle, account.email);
+  // An account with no link either predates links or was left unmatched by the
+  // backfill, so its billing can only be found by email.
+  const cancelResult = account.paddleCustomerId
+    ? await cancelFn(paddle, account.paddleCustomerId)
+    : await checkByEmailFn(paddle, account.email);
 
   if (isErr(cancelResult)) {
-    logError(si`Failed to ${cancelCustomerSubscription.name}; skipping deletion`, {
+    logError('Failed to check Paddle billing; skipping deletion', {
       reason: cancelResult.reason,
       email: account.email.value,
     });

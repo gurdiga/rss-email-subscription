@@ -1,10 +1,11 @@
 import { expect } from 'chai';
 import { Account, AccountData, AccountId } from '../../domain/account';
 import { accountExists, storeAccount } from '../../domain/account-storage';
-import { EmailAddress } from '../../domain/email-address';
 import { getFeedJsonStorageKey } from '../../domain/feed-storage';
 import { FeedId, makeFeedId } from '../../domain/feed-id';
 import { NothingToCancel } from '../../api/payment-integration';
+import { EmailAddress } from '../../domain/email-address';
+import { PaddleCustomerId } from '../../domain/payment';
 import { PlanId } from '../../domain/plan';
 import { AppStorage } from '../../domain/storage';
 import { Result, makeErr } from '../../shared/lang';
@@ -101,19 +102,48 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
     expect(accountExists(storage, accountId)).to.be.true;
   });
 
-  it('asks Paddle about the account email before deleting', async () => {
+  it('asks Paddle about the linked customer before deleting', async () => {
     const storage = makeTestStorageFromSnapshot({});
-    const account = staleUnconfirmed({ email: 'stuck@test.com' });
+    const customerId = 'ctm_01bbbbbbbbbbbbbbbbbbbbbbbb';
+    const account = staleUnconfirmed({ email: 'stuck@test.com', paddleCustomerId: customerId });
     const askedAbout: string[] = [];
 
     storeTestAccount(storage, account);
 
-    await deleteStaleUnconfirmedAccounts(storage, env, async (_paddle, email: EmailAddress) => {
+    await deleteStaleUnconfirmedAccounts(storage, env, async (_paddle, paddleCustomerId: PaddleCustomerId) => {
+      askedAbout.push(paddleCustomerId.value);
+      return { kind: 'NothingToCancel' as const };
+    });
+
+    expect(askedAbout).to.deep.equal([customerId]);
+  });
+
+  it('checks an unlinked account’s billing by email, without cancelling anything', async () => {
+    const storage = makeTestStorageFromSnapshot({});
+    const unlinked = staleUnconfirmed({ email: 'unlinked@test.com', paddleCustomerId: undefined });
+    const accountId = storeTestAccount(storage, unlinked);
+    const askedAbout: string[] = [];
+    const cancelFails = async () => makeErr('cancelled by email');
+
+    await deleteStaleUnconfirmedAccounts(storage, env, cancelFails, async (_paddle, email: EmailAddress) => {
       askedAbout.push(email.value);
       return { kind: 'NothingToCancel' as const };
     });
 
-    expect(askedAbout).to.deep.equal(['stuck@test.com']);
+    expect(askedAbout).to.deep.equal(['unlinked@test.com']);
+    expect(accountExists(storage, accountId)).to.be.false;
+  });
+
+  it('leaves an unlinked account alone when its email has a live subscription', async () => {
+    const storage = makeTestStorageFromSnapshot({});
+    const unlinked = staleUnconfirmed({ email: 'unlinked@test.com', paddleCustomerId: undefined });
+    const accountId = storeTestAccount(storage, unlinked);
+
+    await deleteStaleUnconfirmedAccounts(storage, env, nothingToCancel, async () => ({
+      kind: 'LiveSubscriptionFound' as const,
+    }));
+
+    expect(accountExists(storage, accountId)).to.be.true;
   });
 });
 
@@ -126,6 +156,7 @@ function staleUnconfirmed(overrides: Partial<AccountData> = {}): Account {
     planId: PlanId.PendingPayment,
     confirmationTimestamp: undefined,
     creationTimestamp: daysAgo(3),
+    paddleCustomerId: 'ctm_01aaaaaaaaaaaaaaaaaaaaaaaa',
     ...overrides,
   });
 }

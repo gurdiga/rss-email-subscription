@@ -1,7 +1,7 @@
 import { expect } from 'chai';
 import { Account, isAccountNotFound } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { loadAccount, storeAccount } from '../domain/account-storage';
+import { accountExists, loadAccount, storeAccount } from '../domain/account-storage';
 import {
   ConfirmationSecret,
   isConfirmationSecretNotFound,
@@ -336,6 +336,26 @@ describe(deleteAccountWithPassword.name, () => {
     const response = await responsePromise;
     expect(response).to.include({ kind: 'InputError', field: 'password' }, JSON.stringify(response));
     expect(loadStoredAccount(app).hashedPassword.value, 'the account survives').to.equal(resetHashedPassword.value);
+  });
+
+  it('refuses a paid account with no linked Paddle customer, rather than leave its billing behind', async () => {
+    const app = makeTestApp();
+    const accountId = await storeTestAccount(app);
+    const reqSession = { ...makeReqSession(accountId.value, email), ...makeMockSessionMethods() };
+
+    storeAccount(app.storage, accountId, { ...loadStoredAccount(app), planId: PlanId.Courage });
+
+    const response = await deleteAccountWithPassword(
+      'req',
+      { password: currentPassword },
+      {},
+      reqSession,
+      app,
+      makeMockRegenerateSession(reqSession)
+    );
+
+    expect(response.kind).to.equal('AppError', JSON.stringify(response));
+    expect(accountExists(app.storage, accountId), 'the account survives').to.equal(true);
   });
 });
 
