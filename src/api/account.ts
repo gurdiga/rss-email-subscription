@@ -28,6 +28,7 @@ import {
   makeConfirmationSecret,
   makeEmailChangeRequestSecretData,
   makeRandomConfirmationSecret,
+  makeConfirmationLink,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -521,9 +522,7 @@ async function sendEmailChangeConfirmationEmail(
   settings: AppSettings,
   env: AppEnv
 ) {
-  const confirmationLink = new URL(si`https://${env.DOMAIN_NAME}${PagePath.emailChangeConfirmation}`);
-
-  confirmationLink.searchParams.set('secret', confirmationSecret.value);
+  const confirmationLink = makeConfirmationLink(env.DOMAIN_NAME, PagePath.emailChangeConfirmation, confirmationSecret);
 
   const emailContent = {
     subject: 'Please confirm FeedSubscription email change',

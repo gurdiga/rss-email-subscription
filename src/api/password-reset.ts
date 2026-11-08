@@ -13,6 +13,7 @@ import {
   isIssuedForAccount,
   makeConfirmationSecret,
   makeRandomConfirmationSecret,
+  makeConfirmationLink,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -118,9 +119,7 @@ async function sendConfirmationEmail(
 }
 
 function makeConfirmationEmailContent(secret: ConfirmationSecret, domainName: string): EmailContent {
-  const confirmationLink = new URL(si`https://${domainName}${PagePath.confirmPasswordReset}`);
-
-  confirmationLink.searchParams.set('secret', secret.value);
+  const confirmationLink = makeConfirmationLink(domainName, PagePath.confirmPasswordReset, secret);
 
   return {
     subject: 'Password reset link from FeedSubscription',

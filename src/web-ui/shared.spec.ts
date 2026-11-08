@@ -5,12 +5,31 @@ import { makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
 import {
   fillUiElements,
+  getConfirmationSecretParams,
   getCookieByName,
   requireQueryParams,
   requireUiElements,
   toggleAttribute,
   UiElementFillSpec,
 } from './shared';
+
+describe(getConfirmationSecretParams.name, () => {
+  it('reads the secret from the fragment', () => {
+    const params = getConfirmationSecretParams({ hash: '#secret=from-fragment', search: '' });
+
+    expect(requireQueryParams<{ secret: string }>({ secret: 'secret' }, params)).to.deep.equal({
+      secret: 'from-fragment',
+    });
+  });
+
+  it('falls back to the query string, for links mailed before the fragment', () => {
+    const params = getConfirmationSecretParams({ hash: '', search: '?secret=from-query' });
+
+    expect(requireQueryParams<{ secret: string }>({ secret: 'secret' }, params)).to.deep.equal({
+      secret: 'from-query',
+    });
+  });
+});
 
 describe(requireQueryParams.name, () => {
   interface RequiredParams {

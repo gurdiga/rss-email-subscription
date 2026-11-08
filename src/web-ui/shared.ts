@@ -43,6 +43,14 @@ export function requireQueryParams<RequiredParams>(
   return params;
 }
 
+// Confirmation links carry their secret in the fragment. Links mailed before that
+// carry it in the query string, and keep working until they expire.
+export function getConfirmationSecretParams(location: Pick<Location, 'hash' | 'search'> = window.location): string {
+  const fragmentParams = location.hash.slice(1);
+
+  return new URLSearchParams(fragmentParams).has('secret') ? fragmentParams : location.search;
+}
+
 export type ElementSelectors<T> = Record<keyof T, string>;
 
 export function requireUiElements<T>(selectors: ElementSelectors<T>, querySelectorFn = querySelector): Result<T> {

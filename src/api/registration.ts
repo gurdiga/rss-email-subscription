@@ -16,6 +16,7 @@ import {
   isConfirmationSecretNotFound,
   makeConfirmationSecret,
   makeRandomConfirmationSecret,
+  makeConfirmationLink,
 } from '../domain/confirmation-secrets';
 import {
   deleteConfirmationSecret,
@@ -189,9 +190,7 @@ export function makeRegistrationConfirmationEmailContent(
   confirmationSecret: ConfirmationSecret,
   domainName: string
 ): EmailContent {
-  const confirmationLink = new URL(si`https://${domainName}${PagePath.registrationConfirmation}`);
-
-  confirmationLink.searchParams.set('secret', confirmationSecret.value);
+  const confirmationLink = makeConfirmationLink(domainName, PagePath.registrationConfirmation, confirmationSecret);
 
   return {
     subject: 'Please confirm FeedSubscription.com registration',

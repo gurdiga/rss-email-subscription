@@ -3,6 +3,7 @@ import { PasswordResetConfirmationData } from '../domain/password-reset';
 import { isInputError, isAppError, isSuccess } from '../shared/api-response';
 import { asyncAttempt, exhaustivenessCheck, isErr } from '../shared/lang';
 import {
+  getConfirmationSecretParams,
   requireQueryParams,
   displayInitError,
   requireUiElements,
@@ -20,9 +21,7 @@ import {
 } from './shared';
 
 async function main() {
-  const queryStringParams = requireQueryParams<RequiredParams>({
-    secret: 'secret',
-  });
+  const queryStringParams = requireQueryParams<RequiredParams>({ secret: 'secret' }, getConfirmationSecretParams());
 
   if (isErr(queryStringParams)) {
     displayInitError(queryStringParams.reason);

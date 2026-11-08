@@ -1,6 +1,11 @@
 import { expect } from 'chai';
 import { isErr, makeErr } from '../shared/lang';
-import { ConfirmationSecret, makeConfirmationSecret, makeRandomConfirmationSecret } from './confirmation-secrets';
+import {
+  ConfirmationSecret,
+  makeConfirmationLink,
+  makeConfirmationSecret,
+  makeRandomConfirmationSecret,
+} from './confirmation-secrets';
 
 describe(makeConfirmationSecret.name, () => {
   const field = 'secret';
@@ -29,6 +34,16 @@ describe(makeConfirmationSecret.name, () => {
     expect(traversalPayload).to.have.lengthOf(64);
     expect(makeConfirmationSecret(traversalPayload)).to.deep.equal(makeErr('Input contains invalid characters', field));
     expect(makeConfirmationSecret('X'.repeat(64))).to.deep.equal(makeErr('Input contains invalid characters', field));
+  });
+});
+
+describe(makeConfirmationLink.name, () => {
+  it('puts the secret in the fragment, never the query string', () => {
+    const secret = makeRandomConfirmationSecret();
+    const link = makeConfirmationLink('example.com', '/user/confirm-password-reset.html', secret);
+
+    expect(link.toString()).to.equal('https://example.com/user/confirm-password-reset.html#secret=' + secret.value);
+    expect(link.search).to.equal('');
   });
 });
 

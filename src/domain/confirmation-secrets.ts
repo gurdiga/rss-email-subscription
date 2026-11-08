@@ -41,6 +41,17 @@ export const confirmationSecretLength = 64;
 // to hex characters prevents path traversal via crafted secrets like "../../settings".
 const confirmationSecretCharsetRe = /^[a-f0-9]+$/;
 
+// The secret goes in the fragment, which browsers never send. In the query string it
+// would reach the logs through the page’s own request line and through the Referer of
+// every request the page makes after it.
+export function makeConfirmationLink(domainName: string, pagePath: string, secret: ConfirmationSecret): URL {
+  const link = new URL(si`https://${domainName}${pagePath}`);
+
+  link.hash = new URLSearchParams({ secret: secret.value }).toString();
+
+  return link;
+}
+
 export function isConfirmationSecret(value: unknown): value is ConfirmationSecret {
   return hasKind(value, 'ConfirmationSecret');
 }

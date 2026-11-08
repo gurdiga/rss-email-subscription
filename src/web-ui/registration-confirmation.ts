@@ -12,6 +12,7 @@ import {
   hideElement,
   HttpMethod,
   navigateTo,
+  getConfirmationSecretParams,
   requireQueryParams,
   requireUiElements,
   sendApiRequest,
@@ -21,9 +22,7 @@ import {
 } from './shared';
 
 async function main() {
-  const queryStringParams = requireQueryParams<RequiredParams>({
-    secret: 'secret',
-  });
+  const queryStringParams = requireQueryParams<RequiredParams>({ secret: 'secret' }, getConfirmationSecretParams());
 
   if (isErr(queryStringParams)) {
     displayInitError(queryStringParams.reason);
