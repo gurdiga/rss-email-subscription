@@ -95,7 +95,7 @@ describe(deleteStaleUnconfirmedAccounts.name, () => {
   it('leaves the account alone when Paddle had a live subscription to cancel', async () => {
     const storage = makeTestStorageFromSnapshot({});
     const accountId = storeTestAccount(storage, staleUnconfirmed());
-    const cancelSucceeds = async () => undefined;
+    const cancelSucceeds = async () => ({ kind: 'ScheduledCancellation' as const, effectiveAt: new Date() });
 
     await deleteStaleUnconfirmedAccounts(storage, env, cancelSucceeds);
 

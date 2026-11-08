@@ -1,4 +1,11 @@
-import { Environment, EventName, LogLevel, Paddle, TransactionNotification } from '@paddle/paddle-node-sdk';
+import {
+  Environment,
+  EventName,
+  LogLevel,
+  Paddle,
+  Subscription,
+  TransactionNotification,
+} from '@paddle/paddle-node-sdk';
 import { RequestHandler } from 'express';
 import { Account, AccountId, isAccountId, isAccountNotFound } from '../domain/account';
 import {
@@ -377,6 +384,14 @@ export async function changeCustomerSubscription(
     return makeErr(si`No active subscription found for customer "${customerId.value}"`);
   }
 
+  // Paddle refuses to change a subscription with a change pending, so a downgrade to
+  // Free that hasn't taken effect yet is lifted first: choosing a paid plan undoes it.
+  const removeResult = await removeScheduledCancellationOf(paddle, subscription);
+
+  if (isErr(removeResult)) {
+    return removeResult;
+  }
+
   // Paddle requires 'do_not_bill' during trial; 'prorated_immediately' for active subscriptions.
   const prorationBillingMode = subscription.status === 'trialing' ? 'do_not_bill' : 'prorated_immediately';
 
@@ -388,8 +403,26 @@ export async function changeCustomerSubscription(
   );
 
   if (isErr(updated)) {
-    return makeErr(si`Failed to paddle.subscriptions.update: ${updated.reason}`);
+    const restoreResult = await restoreLiftedCancellation(paddle, subscription);
+
+    return makeErr(si`Failed to paddle.subscriptions.update: ${updated.reason}${restoreResult}`);
   }
+}
+
+// After a failed plan change, puts back the cancellation lifted for it, so the plan
+// still ends when the account page says it does. Returns what to add to the error.
+async function restoreLiftedCancellation(paddle: Paddle, subscription: Subscription): Promise<string> {
+  if (subscription.scheduledChange?.action !== 'cancel') {
+    return '';
+  }
+
+  const result = await asyncAttempt(() =>
+    paddle.subscriptions.cancel(subscription.id, { effectiveFrom: 'next_billing_period' })
+  );
+
+  return isErr(result)
+    ? si`; the lifted cancellation of "${subscription.id}" could NOT be restored, so it now renews: ${result.reason}`
+    : '; the lifted cancellation was restored';
 }
 
 export async function getPaymentMethodUpdateTransaction(
@@ -426,7 +459,7 @@ export async function getPaymentMethodUpdateTransaction(
 export async function cancelCustomerSubscription(
   paddle: Paddle,
   customerId: PaddleCustomerId
-): Promise<Result<NothingToCancel | void>> {
+): Promise<Result<NothingToCancel | ScheduledCancellation>> {
   const subscriptionsPage = await asyncAttempt(() =>
     paddle.subscriptions.list({ customerId: [customerId.value], status: ['active', 'trialing'] }).next()
   );
@@ -450,7 +483,7 @@ export async function cancelCustomerSubscription(
   // cancel a subscription with a change pending, and repeating it would block both a
   // second downgrade and deleting the account until the period ran out.
   if (subscription.scheduledChange?.action === 'cancel') {
-    return;
+    return makeScheduledCancellation(subscription.scheduledChange.effectiveAt);
   }
 
   const result = await asyncAttempt(() =>
@@ -459,6 +492,68 @@ export async function cancelCustomerSubscription(
 
   if (isErr(result)) {
     return makeErr(si`Failed to paddle.subscriptions.cancel("${subscription.id}"): ${result.reason}`);
+  }
+
+  return makeScheduledCancellation(result.scheduledChange?.effectiveAt);
+}
+
+export interface ScheduledCancellation {
+  kind: 'ScheduledCancellation';
+  effectiveAt: Date;
+}
+
+function makeScheduledCancellation(effectiveAt: string | undefined): Result<ScheduledCancellation> {
+  if (!effectiveAt) {
+    return makeErr('Paddle scheduled the cancellation without saying when it takes effect');
+  }
+
+  const date = makeDate(effectiveAt);
+
+  if (isErr(date)) {
+    return makeErr(si`Invalid scheduled cancellation date from Paddle: ${date.reason}`);
+  }
+
+  return { kind: 'ScheduledCancellation', effectiveAt: date };
+}
+
+// Undoes a downgrade to Free before it takes effect. A no-op when nothing is scheduled,
+// so a repeated request does no harm. NothingToCancel means there's no live
+// subscription at all: the cancellation already took effect, and there's nothing left
+// to keep.
+export async function removeScheduledCancellation(
+  paddle: Paddle,
+  customerId: PaddleCustomerId
+): Promise<Result<NothingToCancel | void>> {
+  const subscriptionsPage = await asyncAttempt(() =>
+    paddle.subscriptions.list({ customerId: [customerId.value], status: ['active', 'trialing'] }).next()
+  );
+
+  if (isErr(subscriptionsPage)) {
+    return makeErr(si`Failed to paddle.subscriptions.list: ${subscriptionsPage.reason}`);
+  }
+
+  if (subscriptionsPage.length === 0) {
+    return makeNothingToCancel();
+  }
+
+  for (const subscription of subscriptionsPage) {
+    const result = await removeScheduledCancellationOf(paddle, subscription);
+
+    if (isErr(result)) {
+      return result;
+    }
+  }
+}
+
+async function removeScheduledCancellationOf(paddle: Paddle, subscription: Subscription): Promise<Result<void>> {
+  if (subscription.scheduledChange?.action !== 'cancel') {
+    return;
+  }
+
+  const result = await asyncAttempt(() => paddle.subscriptions.update(subscription.id, { scheduledChange: null }));
+
+  if (isErr(result)) {
+    return makeErr(si`Failed to remove the scheduled cancellation of "${subscription.id}": ${result.reason}`);
   }
 }
 
@@ -767,6 +862,7 @@ export function handleSubscriptionCanceled(app: App, customerId: string, occurre
     ...account,
     planId: newPlanId,
     lastPaddlePlanEventAt: occurredAt,
+    pendingCancellationAt: undefined,
   });
 
   if (isErr(storeResult)) {

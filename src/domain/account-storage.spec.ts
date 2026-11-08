@@ -90,6 +90,7 @@ describe(loadAccount.name, () => {
       passwordChangedAt: creationTimestamp,
       paddleCustomerId: undefined,
       lastPaddlePlanEventAt: undefined,
+      pendingCancellationAt: undefined,
     };
 
     expect(hasItem.calls).to.deep.equal([[storageKey]]);
@@ -156,6 +157,7 @@ describe(storeAccount.name, () => {
       passwordChangedAt: creationTimestamp,
       paddleCustomerId: undefined,
       lastPaddlePlanEventAt: undefined,
+      pendingCancellationAt: undefined,
     };
     const storeItem = makeSpy<AppStorage['storeItem']>();
     const loadItem = makeStub(() => getAccountData(account));
@@ -201,6 +203,7 @@ describe(confirmAccount.name, () => {
       passwordChangedAt: confirmationTimestamp,
       paddleCustomerId: undefined,
       lastPaddlePlanEventAt: undefined,
+      pendingCancellationAt: undefined,
     };
 
     expect(hasItem.calls).to.deep.equal([[getAccountStorageKey(accountId)]]);
@@ -242,6 +245,7 @@ describe(setAccountEmail.name, () => {
           passwordChangedAt: account.passwordChangedAt,
           paddleCustomerId: undefined,
           lastPaddlePlanEventAt: undefined,
+          pendingCancellationAt: undefined,
         },
       ],
     ]);
@@ -418,5 +422,6 @@ function getAccountData(account: Account): AccountData {
     passwordChangedAt: account.passwordChangedAt,
     paddleCustomerId: account.paddleCustomerId?.value,
     lastPaddlePlanEventAt: account.lastPaddlePlanEventAt,
+    pendingCancellationAt: account.pendingCancellationAt,
   };
 }

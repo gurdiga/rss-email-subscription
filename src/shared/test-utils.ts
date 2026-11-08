@@ -170,6 +170,7 @@ export function makeTestAccount(customAccountData: Partial<AccountData> = {}): A
       ? (makePaddleCustomerId(accountData.paddleCustomerId) as PaddleCustomerId)
       : undefined,
     lastPaddlePlanEventAt: accountData.lastPaddlePlanEventAt,
+    pendingCancellationAt: accountData.pendingCancellationAt,
   };
 
   return result;

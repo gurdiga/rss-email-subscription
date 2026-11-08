@@ -58,6 +58,7 @@ export async function createDemoAccount(): Promise<Result<string>> {
     passwordChangedAt: now,
     paddleCustomerId: undefined,
     lastPaddlePlanEventAt: undefined,
+    pendingCancellationAt: undefined,
   };
 
   const storeResult = storeAccount(storage, accountId, account);

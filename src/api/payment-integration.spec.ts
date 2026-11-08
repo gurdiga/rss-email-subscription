@@ -16,11 +16,13 @@ import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } f
 import { si } from '../shared/string-utils';
 import {
   cancelCustomerSubscription,
+  changeCustomerSubscription,
   createCustomerWithSubscription,
   handleSubscriptionCanceled,
   handleTransactionCompleted,
   isPaddleCustomerTaken,
   loadCardDescription,
+  removeScheduledCancellation,
 } from './payment-integration';
 import { App } from './init-app';
 import { hashingSalt, makeTestApp } from './test-utils';
@@ -209,6 +211,16 @@ describe(handleSubscriptionCanceled.name, () => {
     expect(isErr(result)).to.be.true;
   });
 
+  it('clears the pending cancellation once it takes effect', () => {
+    const app = makeTestApp();
+    const accountId = storeLinkedAccount(app, PlanId.Courage);
+
+    storeAccount(app.storage, accountId, { ...loadTestAccount(app, accountId), pendingCancellationAt: new Date() });
+    handleSubscriptionCanceled(app, customerId, now());
+
+    expect(loadTestAccount(app, accountId).pendingCancellationAt).to.be.undefined;
+  });
+
   it('downgrades account to Free on subscription cancellation', () => {
     const app = makeTestApp();
     const accountId = storeLinkedAccount(app, PlanId.Courage);
@@ -318,20 +330,95 @@ describe(createCustomerWithSubscription.name, () => {
 });
 
 describe(cancelCustomerSubscription.name, () => {
-  it('leaves a subscription already set to cancel alone, and reports it cancelled', async () => {
-    const subscription = { id: 'sub_01test', scheduledChange: { action: 'cancel' } };
-    const paddle: any = {
-      subscriptions: {
-        list: () => ({ next: async () => [subscription] }),
-        cancel: async () => expect.fail('cancelled again'),
-      },
-    };
+  it('leaves a subscription already set to cancel alone, and reports when it ends', async () => {
+    const subscription = { id: 'sub_01test', scheduledChange: { action: 'cancel', effectiveAt: periodEnd } };
+    const paddle = makeFakeSubscriptionsPaddle([subscription], {
+      cancel: async () => expect.fail('cancelled again'),
+    });
 
     const result = await cancelCustomerSubscription(paddle, makeCustomerId());
 
-    expect(result).to.be.undefined;
+    expect(result).to.deep.equal({ kind: 'ScheduledCancellation', effectiveAt: new Date(periodEnd) });
+  });
+
+  it('reports when a new cancellation takes effect', async () => {
+    const paddle = makeFakeSubscriptionsPaddle([{ id: 'sub_01test', scheduledChange: null }], {
+      cancel: async () => ({ scheduledChange: { action: 'cancel', effectiveAt: periodEnd } }),
+    });
+
+    const result = await cancelCustomerSubscription(paddle, makeCustomerId());
+
+    expect(result).to.deep.equal({ kind: 'ScheduledCancellation', effectiveAt: new Date(periodEnd) });
   });
 });
+
+describe(removeScheduledCancellation.name, () => {
+  it('lifts a scheduled cancellation, and leaves other subscriptions alone', async () => {
+    const updates: unknown[] = [];
+    const paddle = makeFakeSubscriptionsPaddle(
+      [
+        { id: 'sub_01cancelling', scheduledChange: { action: 'cancel', effectiveAt: periodEnd } },
+        { id: 'sub_01pausing', scheduledChange: { action: 'pause', effectiveAt: periodEnd } },
+      ],
+      { update: async (id: string, body: unknown) => updates.push([id, body]) }
+    );
+
+    const result = await removeScheduledCancellation(paddle, makeCustomerId());
+
+    expect(result).to.be.undefined;
+    expect(updates).to.deep.equal([['sub_01cancelling', { scheduledChange: null }]]);
+  });
+
+  it('reports nothing to keep once the subscription has ended', async () => {
+    const paddle = makeFakeSubscriptionsPaddle([]);
+
+    expect(await removeScheduledCancellation(paddle, makeCustomerId())).to.deep.equal({ kind: 'NothingToCancel' });
+  });
+});
+
+describe(changeCustomerSubscription.name, () => {
+  it('lifts a pending cancellation before changing the plan', async () => {
+    const updates: unknown[] = [];
+    const paddle = makeFakeSubscriptionsPaddle(
+      [{ id: 'sub_01test', status: 'active', scheduledChange: { action: 'cancel', effectiveAt: periodEnd } }],
+      { update: async (_id: string, body: object) => updates.push(Object.keys(body)) }
+    );
+
+    const result = await changeCustomerSubscription(paddle, makeCustomerId(), PlanId.Mastery);
+
+    expect(result).to.be.undefined;
+    expect(updates).to.deep.equal([['scheduledChange'], ['items', 'prorationBillingMode']]);
+  });
+
+  it('puts the lifted cancellation back when the plan change fails', async () => {
+    const cancellations: unknown[] = [];
+    const paddle = makeFakeSubscriptionsPaddle(
+      [{ id: 'sub_01test', status: 'active', scheduledChange: { action: 'cancel', effectiveAt: periodEnd } }],
+      {
+        update: async (_id: string, body: object) => {
+          if ('items' in body) {
+            throw new Error('Paddle is down');
+          }
+        },
+        cancel: async (id: string, body: unknown) => cancellations.push([id, body]),
+      }
+    );
+
+    const result = await changeCustomerSubscription(paddle, makeCustomerId(), PlanId.Mastery);
+
+    expect(isErr(result)).to.be.true;
+    expect(cancellations).to.deep.equal([['sub_01test', { effectiveFrom: 'next_billing_period' }]]);
+  });
+});
+
+const periodEnd = '2026-12-03T00:00:00.000Z';
+
+function makeFakeSubscriptionsPaddle(subscriptions: object[], overrides: object = {}): any {
+  return {
+    subscriptions: { list: () => ({ next: async () => subscriptions }), ...overrides },
+    prices: { list: () => ({ next: async () => [{ id: 'pri_01mastery', customData: { res_plan_id: 'mastery' } }] }) },
+  };
+}
 
 const customerId = 'ctm_01aaaaaaaaaaaaaaaaaaaaaaaa';
 

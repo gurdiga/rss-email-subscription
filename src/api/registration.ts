@@ -281,6 +281,7 @@ function initAccount(
     passwordChangedAt: now,
     paddleCustomerId: undefined,
     lastPaddlePlanEventAt: undefined,
+    pendingCancellationAt: undefined,
   };
 
   const storeAccountResult = storeAccount(storage, accountId, account);

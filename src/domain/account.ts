@@ -39,6 +39,9 @@ export interface Account {
   passwordChangedAt: Date;
   paddleCustomerId: PaddleCustomerId | undefined;
   lastPaddlePlanEventAt: Date | undefined;
+  // When a downgrade to Free takes effect. Paddle cancels at the end of the billing
+  // period, and the plan only changes then, so this is the one sign of it until then.
+  pendingCancellationAt: Date | undefined;
 }
 
 export interface AccountData {
@@ -51,6 +54,7 @@ export interface AccountData {
   passwordChangedAt: Date | undefined;
   paddleCustomerId?: string;
   lastPaddlePlanEventAt?: Date;
+  pendingCancellationAt?: Date;
 }
 
 export interface UiAccount {
@@ -58,6 +62,7 @@ export interface UiAccount {
   planId: PlanId;
   isAdmin: boolean;
   cardDescription: string;
+  pendingCancellationAt?: string;
 }
 
 export interface AccountNotFound {
@@ -137,6 +142,7 @@ export type PlanChangeRequestData = Record<keyof PlanChangeRequest, string>;
 
 export interface PlanChangeResponseData {
   paymentToken: string;
+  pendingCancellationAt?: string;
 }
 
 export interface DeleteAccountRequest {

@@ -79,7 +79,7 @@ async function main() {
 
   addEmailChangeEventHandlers(uiElements);
   addPasswordChangeEventHandlers(uiElements);
-  addPlanChangeEventHandlers(uiElements, uiAccount.planId);
+  addPlanChangeEventHandlers(uiElements, uiAccount.planId, !!uiAccount.pendingCancellationAt);
   addCardUpdateEventHandlers(uiElements);
   addDeleteAccountEventHandlers(uiElements);
 }
@@ -137,7 +137,11 @@ async function submitDeleteAccountRequest(uiElements: DeleteAccountUiElements) {
   );
 }
 
-async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPlanId: PlanId): Promise<void> {
+async function addPlanChangeEventHandlers(
+  uiElements: PlanUiElements,
+  currentPlanId: PlanId,
+  hasPendingCancellation: boolean
+): Promise<void> {
   const { changePlanButton, cancelPlanChangeButton, submitNewPlanButton, changePlanDemoAccountNote } = uiElements;
   const { viewPlanSection, changePlanSection, planChangeSuccessMessage, planChangeApiResponseMessage, planDropdown } =
     uiElements;
@@ -151,7 +155,8 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     return;
   }
 
-  initPlansDropdown(uiElements, currentPlanId);
+  await initPlansDropdown(uiElements, currentPlanId);
+  setFreePlanOffered(uiElements, !hasPendingCancellation);
 
   onClick(changePlanButton, () => {
     hideElement(viewPlanSection);
@@ -176,8 +181,58 @@ async function addPlanChangeEventHandlers(uiElements: PlanUiElements, currentPla
     await submitNewPlan(uiElements, paymentSubformHandle);
   });
 
+  onClick(uiElements.keepPlanButton, async () => {
+    await submitKeepPlan(uiElements);
+  });
+
   toggleElement(isDemoAccount(), changePlanDemoAccountNote);
   submitNewPlanButton.disabled = isDemoAccount();
+}
+
+async function submitKeepPlan(uiElements: PlanUiElements) {
+  const { keepPlanButton, keepPlanApiResponseMessage, pendingCancellationNotice } = uiElements;
+
+  keepPlanButton.disabled = true;
+  hideElement(keepPlanApiResponseMessage);
+
+  const response = await asyncAttempt(() => sendApiRequest(ApiPath.keepAccountPlan, HttpMethod.POST, {}));
+
+  keepPlanButton.disabled = false;
+
+  if (isErr(response)) {
+    displayCommunicationError(response, keepPlanApiResponseMessage);
+    return;
+  }
+
+  if (!isSuccess(response)) {
+    displayApiResponse(response, keepPlanApiResponseMessage);
+    return;
+  }
+
+  hideElement(pendingCancellationNotice);
+  setFreePlanOffered(uiElements, true);
+}
+
+function showPendingCancellation(uiElements: PlanUiElements, pendingCancellationAt: string): void {
+  const date = new Date(pendingCancellationAt).toLocaleDateString(undefined, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+
+  uiElements.pendingCancellationDate.textContent = date;
+  unhideElement(uiElements.pendingCancellationNotice);
+}
+
+// A downgrade to Free is already on its way while a cancellation is pending, and Paddle
+// would refuse a second one.
+function setFreePlanOffered(uiElements: PlanUiElements, isOffered: boolean): void {
+  const freeOption = uiElements.planDropdown.querySelector<HTMLOptionElement>(si`option[value="${PlanId.Free}"]`);
+
+  if (freeOption) {
+    freeOption.disabled = !isOffered;
+    freeOption.hidden = !isOffered;
+  }
 }
 
 function addCardUpdateEventHandlers(uiElements: CardUpdateUiElements): void {
@@ -262,6 +317,21 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
     planChangeApiResponseMessage,
     { planId: planDropdown },
     async (responseData) => {
+      // The plan only changes when the paid period runs out, so this is a notice, not
+      // a new current plan.
+      if (newPlanId === PlanId.Free) {
+        const { pendingCancellationAt } = (responseData || {}) as PlanChangeResponseData;
+
+        if (pendingCancellationAt) {
+          showPendingCancellation(uiElements, pendingCancellationAt);
+        }
+
+        setFreePlanOffered(uiElements, false);
+        hideElement(changePlanSection);
+        unhideElement(uiElements.viewPlanSection);
+        return;
+      }
+
       if (!responseData && isSubscriptionPlan(newPlanId)) {
         reportUnexpectedEmptyResponseData(apiPath);
         return;
@@ -294,6 +364,8 @@ async function submitNewPlan(uiElements: PlanUiElements, paymentSubformHandle: P
       }
 
       currentPlanLabel.textContent = planLabel;
+      hideElement(uiElements.pendingCancellationNotice);
+      setFreePlanOffered(uiElements, true);
       hideElement(paymentSubformContainer);
       unhideElement(planChangeSuccessMessage);
       scrollIntoView(changePlanSection);
@@ -468,6 +540,10 @@ async function fillUi(uiElements: RequiredUiElements, uiAccount: UiAccount) {
     return result;
   }
 
+  if (uiAccount.pendingCancellationAt) {
+    showPendingCancellation(uiElements, uiAccount.pendingCancellationAt);
+  }
+
   if (isSubscriptionPlan(uiAccount.planId)) {
     result = fillUiElements([
       {
@@ -579,6 +655,10 @@ interface PlanUiElements {
   paymentSubformContainer: HTMLElement;
   paymentSubform: HTMLElement;
   changePlanDemoAccountNote: HTMLElement;
+  pendingCancellationNotice: HTMLElement;
+  pendingCancellationDate: HTMLElement;
+  keepPlanButton: HTMLButtonElement;
+  keepPlanApiResponseMessage: HTMLElement;
 }
 
 const planUiElements: ElementSelectors<PlanUiElements> = {
@@ -596,6 +676,10 @@ const planUiElements: ElementSelectors<PlanUiElements> = {
   paymentSubformContainer: '#payment-subform-container',
   paymentSubform: '#payment-subform',
   changePlanDemoAccountNote: '#change-plan-demo-account-note',
+  pendingCancellationNotice: '#pending-cancellation-notice',
+  pendingCancellationDate: '#pending-cancellation-date',
+  keepPlanButton: '#keep-plan-button',
+  keepPlanApiResponseMessage: '#keep-plan-api-response-message',
 };
 
 interface CardUpdateUiElements {

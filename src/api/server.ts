@@ -17,6 +17,7 @@ import {
   loadCurrentAccount,
   requestAccountEmailChange,
   requestAccountPasswordChange,
+  keepAccountPlan,
   requestAccountPlanChange,
   requestPaymentMethodUpdate,
 } from './account';
@@ -131,6 +132,7 @@ async function main() {
     makeAppRequestHandler(requestAccountPasswordChange, app)
   );
   router.post(ApiPath.requestAccountPlanChange, makeAppRequestHandler(requestAccountPlanChange, app));
+  router.post(ApiPath.keepAccountPlan, makeAppRequestHandler(keepAccountPlan, app));
   router.post(ApiPath.requestPaymentMethodUpdate, makeAppRequestHandler(requestPaymentMethodUpdate, app));
   router.post(
     ApiPath.deleteAccountWithPassword,

@@ -60,6 +60,7 @@ import {
   getPaymentMethodUpdateTransaction,
   isPaddleCustomerTaken,
   makeContactSupportError,
+  removeScheduledCancellation,
   updatePaddleCustomerEmail,
   isNothingToCancel,
   loadCardDescription,
@@ -113,6 +114,7 @@ export const loadCurrentAccount: AppRequestHandler = async function loadCurrentA
     planId: account.planId,
     isAdmin: !!account.isAdmin,
     cardDescription,
+    pendingCancellationAt: account.pendingCancellationAt?.toISOString(),
   };
 
   return makeSuccess<UiAccount>('Success', logData, responseData);
@@ -839,7 +841,17 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
       return makeAppError();
     }
 
-    return makeSuccess('Success', {}, { paymentToken: '' });
+    const { effectiveAt } = cancelResult;
+    const storeResult = storePendingCancellation(storage, accountId, effectiveAt);
+
+    // Paddle has scheduled it either way, so this only costs the account page its notice.
+    if (isErr(storeResult)) {
+      logError(si`Failed to ${storePendingCancellation.name}`, { reason: storeResult.reason, email: email.value });
+    }
+
+    const responseData: PlanChangeResponseData = { paymentToken: '', pendingCancellationAt: effectiveAt.toISOString() };
+
+    return makeSuccess('Success', {}, responseData);
   } else if (changingFromOnePaidPlanToAnother) {
     if (!paddleCustomerId) {
       logError('No Paddle customer linked to a paid account', { accountId: accountId.value, oldPlanId });
@@ -896,8 +908,10 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   const oldPlanTitle = Plans[account.planId].title;
   const newPlanTitle = Plans[request.planId].title;
+  // A pending downgrade to Free was lifted by the change, so its notice goes too.
   const storeAccountResult = storeAccount(storage, accountId, {
     ...currentAccount,
+    pendingCancellationAt: undefined,
     planId: request.planId,
   });
 
@@ -914,6 +928,88 @@ export const requestAccountPlanChange: AppRequestHandler = async function reques
 
   return makeSuccess('Success', {}, { paymentToken: '' });
 };
+
+export const keepAccountPlan: AppRequestHandler = async function keepAccountPlan(
+  reqId,
+  _reqBody,
+  _reqParams,
+  reqSession,
+  { storage, settings, env }
+) {
+  const { logWarning, logError, logInfo } = makeCustomLoggers({ module: keepAccountPlan.name, reqId });
+  const session = checkSession(reqSession);
+
+  if (!isAuthenticatedSession(session)) {
+    logWarning('Not authenticated', { reason: session.err.reason });
+    return makeNotAuthenticatedError();
+  }
+
+  if (isDemoSession(reqSession)) {
+    return makeSuccess('Success');
+  }
+
+  const { accountId } = session;
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason, accountId: accountId.value });
+    return makeAppError();
+  }
+
+  if (isAccountNotFound(account)) {
+    logWarning('Account not found', { accountId: accountId.value });
+    return makeNotAuthenticatedError();
+  }
+
+  if (!account.pendingCancellationAt) {
+    return makeInputError('Your plan isn’t scheduled to end.');
+  }
+
+  if (!account.paddleCustomerId) {
+    logError('No Paddle customer linked to a paid account', { accountId: accountId.value });
+    return makeContactSupportError(settings);
+  }
+
+  const paddle = makePaddle(env.PADDLE_API_KEY, env.PADDLE_ENVIRONMENT);
+  const removeResult = await removeScheduledCancellation(paddle, account.paddleCustomerId);
+
+  if (isErr(removeResult)) {
+    logError(si`Failed to ${removeScheduledCancellation.name}`, { reason: removeResult.reason });
+    return makeAppError();
+  }
+
+  // Its webhook hasn't arrived yet, and when it does it moves the account to Free.
+  if (isNothingToCancel(removeResult)) {
+    logWarning('No live subscription to keep', { accountId: accountId.value });
+    return makeInputError('This plan has already ended, so it can’t be kept. Please choose a plan again.');
+  }
+
+  const storeResult = storePendingCancellation(storage, accountId, undefined);
+
+  if (isErr(storeResult)) {
+    logError(si`Failed to ${storePendingCancellation.name}`, { reason: storeResult.reason });
+    return makeAppError();
+  }
+
+  logInfo('Kept the plan', { accountId: accountId.value, planId: account.planId });
+
+  return makeSuccess('Your plan continues. 👍');
+};
+
+// Re-reads first: the Paddle call that precedes each use yields to the event loop.
+function storePendingCancellation(storage: AppStorage, accountId: AccountId, pendingCancellationAt: Date | undefined) {
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    return account;
+  }
+
+  if (isAccountNotFound(account)) {
+    return makeErr('Account not found');
+  }
+
+  return storeAccount(storage, accountId, { ...account, pendingCancellationAt });
+}
 
 function makePlanChangeRequest(data: unknown | PlanChangeRequestData): Result<PlanChangeRequest> {
   return makeValues<PlanChangeRequest>(data, { planId: makePlanId });

@@ -224,6 +224,15 @@ export function loadAccount(
     );
   }
 
+  const pendingCancellationAt = parseOptionalDate(item.pendingCancellationAt);
+
+  if (isErr(pendingCancellationAt)) {
+    return makeErr(
+      si`Invalid stored data for account ${accountId.value}: ${pendingCancellationAt.reason}`,
+      'pendingCancellationAt'
+    );
+  }
+
   const lastPaddlePlanEventAt = parseOptionalDate(item.lastPaddlePlanEventAt);
 
   if (isErr(lastPaddlePlanEventAt)) {
@@ -243,6 +252,7 @@ export function loadAccount(
     passwordChangedAt,
     paddleCustomerId,
     lastPaddlePlanEventAt,
+    pendingCancellationAt,
   };
 }
 
@@ -258,6 +268,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
     passwordChangedAt: account.passwordChangedAt,
     paddleCustomerId: account.paddleCustomerId?.value,
     lastPaddlePlanEventAt: account.lastPaddlePlanEventAt,
+    pendingCancellationAt: account.pendingCancellationAt,
   };
 
   const storeItemResult = storage.storeItem(storageKey, data);
