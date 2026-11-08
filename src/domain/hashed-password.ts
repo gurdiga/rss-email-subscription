@@ -71,9 +71,14 @@ export interface PasswordVerification {
 
 export async function verifyPassword(
   plainPassword: string,
-  storedHashedPassword: HashedPassword,
+  storedHashedPassword: HashedPassword | undefined,
   legacySalt: string
 ): Promise<PasswordVerification> {
+  // An account awaiting confirmation has no password yet, so nothing matches it.
+  if (!storedHashedPassword) {
+    return { isMatch: false, needsRehash: false };
+  }
+
   const stored = storedHashedPassword.value;
 
   if (isLegacyHashedPassword(stored)) {

@@ -44,7 +44,7 @@ export const authentication: AppRequestHandler = async function authentication(
     return makeAppError('Could not find your account');
   }
 
-  if (accountAfterRegenerate.hashedPassword.value !== hashedPassword.value) {
+  if (accountAfterRegenerate.hashedPassword?.value !== hashedPassword.value) {
     return makeInputError<keyof AuthenticationRequest>('Password doesn’t match… 🤔', 'password');
   }
 
@@ -109,7 +109,7 @@ async function checkCredentials(
 
   const verification = await verifyPassword(request.password.value, account.hashedPassword, settings.hashingSalt);
 
-  if (!verification.isMatch) {
+  if (!verification.isMatch || !account.hashedPassword) {
     logWarning('Incorrect password');
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
@@ -126,7 +126,7 @@ async function checkCredentials(
     return makeErr('Could not find your account', 'email');
   }
 
-  if (currentAccount.hashedPassword.value !== account.hashedPassword.value) {
+  if (currentAccount.hashedPassword?.value !== account.hashedPassword.value) {
     logWarning('Stored password changed while verifying it');
     return makeErr('Password doesn’t match… 🤔', 'password');
   }
@@ -151,6 +151,11 @@ async function checkCredentials(
   if (isErr(finalAccount) || isAccountNotFound(finalAccount)) {
     logWarning('Account disappeared after rehash');
     return makeErr('Could not find your account', 'email');
+  }
+
+  if (!finalAccount.hashedPassword) {
+    logWarning('Stored password removed while rehashing it');
+    return makeErr('Password doesn’t match… 🤔', 'password');
   }
 
   if (finalAccount.hashedPassword.value !== expectedHashedPassword.value) {
@@ -210,7 +215,7 @@ async function rehashPassword(
     return;
   }
 
-  if (account.hashedPassword.value !== verifiedHashedPassword.value) {
+  if (account.hashedPassword?.value !== verifiedHashedPassword.value) {
     logInfo('Skipped rehash: stored password changed while hashing');
     return;
   }

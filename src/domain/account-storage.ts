@@ -37,9 +37,12 @@ export function getAccountIdList(storage: AppStorage): Result<AccountIdList> {
   return { accountIds, errs };
 }
 
+// The password is set in the same write that confirms the address, so an account is
+// never confirmed with a password chosen by someone who hadn’t shown they control it.
 export function confirmAccount(
   storage: AppStorage,
   accountId: AccountId,
+  hashedPassword: HashedPassword,
   getCurrentTimestampFn = () => new Date()
 ): Result<AccountNotFound | void> {
   const account = loadAccount(storage, accountId);
@@ -48,9 +51,13 @@ export function confirmAccount(
     return account;
   }
 
-  account.confirmationTimestamp = getCurrentTimestampFn();
-
-  const storeAccountResult = storeAccount(storage, accountId, account);
+  const now = getCurrentTimestampFn();
+  const storeAccountResult = storeAccount(storage, accountId, {
+    ...account,
+    hashedPassword,
+    confirmationTimestamp: now,
+    passwordChangedAt: now,
+  });
 
   if (isErr(storeAccountResult)) {
     return makeErr(si`Couldn’t ${storeAccount.name}: ${storeAccountResult.reason}`);
@@ -167,7 +174,7 @@ export function loadAccount(
     );
   }
 
-  const hashedPassword = makeHashedPassword(item.hashedPassword);
+  const hashedPassword = item.hashedPassword === undefined ? undefined : makeHashedPassword(item.hashedPassword);
 
   if (isErr(hashedPassword)) {
     return makeErr(si`Invalid stored data for account ${accountId.value}: ${hashedPassword.reason}`, 'hashedPassword');
@@ -244,7 +251,7 @@ export function storeAccount(storage: AppStorage, accountId: AccountId, account:
   const data: AccountData = {
     planId: account.planId,
     email: account.email.value,
-    hashedPassword: account.hashedPassword.value,
+    hashedPassword: account.hashedPassword?.value,
     creationTimestamp: account.creationTimestamp,
     confirmationTimestamp: account.confirmationTimestamp,
     isAdmin: account.isAdmin,

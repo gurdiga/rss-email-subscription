@@ -94,7 +94,7 @@ describe(requestAccountPasswordChange.name, () => {
 
     const account = loadAccount(app.storage, demoAccountId);
     expect(isErr(account) || isAccountNotFound(account)).to.be.false;
-    expect((account as Account).hashedPassword.value, 'the demo hash is untouched').to.equal(
+    expect((account as Account).hashedPassword?.value, 'the demo hash is untouched').to.equal(
       storedHashedPassword.value
     );
 
@@ -335,7 +335,7 @@ describe(deleteAccountWithPassword.name, () => {
 
     const response = await responsePromise;
     expect(response).to.include({ kind: 'InputError', field: 'password' }, JSON.stringify(response));
-    expect(loadStoredAccount(app).hashedPassword.value, 'the account survives').to.equal(resetHashedPassword.value);
+    expect(loadStoredAccount(app).hashedPassword?.value, 'the account survives').to.equal(resetHashedPassword.value);
   });
 
   it('refuses a paid account with no linked Paddle customer, rather than leave its billing behind', async () => {

@@ -341,7 +341,7 @@ export const requestAccountPasswordChange: AppRequestHandler = async function re
     settings.hashingSalt
   );
 
-  if (!verification.isMatch) {
+  if (!verification.isMatch || !account.hashedPassword) {
     return makeInputError<keyof PasswordChangeRequest>('Current password doesn’t match', 'currentPassword');
   }
 
@@ -406,7 +406,7 @@ function storeNewPassword(
     return makeErr('Account not found when storing the new password');
   }
 
-  if (account.hashedPassword.value !== verifiedHashedPassword.value) {
+  if (account.hashedPassword?.value !== verifiedHashedPassword.value) {
     return makeErr('Stored password changed while hashing the new one');
   }
 
@@ -618,7 +618,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
 
   const verification = await verifyPassword(request.password.value, account.hashedPassword, settings.hashingSalt);
 
-  if (!verification.isMatch) {
+  if (!verification.isMatch || !account.hashedPassword) {
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }
 
@@ -657,7 +657,7 @@ export const deleteAccountWithPassword: AppRequestHandler = async function delet
     return makeAppError();
   }
 
-  if (currentAccount.hashedPassword.value !== account.hashedPassword.value) {
+  if (currentAccount.hashedPassword?.value !== account.hashedPassword.value) {
     logWarning('Password changed during deletion', { accountId: accountId.value });
     return makeInputError<keyof DeleteAccountRequest>('Password doesn’t match', 'password');
   }

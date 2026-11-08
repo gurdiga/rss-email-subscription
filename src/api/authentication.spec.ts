@@ -77,7 +77,7 @@ describe(authentication.name, () => {
 
     const account = loadAccount(app.storage, accountId);
     expect(isErr(account) || isAccountNotFound(account)).to.be.false;
-    expect((account as Account).hashedPassword.value, 'the concurrent reset must survive').to.equal(
+    expect((account as Account).hashedPassword?.value, 'the concurrent reset must survive').to.equal(
       newHashedPassword.value
     );
   });
@@ -92,7 +92,7 @@ describe(authentication.name, () => {
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const reloaded = loadStoredAccount(app, email);
-    expect(reloaded.hashedPassword.value).to.match(/^scrypt\$v1\$/, 'legacy hash should be rehashed to scrypt format');
+    expect(reloaded.hashedPassword?.value).to.match(/^scrypt\$v1\$/, 'legacy hash should be rehashed to scrypt format');
 
     const verification = await verifyPassword(password, reloaded.hashedPassword, hashingSalt);
     expect(verification.isMatch, 'rehashed password still verifies').to.be.true;
@@ -115,7 +115,7 @@ describe(authentication.name, () => {
     const response = await login(app, { email, password });
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
-    expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
+    expect(loadStoredAccount(app, email).hashedPassword?.value).to.equal(
       hashedPassword.value,
       'a new-format hash must not be rewritten on login'
     );
@@ -146,7 +146,7 @@ describe(authentication.name, () => {
     const response = await loginPromise;
     expect(response).to.include({ kind: 'InputError', field: 'password' }, JSON.stringify(response));
 
-    expect(loadStoredAccount(app, email).hashedPassword.value).to.equal(
+    expect(loadStoredAccount(app, email).hashedPassword?.value).to.equal(
       resetHashedPassword.value,
       'the concurrent reset must survive the login’s rehash'
     );
@@ -205,7 +205,7 @@ describe(authentication.name, () => {
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
     const account = loadStoredAccount(app, demoAccountEmail);
-    expect(account.hashedPassword.value).to.equal(legacyHash, 'the demo account must keep its legacy hash');
+    expect(account.hashedPassword?.value).to.equal(legacyHash, 'the demo account must keep its legacy hash');
   });
 });
 

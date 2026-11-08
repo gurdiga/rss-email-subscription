@@ -169,11 +169,10 @@ describe(storeAccount.name, () => {
 });
 
 describe(confirmAccount.name, () => {
-  it('sets confirmationTimestamp on the given account', () => {
+  it('sets confirmationTimestamp and the password on the given account, in one write', () => {
     const accountData: AccountData = {
       planId: PlanId.Free,
       email: 'test@test.com',
-      hashedPassword: 'a'.repeat(hashedPasswordLength),
       confirmationTimestamp: undefined,
       creationTimestamp,
       isAdmin: true,
@@ -187,18 +186,19 @@ describe(confirmAccount.name, () => {
 
     const confirmationTimestamp = new Date('2022-10-07');
 
-    const result = confirmAccount(storage, accountId, () => confirmationTimestamp);
+    const hashedPassword = makeHashedPassword('a'.repeat(hashedPasswordLength)) as HashedPassword;
+    const result = confirmAccount(storage, accountId, hashedPassword, () => confirmationTimestamp);
 
     expect(isErr(result), si`result: ${JSON.stringify(result)}`).to.be.false;
 
     const expectedStoredData: AccountData = {
       planId: accountData.planId,
       email: accountData.email,
-      hashedPassword: accountData.hashedPassword,
+      hashedPassword: hashedPassword.value,
       confirmationTimestamp,
       creationTimestamp,
       isAdmin: true,
-      passwordChangedAt: creationTimestamp,
+      passwordChangedAt: confirmationTimestamp,
       paddleCustomerId: undefined,
       lastPaddlePlanEventAt: undefined,
     };
@@ -235,7 +235,7 @@ describe(setAccountEmail.name, () => {
         {
           planId: account.planId,
           email: newEmail.value,
-          hashedPassword: account.hashedPassword.value,
+          hashedPassword: account.hashedPassword?.value,
           confirmationTimestamp: account.confirmationTimestamp,
           creationTimestamp: account.creationTimestamp,
           isAdmin: account.isAdmin,
@@ -334,7 +334,7 @@ describe(findAccountIdByPaddleCustomerId.name, () => {
   it('keeps the link through the account’s other writes', () => {
     const storage = makeLinkedStorage();
 
-    confirmAccount(storage, linkedAccountId);
+    confirmAccount(storage, linkedAccountId, makeHashedPassword('c'.repeat(hashedPasswordLength)) as HashedPassword);
     resetAccountPassword(
       storage,
       linkedAccountId,
@@ -411,7 +411,7 @@ function getAccountData(account: Account): AccountData {
   return {
     planId: account.planId,
     email: account.email.value,
-    hashedPassword: account.hashedPassword.value,
+    hashedPassword: account.hashedPassword?.value,
     confirmationTimestamp: account.confirmationTimestamp,
     creationTimestamp: account.creationTimestamp,
     isAdmin: account.isAdmin,

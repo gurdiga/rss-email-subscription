@@ -172,7 +172,7 @@ describe('API', () => {
     before(() => expect(++step).to.equal(2, 'test are expected to run in source order'));
 
     it('flows', async () => {
-      const { responseBody: registrationResponse } = await registrationSend(planId, userEmail, userPassword);
+      const { responseBody: registrationResponse } = await registrationSend(planId, userEmail);
       const [account, accountId] = loadStoredAccountByEmail(userEmail);
 
       expect((registrationResponse as Success).kind).to.equal('Success', 'registration');
@@ -181,14 +181,17 @@ describe('API', () => {
         'registration stores pending plan until payment confirmed'
       );
       expect(account.email).to.equal(userEmail, 'registration email');
-      expect(account.hashedPassword).to.be.a('string', 'registration hashedPassword');
+      expect(account.hashedPassword, 'no password until the address is confirmed').to.be.undefined;
       expect(account.creationTimestamp).to.be.a('string', 'registration creationTimestamp');
       expect(account.confirmationTimestamp, 'registration confirmationTimestamp').to.be.undefined;
 
-      const { responseBody: repeatedRegistration } = await registrationSend(planId, userEmail, userPassword);
+      const { responseBody: repeatedRegistration } = await registrationSend(planId, userEmail);
       expect(repeatedRegistration).to.deep.equal(makeInputError('Email already taken', 'email'));
 
-      const { responseBody: registrationConfirmationResponse } = await registrationConfirmationSend(userEmail);
+      const { responseBody: registrationConfirmationResponse } = await registrationConfirmationSend(
+        userEmail,
+        userPassword
+      );
       expect(registrationConfirmationResponse).to.include(
         { kind: 'Success' },
         si`registration confirmation: ${JSON.stringify(registrationConfirmationResponse)}`
@@ -815,14 +818,13 @@ describe('API', () => {
         deleteAccount(deleteEmailAddress); // clean up leftovers from previous runs
         await deauthenticationSend();
 
-        const { responseBody: registrationResponse } = await registrationSend(
-          planId,
+        const { responseBody: registrationResponse } = await registrationSend(planId, deleteAccountEmail);
+        expect(registrationResponse).to.include({ kind: 'Success' }, 'registration failed for delete-account user');
+
+        const { responseBody: confirmationResponse } = await registrationConfirmationSend(
           deleteAccountEmail,
           deleteAccountPassword
         );
-        expect(registrationResponse).to.include({ kind: 'Success' }, 'registration failed for delete-account user');
-
-        const { responseBody: confirmationResponse } = await registrationConfirmationSend(deleteAccountEmail);
         expect(confirmationResponse).to.include({ kind: 'Success' }, 'confirmation failed for delete-account user');
 
         const { responseBody: authenticationResponse } = await authenticationSend(
@@ -956,17 +958,17 @@ describe('API', () => {
     return post(getFullApiPath(ApiPath.authentication), { email, password });
   }
 
-  async function registrationSend(planId: PlanId, email: string, password: string) {
-    return post(getFullApiPath(ApiPath.registration), { planId, email, password });
+  async function registrationSend(planId: PlanId, email: string) {
+    return post(getFullApiPath(ApiPath.registration), { planId, email });
   }
 
-  async function registrationConfirmationSend(email: string) {
+  async function registrationConfirmationSend(email: string, password: string) {
     const accountId = getAccountId(email);
     const [secret] = findStoredConfirmationSecret(
       (data) => data?.kind === 'RegistrationConfirmationSecretData' && data?.accountId?.value === accountId.value
     );
 
-    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret: secret.value });
+    return post(getFullApiPath(ApiPath.registrationConfirmation), { secret: secret.value, password });
   }
 
   function getAccountId(email: string): AccountId {

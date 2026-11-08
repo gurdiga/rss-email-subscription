@@ -95,7 +95,7 @@ describe(confirmPasswordReset.name, () => {
     const response = await resetWith(app, secret);
 
     expect(response).to.include({ kind: 'InputError', field: 'secret' }, JSON.stringify(response));
-    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword.value);
+    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword?.value);
   });
 
   it('refuses a secret minted for another purpose', async () => {
@@ -109,7 +109,7 @@ describe(confirmPasswordReset.name, () => {
     const response = await resetWith(app, emailChange);
 
     expect(response).to.include({ kind: 'InputError', field: 'secret' }, JSON.stringify(response));
-    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword.value);
+    expect(storedHash(app.storage, accountId), 'the password is unchanged').to.equal(account.hashedPassword?.value);
     expect(secretExists(app.storage, emailChange), 'the email-change secret is not consumed').to.be.true;
   });
 
@@ -132,7 +132,7 @@ describe(confirmPasswordReset.name, () => {
   function storedHash(storage: AppStorage, accountId: AccountId): string {
     const account = loadAccount(storage, accountId);
 
-    return isErr(account) || isAccountNotFound(account) ? '' : account.hashedPassword.value;
+    return isErr(account) || isAccountNotFound(account) ? '' : (account.hashedPassword?.value ?? '');
   }
 });
 

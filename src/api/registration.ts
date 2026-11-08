@@ -3,14 +3,16 @@ import { sendEmail } from '../app/email-sending/email-delivery';
 import {
   Account,
   AccountId,
+  isAccountNotFound,
   RegistrationConfirmationRequest,
   RegistrationRequest,
   RegistrationResponseData,
 } from '../domain/account';
 import { getAccountIdByEmail } from '../domain/account-crypto';
-import { accountExists, confirmAccount, storeAccount } from '../domain/account-storage';
+import { accountExists, confirmAccount, loadAccount, storeAccount } from '../domain/account-storage';
 import { AppSettings } from '../domain/app-settings';
 import {
+  accountControlSecretKinds,
   ConfirmationSecret,
   humanConfirmationSecretLifetime,
   isConfirmationSecretNotFound,
@@ -21,6 +23,7 @@ import {
 import {
   deleteConfirmationSecret,
   loadConfirmationSecretOfKind,
+  revokeAccountSecrets,
   storeConfirmationSecret,
 } from '../domain/confirmation-secrets-storage';
 import { EmailAddress } from '../domain/email-address';
@@ -30,7 +33,7 @@ import { PagePath } from '../domain/page-path';
 import { makePassword } from '../domain/password';
 import { PlanId, isSubscriptionPlan, makePlanId } from '../domain/plan';
 import { AppStorage } from '../domain/storage';
-import { AppError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
+import { AppError, InputError, makeAppError, makeInputError, makeSuccess } from '../shared/api-response';
 import { Result, hasKind, isErr, makeErr, makeValues } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
@@ -74,7 +77,7 @@ export const registration: AppRequestHandler = async function registration(
     return makeInputError<keyof RegistrationRequest>('The Free plan has been discontinued', 'planId');
   }
 
-  const accountId = await initAccount(storage, settings, request);
+  const accountId = initAccount(storage, settings, request);
 
   if (isErr(accountId)) {
     logError(si`Failed to ${initAccount.name}`, { reason: accountId.reason, request });
@@ -208,10 +211,10 @@ export function makeRegistrationConfirmationEmailContent(
       </a>
 
       <p>
-        Once you have clicked on the link above, you will have completed the
-        registration process and will be able to register your blog feed and
-        embed the Subscribe Form. Please note that this registration link expires
-        in ${humanConfirmationSecretLifetime}.
+        The link opens a page where you choose your password. Once you have done that,
+        you will have completed the registration process and will be able to register
+        your blog feed and embed the Subscribe Form. Please note that this registration
+        link expires in ${humanConfirmationSecretLifetime}.
       </p>
 
       <p>
@@ -233,7 +236,6 @@ export function makeRegistrationRequest(data: unknown): Result<RegistrationReque
   return makeValues<RegistrationRequest>(data, {
     planId: makePlanId,
     email: makeEmailAddress,
-    password: makePassword,
   });
 }
 
@@ -249,11 +251,11 @@ export function isAccountAlreadyExists(x: any): x is AccountAlreadyExists {
   return hasKind(x, 'AccountAlreadyExists');
 }
 
-async function initAccount(
+function initAccount(
   storage: AppStorage,
   settings: AppSettings,
   request: RegistrationRequest
-): Promise<Result<AccountId | AccountAlreadyExists>> {
+): Result<AccountId | AccountAlreadyExists> {
   const { logInfo, logWarning, logError } = makeCustomLoggers({ module: initAccount.name });
 
   const accountId = getAccountIdByEmail(request.email, settings.hashingSalt);
@@ -263,23 +265,7 @@ async function initAccount(
     return exists;
   }
 
-  // Cheap pre-check, so a registration flood doesn’t pay for a scrypt hash per attempt.
   if (exists) {
-    logWarning('Account already exists', { email: request.email.value });
-    return makeAccountAlreadyExists();
-  }
-
-  const hashedPassword = await hashPassword(request.password.value);
-
-  // Hashing yields to the event loop, so check again with nothing between here and the
-  // store: two concurrent registrations for one email must not both write the account.
-  const existsAfterHashing = accountExists(storage, accountId);
-
-  if (isErr(existsAfterHashing)) {
-    return existsAfterHashing;
-  }
-
-  if (existsAfterHashing) {
     logWarning('Account already exists', { email: request.email.value });
     return makeAccountAlreadyExists();
   }
@@ -288,7 +274,7 @@ async function initAccount(
   const account: Account = {
     planId: PlanId.PendingPayment,
     email: request.email,
-    hashedPassword,
+    hashedPassword: undefined,
     confirmationTimestamp: undefined,
     creationTimestamp: now,
     isAdmin: false,
@@ -310,29 +296,82 @@ async function initAccount(
 }
 
 export const registrationConfirmation: AppRequestHandler = async function registrationConfirmation(
-  _reqId,
+  reqId,
   reqBody,
   _reqParams,
   _reqSession,
   { storage },
   regenerateSession
 ) {
-  const { logWarning } = makeCustomLoggers({ module: registrationConfirmation.name });
+  const { logWarning, logError, logInfo } = makeCustomLoggers({ module: registrationConfirmation.name, reqId });
   const request = makeRegistrationConfirmationRequest(reqBody);
 
   if (isErr(request)) {
-    logWarning(si`Failed to ${makeRegistrationConfirmationRequest.name}`, { reason: request.reason, reqBody });
-    return makeInputError('Invalid registration confirmation link');
+    logWarning(si`Failed to ${makeRegistrationConfirmationRequest.name}`, { reason: request.reason });
+
+    return request.field === 'password'
+      ? makeInputError(request.reason, request.field)
+      : makeInputError('Invalid registration confirmation link');
   }
 
-  const { secret } = request;
-  const confirmationSecretData = confirmAccountBySecret(storage, secret);
+  const { secret, password } = request;
+  const secretData = loadRegistrationSecretData(storage, secret);
 
-  if (isErr(confirmationSecretData)) {
-    return makeAppError(confirmationSecretData.reason);
+  if (isErr(secretData)) {
+    logError(si`Failed to ${loadRegistrationSecretData.name}`, { reason: secretData.reason });
+    return makeAppError();
   }
 
-  const { accountId, email } = confirmationSecretData;
+  if (isConfirmationSecretNotFound(secretData)) {
+    logWarning('Registration confirmation secret not found');
+    return makeInputError(expiredLinkMessage);
+  }
+
+  const { accountId, email } = secretData;
+  const isConfirmable = checkConfirmable(storage, accountId, secret);
+
+  if (!isConfirmable.isConfirmable) {
+    return isConfirmable.response;
+  }
+
+  const hashedPassword = await hashPassword(password.value);
+
+  // Hashing yields to the event loop, so the link may have been used or the account
+  // confirmed meanwhile. Check again, with nothing awaited between here and the store.
+  const secretDataAfterHashing = loadRegistrationSecretData(storage, secret);
+
+  if (isErr(secretDataAfterHashing) || isConfirmationSecretNotFound(secretDataAfterHashing)) {
+    return makeInputError(expiredLinkMessage);
+  }
+
+  const isStillConfirmable = checkConfirmable(storage, accountId, secret);
+
+  if (!isStillConfirmable.isConfirmable) {
+    return isStillConfirmable.response;
+  }
+
+  const confirmResult = confirmAccount(storage, accountId, hashedPassword);
+
+  if (isErr(confirmResult) || isAccountNotFound(confirmResult)) {
+    logError(si`Failed to ${confirmAccount.name}`, { accountId: accountId.value });
+    return makeAppError();
+  }
+
+  const deleteResult = deleteConfirmationSecret(storage, secret);
+
+  if (isErr(deleteResult)) {
+    logError(si`Failed to ${deleteConfirmationSecret.name}`, { reason: deleteResult.reason });
+  }
+
+  // As after a password reset: anything issued before the password existed shouldn’t
+  // outlive it. The account is confirmed, so a failure here is logged, not reported.
+  const revokeResult = revokeAccountSecrets(storage, accountId, accountControlSecretKinds);
+
+  if (isErr(revokeResult)) {
+    logError(si`Failed to ${revokeAccountSecrets.name}: ${revokeResult.reason}`, { accountId: accountId.value });
+  }
+
+  logInfo('User confirmed registration', { accountId: accountId.value, email: email.value });
 
   const newReqSession = await regenerateSession();
   const sessionInitResult = initSession(storage, newReqSession, accountId, email);
@@ -349,59 +388,47 @@ export const registrationConfirmation: AppRequestHandler = async function regist
   return makeSuccess('Account registration confirmed.', logData, responseData, cookies);
 };
 
+const expiredLinkMessage = 'This confirmation link has expired or has already been used.';
+
 function makeRegistrationConfirmationRequest(data: unknown): Result<RegistrationConfirmationRequest> {
   return makeValues<RegistrationConfirmationRequest>(data, {
     secret: makeConfirmationSecret,
+    password: makePassword,
   });
 }
 
-function confirmAccountBySecret(
-  storage: AppStorage,
-  secret: ConfirmationSecret
-): Result<RegistrationConfirmationSecretData> {
-  const { logWarning, logError, logInfo } = makeCustomLoggers({
-    module: confirmAccountBySecret.name,
-    secret: secret.value,
-  });
-
-  const data = loadConfirmationSecretOfKind<RegistrationConfirmationSecretData>(
+function loadRegistrationSecretData(storage: AppStorage, secret: ConfirmationSecret) {
+  return loadConfirmationSecretOfKind<RegistrationConfirmationSecretData>(
     storage,
     secret,
     'RegistrationConfirmationSecretData'
   );
+}
 
-  if (isErr(data)) {
-    logError(si`Failed to ${loadConfirmationSecretOfKind.name}`, { reason: data.reason });
-    return makeErr('Invalid registration confirmation link');
+type Confirmability = { isConfirmable: true } | { isConfirmable: false; response: InputError | AppError };
+
+// An already-confirmed account has a password its owner chose. Letting a leftover
+// registration link set another would make it a second password-reset link.
+function checkConfirmable(storage: AppStorage, accountId: AccountId, secret: ConfirmationSecret): Confirmability {
+  const { logError, logWarning } = makeCustomLoggers({ module: checkConfirmable.name, accountId: accountId.value });
+  const account = loadAccount(storage, accountId);
+
+  if (isErr(account)) {
+    logError(si`Failed to ${loadAccount.name}`, { reason: account.reason });
+    return { isConfirmable: false, response: makeAppError() };
   }
 
-  if (isConfirmationSecretNotFound(data)) {
-    logWarning('Confirmation secret not found', { secret: secret.value });
-    return makeErr('Confirmation link expired or has already been confirmed');
+  if (isAccountNotFound(account)) {
+    logWarning('Account to confirm not found');
+    deleteConfirmationSecret(storage, secret);
+    return { isConfirmable: false, response: makeInputError(expiredLinkMessage) };
   }
 
-  const { accountId } = data;
-  const confirmAccountResult = confirmAccount(storage, accountId);
-
-  if (isErr(confirmAccountResult)) {
-    logWarning(si`Failed to ${confirmAccount.name}`, {
-      accountId: accountId.value,
-      reason: confirmAccountResult.reason,
-    });
-    return makeErr('Application error');
+  if (account.confirmationTimestamp) {
+    logWarning('Account already confirmed');
+    deleteConfirmationSecret(storage, secret);
+    return { isConfirmable: false, response: makeInputError('This account is already confirmed. Please log in.') };
   }
 
-  const deleteResult = deleteConfirmationSecret(storage, secret);
-
-  if (isErr(deleteResult)) {
-    logError(si`Failed to ${deleteConfirmationSecret.name}`, {
-      reason: deleteResult.reason,
-      secret: secret.value,
-    });
-    return makeErr('Application error');
-  }
-
-  logInfo('User confirmed registration', { accountId: data.accountId.value, data: data.email.value });
-
-  return data;
+  return { isConfirmable: true };
 }

@@ -23,6 +23,7 @@ import {
   sendApiRequest,
   unhideElement,
 } from './shared';
+import { querySelector } from './dom-isolation';
 import {
   PaymentSubformHandle,
   buildPlanDropdownOptions,
@@ -50,7 +51,6 @@ async function main() {
     form: '#registration-form',
     planDropdown: '#plan',
     emailField: '#email',
-    passwordField: '#password',
     submitButton: '#submit-button',
     appErrorMessage: '#app-error-message',
     confirmationMessage: '#confirmation-message',
@@ -63,6 +63,8 @@ async function main() {
     displayInitError(uiElements.reason);
     return;
   }
+
+  hideLeftoverPasswordField();
 
   let planId = queryStringParams.plan ? makePlanId(queryStringParams.plan) : PlanId.Courage;
 
@@ -91,7 +93,7 @@ async function main() {
 }
 
 function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: PaymentSubformHandle): void {
-  const { planDropdown, emailField, passwordField, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
+  const { planDropdown, emailField, submitButton, apiResponseMessage, appErrorMessage } = uiElements;
   const { form, confirmationMessage, additionalActionsSection } = uiElements;
 
   onSubmit(submitButton, async (event: Event) => {
@@ -103,7 +105,6 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     const request: RegistrationRequestData = {
       planId: planId,
       email: emailField.value,
-      password: passwordField.value,
     };
 
     const path = ApiPath.registration;
@@ -122,7 +123,6 @@ function initSubmitButton(uiElements: RequiredUiElements, paymentSubformHandle: 
     if (isInputError(response)) {
       const formFields: Record<keyof RegistrationRequest, HTMLElement> = {
         planId: uiElements.planDropdown,
-        password: uiElements.passwordField,
         email: uiElements.emailField,
       };
       displayValidationError(response, formFields);
@@ -196,6 +196,17 @@ export async function initPlanDropdown(uiElements: RequiredUiElements, selectedP
   togglePaymentSubform(planDropdown.value);
 }
 
+// The password is chosen on the confirmation page now. Pages built before that still
+// have the field, and it would only mislead.
+function hideLeftoverPasswordField(): void {
+  const passwordField = querySelector('#password');
+  const container = passwordField?.closest('div');
+
+  if (container) {
+    hideElement(container as HTMLElement);
+  }
+}
+
 interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
   confirmationMessage: HTMLElement;
   paymentSubform: HTMLElement;
@@ -206,7 +217,6 @@ interface RequiredUiElements extends FormUiElements, AppStatusUiElements {
 interface FormFields {
   planDropdown: HTMLSelectElement;
   emailField: HTMLInputElement;
-  passwordField: HTMLInputElement;
 }
 
 interface FormUiElements extends FormFields {

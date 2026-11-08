@@ -30,7 +30,9 @@ export function isAccountId(value: unknown): value is AccountId {
 export interface Account {
   planId: PlanId;
   email: EmailAddress;
-  hashedPassword: HashedPassword;
+  // Chosen on the confirmation page, not at registration: only whoever controls the
+  // mailbox gets to set it. Undefined until then.
+  hashedPassword: HashedPassword | undefined;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean;
@@ -42,7 +44,7 @@ export interface Account {
 export interface AccountData {
   planId: string;
   email: string;
-  hashedPassword: string;
+  hashedPassword?: string;
   creationTimestamp: Date;
   confirmationTimestamp: Date | undefined;
   isAdmin: boolean | undefined;
@@ -78,7 +80,6 @@ export interface AccountIdList {
 export interface RegistrationRequest {
   planId: PlanId;
   email: EmailAddress;
-  password: Password;
 }
 
 export type RegistrationRequestData = Record<keyof RegistrationRequest, string>;
@@ -100,6 +101,7 @@ export interface AuthenticationResponseData {
 
 export interface RegistrationConfirmationRequest {
   secret: ConfirmationSecret;
+  password: Password;
 }
 
 export type RegistrationConfirmationRequestData = Record<keyof RegistrationConfirmationRequest, string>;
