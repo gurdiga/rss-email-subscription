@@ -8,19 +8,25 @@ x-logging: &logging
       syslog-format: rfc3164
       tag: '{{.Name}}'
 
-x-app-env: &app-env
+# Split by who reads what, so each container gets only the secrets it uses: delmon
+# just the data dir; app (cron) also mail and subscription cancellation; api the rest.
+x-base-env: &base-env
   TZ: UTC
-  DOMAIN_NAME: ${DOMAIN_NAME?}
   DATA_DIR_ROOT: /data
   NODE_ENV: ${NODE_ENV?} #See https://github.com/nodejs/docker-node/blob/main/docs/BestPractices.md
+
+x-cron-env: &cron-env
+  DOMAIN_NAME: ${DOMAIN_NAME?}
+  SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
+  PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT?}
+  PADDLE_API_KEY: ${PADDLE_API_KEY?}
+
+x-api-env: &api-env
   # Unset means rate limiting is ON. Set by `make start-api` (and `start-website`,
   # which depends on it) for api-test. The api logs which state it started in.
   RATE_LIMITING_DISABLED: ${RATE_LIMITING_DISABLED:-}
   # DEBUG: '*' # Useful for debuggind Express.js routing
-  SMTP_CONNECTION_STRING: ${SMTP_CONNECTION_STRING?}
-  PADDLE_ENVIRONMENT: ${PADDLE_ENVIRONMENT?}
   PADDLE_CLIENT_TOKEN: ${PADDLE_CLIENT_TOKEN?}
-  PADDLE_API_KEY: ${PADDLE_API_KEY?}
   PADDLE_WEBHOOK_SECRET: ${PADDLE_WEBHOOK_SECRET?}
   # nginx's own static address on this file's network (the website service,
   # below) — api needs it for Express's trust-proxy setting (see server.ts).
@@ -143,7 +149,7 @@ services:
     # extra_hosts:
     #   - 'feedsubscription.com:207.154.253.211'
     environment:
-      <<: *app-env
+      <<: [*base-env, *cron-env]
     command: node dist/app/cron.js
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
@@ -178,7 +184,7 @@ services:
       - .tmp/logs/feedsubscription:/logs:ro
       - ${DATA_DIR_ROOT?}:/data
     environment:
-      <<: *app-env
+      <<: *base-env
       SMTP_OUT_LOG: /logs/smtp-out.log
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
@@ -202,7 +208,7 @@ services:
     environment:
       # DEBUG: 'express:*'
       # TS_NODE_DEBUG: 'true'
-      <<: *app-env
+      <<: [*base-env, *cron-env, *api-env]
     <<: [*logging, *x-disable-ipv6, *x-dns]
     # /cors-test is the cheapest unauthenticated route the router has.
     healthcheck:
