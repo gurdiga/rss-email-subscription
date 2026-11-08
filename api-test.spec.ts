@@ -2,7 +2,8 @@
 import { expect } from 'chai';
 const cookie = require('cookie');
 import fetchCookie from 'fetch-cookie';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
 import { navbarCookieName } from './src/api/app-cookie';
 import { deleteAccount } from './src/api/delete-account-cli';
 import { sessionCookieMaxage } from './src/api/session';
@@ -60,7 +61,7 @@ import {
 import { PlanId } from './src/domain/plan';
 import { ApiResponse, InputError, makeInputError, Success } from './src/shared/api-response';
 import { sortBy } from './src/shared/array-utils';
-import { makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
+import { hashPassword, makeHashedPassword, verifyPassword } from './src/domain/hashed-password';
 import { isErr } from './src/shared/lang';
 import { makePath } from './src/shared/path-utils';
 import { si } from './src/shared/string-utils';
@@ -102,21 +103,51 @@ describe('API', () => {
   describe('infrastructure', () => {
     before(() => expect(++step).to.equal(1, 'test are expected to run in source order'));
 
-    describe('http session test', () => {
-      it('works', async () => {
-        const { responseBody } = await get(getFullApiPath(ApiPath.sessionTest), 'json');
-        expect(responseBody.kind).to.equal('Success');
+    describe('http session', () => {
+      const sessionEmail = 'api-test-session@feedsubscription.com';
+      const sessionPassword = 'A-session-S3cre7-password';
 
-        const sessionId = (responseBody as Success).responseData!['sessionId'];
-        expect(sessionId).to.exist;
-
-        const sessionData = loadSessionData(sessionId);
-        expect(sessionData['works']).to.equal(true);
-
-        const { responseBody: subsequentRequestResponse } = await get(getFullApiPath(ApiPath.sessionTest), 'json');
-        const subsequentRequestSession = (subsequentRequestResponse as Success).responseData!['sessionId'];
-        expect(subsequentRequestSession).to.equal(sessionId);
+      before(async () => {
+        deleteAccount(makeTestEmailAddress(sessionEmail)); // clean up leftovers from previous runs
+        await storeConfirmedAccount(sessionEmail, sessionPassword);
       });
+
+      after(async () => {
+        await deauthenticationSend();
+        deleteAccount(makeTestEmailAddress(sessionEmail));
+      });
+
+      it('keeps a logged-in session across requests', async () => {
+        const { responseBody: authenticationResponse } = await authenticationSend(sessionEmail, sessionPassword);
+        expect(authenticationResponse.kind).to.equal('Success', JSON.stringify(authenticationResponse));
+
+        const sessionId = (authenticationResponse as Success).responseData!['sessionId'];
+        expect(loadSessionData(sessionId).accountId).to.equal(getAccountId(sessionEmail).value);
+
+        for (const request of ['first', 'subsequent']) {
+          const { responseBody } = await get(getFullApiPath(ApiPath.loadCurrentAccount), 'json');
+          expect(responseBody.kind).to.equal('Success', si`${request} request: ${JSON.stringify(responseBody)}`);
+        }
+      });
+
+      // Straight to storage, as the stack would leave it after registration and
+      // confirmation, so this test needs no email round trip.
+      async function storeConfirmedAccount(email: string, password: string) {
+        const now = new Date();
+        const accountData = {
+          planId,
+          email,
+          hashedPassword: (await hashPassword(password)).value,
+          creationTimestamp: now,
+          confirmationTimestamp: now,
+          isAdmin: false,
+          passwordChangedAt: now,
+        };
+        const filePath = makePath(dataDirRoot, getAccountStorageKey(getAccountId(email)));
+
+        mkdirSync(dirname(filePath), { recursive: true });
+        writeFileSync(filePath, JSON.stringify(accountData));
+      }
     });
 
     describe('web-ui-scripts', () => {

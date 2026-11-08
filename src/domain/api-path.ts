@@ -7,7 +7,6 @@ export enum ApiPath {
   webUiScripts = '/web-ui-scripts',
   versionTxt = '/version.txt',
   corsTest = '/cors-test',
-  sessionTest = '/session-test',
   loadFeeds = '/feeds',
   loadFeedDisplayName = '/feeds/get-display-name-by-id',
   loadFeedById = '/feeds/load-by-id',
