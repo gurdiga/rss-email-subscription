@@ -3,8 +3,8 @@ import { UAParser } from 'ua-parser-js';
 import { isAccountNotFound } from '../domain/account';
 import { loadAccount } from '../domain/account-storage';
 import { PlanId } from '../domain/plan';
-import { ApiResponse, Success } from '../shared/api-response';
-import { asyncAttempt, exhaustivenessCheck, getErrorMessage, isErr } from '../shared/lang';
+import { ApiResponse, Success, makeAppError } from '../shared/api-response';
+import { Result, asyncAttempt, exhaustivenessCheck, getErrorMessage, isErr, makeErr } from '../shared/lang';
 import { makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { AppCookie, appCookies, sessionCookieMaxAge } from './app-cookie';
@@ -29,7 +29,17 @@ export function requirePaymentConfirmed(app: App): RequestHandler {
 
     const account = loadAccount(app.storage, session.accountId);
 
-    if (!isErr(account) && !isAccountNotFound(account) && account.planId === PlanId.PendingPayment) {
+    // Failing closed: an account that can’t be read can’t be shown to have paid. A
+    // missing one passes, and the handler after this treats its session as logged out.
+    if (isErr(account)) {
+      makeCustomLoggers({ module: 'requirePaymentConfirmed' }).logError(si`Failed to ${loadAccount.name}`, {
+        reason: account.reason,
+      });
+      res.status(500).json(makeAppError());
+      return;
+    }
+
+    if (!isAccountNotFound(account) && account.planId === PlanId.PendingPayment) {
       res.status(402).json({ kind: 'AppError', message: 'Payment confirmation pending' });
       return;
     }
@@ -49,7 +59,9 @@ export type AppRequestHandler = (
   regenerateSession: RegenerateSessionFn
 ) => Promise<ApiResponse>;
 
-export function makeAppRequestHandler(handler: AppRequestHandler, app: App): RequestHandler {
+// isLogout exempts a handler from the account-read check below: logging out has to work
+// even when the account can't be read, or the session would outlive the outage.
+export function makeAppRequestHandler(handler: AppRequestHandler, app: App, { isLogout = false } = {}): RequestHandler {
   return async (req, res) => {
     const reqId = req.get('X-Request-ID') || 'EMPTY_X-Request-ID';
     const reqBody = (req.body || {}) as unknown;
@@ -57,7 +69,7 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     const reqSession = req.session || {};
     const action = handler.name;
 
-    clearSessionFieldsIfPasswordChanged(app, reqSession);
+    const staleSessionResult = clearStaleSessionFields(app, reqSession);
 
     const ua = getUaInfo(req.get('User-Agent'));
 
@@ -74,6 +86,12 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
     });
 
     logInfo(action, { reqId, reqBody, reqParams });
+
+    if (isErr(staleSessionResult) && !isLogout) {
+      logError(si`Failed to ${clearStaleSessionFields.name}`, { reason: staleSessionResult.reason });
+      res.status(500).send(makeAppError());
+      return;
+    }
 
     // regenerate() reassigns req.session to a fresh, live session under a new ID
     // before its callback fires, even if destroy() of the old record errors — that
@@ -129,11 +147,11 @@ export function makeAppRequestHandler(handler: AppRequestHandler, app: App): Req
   };
 }
 
-// Clears the session's credentials when its passwordChangedAt snapshot is stale,
-// so every AppRequestHandler-typed route's own checkSession call sees an
-// UnauthenticatedSession exactly as it would for a session that was never logged
-// in.
-export function clearSessionFieldsIfPasswordChanged(app: App, reqSession: ReqSession): void {
+// Clears the session's credentials when its account is gone or its passwordChangedAt
+// snapshot is stale, so every AppRequestHandler-typed route's own checkSession call
+// sees an UnauthenticatedSession exactly as it would for a session that was never
+// logged in. An account that can't be read is an error, not a pass.
+export function clearStaleSessionFields(app: App, reqSession: ReqSession): Result<void> {
   const session = checkSession(reqSession);
 
   if (!isAuthenticatedSession(session)) {
@@ -142,11 +160,11 @@ export function clearSessionFieldsIfPasswordChanged(app: App, reqSession: ReqSes
 
   const account = loadAccount(app.storage, session.accountId);
 
-  if (isErr(account) || isAccountNotFound(account)) {
-    return;
+  if (isErr(account)) {
+    return makeErr(si`Failed to ${loadAccount.name}: ${account.reason}`);
   }
 
-  if (account.passwordChangedAt.getTime() !== session.passwordChangedAt.getTime()) {
+  if (isAccountNotFound(account) || account.passwordChangedAt.getTime() !== session.passwordChangedAt.getTime()) {
     clearSessionFields(reqSession);
   }
 }

@@ -112,7 +112,7 @@ async function main() {
     makeRateLimiter(20, 15 * minute),
     makeAppRequestHandler(confirmPasswordReset, app)
   );
-  router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app));
+  router.post(ApiPath.deauthentication, makeAppRequestHandler(deauthentication, app, { isLogout: true }));
   router.get(ApiPath.loadCurrentAccount, makeAppRequestHandler(loadCurrentAccount, app));
   // Mails the caller-supplied new address, and the published demo login reaches
   // it, so the session in front of it is not much of a gate.

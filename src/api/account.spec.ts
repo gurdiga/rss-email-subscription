@@ -16,7 +16,7 @@ import { PlanId } from '../domain/plan';
 import { isErr } from '../shared/lang';
 import { makeTestAccount, makeTestEmailAddress, purgeTestStorageFromSnapshot } from '../shared/test-utils';
 import { sessionCookieName } from './app-cookie';
-import { clearSessionFieldsIfPasswordChanged } from './app-request-handler';
+import { clearStaleSessionFields } from './app-request-handler';
 import { hashingSalt, makeMockRegenerateSession, makeMockSessionMethods, makeTestApp } from './test-utils';
 import {
   confirmAccountEmailChange,
@@ -63,7 +63,7 @@ describe(requestAccountPasswordChange.name, () => {
     );
     expect(response.kind).to.equal('Success', JSON.stringify(response));
 
-    clearSessionFieldsIfPasswordChanged(app, session);
+    clearStaleSessionFields(app, session);
 
     expect(session.accountId).to.equal(accountId.value);
   });
