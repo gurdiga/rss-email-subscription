@@ -2,7 +2,7 @@
 # and silently desync — the digest would win and the tag would be a decoration.
 # Index digest, not per-arch: it still resolves per-arch, so the same pin works
 # on an arm64 laptop and an amd64 server.
-ARG NODE_IMAGE=node:22.23-alpine3.23@sha256:206878a60dc7014193f418ab9259b6110c15fbd514b3044a267be706509944e4
+ARG NODE_IMAGE=node:22.23-alpine3.23@sha256:6868d4695b947ee120bffaa463fecd68cde370d7bfec92955e7c8ac576b4f475
 ARG OPENSSL_VERSION=3.5.9-r0
 ARG BUSYBOX_VERSION=1.37.0-r30
 ARG GIT_REVISION
