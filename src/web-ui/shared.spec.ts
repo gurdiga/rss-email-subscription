@@ -1,5 +1,5 @@
 import { expect } from 'chai';
-import { makeErr, Result } from '../shared/lang';
+import { isErr, makeErr, Result } from '../shared/lang';
 import { si } from '../shared/string-utils';
 import { makeStub } from '../shared/test-utils';
 import { querySelector } from './dom-isolation';
@@ -15,19 +15,17 @@ import {
 
 describe(getConfirmationSecretParams.name, () => {
   it('reads the secret from the fragment', () => {
-    const params = getConfirmationSecretParams({ hash: '#secret=from-fragment', search: '' });
+    const params = getConfirmationSecretParams({ hash: '#secret=from-fragment' });
 
     expect(requireQueryParams<{ secret: string }>({ secret: 'secret' }, params)).to.deep.equal({
       secret: 'from-fragment',
     });
   });
 
-  it('falls back to the query string, for links mailed before the fragment', () => {
-    const params = getConfirmationSecretParams({ hash: '', search: '?secret=from-query' });
+  it('ignores a secret in the query string', () => {
+    const params = getConfirmationSecretParams({ hash: '' });
 
-    expect(requireQueryParams<{ secret: string }>({ secret: 'secret' }, params)).to.deep.equal({
-      secret: 'from-query',
-    });
+    expect(isErr(requireQueryParams<{ secret: string }>({ secret: 'secret' }, params))).to.be.true;
   });
 });
 
