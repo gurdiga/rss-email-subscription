@@ -708,6 +708,8 @@ describe('API', () => {
     describe('Email change', () => {
       before(authenticate);
 
+      // A long timeout: both change requests mail through Gmail, which
+      // takes a few seconds each, and both confirmations call Paddle.
       it('allows requesting and then confirming email change', async () => {
         const sameEmail = makeTestEmailAddress(userEmail);
         const { responseBody: sameEmailResponse } = await requestAccountEmailChangeSend(sameEmail);
@@ -743,7 +745,7 @@ describe('API', () => {
         expect(storedAccount.email).to.deep.equal(newEmail.value);
 
         await changeBackEmailFrom(newEmail);
-      }).timeout(5000);
+      }).timeout(15000);
 
       async function changeBackEmailFrom(newEmail: EmailAddress) {
         const { responseBody: authenticationResponse } = await authenticationSend(newEmail.value, userPassword);

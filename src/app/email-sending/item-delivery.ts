@@ -219,7 +219,7 @@ export function prepareOutboxEmails(
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
   domainName: string
-): Result<number> {
+): void {
   const { logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
     accountId: accountId.value,
@@ -247,7 +247,7 @@ export function prepareOutboxEmails(
           fileName: storedItem.fileName,
           to: hashedEmail.emailAddress.value,
         });
-        return 1;
+        return;
       }
     }
 
@@ -259,7 +259,7 @@ export function prepareOutboxEmails(
         reason: storeItemResult.reason,
         ...logData,
       });
-      return 1;
+      return;
     }
 
     const storeTimestampResult = storeDeliveryTimestamp(storage, accountId, feed.id, storedItem);
@@ -269,11 +269,9 @@ export function prepareOutboxEmails(
         reason: storeTimestampResult.reason,
         ...logData,
       });
-      return 1;
+      return;
     }
   }
-
-  return 0;
 }
 
 function storeDeliveryItem(
