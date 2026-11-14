@@ -283,6 +283,34 @@ describe(createCustomerWithSubscription.name, () => {
     expect(loadTestAccount(app, accountId).paddleCustomerId).to.be.undefined;
   });
 
+  it('finds an archived customer, and reactivates it before reusing it', async () => {
+    const app = makeTestApp();
+    const accountId = storeTestAccount(app);
+    let listedStatuses: unknown;
+    let update: unknown;
+    const paddle = makeFakePaddle({
+      customerStatus: 'archived',
+      onCustomersList: (query) => (listedStatuses = query.status),
+      onCustomerUpdate: (id, data) => (update = { id, data }),
+    });
+
+    const result = await createCustomerWithSubscription(paddle, app.storage, accountId, PlanId.Courage);
+
+    expect(result).to.deep.include({ kind: 'PaddleTransactionId' });
+    expect(listedStatuses).to.include('archived');
+    expect(update).to.deep.equal({ id: customerId, data: { status: 'active' } });
+  });
+
+  it('leaves an active customer’s status alone', async () => {
+    const app = makeTestApp();
+    const accountId = storeTestAccount(app);
+    const paddle = makeFakePaddle({ onCustomerUpdate: () => expect.fail('updated the customer') });
+
+    const result = await createCustomerWithSubscription(paddle, app.storage, accountId, PlanId.Courage);
+
+    expect(result).to.deep.include({ kind: 'PaddleTransactionId' });
+  });
+
   it('uses the account’s own linked customer without looking up its email', async () => {
     const app = makeTestApp();
     const accountId = storeLinkedAccount(app, PlanId.Free);
@@ -305,16 +333,32 @@ describe(createCustomerWithSubscription.name, () => {
   // The Paddle calls createCustomerWithSubscription makes, answering as if a customer
   // with this test’s email already exists.
   function makeFakePaddle(
-    options: { liveSubscriptionIds?: string[]; onTransactionCreate?: () => void; onCustomersList?: () => void } = {}
+    options: {
+      liveSubscriptionIds?: string[];
+      customerStatus?: string;
+      onTransactionCreate?: () => void;
+      onCustomersList?: (query: { status?: string[] }) => void;
+      onCustomerUpdate?: (id: string, data: unknown) => void;
+    } = {}
   ): any {
-    const { liveSubscriptionIds = [], onTransactionCreate = () => {}, onCustomersList = () => {} } = options;
+    const {
+      liveSubscriptionIds = [],
+      customerStatus = 'active',
+      onTransactionCreate = () => {},
+      onCustomersList = () => {},
+      onCustomerUpdate = () => {},
+    } = options;
     const page = <T>(items: T[]) => ({ next: async () => items });
 
     return {
       customers: {
-        list: () => {
-          onCustomersList();
-          return page([{ id: customerId }]);
+        list: (query: { status?: string[] }) => {
+          onCustomersList(query);
+          return page([{ id: customerId, status: customerStatus }]);
+        },
+        update: async (id: string, data: unknown) => {
+          onCustomerUpdate(id, data);
+          return { id };
         },
       },
       subscriptions: { list: () => page(liveSubscriptionIds.map((id) => ({ id }))) },

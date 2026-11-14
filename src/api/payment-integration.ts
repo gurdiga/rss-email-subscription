@@ -302,6 +302,16 @@ async function getOrAdoptPaddleCustomer(
     return makePaddleCustomerTaken(si`${customerId.value} is unlinked but has live subscriptions: ${ids}`);
   }
 
+  // An archived customer keeps its email: Paddle refuses to create
+  // another one at the address, so this one is reactivated and reused.
+  if (existing.status === 'archived') {
+    const reactivated = await asyncAttempt(() => paddle.customers.update(customerId.value, { status: 'active' }));
+
+    if (isErr(reactivated)) {
+      return makeErr(si`Failed to reactivate Paddle customer ${customerId.value}: ${reactivated.reason}`);
+    }
+  }
+
   return customerId;
 }
 
@@ -337,11 +347,17 @@ export function isCustomerNotFound(value: unknown): value is CustomerNotFound {
   return hasKind(value, 'CustomerNotFound');
 }
 
-// For registration and the backfill only. Everything else goes by the customer ID
-// stored on the account: the email on a Paddle customer is whatever it was when
-// last synced, so it can name an address someone else has since registered.
+// For registration and the backfill only. Everything else goes by the
+// customer ID stored on the account: the email on a Paddle customer is
+// whatever it was when last synced, so it can name an address someone
+// else has since registered.
+//
+// Archived customers too: the list returns only active ones by default,
+// but an archived customer still holds its email.
 export async function findPaddleCustomerByEmail(paddle: Paddle, email: EmailAddress) {
-  const customers = await asyncAttempt(() => paddle.customers.list({ email: [email.value] }).next());
+  const customers = await asyncAttempt(() =>
+    paddle.customers.list({ email: [email.value], status: ['active', 'archived'] }).next()
+  );
 
   if (isErr(customers)) {
     return makeErr(si`Failed to paddle.customers.list: ${customers.reason}`);
