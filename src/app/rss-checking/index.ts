@@ -17,6 +17,7 @@ import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timesta
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssFeed } from './rss-parsing';
 import { makeCappedFetch } from './fetch';
+import { checkRobotsTxt } from './robots-txt';
 import { fetchRss, scheduledFeedMaxBytes } from './rss-response';
 
 const suppressAlertPatterns = [/getaddrinfo ENOTFOUND/, /Connect Timeout Error/];
@@ -37,6 +38,27 @@ export async function checkRss(
     feedDisplayName,
   });
   const { url } = feed;
+  const robotsTxtVerdict = await checkRobotsTxt(url);
+
+  if (robotsTxtVerdict.kind === 'Disallowed') {
+    logError('Disallowed by robots.txt', { url, rule: robotsTxtVerdict.rule });
+    await recordFailureAndMaybeAlert(accountId, feed, storage, env, settings, false, logError);
+
+    return 1;
+  }
+
+  if (robotsTxtVerdict.kind === 'Unreachable') {
+    const { reason } = robotsTxtVerdict;
+
+    logError('Failed fetching robots.txt', { url, reason });
+
+    const isSuppressed = suppressAlertPatterns.some((x) => x.test(reason));
+
+    await recordFailureAndMaybeAlert(accountId, feed, storage, env, settings, isSuppressed, logError);
+
+    return 1;
+  }
+
   const startTime = Date.now();
   const rssResponse = await fetchRss(url, makeCappedFetch(scheduledFeedMaxBytes));
   const durationMs = Date.now() - startTime;
