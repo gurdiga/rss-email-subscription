@@ -9,7 +9,7 @@ import { hasConfirmedSubscribers, loadFeedsByAccountId } from '../domain/feed-st
 import { AppStorage, makeStorage } from '../domain/storage';
 import { isEmpty, isNotEmpty } from '../shared/array-utils';
 import { requireEnv } from '../shared/env';
-import { isErr } from '../shared/lang';
+import { asyncAttempt, isErr } from '../shared/lang';
 import { logDuration, logHeartbeat, makeCustomLoggers } from '../shared/logging';
 import { si } from '../shared/string-utils';
 import { expireConfirmationSecrets } from './confirmation-secrets-expiration';
@@ -36,8 +36,9 @@ function main() {
     return;
   }
 
-  // requireEnv types PADDLE_ENVIRONMENT without checking it, so validate here rather than
-  // let a typo surface six hours later as a failing sweep.
+  // requireEnv types PADDLE_ENVIRONMENT without checking it, so
+  // validate here rather than let a typo surface six hours later as a
+  // failing sweep.
   const paddleEnvironment = makePaddleEnvironment(env.PADDLE_ENVIRONMENT);
 
   if (isErr(paddleEnvironment)) {
@@ -57,9 +58,10 @@ function main() {
   const jobs = [
     startCronJob('2 * * * *', () => checkFeeds(storage, env, settings)),
     startCronJob('42 */6 * * *', () => expireConfirmationSecrets(storage)),
-    // After the secret expiry above, deliberately. The other order would leave a window
-    // where the account is gone but its secret is not, and confirmAccountBySecret reports
-    // success on a missing account.
+    // After the secret expiry above, deliberately. The other order
+    // would leave a window where the account is gone but its secret is
+    // not, and confirmAccountBySecret reports success on a missing
+    // account.
     startCronJob('52 */6 * * *', () => deleteStaleUnconfirmedAccounts(storage, env)),
     startCronJob('5 5 * * *', () => logHeartbeat(logInfo)),
   ];
@@ -136,8 +138,17 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
       for (const feed of approvedFeedsWithSubscribers) {
         const feedLogData = { ...logData, displayName: feed.displayName, feedId: feed.id.value };
 
-        await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage, env, settings));
-        await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage, env));
+        // Nothing above catches, and the promise isn't awaited, so a
+        // throw from one feed would end the process: the feeds after it
+        // would never be checked.
+        const result = await asyncAttempt(async () => {
+          await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage, env, settings));
+          await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage, env));
+        });
+
+        if (isErr(result)) {
+          logError('Failed to process feed', { ...feedLogData, reason: result.reason });
+        }
       }
     }
   });

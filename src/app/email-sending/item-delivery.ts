@@ -25,9 +25,10 @@ import { logDuration, makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
 import { getFeedOutboxStorageKey, getRssItemId } from '../rss-checking/new-item-recording';
-import { EmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
+import { EmailContent, ItemEmailContent, makeEmailContent, makeUnsubscribeUrl } from './email-content';
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
+import { makeItemEmailContentInWorker } from './item-content-worker';
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 
 export async function deliverItems(
@@ -45,8 +46,46 @@ export async function deliverItems(
 
   confirmedEmails.push(getCatchAllEmail());
 
-  prepareOutboxEmails(storage, accountId, feed, validItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
-  return await sendOutboxEmails(storage, env, accountId, feed, validItems, confirmedEmails, from);
+  const preparedItems = await prepareItems(accountId, feed, validItems);
+  const preparedStoredItems = preparedItems.map((x) => x.storedItem);
+
+  prepareOutboxEmails(storage, accountId, feed, preparedItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
+  return await sendOutboxEmails(storage, env, accountId, feed, preparedStoredItems, confirmedEmails, from);
+}
+
+interface PreparedItem {
+  storedItem: ValidStoredRssItem;
+  itemContent: ItemEmailContent;
+}
+
+// Content is built once per item, before the outbox writes, so that an
+// item whose content fails leaves no messages behind.
+async function prepareItems(accountId: AccountId, feed: Feed, validItems: ValidStoredRssItem[]) {
+  const { logError } = makeCustomLoggers({
+    module: prepareItems.name,
+    accountId: accountId.value,
+    feedId: feed.id.value,
+  });
+  const preparedItems: PreparedItem[] = [];
+
+  for (const storedItem of validItems) {
+    const itemContent = await makeItemEmailContentInWorker(storedItem.item, feed.emailBodySpec, feed.emailSubjectSpec);
+
+    // The item stays in the inbox, so this repeats every hour until
+    // someone looks, but it no longer holds up the feed's other items
+    // or the feeds after it.
+    if (isErr(itemContent)) {
+      logError(si`Failed to ${makeItemEmailContentInWorker.name}`, {
+        reason: itemContent.reason,
+        fileName: storedItem.fileName,
+      });
+      continue;
+    }
+
+    preparedItems.push({ storedItem, itemContent });
+  }
+
+  return preparedItems;
 }
 
 const catchAllEmailAddress = 'catch-all@feedsubscription.com';
@@ -176,7 +215,7 @@ export function prepareOutboxEmails(
   storage: AppStorage,
   accountId: AccountId,
   feed: Feed,
-  validItems: ValidStoredRssItem[],
+  preparedItems: PreparedItem[],
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
   domainName: string
@@ -187,12 +226,13 @@ export function prepareOutboxEmails(
     feedId: feed.id.value,
   });
 
-  for (const storedItem of validItems) {
+  for (const { storedItem, itemContent } of preparedItems) {
     for (const hashedEmail of confirmedEmails) {
       const storeResult = storeOutboxEmail(
         storage,
         accountId,
         feed,
+        itemContent,
         storedItem.item,
         hashedEmail,
         fromAddress,
@@ -264,18 +304,17 @@ function storeOutboxEmail(
   storage: AppStorage,
   accountId: AccountId,
   feed: Feed,
+  itemContent: ItemEmailContent,
   item: RssItem,
   hashedEmail: HashedEmail,
   fromAddress: EmailAddress,
   domainName: string
 ) {
-  const messageData = makeStoredEmailMessageData(feed, hashedEmail, item, fromAddress, domainName);
-  const messageStorageKey = getOutboxMessageStorageKey(
-    accountId,
-    feed.id,
-    getRssItemId(item),
-    getMessageId(hashedEmail.emailAddress)
-  );
+  const messageData = makeStoredEmailMessageData(feed, hashedEmail, itemContent, fromAddress, domainName);
+
+  const itemId = getRssItemId(item);
+  const messageId = getMessageId(hashedEmail.emailAddress);
+  const messageStorageKey = getOutboxMessageStorageKey(accountId, feed.id, itemId, messageId);
 
   return storage.storeItem(messageStorageKey, messageData);
 }
@@ -316,12 +355,12 @@ interface StoredEmailMessageData {
 export function makeStoredEmailMessageData(
   feed: Feed,
   to: HashedEmail,
-  item: RssItem,
+  itemContent: ItemEmailContent,
   fromAddress: EmailAddress,
   domainName: string
 ): StoredEmailMessageData {
   const unsubscribeUrl = makeUnsubscribeUrl(feed.id, to, feed.displayName, domainName);
-  const emailContent = makeEmailContent(item, unsubscribeUrl, fromAddress, feed.emailBodySpec, feed.emailSubjectSpec);
+  const emailContent = makeEmailContent(itemContent, unsubscribeUrl, fromAddress);
 
   const message: StoredEmailMessageData = {
     to: to.emailAddress.value,

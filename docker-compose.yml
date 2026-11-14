@@ -151,6 +151,10 @@ services:
     environment:
       <<: [*base-env, *cron-env]
     command: node dist/app/cron.js
+    # A day of 5-minute samples peaked at 79 MiB. Items are parsed in
+    # a worker capped at 192 MiB of heap (item-content-worker.ts), one
+    # at a time, so 384m leaves room.
+    mem_limit: 384m
     <<: [*logging, *x-disable-ipv6, *x-dns]
     networks:
       net:
@@ -180,6 +184,9 @@ services:
     command: >-
       sh -c ': "$${SMTP_OUT_LOG:?SMTP_OUT_LOG is not set}";
       exec node dist/app/delivery-monitoring < <(tail -n 0 -F "$$SMTP_OUT_LOG")'
+    # It parses log lines only. A day of 5-minute samples peaked at
+    # 44 MiB, on startup.
+    mem_limit: 128m
     volumes:
       - .tmp/logs/feedsubscription:/logs:ro
       - ${DATA_DIR_ROOT?}:/data
@@ -203,6 +210,9 @@ services:
     init: true # This is to tell Node process to stop when the container is asked to stop.
     restart: always
     command: node dist/api/server.js
+    # As for app: a day's peak of 67 MiB, plus the parsing worker for
+    # sample emails.
+    mem_limit: 384m
     volumes:
       - ${DATA_DIR_ROOT?}:/data
     environment:

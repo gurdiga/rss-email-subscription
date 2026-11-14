@@ -2,7 +2,7 @@ import { requireEnv } from '../../shared/env';
 import { isErr, makeErr, Result } from '../../shared/lang';
 import { deliverEmail, EmailDeliveryEnv, EmailDeliveryRequest } from './email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from './emails';
-import { makeEmailContent } from './email-content';
+import { makeEmailContent, makeItemEmailContent } from './email-content';
 import { RssItem } from '../../domain/rss-item';
 import { makeSubscriptionConfirmationEmailContent } from '../../api/subscription';
 import { si } from '../../shared/string-utils';
@@ -41,13 +41,13 @@ async function sentItemEmail(from: FullEmailAddress, to: string, replyTo: string
   };
   const emailBodySpec: FeedEmailBodySpec = makeFullItemText();
   const emailSubjectSpec: FeedEmailSubjectSpec = makeItemTitle();
-  const emailMessage = makeEmailContent(
-    item,
-    new URL('https://example.com'),
-    from.emailAddress,
-    emailBodySpec,
-    emailSubjectSpec
-  );
+  const itemContent = makeItemEmailContent(item, emailBodySpec, emailSubjectSpec);
+
+  if (isErr(itemContent)) {
+    throw new Error(itemContent.reason);
+  }
+
+  const emailMessage = makeEmailContent(itemContent, new URL('https://example.com'), from.emailAddress);
   const subject = emailMessage.subject;
   const htmlBody = si`
       <p>This emai is sent from this unit test:</p>

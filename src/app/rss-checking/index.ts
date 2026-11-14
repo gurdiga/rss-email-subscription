@@ -16,7 +16,8 @@ import { selectNewItems } from './item-selection';
 import { getLastPostMetadata, recordLastPostMetadata } from './last-post-timestamp';
 import { recordNewRssItems } from './new-item-recording';
 import { parseRssFeed } from './rss-parsing';
-import { fetchRss } from './rss-response';
+import { makeCappedFetch } from './fetch';
+import { fetchRss, scheduledFeedMaxBytes } from './rss-response';
 
 const suppressAlertPatterns = [/getaddrinfo ENOTFOUND/, /Connect Timeout Error/];
 const alertAfterConsecutiveFailures = 10;
@@ -37,7 +38,7 @@ export async function checkRss(
   });
   const { url } = feed;
   const startTime = Date.now();
-  const rssResponse = await fetchRss(url);
+  const rssResponse = await fetchRss(url, makeCappedFetch(scheduledFeedMaxBytes));
   const durationMs = Date.now() - startTime;
 
   if (isErr(rssResponse)) {

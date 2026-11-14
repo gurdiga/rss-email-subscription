@@ -1,6 +1,7 @@
 import { expect } from 'chai';
-import { makeEmailContent } from '../../app/email-sending/email-content';
+import { makeEmailContent, makeItemEmailContent } from '../../app/email-sending/email-content';
 import { makeFullItemText, makeItemTitle } from '../../domain/feed';
+import { isErr } from '../../shared/lang';
 import { makeTestEmailAddress } from '../../shared/test-utils';
 import { makePublicSamplePost } from './show-sample-email';
 
@@ -10,13 +11,13 @@ describe(makePublicSamplePost.name, () => {
     const unsubscribeUrl = new URL('https://test.feedsubscription.com/unsubscribe.html?id=sample');
     const fromAddress = makeTestEmailAddress('sample@test.feedsubscription.com');
 
-    const { subject, htmlBody } = makeEmailContent(
-      post,
-      unsubscribeUrl,
-      fromAddress,
-      makeFullItemText(),
-      makeItemTitle()
-    );
+    const itemContent = makeItemEmailContent(post, makeFullItemText(), makeItemTitle());
+
+    if (isErr(itemContent)) {
+      throw new Error(itemContent.reason);
+    }
+
+    const { subject, htmlBody } = makeEmailContent(itemContent, unsubscribeUrl, fromAddress);
 
     expect(subject).to.equal('Your post title goes here');
     expect(htmlBody).to.contain('This is a sample of the email your subscribers will get');

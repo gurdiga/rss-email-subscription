@@ -2,6 +2,7 @@ import { expect } from 'chai';
 import { HashedEmail } from '../../domain/email-address';
 import { FeedEmailBodySpec, FeedEmailSubjectSpec, makeFullItemText, makeItemTitle } from '../../domain/feed';
 import { RssItem } from '../../domain/rss-item';
+import { isErr } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import {
   encodeSearchParamValue,
@@ -9,7 +10,15 @@ import {
   makeTestEmailAddress,
   makeTestFeedId,
 } from '../../shared/test-utils';
-import { escapeHtml, extractExcerpt, makeEmailContent, makeUnsubscribeUrl, preprocessContent } from './email-content';
+import {
+  escapeHtml,
+  extractExcerpt,
+  makeEmailContent,
+  makeItemEmailContent,
+  makeUnsubscribeUrl,
+  maxItemContentLength,
+  preprocessContent,
+} from './email-content';
 import { makeFullEmailAddress } from './emails';
 
 const feedId = makeTestFeedId();
@@ -31,7 +40,7 @@ describe(makeEmailContent.name, () => {
 
   it('returns an EmailMessage value for the given RssItem', () => {
     const unsubscribeUrl = new URL('https://example.com');
-    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec, emailSubjectSpec);
+    const emailMessage = makeContent(item, unsubscribeUrl, emailBodySpec, emailSubjectSpec);
 
     expect(emailMessage.subject).to.equal(item.title);
     expect(emailMessage.htmlBody).to.contain(item.content);
@@ -44,7 +53,7 @@ describe(makeEmailContent.name, () => {
   it('returns content according to given emailBodySpec', () => {
     const unsubscribeUrl = new URL('https://example.com/unsubscribe?secret');
     const emailBodySpec = makeTesItemExcerptWordCount(55);
-    const emailMessage = makeEmailContent(item, unsubscribeUrl, from.emailAddress, emailBodySpec, emailSubjectSpec);
+    const emailMessage = makeContent(item, unsubscribeUrl, emailBodySpec, emailSubjectSpec);
 
     const expectedContent =
       '<p>You’ll find this post in your <code class="language-plaintext highlighter-rouge">_posts</code> directory.' + // 8 words
@@ -63,10 +72,44 @@ describe(makeEmailContent.name, () => {
     const titledItem: RssItem = { ...item, title: 'Why <repositories> is not inherited & how to fix it' };
     const unsubscribeUrl = new URL('https://example.com');
 
-    const emailMessage = makeEmailContent(titledItem, unsubscribeUrl, from.emailAddress, emailBodySpec, customSubject);
+    const emailMessage = makeContent(titledItem, unsubscribeUrl, emailBodySpec, customSubject);
 
     expect(emailMessage.htmlBody).to.contain('<h1>Why &lt;repositories&gt; is not inherited &amp; how to fix it</h1>');
   });
+
+  it('links to an item too large to parse instead of including it', () => {
+    const largeItem: RssItem = { ...item, content: '<p>x</p>'.repeat(maxItemContentLength / 8 + 1) };
+    const unsubscribeUrl = new URL('https://example.com');
+
+    const emailMessage = makeContent(largeItem, unsubscribeUrl, emailBodySpec, emailSubjectSpec);
+
+    expect(emailMessage.htmlBody).to.contain('This post is too long to send by email.');
+    expect(emailMessage.htmlBody).to.contain(si`<a href="${item.link.toString()}">Read more on the blog</a>`);
+    expect(emailMessage.htmlBody).not.to.contain('<p>x</p>');
+  });
+
+  it('returns an Err for markup nested too deeply to serialize', () => {
+    const nestedItem: RssItem = { ...item, content: '<b>'.repeat(20_000) + 'x' };
+
+    const result = makeItemEmailContent(nestedItem, emailBodySpec, emailSubjectSpec);
+
+    expect(isErr(result)).to.be.true;
+  });
+
+  function makeContent(
+    rssItem: RssItem,
+    unsubscribeUrl: URL,
+    bodySpec: FeedEmailBodySpec,
+    subjectSpec: FeedEmailSubjectSpec
+  ) {
+    const itemContent = makeItemEmailContent(rssItem, bodySpec, subjectSpec);
+
+    if (isErr(itemContent)) {
+      throw new Error(itemContent.reason);
+    }
+
+    return makeEmailContent(itemContent, unsubscribeUrl, from.emailAddress);
+  }
 });
 
 describe(preprocessContent.name, () => {
@@ -98,6 +141,35 @@ describe(preprocessContent.name, () => {
     const result = preprocessContent(html, itemLink);
 
     expect(result).to.equal('<p class="ok-class">Some text</p>');
+  });
+
+  it('keeps content after a stray closing body or html tag', () => {
+    const html = '<p>before</p></body></html><p>after</p>';
+
+    expect(preprocessContent(html, itemLink)).to.equal('<p>before</p><p>after</p>');
+  });
+
+  it('keeps table rows found outside a table', () => {
+    const html = '<tr><td>cell</td></tr><p>x</p>';
+
+    expect(preprocessContent(html, itemLink)).to.equal(html);
+  });
+
+  it('keeps leading style and title elements where they are', () => {
+    const html = '<style>p { color: red }</style><title>t</title><p>x</p>';
+
+    expect(preprocessContent(html, itemLink)).to.equal(html);
+  });
+
+  it('stays fast on a long run of short top-level elements', () => {
+    const html = '<b>x</b>'.repeat(32 * 1024);
+    const startTime = Date.now();
+
+    preprocessContent(html, itemLink);
+
+    // Cheerio's fragment mode took about 4 s on this; parseHtml takes
+    // under 100 ms.
+    expect(Date.now() - startTime).to.be.below(1000);
   });
 
   it('absolutize a.href', () => {

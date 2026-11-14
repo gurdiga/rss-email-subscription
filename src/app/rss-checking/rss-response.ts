@@ -2,10 +2,15 @@ import { makeErr, Result } from '../../shared/lang';
 import { si } from '../../shared/string-utils';
 import { discardResponseBody, fetch, FetchFn } from './fetch';
 
-// For feeds fetched while someone waits on the API, as opposed to the hourly
-// cron check, which keeps the general 10 MiB. The largest approved feed was
-// about 400 KB in November 2026. A feed truncated at the cap fails to parse.
+// For feeds fetched while someone waits on the API. The largest
+// approved feed was about 400 KB in November 2026. A feed truncated at
+// the cap fails to parse.
 export const interactiveFeedMaxBytes = 1024 * 1024;
+
+// For the hourly check. The general 10 MiB cap let one feed parse into
+// about 370 MiB of heap, which the app container's memory limit no
+// longer allows.
+export const scheduledFeedMaxBytes = 2 * 1024 * 1024;
 
 export interface RssResponse {
   kind: 'RssResponse';
@@ -41,7 +46,8 @@ export async function fetchRss(url: URL, fetchFn: FetchFn = fetch): Promise<Resu
       return makeErr(si`Invalid response content-type: ${contentType}`);
     }
   } catch (error) {
-    // The cause is where fetch keeps the reason, and makeErr now carries it.
+    // The cause is where fetch keeps the reason, and makeErr now
+    // carries it.
     return makeErr(error);
   }
 }

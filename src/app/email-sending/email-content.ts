@@ -1,9 +1,12 @@
-import type { AnyNode, Element } from 'domhandler';
 import * as cheerio from 'cheerio';
+import { AnyNode, Document, Element } from 'domhandler';
+import { Parser } from 'parse5';
+import { adapter, Htmlparser2TreeAdapterMap } from 'parse5-htmlparser2-tree-adapter';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { FeedEmailBodySpec, FeedEmailSubjectSpec, isFullItemText, isItemTitle } from '../../domain/feed';
 import { FeedId } from '../../domain/feed-id';
 import { RssItem } from '../../domain/rss-item';
+import { attempt, isErr, makeErr, Result } from '../../shared/lang';
 import { rawsi, si } from '../../shared/string-utils';
 
 export interface EmailContent {
@@ -11,34 +14,80 @@ export interface EmailContent {
   htmlBody: string;
 }
 
-export function makeEmailContent(
-  item: RssItem,
-  unsubscribeUrl: URL,
-  fromAddress: EmailAddress,
+// Plain data, so that it can cross from a worker thread.
+export interface ItemEmailContent {
+  subject: string;
+  articleHtml: string;
+  onlineLink: string | undefined;
+}
+
+export type ItemContentSource = Pick<RssItem, 'title' | 'content' | 'link'>;
+
+// The article part of an item's email, which is the same for every
+// subscriber: build it once per item. It is a Result because the HTML
+// serializer recurses, and a few KB of nested markup overflow the
+// stack. To bound its time and memory, call it through
+// makeItemEmailContentInWorker.
+export function makeItemEmailContent(
+  item: ItemContentSource,
   emailBodySpec: FeedEmailBodySpec,
   emailSubjectSpec: FeedEmailSubjectSpec
-): EmailContent {
+): Result<ItemEmailContent> {
   const sendFullText = isFullItemText(emailBodySpec);
   const subjectIsPostTitle = isItemTitle(emailSubjectSpec);
 
   const contentPrefix = subjectIsPostTitle ? '' : si`<h1>${escapeHtml(item.title)}</h1>`;
-  const content = sendFullText
-    ? item.content
-    : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
-
   const subject = subjectIsPostTitle ? item.title : emailSubjectSpec.text;
-  const itemHtml = preprocessContent(contentPrefix + content, item.link);
+  const onlineLink = sendFullText ? item.link.toString() : undefined;
+
+  if (item.content.length > maxItemContentLength) {
+    return {
+      subject,
+      articleHtml: contentPrefix + tooLongForEmailHtml + makeReadMoreLink(item.link),
+      onlineLink: undefined,
+    };
+  }
+
+  const articleHtml = attempt(() => {
+    const content = sendFullText
+      ? item.content
+      : extractExcerpt(item.content, emailBodySpec.wordCount) + '…' + makeReadMoreLink(item.link);
+
+    return preprocessContent(contentPrefix + content, item.link);
+  });
+
+  if (isErr(articleHtml)) {
+    return makeErr(si`Failed to process item content: ${articleHtml.reason}`);
+  }
+
+  return { subject, articleHtml, onlineLink };
+}
+
+// Parsing holds about 130 to 270 bytes of heap per byte of markup,
+// depending on the tags, so this bounds a hostile item to roughly 135
+// MiB. The largest real item seen was about 450 KB, in 2023. Above the
+// cap the content isn't parsed at all.
+export const maxItemContentLength = 512 * 1024;
+
+const tooLongForEmailHtml = '<p>This post is too long to send by email.</p>';
+
+export function makeEmailContent(
+  itemContent: ItemEmailContent,
+  unsubscribeUrl: URL,
+  fromAddress: EmailAddress
+): EmailContent {
+  const { subject, articleHtml, onlineLink } = itemContent;
 
   return {
     subject,
     htmlBody: htmlBody(si`
-      <article>${itemHtml}</article>
+      <article>${articleHtml}</article>
 
       <hr style="clear: both; margin-top: 3em;" />
 
       <footer>
         <small>
-          ${sendFullText ? si`<p>You can read this post online here: ${item.link.toString()}</p>` : ''}
+          ${onlineLink ? si`<p>You can read this post online here: ${onlineLink}</p>` : ''}
 
           <p>
             PRO TIP: Add ${fromAddress.value} to your contacts so that this is not considered junk mail.
@@ -55,7 +104,8 @@ export function makeEmailContent(
 }
 
 export function preprocessContent(html: string, itemLink: URL) {
-  const $ = parseHtml(html);
+  const parsedHtml = parseHtml(html);
+  const { $ } = parsedHtml;
 
   $('img').each((_index, image) => {
     setMaxWidth(image);
@@ -73,7 +123,7 @@ export function preprocessContent(html: string, itemLink: URL) {
     ensureAbsoluteHref(a, itemLink);
   });
 
-  return $.html();
+  return getHtml(parsedHtml);
 }
 
 function ensureAbsoluteHref(a: Element, itemLink: URL): void {
@@ -159,7 +209,8 @@ function makeReadMoreLink(url: URL): string {
 }
 
 export function extractExcerpt(html: string, wordCount: number): string {
-  const $ = parseHtml(html);
+  const parsedHtml = parseHtml(html);
+  const { $, root } = parsedHtml;
 
   let collectedWordCount = 0;
 
@@ -199,16 +250,50 @@ export function extractExcerpt(html: string, wordCount: number): string {
     }
   };
 
-  $._root.childNodes.forEach(processNode);
+  [...root.childNodes].forEach(processNode);
 
+  // Last first: each removal searches its parent's children from the
+  // end.
   nodesToRemove.reverse().forEach((node) => $(node).remove());
 
-  return $.html().trim();
+  return getHtml(parsedHtml).trim();
 }
 
-export function parseHtml(html: string): ReturnType<typeof cheerio.load> {
-  const isFullDocument = false;
-  const cheerioOptions = {};
+// Parses like cheerio's fragment mode, with the same parser, context
+// and tree, so the output is unchanged, but without its quadratic
+// steps. Both parse5's fragment parser and cheerio then move the
+// top-level nodes one by one, each move a search and a splice, and the
+// selectors slow down quadratically with many top-level nodes too: a
+// run of short elements took about a minute per MiB. Here the nodes
+// move in one pass, under a single wrapper element. Document mode
+// avoids all of this, but it drops table rows found outside a table,
+// which a fragment keeps.
+//
+// Deeply nested markup stays superlinear, in this parser and in
+// htmlparser2 alike; the worker's timeout is what bounds it.
+export function parseHtml(html: string): ParsedHtml {
+  const parser = Parser.getFragmentParser<Htmlparser2TreeAdapterMap>(null, {
+    treeAdapter: adapter,
+    scriptingEnabled: true,
+  });
 
-  return cheerio.load(html, cheerioOptions, isFullDocument);
+  parser.tokenizer.write(html, true);
+
+  const fakeRootElement = parser.document.children[0] as Element;
+  const root = new Element('div', {}, fakeRootElement.children);
+  const document = new Document([root]);
+
+  root.parent = document;
+  root.children.forEach((child) => (child.parent = root));
+
+  return { $: cheerio.load(document, {}, false), root };
+}
+
+interface ParsedHtml {
+  $: cheerio.CheerioAPI;
+  root: Element;
+}
+
+function getHtml({ $, root }: ParsedHtml): string {
+  return $(root).html() ?? '';
 }

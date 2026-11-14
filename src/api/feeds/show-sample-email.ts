@@ -1,4 +1,5 @@
 import { makeEmailContent, makeUnsubscribeUrl } from '../../app/email-sending/email-content';
+import { makeItemEmailContentInWorker } from '../../app/email-sending/item-content-worker';
 import { sendEmail } from '../../app/email-sending/email-delivery';
 import { FullEmailAddress, makeFullEmailAddress } from '../../app/email-sending/emails';
 import { getFeedInfo } from '../../app/rss-checking/rss-parsing';
@@ -141,14 +142,13 @@ async function sendSampleEmail(
   unsubscribeUrl: URL,
   emailSubjectSpec: FeedEmailSubjectSpec
 ) {
-  const emailBodySpec = makeFullItemText();
-  const emailContent = makeEmailContent(
-    mostRecentPost,
-    unsubscribeUrl,
-    sender.emailAddress,
-    emailBodySpec,
-    emailSubjectSpec
-  );
+  const itemContent = await makeItemEmailContentInWorker(mostRecentPost, makeFullItemText(), emailSubjectSpec);
+
+  if (isErr(itemContent)) {
+    return itemContent;
+  }
+
+  const emailContent = makeEmailContent(itemContent, unsubscribeUrl, sender.emailAddress);
 
   return await sendEmail(sender, recipient.emailAddress, sender.emailAddress, emailContent, env);
 }
