@@ -7,7 +7,8 @@
     "editor.wordWrapColumn": 72
   },
   "[typescript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "rewrap.wrappingColumn": 72
   },
   "[nginx]": {
     "editor.defaultFormatter": "raynigon.nginx-formatter"

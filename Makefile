@@ -90,7 +90,7 @@ cw:
 pre-commit: lint-quiet compile-quiet test-quiet format-check-quiet
 pc: pre-commit
 
-lint: lint-mocha-only lint-require-strict-interpolation lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config lint-dnsmasq-conf
+lint: lint-mocha-only lint-require-strict-interpolation lint-comment-width lint-docker-compose lint-dockerfile lint-shell-scripts lint-nginx-config lint-dnsmasq-conf
 l: lint
 
 unused-exports:
@@ -161,6 +161,26 @@ lint-require-strict-interpolation:
 	xargs grep --color=always --line-number -P '(?<!si)`[^;\]), ]' |
 	awk '!/type [A-Z]/' |
 	tee /dev/stderr | ifne false
+
+# Prettier never reflows comments, so this holds them to 72 columns.
+# Added lines only: hundreds of older comments are longer, and they get
+# rewrapped as their files are edited. Perl rather than awk, to count
+# characters rather than bytes; lines with a URL are exempt.
+lint-comment-width:
+	@if git diff --cached --quiet -- '*.ts'; then diff_args=HEAD; else diff_args=--cached; fi
+	git diff $$diff_args -U0 --no-color -- '*.ts' |
+	perl -CSD -ne '
+		if (m{^\+\+\+ b/(.*)}) { $$file = $$1; next }
+		if (/^@@ -\S+ \+(\d+)/) { $$line = $$1; next }
+		next unless s/^\+//;
+		chomp;
+		if (m{^\s*(//|/\*|\*)} && !m{https?://} && length > 72) {
+			print "$$file:$$line: " . length . " columns: $$_\n";
+			$$failed = 1;
+		}
+		$$line++;
+		END { exit($$failed ? 1 : 0) }
+	'
 
 smtp-test:
 	node_modules/.bin/ts-node src/app/email-sending/email-delivery.slow-test.ts
