@@ -1,4 +1,5 @@
 import { isErr, makeErr, Result } from '../../shared/lang';
+import { makeCustomLoggers } from '../../shared/logging';
 import { si } from '../../shared/string-utils';
 import { discardResponseBody, FetchFn, makeCappedFetch } from './fetch';
 
@@ -60,27 +61,53 @@ async function getRules(
   cache: RobotsTxtCache,
   now: number
 ): Promise<Result<RobotsRule[]>> {
+  const { logInfo, logWarning } = makeCustomLoggers({ module: 'robots-txt', origin });
   const cached = cache.get(origin);
 
   if (cached && now - cached.fetchedAt < robotsTxtMaxAgeMs) {
+    logInfo('Using cached robots.txt', {
+      ruleCount: cached.rules.length,
+      fetchedAt: new Date(cached.fetchedAt).toISOString(),
+    });
+
     return cached.rules;
   }
 
+  const startTime = Date.now();
   const fetched = await fetchRules(origin, fetchFn);
+  const durationMs = Date.now() - startTime;
 
   if (isErr(fetched)) {
+    if (!cached) {
+      return fetched;
+    }
+
     // RFC 9309 allows a stale copy while the file is unreachable. A
     // failure is never cached: right after a restart, a blip would
     // otherwise block the feed for a whole day.
-    return cached ? cached.rules : fetched;
+    logWarning('Using stale robots.txt', {
+      reason: fetched.reason,
+      fetchedAt: new Date(cached.fetchedAt).toISOString(),
+      durationMs,
+    });
+
+    return cached.rules;
   }
 
-  cache.set(origin, { rules: fetched, fetchedAt: now });
+  const { rules, status } = fetched;
 
-  return fetched;
+  logInfo('Fetched robots.txt', { status, ruleCount: rules.length, durationMs });
+  cache.set(origin, { rules, fetchedAt: now });
+
+  return rules;
 }
 
-async function fetchRules(origin: string, fetchFn: FetchFn): Promise<Result<RobotsRule[]>> {
+interface FetchedRules {
+  rules: RobotsRule[];
+  status: number;
+}
+
+async function fetchRules(origin: string, fetchFn: FetchFn): Promise<Result<FetchedRules>> {
   try {
     const response = await fetchFn(new URL('/robots.txt', origin));
     const { status } = response;
@@ -88,14 +115,16 @@ async function fetchRules(origin: string, fetchFn: FetchFn): Promise<Result<Robo
     // By status code rather than statusText: over HTTP/1.1 the server
     // picks the reason phrase.
     if (status >= 200 && status < 300) {
-      return parseRobotsTxt(dropTruncatedLine(await response.text()));
+      const rules = parseRobotsTxt(dropTruncatedLine(await response.text()));
+
+      return { rules, status };
     }
 
     discardResponseBody(response);
 
     // RFC 9309 reads a 4xx, 401 and 403 included, as no rules at all.
     if (status >= 400 && status < 500) {
-      return [];
+      return { rules: [], status };
     }
 
     return makeErr(si`robots.txt responded ${status}`);
