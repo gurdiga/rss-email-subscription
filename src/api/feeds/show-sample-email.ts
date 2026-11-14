@@ -226,16 +226,39 @@ async function sendFixedSampleEmail(recipient: HashedEmail, env: AppEnv) {
 
 const publicSampleSenderName = 'FeedSubscription preview';
 
+// The body is the opening of a real post on our blog, and the link
+// points to that post: with a link to the site root, the footer’s
+// “read this post online” suggested that subscribers get sent to the
+// blog’s home page rather than to the post.
 export function makePublicSamplePost(domainName: string): RssItem {
+  const link = new URL(si`https://${domainName}/blog/hello-world.html`);
+
   return {
     title: 'Your post title goes here',
     content: si`
-      <p>This is a sample of the email your subscribers will get when you publish a new post.</p>
-      <p>In the real email, this is where the full text of your post goes, with its images and links,
-      and the subject line is the post title. The sender name is your blog’s name.</p>`,
+      <p><i>This is a sample of the email your subscribers will get when you publish a new post.
+      The subject line is the post title, the sender name is your blog’s name, and the body is
+      the full text of your post. Here, it’s the opening of a post from our own blog.</i></p>
+
+      <img src="https://${domainName}/assets/blog/hello-world.webp" width="600"
+        alt="A person walking down the middle of an empty road toward the mountains">
+
+      <h2>Where it started</h2>
+      <p>When Blogger’s FollowByEmail widget went away in 2021, I wanted to help my friend
+      <a href="https://sandradodd.com/">Sandra Dodd</a>, who has a few blogs there.</p>
+      <p>One service that seemed an OK option at the time was follow.it, but the ads on its free
+      plan had nothing to do with the email content. And Sandra is a daily blogger, so we needed
+      something that would send 1500 emails per day.</p>
+
+      <h2>How hard can it be?</h2>
+      <p>After looking around some more, I said to myself: <i>How hard can it be?!</i> In November
+      2021, after a few months of nights and weekends, the system worked well enough to move
+      Sandra’s blogs over to it.</p>
+
+      <p><a href="${link.toString()}">Continue reading on the FeedSubscription blog →</a></p>`,
     author: publicSampleSenderName,
     pubDate: new Date(0),
-    link: new URL(si`https://${domainName}/`),
+    link,
     guid: 'public-sample-email',
   };
 }
