@@ -1,4 +1,5 @@
 import { ApiPath } from '../domain/api-path';
+import { FeedAddParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import {
   CheckFeedUrlRequestData,
   CheckFeedUrlResponseData,
@@ -41,6 +42,7 @@ function main() {
     feedCheckApiErrorMessage: '#feed-check-api-error-message',
     rssUrlContainer: '#rss-url-container',
     showSampleEmailButton: '#show-sample-email-button',
+    registerFeedLink: '#register-feed-link',
     emailFieldContainer: '#email-field-container',
     emailField: '#email-field',
     submitSampleEmailButton: '#submit-sample-email-button',
@@ -138,7 +140,7 @@ function dismissSampleEmailForm(uiElements: SampleEmailFormElements): void {
 
 function initMainForm(uiElements: UiElements) {
   const { blogUrlField, submitButton, successMessage, rssUrlContainer, showSampleEmailButton } = uiElements;
-  const { feedCheckApiErrorMessage, blogUrlMessage, feedUrlMessage } = uiElements;
+  const { feedCheckApiErrorMessage, blogUrlMessage, feedUrlMessage, registerFeedLink } = uiElements;
 
   onInput(blogUrlField, () => dismissMainForm(uiElements));
 
@@ -178,7 +180,7 @@ function initMainForm(uiElements: UiElements) {
         return;
       }
 
-      const { feedUrl, isFeedUrl } = response.responseData;
+      const { feedUrl, isFeedUrl, blogTitle } = response.responseData;
 
       hideElement(submitButton);
       rssUrlContainer.textContent = feedUrl;
@@ -187,6 +189,11 @@ function initMainForm(uiElements: UiElements) {
       toggleElement(isFeedUrl, feedUrlMessage);
       unhideElement(successMessage);
       toggleElement(!isAuthenticated(), showSampleEmailButton);
+
+      const feedAddParams: FeedAddParams = { url: feedUrl, displayName: blogTitle };
+
+      registerFeedLink.href = makePagePathWithParams<FeedAddParams>(PagePath.feedAdd, feedAddParams);
+      toggleElement(isAuthenticated(), registerFeedLink);
       scrollIntoView(successMessage);
       return;
     }
@@ -211,6 +218,7 @@ interface UiElements extends MainFormFields, SampleEmailFormElements {
   successMessage: HTMLElement;
   blogUrlMessage: HTMLElement;
   feedUrlMessage: HTMLElement;
+  registerFeedLink: HTMLAnchorElement;
 }
 
 interface SampleEmailFormElements {

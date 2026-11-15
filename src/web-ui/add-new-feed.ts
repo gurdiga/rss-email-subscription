@@ -1,6 +1,6 @@
 import { ApiPath } from '../domain/api-path';
 import { AddNewFeedRequestData, AddNewFeedResponseData, defaultExcerptWordCount } from '../domain/feed';
-import { FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
+import { FeedAddParams, FeedManageParams, PagePath, makePagePathWithParams } from '../domain/page-path';
 import { isAppError, isInputError, isSuccess } from '../shared/api-response';
 import { Result, asyncAttempt, isErr } from '../shared/lang';
 import {
@@ -21,6 +21,7 @@ import {
   isAuthenticated,
   navigateTo,
   onSubmit,
+  requireQueryParams,
   requireUiElements,
   sendApiRequest,
 } from './shared';
@@ -35,6 +36,16 @@ import {
 async function main() {
   if (!isAuthenticated()) {
     location.href = PagePath.userAuthentication;
+    return;
+  }
+
+  const queryStringParams = requireQueryParams<Partial<FeedAddParams>>({
+    url: 'url?',
+    displayName: 'displayName?',
+  });
+
+  if (isErr(queryStringParams)) {
+    displayInitError(queryStringParams.reason);
     return;
   }
 
@@ -57,6 +68,7 @@ async function main() {
   ]);
 
   initDefaultExcerptWordCount(uiElements.emailBodyExcerptWordCount, defaultExcerptWordCount);
+  prefillFeedFields(uiElements, queryStringParams);
   bindSubmitButton(uiElements);
   bindBlogFeedUrlField(uiElements);
 }
@@ -65,6 +77,11 @@ function bindBlogFeedUrlField(uiElements: RequiredUiElements) {
   uiElements; // TODO: remove
   // TODO Maybe:
   // - oninput: check if it’s a valid URL, and try to ApiPath.checkFeedUrl
+}
+
+function prefillFeedFields(uiElements: RequiredUiElements, params: Partial<FeedAddParams>) {
+  uiElements.url.value = params.url || '';
+  uiElements.displayName.value = params.displayName || '';
 }
 
 function initDefaultExcerptWordCount(filed: HTMLInputElement, count: number) {

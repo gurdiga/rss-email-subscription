@@ -8,6 +8,7 @@ export enum PagePath {
   requestPasswordReset = '/user/request-password-reset.html',
   confirmPasswordReset = '/user/confirm-password-reset.html',
   feedList = '/user/feeds.html',
+  feedAdd = '/user/add-new-feed.html',
   feedManage = '/user/manage-feed.html',
   feedEdit = '/user/edit-feed.html',
   feedSubscribeForm = '/user/feed-subscribe-form.html',
@@ -19,10 +20,10 @@ export enum PagePath {
   accountPage = '/user/account.html',
 }
 
-export const privatePaths = [
+export const privatePaths: string[] = [
   PagePath.accountPage,
   PagePath.feedList,
-  '/user/add-new-feed.html',
+  PagePath.feedAdd,
   PagePath.feedEdit,
   PagePath.feedManage,
   PagePath.manageFeedSubscribers,
@@ -37,6 +38,11 @@ export interface FeedSubscribeFormParams {
 
 export interface DeliveryReportsParams {
   id: string;
+  displayName: string;
+}
+
+export interface FeedAddParams {
+  url: string;
   displayName: string;
 }
 
