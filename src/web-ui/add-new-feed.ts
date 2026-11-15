@@ -70,13 +70,6 @@ async function main() {
   initDefaultExcerptWordCount(uiElements.emailBodyExcerptWordCount, defaultExcerptWordCount);
   prefillFeedFields(uiElements, queryStringParams);
   bindSubmitButton(uiElements);
-  bindBlogFeedUrlField(uiElements);
-}
-
-function bindBlogFeedUrlField(uiElements: RequiredUiElements) {
-  uiElements; // TODO: remove
-  // TODO Maybe:
-  // - oninput: check if it’s a valid URL, and try to ApiPath.checkFeedUrl
 }
 
 function prefillFeedFields(uiElements: RequiredUiElements, params: Partial<FeedAddParams>) {
