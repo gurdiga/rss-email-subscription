@@ -36,6 +36,8 @@ function main() {
     blogUrlField: '#feed-checker-field',
     submitButton: '#feed-checker-button',
     successMessage: '#feed-checker-success-message',
+    blogUrlMessage: '#blog-url-message',
+    feedUrlMessage: '#feed-url-message',
     feedCheckApiErrorMessage: '#feed-check-api-error-message',
     rssUrlContainer: '#rss-url-container',
     showSampleEmailButton: '#show-sample-email-button',
@@ -136,7 +138,7 @@ function dismissSampleEmailForm(uiElements: SampleEmailFormElements): void {
 
 function initMainForm(uiElements: UiElements) {
   const { blogUrlField, submitButton, successMessage, rssUrlContainer, showSampleEmailButton } = uiElements;
-  const { feedCheckApiErrorMessage } = uiElements;
+  const { feedCheckApiErrorMessage, blogUrlMessage, feedUrlMessage } = uiElements;
 
   onInput(blogUrlField, () => dismissMainForm(uiElements));
 
@@ -176,10 +178,13 @@ function initMainForm(uiElements: UiElements) {
         return;
       }
 
-      const { feedUrl } = response.responseData;
+      const { feedUrl, isFeedUrl } = response.responseData;
 
       hideElement(submitButton);
       rssUrlContainer.textContent = feedUrl;
+
+      toggleElement(!isFeedUrl, blogUrlMessage);
+      toggleElement(isFeedUrl, feedUrlMessage);
       unhideElement(successMessage);
       toggleElement(!isAuthenticated(), showSampleEmailButton);
       scrollIntoView(successMessage);
@@ -204,6 +209,8 @@ interface UiElements extends MainFormFields, SampleEmailFormElements {
   form: HTMLFormElement;
   submitButton: HTMLButtonElement;
   successMessage: HTMLElement;
+  blogUrlMessage: HTMLElement;
+  feedUrlMessage: HTMLElement;
 }
 
 interface SampleEmailFormElements {

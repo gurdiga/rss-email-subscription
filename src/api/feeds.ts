@@ -407,9 +407,19 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
     discardResponseBody(response);
 
     const feedInfo = await getFeedInfo(blogUrl);
-    let blogTitle = isErr(feedInfo) ? '' : feedInfo.title;
 
-    const responseData: CheckFeedUrlResponseData = { blogTitle, feedUrl: blogUrl.toString() };
+    // The Content-Type alone also matches sitemaps and XML error pages.
+    if (isErr(feedInfo)) {
+      logWarning(si`Failed to ${getFeedInfo.name}`, { reason: feedInfo.reason, blogUrl: blogUrl.toString() });
+      return makeInputError('Could not read that feed. 🤔', fieldName);
+    }
+
+    const responseData: CheckFeedUrlResponseData = {
+      blogTitle: feedInfo.title,
+      feedUrl: blogUrl.toString(),
+      isFeedUrl: true,
+    };
+
     return makeSuccess('OK', {}, responseData);
   }
 
@@ -462,6 +472,7 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
   const responseData: CheckFeedUrlResponseData = {
     blogTitle,
     feedUrl: feedUrl.toString(),
+    isFeedUrl: false,
   };
 
   logInfo('Blog RSS check', { blogUrl, feedUrl: feedUrl.toString() });
