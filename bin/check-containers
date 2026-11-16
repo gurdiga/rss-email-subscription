@@ -2,7 +2,10 @@
 
 # cron */5 * * * *
 # cron @reboot (CHECK_CONTAINERS_FORCE=1, after `make start`)
-# cron 0 7 * * * (CHECK_CONTAINERS_REMIND=1)
+# cron 2 7 * * * (CHECK_CONTAINERS_REMIND=1)
+#
+# The reminder stays off the five-minute grid: two runs at once race on
+# the state files, and one of them reports BROKEN.
 #
 # Reports containers that should be running and are not, or that run but
 # fail their healthcheck. Exists because every other alerting path on
