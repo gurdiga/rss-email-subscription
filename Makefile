@@ -885,86 +885,97 @@ backup-purge:
 # The privacy policy promises 12 months. logrotate alone can’t
 # keep it: it only prunes names matching its current dateext, and
 # rclone copy never deletes offsite. Local first, so the next backup
-# has nothing old to re-upload. A prerequisite of backup-purge-gfs
-# so that it runs on the same weekly cron line.
+# has nothing old to re-upload. DRY_RUN=1 only lists.
 purge-old-logs:
 	@source .env
-	{
-		find .tmp/logs/feedsubscription -type f -mtime +365 -print -delete
-		rclone delete --min-age 365d --verbose "$$RCLONE_PATH/logs" 2>&1
-	} |
-	ifne -n echo '(empty)' |
-	cat <(
-		echo "Subject: RES purge-old-logs"
-		echo "From: RES <system@feedsubscription.com>"
-		echo ""
-	) - |
-	$(NOTIFY)
+	report=.tmp/logs/feedsubscription/purge-old-logs.log
+	status=0
+	(
+		set -euo pipefail
 
-# cron @daily
-backup-purge-gfs: purge-old-logs
-	@source .env
-
-	# GFS (Grandfather-Father-Son) rotation:
-	# - Sons (daily): Keep last 7 days
-	# - Fathers (weekly): Keep 4 weekly backups (Sundays)
-	# - Grandfathers (monthly): Keep 12 monthly backups (first of month)
-
-	function determine_keep() {
-		local backup_date=$$1
-		local today=`date +%s`
-		local backup_ts=`date -d "$${backup_date:0:10}" +%s 2>/dev/null || echo 0`
-		local days_old=$$(( (today - backup_ts) / 86400 ))
-
-		# Keep if within last 7 days (Son)
-		if [ $$days_old -le 7 ]; then
-			echo "keep-daily"
-			return
-		fi
-
-		# Keep if it's a Sunday and within 4 weeks (Father)
-		local dow=`date -d "$${backup_date:0:10}" +%u 2>/dev/null || echo 0`
-		if [ $$dow -eq 7 ] && [ $$days_old -le 28 ]; then
-			echo "keep-weekly"
-			return
-		fi
-
-		# Keep if it's the 1st of month and within 12 months (Grandfather)
-		local dom=`date -d "$${backup_date:0:10}" +%d 2>/dev/null || echo 0`
-		if [ $$dom -eq 01 ] && [ $$days_old -le 365 ]; then
-			echo "keep-monthly"
-			return
-		fi
-
-		echo "delete"
-	}
-
-	export -f determine_keep
-
-	rclone lsf $$RCLONE_PATH |
-	grep -v '^logs/' |
-	sort |
-	while read backup; do
-		backup_clean=$${backup%/}
-		status=`determine_keep $$backup_clean`
-
-		if [ "$$status" = "delete" ]; then
-			echo "DELETE: $$backup_clean"
-			rclone purge "$$RCLONE_PATH/$$backup_clean" 2>&1 || echo "  ERROR purging $$backup_clean"
+		if [ -n "$${DRY_RUN:-}" ]; then
+			find .tmp/logs/feedsubscription -type f -mtime +365 -print
+			rclone delete --dry-run --min-age 365d "$$RCLONE_PATH/logs" 2>&1
 		else
-			# echo "KEEP ($$status): $$backup_clean"
+			find .tmp/logs/feedsubscription -type f -mtime +365 -print -delete
+			rclone delete --min-age 365d --verbose "$$RCLONE_PATH/logs" 2>&1
 		fi
-	done > .tmp/logs/feedsubscription/backup-purge-gfs.log
+	) > $$report 2>&1 || status=$$?
+	bin/mail-job-report purge-old-logs $$status $$report
 
-	cat <(
-		echo "Subject: RES backup-purge-gfs"
-		echo "From: RES <system@feedsubscription.com>"
+# Delivery records name each recipient, so they get the same 12
+# months as the logs. The reports page lists only the unarchived
+# ones, about the last month, so nothing it shows goes. DRY_RUN=1
+# only counts.
+purge-old-deliveries:
+	@report=.tmp/logs/feedsubscription/purge-old-deliveries.log
+	status=0
+	(
+		set -euo pipefail
+		shopt -s nullglob
+		cutoff=`date -d '365 days ago' +%Y%m%d`
+		count=0
+
+		for path in .tmp/docker-data/accounts/*/feeds/*/deliveries/*; do
+			name=`basename "$$path"`
+
+			# Delivery IDs start with the date, as in 20240309-6060c1….
+			[[ $$name =~ ^[0-9]{8}- ]] || continue
+			[[ $${name:0:8} < $$cutoff ]] || continue
+
+			# find rather than a recursive rm: given an empty path it
+			# fails instead of deleting from the root.
+			[ -n "$${DRY_RUN:-}" ] || find "$$path" -delete
+			count=$$((count + 1))
+		done
+
+		echo "$$count deliveries from before $$cutoff"
+	) > $$report 2>&1 || status=$$?
+	bin/mail-job-report purge-old-deliveries $$status $$report
+
+# cron @weekly, right after make backup. Keeps every backup from the
+# last 35 days, which is the last five weekly ones, plus the first
+# backup of each month for a year. Nothing older than 365 days stays:
+# the privacy policy promises it. DRY_RUN=1 only lists.
+#
+# The two purges above run as prerequisites to share this cron line.
+backup-purge-gfs: purge-old-logs purge-old-deliveries
+	@source .env
+	report=.tmp/logs/feedsubscription/backup-purge-gfs.log
+	status=0
+	(
+		set -euo pipefail
+		listing=`rclone lsf "$$RCLONE_PATH"`
+		today=`date +%s`
+		months_seen=" "
+		kept=()
+
+		for entry in `grep -v '^logs/' <<< "$$listing" | sort`; do
+			name=$${entry%/}
+			day=$${name:0:10}
+
+			# A name that isn’t a date stops the job, loudly, rather
+			# than being guessed at.
+			timestamp=`date -d "$$day" +%s`
+			days_old=$$(( (today - timestamp) / 86400 ))
+			month=$${day:0:7}
+
+			if [ $$days_old -le 35 ]; then
+				kept+=("$$name")
+			elif [ $$days_old -le 365 ] && [[ $$months_seen != *" $$month "* ]]; then
+				kept+=("$$name")
+			else
+				echo "$${DRY_RUN:+would }delete: $$name"
+				[ -n "$${DRY_RUN:-}" ] || rclone purge "$$RCLONE_PATH/$$name"
+			fi
+
+			months_seen+="$$month "
+		done
+
 		echo ""
-	) <(
-		cat .tmp/logs/feedsubscription/backup-purge-gfs.log |
-		ifne -n echo '(empty)'
-	) |
-	$(NOTIFY)
+		echo "kept $${#kept[@]}, oldest: $${kept[0]:-none}"
+	) > $$report 2>&1 || status=$$?
+	bin/mail-job-report backup-purge-gfs $$status $$report
 
 ${RCLONE_BINARY}:
 	curl https://rclone.org/install.sh | sudo bash
