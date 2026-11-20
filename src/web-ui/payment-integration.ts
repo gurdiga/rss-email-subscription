@@ -46,6 +46,7 @@ export async function makePaymentSubformHandle(
         paddle.Checkout.open({
           transactionId,
           settings: {
+            allowLogout: false, // locks the email field
             displayMode: 'inline',
             frameTarget: 'paddle-checkout',
             frameInitialHeight: 450,
