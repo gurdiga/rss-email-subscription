@@ -1007,11 +1007,44 @@ init-data-dir:
 	mkdir $$DATA_DIR_ROOT/accounts
 	echo "Initialized data dir: $$DATA_DIR_ROOT"
 
+# rsync runs without --delete, so these snapshots keep what prod has
+# since deleted. That history is wanted, but the privacy policy caps
+# it at 12 months, so whatever prod no longer has goes once it is a
+# year old: deleted accounts and feeds, pruned deliveries and logs.
 rsync-logs:
+	@set -euo pipefail
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/logs/ .tmp/logs/
+	find .tmp/logs/feedsubscription -type f -mtime +365 -print -delete
 
 rsync-data:
+	@set -euo pipefail
 	rsync -avz root@feedsubscription.com:src/rss-email-subscription/.tmp/docker-data/ .tmp/docker-data/
+	$(MAKE) --no-print-directory prune-local-data
+
+# DRY_RUN=1 only lists.
+prune-local-data:
+	@set -euo pipefail
+	cd .tmp/docker-data
+	gone=../prune-local-data-gone.txt
+	old=../prune-local-data-old.txt
+
+	rsync -an --delete --itemize-changes \
+		root@feedsubscription.com:src/rss-email-subscription/.tmp/docker-data/ ./ |
+	sed -n 's/^\*deleting  *//p' > $$gone
+
+	# One find over all the paths: there are tens of thousands, and a
+	# process each took minutes.
+	{ grep -v '/$$' $$gone || true; } |
+	xargs -r -d '\n' sh -c 'find "$$@" -maxdepth 0 -type f -mtime +365' sh > $$old
+
+	cat $$old
+	[ -z "$${DRY_RUN:-}" ] || exit 0
+	xargs -r -d '\n' sh -c 'find "$$@" -maxdepth 0 -type f -delete' sh < $$old
+
+	# Deepest first, so a parent emptied by its children goes too.
+	{ grep '/$$' $$gone || true; } |
+	sort -r |
+	xargs -r -d '\n' rmdir --ignore-fail-on-non-empty
 
 sent-count: rsync-logs
 	@$(MAKE) --no-print-directory sent-count-last-week |
