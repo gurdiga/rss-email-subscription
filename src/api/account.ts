@@ -421,7 +421,7 @@ function storeNewPassword(
 
 async function sendPasswordChangeInformationEmail(email: EmailAddress, settings: AppSettings, env: AppEnv) {
   const emailContent = {
-    subject: 'Please note FeedSubscription passsword change',
+    subject: 'Please note FeedSubscription password change',
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
