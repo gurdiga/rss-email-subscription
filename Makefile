@@ -882,8 +882,27 @@ backup-purge:
 	) |
 	$(NOTIFY)
 
+# The privacy policy promises 12 months. logrotate alone can’t
+# keep it: it only prunes names matching its current dateext, and
+# rclone copy never deletes offsite. Local first, so the next backup
+# has nothing old to re-upload. A prerequisite of backup-purge-gfs
+# so that it runs on the same weekly cron line.
+purge-old-logs:
+	@source .env
+	{
+		find .tmp/logs/feedsubscription -type f -mtime +365 -print -delete
+		rclone delete --min-age 365d --verbose "$$RCLONE_PATH/logs" 2>&1
+	} |
+	ifne -n echo '(empty)' |
+	cat <(
+		echo "Subject: RES purge-old-logs"
+		echo "From: RES <system@feedsubscription.com>"
+		echo ""
+	) - |
+	$(NOTIFY)
+
 # cron @daily
-backup-purge-gfs:
+backup-purge-gfs: purge-old-logs
 	@source .env
 
 	# GFS (Grandfather-Father-Son) rotation:
