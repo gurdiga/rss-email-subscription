@@ -1349,7 +1349,7 @@ purge-demo-feeds:
 		sed 's|.tmp/docker-data/accounts/fe95d2f305d7ba5dcd955a9f2083d7faab76e42d98f52d2e6583380c4600cd0e/||' |
 		ifne -n echo '(empty)'
 		echo
-		docker exec app node dist/api/seed-demo-feeds-cli.js 2>&1
+		docker exec api node dist/api/seed-demo-feeds-cli.js 2>&1
 	} |
 	cat <( \
 		echo "Subject: RES purge-demo-feeds"; \
