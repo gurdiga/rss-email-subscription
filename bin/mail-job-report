@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Usage: bin/mail-job-report NAME STATUS REPORT_FILE
+#
+# Mails a cron job's report through bin/notify, and exits with the
+# job's status. The crontab sets MAILTO="", so a job that dies before
+# its own mail step is otherwise silent: backup-purge-gfs failed on
+# a syntax error from February to November 2026 and nobody heard.
+# Jobs therefore collect their output in REPORT_FILE and hand over
+# whatever status they ended with, success or not.
+
+set -euo pipefail
+
+name=$1
+status=$2
+report=$3
+
+subject="RES $name"
+[ -z "${DRY_RUN:-}" ] || subject+=" (dry run)"
+[ "$status" -eq 0 ] || subject+=" FAILED"
+
+{
+  echo "Subject: $subject"
+  echo "From: RES <system@feedsubscription.com>"
+  echo ""
+
+  if [ -s "$report" ]; then
+    cat "$report"
+  else
+    echo "(empty)"
+  fi
+
+  [ "$status" -eq 0 ] || echo "exit status $status"
+} | "${MAIL_JOB_REPORT_NOTIFY:-$(dirname "$0")/notify}"
+
+exit "$status"
