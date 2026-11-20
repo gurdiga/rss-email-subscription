@@ -98,7 +98,7 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
   }
 
   if (isMissing(content)) {
-    content = 'Post content is missing';
+    content = missingContentHtml;
   }
 
   const dateString = item.isoDate?.trim() || item.pubDate?.trim();
@@ -133,6 +133,9 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     value,
   };
 }
+
+export const missingContentHtml =
+  '<p>The feed didn’t include the text of this post, but you can read it on the blog.</p>';
 
 export function makeAuthor(item: ParsedRssItem): Result<string> {
   if (typeof item.author === 'string') {

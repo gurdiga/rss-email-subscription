@@ -4,7 +4,7 @@ import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
 import { makeRssItem, parseRssFeed, RssFeed, ParsedRssItem, MakeRssItemFn, makeAuthor } from './rss-parsing';
-import { ValidRssItem } from './rss-parsing';
+import { ValidRssItem, missingContentHtml } from './rss-parsing';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 
@@ -294,7 +294,7 @@ describe(parseRssFeed.name, () => {
           kind: 'ValidRssItem',
           value: {
             title: inputItem.title!,
-            content: inputItem.content?.trim()! || 'Post content is missing',
+            content: inputItem.content?.trim()! || missingContentHtml,
             author: makeAuthor(inputItem) as string,
             pubDate: new Date(inputItem.isoDate!),
             link: new URL(inputItem.link!, baseURL),
