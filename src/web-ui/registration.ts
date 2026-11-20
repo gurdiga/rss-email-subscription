@@ -172,7 +172,9 @@ export async function initPlanDropdown(uiElements: RequiredUiElements, selectedP
     return options;
   }
 
-  planDropdown.replaceChildren(...options);
+  // The API rejects Free at registration; the shared builder keeps it
+  // because the account page offers it as the downgrade target.
+  planDropdown.replaceChildren(...options.filter((option) => option.value !== PlanId.Free));
 
   const togglePaymentSubform = async (planIdString: string) => {
     const planId = makePlanId(planIdString);
