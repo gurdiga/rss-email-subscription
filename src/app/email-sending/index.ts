@@ -1,6 +1,7 @@
 import { AppEnv } from '../../api/init-app';
 import { AccountId, isAccountNotFound } from '../../domain/account';
 import { loadAccount } from '../../domain/account-storage';
+import { AppSettings } from '../../domain/app-settings';
 import { makeEmailAddress } from '../../domain/email-address-making';
 import { Feed } from '../../domain/feed';
 import { AppStorage } from '../../domain/storage';
@@ -16,7 +17,8 @@ export async function sendEmails(
   accountId: AccountId,
   feed: Feed,
   storage: AppStorage,
-  env: AppEnv
+  env: AppEnv,
+  settings: AppSettings
 ): Promise<number | undefined> {
   const { logError, logInfo, logWarning } = makeCustomLoggers({
     module: 'email-sending',
@@ -81,5 +83,5 @@ export async function sendEmails(
 
   const confirmedEmails = validEmails.filter((email) => email.isConfirmed);
 
-  return deliverItems(storage, env, accountId, feed, validItems, confirmedEmails, from);
+  return deliverItems(storage, env, settings, accountId, account, feed, validItems, confirmedEmails, from);
 }

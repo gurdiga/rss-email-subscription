@@ -143,7 +143,7 @@ async function checkFeeds(storage: AppStorage, env: AppEnv, settings: AppSetting
         // would never be checked.
         const result = await asyncAttempt(async () => {
           await logDuration('RSS checking', feedLogData, () => checkRss(accountId, feed, storage, env, settings));
-          await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage, env));
+          await logDuration('Email sending', feedLogData, () => sendEmails(accountId, feed, storage, env, settings));
         });
 
         if (isErr(result)) {

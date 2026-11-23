@@ -1,4 +1,5 @@
-import { AccountId } from '../../domain/account';
+import { Account, AccountId } from '../../domain/account';
+import { AppSettings } from '../../domain/app-settings';
 import { PrePostfixMessageStatus, StoredEmailStatus, makeStoredEmailStatus } from '../../domain/delivery-status';
 import { EmailAddress, HashedEmail } from '../../domain/email-address';
 import { makeEmailAddress } from '../../domain/email-address-making';
@@ -29,13 +30,15 @@ import { EmailContent, ItemEmailContent, makeEmailContent, makeUnsubscribeUrl } 
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
 import { makeItemEmailContentInWorker } from './item-content-worker';
-import { recordSentEmails } from './monthly-limit';
+import { holdBackItemsOverMonthlyLimit, recordSentEmails } from './monthly-limit';
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 
 export async function deliverItems(
   storage: AppStorage,
   env: EmailDeliveryEnv,
+  settings: AppSettings,
   accountId: AccountId,
+  account: Account,
   feed: Feed,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
@@ -57,12 +60,29 @@ export async function deliverItems(
   confirmedEmails.push(getCatchAllEmail());
 
   const preparedItems = await prepareItems(accountId, feed, validItems);
-  const preparedStoredItems = preparedItems.map((x) => x.storedItem);
+  const itemsToSend = await holdBackItemsOverMonthlyLimit(
+    storage,
+    env,
+    settings,
+    accountId,
+    account,
+    feed,
+    preparedItems,
+    subscriberCount,
+    now
+  );
+
+  if (isErr(itemsToSend)) {
+    logError(si`Failed to ${holdBackItemsOverMonthlyLimit.name}`, { reason: itemsToSend.reason });
+    return 1;
+  }
+
+  const storedItemsToSend = itemsToSend.map((x) => x.storedItem);
   const preparedCount = prepareOutboxEmails(
     storage,
     accountId,
     feed,
-    preparedItems,
+    itemsToSend,
     confirmedEmails,
     from.emailAddress,
     env.DOMAIN_NAME
@@ -77,7 +97,7 @@ export async function deliverItems(
     logError(si`Failed to ${recordSentEmails.name}`, { reason: recordResult.reason });
   }
 
-  return await sendOutboxEmails(storage, env, accountId, feed, preparedStoredItems, confirmedEmails, from);
+  return await sendOutboxEmails(storage, env, accountId, feed, storedItemsToSend, confirmedEmails, from);
 }
 
 interface PreparedItem {
