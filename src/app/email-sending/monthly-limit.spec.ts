@@ -127,11 +127,13 @@ describe(holdBackItemsOverMonthlyLimit.name, () => {
         'That isn’t enough to send “Fish &amp; &lt;Chips&gt;” to your 1,000 subscribers, so it wasn’t emailed.</p>'
     );
     expect(text).to.contain(
-      '<p>Posts that don’t fit won’t be emailed until December 1, 2026, and won’t be sent later.</p>'
+      '<p>New posts that don’t fit in the remaining emails won’t be emailed, now or later. ' +
+        'The count starts over on December 1, 2026.</p>'
     );
     expect(text).to.contain(
       '<p>To keep sending, please choose a larger plan on the ' +
-        '<a href="https://test.feedsubscription.com/user/account.html">Account page</a>, or reply to this email.</p>'
+        '<a href="https://test.feedsubscription.com/user/account.html">Account page</a>. ' +
+        'If you have any other questions, just reply to this email.</p>'
     );
     expect(text).to.contain('<p>Have a nice day.</p>');
   });
@@ -168,7 +170,7 @@ describe(holdBackItemsOverMonthlyLimit.name, () => {
 
     const request: EmailDeliveryRequest = deliverEmailFn.calls[1]![0];
 
-    expect(request.htmlBody.replace(/\s+/g, ' ')).to.contain('until January 1, 2027,');
+    expect(request.htmlBody.replace(/\s+/g, ' ')).to.contain('The count starts over on January 1, 2027.');
   });
 
   function holdBack(

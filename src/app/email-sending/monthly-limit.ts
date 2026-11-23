@@ -251,12 +251,12 @@ async function sendMonthlyLimitEmail(
       enough to send “${escapeHtml(heldBackItem.title)}” to your
       ${subscribers}, so it wasn’t emailed.</p>
 
-      <p>Posts that don’t fit won’t be emailed until ${resetDate}, and
-      won’t be sent later.</p>
+      <p>New posts that don’t fit in the remaining emails won’t be
+      emailed, now or later. The count starts over on ${resetDate}.</p>
 
       <p>To keep sending, please choose a larger plan on the
-      <a href="${accountPageUrl}">Account page</a>, or reply to this
-      email.</p>
+      <a href="${accountPageUrl}">Account page</a>. If you have any
+      other questions, just reply to this email.</p>
 
       <p>Have a nice day.</p>
     `),
