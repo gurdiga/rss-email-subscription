@@ -29,6 +29,7 @@ import { EmailContent, ItemEmailContent, makeEmailContent, makeUnsubscribeUrl } 
 import { DeliveryInfo, EmailDeliveryEnv, sendEmail } from './email-delivery';
 import { FullEmailAddress } from './emails';
 import { makeItemEmailContentInWorker } from './item-content-worker';
+import { recordSentEmails } from './monthly-limit';
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 
 export async function deliverItems(
@@ -38,18 +39,44 @@ export async function deliverItems(
   feed: Feed,
   validItems: ValidStoredRssItem[],
   confirmedEmails: HashedEmail[],
-  from: FullEmailAddress
+  from: FullEmailAddress,
+  now = new Date()
 ) {
+  const { logError } = makeCustomLoggers({
+    module: deliverItems.name,
+    accountId: accountId.value,
+    feedId: feed.id.value,
+  });
+
   if (confirmedEmails.length === 0) {
     return;
   }
+
+  const subscriberCount = confirmedEmails.length;
 
   confirmedEmails.push(getCatchAllEmail());
 
   const preparedItems = await prepareItems(accountId, feed, validItems);
   const preparedStoredItems = preparedItems.map((x) => x.storedItem);
+  const preparedCount = prepareOutboxEmails(
+    storage,
+    accountId,
+    feed,
+    preparedItems,
+    confirmedEmails,
+    from.emailAddress,
+    env.DOMAIN_NAME
+  );
 
-  prepareOutboxEmails(storage, accountId, feed, preparedItems, confirmedEmails, from.emailAddress, env.DOMAIN_NAME);
+  // Counted once the messages are in the outbox rather than as each
+  // one goes out: the ones that fail stay there and are retried on the
+  // next run, so counting them here counts each of them exactly once.
+  const recordResult = recordSentEmails(storage, accountId, preparedCount * subscriberCount, now);
+
+  if (isErr(recordResult)) {
+    logError(si`Failed to ${recordSentEmails.name}`, { reason: recordResult.reason });
+  }
+
   return await sendOutboxEmails(storage, env, accountId, feed, preparedStoredItems, confirmedEmails, from);
 }
 
@@ -219,12 +246,14 @@ export function prepareOutboxEmails(
   confirmedEmails: HashedEmail[],
   fromAddress: EmailAddress,
   domainName: string
-): void {
+): number {
   const { logError } = makeCustomLoggers({
     module: prepareOutboxEmails.name,
     accountId: accountId.value,
     feedId: feed.id.value,
   });
+
+  let preparedCount = 0;
 
   for (const { storedItem, itemContent } of preparedItems) {
     for (const hashedEmail of confirmedEmails) {
@@ -247,7 +276,7 @@ export function prepareOutboxEmails(
           fileName: storedItem.fileName,
           to: hashedEmail.emailAddress.value,
         });
-        return;
+        return preparedCount;
       }
     }
 
@@ -259,7 +288,7 @@ export function prepareOutboxEmails(
         reason: storeItemResult.reason,
         ...logData,
       });
-      return;
+      return preparedCount;
     }
 
     const storeTimestampResult = storeDeliveryTimestamp(storage, accountId, feed.id, storedItem);
@@ -269,9 +298,13 @@ export function prepareOutboxEmails(
         reason: storeTimestampResult.reason,
         ...logData,
       });
-      return;
+      return preparedCount;
     }
+
+    preparedCount++;
   }
+
+  return preparedCount;
 }
 
 function storeDeliveryItem(
