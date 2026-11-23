@@ -13,7 +13,7 @@ make host-install   # overwrites the installed copies
 
 A `crontab -e` on prod is drift, not a change: `host-install` replaces the crontab with `host/crontab`. If something gets changed on the host directly, copy it back here before the next install.
 
-One file is not in the repo: `/etc/msmtp-password`, which holds the Gmail app password. `/etc/msmtprc` reads it through `passwordeval`. Create it with mode 600 and owner root, containing only the password. `host-install` refuses to run without it, because msmtp failing to authenticate silences every alert.
+One file is not in the repo: `/etc/msmtp-password`, which holds the app password of `res.system.notifications@gmail.com`, a Gmail account that exists only to send these alerts. `/etc/msmtprc` reads it through `passwordeval`. Create it with mode 600 and owner root, containing only the password. `host-install` refuses to run without it, because msmtp failing to authenticate silences every alert.
 
 ## The two mail channels
 
