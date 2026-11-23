@@ -451,7 +451,10 @@ export const checkFeedUrl: AppRequestHandler = async function checkFeedUrl(
 
   if (!feedHref) {
     logWarning('No RSS feed found', { blogUrl: blogUrl.toString() });
-    return makeInputError('No RSS feed found', fieldName);
+    return makeInputError(
+      'No RSS feed found. Your blogging platform’s documentation should say how to turn it on.',
+      fieldName
+    );
   }
 
   const feedUrl = makeBlogFeedHttpUrl(feedHref, blogUrl, fieldName);
