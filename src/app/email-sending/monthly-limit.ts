@@ -3,6 +3,7 @@ import { getAccountRootStorageKey } from '../../domain/account-storage';
 import { AppSettings } from '../../domain/app-settings';
 import { Feed } from '../../domain/feed';
 import { Plan, Plans } from '../../domain/plan';
+import { RssItem } from '../../domain/rss-item';
 import { AppStorage, StorageKey } from '../../domain/storage';
 import { isEmpty } from '../../shared/array-utils';
 import { parseOptionalDate } from '../../shared/date-utils';
@@ -10,7 +11,7 @@ import { Result, isErr, makeErr, makeNumber } from '../../shared/lang';
 import { makeCustomLoggers } from '../../shared/logging';
 import { makePath } from '../../shared/path-utils';
 import { si } from '../../shared/string-utils';
-import { htmlBody } from './email-content';
+import { escapeHtml, htmlBody } from './email-content';
 import { DeliverEmailFn, DeliveryInfo, EmailDeliveryEnv, deliverEmail, sendEmail } from './email-delivery';
 import { ValidStoredRssItem, getStoredRssItemStorageKey } from './rss-item-reading';
 
@@ -79,7 +80,18 @@ export async function holdBackItemsOverMonthlyLimit<T extends { storedItem: Vali
     return withinLimit;
   }
 
-  const sendResult = await sendMonthlyLimitEmail(account, plan, settings, env, now, deliverEmailFn);
+  const firstHeldBackItem = overLimit[0]!.storedItem.item;
+  const sendResult = await sendMonthlyLimitEmail(
+    account,
+    plan,
+    sentCount,
+    firstHeldBackItem,
+    emailsPerItem,
+    settings,
+    env,
+    now,
+    deliverEmailFn
+  );
 
   // The timestamp is recorded only once the email is out, so a failed
   // send is retried with the next held-back post.
@@ -113,8 +125,8 @@ export async function holdBackItemsOverMonthlyLimit<T extends { storedItem: Vali
   return withinLimit;
 }
 
-// The item that crosses the limit still goes out in full: only the ones
-// that would start after it are held back.
+// An item goes out only if its whole send fits what is left of the
+// month, so none is ever sent to part of the list.
 export function splitByMonthlyLimit<T>(
   items: T[],
   sentCount: number,
@@ -126,7 +138,7 @@ export function splitByMonthlyLimit<T>(
   let count = sentCount;
 
   for (const item of items) {
-    if (count >= maxEmailsPerMonth) {
+    if (count + emailsPerItem > maxEmailsPerMonth) {
       overLimit.push(item);
       continue;
     }
@@ -210,12 +222,17 @@ export function getUtcMonth(date: Date): string {
 async function sendMonthlyLimitEmail(
   account: Account,
   plan: Plan,
+  sentCount: number,
+  heldBackItem: RssItem,
+  subscriberCount: number,
   settings: AppSettings,
   env: EmailDeliveryEnv,
   now: Date,
   deliverEmailFn: DeliverEmailFn
 ): Promise<Result<DeliveryInfo>> {
-  const emailCount = plan.maxEmailsPerMonth.toLocaleString('en-US');
+  const usedCount = formatNumber(sentCount);
+  const allowance = formatNumber(plan.maxEmailsPerMonth);
+  const subscribers = subscriberCount === 1 ? '1 subscriber' : si`${formatNumber(subscriberCount)} subscribers`;
   const resetDate = getFirstDayOfNextUtcMonth(now).toLocaleDateString('en-US', {
     timeZone: 'UTC',
     year: 'numeric',
@@ -225,14 +242,17 @@ async function sendMonthlyLimitEmail(
   const accountPageUrl = si`https://${env.DOMAIN_NAME}/user/account.html`;
 
   const emailContent = {
-    subject: 'Your FeedSubscription account reached its monthly email limit',
+    subject: 'A post didn’t fit in your FeedSubscription monthly emails',
     htmlBody: htmlBody(si`
       <p>Hello,</p>
 
-      <p>Your FeedSubscription account has used its ${emailCount} emails
-      for this month on the ${plan.title}, so new posts won’t be emailed
-      until ${resetDate}. Posts that come out before then won’t be sent
-      later.</p>
+      <p>Your FeedSubscription account has used ${usedCount} of the
+      ${allowance} emails in this month’s ${plan.title}. That isn’t
+      enough to send “${escapeHtml(heldBackItem.title)}” to your
+      ${subscribers}, so it wasn’t emailed.</p>
+
+      <p>Posts that don’t fit won’t be emailed until ${resetDate}, and
+      won’t be sent later.</p>
 
       <p>To keep sending, please choose a larger plan on the
       <a href="${accountPageUrl}">Account page</a>, or reply to this
@@ -252,6 +272,10 @@ async function sendMonthlyLimitEmail(
     env,
     deliverEmailFn
   );
+}
+
+function formatNumber(value: number): string {
+  return value.toLocaleString('en-US');
 }
 
 export function getFirstDayOfNextUtcMonth(date: Date): Date {
