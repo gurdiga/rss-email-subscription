@@ -92,7 +92,7 @@ function labelStartColumn(): void {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   if (header && timeZone) {
-    header.textContent = si`Start (${timeZone})`;
+    header.textContent += si` (${timeZone})`;
   }
 }
 
