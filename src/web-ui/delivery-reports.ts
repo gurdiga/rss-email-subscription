@@ -16,7 +16,7 @@ import {
   feedListBreadcrumbsLink,
   makeFeedManageBreadcrumbsLink,
 } from './breadcrumbs';
-import { createElement } from './dom-isolation';
+import { createElement, querySelector } from './dom-isolation';
 import {
   HttpMethod,
   SpinnerUiElements,
@@ -80,7 +80,20 @@ async function main() {
   }
 
   displayReport(uiElements.tbody, response);
+  labelStartColumn();
   unhideElement(uiElements.report);
+}
+
+// The cells are in the browser’s time zone; this names it. The
+// header is optional so the script and the page can deploy in
+// either order.
+function labelStartColumn(): void {
+  const header = querySelector('#start-column-header');
+  const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  if (header && timeZone) {
+    header.textContent = si`Start (${timeZone})`;
+  }
 }
 
 function displayReport(tbody: HTMLTableSectionElement, response: DeliveryReportResponse) {
