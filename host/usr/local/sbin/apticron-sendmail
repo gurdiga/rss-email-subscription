@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# The sendmail bsd-mailx runs for apticron (set in /etc/apticron/mailrc).
+# Sends through msmtp straight to Gmail, so the report does not depend
+# on smtp-out the way /usr/sbin/sendmail (ssmtp) does. The List-Id must
+# match the one in bin/notify: Gmail rewrites From, so this is the only
+# header alerts can be filtered on.
+#
+# Installed as a copy rather than run from the checkout, so a broken
+# checkout cannot also silence the report about pending upgrades.
+{
+  echo "List-Id: RES alerts <res-alerts.feedsubscription.com>"
+  cat
+} | /usr/bin/msmtp "$@"

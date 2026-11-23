@@ -1,0 +1,33 @@
+MAILTO=""
+PATH=$PATH:/usr/sbin:/usr/bin
+
+HOME=/root/src/rss-email-subscription
+
+59 23 * * * make delivery-report
+59 23 * * * make mailq-report
+@weekly make backup backup-purge-gfs
+@weekly make tracking-report
+
+0 3 * * 0 make docker-prune # 3h after the @weekly restarts: prune --all deletes a container stopped mid-restart, and its image
+@weekly make certbot-report
+@weekly make reload-website # reload SSL certificate if updated
+@weekly make restart-smtp-in # remount SSL certificate if updated
+@weekly make restart-postilion # remount SSL certificate if updated
+@weekly make list-sessions
+@weekly make list-qid-index
+@weekly make purge-demo-feeds
+@weekly make open-ports-report
+
+# not using @monthly because I need it to complete before backup begins
+50 23 28 * * make archive-old-deliveries
+
+@reboot make start && CHECK_CONTAINERS_FORCE=1 bin/check-containers
+@reboot make watch-smtp-out
+@reboot make watch-app
+@reboot make watch-website
+@reboot make watch-delmon
+@reboot make watch-msmtp
+*/5 * * * * bin/check-containers
+2 7 * * * CHECK_CONTAINERS_REMIND=1 bin/check-containers
+@weekly make resolver-report
+@daily make update-tor-exit-node-blocklist

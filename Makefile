@@ -672,6 +672,41 @@ watch-msmtp:
 	done \
 	& disown
 
+# Host config outside the containers: see host/README.md. Run on prod,
+# as root. It overwrites what it installs, so run host-diff first.
+host-install:
+	@set -euo pipefail
+
+	# Without it msmtp cannot authenticate, which silences every alert.
+	test -s /etc/msmtp-password || {
+		echo "/etc/msmtp-password is missing: see host/README.md" >&2
+		exit 1
+	}
+
+	install -m 600 -o root -g root host/etc/msmtprc /etc/msmtprc
+	install -m 644 -o root -g root host/etc/logrotate.d/msmtp /etc/logrotate.d/msmtp
+	install -m 640 -o root -g mail host/etc/ssmtp/ssmtp.conf /etc/ssmtp/ssmtp.conf
+	install -m 644 -o root -g root host/etc/apticron/mailrc /etc/apticron/mailrc
+	install -m 644 -o root -g root host/etc/cron.d/apticron /etc/cron.d/apticron
+	install -m 755 -o root -g root host/usr/local/sbin/apticron-sendmail /usr/local/sbin/apticron-sendmail
+	crontab host/crontab
+
+# Exits non-zero when the host has drifted from host/. The + lines are
+# what host-install would put in place.
+#
+# The mask is for an msmtprc with the password inline, the way it was
+# before passwordeval: the whole line goes, so no value can slip past.
+host-diff:
+	@set -o pipefail
+	status=0
+	for file in $$(cd host && find etc usr -type f | sort); do
+		diff -u "/$$file" "host/$$file" |
+		sed -E 's/^([-+ ][[:space:]]*password[[:space:]]).*/\1<hidden>/' ||
+		status=1
+	done
+	crontab -l | diff -u --label "crontab -l" - host/crontab || status=1
+	exit $$status
+
 # cron @weekly
 certbot-report:
 	@(

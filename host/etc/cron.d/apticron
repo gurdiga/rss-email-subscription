@@ -1,0 +1,4 @@
+# cron entry for apticron
+
+MAILRC=/etc/apticron/mailrc
+@weekly root if test -x /usr/sbin/apticron; then /usr/sbin/apticron --cron; else true; fi

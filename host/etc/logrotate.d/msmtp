@@ -1,0 +1,11 @@
+# msmtp opens the file per send, so no postrotate signal is needed.
+/var/log/msmtp {
+  monthly
+  rotate 60
+  missingok
+  notifempty
+  compress
+  dateext
+  dateformat -%Y-%m-%d
+  create 0600 root root
+}

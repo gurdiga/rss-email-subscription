@@ -16,7 +16,8 @@ msmtp="${NOTIFY_MSMTP:-msmtp}"
 # Gmail rewrites the From header to the authenticated account, so alerts
 # cannot be filtered by sender. This is the handle that survives:
 # list:(res-alerts.feedsubscription.com). Sub-addressing does not work —
-# deliveredto: matches nothing.
+# deliveredto: matches nothing. apticron's reports carry the same one,
+# from host/usr/local/sbin/apticron-sendmail: change both together.
 list_id='RES alerts <res-alerts.feedsubscription.com>'
 
 # Alerts used to arrive with no Message-ID at all — postfix logged
