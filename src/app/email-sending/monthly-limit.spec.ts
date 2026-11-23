@@ -127,7 +127,7 @@ describe(holdBackItemsOverMonthlyLimit.name, () => {
         'That isn’t enough to send “Fish &amp; &lt;Chips&gt;” to your 1,000 subscribers, so it wasn’t emailed.</p>'
     );
     expect(text).to.contain(
-      '<p>New posts that don’t fit in the remaining emails won’t be emailed, now or later. ' +
+      '<p>New posts that don’t fit in the remaining emails won’t be sent. ' +
         'The count starts over on December 1, 2026.</p>'
     );
     expect(text).to.contain(
