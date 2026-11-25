@@ -5,6 +5,7 @@ import { getErrorMessage, hasKind, isErr, isObject, makeErr, Result } from '../.
 import { makeDate } from '../../shared/date-utils';
 import { si } from '../../shared/string-utils';
 import { makeHttpUrl } from '../../shared/url';
+import { escapeHtml } from '../email-sending/email-content';
 import { makeCappedFetch } from './fetch';
 import { fetchRss, interactiveFeedMaxBytes, RssResponse } from './rss-response';
 
@@ -97,10 +98,6 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     return invalidRssItem('Post title is missing');
   }
 
-  if (isMissing(content)) {
-    content = missingContentHtml;
-  }
-
   const dateString = item.isoDate?.trim() || item.pubDate?.trim();
 
   if (!dateString) {
@@ -125,6 +122,10 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
     return invalidRssItem('Post publication timestamp is not a valid JSON date string');
   }
 
+  if (isMissing(content)) {
+    content = makeMissingContentHtml(link);
+  }
+
   const guid = item.guid || item.id || link.toString();
   const value: RssItem = { title, content, author, pubDate, link, guid };
 
@@ -134,8 +135,9 @@ export function makeRssItem(item: ParsedRssItem, baseURL: URL, defaultTitle: str
   };
 }
 
-export const missingContentHtml =
-  '<p>The feed didn’t include the text of this post, but you can read it on the blog.</p>';
+export function makeMissingContentHtml(link: URL): string {
+  return si`<p>The feed didn’t include the text of this post, but you can <a href="${escapeHtml(link.toString())}">read it on the blog</a>.</p>`;
+}
 
 export function makeAuthor(item: ParsedRssItem): Result<string> {
   if (typeof item.author === 'string') {

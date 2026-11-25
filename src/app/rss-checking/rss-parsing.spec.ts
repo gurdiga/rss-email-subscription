@@ -4,7 +4,7 @@ import { Err, makeErr } from '../../shared/lang';
 import { RssItem } from '../../domain/rss-item';
 import { makeThrowingStub } from '../../shared/test-utils';
 import { makeRssItem, parseRssFeed, RssFeed, ParsedRssItem, MakeRssItemFn, makeAuthor } from './rss-parsing';
-import { ValidRssItem, missingContentHtml } from './rss-parsing';
+import { ValidRssItem, makeMissingContentHtml } from './rss-parsing';
 import { si } from '../../shared/string-utils';
 import { makePath } from '../../shared/path-utils';
 
@@ -290,20 +290,36 @@ describe(parseRssFeed.name, () => {
       ];
 
       inputRssItems.forEach((inputItem: ParsedRssItem) => {
+        const link = new URL(inputItem.link!, baseURL);
         const expectedResult: ValidRssItem = {
           kind: 'ValidRssItem',
           value: {
             title: inputItem.title!,
-            content: inputItem.content?.trim()! || missingContentHtml,
+            content: inputItem.content?.trim()! || makeMissingContentHtml(link),
             author: makeAuthor(inputItem) as string,
             pubDate: new Date(inputItem.isoDate!),
-            link: new URL(inputItem.link!, baseURL),
+            link,
             guid: inputItem.guid!,
           },
         };
 
         expect(makeRssItem(inputItem, baseURL, defaultItemTitle)).to.deep.equal(expectedResult);
       });
+    });
+
+    it('links to the post when the feed has no post text', () => {
+      const inputItem: ParsedRssItem = {
+        title: 'Post title',
+        isoDate: new Date().toJSON(),
+        link: '/post?a=1&b=2',
+        guid: '1',
+      };
+
+      const result = makeRssItem(inputItem, baseURL, defaultItemTitle) as ValidRssItem;
+
+      expect(result.value.content).to.equal(
+        '<p>The feed didn’t include the text of this post, but you can <a href="https://example.com/post?a=1&amp;b=2">read it on the blog</a>.</p>'
+      );
     });
 
     it('returns a InvalidRssItem value when input is invalid', () => {
