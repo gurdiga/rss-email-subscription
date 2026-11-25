@@ -17,7 +17,7 @@ RUN apk update --no-cache && apk upgrade --no-cache
 # no libcurl.
 RUN apk add --no-cache \
   busybox=1.37.0-r30 \
-  openssl=3.5.9-r0 \
+  openssl=3.5.9-r1 \
   c-ares=1.34.9-r0 \
   tini=0.19.0-r3 \
   syslog-ng=4.10.2-r1 \
